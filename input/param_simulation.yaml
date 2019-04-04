@@ -1,0 +1,61 @@
+ProductionID: DD_baseline2018a_Cosmo
+SN parameters:
+   Id : 100                   # Id of the first SN
+   X1_Color:                    # stretch and color
+       type : fixed #random or fixed
+       min : [-2.0,0.2]
+       max : [0.2,0.2]
+       rate :  JLA
+   z :              # redshift
+       type : uniform
+       min : 0.01
+       max : 0.9
+       step: 0.05
+       rate : Perrett # Type Ia volumetric rate : Perrett, Ripoche, Dilday.
+   DayMax:                 # Tmax (obs. frame)
+       type : unique #uniform or random or unique
+       step : 1 # if uniform: step (in day) between Tmin(obs) and Tmax(obs)      
+   min_rf_phase : -20.        # obs min phase (rest frame)
+   max_rf_phase : 60.         # obs max phase (rest frame)
+   absmag : -19.0906          # peak abs mag
+   band : bessellB             # band for absmag
+   magsys : vega              # magsys for absmag
+   differential_flux: False
+Cosmology:
+   Model : w0waCDM      # Cosmological model
+   Omega_m : 0.30             # Omega_m
+   Omega_l : 0.70             # Omega_l
+   H0 : 72.0                  # H0
+   w0 : -1.0                  # w0
+   wa : 0.0                   # wa
+Instrument:
+   name : LSST       #name of the telescope (internal)
+   throughput_dir : LSST_THROUGHPUTS_BASELINE #dir of throughput
+   atmos_dir : THROUGHPUTS_DIR   #dir of atmos
+   airmass : 1.2   #airmass value
+   atmos : True  #atmos
+   aerosol : False  #aerosol
+Observations: 
+   #filename: /sps/lsst/cadence/LSST_SN_PhG/cadence_db/opsim_db/kraken_2026.db # Name of db obs file (full path)
+   filename: /home/philippe/LSST/DB_Files/kraken_2026.db
+   fieldtype: DD #DD or WFD
+   coadd: True # this is the coaddition per night
+   season: 1 #season to simulate (-1 = all seasons)
+Simulator :
+    name : sn_catalog_simulations.sim_sncosmo.sn_cosmo        # Simulator name: sn_cosmo,sn_sim,sn_ana, sn_fast
+    model : salt2-extended   # spectra model
+    version : 1.0                     #version
+    #Reference File: SN_MAF/Reference_Files/LC_Ref_-2.0_0.2.hdf5
+    Reference File: LC_Test_today.hdf5
+Host Parameters: None         # Host parameters
+Display_LC : #display during LC simulations
+   display: False
+   time: 1 #display during time (sec) before closing
+Output:
+    directory: Output_Simu
+    save: True
+Multiprocessing:
+    nproc: 5
+Metric: sn_maf.sn_simulations.sn_maf_simulation
+Pixelisation:
+    nside: 64
