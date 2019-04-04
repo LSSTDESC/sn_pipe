@@ -18,13 +18,13 @@ Observations:
    #dt_range: [0.5, 30.]  # WFD dt range
 Pixelisation:
     nside: 64
-#Li file : ['sn_maf/reference_files/Li_SNSim_-2.0_0.2.npy']
-#Mag_to_flux file : ['sn_maf/reference_files/Mag_to_Flux_SNSim.npy']
+#Li file : ['reference_files/Li_SNSim_-2.0_0.2.npy']
+#Mag_to_flux file : ['reference_files/Mag_to_Flux_SNSim.npy']
 #names_ref: ['SNSim']
-Li file : ['sn_maf/reference_files/Li_SNCosmo_-2.0_0.2.npy']
-Mag_to_flux file : ['sn_maf/reference_files/Mag_to_Flux_SNCosmo.npy']
+Li file : ['reference_files/Li_SNCosmo_-2.0_0.2.npy']
+Mag_to_flux file : ['reference_files/Mag_to_Flux_SNCosmo.npy']
 names_ref: ['SNCosmo']
-#Li file : ['sn_maf/reference_files/Li_SNSim_-2.0_0.2.npy','sn_maf/reference_files/Li_SNCosmo_-2.0_0.2.npy']
-#Mag_to_flux file : ['sn_maf/reference_files/Mag_to_Flux_SNSim.npy','sn_maf/reference_files/Mag_to_Flux_SNCosmo.npy']
+#Li file : ['reference_files/Li_SNSim_-2.0_0.2.npy','reference_files/Li_SNCosmo_-2.0_0.2.npy']
+#Mag_to_flux file : ['reference_files/Mag_to_Flux_SNSim.npy','reference_files/Mag_to_Flux_SNCosmo.npy']
 #names_ref: ['SNSim','SNCosmo']
-Metric: sn_maf.sn_metrics.sn_cadence_metric
+Metric: sn_metrics.sn_cadence_metric

@@ -8,10 +8,10 @@ import yaml
 from importlib import import_module
 # import sqlite3
 import numpy as np
-from sn_maf.sn_tools.sn_cadence_tools import Reference_Data
+from sn_tools.sn_cadence_tools import ReferenceData
 import healpy as hp
 import numpy.lib.recfunctions as rf
-import sn_maf.sn_plotters.sn_snrPlotters as sn_plot
+import sn_plotters.sn_snrPlotters as sn_plot
 
 parser = argparse.ArgumentParser(
     description='Run a SN metric from a configuration file')
@@ -76,7 +76,7 @@ def run(config_filename):
         # sql_i += ' AND abs(fieldRA-(%f))< %f' % (Ra_ref, 1.e-2)+' AND '
         # sql_i += 'abs(fieldDec-(%f))< %f' % (Dec_ref, 1.e-2)
 
-        lim_sn[band] = Reference_Data(
+        lim_sn[band] = ReferenceData(
             config['Li file'], config['Mag_to_flux file'], band, z)
 
         metric[band] = module.SNSNRMetric(config=config, coadd=config['Observations']
@@ -148,6 +148,7 @@ def run(config_filename):
     sn_plot.DetecFracPlot(detec_frac, config['Pixelisation']
                           ['nside'], config['names_ref'])
 
+    sn_plot.DetecFracHist(detec_frac, config['names_ref'])
     # frac_obs = Fraction_Observation(res, config, metric)
     # print(frac_obs)
     # mbg.writeAll()

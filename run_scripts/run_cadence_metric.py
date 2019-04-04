@@ -9,7 +9,7 @@ import yaml
 from importlib import import_module
 import sqlite3
 import numpy as np
-import sn_maf.sn_plotters.sn_cadencePlotters as sn_plot
+import sn_plotters.sn_cadencePlotters as sn_plot
 
 parser = argparse.ArgumentParser(
     description='Run a SN metric from a configuration file')
@@ -96,11 +96,11 @@ def run(config_filename):
     # Let us display the results
 
     for band, val in bdict.items():
-        sn_plot.Plot_Cadence(band, config['Li file'], config['Mag_to_flux file'],
-                             SNR[band],
-                             val.metricValues[~val.metricValues.mask],
-                             config['names_ref'],
-                             mag_range=mag_range, dt_range=dt_range)
+        sn_plot.PlotCadence(band, config['Li file'], config['Mag_to_flux file'],
+                            SNR[band],
+                            val.metricValues[~val.metricValues.mask],
+                            config['names_ref'],
+                            mag_range=mag_range, dt_range=dt_range)
 
     # mbg.writeAll()
     # mbg.plotAll(closefigs=False)

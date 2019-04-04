@@ -34,6 +34,8 @@ class InstallCommand(install):
             cmd = 'pip install --user --process-dependency-links git+https://github.com/lsstdesc/sn_metrics.git@{}'.format(
                 self.branch)
             os.system(cmd)
+            cmd = 'pip install --user h5py==2.7.1'
+            os.system(cmd)
         install.run(self)
 
 
