@@ -3,6 +3,7 @@ import distutils.cmd
 import distutils.log
 import os
 from setuptools.command.install import install
+from pip.req import parse_requirements
 
 
 class InstallCommand(install):
@@ -34,15 +35,18 @@ class InstallCommand(install):
             cmd = 'pip install --user --process-dependency-links git+https://github.com/lsstdesc/sn_metrics.git@{}'.format(
                 self.branch)
             os.system(cmd)
-            """
-            for cmd in ['pip install --user h5py==2.7.1',
-                        'pip install --user shapely[vectorized]',
-                        'pip install --user --no-deps astropy-healpix',
-                        'pip install --user descartes']:
-            """
-            for cmd in ['pip install --user --no-deps astropy-healpix']:
+            # parse_requirements() returns generator of pip.req.InstallRequirement objects
+            install_reqs = parse_requirements(
+                'requirements.txt', session='hack')
+            # reqs is a list of requirement
+            reqs = [str(ir.req) for ir in install_reqs]
+            for req in reqs:
+                cmd = 'pip install --user {}'.format(req)
                 os.system(cmd)
-            
+            for req in ['astropy-healpix']:
+                cmd = 'pip install --user --no-deps{}'.format(req)
+                os.system(cmd)
+
         install.run(self)
 
 
