@@ -22,7 +22,7 @@ A framework to run the Survey Strategy Support pipeline.
 ## **Running the metrics**
 
 ### Installing requested packages
-- pip install . --user --install-option="--package=metrics" --install-option="--branch=thebranch"
+- pip install . --user --install-option="--package=metrics" --install-option="--branch=thebranch" -r requirements.txt
 
 ### Running the Cadence metric
 - python run_scripts/run_cadence_metric.py input/param_cadence_metric.yaml

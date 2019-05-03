@@ -1,0 +1,6 @@
+###### Requirements without Version Specifiers ######
+shapely[vectorized]
+descartes
+#
+###### Requirements with Version Specifiers ######
+h5py==2.7.1
