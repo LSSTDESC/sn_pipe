@@ -31,8 +31,6 @@ for dbName in dbNames:
         fileName='{}/{}_CadenceMetric_{}.npy'.format(dirFile,dbName,band)
         print(fileName)
         metricValues = np.load(fileName)
-        print('jjj',metricValues.dtype)
-        print('jjj',metricValues)
         sn_plot.plotMollview(64,metricValues,'cadence_mean','cadence','days',1.,band)
         sn_plot.plotMollview(64,metricValues,'m5_mean','m5','mag',24.,band)
         sn_plot.plotCadence(band,Li_files,mag_to_flux_files,
