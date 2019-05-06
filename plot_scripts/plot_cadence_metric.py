@@ -4,7 +4,7 @@ import matplotlib.pylab as plt
 import argparse
 from optparse import OptionParser
 
-parser = OptionParser()
+parser = OptionParser(description='Display Cadence metric results')
 parser.add_option("--dbName", type="str", default='kraken_2026', help="db name [%default]")
 parser.add_option("--dirFile", type="str", default='', help="file directory [%default]")
 parser.add_option("--band", type="str", default='r', help="band [%default]")
