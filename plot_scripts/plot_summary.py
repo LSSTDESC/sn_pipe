@@ -52,8 +52,6 @@ class PlotSummary:
 
         return r
 
-            
-
 
 def plotBand(band,medVals):
 
