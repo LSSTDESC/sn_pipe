@@ -1,6 +1,8 @@
 import numpy as np
 import sn_plotters.sn_cadencePlotters as sn_plot
-import matplotlib.pylab as plt
+import matplotlib.pyplot as plt
+import os
+from mpl_toolkits.axes_grid1.inset_locator import zoomed_inset_axes,mark_inset
 
 class PlotSummary:
     def __init__(self, x1=-2.0, color=0.2, namesRef=['SNCosmo'],
@@ -32,17 +34,22 @@ class PlotSummary:
 
     def loadFile(self,dirFile, dbName, band, metricName):
         fileName  ='{}/{}_{}_{}.npy'.format(dirFile,dbName,metricName,band)
+        if not os.path.isfile(fileName):
+            return None
         return np.load(fileName)
 
     def getMetricValues(self, dirFile, dbName, band):
         
         metricValuesCad = self.loadFile(dirFile, dbName, band, 'CadenceMetric')
+        metricValuesSNR =  self.loadFile(dirFile, dbName, band, 'SNRMetric')
+        if metricValuesCad is None or metricValuesSNR is None:
+            return None
         resCadence = sn_plot.plotCadence(band,self.Li_files,self.mag_to_flux_files,
                             self.SNR[band],
                             metricValuesCad,
                             self.namesRef,
                                          mag_range=self.mag_range, dt_range=self.dt_range, display=False)
-        metricValuesSNR =  self.loadFile(dirFile, dbName, band, 'SNRMetric')
+        
 
         r = []
         for name in self.namesRef:
@@ -52,39 +59,86 @@ class PlotSummary:
 
         return r
 
+def isInZone(x1,x2,y1,y2,x,y):
+    
+    if x<x1 or x>x2 or y<y1 or y>y2:
+        return True
+    return False
 
-def plotBand(band,medVals):
+
+def plotBand(ax,band,medVals,label='True', shiftx = -0.003, shifty = -0.004,exclude=False,x1=0, x2=0, y1=0, y2=0, zoom=False):
 
     ida = medVals['band'] == band
     medValues = medVals[ida]
 
-    fig, ax = plt.subplots()
-
-    fig.suptitle('{} band'.format(band))
     tot_label=[]
-    shiftx = 0.002
-    shifty = 0.005
+   
+    print(medValues['dbName'])
+    diffx = np.max(medValues['zlim'])-np.min(medValues['zlim'])
+    diffy = np.max(medValues['detect_rate'])-np.min(medValues['detect_rate'])
+
+    shifty = -0.005*diffy
+    shiftx = -0.01*diffx
+
+    if zoom:
+       diffx = x2-x1
+       diffy = y2-y1
+    
+       print(diffx,diffy)
+       shifty = 0.07*diffy
+       shiftx = -0.005*diffx
+
+    tagig = {}
     for dbName in forPlot['dbName']:
         idx = medValues['dbName'] == dbName
         sel = medValues[idx]
+        if len(sel) ==0:
+            continue
+
         idxp = np.where(forPlot['dbName'] == dbName)
         color = forPlot[idxp]['color'][0]
         marker = forPlot[idxp]['marker'][0]
         name = forPlot[idxp]['newName'][0]
-        namefig = forPlot[idxp]['dbName'][0]
-        #tot_label.append(ax.errorbar(sel['zlim'],sel['detect_rate'],color=color,marker=marker,label=name,linestyle='None'))
-        ax.plot(sel['zlim'],sel['detect_rate'],color=color,marker=marker)
-        if name not in ['opsim_single_visits','fb_rolling']:
-            ax.text(sel['zlim']-shiftx,sel['detect_rate']-shifty,namefig)
+        namefig = forPlot[idxp]['newName'][0]
+        namepl = forPlot[idxp]['Namepl'][0]
+        groupid = forPlot[idxp]['group'][0]
+
+        if zoom:
+            if isInZone(x1,x2,y1,y2,sel['zlim'],sel['detect_rate']):
+                continue
+            
+        if namepl == 'none':
+            namepl = ''
+        
+        if groupid == 'none':
+            ax.plot(sel['zlim'],sel['detect_rate'],color=color,marker=marker)
+            if (not zoom and isInZone(x1,x2,y1,y2,sel['zlim'],sel['detect_rate'])) or (zoom and not isInZone(x1,x2,y1,y2,sel['zlim'],sel['detect_rate'])):
+                ax.text(sel['zlim']+shiftx,sel['detect_rate']+shifty,namefig,ha='center',va='center')
+
         else:
-            ax.text(sel['zlim']+shiftx/2.,sel['detect_rate'],namefig) 
-    labs = [l.get_label() for l in tot_label]
-    ax.legend(tot_label, labs, ncol=4,loc='best',prop={'size':12},frameon=False)
-    ax.set_xlabel('z$_{lim}$')
-    ax.set_ylabel('Detection rate')
-    xmin, xmax = ax.get_xlim()
-    ax.set_xlim([xmin,xmax+0.01])
+            if label and groupid not in tagig.keys():
+                tot_label.append(ax.errorbar(sel['zlim'],sel['detect_rate'],color=color,marker=marker,label=groupid,linestyle='None',markerfacecolor='None'))
+                tagig[groupid] = 0
+            else:
+                ax.plot(sel['zlim'],sel['detect_rate'],color=color,marker=marker,markerfacecolor='None')
+            if (not zoom and isInZone(x1,x2,y1,y2,sel['zlim'],sel['detect_rate'])) or (zoom and not isInZone(x1,x2,y1,y2,sel['zlim'],sel['detect_rate'])):
+                if namepl in ['large_single_visit','single_exp']:
+                    ax.text(sel['zlim'],sel['detect_rate']-shifty,namepl,ha='center',va='bottom')
+                else:
+                    if namepl=='baseline' and color=='b':
+                        ax.text(sel['zlim']+shiftx,sel['detect_rate'],namepl,ha='right',va='center') 
+                    else:
+                        ax.text(sel['zlim'],sel['detect_rate']+shifty,namepl,ha='center',va='top')
+    if label:
+        labs = [l.get_label() for l in tot_label]
+        #ax.legend(tot_label, labs, ncol=3,loc='best',prop={'size':12},frameon=True)
+        ax.legend(tot_label, labs, ncol=1,loc='center left', bbox_to_anchor=(1,0.5),prop={'size':12},frameon=True)
+        ax.set_xlabel('z$_{lim}$')
+        ax.set_ylabel('Detection rate')
+        xmin, xmax = ax.get_xlim()
+        ax.set_xlim([xmin-0.001,xmax+0.001])
     plt.grid(linestyle='--')
+    
     
 
 dirFile = '/sps/lsst/users/gris/MetricOutput'
@@ -99,23 +153,69 @@ plt.rcParams['lines.linewidth'] = 2.5
 plt.rcParams['figure.figsize'] = (10, 7)
 
 forPlot = np.loadtxt('plot_scripts/cadenceCustomize.txt',
-                     dtype={'names': ('dbName', 'newName', 'color','marker'),'formats': ('U17', 'U25', 'U1','U1')})
+                     dtype={'names': ('dbName', 'newName', 'group','Namepl','color','marker'),'formats': ('U33', 'U33','U12','U18','U6','U1')})
 
+print(forPlot)
 plotSum = PlotSummary()
 
-bands = 'griz'
-
-medList = []
-for band in bands:
-    for dbName in forPlot['dbName']:
-        print('processing',dbName)
-        medList += plotSum.getMetricValues(dirFile, dbName,band)
+bands = 'i'
+if not os.path.isfile('Summary.npy'):
+    medList = []
+    for band in bands:
+        for dbName in forPlot['dbName']:
+            print('processing',dbName)
+            res = plotSum.getMetricValues(dirFile, dbName,band)
+            if res is not None:
+                medList += res
     
-medValues = np.array(medList, dtype=[('band','U1'),('dbName','U17'),('zlim','f8'),('detect_rate','f8')])
+    medValues = np.array(medList, dtype=[('band','U1'),('dbName','U33'),('zlim','f8'),('detect_rate','f8')])
+
+    np.save('Summary.npy',np.copy(medValues))
 
 print(forPlot)
 
-for band in bands:
-    plotBand(band,medValues)
+medValues = np.load('Summary.npy')
 
+zoom={}
+
+zoom['g']=[0.2835, 0.288, 0.42, 0.426]
+zoom['r']=[0.332,0.334,0.4515,0.457]
+zoom['i']=[0.305,0.31,0.457,0.463]
+zoom['z']=[0.269, 0.285, 0.42, 0.438]
+
+zoomval=dict(zip('griz',[4.,5.,4.,4.]))
+window={}
+
+window['z']= {}
+window['z']['ax'] = [0.2,0.4,0.39,0.50]
+window['z']['ax2'] = [0.2,0.4,0.52,0.56]
+
+for band in bands:
+    x1, x2, y1, y2 = zoom[band][0], zoom[band][1],zoom[band][2],zoom[band][3]# specify the limits
+    fig, ax = plt.subplots()
+    """
+    fig,(ax,ax2) = plt.subplots(2, 1, sharey=True)
+    
+    ax.set_xlim([window[band]['ax'][0],window[band]['ax'][1]])
+    ax.set_ylim([window[band]['ax'][2],window[band]['ax'][3]])
+    ax2.set_xlim([window[band]['ax2'][0],window[band]['ax2'][1]])
+    ax2.set_ylim([window[band]['ax2'][2],window[band]['ax'][3]])
+    """
+    fig.suptitle('{} band'.format(band))
+    fig.subplots_adjust(right=0.9)
+    
+    plotBand(ax,band,medValues,x1=x1, x2=x2, y1=y1, y2=y2)
+    #plotBand(ax2,band,medValues,x1=x1, x2=x2, y1=y1, y2=y2)
+    if band == 'i':
+        axins = zoomed_inset_axes(ax, zoomval[band], loc=4) # zoom-factor: 2.5, location: upper-left
+        
+        axins.set_xlim(x1, x2) # apply the x-limits
+        axins.set_ylim(y1, y2) # apply the y-limits
+        mark_inset(ax, axins, loc1=1,loc2=3, fc="none", ec="0.5")
+    
+        plotBand(axins,band,medValues,label=False,shiftx=-0.001,shifty=-0.001,exclude=True,x1=x1, x2=x2, y1=y1, y2=y2,zoom=True)
+        # Turn off tick labels
+        axins.set_yticklabels([])
+        axins.set_xticklabels([])
+    
 plt.show()

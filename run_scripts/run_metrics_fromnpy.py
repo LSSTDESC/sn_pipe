@@ -48,7 +48,7 @@ parser.add_option("--nproc", type="int", default='8', help="number of proc  [%de
 
 opts, args = parser.parse_args()
 
-print('Starting processing...')
+print('Start processing...')
 
 
 #Load file
@@ -109,7 +109,7 @@ if tabpix[-1]-tabpix[-2]<= 100:
 print(tabpix,len(tabpix))
 result_queue = multiprocessing.Queue()
 for j in range(len(tabpix)-1):
-#for j in range(3,4):
+#for j in range(5,6):
     ida = tabpix[j]
     idb = tabpix[j+1]
     p=multiprocessing.Process(name='Subprocess-'+str(j),target=loop,args=(healpixels[ida:idb],obsFocalPlane,band,metricList,j,result_queue))
