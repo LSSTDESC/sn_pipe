@@ -15,7 +15,8 @@ parser.add_option("--realTime", type="int", default=0,
                   help="real-time mode [%default]")
 parser.add_option("--saveFig", type="int", default=0,
                   help="save fig end of the night [%default]")
-
+parser.add_option("--areaTime", type="int", default=0,
+                  help="display observed area [%default]")
 opts, args = parser.parse_args()
 
 dbDir = opts.dbDir
@@ -26,12 +27,12 @@ nights = opts.nights
 saveMovie = opts.saveMovie
 realTime = opts.realTime
 saveFig = opts.saveFig
+areaTime = opts.areaTime
 
-
+"""
 CadenceMovie(dbDir=dbDir, dbName=dbName, title=dbName, nights=nights,
-             saveMovie=saveMovie, realTime=realTime, saveFig=saveFig)
+             saveMovie=saveMovie, realTime=realTime, saveFig=saveFig, areaTime=areaTime)
 
 """
 SnapNight(dbDir=dbDir, dbName=dbName, saveFig=saveFig,
           nights=nights, realTime=realTime)
-"""
