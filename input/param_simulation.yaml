@@ -1,7 +1,7 @@
 ProductionID: DD_baseline2018a_Cosmo
 SN parameters:
    Id : 100                   # Id of the first SN
-   X1_Color:                    # stretch and color
+   x1_color:                    # stretch and color
        type : fixed #random or fixed
        min : [-2.0,0.2]
        max : [0.2,0.2]
@@ -12,7 +12,7 @@ SN parameters:
        max : 0.9
        step: 0.05
        rate : Perrett # Type Ia volumetric rate : Perrett, Ripoche, Dilday.
-   DayMax:                 # Tmax (obs. frame)
+   daymax:                 # Tmax (obs. frame)
        type : unique #uniform or random or unique
        step : 1 # if uniform: step (in day) between Tmin(obs) and Tmax(obs)      
    min_rf_phase : -20.        # obs min phase (rest frame)
@@ -42,20 +42,20 @@ Observations:
    coadd: True # this is the coaddition per night
    season: 1 #season to simulate (-1 = all seasons)
 Simulator :
-    name : sn_catalog_simulations.sim_sncosmo.sn_cosmo        # Simulator name: sn_cosmo,sn_sim,sn_ana, sn_fast
+    name : sn_simulator.sn_cosmo        # Simulator name: sn_cosmo,sn_sim,sn_ana, sn_fast
     model : salt2-extended   # spectra model
     version : 1.0                     #version
     #Reference File: SN_MAF/Reference_Files/LC_Ref_-2.0_0.2.hdf5
     Reference File: LC_Test_today.hdf5
 Host Parameters: None         # Host parameters
 Display_LC : #display during LC simulations
-   display: False
+   display: True
    time: 1 #display during time (sec) before closing
 Output:
     directory: Output_Simu
     save: True
 Multiprocessing:
-    nproc: 5
-Metric: sn_maf.sn_simulations.sn_maf_simulation
+    nproc: 1
+Metric: sn_mafsim.sn_maf_simulation
 Pixelisation:
     nside: 64

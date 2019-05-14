@@ -9,7 +9,7 @@ import yaml
 from importlib import import_module
 import sqlite3
 import numpy as np
-from sn_maf.sn_tools.sn_cadence_tools import Generate_Fake_Observations
+from sn_tools.sn_cadence_tools import GenerateFakeObservations
 
 parser = argparse.ArgumentParser(
     description='Run a SN metric from a configuration file')
@@ -74,7 +74,7 @@ def run(config_filename):
             metric.simu.Finish()
     else:
         config_fake = yaml.load(open(config['Param_file']))
-        fake_obs = Generate_Fake_Observations(config_fake).Observations
+        fake_obs = GenerateFakeObservations(config_fake).Observations
 
         # print(fake_obs)
         metric = module.SNMetric(config=config)
