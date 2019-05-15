@@ -39,3 +39,7 @@ A framework to run the Survey Strategy Support pipeline.
 - output : a set of plots:
    - SNR vs Time (per band and per season) <img src="doc/snr_z_season_1.png" height="24">
 
+## **Running the simulations**
+
+### Installing requested packages
+- pip install . --user --install-option="--package=simulation" --install-option="--branch=thebranch"
