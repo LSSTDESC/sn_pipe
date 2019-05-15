@@ -47,6 +47,22 @@ class InstallCommand(install):
                 cmd = 'pip install --user --no-deps{}'.format(req)
                 os.system(cmd)
 
+        if self.package == 'simulation':
+            cmd = 'pip install --user --process-dependency-links git+https://github.com/lsstdesc/sn_simulation.git@{}'.format(
+                self.branch)
+            os.system(cmd)
+            # parse_requirements() returns generator of pip.req.InstallRequirement objects
+            install_reqs = parse_requirements(
+                'requirements.txt', session='hack')
+            # reqs is a list of requirement
+            reqs = [str(ir.req) for ir in install_reqs]
+            for req in reqs:
+                cmd = 'pip install --user {}'.format(req)
+                os.system(cmd)
+            for req in ['astropy-healpix']:
+                cmd = 'pip install --user --no-deps{}'.format(req)
+                os.system(cmd)
+
         install.run(self)
 
 
