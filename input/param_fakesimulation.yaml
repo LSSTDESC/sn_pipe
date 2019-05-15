@@ -1,7 +1,7 @@
 ProductionID: Fake_Observation_0.0_0.0
 SN parameters:
    Id : 100                   # Id of the first SN
-   X1_Color:                    # stretch and color
+   x1_color:                    # stretch and color
        type : fixed  #random or fixed
        min : [0.0,0.0]
        max : [2.0,0.2]
@@ -12,7 +12,7 @@ SN parameters:
        max : 0.12
        step: 0.01
        rate : Perrett # Type Ia volumetric rate : Perrett, Ripoche, Dilday.
-   DayMax:                 # Tmax (obs. frame)
+   daymax:                 # Tmax (obs. frame)
        type : unique #uniform or random or unique
        step : 1 # if uniform: step (in day) between Tmin(obs) and Tmax(obs)      
    min_rf_phase : -20.        # obs min phase (rest frame)
@@ -41,17 +41,17 @@ Observations:
    coadd: None # this is the coaddition per night
    season: 1 #season to simulate (-1 = all seasons)
 Simulator :
-    name : sn_catalog_simulations.sim_sncosmo.sn_cosmo   # Simulator: sn_cosmo,sn_sim,sn_ana, sn_fast
+    name : sn_simulator.sn_cosmo   # Simulator: sn_cosmo,sn_sim,sn_ana, sn_fast
     model : salt2-extended   # spectra model
     version : 1.0                     #version
 Host Parameters: None         # Host parameters
 Display_LC : #display during LC simulations
-   display: False
-   time: 10 #display during time (sec) before closing
+   display: True
+   time: 5 #display during time (sec) before closing
 Output:
     directory: Output_Simu
     save: True
 Multiprocessing:
     nproc: 1
-Metric: sn_maf.sn_simulations.sn_maf_fakesimulation
-Param_file: sn_maf/input/Fake_cadence.yaml
+Metric: sn_mafsim.sn_maf_fakesimulation
+Param_file: input/Fake_cadence.yaml
