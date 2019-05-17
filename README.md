@@ -17,7 +17,7 @@ A framework to run the Survey Strategy Support pipeline.
  - ls /cvmfs/sw.lsst.eu/linux-x86_64/lsst_sims/ -> provides a list of lsst_sim releases available.
  - The "setup" is done this way:
    - source /cvmfs/sw.lsst.eu/linux-x86_64/lsst_sims/sims_2_8_0/loadLSST.bash
-   - setup lsst_sim
+   - setup lsst_sims
 
 **Important : you have to make this setup prior to any operations described below**
 
