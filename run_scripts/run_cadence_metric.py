@@ -69,24 +69,14 @@ def run(config_filename):
         # sql_i += ' AND '
         # sql_i +=  'season= "%s"' % (season)
         metric = module.SNCadenceMetric(
-            config=config, coadd=config['Observations']['coadd'], names_ref=config['names_ref'])
+            config=config, coadd=config['Observations']['coadd'])
         bundles.append(metricBundles.MetricBundle(metric, slicer, sql_i))
         names.append(band)
 
         print('sql', sql_i)
 
     bdict = dict(zip(names, bundles))
-    """
-    mb = metricBundles.MetricBundle(metric, slicer, sqlconstraint)
 
-    mbD = {0:mb}
-
-    resultsDb = db.ResultsDb(outDir='None')
-
-    mbg =  metricBundles.MetricBundleGroup(mbD, opsimdb,
-                                      outDir=outDir, resultsDb=resultsDb)
-
-    """
     resultsDb = db.ResultsDb(outDir='None')
     mbg = metricBundles.MetricBundleGroup(bdict, opsimdb,
                                           outDir=outDir, resultsDb=resultsDb)
@@ -96,9 +86,18 @@ def run(config_filename):
     # Let us display the results
 
     for band, val in bdict.items():
-        sn_plot.PlotCadence(band, config['Li file'], config['Mag_to_flux file'],
+        metValues = val.metricValues[~val.metricValues.mask],
+        res = None
+        for val in metValues:
+            for vval in val:
+                if res is None:
+                    res = vval
+                else:
+                    res = np.concatenate((res, vval))
+        res = np.unique(res)
+        sn_plot.plotCadence(band, config['Li file'], config['Mag_to_flux file'],
                             SNR[band],
-                            val.metricValues[~val.metricValues.mask],
+                            res,
                             config['names_ref'],
                             mag_range=mag_range, dt_range=dt_range)
 

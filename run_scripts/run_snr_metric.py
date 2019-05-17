@@ -52,7 +52,7 @@ def run(config_filename):
 
     # grab the fieldtype (DD or WFD) from yaml input file
     fieldtype = config['Observations']['fieldtype']
-
+    fake_file = config['Fake_file']
     module = import_module(config['Metric'])
 
     slicer = slicers.HealpixSlicer(nside=config['Pixelisation']['nside'])
@@ -79,8 +79,8 @@ def run(config_filename):
         lim_sn[band] = ReferenceData(
             config['Li file'], config['Mag_to_flux file'], band, z)
 
-        metric[band] = module.SNSNRMetric(config=config, coadd=config['Observations']
-                                          ['coadd'], lim_sn=lim_sn[band], names_ref=config['names_ref'], z=z)
+        metric[band] = module.SNSNRMetric(lim_sn=lim_sn[band], names_ref=config['names_ref'], fake_file=fake_file, coadd=config['Observations']
+                                          ['coadd'], z=z)
         bundles.append(metricBundles.MetricBundle(metric[band], slicer, sql_i))
         names.append(band)
 
@@ -90,70 +90,25 @@ def run(config_filename):
     mbg = metricBundles.MetricBundleGroup(bdict, opsimdb,
                                           outDir=outDir, resultsDb=resultsDb)
 
-    # result = mbg.runAll()
     mbg.runAll()
-    # Plot the results:
-    # SNR vs MJD for a SN with T0=MJD-10
-    # Fake observations corresponding to a "perfect" cadence
-    # can be superimposed
 
-    # concatenate the results estimated per band
-    metricValues = {}
-    data_str = ['snr_obs', 'snr_fakes', 'detec_frac']
-    # data_str = ['detec_frac']
-    for dstr in data_str:
-        metricValues[dstr] = None
+    # Let us display the results
 
-    print('processed', time.time()-time_ref)
-    # print('ici', bdict.keys())
     for band, val in bdict.items():
-        print(band, type(val.metricValues))
-        data = val.metricValues[~val.metricValues.mask]
-        # print(band, len(data), data[0])
-        res = {}
-        for dstr in data_str:
-            res[dstr] = None
-        for val in data:
-            for dstr in data_str:
-                if res[dstr] is None:
-                    res[dstr] = val[dstr]
-                else:
-                    res[dstr] = np.concatenate((res[dstr], val[dstr]))
-
-        for dstr in data_str:
-            res[dstr] = np.unique(res[dstr])
-            if metricValues[dstr] is None:
-                metricValues[dstr] = res[dstr]
+        metValues = val.metricValues[~val.metricValues.mask]
+        res = None
+        for vals in metValues:
+            if res is None:
+                res = vals
             else:
-                metricValues[dstr] = np.concatenate(
-                    (metricValues[dstr], res[dstr]))
+                res = np.concatenate((res, vals))
+        res = np.unique(res)
 
-    snr_obs = metricValues['snr_obs']
-    snr_fakes = metricValues['snr_fakes']
-    detec_frac = metricValues['detec_frac']
+        sn_plot.detecFracPlot(res, config['Pixelisation']
+                              ['nside'], config['names_ref'])
 
-    for inum, (Ra, Dec, season) in enumerate(np.unique(snr_obs[['fieldRA', 'fieldDec', 'season']])):
-        idx = (snr_obs['fieldRA'] == Ra) & (
-            snr_obs['fieldDec'] == Dec) & (snr_obs['season'] == season)
-        sel_obs = snr_obs[idx]
-        idxb = (np.abs(snr_fakes['fieldRA'] - Ra) < 1.e-5) & (np.abs(
-            snr_fakes['fieldDec'] - Dec) < 1.e-5) & (snr_fakes['season'] == season)
-        sel_fakes = snr_fakes[idxb]
-        sn_plot.SNRPlot(Ra, Dec, season, sel_obs, sel_fakes, config, metric, z)
-        if inum >= 10:
-            break
+        sn_plot.detecFracHist(res, config['names_ref'])
 
-    # print(detec_frac.dtype)
-
-    sn_plot.DetecFracPlot(detec_frac, config['Pixelisation']
-                          ['nside'], config['names_ref'])
-
-    sn_plot.DetecFracHist(detec_frac, config['names_ref'])
-    # frac_obs = Fraction_Observation(res, config, metric)
-    # print(frac_obs)
-    # mbg.writeAll()
-    # mbg.plotAll(closefigs=False)
-    # mbg.plot()
     plt.show()
 
 
