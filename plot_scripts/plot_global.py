@@ -39,6 +39,22 @@ def plotHist(plotstr, forPlot, legx,legy='Number of Entries'):
     ax.xaxis.set_tick_params(labelsize=12)
     ax.yaxis.set_tick_params(labelsize=12)
 
+def plotHistTime(dbName, plotstr, forPlot, legx,legy):
+    
+    fig, ax = plt.subplots()
+    tab = np.load('{}/{}_SNGlobal.npy'.format(dbDir,dbName))
+    idx = tab['night']<365
+    sel = tab[idx]
+    #ax.plot(sel['night'],sel[plotstr],label=dbName,linestyle='',marker='o')
+    ax.hist2d(sel['night'],sel[plotstr],bins=100)
+
+    ax.legend(ncol=1,loc='best',prop={'size':12},frameon=True)
+    ax.set_xlabel(legx, fontsize=12)
+    ax.set_ylabel(legy, fontsize=12)
+    ax.xaxis.set_tick_params(labelsize=12)
+    ax.yaxis.set_tick_params(labelsize=12)
+
+
 dbDir = '/sps/lsst/users/gris/MetricOutput'
 
 forPlot = np.loadtxt('plot_scripts/cadenceCustomize.txt',
@@ -49,14 +65,24 @@ r = []
 plotHist('nfc',forPlot,'# filter changes /night')
 plotHist('obs_area',forPlot,'Observed area [deg2]/night')
 
+plotHistTime('alt_sched','nfc',forPlot,'night','# filter changes')
+
 for dbName in forPlot['dbName']:
     tab = np.load('{}/{}_SNGlobal.npy'.format(dbDir,dbName))
-    r.append((dbName,np.median(tab['nfc']),np.median(tab['obs_area'])))
+    rint = [dbName,np.median(tab['nfc']),np.median(tab['obs_area'])]
+    names = ['dbName','nfc_med','obs_area_med']
+    for band in 'ugrizy':
+        rint += [np.sum(tab['nvisits_{}'.format(band)])/np.sum(tab['nvisits'])]
+        names += ['frac_{}'.format(band)]
+    r.append((rint))
 
-res = np.rec.fromrecords(r,names=['dbName','nfc_med','obs_area_med'])
+res = np.rec.fromrecords(r,names=names)
 
 plotBarh(res,'nfc_med','Median number of filter changes per night',forPlot)
 plotBarh(res,'obs_area_med','Median observed area per night',forPlot)
+for band in 'ugrizy':
+    plotBarh(res,'frac_{}'.format(band),'Filter allocation - {} band'.format(band),forPlot)
+
 
 
 plt.show()

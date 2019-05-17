@@ -94,6 +94,7 @@ def plotBandSimple(ax,band,medVals,shiftx = -0.003, shifty = -0.004):
         if len(sel) ==0:
             continue
 
+        print(dbName,band,sel['zlim'][0],sel['detect_rate'][0])
         idxp = np.where(forPlot['dbName'] == dbName)
         color = forPlot[idxp]['color'][0]
         marker = forPlot[idxp]['marker'][0]
