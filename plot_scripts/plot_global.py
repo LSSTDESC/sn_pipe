@@ -39,14 +39,25 @@ def plotHist(plotstr, forPlot, legx,legy='Number of Entries'):
     ax.xaxis.set_tick_params(labelsize=12)
     ax.yaxis.set_tick_params(labelsize=12)
 
-def plotHistTime(dbName, plotstr, forPlot, legx,legy):
+def plotHistTime(ax, dbName, plotstr, forPlot, legx,legy):
     
-    fig, ax = plt.subplots()
+    
     tab = np.load('{}/{}_SNGlobal.npy'.format(dbDir,dbName))
     idx = tab['night']<365
     sel = tab[idx]
     #ax.plot(sel['night'],sel[plotstr],label=dbName,linestyle='',marker='o')
-    ax.hist2d(sel['night'],sel[plotstr],bins=100)
+
+    sel.sort(order='night')
+    bin = 5
+    nt = int(365/bin)
+    r=[]
+    for i in range(nt):
+        selb = sel[i*bin:(i+1)*bin]
+        r.append((np.median(selb['night']),np.median(selb['nfc'])))
+     
+    rr = np.rec.fromrecords(r, names=['night','nfc'])
+    #ax.hist2d(sel['night'],sel[plotstr],bins=100)
+    ax.plot(rr['night'],rr['nfc'])
 
     ax.legend(ncol=1,loc='best',prop={'size':12},frameon=True)
     ax.set_xlabel(legx, fontsize=12)
@@ -65,8 +76,12 @@ r = []
 plotHist('nfc',forPlot,'# filter changes /night')
 plotHist('obs_area',forPlot,'Observed area [deg2]/night')
 
-plotHistTime('alt_sched','nfc',forPlot,'night','# filter changes')
 
+fig, ax = plt.subplots()
+plotHistTime(ax,'alt_sched','nfc',forPlot,'night','# filter changes')
+plotHistTime(ax,'altsched_1exp_pairsmix_10yrs','nfc',forPlot,'night','# filter changes')
+
+"""
 for dbName in forPlot['dbName']:
     tab = np.load('{}/{}_SNGlobal.npy'.format(dbDir,dbName))
     rint = [dbName,np.median(tab['nfc']),np.median(tab['obs_area'])]
@@ -82,7 +97,7 @@ plotBarh(res,'nfc_med','Median number of filter changes per night',forPlot)
 plotBarh(res,'obs_area_med','Median observed area per night',forPlot)
 for band in 'ugrizy':
     plotBarh(res,'frac_{}'.format(band),'Filter allocation - {} band'.format(band),forPlot)
-
+"""
 
 
 plt.show()
