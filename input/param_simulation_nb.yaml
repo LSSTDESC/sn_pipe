@@ -6,7 +6,7 @@ SN parameters:
        min : [-2.0,0.2]
        max : [0.2,0.2]
        rate :  JLA
-       dirFile: 'reference_files'
+       dirFile: '../reference_files'
    z :              # redshift
        type : uniform
        min : 0.01
@@ -22,7 +22,7 @@ SN parameters:
    band : bessellB             # band for absmag
    magsys : vega              # magsys for absmag
    differential_flux: False
-   salt2Dir: SALT2_Files
+   salt2Dir: '../SALT2_Files'
 Cosmology:
    Model : w0waCDM      # Cosmological model
    Omega_m : 0.30             # Omega_m
@@ -51,7 +51,7 @@ Simulator :
     Reference File: LC_Test_today.hdf5
 Host Parameters: None         # Host parameters
 Display_LC : #display during LC simulations
-   display: True
+   display: False
    time: 1 #display during time (sec) before closing
 Output:
     directory: Output_Simu
