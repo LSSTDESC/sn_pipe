@@ -65,6 +65,64 @@ def isInZone(x1,x2,y1,y2,x,y):
         return True
     return False
 
+def plotBandSimple(ax,band,medVals,shiftx = -0.003, shifty = -0.004):
+
+    ida = medVals['band'] == band
+    medValues = medVals[ida]
+
+    tot_label=[]
+   
+    print(medValues['dbName'])
+    diffx = np.max(medValues['zlim'])-np.min(medValues['zlim'])
+    diffy = np.max(medValues['detect_rate'])-np.min(medValues['detect_rate'])
+
+    
+    shifty = -0.03*diffy
+    shiftx = -0.01*diffx
+ 
+    if band == 'r':
+        shifty = -0.03*diffy
+        shiftx = -0.01*diffx
+    
+    if band == 'z':
+        shifty = -0.04*diffy
+        shiftx = -0.01*diffx
+
+    for dbName in forPlot['dbName']:
+        idx = medValues['dbName'] == dbName
+        sel = medValues[idx]
+        if len(sel) ==0:
+            continue
+
+        idxp = np.where(forPlot['dbName'] == dbName)
+        color = forPlot[idxp]['color'][0]
+        marker = forPlot[idxp]['marker'][0]
+        name = forPlot[idxp]['newName'][0]
+        namefig = forPlot[idxp]['newName'][0]
+        ax.plot(sel['zlim'],sel['detect_rate'],color=color,marker=marker)
+        if band=='r' and namefig in ['opsim_large_rolling_3yr']:
+            ax.text(sel['zlim']-shiftx,sel['detect_rate'],namefig,ha='left',va='center',color=color)
+            continue
+        if band=='r' and namefig in ['opsim_single_visits','opsim_single_exp']:
+            ax.text(sel['zlim']-shiftx,sel['detect_rate']+shifty,namefig,ha='left',va='center',color=color)
+            continue
+        if band=='z' and namefig in ['opsim_single_exp','opsim_single_visits','opsim_large_single_visits']:
+            ax.text(sel['zlim']-shiftx,sel['detect_rate']-shifty,namefig,ha='center',va='center',color=color)
+            continue
+        if band=='z' and namefig in ['opsim_baseline']:
+            ax.text(sel['zlim']-shiftx,sel['detect_rate'],namefig,ha='left',va='center',color=color)
+            continue
+        if band=='z' and namefig in ['opsim_extra_ddf']:
+            ax.text(sel['zlim']+shiftx,sel['detect_rate'],namefig,ha='right',va='center',color=color)
+            continue
+        ax.text(sel['zlim']+shiftx,sel['detect_rate']+shifty,namefig,ha='center',va='center',color=color)
+        
+
+    ax.set_xlabel('z$_{lim}$')
+    ax.set_ylabel('Detection rate')
+    xmin, xmax = ax.get_xlim()
+    ax.set_xlim([xmin-0.01,xmax+0.01])
+    plt.grid(linestyle='--')
 
 def plotBand(ax,band,medVals,label='True', shiftx = -0.003, shifty = -0.004,exclude=False,x1=0, x2=0, y1=0, y2=0, zoom=False):
 
@@ -158,7 +216,7 @@ forPlot = np.loadtxt('plot_scripts/cadenceCustomize.txt',
 print(forPlot)
 plotSum = PlotSummary()
 
-bands = 'i'
+bands = 'grizy'
 if not os.path.isfile('Summary.npy'):
     medList = []
     for band in bands:
@@ -173,7 +231,7 @@ if not os.path.isfile('Summary.npy'):
     np.save('Summary.npy',np.copy(medValues))
 
 print(forPlot)
-
+bands = 'r'
 medValues = np.load('Summary.npy')
 
 zoom={}
@@ -204,8 +262,9 @@ for band in bands:
     fig.suptitle('{} band'.format(band))
     fig.subplots_adjust(right=0.9)
     
-    plotBand(ax,band,medValues,x1=x1, x2=x2, y1=y1, y2=y2)
+    #plotBand(ax,band,medValues,x1=x1, x2=x2, y1=y1, y2=y2)
     #plotBand(ax2,band,medValues,x1=x1, x2=x2, y1=y1, y2=y2)
+    plotBandSimple(ax,band,medValues)
     if band == 'i':
         axins = zoomed_inset_axes(ax, zoomval[band], loc=4) # zoom-factor: 2.5, location: upper-left
         
