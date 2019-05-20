@@ -12,12 +12,14 @@ class CadenceMetricWrapper:
 
 
     def run(self, band, obs, filterCol='filter'):
-        idx = obs[filterCol] == band
-        sel = obs[idx]
+        sel = obs
+        if band != 'all':
+            idx = obs[filterCol] == band
+            sel = obs[idx]
         return self.metric.run(sel)
 
 class SNRMetricWrapper:
-    def __init__(self,z=0.3, x1=-2.0, color=0.2,names_ref=['SNCosmo'], coadd=False, dirfiles='reference_files', shift=10., season=-1):
+    def __init__(self,z=0.3, x1=-2.0, color=0.2,names_ref=['SNCosmo'], coadd=False, dirfiles='reference_files', dirFakes='input',shift=10., season=-1):
  
         self.z = z
         self.coadd = coadd
@@ -25,7 +27,7 @@ class SNRMetricWrapper:
         self.season = season
         self.shift = shift
         self.name = 'SNRMetric'
- 
+        self.fake_file = '{}/{}.yaml'.format(dirFakes,'Fake_cadence')
         Li_files = []
         mag_to_flux_files = []
         for name in names_ref:
@@ -41,7 +43,7 @@ class SNRMetricWrapper:
     def run(self, band, obs, filterCol='filter'):
         idx = obs[filterCol] == band
         sel = obs[idx]
-        metric = SNSNRMetric(lim_sn=self.lim_sn[band], coadd=self.coadd, names_ref=self.names_ref,shift=self.shift,season=self.season,z=self.z)
+        metric = SNSNRMetric(lim_sn=self.lim_sn[band], fake_file=self.fake_file,coadd=self.coadd, names_ref=self.names_ref,shift=self.shift,season=self.season,z=self.z)
         return metric.run(np.copy(sel))
 
     

@@ -22,8 +22,12 @@ def loop(healpixels,obsFocalPlane,band,metricList,j=0, output_q=None):
             #print(metric.run(band,seasonsel))
             #print('FP')
             #print(metric.run(band,season(obsMatch)))
-            resdict[metric.name] = metric.run(band,season(obsMatch))
-    
+            if band != 'all':
+                resdict[metric.name] = metric.run(band,season(obsMatch))
+            else:
+                if metric.name == 'CadenceMetric':
+                    resdict[metric.name] = metric.run(band,season(obsMatch))
+
         for key in resfi.keys():
             if resdict[key] is not None:
                 if resfi[key] is None:
@@ -66,7 +70,8 @@ outDir = '/sps/lsst/users/gris/MetricOutput'
 
 # List of (instance of) metrics to process
 metricList = []
-metricList.append(SNRMetricWrapper(z=0.3))
+if band != 'all':
+    metricList.append(SNRMetricWrapper(z=0.3))
 metricList.append(CadenceMetricWrapper(season=seasons))
 
 #loading observations
