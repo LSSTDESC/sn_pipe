@@ -17,6 +17,8 @@ parser.add_option("--saveFig", type="int", default=0,
                   help="save fig end of the night [%default]")
 parser.add_option("--areaTime", type="int", default=0,
                   help="display observed area [%default]")
+parser.add_option("--dispType", type="str", default='cadence',
+                  help="what to display[%default]")
 opts, args = parser.parse_args()
 
 dbDir = opts.dbDir
@@ -28,11 +30,14 @@ saveMovie = opts.saveMovie
 realTime = opts.realTime
 saveFig = opts.saveFig
 areaTime = opts.areaTime
+dispType = opts.dispType
 
-"""
-CadenceMovie(dbDir=dbDir, dbName=dbName, title=dbName, nights=nights,
-             saveMovie=saveMovie, realTime=realTime, saveFig=saveFig, areaTime=areaTime)
 
-"""
-SnapNight(dbDir=dbDir, dbName=dbName, saveFig=saveFig,
-          nights=nights, realTime=realTime)
+if dispType == 'cadence':
+    CadenceMovie(dbDir=dbDir, dbName=dbName, title=dbName, nights=nights,
+                 saveMovie=saveMovie, realTime=realTime, saveFig=saveFig, areaTime=areaTime)
+
+if dispType == 'snapshot':
+    SnapNight(dbDir=dbDir, dbName=dbName, saveFig=saveFig,
+              nights=nights, realTime=realTime, areaTime=areaTime)
+
