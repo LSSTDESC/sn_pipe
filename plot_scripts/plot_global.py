@@ -39,25 +39,33 @@ def plotHist(plotstr, forPlot, legx,legy='Number of Entries'):
     ax.xaxis.set_tick_params(labelsize=12)
     ax.yaxis.set_tick_params(labelsize=12)
 
-def plotHistTime(ax, dbName, plotstr, forPlot, legx,legy):
+def plotHistTime(ax, axb,dbName, plotstr, forPlot, legx,legy):
     
     
     tab = np.load('{}/{}_SNGlobal.npy'.format(dbDir,dbName))
+    print('hello',dbName,tab.dtype)
     idx = tab['night']<365
     sel = tab[idx]
     #ax.plot(sel['night'],sel[plotstr],label=dbName,linestyle='',marker='o')
 
+    idx = forPlot['dbName'] == dbName
+    mark = forPlot[idx]['marker'][0]
+
     sel.sort(order='night')
-    bin = 5
+    bin = 1
     nt = int(365/bin)
     r=[]
+    medref = np.median(sel[plotstr])
     for i in range(nt):
         selb = sel[i*bin:(i+1)*bin]
-        r.append((np.median(selb['night']),np.median(selb['nfc'])))
+        r.append((np.median(selb['night']),np.median(selb[plotstr]),np.median(selb['med_moonAlt']),np.median(selb['nddf'])))
      
-    rr = np.rec.fromrecords(r, names=['night','nfc'])
+    rr = np.rec.fromrecords(r, names=['night',plotstr,'med_moonAlt','med_nddf'])
     #ax.hist2d(sel['night'],sel[plotstr],bins=100)
-    ax.plot(rr['night'],rr['nfc'])
+    if dbName != 'dec_1exp_pairsmix_10yrs':
+        ax.plot(rr['night'],rr[plotstr],label=dbName)
+    else:
+        ax.plot(rr['night'],rr[plotstr],label=dbName,marker=mark,ls='none') 
 
     ax.legend(ncol=1,loc='best',prop={'size':12},frameon=True)
     ax.set_xlabel(legx, fontsize=12)
@@ -65,6 +73,9 @@ def plotHistTime(ax, dbName, plotstr, forPlot, legx,legy):
     ax.xaxis.set_tick_params(labelsize=12)
     ax.yaxis.set_tick_params(labelsize=12)
 
+    idx = rr['med_nddf']<1.
+    axb.plot(rr[idx][plotstr],rr[idx]['med_moonAlt'],label=dbName,marker=mark,ls='none')
+    
 
 dbDir = '/sps/lsst/users/gris/MetricOutput'
 
@@ -73,13 +84,15 @@ forPlot = np.loadtxt('plot_scripts/cadenceCustomize.txt',
 
 r = []
 
-plotHist('nfc',forPlot,'# filter changes /night')
+plotHist('nfc_noddf',forPlot,'# filter changes /night')
 plotHist('obs_area',forPlot,'Observed area [deg2]/night')
 
 
 fig, ax = plt.subplots()
-plotHistTime(ax,'alt_sched','nfc',forPlot,'night','# filter changes')
-plotHistTime(ax,'altsched_1exp_pairsmix_10yrs','nfc',forPlot,'night','# filter changes')
+figb, axb = plt.subplots()
+plotHistTime(ax,axb,'alt_sched','nfc_noddf',forPlot,'night','# filter changes')
+plotHistTime(ax,axb,'altsched_1exp_pairsmix_10yrs','nfc_noddf',forPlot,'night','# filter changes')
+#plotHistTime(ax,'dec_1exp_pairsmix_10yrs','nfc',forPlot,'night','# filter changes')
 
 """
 for dbName in forPlot['dbName']:
