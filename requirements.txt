@@ -1,6 +1,9 @@
 ###### Requirements without Version Specifiers ######
 shapely[vectorized]
 descartes
-#
+astropy-healpix
 ###### Requirements with Version Specifiers ######
-h5py==2.7.1
+#h5py==2.7.1
+#### git packages
+git+https://github.com/lsstdesc/sn_tools.git@dev#egg=sn_tools-0.1
+git+https://github.com/lsstdesc/sn_stackers.git@dev#egg=sn_stackers-0.1
