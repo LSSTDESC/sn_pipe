@@ -19,7 +19,7 @@ parser.add_argument('config_filename',
 
 def run(config_filename):
     # YAML input file.
-    config = yaml.load(open(config_filename))
+    config = yaml.load(open(config_filename), Loader=yaml.FullLoader)
     # print(config)
     outDir = 'Test'  # this is for MAF
 

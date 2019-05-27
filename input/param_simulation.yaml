@@ -55,7 +55,7 @@ Display_LC : #display during LC simulations
    time: 1 #display during time (sec) before closing
 Output:
     directory: Output_Simu
-    save: True
+    save: False
 Multiprocessing:
     nproc: 1
 Metric: sn_mafsim.sn_maf_simulation
