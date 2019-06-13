@@ -1,20 +1,20 @@
-ProductionID: DD_baseline2018a_Cosmo
+ProductionID: prodid
 SN parameters:
    Id : 100                   # Id of the first SN
    x1_color:                    # stretch and color
-       type : fixed #random or fixed
+       type : random #random or fixed
        min : [-2.0,0.2]
        max : [0.2,0.2]
        rate :  JLA
        dirFile: 'reference_files'
    z :              # redshift
-       type : uniform
+       type : random
        min : 0.01
-       max : 0.9
+       max : 0.5
        step: 0.05
        rate : Perrett # Type Ia volumetric rate : Perrett, Ripoche, Dilday.
    daymax:                 # Tmax (obs. frame)
-       type : unique #uniform or random or unique
+       type : random #uniform or random or unique
        step : 1 # if uniform: step (in day) between Tmin(obs) and Tmax(obs)      
    min_rf_phase : -20.        # obs min phase (rest frame)
    max_rf_phase : 60.         # obs max phase (rest frame)
@@ -38,10 +38,10 @@ Instrument:
    atmos : True  #atmos
    aerosol : False  #aerosol
 Observations: 
-   filename: /sps/lsst/cadence/LSST_SN_PhG/cadence_db/opsim_db/kraken_2026.db # Name of db obs file (full path)
-   #filename: /home/philippe/LSST/DB_Files/kraken_2026.db
-   fieldtype: DD #DD or WFD
-   coadd: True # this is the coaddition per night
+   #filename: /sps/lsst/cadence/LSST_SN_PhG/cadence_db/opsim_db/kraken_2026.db # Name of db obs file (full path)
+   filename: fullDbName
+   fieldtype: WFD #DD or WFD
+   coadd: False # this is the coaddition per night
    season: 1 #season to simulate (-1 = all seasons)
 Simulator :
     name : sn_simulator.sn_cosmo        # Simulator name: sn_cosmo,sn_sim,sn_ana, sn_fast
@@ -51,13 +51,13 @@ Simulator :
     Reference File: LC_Test_today.hdf5
 Host Parameters: None         # Host parameters
 Display_LC : #display during LC simulations
-   display: True
+   display: False
    time: 1 #display during time (sec) before closing
 Output:
-    directory: Output_Simu
-    save: False
+    directory: /sps/lsst/users/gris/Output_Simu_pipeline
+    save: True
 Multiprocessing:
-    nproc: 1
+    nproc: nnproc
 Metric: sn_mafsim.sn_maf_simulation
 Pixelisation:
-    nside: 64
+    nside: nnside

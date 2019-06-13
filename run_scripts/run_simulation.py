@@ -10,6 +10,7 @@ from importlib import import_module
 import sqlite3
 import numpy as np
 from sn_tools.sn_cadence_tools import GenerateFakeObservations
+import os
 
 parser = argparse.ArgumentParser(
     description='Run a SN metric from a configuration file')
@@ -42,6 +43,22 @@ def run(config_filename):
     names = [tup[1] for tup in cur.fetchall()]
     print(names)
     """
+
+    #check whether X0_norm file exist or not (and generate it if necessary)
+    absMag = config['SN parameters']['absmag']
+    salt2Dir = config['SN parameters']['salt2Dir']
+    model = config['Simulator']['model']
+    version = str(config['Simulator']['version'])
+
+    x0normFile = 'reference_files/X0_norm_{}.npy'.format(absMag)
+
+    if not os.path.isfile(x0normFile):
+        from sn_tools.sn_utils import X0_norm
+        X0_norm(salt2Dir=salt2Dir,model=model, version=version, absmag=absMag,outfile=x0normFile)
+
+    x0_tab = np.load(x0normFile)
+
+
     module = import_module(config['Metric'])
     if dbFile != 'None':
         opsimdb = db.OpsimDatabase(dbFile)
@@ -56,7 +73,7 @@ def run(config_filename):
         # print('slicer',slicer.pixArea,slicer.slicePoints['ra'])
         #print('alors condif', config)
         metric = module.SNMetric(
-            config=config, coadd=config['Observations']['coadd'])
+            config=config, coadd=config['Observations']['coadd'],x0_norm=x0_tab)
 
         sqlconstraint = opsimdb.createSQLWhere(fieldtype, proptags)
 
