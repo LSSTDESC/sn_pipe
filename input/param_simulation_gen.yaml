@@ -54,7 +54,7 @@ Display_LC : #display during LC simulations
    display: False
    time: 1 #display during time (sec) before closing
 Output:
-    directory: /sps/lsst/users/gris/Output_Simu_pipeline
+    directory: outputDir
     save: True
 Multiprocessing:
     nproc: nnproc
