@@ -21,7 +21,7 @@ SN parameters:
    absmag : -19.0906          # peak abs mag
    band : bessellB             # band for absmag
    magsys : vega              # magsys for absmag
-   differential_flux: False
+   differential_flux: diffflux
    salt2Dir: SALT2_Files
 Cosmology:
    Model : w0waCDM      # Cosmological model
@@ -42,7 +42,7 @@ Observations:
    filename: fullDbName
    fieldtype: WFD #DD or WFD
    coadd: False # this is the coaddition per night
-   season: 1 #season to simulate (-1 = all seasons)
+   season: seasval #season to simulate (-1 = all seasons)
 Simulator :
     name : sn_simulator.sn_cosmo        # Simulator name: sn_cosmo,sn_sim,sn_ana, sn_fast
     model : salt2-extended   # spectra model

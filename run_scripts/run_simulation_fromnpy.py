@@ -12,25 +12,28 @@ import yaml
 import os
 
 
-def makeYaml(input_file, dbDir, dbName, nside, nproc, num, outDir):
+def makeYaml(input_file, dbDir, dbName, nside, nproc, num, diffflux,seasnum,outDir):
 
     with open(input_file, 'r') as file:
         filedata = file.read()
 
-    prodid = '{}_{}'.format(dbName, num)
+    prodid = '{}_seas_{}_{}'.format(dbName, seasnum, num)
     fullDbName = '{}/{}.npy'.format(dbDir, dbName)
     filedata = filedata.replace('prodid', prodid)
     filedata = filedata.replace('fullDbName', fullDbName)
     filedata = filedata.replace('nnproc', str(nproc))
     filedata = filedata.replace('nnside', str(nside))
     filedata = filedata.replace('outputDir', outDir)
+    filedata = filedata.replace('diffflux', str(diffflux))
+    filedata = filedata.replace('seasval', str(seasnum))
     return yaml.load(filedata, Loader=yaml.FullLoader)
 
 
-def loop(healpixels, obsFocalPlane, dbDir, dbName, outDir, nside, x0_tab, j=0, output_q=None):
+def loop(healpixels, obsFocalPlane, dbDir, dbName, outDir, nside, diffflux,seasnum,x0_tab, j=0, output_q=None):
 
     config = makeYaml('input/param_simulation_gen.yaml',
-                      dbDir, dbName, nside, 1, j, outDir)
+                      dbDir, dbName, nside, 1, j, diffflux, seasnum,outDir)
+    
     metric = SNMetric(config=config, x0_norm=x0_tab)
     for io, healpixID in enumerate(healpixels):
         obsMatch = obsFocalPlane.matchFast(healpixID)
@@ -65,6 +68,10 @@ parser.add_option("--nside", type="int", default=64,
                   help="healpix nside [%default]")
 parser.add_option("--nproc", type="int", default='8',
                   help="number of proc  [%default]")
+parser.add_option("--diffflux", type="int", default=0,
+                  help="flag for diff flux[%default]")
+parser.add_option("--season", type="int", default=1,
+                  help="season to process[%default]")
 
 opts, args = parser.parse_args()
 
@@ -86,13 +93,15 @@ dbName = opts.dbName
 nside = opts.nside
 seasons = -1
 nproc = opts.nproc
+diffflux = opts.diffflux
+seasnum = opts.season
 
 # List of (instance of) metrics to process
 metricList = []
 
 # Load the (config) yaml file
 config = makeYaml('input/param_simulation_gen.yaml',
-                  dbDir, dbName, nside, 1, -1, outDir)
+                  dbDir, dbName, nside, 1, -1, diffflux,seasnum,outDir)
 
 # check whether X0_norm file exist or not (and generate it if necessary)
 absMag = config['SN parameters']['absmag']
@@ -118,6 +127,10 @@ observations = renameFields(observations)
 
 # this is a "simple" tessalation using healpix
 pixels = pixelate(observations, nside, RaCol='fieldRA', DecCol='fieldDec')
+
+# remove pixels with a "too-high" E(B-V)
+idx = pixels['ebv']<= 0.25 
+pixels = pixels[idx]
 
 # this is a more complicated tessalation using a LSST Focal Plane
 # Get the shape to identify overlapping obs
@@ -156,7 +169,7 @@ for j in range(len(tabpix)-1):
     ida = tabpix[j]
     idb = tabpix[j+1]
     p = multiprocessing.Process(name='Subprocess-'+str(j), target=loop, args=(
-        healpixels[ida:idb], obsFocalPlane, dbDir, dbName, outDir, nside, x0_tab, j, result_queue))
+        healpixels[ida:idb], obsFocalPlane, dbDir, dbName, outDir, nside, diffflux,seasnum,x0_tab, j, result_queue))
     p.start()
 
 

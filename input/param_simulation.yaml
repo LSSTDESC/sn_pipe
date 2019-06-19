@@ -1,4 +1,4 @@
-ProductionID: DD_baseline2018a_Cosmo
+ProductionID: Test
 SN parameters:
    Id : 100                   # Id of the first SN
    x1_color:                    # stretch and color
@@ -10,7 +10,7 @@ SN parameters:
    z :              # redshift
        type : uniform
        min : 0.01
-       max : 0.9
+       max : 0.4
        step: 0.05
        rate : Perrett # Type Ia volumetric rate : Perrett, Ripoche, Dilday.
    daymax:                 # Tmax (obs. frame)
@@ -21,7 +21,7 @@ SN parameters:
    absmag : -19.0906          # peak abs mag
    band : bessellB             # band for absmag
    magsys : vega              # magsys for absmag
-   differential_flux: False
+   differential_flux: 1
    salt2Dir: SALT2_Files
 Cosmology:
    Model : w0waCDM      # Cosmological model
@@ -51,11 +51,11 @@ Simulator :
     Reference File: LC_Test_today.hdf5
 Host Parameters: None         # Host parameters
 Display_LC : #display during LC simulations
-   display: True
+   display: False
    time: 1 #display during time (sec) before closing
 Output:
     directory: Output_Simu
-    save: False
+    save: True
 Multiprocessing:
     nproc: 1
 Metric: sn_mafsim.sn_maf_simulation
