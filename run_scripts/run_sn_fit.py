@@ -36,7 +36,7 @@ def dump(outname,names,val,inum):
 def procelem(lc_name,simul,fit, covmb,j=0, output_q=None):
 
     res = []
-    for simu in simul[:3]:
+    for simu in simul:
         lc = None
         #if simu['n_lc_points'] > 0:
         lc =  Table.read(lc_name, path='lc_{}'.format(simu['id_hdf5']))
