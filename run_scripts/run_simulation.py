@@ -61,34 +61,44 @@ def run(config_filename):
 
     module = import_module(config['Metric'])
     if dbFile != 'None':
-        opsimdb = db.OpsimDatabase(dbFile)
-        version = opsimdb.opsimVersion
-        propinfo, proptags = opsimdb.fetchPropInfo()
-        print('proptags and propinfo', proptags, propinfo)
+        if dbFile.endswith('.db'):
+            opsimdb = db.OpsimDatabase(dbFile)
+            version = opsimdb.opsimVersion
+            propinfo, proptags = opsimdb.fetchPropInfo()
+            print('proptags and propinfo', proptags, propinfo)
 
-        # grab the fieldtype (DD or WFD) from yaml input file
-        fieldtype = config['Observations']['fieldtype']
-        slicer = slicers.HealpixSlicer(nside=config['Pixelisation']['nside'])
+            # grab the fieldtype (DD or WFD) from yaml input file
+            fieldtype = config['Observations']['fieldtype']
+            slicer = slicers.HealpixSlicer(nside=config['Pixelisation']['nside'])
 
-        # print('slicer',slicer.pixArea,slicer.slicePoints['ra'])
-        #print('alors condif', config)
-        metric = module.SNMetric(
-            config=config, coadd=config['Observations']['coadd'],x0_norm=x0_tab)
+            # print('slicer',slicer.pixArea,slicer.slicePoints['ra'])
+            #print('alors condif', config)
+            metric = module.SNMetric(
+                config=config, coadd=config['Observations']['coadd'],x0_norm=x0_tab)
 
-        sqlconstraint = opsimdb.createSQLWhere(fieldtype, proptags)
+            sqlconstraint = opsimdb.createSQLWhere(fieldtype, proptags)
 
-        mb = metricBundles.MetricBundle(metric, slicer, sqlconstraint)
+            mb = metricBundles.MetricBundle(metric, slicer, sqlconstraint)
 
-        mbD = {0: mb}
-
-        resultsDb = db.ResultsDb(outDir=outDir)
-
-        mbg = metricBundles.MetricBundleGroup(mbD, opsimdb,
+            mbD = {0: mb}
+            
+            resultsDb = db.ResultsDb(outDir=outDir)
+            
+            mbg = metricBundles.MetricBundleGroup(mbD, opsimdb,
                                               outDir=outDir, resultsDb=resultsDb)
+            
+            mbg.runAll()
+            if metric.save_status:
+                metric.simu.Finish()
 
-        mbg.runAll()
-        if metric.save_status:
-            metric.simu.Finish()
+        if dbFile.endswith('.npy'):
+            metric = module.SNMetric(
+                config=config, coadd=False,x0_norm=x0_tab)
+            
+            observations = np.load(dbFile)
+
+            metric.run(observations)
+
     else:
         config_fake = yaml.load(open(config['Param_file']))
         fake_obs = GenerateFakeObservations(config_fake).Observations
