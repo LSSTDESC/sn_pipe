@@ -11,6 +11,7 @@ import sqlite3
 import numpy as np
 from sn_tools.sn_cadence_tools import GenerateFakeObservations
 import os
+from sn_tools.sn_utils import GetReference
 
 parser = argparse.ArgumentParser(
     description='Run a SN metric from a configuration file')
@@ -58,8 +59,17 @@ def run(config_filename):
 
     x0_tab = np.load(x0normFile)
 
+    reference_lc = None
+    if 'sn_fast' in config['Simulator']['name']:
+        print('Loading reference LCs from',config['Simulator']['Reference File'])
+        reference_lc = GetReference(
+            config['Simulator']['Reference File'],config['Instrument'])
+        print('Reference LCs loaded')
+
+
 
     module = import_module(config['Metric'])
+
     if dbFile != 'None':
         if dbFile.endswith('.db'):
             opsimdb = db.OpsimDatabase(dbFile)
@@ -74,7 +84,7 @@ def run(config_filename):
             # print('slicer',slicer.pixArea,slicer.slicePoints['ra'])
             #print('alors condif', config)
             metric = module.SNMetric(
-                config=config, coadd=config['Observations']['coadd'],x0_norm=x0_tab)
+                config=config, coadd=config['Observations']['coadd'],x0_norm=x0_tab,reference_lc=reference_lc)
 
             sqlconstraint = opsimdb.createSQLWhere(fieldtype, proptags)
 
@@ -88,25 +98,26 @@ def run(config_filename):
                                               outDir=outDir, resultsDb=resultsDb)
             
             mbg.runAll()
-            if metric.save_status:
-                metric.simu.Finish()
+            
 
         if dbFile.endswith('.npy'):
             metric = module.SNMetric(
-                config=config, coadd=False,x0_norm=x0_tab)
+                config=config, coadd=False,x0_norm=x0_tab,reference_lc=reference_lc)
             
             observations = np.load(dbFile)
 
             metric.run(observations)
 
+        if metric.save_status:
+            metric.simu.Finish()
+
     else:
-        config_fake = yaml.load(open(config['Param_file']))
+        config_fake = yaml.load(open(config['Param_file']), Loader=yaml.FullLoader)
         fake_obs = GenerateFakeObservations(config_fake).Observations
 
-        # print(fake_obs)
-        metric = module.SNMetric(config=config)
+        metric = module.SNMetric(config=config,x0_norm=x0_tab)
         metric.run(fake_obs)
-
+       
     # mbg.plotAll(closefigs=False)
     # plt.show()
 

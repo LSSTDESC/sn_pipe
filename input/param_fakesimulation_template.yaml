@@ -1,17 +1,17 @@
-ProductionID: TestFast_Simple
+ProductionID:  prodid
 SN parameters:
    Id : 100                   # Id of the first SN
    x1_color:                    # stretch and color
-       type : fixed #random or fixed
-       min : [0.0,0.0]
-       max : [0.2,0.2]
+       type : fixed  #random or fixed
+       min : [x1val,colorval]
+       max : [2.0,0.2]
        rate :  JLA
        dirFile: 'reference_files'
    z :              # redshift
-       type : uniform
-       min : 0.01
+       type : unique
+       min : zval
        max : 0.9
-       step: 0.05
+       step: 0.01
        rate : Perrett # Type Ia volumetric rate : Perrett, Ripoche, Dilday.
    daymax:                 # Tmax (obs. frame)
        type : unique #uniform or random or unique
@@ -21,7 +21,7 @@ SN parameters:
    absmag : -19.0906          # peak abs mag
    band : bessellB             # band for absmag
    magsys : vega              # magsys for absmag
-   differential_flux: 0
+   differential_flux: True
    salt2Dir: SALT2_Files
 Cosmology:
    Model : w0waCDM      # Cosmological model
@@ -34,30 +34,28 @@ Instrument:
    name : LSST       #name of the telescope (internal)
    throughput_dir : LSST_THROUGHPUTS_BASELINE #dir of throughput
    atmos_dir : THROUGHPUTS_DIR   #dir of atmos
-   airmass : 1.2   #airmass value
+   airmass : 1.1   #airmass value
    atmos : True  #atmos
    aerosol : False  #aerosol
 Observations: 
-   filename: /sps/lsst/cadence/LSST_SN_PhG/cadence_db/opsim_db/kraken_2026.db # Name of db obs file (full path)
-   #filename: /home/philippe/LSST/DB_Files/kraken_2026.db
-   fieldtype: DD #DD or WFD
-   coadd: True # this is the coaddition per night
+   filename: None  # Name of db obs file (full path)
+   fieldtype: None #DD or WFD
+   coadd: None # this is the coaddition per night
    season: 1 #season to simulate (-1 = all seasons)
 Simulator :
-    name : sn_simulator.sn_fast        # Simulator name: sn_cosmo,sn_sim,sn_ana, sn_fast
+    name : sn_simulator.sn_cosmo   # Simulator: sn_cosmo,sn_sim,sn_ana, sn_fast
     model : salt2-extended   # spectra model
     version : 1.0                     #version
-    #Reference File: SN_MAF/Reference_Files/LC_Ref_-2.0_0.2.hdf5
-    Reference File: /sps/lsst/data/dev/pgris/Templates_final_new/LC_0.0_0.0.hdf5
 Host Parameters: None         # Host parameters
 Display_LC : #display during LC simulations
    display: False
-   time: 1 #display during time (sec) before closing
+   time: 10 #display during time (sec) before closing
 Output:
-    directory: Output_Simu
+    directory: /sps/lsst/data/dev/pgris/Templates_new/x1val_colorval
     save: True
 Multiprocessing:
     nproc: 1
 Metric: sn_mafsim.sn_maf_simulation
+Param_file: fakename
 Pixelisation:
     nside: 64
