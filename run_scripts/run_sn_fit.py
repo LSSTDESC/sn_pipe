@@ -200,10 +200,10 @@ parser.add_argument('config_filename',
                     help='Configuration file in YAML format.')
 
 
-def run(dbDir, prodid,outDir,nproc, covmb=None):
+def run(dirFiles, prodid,outDir,nproc, covmb=None):
     # YAML input file.
     #config = yaml.load(open(config_filename))
-    config = makeYaml('sn_fit_LC/input/param_gen.yaml',dbDir, prodid,outDir,nproc)
+    config = makeYaml('input/param_fit_gen.yaml',dirFiles, prodid,outDir,nproc)
     print(config)
     
     # load telescope
@@ -226,28 +226,25 @@ def run(dbDir, prodid,outDir,nproc, covmb=None):
   
 parser = OptionParser()
 
-parser.add_option("--dbDir", type="str", default='', help="db dir [%default]")
-parser.add_option("--dbName", type="str", default='alt_sched', help="db dir [%default]")
+parser.add_option("--dirFiles", type="str", default='', help="location dir of the files[%default]")
+parser.add_option("--prodid", type="str", default='Test', help="db name [%default]")
 parser.add_option("--outDir", type="str", default='',
                   help="output dir [%default]")
-parser.add_option("--season", type="int", default='1',
-                  help="season[%default]")
 parser.add_option("--nproc", type="int", default=1,
-                  help="nproc [%default]")
-parser.add_option("--mbcov", type="int", default=1,
-                  help="nproc [%default]")
+                  help="number of proc [%default]")
+parser.add_option("--mbcov", type="int", default=0,
+                  help="mbcol calc [%default]")
 
 opts, args = parser.parse_args()   
 
-dbDir = opts.dbDir
-if dbDir == '':
-    dbDir = '/sps/lsst/users/gris/Output_Simu_pipeline_0'
+dirFiles = opts.dirFiles
+if dirFiles == '':
+    dirFiles = '/sps/lsst/users/gris/Output_Simu_pipeline_0'
 outDir = opts.outDir
 if outDir == '':
     outDir = '/sps/lsst/users/gris/Output_Fit_0'
 
-dbName = opts.dbName
-season = opts.season
+prodid = opts.prodid
 nproc = opts.nproc
 mbCalc = opts.mbcov
 
@@ -257,11 +254,5 @@ covmb = None
 if mbCalc:
     covmb = MbCov(salt2Dir,paramNames=dict(zip(['x0','x1','color'],['x0','x1','c'])))
 
-
-files = glob.glob('{}/Simu_{}_seas_{}_*.hdf5'.format(dbDir,dbName,season))
-
-for fi in files:
-    prodid = '_'.join(fi.split('/')[-1].split('.')[0].split('_')[1:])
-    print('pp',prodid)
-    run(dbDir, prodid,outDir,nproc,covmb=covmb)
-    #break
+run(dirFiles, prodid,outDir,nproc,covmb=covmb)
+    

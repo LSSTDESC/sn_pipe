@@ -60,8 +60,28 @@ dbNames += ['baseline_1exp_nopairs_10yrs','baseline_1exp_pairsame_10yrs','baseli
           'altsched_1exp_pairsmix_10yrs','rotator_1exp_pairsmix_10yrs','hyak_baseline_1exp_nopairs_10yrs',
           'hyak_baseline_1exp_pairsame_10yrs']
 
-for dbName in dbNames:
-    #for band in bands:
-    #    batch(dbDir,dbName,'run_scripts/run_metrics_fromnpy',band,8)
-    batch(dbDir,dbName,'run_scripts/run_metrics_fromnpy','all',8)
 
+dbNames = ['very_alt2_rm5illum20_10yrs','very_alt2_rm5illum40_10yrs','very_alt3_rm5illum20_10yrs','very_alt3_rm5illum40_10yrs','very_alt10yrs','very_alt2_rm5illum25_10yrs','very_alt2_rm5illum50_10yrs','very_alt3_rm5illum25_10yrs','very_alt3_rm5illum50_10yrs','very_alt2_rm5illum15_10yrs','very_alt2_rm5illum30_10yrs','very_alt3_rm5illum15_10yrs','very_alt3_rm5illum30_10yrs','very_alt_rm510yrs','noddf_1exp_pairsame_10yrs','desc_ddf_pn_0.70deg_1exp_pairsmix_10yrs','fc1exp_pairsmix_ilim30_10yrs','fc1exp_pairsmix_ilim60_10yrs',
+'fc1exp_pairsmix_ilim15_10yrs','stuck_rolling10yrs','shortt_2ns_1ext_pairsmix_10yrs','shortt_2ns_5ext_pairsmix_10yrs','shortt_5ns_5ext_pairsmix_10yrs','shortt_5ns_1ext_pairsmix_10yrs',
+'simple_roll_mod2_mixed_10yrs','roll_mod2_sdf0.2mixed_10yrs','simple_roll_mod3_sdf0.2mixed_10yrs',
+'roll_mod2_sdf0.1mixed_10yrs','roll_mod3_sdf0.2mixed_10yrs',
+'roll_mod3_sdf0.1mixed_10yrs','simple_roll_mod5_sdf0.2mixed_10yrs',
+'roll_mod6_sdf0.2mixed_10yrs','roll_mod6_sdf0.1mixed_10yrs',
+'simple_roll_mod10_sdf0.2mixed_10yrs','roll_mod2_sdf0.10mixed_10yrs',
+'roll_mod2_sdf0.05mixed_10yrs','simple_roll_mod2_sdf0.20mixed_10yrs',
+'roll_mod3_sdf0.05mixed_10yrs','roll_mod2_sdf0.20mixed_10yrs',
+'roll_mod3_sdf0.20mixed_10yrs','simple_roll_mod3_sdf0.20mixed_10yrs',
+'roll_mod3_sdf0.10mixed_10yrs','roll_mod6_sdf0.05mixed_10yrs',
+'roll_mod6_sdf0.20mixed_10yrs','roll_mod6_sdf0.10mixed_10yrs',
+'simple_roll_mod10_sdf0.20mixed_10yrs']
+
+dbNames = ['weather_0.20c_10yrs','weather_0.60c_10yrs','weather_0.70c_10yrs','weather_1.10c_10yrs',
+'weather_0.40c_10yrs','weather_0.90c_10yrs','weather_0.30c_10yrs','weather_0.80c_10yrs','weather_0.10c_10yrs']
+
+print(len(dbNames))
+dbDir = '/sps/lsst/cadence/LSST_SN_PhG/cadence_db/opsim_new'
+for dbName in dbNames:
+    for band in bands:
+        batch(dbDir,dbName,'run_scripts/run_metrics_fromnpy',band,8)
+    #batch(dbDir,dbName,'run_scripts/run_metrics_fromnpy','all',8)
+    

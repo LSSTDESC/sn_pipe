@@ -45,13 +45,16 @@ def Process_LC(fname, lc_out, ilc, x1, color):
         table_new.add_column(
             Column([tab.meta['daymax']]*len(tab), name='daymax'))
         table_new.add_column(Column([tab.meta['z']]*len(tab), name='z'))
+        #print('go')
         for j, val in enumerate(['x0', 'x1', 'color']):
             ia = i+2*j+1
             ib = ia+1
             tablea = Table.read(f, path=keys[ia])
             tableb = Table.read(f, path=keys[ib])
+            #print(tablea.meta)
+            #print(tableb.meta)
             epsilon = tablea.meta['epsilon_'+val]
-            col = (tablea['flux']-tableb['flux'])/epsilon
+            col = (tablea['flux']-tableb['flux'])/(2.*epsilon)
             #print(tablea.meta)
             #print(tableb.meta)
             table_new.add_column(Column(col, name='d'+val))
@@ -70,9 +73,10 @@ def Process_LC(fname, lc_out, ilc, x1, color):
 
 
 def Run(input_orig, cad_orig, zval,x1, color,outdir,ilc):
-    mjd_min = -20.*(1.+zval)
-    mjd_max = 60.*(1.+zval)
+    mjd_min = -21.*(1.+zval)
+    mjd_max = 63.*(1.+zval)
     duration = (mjd_max-mjd_min)
+    #cad = 0.1
     cad = 0.1*(1.+zval)
     #cad = 0.5*(1.+zval)
     prodid = 'Fake_{}_{}_{}'.format(zval,x1,color)
@@ -101,8 +105,10 @@ def zLoop(input_orig, cad_orig, zval, x1, color, outdir, inum,j=0, output_q=None
     # for ilc, zval in enumerate(np.arange(0.01, 0.02, 0.01)):
 def simuLC(x1,color,nproc,input_orig,cad_orig,outdir):
     timeRef = time.time()
-    zrange = list(np.arange(0.001, 0.9, 0.001))
+    #zrange = list(np.arange(0.01, 1.1, 0.01))
+    #zrange = list(np.arange(0.001, 0.9, 0.001))
     #zrange = list(np.arange(0.005, 0.01, 0.005))
+    zrange = [0.0000]
     nz = len(zrange)
     delta = nz
     if nproc > 1:
@@ -133,8 +139,8 @@ def lcDeriv(x1,color, outdir_final,outdir):
     files =glob.glob(outdir+'/'+str(x1)+'_'+str(color)+'/*')
     
     for ilc,fi in enumerate(files):
-        print('hello',fi)
-        Process_LC(fi,lc_out,200+ilc,x1,color)
+            print('hello',fi)
+            Process_LC(fi,lc_out,200+ilc,x1,color)
 
 parser = OptionParser()
 parser.add_option("--x1", type="float", default=0.0, help="filter [%default]")

@@ -129,6 +129,7 @@ observations = renameFields(observations)
 pixels = pixelate(observations, nside, RaCol='fieldRA', DecCol='fieldDec')
 
 # remove pixels with a "too-high" E(B-V)
+
 idx = pixels['ebv']<= 0.25 
 pixels = pixels[idx]
 
@@ -149,6 +150,7 @@ timeref = time.time()
 
 healpixels = np.unique(pixels['healpixID'])
 npixels = int(len(healpixels))
+print('number of pixels',npixels)
 delta = npixels
 if nproc > 1:
     delta = int(delta/(nproc))
@@ -161,6 +163,7 @@ tabpix = tabpix.tolist()
 
 if tabpix[-1]-tabpix[-2] <= 100:
     tabpix.remove(tabpix[-2])
+
 
 print(tabpix, len(tabpix))
 result_queue = multiprocessing.Queue()
