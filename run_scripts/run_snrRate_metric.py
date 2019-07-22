@@ -75,8 +75,8 @@ def run(config_filename):
     sql_i = sqlconstraint
     #sql_i += ' AND abs(fieldRA-(%f))< %f' % (Ra_ref, 1.e-2)+' AND '
     #sql_i += 'abs(fieldDec-(%f))< %f' % (Dec_ref, 1.e-2)
-    sql_i += ' AND fieldRA > %f AND fieldRA< %f' % (0., 3.)
-    sql_i += ' AND fieldDec > %f AND fieldDec< %f' % (-10., -5.)
+    #sql_i += ' AND fieldRA > %f AND fieldRA< %f' % (0., 3.)
+    #sql_i += ' AND fieldDec > %f AND fieldDec< %f' % (-10., -5.)
     for band in bands:
         lim_sn[band] = ReferenceData(
             config['Li file'], config['Mag_to_flux file'], band, z)
@@ -100,12 +100,14 @@ def run(config_filename):
     for band, val in bdict.items():
         metValues = val.metricValues[~val.metricValues.mask]
         res = None
-        print(metValues)
+        # print(metValues)
         for vals in metValues:
-            if metValues is not None:
+            if vals is not None:
                 if res is None:
                     res = vals
                 else:
+                    #print(len(res), len(vals))
+                    # print(type(vals))
                     res = np.concatenate((res, vals))
         res = np.unique(res)
 

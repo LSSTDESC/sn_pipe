@@ -8,7 +8,7 @@ Observations:
    filename: /home/philippe/LSST/DB_Files/alt_sched.db
    fieldtype: WFD #DD or WFD
    coadd: False # this is the coaddition per night
-   season: [2] #season to simulate (-1 = all seasons)
+   season: -1 #season to simulate (-1 = all seasons)
    bands: 'gri' #bands to consider
    #bands: 'i'
    #SNR: [25., 25., 30., 35.] #DDF SNR cut to estimate sum(Li**2)
