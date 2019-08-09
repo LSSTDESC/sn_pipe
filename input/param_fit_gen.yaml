@@ -10,7 +10,7 @@ Simulations:
    filename: Simu_prodid.hdf5   # Name of simulation  file
    dirname : dbDir     # dir of obs file
 Fitter:
-    name : fitter.sn_Cosmo           # Simulator name: SN_Cosmo,SN_Sim,SN_Ana
+    name : sn_fitter.sn_Cosmo           # Simulator name: SN_Cosmo,SN_Sim,SN_Ana
     model : salt2-extended   # spectra model
     version : 1.0                     #version
 Display : False  #display during LC fit

@@ -212,7 +212,7 @@ plt.rcParams['lines.linewidth'] = 2.5
 plt.rcParams['figure.figsize'] = (10, 7)
 
 forPlot = np.loadtxt('plot_scripts/cadenceCustomize.txt',
-                     dtype={'names': ('dbName', 'newName', 'group','Namepl','color','marker'),'formats': ('U33', 'U33','U12','U18','U6','U1')})
+                     dtype={'names': ('dbName', 'newName', 'group','Namepl','color','marker'),'formats': ('U33', 'U33','U12','U18','U7','U1')})
 
 print(forPlot)
 plotSum = PlotSummary()
@@ -266,7 +266,7 @@ for band in bands:
     #plotBand(ax,band,medValues,x1=x1, x2=x2, y1=y1, y2=y2)
     #plotBand(ax2,band,medValues,x1=x1, x2=x2, y1=y1, y2=y2)
     plotBandSimple(ax,band,medValues)
-    if band == 'i':
+    if band == 'y':
         axins = zoomed_inset_axes(ax, zoomval[band], loc=4) # zoom-factor: 2.5, location: upper-left
         
         axins.set_xlim(x1, x2) # apply the x-limits

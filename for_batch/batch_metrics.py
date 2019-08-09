@@ -75,11 +75,11 @@ dbNames = ['very_alt2_rm5illum20_10yrs','very_alt2_rm5illum40_10yrs','very_alt3_
 'roll_mod6_sdf0.20mixed_10yrs','roll_mod6_sdf0.10mixed_10yrs',
 'simple_roll_mod10_sdf0.20mixed_10yrs']
 
-dbNames = ['weather_0.20c_10yrs','weather_0.60c_10yrs','weather_0.70c_10yrs','weather_1.10c_10yrs',
-'weather_0.40c_10yrs','weather_0.90c_10yrs','weather_0.30c_10yrs','weather_0.80c_10yrs','weather_0.10c_10yrs']
+#dbNames = ['weather_0.20c_10yrs','weather_0.60c_10yrs','weather_0.70c_10yrs','weather_1.10c_10yrs',
+#'weather_0.40c_10yrs','weather_0.90c_10yrs','weather_0.30c_10yrs','weather_0.80c_10yrs','weather_0.10c_10yrs']
 
 print(len(dbNames))
-dbDir = '/sps/lsst/cadence/LSST_SN_PhG/cadence_db/opsim_new'
+#dbDir = '/sps/lsst/cadence/LSST_SN_PhG/cadence_db/opsim_new'
 for dbName in dbNames:
     for band in bands:
         batch(dbDir,dbName,'run_scripts/run_metrics_fromnpy',band,8)

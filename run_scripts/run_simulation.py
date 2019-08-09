@@ -115,7 +115,8 @@ def run(config_filename):
         config_fake = yaml.load(open(config['Param_file']), Loader=yaml.FullLoader)
         fake_obs = GenerateFakeObservations(config_fake).Observations
 
-        metric = module.SNMetric(config=config,x0_norm=x0_tab)
+        metric = module.SNMetric(config=config,coadd=config['Observations']['coadd'],
+                                 x0_norm=x0_tab)
         metric.run(fake_obs)
        
     # mbg.plotAll(closefigs=False)

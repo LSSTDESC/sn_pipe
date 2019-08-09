@@ -1,4 +1,4 @@
-ProductionID: Fast_Obs_2_30
+ProductionID: Fast_kraken_2026
 SN parameters:
    Id : 100                   # Id of the first SN
    x1_color:                    # stretch and color
@@ -38,9 +38,9 @@ Instrument:
    atmos : True  #atmos
    aerosol : False  #aerosol
 Observations: 
-   #filename: /sps/lsst/cadence/LSST_SN_PhG/cadence_db/opsim_db/kraken_2026.db # Name of db obs file (full path)
+   filename: /sps/lsst/cadence/LSST_SN_CADENCE/cadence_db/sims_featureScheduler_runs/weather/weather_0.10c_10yrs.db # Name of db obs file (full path)
    #filename: /home/philippe/LSST/DB_Files/kraken_2026.db
-   filename: /pbs/throng/lsst/users/gris/sn_pipe_simulation_saturation/sn_pipe/Observations_2_30.npy
+   #filename: /pbs/throng/lsst/users/gris/sn_pipe_simulation_saturation/sn_pipe/Observations_2_30.npy
    fieldtype: DD #DD or WFD
    coadd: True # this is the coaddition per night
    season: 2 #season to simulate (-1 = all seasons)
@@ -56,7 +56,7 @@ Display_LC : #display during LC simulations
    time: 1. #display during time (sec) before closing
 Output:
     directory: Output_Simu
-    save: True
+    save: False
 Multiprocessing:
     nproc: 1
 Metric: sn_mafsim.sn_maf_simulation

@@ -1,7 +1,7 @@
 import numpy as np
 import os
 import h5py
-from astropy.table import Table, Column
+from astropy.table import Table, Column, vstack
 from optparse import OptionParser
 import glob
 import multiprocessing
@@ -36,17 +36,18 @@ def Process_LC(fname, lc_out, ilc, x1, color):
     keys = list(f.keys())
 
     print(keys)
-    for i in range(0, len(keys), 7):
+    for i in range(0, len(keys), 9):
         #ilc = int(keys[i].split('_')[1])
         #print('hello ilc', i, ilc)
         tab = Table.read(f, path=keys[i])
         table_new = Table(tab)
         #print(tab.dtype)
+        
         table_new.add_column(
             Column([tab.meta['daymax']]*len(tab), name='daymax'))
         table_new.add_column(Column([tab.meta['z']]*len(tab), name='z'))
         #print('go')
-        for j, val in enumerate(['x0', 'x1', 'color']):
+        for j, val in enumerate(['x0', 'x1', 'color','daymax']):
             ia = i+2*j+1
             ib = ia+1
             tablea = Table.read(f, path=keys[ia])
@@ -103,12 +104,13 @@ def zLoop(input_orig, cad_orig, zval, x1, color, outdir, inum,j=0, output_q=None
 #for ilc, zval in enumerate(np.arange(0.01, 0.9, 0.01)):
 #for ilc, zval in enumerate([0.01]):
     # for ilc, zval in enumerate(np.arange(0.01, 0.02, 0.01)):
-def simuLC(x1,color,nproc,input_orig,cad_orig,outdir):
+def simuLC(x1,color,nproc,input_orig,cad_orig,outdir,zmin,zmax):
     timeRef = time.time()
     #zrange = list(np.arange(0.01, 1.1, 0.01))
-    #zrange = list(np.arange(0.001, 0.9, 0.001))
+    zrange = list(np.arange(zmin, zmax,0.01))
     #zrange = list(np.arange(0.005, 0.01, 0.005))
-    zrange = [0.0000]
+    #zrange = [0.005]
+    
     nz = len(zrange)
     delta = nz
     if nproc > 1:
@@ -142,13 +144,33 @@ def lcDeriv(x1,color, outdir_final,outdir):
             print('hello',fi)
             Process_LC(fi,lc_out,200+ilc,x1,color)
 
+    # now stack the file produced
+    tab_tot = Table()
+
+    
+    fi = h5py.File(lc_out, 'r')
+    keys = fi.keys()
+
+    for kk in keys:
+        
+        tab_b = Table.read(fi, path=kk)
+        
+        if tab_b is not None:
+            tab_tot = vstack([tab_tot, tab_b],metadata_conflicts='silent')
+
+    newFile = lc_out.replace('.hdf5','_vstack.hdf5')
+    r = tab_tot.to_pandas().values.tolist()
+    tab_tot.to_pandas().to_hdf(newFile, key='s')
+
+
 parser = OptionParser()
 parser.add_option("--x1", type="float", default=0.0, help="filter [%default]")
 parser.add_option("--color", type="float", default=0.0, help="filter [%default]")
 parser.add_option("--nproc", type="int", default=1, help="filter [%default]")
 parser.add_option("--simul", type="int", default=1, help="perform simulation [%default]")
 parser.add_option("--lcdiff", type="int", default=0, help="produce LC with flux derivatives[%default]")
-
+parser.add_option("--zmin", type="float", default=0.01, help="zmin [%default]")
+parser.add_option("--zmax", type="float", default=1.0, help="zmax [%default]")
 opts, args = parser.parse_args()
 
 input_orig = 'input/param_fakesimulation_template.yaml'
@@ -166,10 +188,12 @@ color = opts.color
 nproc = opts.nproc
 simul = opts.simul
 lcdiff = opts.lcdiff
+zmin = opts.zmin
+zmax = opts.zmax
 
 
 if simul:
-    simuLC(x1,color,nproc,input_orig,cad_orig,outDir)
+    simuLC(x1,color,nproc,input_orig,cad_orig,outDir,zmin,zmax)
 
 if lcdiff:
     lcDeriv(x1,color,outDirFinal,outDir)

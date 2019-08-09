@@ -40,7 +40,7 @@ Instrument:
 Observations: 
    filename: None  # Name of db obs file (full path)
    fieldtype: None #DD or WFD
-   coadd: None # this is the coaddition per night
+   coadd: False # this is the coaddition per night
    season: 1 #season to simulate (-1 = all seasons)
 Simulator :
     name : sn_simulator.sn_cosmo   # Simulator: sn_cosmo,sn_sim,sn_ana, sn_fast

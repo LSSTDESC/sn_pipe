@@ -2,7 +2,10 @@ import numpy as np
 from sn_metrics.sn_snr_metric import SNSNRMetric
 from sn_metrics.sn_cadence_metric import SNCadenceMetric
 from sn_metrics.sn_snrrate_metric import SNSNRRateMetric
+from sn_metrics.sn_nsn_metric import SNNSNMetric
+from sn_metrics.sn_sl_metric import SLSNMetric
 from sn_tools.sn_cadence_tools import ReferenceData
+from sn_tools.sn_utils import GetReference
 import os
 
 
@@ -82,3 +85,44 @@ class SNRRateMetricWrapper:
         metric = SNSNRRateMetric(lim_sn=self.lim_sn, names_ref=self.names_ref,
                                  coadd=self.coadd, season=self.season, z=self.z, bands=self.bands, snr_ref=self.snr_ref)
         return metric.run(np.copy(obs))
+
+class NSNMetricWrapper:
+    def __init__(self,fieldtype='DD',pixArea=9.6,season=-1):
+
+
+        zmax = 1.3
+
+        self.name = 'NSNMetric_{}_zlim'.format(fieldtype)
+        Instrument={}
+        Instrument['name'] = 'LSST'       #name of the telescope (internal)
+        Instrument['throughput_dir'] = 'LSST_THROUGHPUTS_BASELINE' #dir of throughput
+        Instrument['atmos_dir'] = 'THROUGHPUTS_DIR'   #dir of atmos
+        Instrument['airmass'] = 1.2   #airmass value
+        Instrument['atmos'] = True  #atmos
+        Instrument['aerosol'] = False  #aerosol
+
+        lc_reference = {}
+        gamma_reference = 'reference_files/gamma.hdf5'
+
+        print('Loading reference files',)
+        for (x1,color) in [(-2.0,0.2),(0.0,0.0)]:
+            fname = '/sps/lsst/data/dev/pgris/Templates_final_new/LC_{}_{}_vstack.hdf5'.format(x1,color)
+            lc_reference[(x1,color)] = GetReference(fname,gamma_reference,Instrument)
+
+        print('Reference data loaded')
+        #metric instance
+
+        self.metric = SNNSNMetric(lc_reference,season=season, zmax=zmax,pixArea=pixArea)
+
+    def run(self,obs):
+        return self.metric.run(obs)
+
+class SLMetricWrapper:
+    def __init__(self,season=-1, nside=64):
+
+        self.name = 'SLMetric'
+        self.metric = SLSNMetric(season=season, nside=nside)
+
+
+    def run(self,obs):
+        return self.metric.run(obs)
