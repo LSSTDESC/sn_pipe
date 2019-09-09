@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-#matplotlib.use('agg')
+# matplotlib.use('agg')
 import numpy as np
 import healpy as hp
 from metricWrapper import CadenceMetricWrapper, SNRMetricWrapper
@@ -19,37 +19,37 @@ import numpy.lib.recfunctions as rf
 from sn_stackers.coadd_stacker import CoaddStacker
 from sn_tools.sn_obs import OverlapGnomonic
 
+
 def getFields(obs, fieldIds):
 
     obs = None
-    
+
     """
     print('hhh',np.unique(observations['fieldId']))
 
     val = np.unique(observations[['fieldRa','fieldDec']])
-    #plt.plot(val['fieldRA'],val['fieldDec'],'ko')
+    # plt.plot(val['fieldRA'],val['fieldDec'],'ko')
     idx = observations['fieldId']==0
-    #sel = np.unique(observations[idx][['fieldRA','fieldDec']])
+    # sel = np.unique(observations[idx][['fieldRA','fieldDec']])
     sel = observations[idx]
     print(observations)
-    #plt.plot(sel['fieldRA'],sel['fieldDec'],'b*')
+    # plt.plot(sel['fieldRA'],sel['fieldDec'],'b*')
     plt.plot(sel['observationStartMJD'],sel['fieldRa'],'ko')
 
     plt.show()
     """
 
-
-
-    print('selection',fieldIds)
+    print('selection', fieldIds)
     for fieldId in fieldIds:
-        idf = observations['fieldId']==fieldId
+        idf = observations['fieldId'] == fieldId
         if obs is None:
             obs = observations[idf]
         else:
-            obs = np.concatenate((obs,observations[idf]))
+            obs = np.concatenate((obs, observations[idf]))
     return obs
 
-def selectDD(obs, nside,fieldIds):
+
+def selectDD(obs, nside, fieldIds):
 
     print(obs.dtype)
 
@@ -58,59 +58,60 @@ def selectDD(obs, nside,fieldIds):
     propId = list(np.unique(obs['proposalId']))
 
     if len(propId) > 3:
-        #idx = obs['proposalId'] == 5
-        obser = getFields(obs,fieldIds)
-        return pixelate(obser, nside, RaCol='fieldRa', DecCol='fieldDec')
+        # idx = obs['proposalId'] == 5
+        obser = getFields(obs, fieldIds)
+        return pixelate(obser, nside, RaCol='fieldRA', DecCol='fieldDec')
     else:
         names = obs.dtype.names
         if 'fieldId' in names:
             """
             print(np.unique(obs[['fieldId','note']]))
             """
-            obser = getFields(obs,fieldIds)
-            return pixelate(obser, nside, RaCol='fieldRa', DecCol='fieldDec')
+            obser = getFields(obs, fieldIds)
+            return pixelate(obser, nside, RaCol='fieldRA', DecCol='fieldDec')
         else:
             """this is difficult
                we do not have other ways to identify
                DD except by selecting pixels with a large number of visits
             """
-            pixels = pixelate(obs, nside, RaCol='fieldRa', DecCol='fieldDec')
-            
-            
+            pixels = pixelate(obs, nside, RaCol='fieldRA', DecCol='fieldDec')
+
             df = pd.DataFrame(np.copy(pixels))
 
-            print('ooo',np.unique(pixels['pixRA','pixDec']))
-            groups = df.groupby('healpixID').filter(lambda x: len(x)>5000)
-            
-            group_DD = groups.groupby(['fieldRa','fieldDec']).filter(lambda x: len(x)>4000)
+            print('ooo', np.unique(pixels['pixRA', 'pixDec']))
+            groups = df.groupby('healpixID').filter(lambda x: len(x) > 5000)
 
+            group_DD = groups.groupby(['fieldRA', 'fieldDec']).filter(
+                lambda x: len(x) > 4000)
 
-            #return np.array(group_DD.to_records().view(type=np.matrix))
+            # return np.array(group_DD.to_records().view(type=np.matrix))
             return group_DD.to_records(index=False)
 
-def loop_area(pointings,band, metricList,observations,nside,j=0, output_q=None):
-    
+
+def loop_area(pointings, band, metricList, observations, nside, j=0, output_q=None):
+
     resfi = {}
+    print(np.unique(observations[['fieldRA', 'fieldDec']]))
     for metric in metricList:
         resfi[metric.name] = None
 
     time_ref = time.time()
-    print('Starting processing',len(pointings))
+    print('Starting processing', len(pointings), pointings)
     for pointing in pointings:
-        myprocess = ProcessArea(nside,pointing['Ra'],pointing['Dec'],3.,3.,'fieldRa','fieldDec')
-        
-        
-        resdict = myprocess.process(observations,metricList)
+        myprocess = ProcessArea(
+            nside, pointing['Ra'], pointing['Dec'], 3., 3., 'fieldRA', 'fieldDec')
+
+        resdict = myprocess.process(observations, metricList)
         for key in resfi.keys():
             if resdict[key] is not None:
                 if resfi[key] is None:
                     resfi[key] = resdict[key]
                 else:
-                    #print('vstack',key,resfi[key],resdict[key])
-                    #resfi[key] = np.vstack([resfi[key], resdict[key]])
+                    # print('vstack',key,resfi[key],resdict[key])
+                    # resfi[key] = np.vstack([resfi[key], resdict[key]])
                     resfi[key] = np.concatenate((resfi[key], resdict[key]))
 
-    print('end of processing',time.time()-time_ref)
+    print('end of processing', time.time()-time_ref)
 
     if output_q is not None:
         return output_q.put({j: resfi})
@@ -118,50 +119,48 @@ def loop_area(pointings,band, metricList,observations,nside,j=0, output_q=None):
         return resfi
 
 
-def loop(healpixels,band, metricList, shape,observations,j=0, output_q=None):
+def loop(healpixels, band, metricList, shape, observations, j=0, output_q=None):
 
     display = True
     resfi = {}
     for metric in metricList:
         resfi[metric.name] = None
-    
+
     print('starting here')
     time_ref = time.time()
-    print('rr',len(observations))
+    print('rr', len(observations))
     observations = seasoncalc(observations)
-    print('season',time.time()-time_ref,np.unique(observations['season']))
+    print('season', time.time()-time_ref, np.unique(observations['season']))
     idx = observations['season'] == 1
     observations = observations[idx]
-    print('bbbb',len(observations))
-
+    print('bbbb', len(observations))
 
     for pixel in healpixels:
-    #for healpixID in [35465]:
+        # for healpixID in [35465]:
         time_ref = time.time()
         ax = None
         if display:
-            fig,ax = plt.subplots()
-        
-        #scanzone = shape.shape()
-        #plt.show()
+            fig, ax = plt.subplots()
+
+        # scanzone = shape.shape()
+        # plt.show()
         ##
         time_ref = time.time()
-        #scanzone = shape.shape(healpixID=healpixID)
+        # scanzone = shape.shape(healpixID=healpixID)
 
         obsFocalPlane = ObsPixel(nside=nside, data=observations,
                                  RaCol='fieldRA', DecCol='fieldDec')
 
-        
-        obsMatch = obsFocalPlane.matchFast(pixel,ax=ax)
-        #obsMatch = obsFocalPlane.matchQuery(healpixID)
+        obsMatch = obsFocalPlane.matchFast(pixel, ax=ax)
+        # obsMatch = obsFocalPlane.matchQuery(healpixID)
         if display:
             fig.suptitle(pixel['healpixID'])
             plt.show()
         if obsMatch is None:
             continue
         print(len(obsMatch))
-        #print(obsMatch.dtype)
-        #print('after obs match',time.time()-time_ref)
+        # print(obsMatch.dtype)
+        # print('after obs match',time.time()-time_ref)
         resdict = {}
         for metric in metricList:
             # print('metric',metric.name)
@@ -175,16 +174,16 @@ def loop(healpixels,band, metricList, shape,observations,j=0, output_q=None):
                 if metric.name == 'CadenceMetric':
                     resdict[metric.name] = metric.run(band, season(obsMatch))
             """
-            #print(season(obsMatch))
-            #resdict[metric.name] = metric.run(season(obsMatch))
+            # print(season(obsMatch))
+            # resdict[metric.name] = metric.run(season(obsMatch))
             resdict[metric.name] = metric.run(obsMatch)
         for key in resfi.keys():
             if resdict[key] is not None:
                 if resfi[key] is None:
                     resfi[key] = resdict[key]
                 else:
-                    #print('vstack',key,resfi[key],resdict[key])
-                    #resfi[key] = np.vstack([resfi[key], resdict[key]])
+                    # print('vstack',key,resfi[key],resdict[key])
+                    # resfi[key] = np.vstack([resfi[key], resdict[key]])
                     resfi[key] = np.concatenate((resfi[key], resdict[key]))
 
     if output_q is not None:
@@ -203,7 +202,8 @@ parser.add_option("--nside", type="int", default=64,
 parser.add_option("--band", type="str", default='r', help="band [%default]")
 parser.add_option("--nproc", type="int", default='8',
                   help="number of proc  [%default]")
-parser.add_option("--fieldtype", type="str", default='DD', help="field type DD or WFD[%default]")
+parser.add_option("--fieldtype", type="str", default='DD',
+                  help="field type DD or WFD[%default]")
 parser.add_option("--x1", type="float", default='0.0',
                   help="SN x1 [%default]")
 parser.add_option("--color", type="float", default='0.0',
@@ -250,10 +250,11 @@ if band != 'all':
     metricList.append(SNRMetricWrapper(z=0.3))
 metricList.append(CadenceMetricWrapper(season=seasons))
 """
-#metricList.append(SNRRateMetricWrapper(z=0.3))
-metricList.append(NSNMetricWrapper(fieldtype=fieldtype,pixArea=pixArea,season=-1,overlap=overlap,nside=nside))
+# metricList.append(SNRRateMetricWrapper(z=0.3))
+metricList.append(NSNMetricWrapper(fieldtype=fieldtype,
+                                   pixArea=pixArea, season=-1, overlap=overlap, nside=nside))
 
-#metricList.append(SLMetricWrapper(season=-1, nside=64))
+# metricList.append(SLMetricWrapper(season=-1, nside=64))
 
 # loading observations
 
@@ -267,7 +268,7 @@ stacker = CoaddStacker()
 observations = stacker._run(observations)
 """
 
-#print(obs.dtype)
+# print(obs.dtype)
 
 
 """
@@ -276,30 +277,32 @@ if fieldtype =='WFD':
     observations = observations[idx]
 """
 
-#fieldIds = [290]
-#fieldIds = [290,1427, 2412, 2786]
+# fieldIds = [290]
+# fieldIds = [290,1427, 2412, 2786]
 # this is a "simple" tessalation using healpix
 dictArea = {}
 if fieldtype == 'DD':
-    fieldIds = [290,744, 1427, 2412, 2786]
-    fieldIds = [0]
-    #pixels = selectDD(observations,nside,fieldIds)
-    observations = getFields(observations,fieldIds)
+    fieldIds = [290, 744, 1427, 2412, 2786]
+    # fieldIds = [0]
+    # pixels = selectDD(observations,nside,fieldIds)
+    observations = getFields(observations, fieldIds)
     print(np.unique(observations['fieldId']))
     r = []
-    r.append(('COSMOS',2786,150.36,2.84))
-    r.append(('XMM-LSS',2412,34.39,-5.09))
-    r.append(('CDFS',1427, 53.00,-27.44))
-    r.append(('ELAIS',744,10,-45.52))
-    r.append(('SPT',290,349.39,-63.32))
+    r.append(('COSMOS', 2786, 150.36, 2.84))
+    r.append(('XMM-LSS', 2412, 34.39, -5.09))
+    r.append(('CDFS', 1427, 53.00, -27.44))
+    # r.append(('ELAIS', 744, 10.0, -45.52))
+    r.append(('ELAIS', 744, 0.0, -45.52))
+    r.append(('SPT', 290, 349.39, -63.32))
 
-    areas = np.rec.fromrecords(r, names=['name','fieldId','Ra','Dec'])
+    areas = np.rec.fromrecords(r, names=['name', 'fieldId', 'Ra', 'Dec'])
 
 else:
-    pixels = pixelate(observations, nside, RaCol='fieldRa', DecCol='fieldDec')
+    pixels = pixelate(observations, nside, RaCol='fieldRA', DecCol='fieldDec')
 
 """
-print('number of fields',len(np.unique(pixels['healpixID'])),len(pixels['healpixID']))
+print('number of fields',len(
+    np.unique(pixels['healpixID'])),len(pixels['healpixID']))
 
 pixels = np.unique(pixels[['healpixID','pixRa','pixDec']])
 
@@ -309,16 +312,17 @@ if dithering:
     hppix = HEALPix(nside=nside, order='nested')
     pixDither = None
     for (pixRa,pixDec) in pixels[['pixRa','pixDec']]:
-        healpixID_around = hppix.cone_search_lonlat(pixRa * u.deg, pixDec* u.deg, radius=3*u.deg)
-        coordpix = hp.pix2ang(nside, healpixID_around, nest=True, lonlat=True) 
+        healpixID_around = hppix.cone_search_lonlat(
+            pixRa * u.deg, pixDec* u.deg, radius=3*u.deg)
+        coordpix = hp.pix2ang(nside, healpixID_around, nest=True, lonlat=True)
         coords = SkyCoord(coordpix[0], coordpix[1], unit='deg')
-        #print(coordpix[0])
+        # print(coordpix[0])
         arr = np.array(healpixID_around,dtype=[('healpixID', 'i8')])
         arr = rf.append_fields(arr, 'pixRa', coordpix[0])
         arr = rf.append_fields(arr, 'pixDec', coordpix[1])
         print(pixRa,pixDec,len(arr))
-        #arr = np.array([healpixID_around,coords[0],coords[1]])
-        #print(arr)
+        # arr = np.array([healpixID_around,coords[0],coords[1]])
+        # print(arr)
         if pixDither is None:
             pixDither = arr
         else:
@@ -328,14 +332,14 @@ if dithering:
 """
 # this is a more complicated tessalation using a LSST Focal Plane
 # Get the shape to identify overlapping obs
-#shape = GetShape(nside, overlap)
-#fig, ax = plt.subplots()
+# shape = GetShape(nside, overlap)
+# fig, ax = plt.subplots()
 
 
-#print('obsfocal plane',time.time()-time_ref)
+# print('obsfocal plane',time.time()-time_ref)
 
-#healpixels = np.unique(obsPixels['healpixID'])[:10]
-#res = loop(healpixels, obsFocalPlane, band, metricList)
+# healpixels = np.unique(obsPixels['healpixID'])[:10]
+# res = loop(healpixels, obsFocalPlane, band, metricList)
 
 # print(res)
 
@@ -359,7 +363,7 @@ plt.show()
 
 timeref = time.time()
 
-#healpixels = np.unique(pixels[['healpixID','pixRa','pixDec']])
+# healpixels = np.unique(pixels[['healpixID','pixRa','pixDec']])
 healpixels = areas
 npixels = int(len(healpixels))
 delta = npixels
@@ -372,21 +376,22 @@ if npixels not in tabpix:
 
 tabpix = tabpix.tolist()
 
+"""
 if nproc > 1:
     if tabpix[-1]-tabpix[-2] <= 10:
         tabpix.remove(tabpix[-2])
-
+"""
 print(tabpix, len(tabpix))
 result_queue = multiprocessing.Queue()
 for j in range(len(tabpix)-1):
-#for j in range(4,5):
+    # for j in range(3, 4):
     ida = tabpix[j]
     idb = tabpix[j+1]
-    #print('go', ida, idb)
-    #p = multiprocessing.Process(name='Subprocess-'+str(j), target=loop, args=(
+    # print('go', ida, idb)
+    # p = multiprocessing.Process(name='Subprocess-'+str(j), target=loop, args=(
     #    healpixels[ida:idb],band, metricList, shape,observations,j, result_queue))
     p = multiprocessing.Process(name='Subprocess-'+str(j), target=loop_area, args=(
-        healpixels[ida:idb],band, metricList,observations,nside,j, result_queue))
+        healpixels[ida:idb], band, metricList, observations, nside, j, result_queue))
     p.start()
 
 
