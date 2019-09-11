@@ -86,43 +86,49 @@ class SNRRateMetricWrapper:
                                  coadd=self.coadd, season=self.season, z=self.z, bands=self.bands, snr_ref=self.snr_ref)
         return metric.run(np.copy(obs))
 
-class NSNMetricWrapper:
-    def __init__(self,fieldtype='DD',nside=64,pixArea=9.6,season=-1, overlap=0.5):
 
+class NSNMetricWrapper:
+    def __init__(self, fieldtype='DD', nside=64, pixArea=9.6, season=-1, ploteffi=False, verbose=False):
 
         zmax = 1.3
 
-        self.name = 'NSNMetric_{}_zlim_overl_{}_nside_{}'.format(fieldtype,np.round(overlap,2),nside)
-        Instrument={}
-        Instrument['name'] = 'LSST'       #name of the telescope (internal)
-        Instrument['throughput_dir'] = 'LSST_THROUGHPUTS_BASELINE' #dir of throughput
-        Instrument['atmos_dir'] = 'THROUGHPUTS_DIR'   #dir of atmos
-        Instrument['airmass'] = 1.2   #airmass value
-        Instrument['atmos'] = True  #atmos
-        Instrument['aerosol'] = False  #aerosol
+        self.name = 'NSNMetric_{}_zlim_nside_{}'.format(fieldtype, nside)
+
+        Instrument = {}
+        Instrument['name'] = 'LSST'  # name of the telescope (internal)
+        # dir of throughput
+        Instrument['throughput_dir'] = 'LSST_THROUGHPUTS_BASELINE'
+        Instrument['atmos_dir'] = 'THROUGHPUTS_DIR'  # dir of atmos
+        Instrument['airmass'] = 1.2  # airmass value
+        Instrument['atmos'] = True  # atmos
+        Instrument['aerosol'] = False  # aerosol
 
         lc_reference = {}
         gamma_reference = 'reference_files/gamma.hdf5'
 
         print('Loading reference files',)
-        for (x1,color) in [(-2.0,0.2),(0.0,0.0)]:
-            fname = '/sps/lsst/data/dev/pgris/Templates_final_new/LC_{}_{}_vstack.hdf5'.format(x1,color)
-            lc_reference[(x1,color)] = GetReference(fname,gamma_reference,Instrument)
+        for (x1, color) in [(-2.0, 0.2), (0.0, 0.0)]:
+            #fname = '/sps/lsst/data/dev/pgris/Templates_final_new/LC_{}_{}_vstack.hdf5'.format(x1,color)
+            fname = '/home/philippe/LSST/test_pipeline/sn_pipe/templates/LC_{}_{}_vstack.hdf5'.format(
+                x1, color)
+            lc_reference[(x1, color)] = GetReference(
+                fname, gamma_reference, Instrument)
 
         print('Reference data loaded')
-        #metric instance
+        # metric instance
 
-        self.metric = SNNSNMetric(lc_reference,season=season, zmax=zmax,pixArea=pixArea)
+        self.metric = SNNSNMetric(
+            lc_reference, season=season, zmax=zmax, pixArea=pixArea, verbose=verbose, ploteffi=ploteffi)
 
-    def run(self,obs):
+    def run(self, obs):
         return self.metric.run(obs)
 
+
 class SLMetricWrapper:
-    def __init__(self,season=-1, nside=64):
+    def __init__(self, season=-1, nside=64):
 
         self.name = 'SLMetric'
         self.metric = SLSNMetric(season=season, nside=nside)
 
-
-    def run(self,obs):
+    def run(self, obs):
         return self.metric.run(obs)
