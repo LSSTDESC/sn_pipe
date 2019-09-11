@@ -78,7 +78,6 @@ def selectDD(obs, nside, fieldIds):
 
             df = pd.DataFrame(np.copy(pixels))
 
-            print('ooo', np.unique(pixels['pixRA', 'pixDec']))
             groups = df.groupby('healpixID').filter(lambda x: len(x) > 5000)
 
             group_DD = groups.groupby(['fieldRA', 'fieldDec']).filter(
@@ -212,9 +211,10 @@ parser.add_option("--zmax", type="float", default='1.2',
                   help="zmax for simu [%default]")
 parser.add_option("--dithering", type="int", default='0',
                   help="dithering for DDF [%default]")
-parser.add_option("--overlap", type="float", default='0.9',
-                  help="overlap focal plane/pixel [%default]")
-
+# parser.add_option("--overlap", type="float", default='0.9',
+#                  help="overlap focal plane/pixel [%default]")
+parser.add_option("--simuType", type="int", default='0',
+                  help="flag for new simulations [%default]")
 
 opts, args = parser.parse_args()
 
@@ -237,7 +237,7 @@ x1 = opts.x1
 color = opts.color
 zmax = opts.zmax
 dithering = opts.dithering
-overlap = opts.overlap
+simuType = opts.simuType
 
 pixArea = hp.nside2pixarea(nside, degrees=True)
 outDir = 'MetricOutput'
@@ -252,7 +252,8 @@ metricList.append(CadenceMetricWrapper(season=seasons))
 """
 # metricList.append(SNRRateMetricWrapper(z=0.3))
 metricList.append(NSNMetricWrapper(fieldtype=fieldtype,
-                                   pixArea=pixArea, season=-1, overlap=overlap, nside=nside))
+                                   pixArea=pixArea, season=[2], nside=nside,
+                                   verbose=True, ploteffi=False))
 
 # metricList.append(SLMetricWrapper(season=-1, nside=64))
 
@@ -282,17 +283,26 @@ if fieldtype =='WFD':
 # this is a "simple" tessalation using healpix
 dictArea = {}
 if fieldtype == 'DD':
-    fieldIds = [290, 744, 1427, 2412, 2786]
+    if simuType > 0:
+        fieldIds = [0]
+    else:
+        fieldIds = [290, 744, 1427, 2412, 2786]
     # fieldIds = [0]
-    # pixels = selectDD(observations,nside,fieldIds)
-    observations = getFields(observations, fieldIds)
-    print(np.unique(observations['fieldId']))
+    if simuType == 2:
+        pixels = selectDD(observations, nside, fieldIds)
+        print('hello ', pixels)
+        observations = np.copy(pixels)
+    else:
+        observations = getFields(observations, fieldIds)
+    # print(np.unique(observations['fieldId']))
     r = []
     r.append(('COSMOS', 2786, 150.36, 2.84))
     r.append(('XMM-LSS', 2412, 34.39, -5.09))
     r.append(('CDFS', 1427, 53.00, -27.44))
-    # r.append(('ELAIS', 744, 10.0, -45.52))
-    r.append(('ELAIS', 744, 0.0, -45.52))
+    if simuType == 1:
+        r.append(('ELAIS', 744, 10.0, -45.52))
+    else:
+        r.append(('ELAIS', 744, 0.0, -45.52))
     r.append(('SPT', 290, 349.39, -63.32))
 
     areas = np.rec.fromrecords(r, names=['name', 'fieldId', 'Ra', 'Dec'])
@@ -383,13 +393,14 @@ if nproc > 1:
 """
 print(tabpix, len(tabpix))
 result_queue = multiprocessing.Queue()
-for j in range(len(tabpix)-1):
-    # for j in range(3, 4):
+# for j in range(len(tabpix)-1):
+for j in range(0, 1):
     ida = tabpix[j]
     idb = tabpix[j+1]
     # print('go', ida, idb)
     # p = multiprocessing.Process(name='Subprocess-'+str(j), target=loop, args=(
     #    healpixels[ida:idb],band, metricList, shape,observations,j, result_queue))
+    print('Field', healpixels[ida:idb])
     p = multiprocessing.Process(name='Subprocess-'+str(j), target=loop_area, args=(
         healpixels[ida:idb], band, metricList, observations, nside, j, result_queue))
     p.start()
