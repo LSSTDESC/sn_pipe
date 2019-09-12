@@ -88,7 +88,7 @@ class SNRRateMetricWrapper:
 
 
 class NSNMetricWrapper:
-    def __init__(self, fieldtype='DD', nside=64, pixArea=9.6, season=-1, ploteffi=False, verbose=False):
+    def __init__(self, fieldtype='DD', nside=64, pixArea=9.6, season=-1, templateDir='',ploteffi=False, verbose=False):
 
         zmax = 1.3
 
@@ -108,9 +108,8 @@ class NSNMetricWrapper:
 
         print('Loading reference files',)
         for (x1, color) in [(-2.0, 0.2), (0.0, 0.0)]:
-            #fname = '/sps/lsst/data/dev/pgris/Templates_final_new/LC_{}_{}_vstack.hdf5'.format(x1,color)
-            fname = '/home/philippe/LSST/test_pipeline/sn_pipe/templates/LC_{}_{}_vstack.hdf5'.format(
-                x1, color)
+            fname = '{}/LC_{}_{}_vstack.hdf5'.format(templateDir,x1,color)
+           
             lc_reference[(x1, color)] = GetReference(
                 fname, gamma_reference, Instrument)
 

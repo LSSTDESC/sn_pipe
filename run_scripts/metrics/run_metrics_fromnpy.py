@@ -98,7 +98,7 @@ def loop_area(pointings, band, metricList, observations, nside, j=0, output_q=No
     print('Starting processing', len(pointings), pointings)
     for pointing in pointings:
         myprocess = ProcessArea(
-            nside, pointing['Ra'], pointing['Dec'], 3., 3., 'fieldRA', 'fieldDec')
+            nside, pointing['Ra'], pointing['Dec'], 5., 5., 'fieldRA', 'fieldDec')
 
         resdict = myprocess.process(observations, metricList)
         for key in resfi.keys():
@@ -196,6 +196,8 @@ parser = OptionParser()
 parser.add_option("--dbName", type="str", default='alt_sched',
                   help="db name [%default]")
 parser.add_option("--dbDir", type="str", default='', help="db dir [%default]")
+parser.add_option("--outDir", type="str", default='', help="output dir [%default]")
+parser.add_option("--templateDir", type="str", default='', help="template dir [%default]")
 parser.add_option("--nside", type="int", default=64,
                   help="healpix nside [%default]")
 parser.add_option("--band", type="str", default='r', help="band [%default]")
@@ -238,9 +240,15 @@ color = opts.color
 zmax = opts.zmax
 dithering = opts.dithering
 simuType = opts.simuType
+outDir = opts.outDir
+templateDir = opts.templateDir
 
 pixArea = hp.nside2pixarea(nside, degrees=True)
-outDir = 'MetricOutput'
+if outDir == '':
+    outDir = 'MetricOutput'
+if templateDir == '':
+    templateDir = '/sps/lsst/data/dev/pgris/Templates_final_new'
+
 if not os.path.isdir(outDir):
     os.makedirs(outDir)
 # List of (instance of) metrics to process
@@ -252,7 +260,8 @@ metricList.append(CadenceMetricWrapper(season=seasons))
 """
 # metricList.append(SNRRateMetricWrapper(z=0.3))
 metricList.append(NSNMetricWrapper(fieldtype=fieldtype,
-                                   pixArea=pixArea, season=[2], nside=nside,
+                                   pixArea=pixArea, season=-1, 
+                                   nside=nside,templateDir=templateDir,
                                    verbose=True, ploteffi=False))
 
 # metricList.append(SLMetricWrapper(season=-1, nside=64))
@@ -393,8 +402,8 @@ if nproc > 1:
 """
 print(tabpix, len(tabpix))
 result_queue = multiprocessing.Queue()
-# for j in range(len(tabpix)-1):
-for j in range(0, 1):
+for j in range(len(tabpix)-1):
+#for j in range(0, 1):
     ida = tabpix[j]
     idb = tabpix[j+1]
     # print('go', ida, idb)
