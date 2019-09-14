@@ -17,12 +17,18 @@ from astropy import units as u
 from astropy.coordinates import SkyCoord
 import numpy.lib.recfunctions as rf
 from sn_stackers.coadd_stacker import CoaddStacker
-from sn_tools.sn_obs import OverlapGnomonic
+from sn_tools.sn_obs import pavingSky
 
 
-def getFields(obs, fieldIds):
+def getFields(observations, fieldIds):
 
     obs = None
+    print(np.unique(observations['proposalId']))
+    propId = list(np.unique(observations['proposalId']))
+
+    if len(propId) > 3 and fieldIds == [1]:
+        idx = observations['proposalId'] == 1
+        return np.copy(observations[idx])
 
     """
     print('hhh',np.unique(observations['fieldId']))
@@ -98,7 +104,7 @@ def loop_area(pointings, band, metricList, observations, nside, j=0, output_q=No
     print('Starting processing', len(pointings), pointings)
     for pointing in pointings:
         myprocess = ProcessArea(
-            nside, pointing['Ra'], pointing['Dec'], 5., 5., 'fieldRA', 'fieldDec')
+            nside, pointing['Ra'], pointing['Dec'], pointing['radius'], pointing['radius'], 'fieldRA', 'fieldDec')
 
         resdict = myprocess.process(observations, metricList)
         for key in resfi.keys():
@@ -196,8 +202,10 @@ parser = OptionParser()
 parser.add_option("--dbName", type="str", default='alt_sched',
                   help="db name [%default]")
 parser.add_option("--dbDir", type="str", default='', help="db dir [%default]")
-parser.add_option("--outDir", type="str", default='', help="output dir [%default]")
-parser.add_option("--templateDir", type="str", default='', help="template dir [%default]")
+parser.add_option("--outDir", type="str", default='',
+                  help="output dir [%default]")
+parser.add_option("--templateDir", type="str", default='',
+                  help="template dir [%default]")
 parser.add_option("--nside", type="int", default=64,
                   help="healpix nside [%default]")
 parser.add_option("--band", type="str", default='r', help="band [%default]")
@@ -260,9 +268,9 @@ metricList.append(CadenceMetricWrapper(season=seasons))
 """
 # metricList.append(SNRRateMetricWrapper(z=0.3))
 metricList.append(NSNMetricWrapper(fieldtype=fieldtype,
-                                   pixArea=pixArea, season=-1, 
-                                   nside=nside,templateDir=templateDir,
-                                   verbose=True, ploteffi=False))
+                                   pixArea=pixArea, season=-1,
+                                   nside=nside, templateDir=templateDir,
+                                   verbose=False, ploteffi=False))
 
 # metricList.append(SLMetricWrapper(season=-1, nside=64))
 
@@ -291,6 +299,7 @@ if fieldtype =='WFD':
 # fieldIds = [290,1427, 2412, 2786]
 # this is a "simple" tessalation using healpix
 dictArea = {}
+radius = 3.
 if fieldtype == 'DD':
     if simuType > 0:
         fieldIds = [0]
@@ -305,19 +314,25 @@ if fieldtype == 'DD':
         observations = getFields(observations, fieldIds)
     # print(np.unique(observations['fieldId']))
     r = []
-    r.append(('COSMOS', 2786, 150.36, 2.84))
-    r.append(('XMM-LSS', 2412, 34.39, -5.09))
-    r.append(('CDFS', 1427, 53.00, -27.44))
+    r.append(('COSMOS', 2786, 150.36, 2.84, radius))
+    r.append(('XMM-LSS', 2412, 34.39, -5.09, radius))
+    r.append(('CDFS', 1427, 53.00, -27.44, radius))
     if simuType == 1:
-        r.append(('ELAIS', 744, 10.0, -45.52))
+        r.append(('ELAIS', 744, 10.0, -45.52, radius))
     else:
-        r.append(('ELAIS', 744, 0.0, -45.52))
-    r.append(('SPT', 290, 349.39, -63.32))
+        r.append(('ELAIS', 744, 0.0, -45.52, radius))
+    r.append(('SPT', 290, 349.39, -63.32, radius))
 
-    areas = np.rec.fromrecords(r, names=['name', 'fieldId', 'Ra', 'Dec'])
+    areas = np.rec.fromrecords(
+        r, names=['name', 'fieldId', 'Ra', 'Dec', 'radius'])
 
 else:
-    pixels = pixelate(observations, nside, RaCol='fieldRA', DecCol='fieldDec')
+    #pixels = pixelate(observations, nside, RaCol='fieldRA', DecCol='fieldDec')
+
+    areas = pavingSky(0., 360., -80., 20., radius)
+    observations = getFields(observations, fieldIds=[1])
+
+print('observations', len(observations))
 
 """
 print('number of fields',len(
@@ -403,7 +418,7 @@ if nproc > 1:
 print(tabpix, len(tabpix))
 result_queue = multiprocessing.Queue()
 for j in range(len(tabpix)-1):
-#for j in range(0, 1):
+    # for j in range(0, 1):
     ida = tabpix[j]
     idb = tabpix[j+1]
     # print('go', ida, idb)
