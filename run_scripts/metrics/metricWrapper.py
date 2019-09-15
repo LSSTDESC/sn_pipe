@@ -88,7 +88,7 @@ class SNRRateMetricWrapper:
 
 
 class NSNMetricWrapper:
-    def __init__(self, fieldtype='DD', nside=64, pixArea=9.6, season=-1, templateDir='',ploteffi=False, verbose=False):
+    def __init__(self, fieldtype='DD', nside=64, pixArea=9.6, season=-1, templateDir='', ploteffi=False, verbose=False):
 
         zmax = 1.3
 
@@ -108,16 +108,33 @@ class NSNMetricWrapper:
 
         print('Loading reference files',)
         for (x1, color) in [(-2.0, 0.2), (0.0, 0.0)]:
-            fname = '{}/LC_{}_{}_vstack.hdf5'.format(templateDir,x1,color)
-           
+            fname = '{}/LC_{}_{}_vstack.hdf5'.format(templateDir, x1, color)
+
             lc_reference[(x1, color)] = GetReference(
                 fname, gamma_reference, Instrument)
 
         print('Reference data loaded')
+
+        # LC selection criteria
+
+        if fieldtype == 'DD':
+            N_bef = 5
+            N_aft = 10
+            snr_min = 5.
+            N_phase_min = 1
+            N_phase_max = 1
+
+        if fieldtype == 'WFD':
+            N_bef = 4
+            N_aft = 10
+            snr_min = 0.
+            N_phase_min = 0
+            N_phase_max = 0
+
         # metric instance
 
         self.metric = SNNSNMetric(
-            lc_reference, season=season, zmax=zmax, pixArea=pixArea, verbose=verbose, ploteffi=ploteffi)
+            lc_reference, season=season, zmax=zmax, pixArea=pixArea, verbose=verbose, ploteffi=ploteffi, N_bef=N_bef, N_aft=N_aft, snr_min=snr_min, N_phase_min=N_phase_min, N_phase_max=N_phase_max)
 
     def run(self, obs):
         return self.metric.run(obs)
