@@ -10,17 +10,14 @@ import os
 
 
 class CadenceMetricWrapper:
-    def __init__(self, season=-1, coadd=False):
+    def __init__(self, season=-1, coadd=True):
 
         self.metric = SNCadenceMetric(coadd=coadd)
         self.name = 'CadenceMetric'
 
-    def run(self, band, obs, filterCol='filter'):
-        sel = obs
-        if band != 'all':
-            idx = obs[filterCol] == band
-            sel = obs[idx]
-        return self.metric.run(sel)
+    def run(self,obs,filterCol='filter'):
+        
+        return self.metric.run(obs)
 
 
 class SNRMetricWrapper:
