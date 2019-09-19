@@ -32,6 +32,9 @@ def getFields(observations, fieldIds):
         if len(propId) > 3:
             idx = observations['proposalId'] == 3
             return np.copy(observations[idx])
+        elif  len(propId) ==2:
+             idx = observations['proposalId'] == 1
+             return np.copy(observations[idx])
         else:
             idx = observations['proposalId'] == 0
             return np.copy(observations[idx]) 
@@ -100,7 +103,7 @@ def selectDD(obs, nside, fieldIds):
             return group_DD.to_records(index=False)
 
 
-def loop_area(pointings, band, metricList, observations, nside, outDir,dbName,j=0, output_q=None):
+def loop_area(pointings, band, metricList, observations, nside, outDir,dbName,saveData,j=0, output_q=None):
 
     resfi = {}
     #print(np.unique(observations[['fieldRA', 'fieldDec']]))
@@ -118,7 +121,7 @@ def loop_area(pointings, band, metricList, observations, nside, outDir,dbName,j=
     time_ref = time.time()
     #print('Starting processing', len(pointings),j)
     ipoint = 1
-    myprocess = ProcessArea(nside,'fieldRA', 'fieldDec',j,outputDir,dbName)
+    myprocess = ProcessArea(nside,'fieldRA', 'fieldDec',j,outputDir,dbName,saveData)
     for pointing in pointings:
         ipoint += 1
         #print('pointing',ipoint)
@@ -252,7 +255,12 @@ parser.add_option("--dithering", type="int", default='0',
 #                  help="overlap focal plane/pixel [%default]")
 parser.add_option("--simuType", type="int", default='0',
                   help="flag for new simulations [%default]")
-
+parser.add_option("--saveData", type="int", default='0',
+                  help="flag to dump data on disk [%default]")
+parser.add_option("--metric", type="str", default='cadence',
+                  help="metric to process [%default]")
+parser.add_option("--coadd", type="int", default='1',
+                  help="nightly coaddition [%default]")
 opts, args = parser.parse_args()
 
 print('Start processing...')
@@ -277,6 +285,9 @@ dithering = opts.dithering
 simuType = opts.simuType
 outDir = opts.outDir
 templateDir = opts.templateDir
+saveData = opts.saveData
+metric = opts.metric
+coadd = opts.coadd
 
 pixArea = hp.nside2pixarea(nside, degrees=True)
 if outDir == '':
@@ -301,7 +312,16 @@ metricList.append(NSNMetricWrapper(fieldtype=fieldtype,
                                    nside=nside, templateDir=templateDir,
                                    verbose=False, ploteffi=False))
 """
-metricList.append(SLMetricWrapper(season=-1, nside=64))
+if metric == 'NSN':
+    metricList.append(NSNMetricWrapper(fieldtype=fieldtype,
+                                       pixArea=pixArea,season=-1,
+                                       nside=nside, templateDir=templateDir,
+                                       verbose=False, ploteffi=False))
+
+if metric == 'Cadence':
+    metricList.append(CadenceMetricWrapper(season=-1,coadd=coadd,fieldtype=fieldtype))
+if metric == 'SL':
+    metricList.append(SLMetricWrapper(nside=nside,coadd=coadd,fieldtype=fieldtype))
 
 # loading observations
 
@@ -393,7 +413,7 @@ result_queue = multiprocessing.Queue()
 
 
 for j in range(len(tabpix)-1):
-#for j in range(1,2):
+#for j in range(4,5):
     ida = tabpix[j]
     idb = tabpix[j+1]
     # print('go', ida, idb)
@@ -401,7 +421,7 @@ for j in range(len(tabpix)-1):
     #    healpixels[ida:idb],band, metricList, shape,observations,j, result_queue))
     print('Field', healpixels[ida:idb])
     p = multiprocessing.Process(name='Subprocess-'+str(j), target=loop_area, args=(
-        healpixels[ida:idb], band, metricList, observations, nside,outputDir,dbName, j, result_queue))
+        healpixels[ida:idb], band, metricList, observations, nside,outputDir,dbName, saveData,j, result_queue))
     p.start()
 
 

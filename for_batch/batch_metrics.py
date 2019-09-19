@@ -1,7 +1,7 @@
 import os
 import numpy as np
 
-def batch(dbDir,dbName,scriptref,nside,simuType,outDir,nprocprog,nproccomp,fieldType):
+def batch(dbDir,dbName,scriptref,nside,simuType,outDir,nprocprog,nproccomp,fieldType,saveData,metric,coadd):
     cwd = os.getcwd()
     dirScript= cwd + "/scripts"
 
@@ -42,6 +42,9 @@ def batch(dbDir,dbName,scriptref,nside,simuType,outDir,nprocprog,nproccomp,field
     cmd += ' --nproc {} --nside {} --simuType {}'.format(nprocprog,nside,simuType)
     cmd += ' --outDir {}'.format(outDir)
     cmd += ' --fieldtype {}'.format(fieldType)
+    cmd += ' --saveData {}'.format(saveData)
+    cmd += ' --metric {}'.format(metric)
+    cmd += ' --coadd {}'.format(coadd)
     script.write(cmd+" \n")
     script.write("EOF" + "\n")
     script.close()
@@ -93,6 +96,8 @@ print(len(dbNames))
 
 
 fieldType = 'WFD'
+metric = 'Cadence'
+coadd = 0
 
 if fieldType =='DD':
     dbNames = ['kraken_2026','ddf_0.23deg_1exp_pairsmix_10yrs','ddf_0.70deg_1exp_pairsmix_10yrs','ddf_pn_0.23deg_1exp_pairsmix_10yrs','ddf_pn_0.70deg_1exp_pairsmix_10yrs']
@@ -101,7 +106,8 @@ if fieldType =='DD':
 
 if fieldType =='WFD':
     dbNames = ['kraken_2026','alt_sched','alt_sched_rolling','baseline_1exp_nopairs_10yrs','baseline_1exp_pairsame_10yrs','baseline_1exp_pairsmix_10yrs','baseline_2exp_pairsame_10yrs','baseline_2exp_pairsmix_10yrs','roll_mod2_sdf0.2mixed_10yrs']
-    dbNames = ['alt_sched_rolling', 'kraken_2026','rolling_10yrs_opsim']
+    #dbNames = ['alt_sched_rolling', 'kraken_2026','rolling_10yrs_opsim']
+    dbNames = ['kraken_2026']
     simuType = [1]*len(dbNames)
     nproc = 8
     
@@ -113,6 +119,6 @@ outDir='/sps/lsst/users/gris/MetricOutput'
 for i,dbName in enumerate(dbNames):
     
     for nside in [64]:
-        batch(dbDir,dbName,'run_scripts/metrics/run_metrics_fromnpy',nside,simuType[i],outDir,nproc,8,fieldType)
+        batch(dbDir,dbName,'run_scripts/metrics/run_metrics_fromnpy',nside,simuType[i],outDir,nproc,8,fieldType,1,metric,coadd)
     #batch(dbDir,dbName,'run_scripts/run_metrics_fromnpy','all',8)
     
