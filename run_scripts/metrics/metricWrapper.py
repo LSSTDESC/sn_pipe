@@ -10,10 +10,10 @@ import os
 
 
 class CadenceMetricWrapper:
-    def __init__(self, season=-1, coadd=True):
+    def __init__(self, season=-1, coadd=True, fieldtype='DD'):
 
         self.metric = SNCadenceMetric(coadd=coadd)
-        self.name = 'CadenceMetric'
+        self.name = 'CadenceMetric_{}'.format(fieldtype)
 
     def run(self,obs,filterCol='filter'):
         

@@ -18,6 +18,7 @@ from astropy.coordinates import SkyCoord
 import numpy.lib.recfunctions as rf
 from sn_stackers.coadd_stacker import CoaddStacker
 from sn_tools.sn_obs import pavingSky
+import glob
 
 
 def getFields(observations, fieldIds):
@@ -26,9 +27,14 @@ def getFields(observations, fieldIds):
     print(np.unique(observations['proposalId']))
     propId = list(np.unique(observations['proposalId']))
 
-    if len(propId) > 3 and fieldIds == [1]:
-        idx = observations['proposalId'] == 1
-        return np.copy(observations[idx])
+    # this is for the WFD
+    if fieldIds == [1]:
+        if len(propId) > 3:
+            idx = observations['proposalId'] == 3
+            return np.copy(observations[idx])
+        else:
+            idx = observations['proposalId'] == 0
+            return np.copy(observations[idx]) 
 
     """
     print('hhh',np.unique(observations['fieldId']))
@@ -45,7 +51,8 @@ def getFields(observations, fieldIds):
     plt.show()
     """
 
-    print('selection', fieldIds)
+    # this is for DDF
+    print('selection', fieldIds,observations.dtype)
     for fieldId in fieldIds:
         idf = observations['fieldId'] == fieldId
         if obs is None:
@@ -93,20 +100,39 @@ def selectDD(obs, nside, fieldIds):
             return group_DD.to_records(index=False)
 
 
-def loop_area(pointings, band, metricList, observations, nside, j=0, output_q=None):
+def loop_area(pointings, band, metricList, observations, nside, outDir,dbName,j=0, output_q=None):
 
     resfi = {}
-    print(np.unique(observations[['fieldRA', 'fieldDec']]))
+    #print(np.unique(observations[['fieldRA', 'fieldDec']]))
+    
+    print('processing pointings',j)
+    
     for metric in metricList:
         resfi[metric.name] = None
+        listf = glob.glob('{}/*_{}_{}*'.format(outputDir,metric.name,j))
+        if len(listf) > 0:
+            for val in listf:
+                os.system('rm {}'.format(val))
 
+    #print(test)
     time_ref = time.time()
-    print('Starting processing', len(pointings), pointings)
+    #print('Starting processing', len(pointings),j)
+    ipoint = 1
+    myprocess = ProcessArea(nside,'fieldRA', 'fieldDec',j,outputDir,dbName)
     for pointing in pointings:
+        ipoint += 1
+        #print('pointing',ipoint)
+        
+        """
         myprocess = ProcessArea(
-            nside, pointing['Ra'], pointing['Dec'], pointing['radius'], pointing['radius'], 'fieldRA', 'fieldDec')
+            nside, pointing['Ra'], pointing['Dec'], pointing['radius'], pointing['radius'], 'fieldRA', 'fieldDec',j,outDir,dbName)
+        """
+        #resdict = myprocess.process(observations, metricList,ipoint)
+        resdict = myprocess(observations, metricList, pointing['Ra'], pointing['Dec'], pointing['radius'], pointing['radius'],ipoint)
+        
+        
 
-        resdict = myprocess.process(observations, metricList)
+    """
         for key in resfi.keys():
             if resdict[key] is not None:
                 if resfi[key] is None:
@@ -115,14 +141,15 @@ def loop_area(pointings, band, metricList, observations, nside, j=0, output_q=No
                     # print('vstack',key,resfi[key],resdict[key])
                     # resfi[key] = np.vstack([resfi[key], resdict[key]])
                     resfi[key] = np.concatenate((resfi[key], resdict[key]))
+    """
+    print('end of processing for', j,time.time()-time_ref)
 
-    print('end of processing', time.time()-time_ref)
-
+    """
     if output_q is not None:
         return output_q.put({j: resfi})
     else:
         return resfi
-
+    """
 
 def loop(healpixels, band, metricList, shape, observations, j=0, output_q=None):
 
@@ -257,22 +284,24 @@ if outDir == '':
 if templateDir == '':
     templateDir = '/sps/lsst/data/dev/pgris/Templates_final_new'
 
-if not os.path.isdir(outDir):
-    os.makedirs(outDir)
+outputDir = '{}/{}'.format(outDir,dbName)
+if not os.path.isdir(outputDir):
+    os.makedirs(outputDir)
 # List of (instance of) metrics to process
 metricList = []
 """
 if band != 'all':
     metricList.append(SNRMetricWrapper(z=0.3))
-metricList.append(CadenceMetricWrapper(season=seasons))
+"""
+#metricList.append(CadenceMetricWrapper(season=seasons,fieldtype=fieldtype))
 """
 # metricList.append(SNRRateMetricWrapper(z=0.3))
 metricList.append(NSNMetricWrapper(fieldtype=fieldtype,
                                    pixArea=pixArea, season=-1,
                                    nside=nside, templateDir=templateDir,
                                    verbose=False, ploteffi=False))
-
-# metricList.append(SLMetricWrapper(season=-1, nside=64))
+"""
+metricList.append(SLMetricWrapper(season=-1, nside=64))
 
 # loading observations
 
@@ -328,72 +357,16 @@ if fieldtype == 'DD':
 
 else:
     #pixels = pixelate(observations, nside, RaCol='fieldRA', DecCol='fieldDec')
-
-    areas = pavingSky(0., 360., -80., 20., radius)
     observations = getFields(observations, fieldIds=[1])
+    minDec = np.min(observations['fieldDec'])-3.
+    maxDec = np.max(observations['fieldDec'])+3.
+    areas = pavingSky(0., 360., minDec,maxDec, radius)
+    #areas = pavingSky(20., 40., -40., -30., radius)
+   
 
-print('observations', len(observations))
-
-"""
-print('number of fields',len(
-    np.unique(pixels['healpixID'])),len(pixels['healpixID']))
-
-pixels = np.unique(pixels[['healpixID','pixRa','pixDec']])
-
-print(pixels)
-
-if dithering:
-    hppix = HEALPix(nside=nside, order='nested')
-    pixDither = None
-    for (pixRa,pixDec) in pixels[['pixRa','pixDec']]:
-        healpixID_around = hppix.cone_search_lonlat(
-            pixRa * u.deg, pixDec* u.deg, radius=3*u.deg)
-        coordpix = hp.pix2ang(nside, healpixID_around, nest=True, lonlat=True)
-        coords = SkyCoord(coordpix[0], coordpix[1], unit='deg')
-        # print(coordpix[0])
-        arr = np.array(healpixID_around,dtype=[('healpixID', 'i8')])
-        arr = rf.append_fields(arr, 'pixRa', coordpix[0])
-        arr = rf.append_fields(arr, 'pixDec', coordpix[1])
-        print(pixRa,pixDec,len(arr))
-        # arr = np.array([healpixID_around,coords[0],coords[1]])
-        # print(arr)
-        if pixDither is None:
-            pixDither = arr
-        else:
-            pixDither = np.concatenate((pixDither,arr))
-    pixels = pixDither
-    print("number of pixels for dithering",len(pixels))
-"""
-# this is a more complicated tessalation using a LSST Focal Plane
-# Get the shape to identify overlapping obs
-# shape = GetShape(nside, overlap)
-# fig, ax = plt.subplots()
+print('observations', len(observations),len(areas))
 
 
-# print('obsfocal plane',time.time()-time_ref)
-
-# healpixels = np.unique(obsPixels['healpixID'])[:10]
-# res = loop(healpixels, obsFocalPlane, band, metricList)
-
-# print(res)
-
-"""
-overlapdisp = OverlapGnomonic(nside)
-
-pointings = list(np.unique(observations[['fieldRA','fieldDec']]))
-
-
-print('rrrr',pointings)
-
-for pointing in pointings:
-    print(pointing)
-    fign, axn = plt.subplots()
-    overlapdisp.overlap_pixlist(np.unique(pixels[['healpixID','pixRa','pixDec']]),pointing,ax=axn)
-    axn.set_xlim(pointing[0]-6.,pointing[0]+6.)
-    axn.set_ylim(pointing[1]-6.,pointing[1]+6.)
-
-plt.show()
-"""
 
 timeref = time.time()
 
@@ -410,15 +383,17 @@ if npixels not in tabpix:
 
 tabpix = tabpix.tolist()
 
-"""
-if nproc > 1:
+
+if nproc >=7:
     if tabpix[-1]-tabpix[-2] <= 10:
         tabpix.remove(tabpix[-2])
-"""
+
 print(tabpix, len(tabpix))
 result_queue = multiprocessing.Queue()
+
+
 for j in range(len(tabpix)-1):
-    # for j in range(0, 1):
+#for j in range(1,2):
     ida = tabpix[j]
     idb = tabpix[j+1]
     # print('go', ida, idb)
@@ -426,17 +401,19 @@ for j in range(len(tabpix)-1):
     #    healpixels[ida:idb],band, metricList, shape,observations,j, result_queue))
     print('Field', healpixels[ida:idb])
     p = multiprocessing.Process(name='Subprocess-'+str(j), target=loop_area, args=(
-        healpixels[ida:idb], band, metricList, observations, nside, j, result_queue))
+        healpixels[ida:idb], band, metricList, observations, nside,outputDir,dbName, j, result_queue))
     p.start()
 
 
+"""
 resultdict = {}
 for i in range(len(tabpix)-1):
     resultdict.update(result_queue.get())
 
 for p in multiprocessing.active_children():
     p.join()
-
+"""
+"""
 restot = {}
 for metric in metricList:
     restot[metric.name] = None
@@ -450,5 +427,5 @@ for key, vals in resultdict.items():
 
 for key, vals in restot.items():
     np.save('{}/{}_{}.npy'.format(outDir, dbName, key), np.copy(vals))
-
-print('Done', time.time()-timeref)
+"""
+#print('Done', time.time()-timeref)

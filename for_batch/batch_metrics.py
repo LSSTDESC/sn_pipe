@@ -1,7 +1,7 @@
 import os
 import numpy as np
 
-def batch(dbDir,dbName,scriptref,band,nproc):
+def batch(dbDir,dbName,scriptref,nside,simuType,outDir,nprocprog,nproccomp,fieldType):
     cwd = os.getcwd()
     dirScript= cwd + "/scripts"
 
@@ -13,12 +13,12 @@ def batch(dbDir,dbName,scriptref,band,nproc):
         os.makedirs(dirLog)    
     
     
-    id='{}_{}'.format(dbName,band)
+    id='{}_{}_{}'.format(dbName,nside,fieldType)
     name_id='metric_{}'.format(id)
     log = dirLog + '/'+name_id+'.log'
 
 
-    qsub = 'qsub -P P_lsst -l sps=1,ct=05:00:00,h_vmem=16G -j y -o {} -pe multicores {} <<EOF'.format(log,nproc)
+    qsub = 'qsub -P P_lsst -l sps=1,ct=10:00:00,h_vmem=16G -j y -o {} -pe multicores {} <<EOF'.format(log,nproccomp)
     #qsub = "qsub -P P_lsst -l sps=1,ct=05:00:00,h_vmem=16G -j y -o "+ log + " <<EOF"
     scriptName = dirScript+'/'+name_id+'.sh'
 
@@ -29,9 +29,19 @@ def batch(dbDir,dbName,scriptref,band,nproc):
     script.write(" cd " + cwd + "\n")
     script.write(" echo 'sourcing setups' \n")
     script.write(" source setup_release.sh CCIN2P3\n")
+    script.write(" source export.sh CCIN2P3\n")
     script.write("echo 'sourcing done' \n")
+    """
+    script.write("export PYTHONPATH=sn_tools:$PYTHONPATH \n")
+    script.write("export PYTHONPATH=sn_metrics:$PYTHONPATH \n")
+    script.write("export PYTHONPATH=sn_stackers:$PYTHONPATH \n")
+    """
+    script.write("echo $PYTHONPATH \n")
 
-    cmd='python {}.py --dbDir {} --dbName {} --nproc {} --band {}'.format(scriptref,dbDir,dbName,nproc,band)
+    cmd = 'python {}.py --dbDir {} --dbName {}'.format(scriptref,dbDir,dbName)
+    cmd += ' --nproc {} --nside {} --simuType {}'.format(nprocprog,nside,simuType)
+    cmd += ' --outDir {}'.format(outDir)
+    cmd += ' --fieldtype {}'.format(fieldType)
     script.write(cmd+" \n")
     script.write("EOF" + "\n")
     script.close()
@@ -61,7 +71,7 @@ dbNames += ['baseline_1exp_nopairs_10yrs','baseline_1exp_pairsame_10yrs','baseli
           'hyak_baseline_1exp_pairsame_10yrs']
 
 
-dbNames = ['very_alt2_rm5illum20_10yrs','very_alt2_rm5illum40_10yrs','very_alt3_rm5illum20_10yrs','very_alt3_rm5illum40_10yrs','very_alt10yrs','very_alt2_rm5illum25_10yrs','very_alt2_rm5illum50_10yrs','very_alt3_rm5illum25_10yrs','very_alt3_rm5illum50_10yrs','very_alt2_rm5illum15_10yrs','very_alt2_rm5illum30_10yrs','very_alt3_rm5illum15_10yrs','very_alt3_rm5illum30_10yrs','very_alt_rm510yrs','noddf_1exp_pairsame_10yrs','desc_ddf_pn_0.70deg_1exp_pairsmix_10yrs','fc1exp_pairsmix_ilim30_10yrs','fc1exp_pairsmix_ilim60_10yrs',
+dbNames = ['very_alt2_rm5illum20_10yrs','very_alt2_rm5illum40_10yrs','very_alt3_rm5illum20_10yrs','very_alt3_rm5illum40_10yrs','very_alt10yrs','very_alt2_rm5illum25_10yrs','very_alt2_rm5illum50_10yrs','very_alt3_rm5illum25_10yrs','very_alt3_rm5illum50_10yrs','very_alt2_rm5illum15_10yrs','very_alt2_rm5illum30_10yrs','very_alt3_rm5illum15_10yrs','very_alt3_rm5illum30_10yrs','very_alt_rm510yrs','noddf_1exp_pairsame_10yrs','fc1exp_pairsmix_ilim30_10yrs','fc1exp_pairsmix_ilim60_10yrs',
 'fc1exp_pairsmix_ilim15_10yrs','stuck_rolling10yrs','shortt_2ns_1ext_pairsmix_10yrs','shortt_2ns_5ext_pairsmix_10yrs','shortt_5ns_5ext_pairsmix_10yrs','shortt_5ns_1ext_pairsmix_10yrs',
 'simple_roll_mod2_mixed_10yrs','roll_mod2_sdf0.2mixed_10yrs','simple_roll_mod3_sdf0.2mixed_10yrs',
 'roll_mod2_sdf0.1mixed_10yrs','roll_mod3_sdf0.2mixed_10yrs',
@@ -80,8 +90,29 @@ dbNames = ['very_alt2_rm5illum20_10yrs','very_alt2_rm5illum40_10yrs','very_alt3_
 
 print(len(dbNames))
 #dbDir = '/sps/lsst/cadence/LSST_SN_PhG/cadence_db/opsim_new'
-for dbName in dbNames:
-    for band in bands:
-        batch(dbDir,dbName,'run_scripts/run_metrics_fromnpy',band,8)
+
+
+fieldType = 'WFD'
+
+if fieldType =='DD':
+    dbNames = ['kraken_2026','ddf_0.23deg_1exp_pairsmix_10yrs','ddf_0.70deg_1exp_pairsmix_10yrs','ddf_pn_0.23deg_1exp_pairsmix_10yrs','ddf_pn_0.70deg_1exp_pairsmix_10yrs']
+    simuType = [0,1,1,1,1]
+    nproc=5
+
+if fieldType =='WFD':
+    dbNames = ['kraken_2026','alt_sched','alt_sched_rolling','baseline_1exp_nopairs_10yrs','baseline_1exp_pairsame_10yrs','baseline_1exp_pairsmix_10yrs','baseline_2exp_pairsame_10yrs','baseline_2exp_pairsmix_10yrs','roll_mod2_sdf0.2mixed_10yrs']
+    dbNames = ['alt_sched_rolling', 'kraken_2026','rolling_10yrs_opsim']
+    simuType = [1]*len(dbNames)
+    nproc = 8
+    
+
+
+
+outDir='/sps/lsst/users/gris/MetricOutput'
+
+for i,dbName in enumerate(dbNames):
+    
+    for nside in [64]:
+        batch(dbDir,dbName,'run_scripts/metrics/run_metrics_fromnpy',nside,simuType[i],outDir,nproc,8,fieldType)
     #batch(dbDir,dbName,'run_scripts/run_metrics_fromnpy','all',8)
     
