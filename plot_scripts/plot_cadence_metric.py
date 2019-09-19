@@ -35,7 +35,7 @@ mag_to_flux_files = []
 if fieldtype == 'WFD':
     SNR = dict(zip('griz', [30., 40., 30., 20.]))  # SNR for WFD
     dt_range = [0.5, 30.]  # WFD dt range
-    mag_range = [22., 25.5]  # WFD mag range
+    mag_range = [23., 26.5]  # WFD mag range
 
 if fieldtype == 'DD':
     SNR = dict(zip('griz', [25., 25., 30., 35.]))  # SNR for DD
@@ -58,11 +58,13 @@ idx = metricValues['filter'] == band
 
 metricValues = np.copy(metricValues[idx])
 
-sn_plot.plotMollview(64,metricValues,'cadence_mean','cadence','days',1.,band)
-sn_plot.plotMollview(64,metricValues,'m5_mean','m5','mag',24.,band)
+sn_plot.plotMollview(64,metricValues,'cadence_mean','cadence','days',1.,band,dbName,saveFig=True)
+sn_plot.plotMollview(64,metricValues,'m5_mean','m5','mag',24.,band,dbName,saveFig=True)
 sn_plot.plotCadence(band,Li_files,mag_to_flux_files,
                     SNR[band],
                     metricValues,
                     namesRef,
-                    mag_range=mag_range, dt_range=dt_range)
+                    mag_range=mag_range, dt_range=dt_range,
+                    dbName=dbName,
+                    saveFig=True)
 plt.show()
