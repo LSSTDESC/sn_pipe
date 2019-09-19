@@ -13,7 +13,7 @@ class CadenceMetricWrapper:
     def __init__(self, season=-1, coadd=True, fieldtype='DD'):
 
         self.metric = SNCadenceMetric(coadd=coadd)
-        self.name = 'CadenceMetric_{}'.format(fieldtype)
+        self.name = 'CadenceMetric_{}_coadd_{}'.format(fieldtype,coadd)
 
     def run(self,obs,filterCol='filter'):
         
@@ -138,9 +138,9 @@ class NSNMetricWrapper:
 
 
 class SLMetricWrapper:
-    def __init__(self, season=-1, nside=64):
+    def __init__(self, season=-1, nside=64,fieldtype='WFD'):
 
-        self.name = 'SLMetric'
+        self.name = 'SLMetric_{}'.format(fieldtype)
         self.metric = SLSNMetric(season=season, nside=nside)
 
     def run(self, obs):
