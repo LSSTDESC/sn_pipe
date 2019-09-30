@@ -19,9 +19,9 @@ import numpy.lib.recfunctions as rf
 from sn_stackers.coadd_stacker import CoaddStacker
 from sn_tools.sn_obs import pavingSky
 import glob
+from numpy import genfromtxt
 
-
-def getFields(observations, fieldIds):
+def getFields(observations, fieldIds, simuType=1):
 
     obs = None
     print(np.unique(observations['proposalId']))
@@ -34,6 +34,8 @@ def getFields(observations, fieldIds):
             return np.copy(observations[idx])
         elif  len(propId) ==2:
              idx = observations['proposalId'] == 1
+             if simuType == 2:
+                 idx = observations['proposalId'] == 0
              return np.copy(observations[idx])
         else:
             idx = observations['proposalId'] == 0
@@ -103,16 +105,16 @@ def selectDD(obs, nside, fieldIds):
             return group_DD.to_records(index=False)
 
 
-def loop_area(pointings, band, metricList, observations, nside, outDir,dbName,saveData,j=0, output_q=None):
+def loop_area(pointings, band, metricList, observations, nside, outDir,dbName,saveData,nodither,RaCol,DecCol,j=0, output_q=None):
 
     resfi = {}
     #print(np.unique(observations[['fieldRA', 'fieldDec']]))
     
-    print('processing pointings',j)
+    print('processing pointings',j,pointings)
     
     for metric in metricList:
         resfi[metric.name] = None
-        listf = glob.glob('{}/*_{}_{}*'.format(outputDir,metric.name,j))
+        listf = glob.glob('{}/*_{}_{}*'.format(outDir,metric.name,j))
         if len(listf) > 0:
             for val in listf:
                 os.system('rm {}'.format(val))
@@ -121,18 +123,22 @@ def loop_area(pointings, band, metricList, observations, nside, outDir,dbName,sa
     time_ref = time.time()
     #print('Starting processing', len(pointings),j)
     ipoint = 1
-    myprocess = ProcessArea(nside,'fieldRA', 'fieldDec',j,outputDir,dbName,saveData)
+    #myprocess = ProcessArea(nside,'fieldRA', 'fieldDec',j,outDir,dbName,saveData)
+    print('hhh',RaCol,DecCol)
+    myprocess = ProcessArea(nside,RaCol,DecCol,j,outDir,dbName,saveData)
     for pointing in pointings:
         ipoint += 1
         #print('pointing',ipoint)
         
+       
         """
         myprocess = ProcessArea(
             nside, pointing['Ra'], pointing['Dec'], pointing['radius'], pointing['radius'], 'fieldRA', 'fieldDec',j,outDir,dbName)
         """
         #resdict = myprocess.process(observations, metricList,ipoint)
-        resdict = myprocess(observations, metricList, pointing['Ra'], pointing['Dec'], pointing['radius'], pointing['radius'],ipoint)
-        
+        #print('obs',len(observations))
+        resdict = myprocess(observations, metricList, pointing['Ra'], pointing['Dec'], pointing['radius'], pointing['radius'],ipoint,nodither,display=False)
+        print(test)
         
 
     """
@@ -261,6 +267,18 @@ parser.add_option("--metric", type="str", default='cadence',
                   help="metric to process [%default]")
 parser.add_option("--coadd", type="int", default='1',
                   help="nightly coaddition [%default]")
+parser.add_option("--nodither", type="str", default='',
+                  help="to remove dithering - for DDF only[%default]")
+parser.add_option("--ramin", type=float, default=0.,
+                  help="ra min for obs area - for WDF only[%default]")
+parser.add_option("--ramax", type=float, default=360.,
+                  help="ra max for obs area - for WDF only[%default]")
+parser.add_option("--decmin", type=float, default=-1.,
+                  help="dec min for obs area - for WDF only[%default]")
+parser.add_option("--decmax", type=float, default=-1.,
+                  help="dec max for obs area - for WDF only[%default]")
+
+
 opts, args = parser.parse_args()
 
 print('Start processing...')
@@ -288,6 +306,11 @@ templateDir = opts.templateDir
 saveData = opts.saveData
 metric = opts.metric
 coadd = opts.coadd
+nodither = opts.nodither
+ramin = opts.ramin
+ramax = opts.ramax
+decmin = opts.decmin
+decmax = opts.decmax
 
 pixArea = hp.nside2pixarea(nside, degrees=True)
 if outDir == '':
@@ -295,7 +318,7 @@ if outDir == '':
 if templateDir == '':
     templateDir = '/sps/lsst/data/dev/pgris/Templates_final_new'
 
-outputDir = '{}/{}'.format(outDir,dbName)
+outputDir = '{}/{}{}'.format(outDir,dbName,nodither)
 if not os.path.isdir(outputDir):
     os.makedirs(outputDir)
 # List of (instance of) metrics to process
@@ -316,10 +339,10 @@ if metric == 'NSN':
     metricList.append(NSNMetricWrapper(fieldtype=fieldtype,
                                        pixArea=pixArea,season=-1,
                                        nside=nside, templateDir=templateDir,
-                                       verbose=False, ploteffi=False))
+                                       verbose=False, ploteffi=False,outeffi=True))
 
 if metric == 'Cadence':
-    metricList.append(CadenceMetricWrapper(season=-1,coadd=coadd,fieldtype=fieldtype))
+    metricList.append(CadenceMetricWrapper(season=-1,coadd=coadd,fieldtype=fieldtype,nside=nside,ramin=ramin,ramax=ramax,decmin=decmin,decmax=decmax))
 if metric == 'SL':
     metricList.append(SLMetricWrapper(nside=nside,coadd=coadd,fieldtype=fieldtype))
 
@@ -348,7 +371,7 @@ if fieldtype =='WFD':
 # fieldIds = [290,1427, 2412, 2786]
 # this is a "simple" tessalation using healpix
 dictArea = {}
-radius = 3.
+radius = 5.
 if fieldtype == 'DD':
     if simuType > 0:
         fieldIds = [0]
@@ -360,28 +383,55 @@ if fieldtype == 'DD':
         print('hello ', pixels)
         observations = np.copy(pixels)
     else:
-        observations = getFields(observations, fieldIds)
+        observations = getFields(observations, fieldIds,simuType)
     # print(np.unique(observations['fieldId']))
     r = []
-    r.append(('COSMOS', 2786, 150.36, 2.84, radius))
-    r.append(('XMM-LSS', 2412, 34.39, -5.09, radius))
-    r.append(('CDFS', 1427, 53.00, -27.44, radius))
+   
     if simuType == 1:
         r.append(('ELAIS', 744, 10.0, -45.52, radius))
     else:
         r.append(('ELAIS', 744, 0.0, -45.52, radius))
     r.append(('SPT', 290, 349.39, -63.32, radius))
-
+    r.append(('COSMOS', 2786, 150.36, 2.84, radius))
+    r.append(('XMM-LSS', 2412, 34.39, -5.09, radius))
+    r.append(('CDFS', 1427, 53.00, -27.44, radius))
     areas = np.rec.fromrecords(
         r, names=['name', 'fieldId', 'Ra', 'Dec', 'radius'])
 
 else:
     #pixels = pixelate(observations, nside, RaCol='fieldRA', DecCol='fieldDec')
-    observations = getFields(observations, fieldIds=[1])
-    minDec = np.min(observations['fieldDec'])-3.
-    maxDec = np.max(observations['fieldDec'])+3.
-    areas = pavingSky(0., 360., minDec,maxDec, radius)
+    observations = getFields(observations, fieldIds=[1],simuType=simuType)
+    minDec = decmin
+    maxDec = decmax
+    if decmin == -1.0 and decmax == -1.0:
+        #in that case min and max dec are given by obs strategy
+        minDec = np.min(observations['fieldDec'])-3.
+        maxDec = np.max(observations['fieldDec'])+3.
+    areas = pavingSky(ramin,ramax, minDec,maxDec, radius)
     #areas = pavingSky(20., 40., -40., -30., radius)
+    print(observations.dtype)
+    RaCol = 'fieldRA'
+    DecCol = 'fieldDec'
+    if simuType == 1:
+        RaCol = 'Ra'
+        DecCol = 'Dec'
+
+
+    """
+    if nodither == 'no':
+        dir_csv = '/sps/lsst/cadence/LSST_SN_CADENCE/cadence_db/2018-06-WPC/dithers/wp_descDithers_csvs/'
+        csv_file = '{}/descDithers_{}.csv'.format(dir_csv,dbName)
+        #load csv file in numpyarray
+        dither = genfromtxt(csv_file, delimiter=',',dtype=[('Decdith', '<f8'), ('Radith', '<f8'), ('Rotdith', '<f8'),('ObsId', '<i8')])
+        print(dither)
+        dither = dither[1:]
+        print(observations.dtype)
+        observations.sort(order='observationId')
+    """
+
+
+        #print(test)
+
    
 
 print('observations', len(observations),len(areas))
@@ -412,8 +462,10 @@ print(tabpix, len(tabpix))
 result_queue = multiprocessing.Queue()
 
 
+
+print('observations',len(observations))
 for j in range(len(tabpix)-1):
-#for j in range(4,5):
+#for j in range(1,2):
     ida = tabpix[j]
     idb = tabpix[j+1]
     # print('go', ida, idb)
@@ -421,7 +473,7 @@ for j in range(len(tabpix)-1):
     #    healpixels[ida:idb],band, metricList, shape,observations,j, result_queue))
     print('Field', healpixels[ida:idb])
     p = multiprocessing.Process(name='Subprocess-'+str(j), target=loop_area, args=(
-        healpixels[ida:idb], band, metricList, observations, nside,outputDir,dbName, saveData,j, result_queue))
+        healpixels[ida:idb], band, metricList, observations, nside,outputDir,dbName, saveData,nodither,RaCol,DecCol,j, result_queue))
     p.start()
 
 
