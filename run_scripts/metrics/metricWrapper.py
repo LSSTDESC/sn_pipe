@@ -10,10 +10,10 @@ import os
 
 
 class CadenceMetricWrapper:
-    def __init__(self, season=-1, coadd=True, fieldtype='DD'):
+    def __init__(self, season=-1, coadd=True, fieldtype='DD',nside=64,ramin=0.,ramax=360.,decmin=-1.0,decmax=-1.0):
 
-        self.metric = SNCadenceMetric(coadd=coadd)
-        self.name = 'CadenceMetric_{}_coadd_{}'.format(fieldtype,coadd)
+        self.metric = SNCadenceMetric(coadd=coadd,nside=nside)
+        self.name = 'CadenceMetric_{}_nside_{}_coadd_{}_{}_{}_{}_{}'.format(fieldtype,nside,coadd,ramin,ramax,decmin,decmax)
 
     def run(self,obs,filterCol='filter'):
         
@@ -85,11 +85,15 @@ class SNRRateMetricWrapper:
 
 
 class NSNMetricWrapper:
-    def __init__(self, fieldtype='DD', nside=64, pixArea=9.6, season=-1, templateDir='', ploteffi=False, verbose=False):
+    def __init__(self, fieldtype='DD', nside=64, pixArea=9.6, season=-1, templateDir='', ploteffi=False, verbose=False, outeffi=False):
 
         zmax = 1.3
 
-        self.name = 'NSNMetric_{}_zlim_nside_{}'.format(fieldtype, nside)
+        thetype = 'zlim'
+        if outeffi:
+            thetype = 'effi'
+
+        self.name = 'NSNMetric_{}_{}_nside_{}'.format(fieldtype, thetype, nside)
 
         Instrument = {}
         Instrument['name'] = 'LSST'  # name of the telescope (internal)
@@ -131,7 +135,7 @@ class NSNMetricWrapper:
         # metric instance
 
         self.metric = SNNSNMetric(
-            lc_reference, season=season, zmax=zmax, pixArea=pixArea, verbose=verbose, ploteffi=ploteffi, N_bef=N_bef, N_aft=N_aft, snr_min=snr_min, N_phase_min=N_phase_min, N_phase_max=N_phase_max)
+            lc_reference, season=season, zmax=zmax, pixArea=pixArea, verbose=verbose, ploteffi=ploteffi, N_bef=N_bef, N_aft=N_aft, snr_min=snr_min, N_phase_min=N_phase_min, N_phase_max=N_phase_max,outeffi=outeffi)
 
     def run(self, obs):
         return self.metric.run(obs)
