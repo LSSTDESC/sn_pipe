@@ -3,7 +3,8 @@ import matplotlib.pyplot as plt
 
 def plotBarh(sel, plotstr, title,forPlot):
     sel.sort(order=plotstr)
-    fig, ax = plt.subplots(figsize=(12,10))
+    #fig, ax = plt.subplots(figsize=(12,10))
+    fig, ax = plt.subplots()
     fig.suptitle(title)
     icol = []
     myrange = np.arange(len(sel))
@@ -79,7 +80,7 @@ def plotHistTime(ax, axb,dbName, plotstr, forPlot, legx,legy):
 
 dbDir = '/sps/lsst/users/gris/MetricOutput'
 
-forPlot = np.loadtxt('plot_scripts/cadenceCustomize.txt',
+forPlot = np.loadtxt('plot_scripts/cadenceCustomize_test.txt',
                      dtype={'names': ('dbName', 'newName', 'group','Namepl','color','marker'),'formats': ('U33', 'U33','U12','U18','U6','U1')})
 
 r = []
@@ -88,13 +89,15 @@ plotHist('nfc_noddf',forPlot,'# filter changes /night')
 plotHist('obs_area',forPlot,'Observed area [deg2]/night')
 
 
+"""
 fig, ax = plt.subplots()
 figb, axb = plt.subplots()
 plotHistTime(ax,axb,'alt_sched','nfc_noddf',forPlot,'night','# filter changes')
-plotHistTime(ax,axb,'altsched_1exp_pairsmix_10yrs','nfc_noddf',forPlot,'night','# filter changes')
+#plotHistTime(ax,axb,'altsched_1exp_pairsmix_10yrs','nfc_noddf',forPlot,'night','# filter changes')
 #plotHistTime(ax,'dec_1exp_pairsmix_10yrs','nfc',forPlot,'night','# filter changes')
-
 """
+
+
 for dbName in forPlot['dbName']:
     tab = np.load('{}/{}_SNGlobal.npy'.format(dbDir,dbName))
     rint = [dbName,np.median(tab['nfc']),np.median(tab['obs_area'])]
@@ -110,7 +113,10 @@ plotBarh(res,'nfc_med','Median number of filter changes per night',forPlot)
 plotBarh(res,'obs_area_med','Median observed area per night',forPlot)
 for band in 'ugrizy':
     plotBarh(res,'frac_{}'.format(band),'Filter allocation - {} band'.format(band),forPlot)
-"""
+
+
+print(res.dtype)
+print(res)
 
 
 plt.show()

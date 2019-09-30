@@ -5,6 +5,8 @@ import matplotlib.pylab as plt
 import argparse
 from optparse import OptionParser
 import glob
+import h5py
+from astropy.table import Table
 
 parser = OptionParser(description='Display Cadence metric results')
 parser.add_option("--dbName", type="str", default='kraken_2026', help="db name [%default]")
@@ -13,6 +15,7 @@ parser.add_option("--band", type="str", default='r', help="band [%default]")
 parser.add_option("--x1", type="float", default=-2.0, help="SN x1 [%default]")
 parser.add_option("--color", type="float", default=0.2, help="SN color [%default]")
 parser.add_option("--fieldtype", type="str", default='WFD', help="file directory [%default]")
+parser.add_option("--nside", type="int", default=64, help="file directory [%default]")
 
 opts, args = parser.parse_args()
 
@@ -25,6 +28,7 @@ band = opts.band
 x1 = opts.x1
 color = opts.color
 fieldtype = opts.fieldtype
+nside = opts.nside
 
 #
 refDir = 'reference_files'
@@ -48,18 +52,29 @@ for name in namesRef:
     mag_to_flux_files = ['{}/Mag_to_Flux_{}.npy'.format(refDir,name)]
 
 
-fileNames = glob.glob('{}/{}/*CadenceMetric*{}*'.format(dirFile,dbName,fieldtype))
+fileNames = glob.glob('{}/{}/*CadenceMetric_{}_nside_{}*'.format(dirFile,dbName,fieldtype,nside))
 #fileName='{}/{}_CadenceMetric_{}.npy'.format(dirFile,dbName,band)
 print(fileNames)
 #metricValues = np.load(fileName)
-metricValues = loopStack(fileNames).to_records(index=False)
+#metricValues = loopStack(fileNames).to_records(index=False)
 
-idx = metricValues['filter'] == band
+metricValues = loopStack(fileNames,'astropyTable')
+#print('hello',metricValues['filter'].dtype)
+#metricValues['filter'] = metricValues['filter'].astype(h5py.special_dtype(vlen=str))
+#metricValues['filter'] = metricValues['filter'].astype(str)
+#print('hellp',metricValues.dtype)
 
-metricValues = np.copy(metricValues[idx])
+
+#metricValues = np.array(metricValues)
+#print('hello',metricValues['filter'].dtype)
+idx = metricValues['filter'] == band.encode()
+
+metricValues = Table(metricValues[idx])
+print('here',metricValues)
 
 sn_plot.plotMollview(64,metricValues,'cadence_mean','cadence','days',1.,band,dbName,saveFig=True)
 sn_plot.plotMollview(64,metricValues,'m5_mean','m5','mag',24.,band,dbName,saveFig=True)
+"""
 sn_plot.plotCadence(band,Li_files,mag_to_flux_files,
                     SNR[band],
                     metricValues,
@@ -67,4 +82,7 @@ sn_plot.plotCadence(band,Li_files,mag_to_flux_files,
                     mag_range=mag_range, dt_range=dt_range,
                     dbName=dbName,
                     saveFig=True)
+"""    
+
+
 plt.show()
