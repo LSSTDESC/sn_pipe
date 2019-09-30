@@ -13,7 +13,7 @@ def batch(dbDir,dbName,scriptref,nside,simuType,outDir,nprocprog,nproccomp,field
         os.makedirs(dirLog)    
     
     
-    id='{}_{}_{}'.format(dbName,nside,fieldType)
+    id='{}_{}_{}_{}'.format(dbName,nside,fieldType,metric)
     name_id='metric_{}'.format(id)
     log = dirLog + '/'+name_id+'.log'
 
@@ -94,31 +94,37 @@ dbNames = ['very_alt2_rm5illum20_10yrs','very_alt2_rm5illum40_10yrs','very_alt3_
 print(len(dbNames))
 #dbDir = '/sps/lsst/cadence/LSST_SN_PhG/cadence_db/opsim_new'
 
+"""
+fieldType = 'DD'
+metric = 'NSN'
 
+"""
 fieldType = 'WFD'
 metric = 'Cadence'
-coadd = 0
+
+coadd = 1
 
 if fieldType =='DD':
     dbNames = ['kraken_2026','ddf_0.23deg_1exp_pairsmix_10yrs','ddf_0.70deg_1exp_pairsmix_10yrs','ddf_pn_0.23deg_1exp_pairsmix_10yrs','ddf_pn_0.70deg_1exp_pairsmix_10yrs']
     simuType = [0,1,1,1,1]
     nproc=5
+    nside = 128
 
 if fieldType =='WFD':
-    dbNames = ['kraken_2026','alt_sched','alt_sched_rolling','baseline_1exp_nopairs_10yrs','baseline_1exp_pairsame_10yrs','baseline_1exp_pairsmix_10yrs','baseline_2exp_pairsame_10yrs','baseline_2exp_pairsmix_10yrs','roll_mod2_sdf0.2mixed_10yrs']
+    dbNames = ['kraken_2026','alt_sched','altsched_good_weather','alt_sched_rolling','baseline_1exp_nopairs_10yrs']
+    #dbNames = ['altsched_good_weather']
+    #'baseline_1exp_pairsame_10yrs','baseline_1exp_pairsmix_10yrs','baseline_2exp_pairsame_10yrs','baseline_2exp_pairsmix_10yrs','roll_mod2_sdf0.2mixed_10yrs']
     #dbNames = ['alt_sched_rolling', 'kraken_2026','rolling_10yrs_opsim']
-    dbNames = ['kraken_2026']
-    simuType = [1]*len(dbNames)
+    #dbNames = ['kraken_2026']
+    simuType = [1,2,2,2,1]
+    #simuType = [2]
     nproc = 8
-    
-
-
+    nside = 64
 
 outDir='/sps/lsst/users/gris/MetricOutput'
 
 for i,dbName in enumerate(dbNames):
-    
-    for nside in [64]:
+    for nside in [nside]:
         batch(dbDir,dbName,'run_scripts/metrics/run_metrics_fromnpy',nside,simuType[i],outDir,nproc,8,fieldType,1,metric,coadd)
     #batch(dbDir,dbName,'run_scripts/run_metrics_fromnpy','all',8)
     
