@@ -138,7 +138,6 @@ def loop_area(pointings, band, metricList, observations, nside, outDir,dbName,sa
         #resdict = myprocess.process(observations, metricList,ipoint)
         #print('obs',len(observations))
         resdict = myprocess(observations, metricList, pointing['Ra'], pointing['Dec'], pointing['radius'], pointing['radius'],ipoint,nodither,display=False)
-        print(test)
         
 
     """
