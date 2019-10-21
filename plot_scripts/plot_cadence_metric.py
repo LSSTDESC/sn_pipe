@@ -72,8 +72,8 @@ idx = metricValues['filter'] == band.encode()
 metricValues = Table(metricValues[idx])
 print('here',metricValues)
 
-sn_plot.plotMollview(64,metricValues,'cadence_mean','cadence','days',1.,band,dbName,saveFig=True)
-sn_plot.plotMollview(64,metricValues,'m5_mean','m5','mag',24.,band,dbName,saveFig=True)
+sn_plot.plotMollview(64,metricValues,'cadence_mean','cadence','days',1.,30.,band,dbName,saveFig=True)
+sn_plot.plotMollview(64,metricValues,'m5_mean','m5','mag',24.,26.,band,dbName,saveFig=True)
 """
 sn_plot.plotCadence(band,Li_files,mag_to_flux_files,
                     SNR[band],
