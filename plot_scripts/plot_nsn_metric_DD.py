@@ -12,6 +12,7 @@ import pandas as pd
 
 def match_colors(data):
 
+    print('here',data)
     x1_colors = [(-2.0,0.2),(0.0,0.0)]
     corr = dict(zip(x1_colors,['faint','medium']))
     r = []
@@ -19,6 +20,8 @@ def match_colors(data):
         idx = data['healpixID'] == healpixID
         idx &= data['season'] == season
         zlim = {}
+        nsn_med={}
+        nsn = {}
         seldata = data[idx]
         pixRa = np.unique(seldata['pixRa'])[0]
         pixDec = np.unique(seldata['pixDec'])[0]
@@ -27,16 +30,24 @@ def match_colors(data):
             idxb = np.abs(seldata['x1']-x1)<1.e-5
             idxb &= np.abs(seldata['color']-color)<1.e-5
             selb = seldata[idxb]
+            print('hohoho',selb.dtype)
             if len(selb)>0:
                 zlim[corr[(x1,color)]] = selb['zlim'][0]
+                nsn_med[corr[(x1,color)]] = selb['nsn_med'][0]
+                nsn[corr[(x1,color)]] = selb['nsn'][0]
             else:
-                zlim[corr[(x1,color)]] = -1.
+                #zlim[corr[(x1,color)]] = -1.
+                
                 good_event = False
         if good_event:        
-            r.append((healpixID,season,pixRa,pixDec,zlim['faint'],zlim['medium']))
+            r.append((healpixID,season,pixRa,pixDec,zlim['faint'],zlim['medium'],nsn_med['faint'],nsn_med['medium'],nsn['faint'],nsn['medium']))
 
    
-    return np.rec.fromrecords(r, names=['healpixID','season','pixRa','pixDec','zlim_faint','zlim_medium'])
+    return np.rec.fromrecords(r, names=['healpixID','season',
+                                        'pixRa','pixDec',
+                                        'zlim_faint','zlim_medium',
+                                        'nsn_med_zfaint','nsn_med_zmedium',
+                                        'nsn_zfaint','nsn_zmedium'])
     
 
 
@@ -57,12 +68,14 @@ def getFields(elaisRa=0.0):
     r.append(('CDFS'.ljust(7), 3, 1427, 53.00, -27.44))
     r.append(('ELAIS'.ljust(7), 4, 744, elaisRa, -45.52))
     r.append(('SPT'.ljust(7), 5, 290, 349.39, -63.32))
+    r.append(('Fake'.ljust(7), 6, 111, 0.0, 0.0))
 
     fields_DD = np.rec.fromrecords(
         r, names=['fieldname', 'fieldnum', 'fieldId', 'Ra', 'Dec'])
     return fields_DD
 
 def getVals(fields_DD, tab, cadence, nside=64, plotting=False):
+    
     pixArea = hp.nside2pixarea(nside, degrees=True)
 
     if plotting:
@@ -70,27 +83,32 @@ def getVals(fields_DD, tab, cadence, nside=64, plotting=False):
 
     r = []
     dataTot = None
+
+    print(tab)
+    print(tab.dtype)
     for field in fields_DD:
         dataSel = dataInside(
             tab, field['Ra'], field['Dec'], 10., 10., 'pixRa', 'pixDec')
-        dataSel = match_colors(dataSel)
-        if dataSel is not None:
-            dataSel = rf.append_fields(dataSel,'fieldname',[field['fieldname']]*len(dataSel))
-            dataSel = rf.append_fields(dataSel,'fieldnum',[int(field['fieldnum'])]*len(dataSel))
-            dataSel = rf.append_fields(dataSel,'cadence',[cadence]*len(dataSel))
-            dataSel = rf.append_fields(dataSel,'nside',[nside]*len(dataSel))
-            dataSel = rf.append_fields(dataSel,'pixArea',[pixArea]*len(dataSel))
-            if dataTot is None:
-                dataTot = dataSel
-            else:
-                dataTot = np.concatenate((dataTot,dataSel))
+        if dataSel is not None:                            
+            dataSel = match_colors(dataSel)
+            if dataSel is not None:
+                dataSel = rf.append_fields(dataSel,'fieldname',[field['fieldname']]*len(dataSel))
+                dataSel = rf.append_fields(dataSel,'fieldnum',[int(field['fieldnum'])]*len(dataSel))
+                dataSel = rf.append_fields(dataSel,'cadence',[cadence]*len(dataSel))
+                dataSel = rf.append_fields(dataSel,'nside',[nside]*len(dataSel))
+                dataSel = rf.append_fields(dataSel,'pixArea',[pixArea]*len(dataSel))
+                if dataTot is None:
+                    dataTot = dataSel
+                else:
+                    dataTot = np.concatenate((dataTot,dataSel))
 
-    
+    print(dataTot)
     return dataTot
 
 parser = OptionParser(description='Display Cadence metric results for DD fields')
 parser.add_option("--dirFile", type="str", default='', help="file directory [%default]")
 parser.add_option("--nside", type="int", default=128, help="nside for healpixels [%default]")
+parser.add_option("--fieldType", type="str", default='DD', help="field type - DD, WFD, Fake [%default]")
 opts, args = parser.parse_args()
 
 # Load parameters
@@ -99,14 +117,16 @@ if dirFile == '':
     dirFile = '/sps/lsst/users/gris/MetricOutput'
 
 nside = opts.nside
-fieldtype = 'DD'
+fieldType = opts.fieldType
+metricName = 'NSN'
 
 dbNames = ['ddf_pn_0.23deg_1exp_pairsmix_10yrs']
 dbNames = ['kraken_2026','ddf_pn_0.23deg_1exp_pairsmix_10yrs']
 dbNames += ['ddf_0.70deg_1exp_pairsmix_10yrs']
 dbNames += ['ddf_0.23deg_1exp_pairsmix_10yrs']
 dbNames += ['ddf_pn_0.70deg_1exp_pairsmix_10yrs']
-dbNames += ['ddf_0.23deg_1exp_pairsmix_10yrsnodither']
+#dbNames += ['ddf_0.23deg_1exp_pairsmix_10yrsnodither']
+dbNames = ['Fake_DESC']
 
 colors = ['k', 'r', 'b','g','m','c']
 markers = ['s', '*', 'o','.','^','o']
@@ -122,7 +142,8 @@ x1 = -2.0
 color = 0.2
 
 for dbName in dbNames:
-    fileNames = glob.glob('{}/{}/*NSNMetric_{}*_nside_{}_*'.format(dirFile,dbName,fieldtype,nside))
+    search_path = '{}/{}/{}/*NSNMetric_{}*_nside_{}_*'.format(dirFile,dbName,metricName,fieldType,nside)
+    fileNames = glob.glob(search_path)
     #fileName='{}/{}_CadenceMetric_{}.npy'.format(dirFile,dbName,band)
     print(fileNames)
     #metricValues = np.load(fileName)
@@ -186,7 +207,16 @@ sn_plot.plotDDLoop(nside,dbNames,metricTot,'zlim_faint','$z_{lim}^{faint}$',mark
 #print(metricTot.dtype,type(metricTot))
 
 
-sn_plot.plotDDLoopCorrel(nside,dbNames,metricTot,'zlim_faint','zlim_medium','$z_{lim}^{faint}$','$z_{lim}^{med}$',markers,colors,mfc,adjl,fields_DD,figleg)
+#sn_plot.plotDDLoopCorrel(nside,dbNames,metricTot,'zlim_faint','zlim_medium','$z_{lim}^{faint}$','$z_{lim}^{med}$',markers,colors,mfc,adjl,fields_DD,figleg)
+
+#sn_plot.plotDDLoopCorrel(nside,dbNames,metricTot,'nsn_med_zfaint','nsn_med_zmedium','$z_{lim}^{faint}$','$z_{lim}^{med}$',markers,colors,mfc,adjl,fields_DD,figleg)
+
+sn_plot.plotDDFit(metricTot,'nsn_med_zmedium','nsn_zmedium')
+
+#sn_plot.plotDDLoopCorrel(nside,dbNames,metricTot,'nsn_med_zfaint','nsn_med_zmedium','$z_{lim}^{faint}$','$z_{lim}^{med}$',markers,colors,mfc,adjl,fields_DD,figleg)
+
+sn_plot.plotDDFit(metricTot,'nsn_med_zmedium','nsn_med_zfaint','zlim_medium','zlim_faint')
+
 
 df = pd.DataFrame(metricTot)
 
@@ -210,7 +240,6 @@ filtercolors = 'cgyrm'
 filtermarkers = ['o','*','s','v','^']
 mfiltc = ['None']*len(filtercolors)
 
-print(metricTot.dtype)
 vars = ['visitExposureTime','cadence_mean','gap_max','gap_5']
 legends = ['Exposure Time [sec]/night','cadence [days]','max gap [days]','frac gap > 5 days']
 
