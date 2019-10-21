@@ -3,6 +3,8 @@ import sn_plotters.sn_cadencePlotters as sn_plot
 import matplotlib.pyplot as plt
 import os
 from mpl_toolkits.axes_grid1.inset_locator import zoomed_inset_axes,mark_inset
+import glob
+from sn_tools.sn_io import loopStack
 
 class PlotSummary:
     def __init__(self, x1=-2.0, color=0.2, namesRef=['SNCosmo'],
@@ -32,23 +34,43 @@ class PlotSummary:
             self.Li_files = ['{}/Li_{}_{}_{}.npy'.format(refDir,name,x1,color)]
             self.mag_to_flux_files = ['{}/Mag_to_Flux_{}.npy'.format(refDir,name)]
 
-    def loadFile(self,dirFile, dbName, band, metricName):
-        fileName  ='{}/{}_{}_{}.npy'.format(dirFile,dbName,metricName,band)
+    def loadFile(self,dirFile, dbName, fieldtype, band, metricName, nside=64):
+        if fieldtype != '':
+            fileName  ='{}/{}/{}_{}_{}_nside_{}_*.hdf5'.format(dirFile,dbName,dbName,metricName,fieldtype,nside)
+        if band != '':
+            fileName  ='{}/{}/{}_{}_nside_{}_{}*.hdf5'.format(dirFile,dbName,dbName,metricName,nside,band)
+
+        print('looking for',fileName)
+        fileNames = glob.glob(fileName)
+        print(fileNames,len(fileNames))
+        metricValues = loopStack(fileNames,'astropyTable')
+        """
         if not os.path.isfile(fileName):
             return None
         return np.load(fileName)
+        """
+        return metricValues
+
 
     def getMetricValues(self, dirFile, dbName, band):
         
-        metricValuesCad = self.loadFile(dirFile, dbName, band, 'CadenceMetric')
-        metricValuesSNR =  self.loadFile(dirFile, dbName, band, 'SNRMetric')
+        metricValuesCad = self.loadFile(dirFile, dbName, 'WFD','', 'CadenceMetric')
+        metricValuesSNR =  self.loadFile(dirFile, dbName,'',band, 'SNRMetric')
+        print('hello',metricValuesSNR.dtype)
+        idx = metricValuesSNR['band'] == str.encode(band)
+        metricValuesSNR = np.copy(metricValuesSNR[idx])
+        print('yes',metricValuesSNR['band'])
+
         if metricValuesCad is None or metricValuesSNR is None:
             return None
         resCadence = sn_plot.plotCadence(band,self.Li_files,self.mag_to_flux_files,
                             self.SNR[band],
                             metricValuesCad,
                             self.namesRef,
-                                         mag_range=self.mag_range, dt_range=self.dt_range, display=False)
+                            mag_range=self.mag_range, 
+                            dt_range=self.dt_range,
+                            dbName=dbName,      
+                            display=False)
         
 
         r = []
@@ -217,7 +239,7 @@ forPlot = np.loadtxt('plot_scripts/cadenceCustomize.txt',
 print(forPlot)
 plotSum = PlotSummary()
 
-bands = 'grizy'
+bands = 'rz'
 if not os.path.isfile('Summary.npy'):
     medList = []
     for band in bands:

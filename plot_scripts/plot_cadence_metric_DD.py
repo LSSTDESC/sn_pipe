@@ -49,6 +49,7 @@ def getVals(fields_DD, tab, cadence, nside=64, plotting=False):
 parser = OptionParser(description='Display Cadence metric results for DD fields')
 parser.add_option("--dirFile", type="str", default='', help="file directory [%default]")
 parser.add_option("--nside", type="int", default=128, help="nside for healpixels [%default]")
+parser.add_option("--fieldType", type="str", default='DD', help="field type [%default]")
 opts, args = parser.parse_args()
 
 # Load parameters
@@ -57,16 +58,17 @@ if dirFile == '':
     dirFile = '/sps/lsst/users/gris/MetricOutput'
 
 nside = opts.nside
-fieldtype = 'DD'
+fieldType = opts.fieldType
 
 dbNames = ['ddf_pn_0.23deg_1exp_pairsmix_10yrs']
-dbNames = ['kraken_2026','ddf_pn_0.23deg_1exp_pairsmix_10yrs_nodither']
-#dbNames = ['ddf_0.70deg_1exp_pairsmix_10yrs']
-#dbNames = ['ddf_0.23deg_1exp_pairsmix_10yrs']
-#dbNames = ['ddf_pn_0.70deg_1exp_pairsmix_10yrs']
-colors = ['k', 'r', 'b']
-markers = ['s', '*', 'o']
-mfc = ['None', 'None', 'None']
+dbNames = ['kraken_2026','ddf_pn_0.23deg_1exp_pairsmix_10yrs']
+dbNames = ['Fake_DESC']
+#dbNames += ['ddf_0.70deg_1exp_pairsmix_10yrs']
+#dbNames += ['ddf_0.23deg_1exp_pairsmix_10yrs']
+#dbNames += ['ddf_pn_0.70deg_1exp_pairsmix_10yrs']
+colors = ['k', 'r', 'b','m','c']
+markers = ['s', '*', 'o','.','p','P']
+mfc = ['None', 'None', 'None','None','None']
 
 lengths = [len(val) for val in dbNames]
 adjl = np.max(lengths)
@@ -76,11 +78,15 @@ pixArea = hp.nside2pixarea(nside,degrees=True)
 
 
 for dbName in dbNames:
-    fileNames = glob.glob('{}/{}/*CadenceMetric_{}*_nside_{}_*'.format(dirFile,dbName,fieldtype,nside))
+    fsearch = '{}/{}/Cadence/*CadenceMetric_{}*_nside_{}_*'.format(dirFile,dbName,fieldType,nside)
+    print('searching',fsearch)
+    fileNames = glob.glob(fsearch)
     #fileName='{}/{}_CadenceMetric_{}.npy'.format(dirFile,dbName,band)
     print(fileNames)
     #metricValues = np.load(fileName)
     metricValues = loopStack(fileNames).to_records(index=False)
+    print(metricValues)
+    print(metricValues.dtype)
     fields_DD = getFields(10.)
     tab = getVals(fields_DD, metricValues, dbName.ljust(adjl), nside,True)
     """
@@ -138,8 +144,11 @@ filtermarkers = ['o','*','s','v','^']
 mfiltc = ['None']*len(filtercolors)
 
 print(metricTot.dtype)
-vars = ['visitExposureTime','cadence_mean','gap_max','gap_5']
-legends = ['Exposure Time [sec]/night','cadence [days]','max gap [days]','frac gap > 5 days']
+#vars = ['visitExposureTime','cadence_mean','gap_max','gap_5']
+#legends = ['Exposure Time [sec]/night','cadence [days]','max gap [days]','frac gap > 5 days']
+vars = ['visitExposureTime','cadence_mean']
+legends = ['Exposure Time [sec]/night','cadence [days]']
+
 
 todraw=dict(zip(vars,legends))
 for dbName in dbNames:
