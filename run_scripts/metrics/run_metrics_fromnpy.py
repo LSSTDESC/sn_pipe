@@ -1,5 +1,6 @@
-import matplotlib.pyplot as plt
-# matplotlib.use('agg')
+#import matplotlib.pyplot as plt
+import matplotlib
+#matplotlib.use('agg')
 import numpy as np
 import healpy as hp
 from metricWrapper import CadenceMetricWrapper, SNRMetricWrapper
@@ -17,93 +18,9 @@ from astropy import units as u
 from astropy.coordinates import SkyCoord
 import numpy.lib.recfunctions as rf
 from sn_stackers.coadd_stacker import CoaddStacker
-from sn_tools.sn_obs import pavingSky
+from sn_tools.sn_obs import pavingSky,getFields
 import glob
 from numpy import genfromtxt
-
-def getFields(observations, fieldIds, simuType=1):
-
-    obs = None
-    print(np.unique(observations['proposalId']))
-    propId = list(np.unique(observations['proposalId']))
-
-    # this is for the WFD
-    if fieldIds == [1]:
-        if len(propId) > 3:
-            idx = observations['proposalId'] == 3
-            return np.copy(observations[idx])
-        elif  len(propId) ==2:
-             idx = observations['proposalId'] == 1
-             if simuType == 2:
-                 idx = observations['proposalId'] == 0
-             return np.copy(observations[idx])
-        else:
-            idx = observations['proposalId'] == 0
-            return np.copy(observations[idx]) 
-
-    """
-    print('hhh',np.unique(observations['fieldId']))
-
-    val = np.unique(observations[['fieldRa','fieldDec']])
-    # plt.plot(val['fieldRA'],val['fieldDec'],'ko')
-    idx = observations['fieldId']==0
-    # sel = np.unique(observations[idx][['fieldRA','fieldDec']])
-    sel = observations[idx]
-    print(observations)
-    # plt.plot(sel['fieldRA'],sel['fieldDec'],'b*')
-    plt.plot(sel['observationStartMJD'],sel['fieldRa'],'ko')
-
-    plt.show()
-    """
-
-    # this is for DDF
-    print('selection', fieldIds,observations.dtype)
-    for fieldId in fieldIds:
-        idf = observations['fieldId'] == fieldId
-        if obs is None:
-            obs = observations[idf]
-        else:
-            obs = np.concatenate((obs, observations[idf]))
-    return obs
-
-
-def selectDD(obs, nside, fieldIds):
-
-    print(obs.dtype)
-
-    print(np.unique(obs['proposalId']))
-
-    propId = list(np.unique(obs['proposalId']))
-
-    if len(propId) > 3:
-        # idx = obs['proposalId'] == 5
-        obser = getFields(obs, fieldIds)
-        return pixelate(obser, nside, RaCol='fieldRA', DecCol='fieldDec')
-    else:
-        names = obs.dtype.names
-        if 'fieldId' in names:
-            """
-            print(np.unique(obs[['fieldId','note']]))
-            """
-            obser = getFields(obs, fieldIds)
-            return pixelate(obser, nside, RaCol='fieldRA', DecCol='fieldDec')
-        else:
-            """this is difficult
-               we do not have other ways to identify
-               DD except by selecting pixels with a large number of visits
-            """
-            pixels = pixelate(obs, nside, RaCol='fieldRA', DecCol='fieldDec')
-
-            df = pd.DataFrame(np.copy(pixels))
-
-            groups = df.groupby('healpixID').filter(lambda x: len(x) > 5000)
-
-            group_DD = groups.groupby(['fieldRA', 'fieldDec']).filter(
-                lambda x: len(x) > 4000)
-
-            # return np.array(group_DD.to_records().view(type=np.matrix))
-            return group_DD.to_records(index=False)
-
 
 def loop_area(pointings, band, metricList, observations, nside, outDir,dbName,saveData,nodither,RaCol,DecCol,j=0, output_q=None):
 
@@ -246,7 +163,7 @@ parser.add_option("--nside", type="int", default=64,
 parser.add_option("--band", type="str", default='r', help="band [%default]")
 parser.add_option("--nproc", type="int", default='8',
                   help="number of proc  [%default]")
-parser.add_option("--fieldtype", type="str", default='DD',
+parser.add_option("--fieldType", type="str", default='DD',
                   help="field type DD or WFD[%default]")
 parser.add_option("--x1", type="float", default='0.0',
                   help="SN x1 [%default]")
@@ -288,13 +205,13 @@ print('Start processing...')
 dbDir = opts.dbDir
 if dbDir == '':
     dbDir = '/sps/lsst/cadence/LSST_SN_CADENCE/cadence_db'
-dbName = opts.dbName
 
+dbName = opts.dbName
 nside = opts.nside
 band = opts.band
 seasons = -1
 nproc = opts.nproc
-fieldtype = opts.fieldtype
+fieldType = opts.fieldType
 x1 = opts.x1
 color = opts.color
 zmax = opts.zmax
@@ -303,6 +220,7 @@ simuType = opts.simuType
 outDir = opts.outDir
 templateDir = opts.templateDir
 saveData = opts.saveData
+
 metric = opts.metric
 coadd = opts.coadd
 nodither = opts.nodither
@@ -317,73 +235,49 @@ if outDir == '':
 if templateDir == '':
     templateDir = '/sps/lsst/data/dev/pgris/Templates_final_new'
 
-outputDir = '{}/{}{}'.format(outDir,dbName,nodither)
+outputDir = '{}/{}{}/{}'.format(outDir,dbName,nodither,metric)
 if not os.path.isdir(outputDir):
     os.makedirs(outputDir)
 # List of (instance of) metrics to process
 metricList = []
-"""
-if band != 'all':
-    metricList.append(SNRMetricWrapper(z=0.3))
-"""
-#metricList.append(CadenceMetricWrapper(season=seasons,fieldtype=fieldtype))
-"""
-# metricList.append(SNRRateMetricWrapper(z=0.3))
-metricList.append(NSNMetricWrapper(fieldtype=fieldtype,
-                                   pixArea=pixArea, season=-1,
-                                   nside=nside, templateDir=templateDir,
-                                   verbose=False, ploteffi=False))
-"""
+
 if metric == 'NSN':
-    metricList.append(NSNMetricWrapper(fieldtype=fieldtype,
-                                       pixArea=pixArea,season=-1,
+    metricList.append(NSNMetricWrapper(fieldType=fieldType,
+                                       pixArea=pixArea,season=[1,2],
                                        nside=nside, templateDir=templateDir,
-                                       verbose=False, ploteffi=False,outeffi=True))
+                                       verbose=True, ploteffi=False,coadd=coadd,outputType='zlims'))
 
 if metric == 'Cadence':
-    metricList.append(CadenceMetricWrapper(season=-1,coadd=coadd,fieldtype=fieldtype,nside=nside,ramin=ramin,ramax=ramax,decmin=decmin,decmax=decmax))
+    metricList.append(CadenceMetricWrapper(season=-1,coadd=coadd,fieldType=fieldType,nside=nside,ramin=ramin,ramax=ramax,decmin=decmin,decmax=decmax))
 if metric == 'SL':
-    metricList.append(SLMetricWrapper(nside=nside,coadd=coadd,fieldtype=fieldtype))
+    metricList.append(SLMetricWrapper(nside=nside,coadd=coadd,fieldType=fieldType))
+if metric == 'SNRRate':
+    metricList.append(SNRRateMetricWrapper(nside=nside,coadd=coadd))
+
+if metric == 'SNR':
+    metricList.append(SNRMetricWrapper(z=0.2,coadd=coadd,nside=nside,band='r',ramin=ramin,ramax=ramax,decmin=decmin,decmax=decmax))
+    metricList.append(SNRMetricWrapper(z=0.2,coadd=coadd,nside=nside,band='z',ramin=ramin,ramax=ramax,decmin=decmin,decmax=decmax))
 
 # loading observations
 
-
 observations = np.load('{}/{}.npy'.format(dbDir, dbName))
 observations = renameFields(observations)
-"""
-print(observations.dtype)
-stacker = CoaddStacker()
 
-observations = stacker._run(observations)
-"""
-
-# print(obs.dtype)
-
-
-"""
-if fieldtype =='WFD':
-    idx = observations['proposalId'] == 3
-    observations = observations[idx]
-"""
 
 # fieldIds = [290]
 # fieldIds = [290,1427, 2412, 2786]
 # this is a "simple" tessalation using healpix
 dictArea = {}
 radius = 5.
-if fieldtype == 'DD':
-    if simuType > 0:
-        fieldIds = [0]
-    else:
-        fieldIds = [290, 744, 1427, 2412, 2786]
-    # fieldIds = [0]
-    if simuType == 2:
-        pixels = selectDD(observations, nside, fieldIds)
-        print('hello ', pixels)
-        observations = np.copy(pixels)
-    else:
-        observations = getFields(observations, fieldIds,simuType)
-    # print(np.unique(observations['fieldId']))
+RaCol = 'fieldRA'
+DecCol = 'fieldDec'
+if 'Ra' in observations.dtype.names:
+     RaCol = 'Ra'
+     DecCol = 'Dec'
+
+if fieldType == 'DD':
+    fieldIds = [290,744,1427, 2412, 2786]
+    observations = getFields(observations, fieldType, fieldIds,nside)
     r = []
    
     if simuType == 1:
@@ -395,25 +289,28 @@ if fieldtype == 'DD':
     r.append(('XMM-LSS', 2412, 34.39, -5.09, radius))
     r.append(('CDFS', 1427, 53.00, -27.44, radius))
     areas = np.rec.fromrecords(
-        r, names=['name', 'fieldId', 'Ra', 'Dec', 'radius'])
+        r, names=['name', 'fieldId', 'Ra', 'Dec', 'radius'])    
+ 
 
 else:
-    #pixels = pixelate(observations, nside, RaCol='fieldRA', DecCol='fieldDec')
-    observations = getFields(observations, fieldIds=[1],simuType=simuType)
-    minDec = decmin
-    maxDec = decmax
-    if decmin == -1.0 and decmax == -1.0:
-        #in that case min and max dec are given by obs strategy
-        minDec = np.min(observations['fieldDec'])-3.
-        maxDec = np.max(observations['fieldDec'])+3.
-    areas = pavingSky(ramin,ramax, minDec,maxDec, radius)
-    #areas = pavingSky(20., 40., -40., -30., radius)
-    print(observations.dtype)
-    RaCol = 'fieldRA'
-    DecCol = 'fieldDec'
-    if simuType == 1:
-        RaCol = 'Ra'
-        DecCol = 'Dec'
+    if fieldType == 'WFD':
+        observations = getFields(observations,'WFD')
+        minDec = decmin
+        maxDec = decmax
+        if decmin == -1.0 and decmax == -1.0:
+            #in that case min and max dec are given by obs strategy
+            minDec = np.min(observations['fieldDec'])-3.
+            maxDec = np.max(observations['fieldDec'])+3.
+        areas = pavingSky(ramin,ramax, minDec,maxDec, radius)
+        #areas = pavingSky(20., 40., -40., -30., radius)
+        print(observations.dtype)
+        
+    if fieldType == 'Fake':
+        #in that case: only one (Ra,Dec)
+        radius = 0.1
+        Ra = np.unique(observations[RaCol])[0]
+        Dec = np.unique(observations[DecCol])[0]
+        areas = pavingSky(Ra-radius/2.,Ra+radius/2.,Dec-radius/2.,Dec+radius/2.,radius)
 
 
     """
@@ -426,20 +323,12 @@ else:
         dither = dither[1:]
         print(observations.dtype)
         observations.sort(order='observationId')
-    """
-
-
-        #print(test)
-
-   
+    """   
 
 print('observations', len(observations),len(areas))
 
-
-
 timeref = time.time()
 
-# healpixels = np.unique(pixels[['healpixID','pixRa','pixDec']])
 healpixels = areas
 npixels = int(len(healpixels))
 delta = npixels
@@ -464,39 +353,11 @@ result_queue = multiprocessing.Queue()
 
 print('observations',len(observations))
 for j in range(len(tabpix)-1):
-#for j in range(1,2):
+#for j in range(2,3):
     ida = tabpix[j]
     idb = tabpix[j+1]
-    # print('go', ida, idb)
-    # p = multiprocessing.Process(name='Subprocess-'+str(j), target=loop, args=(
-    #    healpixels[ida:idb],band, metricList, shape,observations,j, result_queue))
+
     print('Field', healpixels[ida:idb])
     p = multiprocessing.Process(name='Subprocess-'+str(j), target=loop_area, args=(
         healpixels[ida:idb], band, metricList, observations, nside,outputDir,dbName, saveData,nodither,RaCol,DecCol,j, result_queue))
     p.start()
-
-
-"""
-resultdict = {}
-for i in range(len(tabpix)-1):
-    resultdict.update(result_queue.get())
-
-for p in multiprocessing.active_children():
-    p.join()
-"""
-"""
-restot = {}
-for metric in metricList:
-    restot[metric.name] = None
-
-for key, vals in resultdict.items():
-    for keyb in vals.keys():
-        if restot[keyb] is None:
-            restot[keyb] = vals[keyb]
-        else:
-            restot[keyb] = np.concatenate((restot[keyb], vals[keyb]))
-
-for key, vals in restot.items():
-    np.save('{}/{}_{}.npy'.format(outDir, dbName, key), np.copy(vals))
-"""
-#print('Done', time.time()-timeref)
