@@ -1,5 +1,6 @@
 import os
 import numpy as np
+from optparse import OptionParser
 
 def batch(dbDir,dbName,scriptref,nside,simuType,outDir,nprocprog,nproccomp,fieldType,saveData,metric,coadd):
     cwd = os.getcwd()
@@ -41,7 +42,7 @@ def batch(dbDir,dbName,scriptref,nside,simuType,outDir,nprocprog,nproccomp,field
     cmd = 'python {}.py --dbDir {} --dbName {}'.format(scriptref,dbDir,dbName)
     cmd += ' --nproc {} --nside {} --simuType {}'.format(nprocprog,nside,simuType)
     cmd += ' --outDir {}'.format(outDir)
-    cmd += ' --fieldtype {}'.format(fieldType)
+    cmd += ' --fieldType {}'.format(fieldType)
     cmd += ' --saveData {}'.format(saveData)
     cmd += ' --metric {}'.format(metric)
     cmd += ' --coadd {}'.format(coadd)
@@ -50,60 +51,77 @@ def batch(dbDir,dbName,scriptref,nside,simuType,outDir,nprocprog,nproccomp,field
     script.close()
     os.system("sh "+scriptName)
 
+def batch_new(dbDir,scriptref,outDir,nproccomp,saveData,metric,toprocess):
+
+    cwd = os.getcwd()
+    dirScript= cwd + "/scripts"
+
+    if not os.path.isdir(dirScript) :
+        os.makedirs(dirScript)
+    
+    dirLog = cwd + "/logs"
+    if not os.path.isdir(dirLog) :
+        os.makedirs(dirLog)    
+    
+    dbName = toprocess['dbName'][0].decode()
+    nside = toprocess['nside'][0]
+    fieldType = toprocess['fieldType'][0].decode()
+    id='{}_{}_{}_{}'.format(dbName,nside,fieldType,metric)
+    name_id='metric_{}'.format(id)
+    log = dirLog + '/'+name_id+'.log'
+
+
+    qsub = 'qsub -P P_lsst -l sps=1,ct=10:00:00,h_vmem=16G -j y -o {} -pe multicores {} <<EOF'.format(log,nproccomp)
+    #qsub = "qsub -P P_lsst -l sps=1,ct=05:00:00,h_vmem=16G -j y -o "+ log + " <<EOF"
+    scriptName = dirScript+'/'+name_id+'.sh'
+
+
+    script = open(scriptName,"w")
+    script.write(qsub + "\n")
+    script.write("#!/usr/local/bin/bash\n")
+    script.write(" cd " + cwd + "\n")
+    script.write(" echo 'sourcing setups' \n")
+    script.write(" source setup_release.sh CCIN2P3\n")
+    script.write(" source export.sh CCIN2P3\n")
+    script.write("echo 'sourcing done' \n")
+    """
+    script.write("export PYTHONPATH=sn_tools:$PYTHONPATH \n")
+    script.write("export PYTHONPATH=sn_metrics:$PYTHONPATH \n")
+    script.write("export PYTHONPATH=sn_stackers:$PYTHONPATH \n")
+    """
+    script.write("echo $PYTHONPATH \n")
+
+    for proc in toprocess:
+        cmd_ = batch_cmd(scriptref,dbDir,outDir,saveData,metric,proc)
+        """
+        cmd = 'python {}.py --dbDir {} --dbName {}'.format(scriptref,dbDir,dbName)
+        cmd += ' --nproc {} --nside {} --simuType {}'.format(nprocprog,nside,simuType)
+        cmd += ' --outDir {}'.format(outDir)
+        cmd += ' --fieldType {}'.format(fieldType)
+        cmd += ' --saveData {}'.format(saveData)
+        cmd += ' --metric {}'.format(metric)
+        cmd += ' --coadd {}'.format(coadd)
+        """
+        #print('hello',cmd_)
+        script.write(cmd_+" \n")
+    script.write("EOF" + "\n")
+    script.close()
+    os.system("sh "+scriptName)
+
+def batch_cmd(scriptref,dbDir,outDir,saveData,metric,proc):
+
+    cmd = 'python {}.py --dbDir {} --dbName {}'.format(scriptref,dbDir,proc['dbName'].decode())
+    cmd += ' --nproc {} --nside {} --simuType {}'.format(proc['nproc'],proc['nside'],proc['simuType'])
+    cmd += ' --outDir {}'.format(outDir)
+    cmd += ' --fieldType {}'.format(proc['fieldType'].decode())
+    cmd += ' --saveData {}'.format(saveData)
+    cmd += ' --metric {}'.format(metric)
+    cmd += ' --coadd {}'.format(proc['coadd'])
+    
+    return cmd
+
+
 """
-dbDir ='/sps/lsst/cadence/LSST_SN_CADENCE/cadence_db/2018-06-WPC' 
-
-dbNames=['kraken_2026','kraken_2042','kraken_2035','kraken_2044']
-dbNames = ['kraken_2026','kraken_2042','kraken_2035','kraken_2044','colossus_2667','pontus_2489','pontus_2002','mothra_2049','nexus_2097']
-
-for dbName in dbNames:
-    batch(dbDir,dbName,'run_metric',8)
-
-"""
-bands = 'griz'
-dbDir = '/sps/lsst/cadence/LSST_SN_CADENCE/cadence_db'
-dbNames = ['alt_sched','alt_sched_rolling','rolling_10yrs','rolling_mix_10yrs']
-dbNames += ['kraken_2026','kraken_2042','kraken_2035','kraken_2044','colossus_2667','pontus_2489','pontus_2002','mothra_2049','nexus_2097']
-dbNames += ['baseline_1exp_nopairs_10yrs','baseline_1exp_pairsame_10yrs','baseline_1exp_pairsmix_10yrs','baseline_2exp_pairsame_10yrs',
-          'baseline_2exp_pairsmix_10yrs','ddf_0.23deg_1exp_pairsmix_10yrs','ddf_0.70deg_1exp_pairsmix_10yrs',
-          'ddf_pn_0.23deg_1exp_pairsmix_10yrs','ddf_pn_0.70deg_1exp_pairsmix_10yrs','exptime_1exp_pairsmix_10yrs','baseline10yrs',
-          'big_sky10yrs','big_sky_nouiy10yrs','gp_heavy10yrs','newA10yrs','newB10yrs','roll_mod2_mixed_10yrs',
-          'roll_mod3_mixed_10yrs','roll_mod6_mixed_10yrs','simple_roll_mod10_mixed_10yrs','simple_roll_mod2_mixed_10yrs',
-          'simple_roll_mod3_mixed_10yrs','simple_roll_mod5_mixed_10yrs','twilight_1s10yrs',
-          'altsched_1exp_pairsmix_10yrs','rotator_1exp_pairsmix_10yrs','hyak_baseline_1exp_nopairs_10yrs',
-          'hyak_baseline_1exp_pairsame_10yrs']
-
-
-dbNames = ['very_alt2_rm5illum20_10yrs','very_alt2_rm5illum40_10yrs','very_alt3_rm5illum20_10yrs','very_alt3_rm5illum40_10yrs','very_alt10yrs','very_alt2_rm5illum25_10yrs','very_alt2_rm5illum50_10yrs','very_alt3_rm5illum25_10yrs','very_alt3_rm5illum50_10yrs','very_alt2_rm5illum15_10yrs','very_alt2_rm5illum30_10yrs','very_alt3_rm5illum15_10yrs','very_alt3_rm5illum30_10yrs','very_alt_rm510yrs','noddf_1exp_pairsame_10yrs','fc1exp_pairsmix_ilim30_10yrs','fc1exp_pairsmix_ilim60_10yrs',
-'fc1exp_pairsmix_ilim15_10yrs','stuck_rolling10yrs','shortt_2ns_1ext_pairsmix_10yrs','shortt_2ns_5ext_pairsmix_10yrs','shortt_5ns_5ext_pairsmix_10yrs','shortt_5ns_1ext_pairsmix_10yrs',
-'simple_roll_mod2_mixed_10yrs','roll_mod2_sdf0.2mixed_10yrs','simple_roll_mod3_sdf0.2mixed_10yrs',
-'roll_mod2_sdf0.1mixed_10yrs','roll_mod3_sdf0.2mixed_10yrs',
-'roll_mod3_sdf0.1mixed_10yrs','simple_roll_mod5_sdf0.2mixed_10yrs',
-'roll_mod6_sdf0.2mixed_10yrs','roll_mod6_sdf0.1mixed_10yrs',
-'simple_roll_mod10_sdf0.2mixed_10yrs','roll_mod2_sdf0.10mixed_10yrs',
-'roll_mod2_sdf0.05mixed_10yrs','simple_roll_mod2_sdf0.20mixed_10yrs',
-'roll_mod3_sdf0.05mixed_10yrs','roll_mod2_sdf0.20mixed_10yrs',
-'roll_mod3_sdf0.20mixed_10yrs','simple_roll_mod3_sdf0.20mixed_10yrs',
-'roll_mod3_sdf0.10mixed_10yrs','roll_mod6_sdf0.05mixed_10yrs',
-'roll_mod6_sdf0.20mixed_10yrs','roll_mod6_sdf0.10mixed_10yrs',
-'simple_roll_mod10_sdf0.20mixed_10yrs']
-
-#dbNames = ['weather_0.20c_10yrs','weather_0.60c_10yrs','weather_0.70c_10yrs','weather_1.10c_10yrs',
-#'weather_0.40c_10yrs','weather_0.90c_10yrs','weather_0.30c_10yrs','weather_0.80c_10yrs','weather_0.10c_10yrs']
-
-print(len(dbNames))
-#dbDir = '/sps/lsst/cadence/LSST_SN_PhG/cadence_db/opsim_new'
-
-"""
-fieldType = 'DD'
-metric = 'NSN'
-
-"""
-fieldType = 'WFD'
-metric = 'Cadence'
-
-coadd = 1
-
 if fieldType =='DD':
     dbNames = ['kraken_2026','ddf_0.23deg_1exp_pairsmix_10yrs','ddf_0.70deg_1exp_pairsmix_10yrs','ddf_pn_0.23deg_1exp_pairsmix_10yrs','ddf_pn_0.70deg_1exp_pairsmix_10yrs']
     simuType = [0,1,1,1,1]
@@ -112,19 +130,57 @@ if fieldType =='DD':
 
 if fieldType =='WFD':
     dbNames = ['kraken_2026','alt_sched','altsched_good_weather','alt_sched_rolling','baseline_1exp_nopairs_10yrs']
+    simuType = [1,2,2,2,1]
+    #dbNames = ['kraken_2026']
     #dbNames = ['altsched_good_weather']
     #'baseline_1exp_pairsame_10yrs','baseline_1exp_pairsmix_10yrs','baseline_2exp_pairsame_10yrs','baseline_2exp_pairsmix_10yrs','roll_mod2_sdf0.2mixed_10yrs']
     #dbNames = ['alt_sched_rolling', 'kraken_2026','rolling_10yrs_opsim']
-    #dbNames = ['kraken_2026']
-    simuType = [1,2,2,2,1]
+    #simuType = [2,1,0]
+    dbNames = ['colossus_2667']
+    simuType = [2]
+    
+    #simuType = [1]
     #simuType = [2]
     nproc = 8
     nside = 64
+    
+    dbNames = dbNames_oswg_paper
+    simuType = simuType_oswg_paper
+    
+"""
+    
+parser = OptionParser()
 
+parser.add_option("--dbList", type="str", default='WFD.txt',
+                  help="dbList to process  [%default]")
+parser.add_option("--metricName", type="str", default='SNR',
+                  help="metric to process  [%default]")
+parser.add_option("--dbDir", type="str", default='', help="db dir [%default]")
+
+opts, args = parser.parse_args()
+
+print('Start processing...')
+
+dbList = opts.dbList
+metricName = opts.metricName
+dbDir = opts.dbDir
+if dbDir == '':
+    dbDir = '/sps/lsst/cadence/LSST_SN_CADENCE/cadence_db'
 outDir='/sps/lsst/users/gris/MetricOutput'
 
-for i,dbName in enumerate(dbNames):
-    for nside in [nside]:
-        batch(dbDir,dbName,'run_scripts/metrics/run_metrics_fromnpy',nside,simuType[i],outDir,nproc,8,fieldType,1,metric,coadd)
-    #batch(dbDir,dbName,'run_scripts/run_metrics_fromnpy','all',8)
+
+toprocess = np.genfromtxt(dbList,dtype=None,names=['dbName','simuType','nside','coadd','fieldType','nproc'])
+
+print('there',toprocess)
+
+n_per_slice = 1
+n_process = len(toprocess)
+lproc = list(range(0,n_process,n_per_slice))
+for val in lproc:
+#proc in toprocess:
+    batch_new(dbDir,'run_scripts/metrics/run_metrics_fromnpy',outDir,8,1,metricName,toprocess[val:val+n_per_slice])
     
+                      
+if (n_process & 1)&(n_per_slice>1):
+    batch_new(dbDir,'run_scripts/metrics/run_metrics_fromnpy',outDir,8,1,metricName,toprocess[-1])
+
