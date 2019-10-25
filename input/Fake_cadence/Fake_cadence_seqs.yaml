@@ -1,0 +1,27 @@
+Ra: 0.0
+Dec: 0.0
+seasons: [1,2]
+season_length: #season_length (days)
+  1: 180.
+  2: 195.
+sequences: 
+  1 : ['gri','zy']
+  2 : ['grizy']
+cadence: 
+  1 : 2. # Cadence[day] per sequence
+  2 : 3.
+Nvisits:
+ 1: [[2,4,8],[25,4]]
+ 2: [[10,20,20,26,20]]
+Single_Exposure_Time: 
+ 1: [[30.,30.,30.],[30.,30.]]
+ 2: [[30.,30.,30.,30.,30.]]
+deltaT_seq: [0.,1.] # deltaT between sequences [in days]
+bands: 'ugrizy'
+m5: [23.27,24.58,24.22,23.65,22.78,22.00] #5-sigma depth values/band
+#Nvisits: [10,20,20,26,20]
+#exptime per sequence/filter
+shift_days:  0.0069444 #in days: 10./(24.*60.)
+MJD_min: -40.
+seeingEff: [0.92,0.87,0.83,0.80,0.78,0.76]
+seeingGeom: [0.92,0.87,0.83,0.80,0.78,0.76]
