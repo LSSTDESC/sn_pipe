@@ -21,6 +21,7 @@ from sn_stackers.coadd_stacker import CoaddStacker
 from sn_tools.sn_obs import pavingSky,getFields
 import glob
 from numpy import genfromtxt
+from sn_tools.sn_io import Read_Sqlite
 
 def loop_area(pointings, band, metricList, observations, nside, outDir,dbName,saveData,nodither,RaCol,DecCol,j=0, output_q=None):
 
@@ -153,6 +154,8 @@ parser = OptionParser()
 
 parser.add_option("--dbName", type="str", default='alt_sched',
                   help="db name [%default]")
+parser.add_option("--dbExtens", type="str", default='npy',
+                  help="db extension [%default]")
 parser.add_option("--dbDir", type="str", default='', help="db dir [%default]")
 parser.add_option("--outDir", type="str", default='',
                   help="output dir [%default]")
@@ -207,6 +210,7 @@ if dbDir == '':
     dbDir = '/sps/lsst/cadence/LSST_SN_CADENCE/cadence_db'
 
 dbName = opts.dbName
+dbExtens = opts.dbExtens
 nside = opts.nside
 band = opts.band
 seasons = -1
@@ -243,9 +247,9 @@ metricList = []
 
 if metric == 'NSN':
     metricList.append(NSNMetricWrapper(fieldType=fieldType,
-                                       pixArea=pixArea,season=[1,2],
+                                       pixArea=pixArea,season=-1,
                                        nside=nside, templateDir=templateDir,
-                                       verbose=True, ploteffi=False,coadd=coadd,outputType='zlims'))
+                                       verbose=0, ploteffi=0,coadd=coadd,outputType='zlims'))
 
 if metric == 'Cadence':
     metricList.append(CadenceMetricWrapper(season=-1,coadd=coadd,fieldType=fieldType,nside=nside,ramin=ramin,ramax=ramax,decmin=decmin,decmax=decmax))
@@ -254,13 +258,37 @@ if metric == 'SL':
 if metric == 'SNRRate':
     metricList.append(SNRRateMetricWrapper(nside=nside,coadd=coadd))
 
-if metric == 'SNR':
-    metricList.append(SNRMetricWrapper(z=0.2,coadd=coadd,nside=nside,band='r',ramin=ramin,ramax=ramax,decmin=decmin,decmax=decmax))
+if 'SNR' in metric:
+    band = metric[-1]
+    metricList.append(SNRMetricWrapper(z=0.2,coadd=coadd,nside=nside,band=band,ramin=ramin,ramax=ramax,decmin=decmin,decmax=decmax))
+"""
+if metric == 'SNRz'
     metricList.append(SNRMetricWrapper(z=0.2,coadd=coadd,nside=nside,band='z',ramin=ramin,ramax=ramax,decmin=decmin,decmax=decmax))
-
+"""
 # loading observations
 
-observations = np.load('{}/{}.npy'.format(dbDir, dbName))
+dbFullName = '{}/{}.{}'.format(dbDir, dbName,dbExtens)
+# if extension is npy -> load
+if dbExtens == 'npy':
+    observations = np.load(dbFullName)
+else:
+    #db as input-> need to transform as npy
+    print('looking for',dbFullName)
+    keymap = {'observationStartMJD': 'mjd',
+              'filter': 'band',
+              'visitExposureTime': 'exptime',
+              'skyBrightness': 'sky',
+              'fieldRA': 'Ra',
+              'fieldDec': 'Dec',}
+
+    reader = Read_Sqlite(dbFullName)
+    #sql = reader.sql_selection(None)
+    observations = reader.get_data(cols=None, sql='',
+                           to_degrees=False,
+                           new_col_names=keymap)
+
+
+
 observations = renameFields(observations)
 
 
