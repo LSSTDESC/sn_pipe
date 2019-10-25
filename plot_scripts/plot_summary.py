@@ -34,7 +34,33 @@ class PlotSummary:
             self.Li_files = ['{}/Li_{}_{}_{}.npy'.format(refDir,name,x1,color)]
             self.mag_to_flux_files = ['{}/Mag_to_Flux_{}.npy'.format(refDir,name)]
 
-    def loadFile(self,dirFile, dbName, fieldtype, band, metricName, nside=64):
+
+    def loadFile(self,dirFile, dbName, fieldtype,metricName, nside=64):
+    
+        fileName  ='{}/{}/{}_{}*.npy'.format(dirFile,dbName,dbName,metricName)
+        """
+        if fieldtype != '':
+            fileName  ='{}/{}/{}_{}_{}_nside_{}_*.hdf5'.format(dirFile,dbName,dbName,metricName,fieldtype,nside)
+        
+        if band != '':
+            fileName  ='{}/{}/{}_{}_nside_{}_{}*.hdf5'.format(dirFile,dbName,dbName,metricName,nside,band)
+        """
+        print('looking for',fileName)
+        
+        fileNames = glob.glob(fileName)
+        print(fileNames,len(fileNames))
+        """
+        metricValues = loopStack(fileNames,'astropyTable')
+        """
+        metricValues = np.load(fileNames[0])
+        """
+        if not os.path.isfile(fileName):
+            return None
+        return np.load(fileName)
+        """
+        return metricValues    
+
+    def loadFile_old(self,dirFile, dbName, fieldtype, band, metricName, nside=64):
         if fieldtype != '':
             fileName  ='{}/{}/{}_{}_{}_nside_{}_*.hdf5'.format(dirFile,dbName,dbName,metricName,fieldtype,nside)
         if band != '':
@@ -54,12 +80,13 @@ class PlotSummary:
 
     def getMetricValues(self, dirFile, dbName, band):
         
-        metricValuesCad = self.loadFile(dirFile, dbName, 'WFD','', 'CadenceMetric')
-        metricValuesSNR =  self.loadFile(dirFile, dbName,'',band, 'SNRMetric')
+        print('loading here',dirFile, dbName, band)
+        metricValuesCad = self.loadFile(dirFile, dbName, 'WFD','Cadence')
+        metricValuesSNR =  self.loadFile(dirFile, dbName,'','SNR{}'.format(band))
         print('hello',metricValuesSNR.dtype)
-        idx = metricValuesSNR['band'] == str.encode(band)
-        metricValuesSNR = np.copy(metricValuesSNR[idx])
-        print('yes',metricValuesSNR['band'])
+        #idx = metricValuesSNR['band'] == str.encode(band)
+        #metricValuesSNR = np.copy(metricValuesSNR[idx])
+        #print('yes',metricValuesSNR['band'])
 
         if metricValuesCad is None or metricValuesSNR is None:
             return None
@@ -142,7 +169,7 @@ def plotBandSimple(ax,band,medVals,shiftx = -0.003, shifty = -0.004):
         
 
     ax.set_xlabel('z$_{lim}$')
-    ax.set_ylabel('Detection rate')
+    ax.set_ylabel('SNR rate')
     xmin, xmax = ax.get_xlim()
     ax.set_xlim([xmin-0.01,xmax+0.01])
     plt.grid(linestyle='--')
@@ -222,8 +249,8 @@ def plotBand(ax,band,medVals,label='True', shiftx = -0.003, shifty = -0.004,excl
     
     
 
-dirFile = '/sps/lsst/users/gris/MetricOutput'
-
+#dirFile = '/sps/lsst/users/gris/MetricOutput'
+dirFile = '/sps/lsst/users/gris/MetricSummary'
 
 
 plt.rcParams['xtick.labelsize'] = 16
@@ -234,7 +261,7 @@ plt.rcParams['lines.linewidth'] = 2.5
 plt.rcParams['figure.figsize'] = (10, 7)
 
 forPlot = np.loadtxt('plot_scripts/cadenceCustomize.txt',
-                     dtype={'names': ('dbName', 'newName', 'group','Namepl','color','marker'),'formats': ('U33', 'U33','U12','U18','U7','U1')})
+                     dtype={'names': ('dbName', 'newName', 'group','Namepl','color','marker'),'formats': ('U35', 'U33','U12','U18','U7','U1')})
 
 print(forPlot)
 plotSum = PlotSummary()
@@ -254,7 +281,7 @@ if not os.path.isfile('Summary.npy'):
     np.save('Summary.npy',np.copy(medValues))
 
 print(forPlot)
-bands = 'r'
+bands = 'rz'
 medValues = np.load('Summary.npy')
 
 zoom={}
