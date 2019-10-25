@@ -28,7 +28,7 @@ class SNRMetricWrapper:
         self.names_ref = names_ref
         self.season = season
         self.shift = shift
-        self.name = 'SNRMetric_{}_nside_{}_coadd_{}_{}_{}_{}_{}_{}'.format(fieldType,nside,coadd,ramin,ramax,decmin,decmax,band)
+        self.name = 'SNR{}Metric_{}_nside_{}_coadd_{}_{}_{}_{}_{}'.format(band,fieldType,nside,coadd,ramin,ramax,decmin,decmax)
         self.fake_file = '{}/{}.yaml'.format(dirFakes, 'Fake_cadence')
         self.band = band
        
@@ -141,11 +141,11 @@ class NSNMetricWrapper:
         # LC selection criteria
 
         if fieldType == 'DD':
-            N_bef = 5
-            N_aft = 10
-            snr_min = 5.
-            N_phase_min = 1
-            N_phase_max = 1
+            N_bef = 1
+            N_aft = 1
+            snr_min = 0.
+            N_phase_min = 0
+            N_phase_max = 0
 
         if fieldType == 'WFD':
             N_bef = 4
@@ -155,11 +155,11 @@ class NSNMetricWrapper:
             N_phase_max = 0
 
         if fieldType == 'Fake':
-            N_bef = 4
-            N_aft = 10
-            snr_min = 5.
-            N_phase_min = 1
-            N_phase_max = 1
+            N_bef = 0
+            N_aft = 0
+            snr_min = 0.
+            N_phase_min = 0
+            N_phase_max = 0
 
 
 
