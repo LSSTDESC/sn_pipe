@@ -296,7 +296,7 @@ observations = renameFields(observations)
 # fieldIds = [290,1427, 2412, 2786]
 # this is a "simple" tessalation using healpix
 dictArea = {}
-radius = 5.
+radius = 10.
 RaCol = 'fieldRA'
 DecCol = 'fieldDec'
 if 'Ra' in observations.dtype.names:
