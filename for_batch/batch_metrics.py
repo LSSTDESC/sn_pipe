@@ -46,12 +46,13 @@ def batch(dbDir,dbName,scriptref,nside,simuType,outDir,nprocprog,nproccomp,field
     cmd += ' --saveData {}'.format(saveData)
     cmd += ' --metric {}'.format(metric)
     cmd += ' --coadd {}'.format(coadd)
+    cmd += ' --nodither {}'.format(nodither)
     script.write(cmd+" \n")
     script.write("EOF" + "\n")
     script.close()
     os.system("sh "+scriptName)
 
-def batch_new(dbDir,dbExtens,scriptref,outDir,nproccomp,saveData,metric,toprocess):
+def batch_new(dbDir,dbExtens,scriptref,outDir,nproccomp,saveData,metric,toprocess,nodither):
 
     cwd = os.getcwd()
     dirScript= cwd + "/scripts"
@@ -66,7 +67,7 @@ def batch_new(dbDir,dbExtens,scriptref,outDir,nproccomp,saveData,metric,toproces
     dbName = toprocess['dbName'][0].decode()
     nside = toprocess['nside'][0]
     fieldType = toprocess['fieldType'][0].decode()
-    id='{}_{}_{}_{}'.format(dbName,nside,fieldType,metric)
+    id='{}_{}_{}_{}{}'.format(dbName,nside,fieldType,metric,nodither)
     name_id='metric_{}'.format(id)
     log = dirLog + '/'+name_id+'.log'
 
@@ -92,7 +93,7 @@ def batch_new(dbDir,dbExtens,scriptref,outDir,nproccomp,saveData,metric,toproces
     script.write("echo $PYTHONPATH \n")
 
     for proc in toprocess:
-        cmd_ = batch_cmd(scriptref,dbDir,dbExtens,outDir,saveData,metric,proc)
+        cmd_ = batch_cmd(scriptref,dbDir,dbExtens,outDir,saveData,metric,proc,nodither)
         """
         cmd = 'python {}.py --dbDir {} --dbName {}'.format(scriptref,dbDir,dbName)
         cmd += ' --nproc {} --nside {} --simuType {}'.format(nprocprog,nside,simuType)
@@ -108,7 +109,7 @@ def batch_new(dbDir,dbExtens,scriptref,outDir,nproccomp,saveData,metric,toproces
     script.close()
     os.system("sh "+scriptName)
 
-def batch_cmd(scriptref,dbDir,dbExtens,outDir,saveData,metric,proc):
+def batch_cmd(scriptref,dbDir,dbExtens,outDir,saveData,metric,proc,nodither):
 
     cmd = 'python {}.py --dbDir {} --dbName {} --dbExtens {}'.format(scriptref,dbDir,proc['dbName'].decode(),dbExtens)
     cmd += ' --nproc {} --nside {} --simuType {}'.format(proc['nproc'],proc['nside'],proc['simuType'])
@@ -117,7 +118,9 @@ def batch_cmd(scriptref,dbDir,dbExtens,outDir,saveData,metric,proc):
     cmd += ' --saveData {}'.format(saveData)
     cmd += ' --metric {}'.format(metric)
     cmd += ' --coadd {}'.format(proc['coadd'])
-    
+    if nodither != '':
+        cmd += ' --nodither {}'.format(nodither)
+
     return cmd
 
 
@@ -157,6 +160,7 @@ parser.add_option("--metricName", type="str", default='SNR',
                   help="metric to process  [%default]")
 parser.add_option("--dbDir", type="str", default='', help="db dir [%default]")
 parser.add_option("--dbExtens", type="str", default='npy', help="db extension [%default]")
+parser.add_option("--nodither", type="str", default='', help="db extension [%default]")
 
 opts, args = parser.parse_args()
 
@@ -170,7 +174,7 @@ if dbDir == '':
 dbExtens = opts.dbExtens
 
 outDir='/sps/lsst/users/gris/MetricOutput'
-
+nodither = opts.nodither
 
 toprocess = np.genfromtxt(dbList,dtype=None,names=['dbName','simuType','nside','coadd','fieldType','nproc'])
 
@@ -181,9 +185,9 @@ n_process = len(toprocess)
 lproc = list(range(0,n_process,n_per_slice))
 for val in lproc:
 #proc in toprocess:
-    batch_new(dbDir,dbExtens,'run_scripts/metrics/run_metrics_fromnpy',outDir,8,1,metricName,toprocess[val:val+n_per_slice])
+    batch_new(dbDir,dbExtens,'run_scripts/metrics/run_metrics_fromnpy',outDir,8,1,metricName,toprocess[val:val+n_per_slice],nodither)
     
                       
 if (n_process & 1)&(n_per_slice>1):
-    batch_new(dbDir,dbExtens,'run_scripts/metrics/run_metrics_fromnpy',outDir,8,1,metricName,toprocess[-1])
+    batch_new(dbDir,dbExtens,'run_scripts/metrics/run_metrics_fromnpy',outDir,8,1,metricName,toprocess[-1],nodither)
 
