@@ -141,11 +141,11 @@ class NSNMetricWrapper:
         # LC selection criteria
 
         if fieldType == 'DD':
-            N_bef = 1
-            N_aft = 1
-            snr_min = 0.
-            N_phase_min = 0
-            N_phase_max = 0
+            N_bef = 2
+            N_aft = 5
+            snr_min = 5.
+            N_phase_min = 1
+            N_phase_max = 1
 
         if fieldType == 'WFD':
             N_bef = 4
