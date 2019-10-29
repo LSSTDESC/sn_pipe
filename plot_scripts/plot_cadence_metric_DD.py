@@ -24,10 +24,13 @@ def getFields(elaisRa=0.0):
     return fields_DD
 
 def getVals(fields_DD, tab, cadence, nside=64, plotting=False):
+
     pixArea = hp.nside2pixarea(nside, degrees=True)
 
+    """
     if plotting:
         fig, ax = plt.subplots()
+    """
 
     r = []
     dataTot = None
@@ -63,12 +66,27 @@ fieldType = opts.fieldType
 dbNames = ['ddf_pn_0.23deg_1exp_pairsmix_10yrs']
 dbNames = ['kraken_2026','ddf_pn_0.23deg_1exp_pairsmix_10yrs']
 dbNames = ['Fake_DESC']
+dbNames=['agnddf_illum60_v1.3_10yrs']
+dbNames=['descddf_illum60_v1.3_10yrsno']
+dbNames = ['descddf_illum60_v1.3_10yrs',
+           'descddf_illum30_v1.3_10yrs',
+           'descddf_illum7_v1.3_10yrs',
+           'descddf_illum15_v1.3_10yrs',
+           'descddf_illum10_v1.3_10yrs',
+           'descddf_illum3_v1.3_10yrs',
+           'descddf_illum4_v1.3_10yrs',
+           'descddf_illum5_v1.3_10yrs']
+"""
+,'descddf_illum30_v1.3_10yrs','descddf_illum7
+_v1.3_10yrs','descddf_illum15_v1.3_10yrs','descddf_illum10_v1.3_10yrs','descddf_illum3_v1.3_10yrs','euclid_ddf_v1.3_10yrs','descddf_illum
+4_v1.3_10yrs','descddf_illum5_v1.3_10yrs',
+"""
 #dbNames += ['ddf_0.70deg_1exp_pairsmix_10yrs']
 #dbNames += ['ddf_0.23deg_1exp_pairsmix_10yrs']
 #dbNames += ['ddf_pn_0.70deg_1exp_pairsmix_10yrs']
-colors = ['k', 'r', 'b','m','c']
-markers = ['s', '*', 'o','.','p','P']
-mfc = ['None', 'None', 'None','None','None']
+colors = ['k', 'r', 'b','m','c','g','k','r']
+markers = ['s', '*', 'o','.','p','P','>','<']
+mfc = ['None', 'None', 'None','None','None', 'None','None','None']
 
 lengths = [len(val) for val in dbNames]
 adjl = np.max(lengths)
@@ -88,7 +106,8 @@ for dbName in dbNames:
     print(metricValues)
     print(metricValues.dtype)
     fields_DD = getFields(10.)
-    tab = getVals(fields_DD, metricValues, dbName.ljust(adjl), nside,True)
+    #tab = None
+    tab = getVals(fields_DD, metricValues, dbName.ljust(adjl), nside,False)
     """
     idx = metricValues['filter']=='all'
     sel = metricValues[idx]
@@ -107,18 +126,22 @@ for dbName in dbNames:
     idb = fields_DD['fieldname'] == 'COSMOS'.ljust(7)
     #sn_plot.plotMollview(nside,sel,'season_length','season_length','days',1.,'',dbName,saveFig=False,seasons=-1,type='mollview', fieldzoom=fields_DD[idb])
     """
-    if metricTot is None:
-        metricTot = tab
-    else:
-        metricTot = np.concatenate((metricTot,tab))
+    if tab is not None:
+        if metricTot is None:
+            metricTot = tab
+        else:
+            metricTot = np.concatenate((metricTot,tab))
+    
 
 
 fontsize = 15
 fields_DD = getFields()
-print(metricTot[['cadence','filter']])
+
 
 #grab median values
-df = pd.DataFrame(np.copy(metricTot)).groupby(['healpixID','fieldnum','filter','cadence']).median().reset_index()
+#df = pd.DataFrame(np.copy(metricTot)).groupby(['healpixID','fieldnum','filter','cadence']).median().reset_index()
+df = pd.DataFrame(np.copy(metricTot)).groupby(['fieldnum','filter','cadence']).median().reset_index()
+print(metricTot[['cadence','filter']])
 
 #print(df)
 metricTot = df.to_records(index=False)
@@ -129,8 +152,9 @@ sel = metricTot[idx]
 figleg = 'nside = {}'.format(nside)
 sn_plot.plotDDLoop(nside,dbNames,sel,'season_length','season length [days]',markers,colors,mfc,adjl,fields_DD,figleg)
 sn_plot.plotDDLoop(nside,dbNames,sel,'cadence_mean','cadence [days]',markers,colors,mfc,adjl,fields_DD,figleg)
-
-
+sn_plot.plotDDLoop(nside,dbNames,sel,'gap_max','max gap [days]',markers,colors,mfc,adjl,fields_DD,figleg)
+plt.show()
+print(test)
 
 """
 for band in 'grizy':
@@ -146,8 +170,8 @@ mfiltc = ['None']*len(filtercolors)
 print(metricTot.dtype)
 #vars = ['visitExposureTime','cadence_mean','gap_max','gap_5']
 #legends = ['Exposure Time [sec]/night','cadence [days]','max gap [days]','frac gap > 5 days']
-vars = ['visitExposureTime','cadence_mean']
-legends = ['Exposure Time [sec]/night','cadence [days]']
+vars = ['visitExposureTime','cadence_mean','numExposures']
+legends = ['Exposure Time [sec]/night','cadence [days]','Nexposures']
 
 
 todraw=dict(zip(vars,legends))

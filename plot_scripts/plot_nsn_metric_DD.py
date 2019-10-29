@@ -1,5 +1,6 @@
 import numpy as np
 import sn_plotters.sn_cadencePlotters as sn_plot
+import sn_plotters.sn_NSNPlotters as nsn_plot
 from sn_tools.sn_io import loopStack
 import matplotlib.pylab as plt
 import argparse
@@ -12,7 +13,7 @@ import pandas as pd
 
 def match_colors(data):
 
-    print('here',data)
+    #print('here',data)
     x1_colors = [(-2.0,0.2),(0.0,0.0)]
     corr = dict(zip(x1_colors,['faint','medium']))
     r = []
@@ -30,7 +31,6 @@ def match_colors(data):
             idxb = np.abs(seldata['x1']-x1)<1.e-5
             idxb &= np.abs(seldata['color']-color)<1.e-5
             selb = seldata[idxb]
-            print('hohoho',selb.dtype)
             if len(selb)>0:
                 zlim[corr[(x1,color)]] = selb['zlim'][0]
                 nsn_med[corr[(x1,color)]] = selb['nsn_med'][0]
@@ -126,11 +126,33 @@ dbNames += ['ddf_0.70deg_1exp_pairsmix_10yrs']
 dbNames += ['ddf_0.23deg_1exp_pairsmix_10yrs']
 dbNames += ['ddf_pn_0.70deg_1exp_pairsmix_10yrs']
 #dbNames += ['ddf_0.23deg_1exp_pairsmix_10yrsnodither']
-dbNames = ['Fake_DESC']
+#dbNames = ['Fake_DESC']
+dbNames=['descddf_illum60_v1.3_10yrs']
+#dbNames = ['baseline_v1.3_10yrs',
+dbNames = ['descddf_illum60_v1.3_10yrs',
+           'descddf_illum30_v1.3_10yrs',
+           'descddf_illum7_v1.3_10yrs',
+           'descddf_illum15_v1.3_10yrs',
+           'descddf_illum10_v1.3_10yrs',
+           'descddf_illum3_v1.3_10yrs',
+           'descddf_illum4_v1.3_10yrs',
+           'descddf_illum5_v1.3_10yrs']
+dbNames += ['descddf_illum60_v1.3_10yrsno',
+           'descddf_illum30_v1.3_10yrsno',
+           'descddf_illum7_v1.3_10yrsno',
+           'descddf_illum15_v1.3_10yrsno',
+           'descddf_illum10_v1.3_10yrsno',
+           'descddf_illum3_v1.3_10yrsno',
+           'descddf_illum4_v1.3_10yrsno',
+           'descddf_illum5_v1.3_10yrsno']
+#           'euclid_ddf_v1.3_10yrs']
 
+mmarkers = ['s', '*', 'o','.','^','X','>','P']
+mmarkers += ['s', '*', 'o','.','^','X','>','P']
 colors = ['k', 'r', 'b','g','m','c']
 markers = ['s', '*', 'o','.','^','o']
 mfc = ['None', 'None', 'None','None','None','None']
+fields_DD = getFields(5.)
 
 lengths = [len(val) for val in dbNames]
 adjl = np.max(lengths)
@@ -152,7 +174,7 @@ for dbName in dbNames:
     #plt.plot(metricValues['pixRa'],metricValues['pixDec'],'ko')
     #plt.show()
 
-    fields_DD = getFields(5.)
+    
     tab = getVals(fields_DD, metricValues, dbName.ljust(adjl), nside)
 
     #plt.plot(sel['pixRa'],sel['pixDec'],'ko')
@@ -183,6 +205,8 @@ for dbName in dbNames:
     metricTot = append(metricTot,tab)
    
 
+nsn_plot.plot_DDSummary(metricTot, dict(zip(dbNames,mmarkers)),dict(zip(fields_DD['fieldname'],colors)))
+print(test)
 fontsize = 15
 fields_DD = getFields()
 #print(metricTot[['cadence','filter']])
@@ -212,6 +236,7 @@ sn_plot.plotDDLoop(nside,dbNames,metricTot,'zlim_faint','$z_{lim}^{faint}$',mark
 #sn_plot.plotDDLoopCorrel(nside,dbNames,metricTot,'nsn_med_zfaint','nsn_med_zmedium','$z_{lim}^{faint}$','$z_{lim}^{med}$',markers,colors,mfc,adjl,fields_DD,figleg)
 
 sn_plot.plotDDFit(metricTot,'nsn_med_zmedium','nsn_zmedium')
+sn_plot.plotDDFit(metricTot,'zlim_faint','zlim_medium')
 
 #sn_plot.plotDDLoopCorrel(nside,dbNames,metricTot,'nsn_med_zfaint','nsn_med_zmedium','$z_{lim}^{faint}$','$z_{lim}^{med}$',markers,colors,mfc,adjl,fields_DD,figleg)
 
