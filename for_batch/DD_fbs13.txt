@@ -1,0 +1,15 @@
+# dbName                  simuType nside coadd fieldtype nproc
+baseline_v1.3_10yrs	   1	     128    1	  DD	    5			
+descddf_illum60_v1.3_10yrs 1	     128    1	  DD	    5
+descddf_illum30_v1.3_10yrs 1	     128    1	  DD	    5
+descddf_illum7_v1.3_10yrs  1	     128    1	  DD	    5
+descddf_illum15_v1.3_10yrs 1	     128    1	  DD	    5
+descddf_illum10_v1.3_10yrs 1	     128    1	  DD	    5
+descddf_illum3_v1.3_10yrs  1	     128    1	  DD	    5
+descddf_illum4_v1.3_10yrs  1	     128    1	  DD	    5
+descddf_illum5_v1.3_10yrs  1	     128    1	  DD	    5
+agnddf_illum60_v1.3_10yrs  1	     128    1	  DD	    5
+agnddf_illum30_v1.3_10yrs  1	     128    1	  DD	    5
+agnddf_illum10_v1.3_10yrs  1	     128    1	  DD	    5
+agnddf_illum15_v1.3_10yrs  1	     128    1	  DD	    5
+euclid_ddf_v1.3_10yrs	   1 	     128    1	  DD	    5
