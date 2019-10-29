@@ -4,6 +4,8 @@ from sn_metrics.sn_global_metric import SNGlobalMetric
 from sn_tools.sn_obs import renameFields
 import numpy as np
 import multiprocessing
+from sn_tools.sn_io import Read_Sqlite
+import os
 
 def loop(obs, nights,j=0, output_q=None):
     restot = None
@@ -25,6 +27,8 @@ def loop(obs, nights,j=0, output_q=None):
 parser = OptionParser()
 
 parser.add_option("--dbName", type="str", default='alt_sched', help="db name [%default]")
+parser.add_option("--dbExtens", type="str", default='npy',
+                  help="db extension [%default]")
 parser.add_option("--dbDir", type="str", default='', help="db dir [%default]")
 parser.add_option("--outDir", type="str", default='', help="output directory [%default]")
 parser.add_option("--nproc", type="int", default='1', help="nproc for multiprocessing [%default]")
@@ -36,6 +40,7 @@ if dbDir == '':
     dbDir='/sps/lsst/cadence/LSST_SN_CADENCE/cadence_db'
 
 dbName = opts.dbName
+dbExtens = opts.dbExtens
 
 outDir = opts.outDir
 if outDir == '':
@@ -47,8 +52,27 @@ nproc = opts.nproc
 sn_metric = SNGlobalMetric()
 
 #load observations
-obs = np.load('{}/{}.npy'.format(dbDir, dbName))
-obs = renameFields(obs)
+dbFullName = '{}/{}.{}'.format(dbDir, dbName,dbExtens)
+# if extension is npy -> load
+if dbExtens == 'npy':
+    observations = np.load(dbFullName)
+else:
+    #db as input-> need to transform as npy
+    print('looking for',dbFullName)
+    keymap = {'observationStartMJD': 'mjd',
+              'filter': 'band',
+              'visitExposureTime': 'exptime',
+              'skyBrightness': 'sky',
+              'fieldRA': 'Ra',
+              'fieldDec': 'Dec',}
+
+    reader = Read_Sqlite(dbFullName)
+    #sql = reader.sql_selection(None)
+    observations = reader.get_data(cols=None, sql='',
+                           to_degrees=False,
+                           new_col_names=keymap)
+
+obs = renameFields(observations)
 
 # Grab the number of nights
 nights = np.unique(obs['night'])
@@ -89,5 +113,9 @@ for key,vals in resultdict.items():
         restot = vals
     else:
         restot = np.concatenate((restot,vals))
+
+outDir = '{}/{}/Global'.format(outDir,dbName)
+if not os.path.isdir(outDir):
+    os.makedirs(outDir)
 
 np.save('{}/{}_SNGlobal.npy'.format(outDir,dbName),np.copy(restot))
