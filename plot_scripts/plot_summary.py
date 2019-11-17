@@ -5,6 +5,7 @@ import os
 from mpl_toolkits.axes_grid1.inset_locator import zoomed_inset_axes,mark_inset
 import glob
 from sn_tools.sn_io import loopStack
+import csv
 
 class PlotSummary:
     def __init__(self, x1=-2.0, color=0.2, namesRef=['SNCosmo'],
@@ -78,7 +79,7 @@ class PlotSummary:
         return metricValues
 
 
-    def getMetricValues(self, dirFile, dbName, band):
+    def getMetricValues(self, dirFile, dbName, band,m5_str='m5_median'):
         
         print('loading here',dirFile, dbName, band)
         metricValuesCad = self.loadFile(dirFile, dbName, 'WFD','Cadence')
@@ -97,7 +98,7 @@ class PlotSummary:
                             mag_range=self.mag_range, 
                             dt_range=self.dt_range,
                             dbName=dbName,      
-                            display=False)
+                                         display=False,m5_str=m5_str)
         
 
         r = []
@@ -260,8 +261,8 @@ plt.rcParams['axes.labelsize'] = 18
 plt.rcParams['lines.linewidth'] = 2.5
 plt.rcParams['figure.figsize'] = (10, 7)
 
-forPlot = np.loadtxt('plot_scripts/cadenceCustomize.txt',
-                     dtype={'names': ('dbName', 'newName', 'group','Namepl','color','marker'),'formats': ('U35', 'U33','U12','U18','U7','U1')})
+forPlot = np.loadtxt('plot_scripts/cadenceCustomizefb13.txt',
+                     dtype={'names': ('dbName', 'newName', 'group','Namepl','color','marker'),'formats': ('U39', 'U39','U12','U18','U7','U1')})
 
 print(forPlot)
 plotSum = PlotSummary()
@@ -272,11 +273,11 @@ if not os.path.isfile('Summary.npy'):
     for band in bands:
         for dbName in forPlot['dbName']:
             print('processing',dbName)
-            res = plotSum.getMetricValues(dirFile, dbName,band)
+            res = plotSum.getMetricValues(dirFile, dbName,band,m5_str='m5_median')
             if res is not None:
                 medList += res
     
-    medValues = np.array(medList, dtype=[('band','U1'),('dbName','U33'),('zlim','f8'),('detect_rate','f8')])
+    medValues = np.array(medList, dtype=[('band','U1'),('dbName','U39'),('zlim','f8'),('detect_rate','f8')])
 
     np.save('Summary.npy',np.copy(medValues))
 
@@ -328,3 +329,33 @@ for band in bands:
         axins.set_xticklabels([])
     
 plt.show()
+
+#ref_opsim = np.genfromtxt('opsim_runs.csv',delimiter=',')
+
+print('oo',medValues.dtype)
+idx = medValues['band'] == 'z'
+sel = medValues[idx]
+print(sel['dbName'])
+
+rows = []
+rows.append(['','name','group','zlim_z','snr_rate'])
+with open('opsim_runs.csv', newline='') as csvfile:
+    reader = csv.DictReader(csvfile)
+    for row in reader:
+        #print(row['num'],row['name'],row['group']) 
+        name = row['name'].split('.db')[0]
+        idb = sel['dbName'] == name
+        selb = sel[idb]
+        print(row['num'],row['name'],row['group'],np.round(selb['zlim'][0],4),np.round(selb['detect_rate'][0],4))
+        zlim = np.round(selb['zlim'][0],4)
+        detect_rate = np.round(selb['detect_rate'][0],4)
+        rowb = [row['num'],row['name'],row['group'],str(zlim),str(detect_rate)]
+        rows.append(rowb)
+
+with open('person.csv', 'w') as csvFile:
+    writer = csv.writer(csvFile,delimiter=',')
+    for myrow in rows:
+        print(myrow)
+        writer.writerow(myrow)
+
+#print(ref_opsim)
