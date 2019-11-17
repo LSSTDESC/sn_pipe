@@ -68,8 +68,8 @@ def getFields(elaisRa=0.0):
     r.append(('CDFS'.ljust(7), 3, 1427, 53.00, -27.44))
     r.append(('ELAIS'.ljust(7), 4, 744, elaisRa, -45.52))
     r.append(('SPT'.ljust(7), 5, 290, 349.39, -63.32))
-    r.append(('Fake'.ljust(7), 6, 111, 0.0, 0.0))
-
+    #r.append(('Fake'.ljust(7), 6, 111, 0.0, 0.0))
+    r.append(('ADFS'.ljust(7), 6, 290,61.00, -48.0))
     fields_DD = np.rec.fromrecords(
         r, names=['fieldname', 'fieldnum', 'fieldId', 'Ra', 'Dec'])
     return fields_DD
@@ -136,22 +136,34 @@ dbNames = ['descddf_illum60_v1.3_10yrs',
            'descddf_illum10_v1.3_10yrs',
            'descddf_illum3_v1.3_10yrs',
            'descddf_illum4_v1.3_10yrs',
-           'descddf_illum5_v1.3_10yrs']
-dbNames += ['descddf_illum60_v1.3_10yrsno',
-           'descddf_illum30_v1.3_10yrsno',
-           'descddf_illum7_v1.3_10yrsno',
-           'descddf_illum15_v1.3_10yrsno',
-           'descddf_illum10_v1.3_10yrsno',
-           'descddf_illum3_v1.3_10yrsno',
-           'descddf_illum4_v1.3_10yrsno',
-           'descddf_illum5_v1.3_10yrsno']
-#           'euclid_ddf_v1.3_10yrs']
+           'descddf_illum5_v1.3_10yrs',
+           'euclid_ddf_v1.3_10yrs']
 
-mmarkers = ['s', '*', 'o','.','^','X','>','P']
-mmarkers += ['s', '*', 'o','.','^','X','>','P']
-colors = ['k', 'r', 'b','g','m','c']
-markers = ['s', '*', 'o','.','^','o']
-mfc = ['None', 'None', 'None','None','None','None']
+dbNames_small = []
+for val in dbNames:
+    dbNames_small.append('_'.join(val.split('_')[:2]))
+
+dbNames += ['descddf_illum60_v1.3_10yrsnodither',
+           'descddf_illum30_v1.3_10yrsnodither',
+           'descddf_illum7_v1.3_10yrsnodither',
+           'descddf_illum15_v1.3_10yrsnodither',
+           'descddf_illum10_v1.3_10yrsnodither',
+           'descddf_illum3_v1.3_10yrsnodither',
+           'descddf_illum4_v1.3_10yrsnodither',
+            'descddf_illum5_v1.3_10yrsnodither',
+            'euclid_ddf_v1.3_10yrsnodither']
+
+mmarkers = ['s', '*', 'o','.','^','X','>','P','<']
+mmarkers += ['s', '*', 'o','.','^','X','>','P','<']
+colors = ['k', 'r', 'b','g','m','c','c']
+markers = ['s', '*', 'o','.','^','o','<']
+mfc = ['None', 'None', 'None','None','None','None','None']
+colors_cad = ['k', 'r', 'b','g','m','c','r','g','b']
+colors_cadb = colors_cad*2
+mfc_cad = colors_cad+['None']*len(colors_cad)
+colors_cad = dict(zip(dbNames_small,colors_cad))
+
+
 fields_DD = getFields(5.)
 
 lengths = [len(val) for val in dbNames]
@@ -165,6 +177,7 @@ color = 0.2
 
 for dbName in dbNames:
     search_path = '{}/{}/{}/*NSNMetric_{}*_nside_{}_*'.format(dirFile,dbName,metricName,fieldType,nside)
+    print('looking for',search_path)
     fileNames = glob.glob(search_path)
     #fileName='{}/{}_CadenceMetric_{}.npy'.format(dirFile,dbName,band)
     print(fileNames)
@@ -205,8 +218,8 @@ for dbName in dbNames:
     metricTot = append(metricTot,tab)
    
 
-nsn_plot.plot_DDSummary(metricTot, dict(zip(dbNames,mmarkers)),dict(zip(fields_DD['fieldname'],colors)))
-print(test)
+nsn_plot.plot_DDSummary(metricTot, dict(zip(dbNames,mmarkers)),dict(zip(fields_DD['fieldname'],colors)),colors_cad)
+
 fontsize = 15
 fields_DD = getFields()
 #print(metricTot[['cadence','filter']])
@@ -222,7 +235,7 @@ sel = metricTot[idx]
 """
 
 figleg = 'nside = {}'.format(nside)
-sn_plot.plotDDLoop(nside,dbNames,metricTot,'zlim_faint','$z_{lim}^{faint}$',markers,colors,mfc,adjl,fields_DD,figleg)
+#sn_plot.plotDDLoop(nside,dbNames,metricTot,'zlim_faint','$z_{lim}^{faint}$',markers,colors,mfc,adjl,fields_DD,figleg)
 #sn_plot.plotDDLoop(nside,dbNames,sel,'cadence_mean','cadence [days]',markers,colors,mfc,adjl,fields_DD,figleg)
 
 #fig,ax = plt.subplots()
@@ -235,20 +248,20 @@ sn_plot.plotDDLoop(nside,dbNames,metricTot,'zlim_faint','$z_{lim}^{faint}$',mark
 
 #sn_plot.plotDDLoopCorrel(nside,dbNames,metricTot,'nsn_med_zfaint','nsn_med_zmedium','$z_{lim}^{faint}$','$z_{lim}^{med}$',markers,colors,mfc,adjl,fields_DD,figleg)
 
-sn_plot.plotDDFit(metricTot,'nsn_med_zmedium','nsn_zmedium')
-sn_plot.plotDDFit(metricTot,'zlim_faint','zlim_medium')
+#sn_plot.plotDDFit(metricTot,'nsn_med_zmedium','nsn_zmedium')
+#sn_plot.plotDDFit(metricTot,'zlim_faint','zlim_medium')
 
 #sn_plot.plotDDLoopCorrel(nside,dbNames,metricTot,'nsn_med_zfaint','nsn_med_zmedium','$z_{lim}^{faint}$','$z_{lim}^{med}$',markers,colors,mfc,adjl,fields_DD,figleg)
 
-sn_plot.plotDDFit(metricTot,'nsn_med_zmedium','nsn_med_zfaint','zlim_medium','zlim_faint')
+#sn_plot.plotDDFit(metricTot,'nsn_med_zmedium','nsn_med_zfaint','zlim_medium','zlim_faint')
 
 
 df = pd.DataFrame(metricTot)
 
 sums = df.groupby(['fieldnum','fieldname','cadence','nside','season'])['pixArea'].sum().reset_index()
 
-
-sn_plot.plotDDLoop(nside,dbNames,sums,'pixArea','area [deg2]',markers,colors,mfc,adjl,fields_DD,figleg)
+idx = sums['pixArea'] > 1.
+sn_plot.plotDDLoop(nside,dbNames,sums[idx],'pixArea','area [deg2]',mmarkers,colors_cadb,mfc_cad,adjl,fields_DD,figleg)
 
 
 plt.show()
