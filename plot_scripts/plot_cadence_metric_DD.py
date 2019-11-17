@@ -18,7 +18,7 @@ def getFields(elaisRa=0.0):
     r.append(('CDFS'.ljust(7), 3, 1427, 53.00, -27.44))
     r.append(('ELAIS'.ljust(7), 4, 744, elaisRa, -45.52))
     r.append(('SPT'.ljust(7), 5, 290, 349.39, -63.32))
-
+    r.append(('ADFS'.ljust(7), 6, 290,61.00, -48.0))
     fields_DD = np.rec.fromrecords(
         r, names=['fieldname', 'fieldnum', 'fieldId', 'Ra', 'Dec'])
     return fields_DD
@@ -75,7 +75,13 @@ dbNames = ['descddf_illum60_v1.3_10yrs',
            'descddf_illum10_v1.3_10yrs',
            'descddf_illum3_v1.3_10yrs',
            'descddf_illum4_v1.3_10yrs',
-           'descddf_illum5_v1.3_10yrs']
+           'descddf_illum5_v1.3_10yrs',
+           'euclid_ddf_v1.3_10yrs']
+
+nodither = 'nodither'
+
+if nodither != '':
+    dbNames = [dbName+'nodither' for dbName in dbNames]
 """
 ,'descddf_illum30_v1.3_10yrs','descddf_illum7
 _v1.3_10yrs','descddf_illum15_v1.3_10yrs','descddf_illum10_v1.3_10yrs','descddf_illum3_v1.3_10yrs','euclid_ddf_v1.3_10yrs','descddf_illum
@@ -84,9 +90,9 @@ _v1.3_10yrs','descddf_illum15_v1.3_10yrs','descddf_illum10_v1.3_10yrs','descddf_
 #dbNames += ['ddf_0.70deg_1exp_pairsmix_10yrs']
 #dbNames += ['ddf_0.23deg_1exp_pairsmix_10yrs']
 #dbNames += ['ddf_pn_0.70deg_1exp_pairsmix_10yrs']
-colors = ['k', 'r', 'b','m','c','g','k','r']
-markers = ['s', '*', 'o','.','p','P','>','<']
-mfc = ['None', 'None', 'None','None','None', 'None','None','None']
+colors = ['k', 'r', 'b','m','c','g','k','r','b']
+markers = ['s', '*', 'o','.','p','P','>','<','^']
+mfc = ['None', 'None', 'None','None','None', 'None','None','None','None']
 
 lengths = [len(val) for val in dbNames]
 adjl = np.max(lengths)
@@ -140,21 +146,28 @@ fields_DD = getFields()
 
 #grab median values
 #df = pd.DataFrame(np.copy(metricTot)).groupby(['healpixID','fieldnum','filter','cadence']).median().reset_index()
+
+"""
 df = pd.DataFrame(np.copy(metricTot)).groupby(['fieldnum','filter','cadence']).median().reset_index()
 print(metricTot[['cadence','filter']])
 
 #print(df)
 metricTot = df.to_records(index=False)
+"""
+
 idx = metricTot['filter']=='all'
 sel = metricTot[idx]
 
 
 figleg = 'nside = {}'.format(nside)
+
+if nodither != '':
+    figleg += '- {}'.format(nodither)
 sn_plot.plotDDLoop(nside,dbNames,sel,'season_length','season length [days]',markers,colors,mfc,adjl,fields_DD,figleg)
 sn_plot.plotDDLoop(nside,dbNames,sel,'cadence_mean','cadence [days]',markers,colors,mfc,adjl,fields_DD,figleg)
 sn_plot.plotDDLoop(nside,dbNames,sel,'gap_max','max gap [days]',markers,colors,mfc,adjl,fields_DD,figleg)
 plt.show()
-print(test)
+
 
 """
 for band in 'grizy':
@@ -176,9 +189,12 @@ legends = ['Exposure Time [sec]/night','cadence [days]','Nexposures']
 
 todraw=dict(zip(vars,legends))
 for dbName in dbNames:
-    for key, vals in todraw.items():
-        sn_plot.plotDDCadence(metricTot, dbName, key, vals,adjl,fields_DD)
+    if 'euclid' in dbName:
+        for key, vals in todraw.items():
+            print(metricTot)
+            sn_plot.plotDDCadence(metricTot, dbName, key, vals,adjl,fields_DD)
 
+    
 
 """
 
