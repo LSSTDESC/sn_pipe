@@ -1,11 +1,11 @@
 # dbName                                simuType nside coadd fieldtype nproc
+baseline_v1.3_10yrs			0	     64    1	  WFD	    8
 altLike_v1.3_10yrs			0	     64    1	  WFD	    8
 altLike_large_v1.3_10yrs		0	     64    1	  WFD	    8
 baseline_2snap_v1.3_10yrs		0	     64    1	  WFD	    8
 agnddf_illum60_v1.3_10yrs		0	     64    1	  WFD	    8
 agnddf_illum30_v1.3_10yrs		0	     64    1	  WFD	    8
 bulges_bsv1.3_10yrs			0	     64    1	  WFD	    8
-baseline_v1.3_10yrs			0	     64    1	  WFD	    8
 bulges_bulge_wfdv1.3_10yrs		0	     64    1	  WFD	    8
 agnddf_illum10_v1.3_10yrs		0	     64    1	  WFD	    8
 agnddf_illum15_v1.3_10yrs		0	     64    1	  WFD	    8
@@ -88,3 +88,6 @@ bluer_footprint_v1.3_10yrs		0	     64    1	  WFD	    8
 gp_heavy_v1.3_10yrs			0	     64    1	  WFD	    8
 stuck_rolling_v1.3_10yrs		0	     64    1	  WFD	    8
 big_sky_dust_v1.3_10yrs			0	     64    1	  WFD	    8
+tde_illum75_v1.3_10yrs			0	     64    1	  WFD	    8
+uer_illum75_v1.3_10yrs			0	     64    1	  WFD	    8
+baseline_v1.3_1yrs			0	     64    1	  WFD	    8
