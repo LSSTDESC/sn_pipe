@@ -91,7 +91,8 @@ class NSNMetricWrapper:
     def __init__(self, fieldType='DD', nside=64, pixArea=9.6, season=-1, templateDir='', ploteffi=False, verbose=False, coadd=0,outputType='zlims', proxy_level=0,ramin=0.,ramax=360.,decmin=-1.0,decmax=-1.0):
 
         zmax = 1.3
-
+        if fieldType == 'WFD':
+            zmax = 0.6
 
         self.name = 'NSNMetric_{}_{}_nside_{}_coadd_{}_{}_{}_{}_{}'.format(fieldType,outputType,nside,coadd,ramin,ramax,decmin,decmax)
         self.Instrument = {}
@@ -148,8 +149,8 @@ class NSNMetricWrapper:
             N_phase_max = 1
 
         if fieldType == 'WFD':
-            N_bef = 4
-            N_aft = 10
+            N_bef = 2
+            N_aft = 5
             snr_min = 0.
             N_phase_min = 0
             N_phase_max = 0
