@@ -42,7 +42,7 @@ def loop_area(pointings, band, metricList, observations, nside, outDir,dbName,sa
     #print('Starting processing', len(pointings),j)
     ipoint = 1
     #myprocess = ProcessArea(nside,'fieldRA', 'fieldDec',j,outDir,dbName,saveData)
-    print('hhh',RaCol,DecCol)
+    print('hhh',RaCol,DecCol,saveData)
     myprocess = ProcessArea(nside,RaCol,DecCol,j,outDir,dbName,saveData)
     for pointing in pointings:
         ipoint += 1
@@ -54,7 +54,7 @@ def loop_area(pointings, band, metricList, observations, nside, outDir,dbName,sa
             nside, pointing['Ra'], pointing['Dec'], pointing['radius'], pointing['radius'], 'fieldRA', 'fieldDec',j,outDir,dbName)
         """
         #resdict = myprocess.process(observations, metricList,ipoint)
-        #print('obs',len(observations))
+        
         resdict = myprocess(observations, metricList, pointing['Ra'], pointing['Dec'], pointing['radius'], pointing['radius'],ipoint,nodither,display=False)
         
 
@@ -249,7 +249,7 @@ if metric == 'NSN':
     metricList.append(NSNMetricWrapper(fieldType=fieldType,
                                        pixArea=pixArea,season=-1,
                                        nside=nside, templateDir=templateDir,
-                                       verbose=0, ploteffi=0,coadd=coadd,outputType='zlims'))
+                                       verbose=0, ploteffi=0,coadd=coadd,outputType='zlims',proxy_level=0,ramin=ramin,ramax=ramax))
 
 if metric == 'Cadence':
     metricList.append(CadenceMetricWrapper(season=-1,coadd=coadd,fieldType=fieldType,nside=nside,ramin=ramin,ramax=ramax,decmin=decmin,decmax=decmax))
@@ -312,10 +312,15 @@ if fieldType == 'DD':
         r.append(('ELAIS', 744, 10.0, -45.52, radius))
     else:
         r.append(('ELAIS', 744, 0.0, -45.52, radius))
-    r.append(('SPT', 290, 349.39, -63.32, radius))
+    
     r.append(('COSMOS', 2786, 150.36, 2.84, radius))
     r.append(('XMM-LSS', 2412, 34.39, -5.09, radius))
     r.append(('CDFS', 1427, 53.00, -27.44, radius))
+    if 'euclid' not in dbName:
+        r.append(('SPT', 290, 349.39, -63.32, radius))
+    else:
+        r.append(('ADFS', 290, 61.00, -48.0, radius))
+
     areas = np.rec.fromrecords(
         r, names=['name', 'fieldId', 'Ra', 'Dec', 'radius'])    
  
@@ -374,14 +379,13 @@ if nproc >=7:
     if tabpix[-1]-tabpix[-2] <= 10:
         tabpix.remove(tabpix[-2])
 
+tabpix = np.linspace(1,npixels,nproc+1,dtype='int') 
 print(tabpix, len(tabpix))
 result_queue = multiprocessing.Queue()
 
-
-
 print('observations',len(observations))
 for j in range(len(tabpix)-1):
-#for j in range(2,3):
+#for j in range(7,8):
     ida = tabpix[j]
     idb = tabpix[j+1]
 
