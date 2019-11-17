@@ -52,7 +52,9 @@ for name in namesRef:
     mag_to_flux_files = ['{}/Mag_to_Flux_{}.npy'.format(refDir,name)]
 
 
-fileNames = glob.glob('{}/{}/*CadenceMetric_{}_nside_{}*'.format(dirFile,dbName,fieldtype,nside))
+search_file = '{}/{}/Cadence/*CadenceMetric_{}_nside_{}*'.format(dirFile,dbName,fieldtype,nside)
+print('searching for',search_file)
+fileNames = glob.glob(search_file)
 #fileName='{}/{}_CadenceMetric_{}.npy'.format(dirFile,dbName,band)
 print(fileNames)
 #metricValues = np.load(fileName)
@@ -72,17 +74,17 @@ idx = metricValues['filter'] == band.encode()
 metricValues = Table(metricValues[idx])
 print('here',metricValues)
 
-sn_plot.plotMollview(64,metricValues,'cadence_mean','cadence','days',1.,30.,band,dbName,saveFig=True)
-sn_plot.plotMollview(64,metricValues,'m5_mean','m5','mag',24.,26.,band,dbName,saveFig=True)
-"""
+#sn_plot.plotMollview(64,metricValues,'cadence_mean','cadence','days',1.,30.,band,dbName,saveFig=True)
+#sn_plot.plotMollview(64,metricValues,'m5_mean','m5','mag',24.,26.,band,dbName,saveFig=True)
+
 sn_plot.plotCadence(band,Li_files,mag_to_flux_files,
                     SNR[band],
                     metricValues,
                     namesRef,
                     mag_range=mag_range, dt_range=dt_range,
                     dbName=dbName,
-                    saveFig=True)
-"""    
+                    saveFig=False,m5_str='m5_median')
+    
 
 
 plt.show()
