@@ -44,7 +44,7 @@ Observations:
    coadd: fcoadd # this is the coaddition per night
    season: seasval #season to simulate (-1 = all seasons)
 Simulator :
-    name : sn_simulator.sn_fast       # Simulator name: sn_cosmo,sn_sim,sn_ana, sn_fast
+    name : sn_simulator.sn_cosmo       # Simulator name: sn_cosmo,sn_sim,sn_ana, sn_fast
     model : salt2-extended   # spectra model
     version : 1.0                     #version
     #Reference File: SN_MAF/Reference_Files/LC_Ref_-2.0_0.2.hdf5
