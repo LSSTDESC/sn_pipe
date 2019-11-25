@@ -21,7 +21,8 @@ from sn_stackers.coadd_stacker import CoaddStacker
 from sn_tools.sn_obs import pavingSky,getFields
 import glob
 from numpy import genfromtxt
-from sn_tools.sn_io import Read_Sqlite
+from sn_tools.sn_io import getObservations
+from sn_tools.sn_cadence_tools import ClusterObs
 
 def loop_area(pointings, band, metricList, observations, nside, outDir,dbName,saveData,nodither,RaCol,DecCol,j=0, output_q=None):
 
@@ -261,33 +262,12 @@ if metric == 'SNRRate':
 if 'SNR' in metric:
     band = metric[-1]
     metricList.append(SNRMetricWrapper(z=0.2,coadd=coadd,nside=nside,band=band,ramin=ramin,ramax=ramax,decmin=decmin,decmax=decmax))
-"""
-if metric == 'SNRz'
-    metricList.append(SNRMetricWrapper(z=0.2,coadd=coadd,nside=nside,band='z',ramin=ramin,ramax=ramax,decmin=decmin,decmax=decmax))
-"""
+
 # loading observations
 
-dbFullName = '{}/{}.{}'.format(dbDir, dbName,dbExtens)
-# if extension is npy -> load
-if dbExtens == 'npy':
-    observations = np.load(dbFullName)
-else:
-    #db as input-> need to transform as npy
-    print('looking for',dbFullName)
-    keymap = {'observationStartMJD': 'mjd',
-              'filter': 'band',
-              'visitExposureTime': 'exptime',
-              'skyBrightness': 'sky',
-              'fieldRA': 'Ra',
-              'fieldDec': 'Dec',}
+observations = getObservations(dbDir, dbName,dbExtens)
 
-    reader = Read_Sqlite(dbFullName)
-    #sql = reader.sql_selection(None)
-    observations = reader.get_data(cols=None, sql='',
-                           to_degrees=False,
-                           new_col_names=keymap)
-
-
+#rename fields
 
 observations = renameFields(observations)
 
@@ -304,8 +284,24 @@ if 'Ra' in observations.dtype.names:
      DecCol = 'Dec'
 
 if fieldType == 'DD':
+    n_clusters = 5
+    if 'euclid' in dbName:
+        n_clusters = 6
+
     fieldIds = [290,744,1427, 2412, 2786]
     observations = getFields(observations, fieldType, fieldIds,nside)
+    
+    # get clusters out of these obs
+
+    clusters = ClusterObs(observations,n_clusters=n_clusters,dbName=dbName).clusters
+
+    clusters = rf.append_fields(clusters,'radius',[radius]*len(clusters))
+
+    areas = rf.rename_fields(clusters,{'RA':'Ra'})
+
+    print('yes',areas)
+
+    """
     r = []
    
     if simuType == 1:
@@ -323,7 +319,7 @@ if fieldType == 'DD':
 
     areas = np.rec.fromrecords(
         r, names=['name', 'fieldId', 'Ra', 'Dec', 'radius'])    
- 
+    """
 
 else:
     if fieldType == 'WFD':
@@ -346,18 +342,6 @@ else:
         areas = pavingSky(Ra-radius/2.,Ra+radius/2.,Dec-radius/2.,Dec+radius/2.,radius)
 
 
-    """
-    if nodither == 'no':
-        dir_csv = '/sps/lsst/cadence/LSST_SN_CADENCE/cadence_db/2018-06-WPC/dithers/wp_descDithers_csvs/'
-        csv_file = '{}/descDithers_{}.csv'.format(dir_csv,dbName)
-        #load csv file in numpyarray
-        dither = genfromtxt(csv_file, delimiter=',',dtype=[('Decdith', '<f8'), ('Radith', '<f8'), ('Rotdith', '<f8'),('ObsId', '<i8')])
-        print(dither)
-        dither = dither[1:]
-        print(observations.dtype)
-        observations.sort(order='observationId')
-    """   
-
 print('observations', len(observations),len(areas))
 
 timeref = time.time()
@@ -379,7 +363,7 @@ if nproc >=7:
     if tabpix[-1]-tabpix[-2] <= 10:
         tabpix.remove(tabpix[-2])
 
-tabpix = np.linspace(1,npixels,nproc+1,dtype='int') 
+tabpix = np.linspace(0,npixels,nproc+1,dtype='int') 
 print(tabpix, len(tabpix))
 result_queue = multiprocessing.Queue()
 
