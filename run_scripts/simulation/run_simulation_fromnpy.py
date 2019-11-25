@@ -14,6 +14,9 @@ from sn_tools.sn_utils import GetReference
 import pandas as pd
 from sn_tools.sn_obs import pavingSky,getFields
 import glob
+from sn_tools.sn_io import getObservations
+from sn_tools.sn_cadence_tools import ClusterObs
+import numpy.lib.recfunctions as rf
 
 def selectDD(obs, nside):
 
@@ -50,7 +53,10 @@ def selectDD(obs, nside):
             return group_DD.to_records(index=False)
 
 
-def makeYaml(input_file, dbDir, dbName, nside, nproc, diffflux,seasnum,outDir,fieldType,x1,color,zmin,zmax,simu):
+def makeYaml(input_file, dbDir, dbName, nside, nproc, 
+             diffflux,seasnum,outDir,fieldType,
+             x1,color,zmin,zmax,simu,
+             x1colorType,zType,daymaxType):
 
     with open(input_file, 'r') as file:
         filedata = file.read()
@@ -69,6 +75,9 @@ def makeYaml(input_file, dbDir, dbName, nside, nproc, diffflux,seasnum,outDir,fi
     filedata = filedata.replace('colorval', str(color))
     filedata = filedata.replace('zmin', str(zmin))
     filedata = filedata.replace('zmax', str(zmax))
+    filedata = filedata.replace('x1colorType',x1colorType)
+    filedata = filedata.replace('zType',zType)
+    filedata = filedata.replace('daymaxType',daymaxType)
 
 
     if fieldType == 'DD':
@@ -82,7 +91,7 @@ def loop_area(pointings,metricList, observations, nside, outDir,dbName,saveData,
 
     resfi = {}
   
-    print('processing pointings',j,pointings)
+    print('processing pointings',j,pointings,observations.dtype)
     
     for metric in metricList:
         resfi[metric.name] = None
@@ -102,7 +111,11 @@ def loop_area(pointings,metricList, observations, nside, outDir,dbName,saveData,
        
         resdict = myprocess(observations, metricList, pointing['Ra'], pointing['Dec'], pointing['radius'], pointing['radius'],ipoint,nodither,display=False)
         
-
+ 
+    for metric in metricList:
+        if hasattr(metric, 'type'):
+            if metric.type=='simulation':
+                metric.simu.Finish()
     print('end of processing for', j,time.time()-time_ref)
 
 
@@ -139,6 +152,8 @@ parser = OptionParser()
 parser.add_option("--dbName", type="str", default='alt_sched',
                   help="db name [%default]")
 parser.add_option("--dbDir", type="str", default='', help="db dir [%default]")
+parser.add_option("--dbExtens", type="str", default='npy',
+                  help="db extension [%default]")
 parser.add_option("--outDir", type="str", default='',
                   help="output dir [%default]")
 parser.add_option("--nside", type="int", default=64,
@@ -150,6 +165,12 @@ parser.add_option("--diffflux", type="int", default=0,
 parser.add_option("--season", type="int", default=1,
                   help="season to process[%default]")
 parser.add_option("--fieldType", type="str", default='DD', help="field - DD or WFD[%default]")
+parser.add_option("--x1colorType", type="str", default='fixed',
+                  help="x1color type (fixed,random) [%default]")
+parser.add_option("--zType", type="str", default='uniform',
+                  help="x1color type (fixed,uniform,random) [%default]")
+parser.add_option("--daymaxType", type="str", default='unique',
+                  help="x1color type (unique,uniform,random) [%default]")
 parser.add_option("--x1", type="float", default='0.0',
                   help="x1 SN [%default]")
 parser.add_option("--color", type="float", default='0.0',
@@ -164,6 +185,14 @@ parser.add_option("--nodither", type="int", default=0,
                   help="to remove dithering [%default]")
 parser.add_option("--coadd", type="int", default=0,
                   help="to coadd or not[%default]")
+parser.add_option("--ramin", type=float, default=0.,
+                  help="ra min for obs area - for WDF only[%default]")
+parser.add_option("--ramax", type=float, default=360.,
+                  help="ra max for obs area - for WDF only[%default]")
+parser.add_option("--decmin", type=float, default=-1.,
+                  help="dec min for obs area - for WDF only[%default]")
+parser.add_option("--decmax", type=float, default=-1.,
+                  help="dec max for obs area - for WDF only[%default]")
 
 opts, args = parser.parse_args()
 
@@ -181,13 +210,16 @@ if outDir == '':
 
 
 dbName = opts.dbName
-
+dbExtens = opts.dbExtens
 nside = opts.nside
 seasons = -1
 nproc = opts.nproc
 diffflux = opts.diffflux
 seasnum = opts.season
 fieldType = opts.fieldType
+x1colorType = opts.x1colorType
+zType = opts.zType
+daymaxType = opts.daymaxType
 x1 = opts.x1
 color = opts.color
 zmin = opts.zmin
@@ -195,6 +227,10 @@ zmax = opts.zmax
 saveData = opts.saveData
 nodither = opts.nodither
 coadd = opts.coadd
+ramin = opts.ramin
+ramax = opts.ramax
+decmin = opts.decmin
+decmax = opts.decmax
 
 simu = 'sncosmo'
 # List of (instance of) metrics to process
@@ -204,7 +240,7 @@ metricList = []
 config = makeYaml('input/simulation/param_simulation_gen.yaml',
                   dbDir, dbName, nside, 1,diffflux, 
                   seasnum, outDir, fieldType, x1, color,
-                  zmin,zmax,simu)
+                  zmin,zmax,simu,x1colorType,zType,daymaxType)
 
 # check whether X0_norm file exist or not (and generate it if necessary)
 absMag = config['SN parameters']['absmag']
@@ -233,15 +269,12 @@ if 'sn_fast' in config['Simulator']['name']:
 
 # loading observations
 
-observations = np.load('{}/{}.npy'.format(dbDir, dbName))
+observations = getObservations(dbDir, dbName,dbExtens)
+
+#rename fields
+
 observations = renameFields(observations)
 
-"""
-if fieldtype == 'DD':
-    pixels = selectDD(observations,nside)
-else:
-    pixels = pixelate(observations, nside, RaCol='fieldRA', DecCol='fieldDec')
-"""
 dictArea = {}
 radius = 5.
 RaCol = 'fieldRA'
@@ -251,19 +284,24 @@ if 'Ra' in observations.dtype.names:
      DecCol = 'Dec'
 
 if fieldType == 'DD':
+    n_clusters = 5
+    if 'euclid' in dbName:
+        n_clusters = 6
+
     fieldIds = [290,744,1427, 2412, 2786]
     observations = getFields(observations, fieldType, fieldIds,nside)
-    r = []
-        
-    r.append(('ELAIS_1', 744, 10.0, -45.52, radius))
-    r.append(('ELAIS_2', 744, 0.0, -45.52, radius))
-    r.append(('SPT', 290, 349.39, -63.32, radius))
-    r.append(('COSMOS', 2786, 150.36, 2.84, radius))
-    r.append(('XMM-LSS', 2412, 34.39, -5.09, radius))
-    r.append(('CDFS', 1427, 53.00, -27.44, radius))
-    areas = np.rec.fromrecords(
-        r, names=['name', 'fieldId', 'Ra', 'Dec', 'radius'])    
- 
+   
+    # get clusters out of these obs
+
+    clusters = ClusterObs(observations,n_clusters=n_clusters,dbName=dbName).clusters
+
+    clusters = rf.append_fields(clusters,'radius',[radius]*len(clusters))
+
+    
+    areas = rf.rename_fields(clusters,{'RA':'Ra'})
+
+    print('yes',areas)
+    print(observations.dtype)
 
 else:
     if fieldType == 'WFD':
@@ -304,9 +342,15 @@ obsFocalPlane = ObsPixel(nside=nside, data=observations,
 metricList = []
 
 config = makeYaml('input/simulation/param_simulation_gen.yaml',
-                  dbDir, dbName, nside, 8, diffflux, seasnum,outDir,fieldType,x1,color,zmin,zmax,simu)
+                  dbDir, dbName, nside, 8, diffflux, seasnum,
+                  outDir,fieldType,x1,color,zmin,zmax,simu,
+                  x1colorType,zType,daymaxType)
     
+
 print('hell',config)
+with open('prod_yaml/result.yml', 'w') as yaml_file:
+    yaml.dump(config, yaml_file, default_flow_style=False)
+
 metricList.append(SNMetric(config=config, x0_norm=x0_tab,reference_lc=reference_lc,coadd=coadd))
 
 
@@ -336,8 +380,8 @@ if nproc > 1:
 
 print(tabpix, len(tabpix))
 result_queue = multiprocessing.Queue()
-for j in range(len(tabpix)-1):
-    # for j in range(5,6):
+#for j in range(len(tabpix)-1):
+for j in range(0,1):
     ida = tabpix[j]
     idb = tabpix[j+1]
     """
