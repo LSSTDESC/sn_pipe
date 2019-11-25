@@ -166,6 +166,7 @@ parser.add_option("--metricName", type="str", default='SNR',
 parser.add_option("--dbDir", type="str", default='', help="db dir [%default]")
 parser.add_option("--dbExtens", type="str", default='npy', help="db extension [%default]")
 parser.add_option("--nodither", type="str", default='', help="db extension [%default]")
+parser.add_option("--splitSky", type="int", default=0, help="db extension [%default]")
 
 opts, args = parser.parse_args()
 
@@ -180,6 +181,7 @@ dbExtens = opts.dbExtens
 
 outDir='/sps/lsst/users/gris/MetricOutput'
 nodither = opts.nodither
+splitSky = opts.splitSky
 
 toprocess = np.genfromtxt(dbList,dtype=None,names=['dbName','simuType','nside','coadd','fieldType','nproc'])
 
@@ -188,7 +190,10 @@ print('there',toprocess)
 n_per_slice = 1
 n_process = len(toprocess)
 lproc = list(range(0,n_process,n_per_slice))
-RAs = np.linspace(0.,360.,11)
+if splitSky:
+    RAs = np.linspace(0.,360.,11)
+else:
+    RAs = [0.,360.]
 
 for i,val in enumerate(lproc):
 #proc in toprocess:
@@ -196,8 +201,7 @@ for i,val in enumerate(lproc):
         RA_min = RAs[ira]
         RA_max = RAs[ira+1]
         batch_new(dbDir,dbExtens,'run_scripts/metrics/run_metrics_fromnpy',outDir,8,1,metricName,toprocess[val:val+n_per_slice],nodither,RA_min,RA_max)
-    if i >=1:
-        break
+   
                       
 if (n_process & 1)&(n_per_slice>1):
     for ira in range(len(RAs)-1):
