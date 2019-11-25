@@ -21,8 +21,10 @@ SN parameters:
    absmag : -19.0906          # peak abs mag
    band : bessellB             # band for absmag
    magsys : vega              # magsys for absmag
-   differential_flux: diffflux
-   salt2Dir: SALT2_Files
+   differential_flux: diffflux # to estimate differential flux
+   salt2Dir: SALT2_Files #dir where SALT2 files are located
+   blue_cutoff : 350.
+   red_cutoff : 800.
 Cosmology:
    Model : w0waCDM      # Cosmological model
    Omega_m : 0.30             # Omega_m
