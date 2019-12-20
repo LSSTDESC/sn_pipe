@@ -88,9 +88,9 @@ class SNRRateMetricWrapper:
 
 
 class NSNMetricWrapper:
-    def __init__(self, fieldType='DD', nside=64, pixArea=9.6, season=-1, templateDir='', ploteffi=False, verbose=False, coadd=0,outputType='zlims', proxy_level=0,ramin=0.,ramax=360.,decmin=-1.0,decmax=-1.0):
+    def __init__(self, fieldType='DD', nside=64, pixArea=9.6, season=-1, templateDir='', ploteffi=False, verbose=False, coadd=0,outputType='zlims', proxy_level=0,ramin=0.,ramax=360.,decmin=-1.0,decmax=-1.0,lightOutput=True,T0s='all'):
 
-        zmax = 1.3
+        zmax = 1.1
         if fieldType == 'WFD':
             zmax = 0.6
 
@@ -173,7 +173,7 @@ class NSNMetricWrapper:
         # metric instance
 
         self.metric = SNNSNMetric(
-            lc_reference, season=season, zmax=zmax, pixArea=pixArea, verbose=verbose, ploteffi=ploteffi, N_bef=N_bef, N_aft=N_aft, snr_min=snr_min, N_phase_min=N_phase_min, N_phase_max=N_phase_max,outputType=outputType, proxy_level=proxy_level,x1_color_dist=x1_color_dist,coadd=coadd)
+            lc_reference, season=season, zmax=zmax, pixArea=pixArea, verbose=verbose, ploteffi=ploteffi, N_bef=N_bef, N_aft=N_aft, snr_min=snr_min, N_phase_min=N_phase_min, N_phase_max=N_phase_max,outputType=outputType, proxy_level=proxy_level,x1_color_dist=x1_color_dist,coadd=coadd,lightOutput=lightOutput,T0s=T0s)
 
     def run(self, obs):
         return self.metric.run(obs)
