@@ -250,7 +250,7 @@ if metric == 'NSN':
     metricList.append(NSNMetricWrapper(fieldType=fieldType,
                                        pixArea=pixArea,season=-1,
                                        nside=nside, templateDir=templateDir,
-                                       verbose=0, ploteffi=0,coadd=coadd,outputType='zlims',proxy_level=0,ramin=ramin,ramax=ramax))
+                                       verbose=0, ploteffi=1,coadd=coadd,outputType='lc',proxy_level=1,ramin=ramin,ramax=ramax,lightOutput=False,T0s='one'))
 
 if metric == 'Cadence':
     metricList.append(CadenceMetricWrapper(season=-1,coadd=coadd,fieldType=fieldType,nside=nside,ramin=ramin,ramax=ramax,decmin=decmin,decmax=decmax))
