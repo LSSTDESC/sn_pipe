@@ -65,6 +65,7 @@ def plotParameters(fieldname, fieldid, tab, season):
 
 LCDir = '/sps/lsst/users/gris/LC'
 dbName = 'baseline_v1.3_10yrs'
+dbName = 'descddf_illum5_v1.3_10yrs'
 prefix = 'sncosmo_DD'
 
 paramName = '{}/Simu_{}_{}_seas*.hdf5'.format(LCDir,prefix,dbName)
@@ -84,6 +85,8 @@ for paramFile in paramFiles:
     print(params[:10])
     print(type(params),params.dtype)
 
+    print('NSN',len(params))
+
 plt.plot(params['pixRa'],params['pixDec'],'ko')
 
 
@@ -93,7 +96,7 @@ for fieldid in np.unique(params['fieldid']):
     fieldname = np.unique(field['fieldname'])
     season = np.unique(field['season'])
     print(fieldname,fieldid,field,season)
-    plotParameters(fieldname,fieldid,field,season)
+    plotParameters(fieldname,fieldid,field,season=1)
 
 for paramFile in paramFiles:
     lcFile = paramFile.replace('Simu','LC')
@@ -111,7 +114,7 @@ for paramFile in paramFiles:
         #lc = Table.read(lcFile, path=key)
         lc = Table.read(lcFile, path='lc_{}'.format(val['id_hdf5']))
         pprint.pprint(lc.meta) # metadata
-        print(lc) # light curve points
+        print(lc.dtype) # light curve points
         plotLC(lc,ax,band_id,i)
         plt.show()
 

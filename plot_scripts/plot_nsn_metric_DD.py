@@ -10,6 +10,82 @@ from sn_tools.sn_obs import dataInside
 import healpy as hp
 import numpy.lib.recfunctions as rf
 import pandas as pd
+from sn_tools.sn_cadence_tools import DDFields
+import os
+
+def summary_old(forPlot):
+    
+
+    for val in forPlot:
+        dbName = val['dbName']
+        search_path = '{}/{}/{}/*NSNMetric_{}*_nside_{}_*'.format(dirFile,dbName,metricName,fieldType,nside)
+        print('looking for',search_path)
+        fileNames = glob.glob(search_path)
+        #fileName='{}/{}_CadenceMetric_{}.npy'.format(dirFile,dbName,band)
+        print(fileNames)
+        #metricValues = np.load(fileName)
+        #metricValues = loopStack(fileNames).to_records(index=False)
+        metricValues = np.array(loopStack(fileNames,'astropyTable'))
+        #plt.plot(metricValues['pixRa'],metricValues['pixDec'],'ko')
+        #plt.show()
+
+        
+        tab = getVals(fields_DD, metricValues, dbName.ljust(adjl), nside)
+        
+        #plt.plot(sel['pixRa'],sel['pixDec'],'ko')
+        #plt.show()
+        """
+        idx = metricValues['filter']=='all'
+        sel = metricValues[idx]
+        #print(sel[['pixRa','pixDec','filter']])
+        print(sel.dtype)
+        for (pixRa,pixDec) in np.unique(sel[['pixRa','pixDec']]):
+        idd = np.abs(sel['pixRa']-pixRa)<1.e-5
+        idd &= np.abs(sel['pixDec']-pixDec)<1.e-5
+        print(len(sel[idd]))
+        print(sel[idd][['pixRa','pixDec','healpixID','season','filter']])
+        break
+        #    print(val)
+        #print(test)
+        print(len(np.unique(sel[['pixRa','pixDec']])),len(sel))
+        print(tab.dtype,np.sum(sel['pixArea']))
+        idb = fields_DD['fieldname'] == 'COSMOS'.ljust(7)
+        #sn_plot.plotMollview(nside,sel,'season_length','season_length','days',1.,'',dbName,saveFig=False,seasons=-1,type='mollview', fieldzoom=fields_DD[idb])
+        """
+        
+        #sn_plot.plotMollview(nside,sel,'zlim','zlim - faint SN','',0.,'',dbName,saveFig=False,seasons=-1,type='mollview')
+        #plt.show()
+        
+  
+        metricTot = append(metricTot,tab)
+  
+
+
+
+def summary(forPlot,fname):
+
+    metricTot = None
+    for val in forPlot:
+        dbName = val['dbName']
+        search_path = '{}/{}/{}/*NSNMetric_{}*_nside_{}_*'.format(dirFile,dbName,metricName,fieldType,nside)
+        print('looking for',search_path)
+        fileNames = glob.glob(search_path)
+        #fileName='{}/{}_CadenceMetric_{}.npy'.format(dirFile,dbName,band)
+        print(fileNames)
+        if fileNames:
+            #plt.plot(metricValues['pixRa'],metricValues['pixDec'],'ko')
+            #plt.show()
+            metricValues = np.array(loopStack(fileNames,'astropyTable'))
+            
+            tab = getVals(fields_DD, metricValues, dbName.ljust(adjl), nside)
+            
+            #plt.plot(sel['pixRa'],sel['pixDec'],'ko')
+            #plt.show()
+            
+            metricTot = append(metricTot,tab)
+
+    #return metricTot
+    np.save(fname,np.copy(metricTot))
 
 def match_colors(data):
 
@@ -88,11 +164,11 @@ def getVals(fields_DD, tab, cadence, nside=64, plotting=False):
     print(tab.dtype)
     for field in fields_DD:
         dataSel = dataInside(
-            tab, field['Ra'], field['Dec'], 10., 10., 'pixRa', 'pixDec')
+            tab, field['RA'], field['Dec'], 10., 10., 'pixRa', 'pixDec')
         if dataSel is not None:                            
             dataSel = match_colors(dataSel)
             if dataSel is not None:
-                dataSel = rf.append_fields(dataSel,'fieldname',[field['fieldname']]*len(dataSel))
+                dataSel = rf.append_fields(dataSel,'fieldname',[field['name'].ljust(7)]*len(dataSel))
                 dataSel = rf.append_fields(dataSel,'fieldnum',[int(field['fieldnum'])]*len(dataSel))
                 dataSel = rf.append_fields(dataSel,'cadence',[cadence]*len(dataSel))
                 dataSel = rf.append_fields(dataSel,'nside',[nside]*len(dataSel))
@@ -143,6 +219,7 @@ dbNames_small = []
 for val in dbNames:
     dbNames_small.append('_'.join(val.split('_')[:2]))
 
+"""
 dbNames += ['descddf_illum60_v1.3_10yrsnodither',
            'descddf_illum30_v1.3_10yrsnodither',
            'descddf_illum7_v1.3_10yrsnodither',
@@ -152,7 +229,9 @@ dbNames += ['descddf_illum60_v1.3_10yrsnodither',
            'descddf_illum4_v1.3_10yrsnodither',
             'descddf_illum5_v1.3_10yrsnodither',
             'euclid_ddf_v1.3_10yrsnodither']
-
+"""
+forPlot = np.loadtxt('plot_scripts/cadenceCustomizefb13.txt',
+                     dtype={'names': ('dbName', 'newName', 'group','Namepl','color','marker'),'formats': ('U39', 'U39','U12','U18','U7','U1')})
 mmarkers = ['s', '*', 'o','.','^','X','>','P','<']
 mmarkers += ['s', '*', 'o','.','^','X','>','P','<']
 colors = ['k', 'r', 'b','g','m','c','c']
@@ -165,9 +244,11 @@ colors_cad = dict(zip(dbNames_small,colors_cad))
 
 
 fields_DD = getFields(5.)
+fields_DD = DDFields()
 
-lengths = [len(val) for val in dbNames]
+lengths = [len(val) for val in forPlot['dbName']]
 adjl = np.max(lengths)
+
 
 metricTot = None
 metricTot_med = None
@@ -175,50 +256,17 @@ pixArea = hp.nside2pixarea(nside,degrees=True)
 x1 = -2.0
 color = 0.2
 
-for dbName in dbNames:
-    search_path = '{}/{}/{}/*NSNMetric_{}*_nside_{}_*'.format(dirFile,dbName,metricName,fieldType,nside)
-    print('looking for',search_path)
-    fileNames = glob.glob(search_path)
-    #fileName='{}/{}_CadenceMetric_{}.npy'.format(dirFile,dbName,band)
-    print(fileNames)
-    #metricValues = np.load(fileName)
-    #metricValues = loopStack(fileNames).to_records(index=False)
-    metricValues = np.array(loopStack(fileNames,'astropyTable'))
-    #plt.plot(metricValues['pixRa'],metricValues['pixDec'],'ko')
-    #plt.show()
+fname = 'Summary_DD.npy'
+if not os.path.isfile(fname):
+    summary(forPlot,fname)
 
-    
-    tab = getVals(fields_DD, metricValues, dbName.ljust(adjl), nside)
+metricTot = np.load(fname)
 
-    #plt.plot(sel['pixRa'],sel['pixDec'],'ko')
-    #plt.show()
-    """
-    idx = metricValues['filter']=='all'
-    sel = metricValues[idx]
-    #print(sel[['pixRa','pixDec','filter']])
-    print(sel.dtype)
-    for (pixRa,pixDec) in np.unique(sel[['pixRa','pixDec']]):
-        idd = np.abs(sel['pixRa']-pixRa)<1.e-5
-        idd &= np.abs(sel['pixDec']-pixDec)<1.e-5
-        print(len(sel[idd]))
-        print(sel[idd][['pixRa','pixDec','healpixID','season','filter']])
-        break
-    #    print(val)
-    #print(test)
-    print(len(np.unique(sel[['pixRa','pixDec']])),len(sel))
-    print(tab.dtype,np.sum(sel['pixArea']))
-    idb = fields_DD['fieldname'] == 'COSMOS'.ljust(7)
-    #sn_plot.plotMollview(nside,sel,'season_length','season_length','days',1.,'',dbName,saveFig=False,seasons=-1,type='mollview', fieldzoom=fields_DD[idb])
-    """
-    
-    #sn_plot.plotMollview(nside,sel,'zlim','zlim - faint SN','',0.,'',dbName,saveFig=False,seasons=-1,type='mollview')
-    #plt.show()
-
-  
-    metricTot = append(metricTot,tab)
-   
-
-nsn_plot.plot_DDSummary(metricTot, dict(zip(dbNames,mmarkers)),dict(zip(fields_DD['fieldname'],colors)),colors_cad)
+print('oo',metricTot.dtype,type(metricTot))
+#print(test)
+fieldnames = np.unique(metricTot['fieldname'])
+#nsn_plot.plot_DDSummary(metricTot, dict(zip(dbNames,mmarkers)),dict(zip(fieldnames,colors)),colors_cad)
+nsn_plot.plot_DDSummary(metricTot, forPlot)
 
 fontsize = 15
 fields_DD = getFields()

@@ -9,19 +9,38 @@ from sn_tools.sn_obs import dataInside
 import healpy as hp
 import numpy.lib.recfunctions as rf
 import pandas as pd
+from sn_tools.sn_cadence_tools import DDFields
+import os
+import multiprocessing
 
-def getFields(elaisRa=0.0):
+def anadB(dbNames,dirFile,ljustdb,j,output_q):
 
-    r = []
-    r.append(('COSMOS '.ljust(7), 1, 2786, 150.36, 2.84))
-    r.append(('XMM-LSS', 2, 2412, 34.39, -5.09))
-    r.append(('CDFS'.ljust(7), 3, 1427, 53.00, -27.44))
-    r.append(('ELAIS'.ljust(7), 4, 744, elaisRa, -45.52))
-    r.append(('SPT'.ljust(7), 5, 290, 349.39, -63.32))
-    r.append(('ADFS'.ljust(7), 6, 290,61.00, -48.0))
-    fields_DD = np.rec.fromrecords(
-        r, names=['fieldname', 'fieldnum', 'fieldId', 'Ra', 'Dec'])
-    return fields_DD
+    metricTot = None
+    for dbNam in dbNames:
+        dbName = dbNam.decode()
+        fsearch = '{}/{}/Cadence/*CadenceMetric_{}*_nside_{}_*'.format(dirFile,dbName,fieldType,nside)
+        print('searching',fsearch)
+        fileNames = glob.glob(fsearch)
+        print(fileNames)
+        if not fileNames:
+            continue
+        metricValues = loopStack(fileNames).to_records(index=False)
+        print(metricValues)
+        print(metricValues.dtype)
+        fields_DD = DDFields()
+    
+        tab = getVals(fields_DD, metricValues, dbName.ljust(ljustdb), nside,False)
+
+        if tab is not None:
+            if metricTot is None:
+                metricTot = tab
+            else:
+                metricTot = np.concatenate((metricTot,tab))
+    
+    if output_q is not None:
+        return output_q.put({j:metricTot})
+    else:
+        return metricTot
 
 def getVals(fields_DD, tab, cadence, nside=64, plotting=False):
 
@@ -36,14 +55,15 @@ def getVals(fields_DD, tab, cadence, nside=64, plotting=False):
     dataTot = None
     for field in fields_DD:
         dataSel = dataInside(
-            tab, field['Ra'], field['Dec'], 10., 10., 'pixRa', 'pixDec')
+            tab, field['RA'], field['Dec'], 10., 10., 'pixRa', 'pixDec')
         if dataSel is not None:
-            dataSel = rf.append_fields(dataSel,'fieldname',[field['fieldname']]*len(dataSel))
+            dataSel = rf.append_fields(dataSel,'fieldname',[field['name'].ljust(7)]*len(dataSel))
             dataSel = rf.append_fields(dataSel,'fieldnum',[int(field['fieldnum'])]*len(dataSel))
             dataSel = rf.append_fields(dataSel,'cadence',[cadence]*len(dataSel))
             if dataTot is None:
                 dataTot = dataSel
             else:
+                print(dataTot,dataSel)
                 dataTot = np.concatenate((dataTot,dataSel))
 
     
@@ -51,8 +71,10 @@ def getVals(fields_DD, tab, cadence, nside=64, plotting=False):
 
 parser = OptionParser(description='Display Cadence metric results for DD fields')
 parser.add_option("--dirFile", type="str", default='', help="file directory [%default]")
+parser.add_option("--dbList", type="str", default='', help="dbList  [%default]")
 parser.add_option("--nside", type="int", default=128, help="nside for healpixels [%default]")
 parser.add_option("--fieldType", type="str", default='DD', help="field type [%default]")
+
 opts, args = parser.parse_args()
 
 # Load parameters
@@ -62,6 +84,7 @@ if dirFile == '':
 
 nside = opts.nside
 fieldType = opts.fieldType
+dbList = opts.dbList
 
 dbNames = ['ddf_pn_0.23deg_1exp_pairsmix_10yrs']
 dbNames = ['kraken_2026','ddf_pn_0.23deg_1exp_pairsmix_10yrs']
@@ -78,7 +101,7 @@ dbNames = ['descddf_illum60_v1.3_10yrs',
            'descddf_illum5_v1.3_10yrs',
            'euclid_ddf_v1.3_10yrs']
 
-nodither = 'nodither'
+nodither = ''
 
 if nodither != '':
     dbNames = [dbName+'nodither' for dbName in dbNames]
@@ -100,7 +123,46 @@ adjl = np.max(lengths)
 metricTot = None
 pixArea = hp.nside2pixarea(nside,degrees=True)
 
+toprocess = np.genfromtxt(dbList,dtype=None,names=['dbName','simuType','nside','coadd','fieldType','nproc'])
 
+outName = 'DD_Cadence_Summary.npy'
+ 
+lengths = [len(val) for val in toprocess['dbName']]
+ljustdb = np.max(lengths)
+
+if not os.path.isfile(outName):
+
+   
+    nz = len(toprocess)
+    nproc = 8
+    tabmulti = np.linspace(0,nz-1,nproc+1,dtype='int')
+    result_queue = multiprocessing.Queue()
+    for j in range(len(tabmulti)-1):
+    #for j in [6]:
+        ida = tabmulti[j]
+        idb = tabmulti[j+1]
+   
+        p = multiprocessing.Process(name='Subprocess-'+str(j), target=anadB, args=(toprocess[ida:idb]['dbName'],dirFile,ljustdb,j, result_queue))
+        p.start()
+ 
+    resultdict = {}
+    for i in range(len(tabmulti)-1):
+        resultdict.update(result_queue.get())
+
+    for p in multiprocessing.active_children():
+        p.join()
+
+    restot = None
+    for key,vals in resultdict.items():
+        if restot is None:
+            restot = vals
+        else:
+            restot = np.concatenate((restot,vals))
+        #res=pd.concat([res,vals],sort_index=False)
+        #restot = None
+    
+    np.save(outName,restot)
+"""
 for dbName in dbNames:
     fsearch = '{}/{}/Cadence/*CadenceMetric_{}*_nside_{}_*'.format(dirFile,dbName,fieldType,nside)
     print('searching',fsearch)
@@ -114,7 +176,7 @@ for dbName in dbNames:
     fields_DD = getFields(10.)
     #tab = None
     tab = getVals(fields_DD, metricValues, dbName.ljust(adjl), nside,False)
-    """
+    
     idx = metricValues['filter']=='all'
     sel = metricValues[idx]
     #print(sel[['pixRa','pixDec','filter']])
@@ -131,17 +193,17 @@ for dbName in dbNames:
     print(tab.dtype,np.sum(sel['pixArea']))
     idb = fields_DD['fieldname'] == 'COSMOS'.ljust(7)
     #sn_plot.plotMollview(nside,sel,'season_length','season_length','days',1.,'',dbName,saveFig=False,seasons=-1,type='mollview', fieldzoom=fields_DD[idb])
-    """
+    
     if tab is not None:
         if metricTot is None:
             metricTot = tab
         else:
             metricTot = np.concatenate((metricTot,tab))
     
-
-
+"""
+metricTot = np.load(outName)
 fontsize = 15
-fields_DD = getFields()
+fields_DD = DDFields()
 
 
 #grab median values
@@ -158,16 +220,27 @@ metricTot = df.to_records(index=False)
 idx = metricTot['filter']=='all'
 sel = metricTot[idx]
 
-
+print(len(np.unique(metricTot['cadence'])))
+print(test)
+print(metricTot.dtype)
 figleg = 'nside = {}'.format(nside)
 
 if nodither != '':
     figleg += '- {}'.format(nodither)
-sn_plot.plotDDLoop(nside,dbNames,sel,'season_length','season length [days]',markers,colors,mfc,adjl,fields_DD,figleg)
-sn_plot.plotDDLoop(nside,dbNames,sel,'cadence_mean','cadence [days]',markers,colors,mfc,adjl,fields_DD,figleg)
-sn_plot.plotDDLoop(nside,dbNames,sel,'gap_max','max gap [days]',markers,colors,mfc,adjl,fields_DD,figleg)
+#sn_plot.plotDDLoop(nside,dbNames,sel,'season_length','season length [days]',markers,colors,mfc,ljustdb,fields_DD,figleg)
+#sn_plot.plotDDLoop(nside,dbNames,sel,'cadence_mean','cadence [days]',markers,colors,mfc,ljustdb,fields_DD,figleg)
+#sn_plot.plotDDLoop(nside,dbNames,sel,'gap_max','max gap [days]',markers,colors,mfc,ljustdb,fields_DD,figleg)
+
+"""
+sn_plot.plotDDLoop_barh(sel,'season_length','season length [days]')
+
+sn_plot.plotDDLoop_barh(sel,'cadence_mean','cadence [days]')
 plt.show()
 
+sn_plot.plotDDLoop_barh(sel,'gap_max','max gap [days]')
+
+plt.show()
+"""
 
 """
 for band in 'grizy':
@@ -184,18 +257,32 @@ print(metricTot.dtype)
 #vars = ['visitExposureTime','cadence_mean','gap_max','gap_5']
 #legends = ['Exposure Time [sec]/night','cadence [days]','max gap [days]','frac gap > 5 days']
 vars = ['visitExposureTime','cadence_mean','numExposures']
-legends = ['Exposure Time [sec]/night','cadence [days]','Nexposures']
+legends = ['Exposure Time [sec]/night','cadence [days]','N$_exposures$/observing night']
 
+#sn_plot.plotDDCadence_barh(metricTot,'numExposures','N$_{exposures}$ per night of observation')
+#sn_plot.plotDDCadence_barh(metricTot,'visitExposureTime','Exposure Time [sec]/night')
+sn_plot.plotDDCadence_barh(metricTot,'visitExposureTime','N$_{visits}$/night',scale=30.)
 
 todraw=dict(zip(vars,legends))
 for dbName in dbNames:
-    if 'euclid' in dbName:
+    #if 'descddf_illum10' in dbName:
+    if 'baseline_2snap' in dbName:
         for key, vals in todraw.items():
             print(metricTot)
-            sn_plot.plotDDCadence(metricTot, dbName, key, vals,adjl,fields_DD)
-
+            sn_plot.plotDDCadence(metricTot, dbName, key, vals,ljustdb,fields_DD)
+        #break
     
+whichdb = 'baseline_2snap'
+whichdb = 'euclid'
+dbName_f = ''
+for dbName in np.unique(metricTot['cadence']):
+    if whichdb in dbName:
+        print('found')
+        dbName_f = dbName
 
+for key, vals in todraw.items():
+    print(metricTot)
+    sn_plot.plotDDCadence(metricTot,dbName_f, key, vals,ljustdb,fields_DD)
 """
 
 for season in np.unique(sel['season']):
