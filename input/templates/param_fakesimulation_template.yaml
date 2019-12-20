@@ -22,7 +22,9 @@ SN parameters:
    band : bessellB             # band for absmag
    magsys : vega              # magsys for absmag
    differential_flux: True
-   salt2Dir: SALT2_Files
+   salt2Dir: SALT2_Files  
+   blue_cutoff : 350.
+   red_cutoff : 800.
 Cosmology:
    Model : w0waCDM      # Cosmological model
    Omega_m : 0.30             # Omega_m
