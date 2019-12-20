@@ -203,7 +203,7 @@ parser.add_argument('config_filename',
 def run(dirFiles, prodid,outDir,nproc, covmb=None):
     # YAML input file.
     #config = yaml.load(open(config_filename))
-    config = makeYaml('input/param_fit_gen.yaml',dirFiles, prodid,outDir,nproc)
+    config = makeYaml('input/fit_sn/param_fit_gen.yaml',dirFiles, prodid,outDir,nproc)
     print(config)
     
     # load telescope
@@ -254,5 +254,11 @@ covmb = None
 if mbCalc:
     covmb = MbCov(salt2Dir,paramNames=dict(zip(['x0','x1','color'],['x0','x1','c'])))
 
-run(dirFiles, prodid,outDir,nproc,covmb=covmb)
+prefix = 'sncosmo_DD'
+files = glob.glob('{}/Simu_{}_{}*.hdf5'.format(dirFiles,prefix,prodid))
+
+for fi in files:
+    prodid = '{}_{}'.format(prefix,fi.split('{}_'.format(prefix))[-1].split('.hdf5')[0])
+    print('hhh',prodid)
+    run(dirFiles, prodid,outDir,nproc,covmb=covmb)
     
