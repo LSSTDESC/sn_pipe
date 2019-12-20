@@ -87,19 +87,15 @@ def makeYaml(input_file, dbDir, dbName, nside, nproc,
     return yaml.load(filedata, Loader=yaml.FullLoader)
 
 
-def loop_area(pointings,metricList, observations, nside, outDir,dbName,saveData,nodither,RaCol,DecCol,j=0, output_q=None):
+#def loop_area(pointings,metricList, observations, nside, outDir,dbName,saveData,nodither,RaCol,DecCol,j=0, output_q=None):
+def loop_area(pointings,config, x0_tab,reference_lc,coadd,observations, nside, outDir,dbName,saveData,nodither,RaCol,DecCol,j=0, output_q=None):
 
-    resfi = {}
-  
-    print('processing pointings',j,pointings,observations.dtype)
     
-    for metric in metricList:
-        resfi[metric.name] = None
-        listf = glob.glob('{}/*_{}_{}*'.format(outDir,metric.name,j))
-        if len(listf) > 0:
-            for val in listf:
-                os.system('rm {}'.format(val))
-
+    #this is to take multiproc into account
+    config['ProductionID'] = '{}_{}'.format(config['ProductionID'],j)
+    metric = SNMetric(config=config, x0_norm=x0_tab,reference_lc=reference_lc,coadd=coadd)
+   
+    print('processing pointings',j,pointings,observations.dtype)
     
     time_ref = time.time()
     
@@ -109,13 +105,12 @@ def loop_area(pointings,metricList, observations, nside, outDir,dbName,saveData,
     for pointing in pointings:
         ipoint += 1
        
-        resdict = myprocess(observations, metricList, pointing['Ra'], pointing['Dec'], pointing['radius'], pointing['radius'],ipoint,nodither,display=False)
+        resdict = myprocess(observations, [metric], pointing['Ra'], pointing['Dec'], pointing['radius'], pointing['radius'],ipoint,nodither,display=False)
         
  
-    for metric in metricList:
-        if hasattr(metric, 'type'):
-            if metric.type=='simulation':
-                metric.simu.Finish()
+    if hasattr(metric, 'type'):
+        if metric.type=='simulation':
+            metric.simu.Finish()
     print('end of processing for', j,time.time()-time_ref)
 
 
@@ -162,7 +157,7 @@ parser.add_option("--nproc", type="int", default='8',
                   help="number of proc  [%default]")
 parser.add_option("--diffflux", type="int", default=0,
                   help="flag for diff flux[%default]")
-parser.add_option("--season", type="int", default=1,
+parser.add_option("--season", type="int", default=-1,
                   help="season to process[%default]")
 parser.add_option("--fieldType", type="str", default='DD', help="field - DD or WFD[%default]")
 parser.add_option("--x1colorType", type="str", default='fixed',
@@ -183,7 +178,7 @@ parser.add_option("--saveData", type="int", default=1,
                   help="to save data [%default]")
 parser.add_option("--nodither", type="int", default=0,
                   help="to remove dithering [%default]")
-parser.add_option("--coadd", type="int", default=0,
+parser.add_option("--coadd", type="int", default=1,
                   help="to coadd or not[%default]")
 parser.add_option("--ramin", type=float, default=0.,
                   help="ra min for obs area - for WDF only[%default]")
@@ -234,7 +229,7 @@ decmax = opts.decmax
 
 simu = 'sncosmo'
 # List of (instance of) metrics to process
-metricList = []
+#metricList = []
 
 # Load the (config) yaml file
 config = makeYaml('input/simulation/param_simulation_gen.yaml',
@@ -323,6 +318,8 @@ else:
         Dec = np.unique(observations[DecCol])[0]
         areas = pavingSky(Ra-radius/2.,Ra+radius/2.,Dec-radius/2.,Dec+radius/2.,radius)
 
+#print(observations.dtype)
+#print(test)
 
 
 # remove pixels with a "too-high" E(B-V)
@@ -346,12 +343,10 @@ config = makeYaml('input/simulation/param_simulation_gen.yaml',
                   outDir,fieldType,x1,color,zmin,zmax,simu,
                   x1colorType,zType,daymaxType)
     
-
-print('hell',config)
 with open('prod_yaml/result.yml', 'w') as yaml_file:
     yaml.dump(config, yaml_file, default_flow_style=False)
 
-metricList.append(SNMetric(config=config, x0_norm=x0_tab,reference_lc=reference_lc,coadd=coadd))
+#metricList.append(SNMetric(config=config, x0_norm=x0_tab,reference_lc=reference_lc,coadd=coadd))
 
 
 #healpixels = np.unique(obsPixels['healpixID'])[:10]
@@ -363,6 +358,7 @@ timeref = time.time()
 
 healpixels = areas
 npixels = int(len(healpixels))
+"""
 print('number of pixels',npixels)
 delta = npixels
 if nproc > 1:
@@ -376,20 +372,26 @@ tabpix = tabpix.tolist()
 if nproc > 1:
     if tabpix[-1]-tabpix[-2] <= 100:
         tabpix.remove(tabpix[-2])
-
-
+"""
+tabpix = np.linspace(0,npixels,nproc+1,dtype='int') 
 print(tabpix, len(tabpix))
 result_queue = multiprocessing.Queue()
-#for j in range(len(tabpix)-1):
-for j in range(0,1):
+for j in range(len(tabpix)-1):
+#for j in range(0,1):
     ida = tabpix[j]
     idb = tabpix[j+1]
     """
     p = multiprocessing.Process(name='Subprocess-'+str(j), target=loop, args=(x1,color,zmin,zmax,
         healpixels[ida:idb], obsFocalPlane, dbDir, dbName, fieldtype, outDir, nside, 
         diffflux,seasnum,x0_tab,reference_lc,simu, j, result_queue)) 
-    """
+   
     p = multiprocessing.Process(name='Subprocess-'+str(j), target=loop_area, args=(
         healpixels[ida:idb],metricList, observations, nside,outDir,dbName, saveData,nodither,RaCol,DecCol,j, result_queue))
+    """
+    p = multiprocessing.Process(name='Subprocess-'+str(j), target=loop_area, args=(
+        healpixels[ida:idb],config,x0_tab,reference_lc,coadd, observations, nside,outDir,dbName, saveData,nodither,RaCol,DecCol,j, result_queue))
+
+
+
     p.start()
 
