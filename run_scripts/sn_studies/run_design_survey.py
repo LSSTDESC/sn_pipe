@@ -20,9 +20,9 @@ bands = 'rizy'
 
 theDir = 'input/sn_studies'
 fname = 'Fakes_NSNMetric_Fake_lc_nside_64_coadd_0_0.0_360.0_-1.0_-1.0_0.hdf5'
+m5file = 'medValues.npy'
 
-
-data = Data(theDir,fname,x1,color,blue_cutoff,red_cutoff,bands=bands)
+data = Data(theDir,fname,m5file,x1,color,blue_cutoff,red_cutoff,bands=bands)
 
 
 #few plots related to data
@@ -85,7 +85,7 @@ cadence = 3. #define the cadence
 # load m5 reference values - here: med value per field per filter per season
 m5_type = 'median_m5_field_filter_season' # m5 values
 
-myvisits_seasons = Nvisits_cadence(snr_calc.SNR,cadence,m5_type,'Nvisits',bands)
+myvisits_seasons = Nvisits_cadence(snr_calc.SNR,cadence,theDir,m5file,m5_type,'Nvisits',bands)
 
 #this is to plot the variation of the number visits vs season
 """
@@ -96,7 +96,7 @@ plt.show()
 # load m5 reference file - here median per filter (over fields and seasons)
 m5_type='median_m5_filter'
 
-myvisits_ref = Nvisits_cadence(snr_calc.SNR,cadence,m5_type,'Nvisits',bands)
+myvisits_ref = Nvisits_cadence(snr_calc.SNR,cadence,theDir,m5file,m5_type,'Nvisits',bands)
 
 """
 myvisits_ref.plot()
