@@ -1,0 +1,34 @@
+frac_DDF : 0.06 #DDF fraction
+Nvisits : 2390000 #total number of LSST visits - 10 years
+frac_AGN : 0.01 #AGN fraction of DDF
+Fields : ['COSMOS','ELAIS','CDFS','XMM-LSS','ADFS1','ADFS2']
+COSMOS :
+  season_length: 6.0 #season length [ months]
+  cadence: 3 #cadence [days]
+  seasons: [1,2] #seasons
+  weight_visit: 1
+ELAIS :
+  season_length:  6.0 #season length [ months]
+  cadence: 3 #cadence [days]
+  seasons: [3,4] #seasons
+  weight_visit: 1     
+CDFS :
+  season_length:  6.0 #season length [ months]
+  cadence: 3 #cadence [days]
+  seasons: [3,4] #seasons
+  weight_visit: 1 
+XMM-LSS :
+  season_length:  6.0 #season length [ months]
+  cadence: 3 #cadence [days]
+  seasons: [5,6] #seasons
+  weight_visit: 1   
+ADFS1 :
+  season_length:  6.0 #season length [ months]
+  cadence: 3 #cadence [days]
+  seasons: [1,2] #seasons
+  weight_visit: 1
+ADFS2 :
+  season_length:  6.0 #season length [ months]
+  cadence: 3 #cadence [days]
+  seasons: [1,2] #seasons
+  weight_visit: 1

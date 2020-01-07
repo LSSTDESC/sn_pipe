@@ -104,7 +104,7 @@ myvisits_ref.plot()
 plt.show()
 """
 #configName = 'DD_scen1.yaml'
-configName = 'DD_scen2.yaml'
+configName = 'input/sn_studies/DD_scen2.yaml'
 
 mybud = DD_Budget(configName,myvisits_ref.nvisits_cadence,
                       myvisits_seasons.nvisits_cadence,
