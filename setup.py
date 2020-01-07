@@ -45,6 +45,11 @@ class InstallCommand(install):
                 self.branch)
             os.system(cmd)
 
+        if self.package == 'studies':
+            cmd = 'pip install --user git+https://github.com/lsstdesc/sn_studies.git@{}'.format(
+                self.branch)
+            os.system(cmd)
+
         install.run(self)
 
 
