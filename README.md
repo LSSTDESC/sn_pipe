@@ -31,9 +31,9 @@ All rights reserved.
 ## **Instruction for installation**
 
 ### Getting the package from github
-
+```
  git clone -b thebranch https://github.com/lsstdesc/sn_pipe
- 
+ ```
  where thebranch is the branch you would like to use (main, dev, dev_stable, ...)
 
 ### Environnement setup
@@ -42,10 +42,23 @@ All rights reserved.
  - to install cvmfs: https://sw.lsst.eu/installation.html
  - ls /cvmfs/sw.lsst.eu/linux-x86_64/lsst_sims/ -> provides a list of lsst_sim releases available.
  - The "setup" is done this way:
+ ```
    - source /cvmfs/sw.lsst.eu/linux-x86_64/lsst_sims/sims_w_2019_20/loadLSST.bash
    - setup lsst_sims
+```
 
-**Important : you have to make this setup prior to any operations described below**
+**Important : you have to make this setup prior to any operation described below**
+
+###  Installation
+
+The Survey Strategy Support pipeline is supposed to be modular, in the sense that only needed git packages are installed for a given task. The current tasks that may be run are:
+- supernovae metrics using the sn_metrics package
+- light curve simulation using the sn_simulation package
+
+| Task | package | command for installation|
+|----|----|----|
+| SN metrics | sn_metrics | pip install . --user --install-option="--package=metrics" --install-option="--branch=thebranch"|
+| LC simulations | sn_simulation|pip install . --user --install-option="--package=simulation" --install-option="--branch=thebranch"|
 
 ## **Running the metrics**
 
