@@ -1,3 +1,4 @@
+confName: scen1 # scenario tag
 frac_DDF : 0.06 #DDF fraction
 Nvisits : 2390000 #total number of LSST visits - 10 years
 frac_AGN : 0.01 #AGN fraction of DDF
