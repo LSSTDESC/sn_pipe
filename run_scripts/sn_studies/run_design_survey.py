@@ -106,15 +106,17 @@ myvisits_ref.plot()
 plt.show()
 """
 configName = 'input/sn_studies/DD_scen1.yaml'
-#configName = 'input/sn_studies/DD_scen2.yaml'
+configName = 'input/sn_studies/DD_scen2.yaml'
 #configName = 'input/sn_studies/DD_scen3.yaml'
 
 dd_budget = 0.06
 mybud = DD_Budget(configName, myvisits_ref.nvisits_cadence,
                   myvisits_seasons.nvisits_cadence,
-                  runtype='Nvisits_single')
+                  runtype='Nvisits_adjusted')
 
-mybud.plot_budget(dd_value=dd_budget, fieldName='COSMOS', season=1)
+mybud.plot_budget_zlim(dd_budget=dd_budget)
+mybud.plot_budget_visits(fieldName='COSMOS',season=1,dd_budget=dd_budget)
 
 #mybud.printVisits(dd_budget)
+
 plt.show()
