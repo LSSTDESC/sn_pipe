@@ -1,6 +1,6 @@
 #import matplotlib.pyplot as plt
 import matplotlib
-#matplotlib.use('agg')
+# matplotlib.use('agg')
 import numpy as np
 import healpy as hp
 from metricWrapper import CadenceMetricWrapper, SNRMetricWrapper
@@ -18,46 +18,46 @@ from astropy import units as u
 from astropy.coordinates import SkyCoord
 import numpy.lib.recfunctions as rf
 from sn_stackers.coadd_stacker import CoaddStacker
-from sn_tools.sn_obs import pavingSky,getFields
+from sn_tools.sn_obs import pavingSky, getFields
 import glob
 from numpy import genfromtxt
 from sn_tools.sn_io import getObservations
 from sn_tools.sn_cadence_tools import ClusterObs
 
-def loop_area(pointings, band, metricList, observations, nside, outDir,dbName,saveData,nodither,RaCol,DecCol,j=0, output_q=None):
+
+def loop_area(pointings, band, metricList, observations, nside, outDir, dbName, saveData, nodither, RaCol, DecCol, j=0, output_q=None):
 
     resfi = {}
     #print(np.unique(observations[['fieldRA', 'fieldDec']]))
-    
-    print('processing pointings',j,pointings)
-    
+
+    print('processing pointings', j, pointings)
+
     for metric in metricList:
         resfi[metric.name] = None
-        listf = glob.glob('{}/*_{}_{}*'.format(outDir,metric.name,j))
+        listf = glob.glob('{}/*_{}_{}*'.format(outDir, metric.name, j))
         if len(listf) > 0:
             for val in listf:
                 os.system('rm {}'.format(val))
 
-    #print(test)
+    # print(test)
     time_ref = time.time()
     #print('Starting processing', len(pointings),j)
     ipoint = 1
     #myprocess = ProcessArea(nside,'fieldRA', 'fieldDec',j,outDir,dbName,saveData)
-    print('hhh',RaCol,DecCol,saveData)
-    myprocess = ProcessArea(nside,RaCol,DecCol,j,outDir,dbName,saveData)
+    print('hhh', RaCol, DecCol, saveData)
+    myprocess = ProcessArea(nside, RaCol, DecCol, j, outDir, dbName, saveData)
     for pointing in pointings:
         ipoint += 1
-        #print('pointing',ipoint)
-        
-       
+        # print('pointing',ipoint)
+
         """
         myprocess = ProcessArea(
             nside, pointing['Ra'], pointing['Dec'], pointing['radius'], pointing['radius'], 'fieldRA', 'fieldDec',j,outDir,dbName)
         """
         #resdict = myprocess.process(observations, metricList,ipoint)
-        
-        resdict = myprocess(observations, metricList, pointing['Ra'], pointing['Dec'], pointing['radius'], pointing['radius'],ipoint,nodither,display=False)
-        
+
+        resdict = myprocess(observations, metricList, pointing['Ra'], pointing['Dec'],
+                            pointing['radius'], pointing['radius'], ipoint, nodither, display=False)
 
     """
         for key in resfi.keys():
@@ -69,7 +69,7 @@ def loop_area(pointings, band, metricList, observations, nside, outDir,dbName,sa
                     # resfi[key] = np.vstack([resfi[key], resdict[key]])
                     resfi[key] = np.concatenate((resfi[key], resdict[key]))
     """
-    print('end of processing for', j,time.time()-time_ref)
+    print('end of processing for', j, time.time()-time_ref)
 
     """
     if output_q is not None:
@@ -77,6 +77,7 @@ def loop_area(pointings, band, metricList, observations, nside, outDir,dbName,sa
     else:
         return resfi
     """
+
 
 def loop(healpixels, band, metricList, shape, observations, j=0, output_q=None):
 
@@ -240,7 +241,7 @@ if outDir == '':
 if templateDir == '':
     templateDir = '/sps/lsst/data/dev/pgris/Templates_final_new'
 
-outputDir = '{}/{}{}/{}'.format(outDir,dbName,nodither,metric)
+outputDir = '{}/{}{}/{}'.format(outDir, dbName, nodither, metric)
 if not os.path.isdir(outputDir):
     os.makedirs(outputDir)
 # List of (instance of) metrics to process
@@ -248,26 +249,29 @@ metricList = []
 
 if metric == 'NSN':
     metricList.append(NSNMetricWrapper(fieldType=fieldType,
-                                       pixArea=pixArea,season=-1,
+                                       pixArea=pixArea, season=-1,
                                        nside=nside, templateDir=templateDir,
-                                       verbose=0, ploteffi=1,coadd=coadd,outputType='lc',proxy_level=1,ramin=ramin,ramax=ramax,lightOutput=False,T0s='one'))
+                                       verbose=0, ploteffi=1, coadd=coadd, outputType='lc', proxy_level=1, ramin=ramin, ramax=ramax, lightOutput=False, T0s='one'))
 
 if metric == 'Cadence':
-    metricList.append(CadenceMetricWrapper(season=-1,coadd=coadd,fieldType=fieldType,nside=nside,ramin=ramin,ramax=ramax,decmin=decmin,decmax=decmax))
+    metricList.append(CadenceMetricWrapper(season=-1, coadd=coadd, fieldType=fieldType,
+                                           nside=nside, ramin=ramin, ramax=ramax, decmin=decmin, decmax=decmax))
 if metric == 'SL':
-    metricList.append(SLMetricWrapper(nside=nside,coadd=coadd,fieldType=fieldType))
+    metricList.append(SLMetricWrapper(
+        nside=nside, coadd=coadd, fieldType=fieldType))
 if metric == 'SNRRate':
-    metricList.append(SNRRateMetricWrapper(nside=nside,coadd=coadd))
+    metricList.append(SNRRateMetricWrapper(nside=nside, coadd=coadd))
 
 if 'SNR' in metric:
     band = metric[-1]
-    metricList.append(SNRMetricWrapper(z=0.2,coadd=coadd,nside=nside,band=band,ramin=ramin,ramax=ramax,decmin=decmin,decmax=decmax))
+    metricList.append(SNRMetricWrapper(z=0.2, coadd=coadd, nside=nside,
+                                       band=band, ramin=ramin, ramax=ramax, decmin=decmin, decmax=decmax))
 
 # loading observations
 
-observations = getObservations(dbDir, dbName,dbExtens)
+observations = getObservations(dbDir, dbName, dbExtens)
 
-#rename fields
+# rename fields
 
 observations = renameFields(observations)
 
@@ -280,26 +284,28 @@ radius = 10.
 RaCol = 'fieldRA'
 DecCol = 'fieldDec'
 if 'Ra' in observations.dtype.names:
-     RaCol = 'Ra'
-     DecCol = 'Dec'
+    RaCol = 'Ra'
+    DecCol = 'Dec'
 
 if fieldType == 'DD':
-    n_clusters = 5
+    nclusters = 5
     if 'euclid' in dbName:
-        n_clusters = 6
+        nclusters = 6
 
-    fieldIds = [290,744,1427, 2412, 2786]
-    observations = getFields(observations, fieldType, fieldIds,nside)
-    
+    fieldIds = [290, 744, 1427, 2412, 2786]
+    observations = getFields(observations, fieldType, fieldIds, nside)
+
     # get clusters out of these obs
+    radius = 0.1
 
-    clusters = ClusterObs(observations,n_clusters=n_clusters,dbName=dbName).clusters
+    clusters = ClusterObs(
+        observations, nclusters=nclusters, dbName=dbName).clusters
 
-    clusters = rf.append_fields(clusters,'radius',[radius]*len(clusters))
+    clusters = rf.append_fields(clusters, 'radius', [radius]*len(clusters))
 
-    areas = rf.rename_fields(clusters,{'RA':'Ra'})
+    areas = rf.rename_fields(clusters, {'RA': 'Ra'})
 
-    print('yes',areas)
+    print('yes', areas)
 
     """
     r = []
@@ -323,26 +329,27 @@ if fieldType == 'DD':
 
 else:
     if fieldType == 'WFD':
-        observations = getFields(observations,'WFD')
+        observations = getFields(observations, 'WFD')
         minDec = decmin
         maxDec = decmax
         if decmin == -1.0 and decmax == -1.0:
-            #in that case min and max dec are given by obs strategy
+            # in that case min and max dec are given by obs strategy
             minDec = np.min(observations['fieldDec'])-3.
             maxDec = np.max(observations['fieldDec'])+3.
-        areas = pavingSky(ramin,ramax, minDec,maxDec, radius)
+        areas = pavingSky(ramin, ramax, minDec, maxDec, radius)
         #areas = pavingSky(20., 40., -40., -30., radius)
         print(observations.dtype)
-        
+
     if fieldType == 'Fake':
-        #in that case: only one (Ra,Dec)
+        # in that case: only one (Ra,Dec)
         radius = 0.1
         Ra = np.unique(observations[RaCol])[0]
         Dec = np.unique(observations[DecCol])[0]
-        areas = pavingSky(Ra-radius/2.,Ra+radius/2.,Dec-radius/2.,Dec+radius/2.,radius)
+        areas = pavingSky(Ra-radius/2., Ra+radius/2., Dec -
+                          radius/2., Dec+radius/2., radius)
 
 
-print('observations', len(observations),len(areas))
+print('observations', len(observations), len(areas))
 
 timeref = time.time()
 
@@ -359,21 +366,21 @@ if npixels not in tabpix:
 tabpix = tabpix.tolist()
 
 
-if nproc >=7:
+if nproc >= 7:
     if tabpix[-1]-tabpix[-2] <= 10:
         tabpix.remove(tabpix[-2])
 
-tabpix = np.linspace(0,npixels,nproc+1,dtype='int') 
+tabpix = np.linspace(0, npixels, nproc+1, dtype='int')
 print(tabpix, len(tabpix))
 result_queue = multiprocessing.Queue()
 
-print('observations',len(observations))
+print('observations', len(observations))
 for j in range(len(tabpix)-1):
-#for j in range(7,8):
+    # for j in range(7,8):
     ida = tabpix[j]
     idb = tabpix[j+1]
 
     print('Field', healpixels[ida:idb])
     p = multiprocessing.Process(name='Subprocess-'+str(j), target=loop_area, args=(
-        healpixels[ida:idb], band, metricList, observations, nside,outputDir,dbName, saveData,nodither,RaCol,DecCol,j, result_queue))
+        healpixels[ida:idb], band, metricList, observations, nside, outputDir, dbName, saveData, nodither, RaCol, DecCol, j, result_queue))
     p.start()
