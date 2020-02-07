@@ -80,7 +80,7 @@ def run(config_filename):
             config['Li file'], config['Mag_to_flux file'], band, z)
 
         metric[band] = module.SNSNRMetric(lim_sn=lim_sn[band], names_ref=config['names_ref'], fake_file=fake_file, coadd=config['Observations']
-                                          ['coadd'], z=z)
+                                          ['coadd'], z=z, display=config['Display_Processing'], season=config['Observations']['season'])
         bundles.append(metricBundles.MetricBundle(metric[band], slicer, sql_i))
         names.append(band)
 
@@ -104,11 +104,12 @@ def run(config_filename):
                 res = np.concatenate((res, vals))
         res = np.unique(res)
 
+        """
         sn_plot.detecFracPlot(res, config['Pixelisation']
                               ['nside'], config['names_ref'])
 
         sn_plot.detecFracHist(res, config['names_ref'])
-
+        """
     plt.show()
 
 
