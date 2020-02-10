@@ -14,7 +14,7 @@ import numpy.lib.recfunctions as rf
 import sn_plotters.sn_snrPlotters as sn_plot
 
 parser = argparse.ArgumentParser(
-    description='Run a SN metric from a configuration file')
+    description='Run SN ObsRate metric from a configuration file')
 parser.add_argument('config_filename',
                     help='Configuration file in YAML format.')
 
@@ -81,7 +81,7 @@ def run(config_filename):
         lim_sn[band] = ReferenceData(
             config['Li file'], config['Mag_to_flux file'], band, z)
 
-    metric = module.SNSNRRateMetric(lim_sn=lim_sn, names_ref=config['names_ref'], season=season, coadd=config['Observations']
+    metric = module.SNObsRateMetric(lim_sn=lim_sn, names_ref=config['names_ref'], season=season, coadd=config['Observations']
                                     ['coadd'], z=z, bands=bands, snr_ref=dict(zip(bands, snr_ref)))
     bundles.append(metricBundles.MetricBundle(metric, slicer, sql_i))
     names.append(band)
