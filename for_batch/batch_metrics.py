@@ -2,30 +2,29 @@ import os
 import numpy as np
 from optparse import OptionParser
 
-def batch(dbDir,dbName,scriptref,nside,simuType,outDir,nprocprog,nproccomp,fieldType,saveData,metric,coadd):
+
+def batch(dbDir, dbName, scriptref, nside, simuType, outDir, nprocprog, nproccomp, fieldType, saveData, metric, coadd):
 
     cwd = os.getcwd()
-    dirScript= cwd + "/scripts"
+    dirScript = cwd + "/scripts"
 
-    if not os.path.isdir(dirScript) :
+    if not os.path.isdir(dirScript):
         os.makedirs(dirScript)
-    
+
     dirLog = cwd + "/logs"
-    if not os.path.isdir(dirLog) :
-        os.makedirs(dirLog)    
-    
-    
-    id='{}_{}_{}_{}'.format(dbName,nside,fieldType,metric)
-    name_id='metric_{}'.format(id)
+    if not os.path.isdir(dirLog):
+        os.makedirs(dirLog)
+
+    id = '{}_{}_{}_{}'.format(dbName, nside, fieldType, metric)
+    name_id = 'metric_{}'.format(id)
     log = dirLog + '/'+name_id+'.log'
 
-
-    qsub = 'qsub -P P_lsst -l sps=1,ct=10:00:00,h_vmem=16G -j y -o {} -pe multicores {} <<EOF'.format(log,nproccomp)
+    qsub = 'qsub -P P_lsst -l sps=1,ct=10:00:00,h_vmem=16G -j y -o {} -pe multicores {} <<EOF'.format(
+        log, nproccomp)
     #qsub = "qsub -P P_lsst -l sps=1,ct=05:00:00,h_vmem=16G -j y -o "+ log + " <<EOF"
     scriptName = dirScript+'/'+name_id+'.sh'
 
-
-    script = open(scriptName,"w")
+    script = open(scriptName, "w")
     script.write(qsub + "\n")
     script.write("#!/usr/local/bin/bash\n")
     script.write(" cd " + cwd + "\n")
@@ -40,8 +39,10 @@ def batch(dbDir,dbName,scriptref,nside,simuType,outDir,nprocprog,nproccomp,field
     """
     script.write("echo $PYTHONPATH \n")
 
-    cmd = 'python {}.py --dbDir {} --dbName {}'.format(scriptref,dbDir,dbName)
-    cmd += ' --nproc {} --nside {} --simuType {}'.format(nprocprog,nside,simuType)
+    cmd = 'python {}.py --dbDir {} --dbName {}'.format(
+        scriptref, dbDir, dbName)
+    cmd += ' --nproc {} --nside {} --simuType {}'.format(
+        nprocprog, nside, simuType)
     cmd += ' --outDir {}'.format(outDir)
     cmd += ' --fieldType {}'.format(fieldType)
     cmd += ' --saveData {}'.format(saveData)
@@ -53,35 +54,36 @@ def batch(dbDir,dbName,scriptref,nside,simuType,outDir,nprocprog,nproccomp,field
     script.close()
     #os.system("sh "+scriptName)
 
-def batch_new(dbDir,dbExtens,scriptref,outDir,nproccomp,
-              saveData,metric,toprocess,nodither,
-              RA_min=0.0,RA_max=360.0,Dec_min=-1.0,Dec_max=-1.0):
+
+def batch_new(dbDir, dbExtens, scriptref, outDir, nproccomp,
+              saveData, metric, toprocess, nodither,
+              RA_min=0.0, RA_max=360.0, Dec_min=-1.0, Dec_max=-1.0):
 
     cwd = os.getcwd()
-    dirScript= cwd + "/scripts"
+    dirScript = cwd + "/scripts"
 
-    if not os.path.isdir(dirScript) :
+    if not os.path.isdir(dirScript):
         os.makedirs(dirScript)
-    
+
     dirLog = cwd + "/logs"
-    if not os.path.isdir(dirLog) :
-        os.makedirs(dirLog)    
-    
+    if not os.path.isdir(dirLog):
+        os.makedirs(dirLog)
+
     dbName = toprocess['dbName'][0].decode()
     nside = toprocess['nside'][0]
     fieldType = toprocess['fieldType'][0].decode()
-    id='{}_{}_{}_{}{}_{}_{}_{}_{}'.format(dbName,nside,fieldType,metric,nodither,RA_min,RA_max,Dec_min,Dec_max) 
+    id = '{}_{}_{}_{}{}_{}_{}_{}_{}'.format(
+        dbName, nside, fieldType, metric, nodither, RA_min, RA_max, Dec_min, Dec_max)
 
-    name_id='metric_{}'.format(id)
+    name_id = 'metric_{}'.format(id)
     log = dirLog + '/'+name_id+'.log'
 
-
-    qsub = 'qsub -P P_lsst -l sps=1,ct=24:00:00,h_vmem=16G -j y -o {} -pe multicores {} <<EOF'.format(log,nproccomp)
+    qsub = 'qsub -P P_lsst -l sps=1,ct=24:00:00,h_vmem=16G -j y -o {} -pe multicores {} <<EOF'.format(
+        log, nproccomp)
     #qsub = "qsub -P P_lsst -l sps=1,ct=05:00:00,h_vmem=16G -j y -o "+ log + " <<EOF"
     scriptName = dirScript+'/'+name_id+'.sh'
 
-
-    script = open(scriptName,"w")
+    script = open(scriptName, "w")
     script.write(qsub + "\n")
     script.write("#!/usr/local/bin/bash\n")
     script.write(" cd " + cwd + "\n")
@@ -97,22 +99,24 @@ def batch_new(dbDir,dbExtens,scriptref,outDir,nproccomp,
     script.write("echo $PYTHONPATH \n")
 
     for proc in toprocess:
-        cmd_ = batch_cmd(scriptref,dbDir,dbExtens,outDir,
-                         saveData,metric,proc,nodither,
-                         RA_min,RA_max,Dec_min,Dec_max)
+        cmd_ = batch_cmd(scriptref, dbDir, dbExtens, outDir,
+                         saveData, metric, proc, nodither,
+                         RA_min, RA_max, Dec_min, Dec_max)
 
-        
         script.write(cmd_+" \n")
     script.write("EOF" + "\n")
     script.close()
-    os.system("sh "+scriptName)
+    #os.system("sh "+scriptName)
 
-def batch_cmd(scriptref,dbDir,dbExtens,outDir,
-              saveData,metric,proc,nodither,
-              RA_min,RA_max,Dec_min,Dec_max):
 
-    cmd = 'python {}.py --dbDir {} --dbName {} --dbExtens {}'.format(scriptref,dbDir,proc['dbName'].decode(),dbExtens)
-    cmd += ' --nproc {} --nside {} --simuType {}'.format(proc['nproc'],proc['nside'],proc['simuType'])
+def batch_cmd(scriptref, dbDir, dbExtens, outDir,
+              saveData, metric, proc, nodither,
+              RA_min, RA_max, Dec_min, Dec_max):
+
+    cmd = 'python {}.py --dbDir {} --dbName {} --dbExtens {}'.format(
+        scriptref, dbDir, proc['dbName'].decode(), dbExtens)
+    cmd += ' --nproc {} --nside {} --simuType {}'.format(
+        proc['nproc'], proc['nside'], proc['simuType'])
     cmd += ' --outDir {}'.format(outDir)
     cmd += ' --fieldType {}'.format(proc['fieldType'].decode())
     cmd += ' --saveData {}'.format(saveData)
@@ -156,7 +160,7 @@ if fieldType =='WFD':
     simuType = simuType_oswg_paper
     
 """
-    
+
 parser = OptionParser()
 
 parser.add_option("--dbList", type="str", default='WFD.txt',
@@ -164,9 +168,12 @@ parser.add_option("--dbList", type="str", default='WFD.txt',
 parser.add_option("--metricName", type="str", default='SNR',
                   help="metric to process  [%default]")
 parser.add_option("--dbDir", type="str", default='', help="db dir [%default]")
-parser.add_option("--dbExtens", type="str", default='npy', help="db extension [%default]")
-parser.add_option("--nodither", type="str", default='', help="db extension [%default]")
-parser.add_option("--splitSky", type="int", default=0, help="db extension [%default]")
+parser.add_option("--dbExtens", type="str", default='npy',
+                  help="db extension [%default]")
+parser.add_option("--nodither", type="str", default='',
+                  help="db extension [%default]")
+parser.add_option("--splitSky", type="int", default=0,
+                  help="db extension [%default]")
 
 opts, args = parser.parse_args()
 
@@ -179,33 +186,35 @@ if dbDir == '':
     dbDir = '/sps/lsst/cadence/LSST_SN_CADENCE/cadence_db'
 dbExtens = opts.dbExtens
 
-outDir='/sps/lsst/users/gris/MetricOutput'
+outDir = '/sps/lsst/users/gris/MetricOutput'
 nodither = opts.nodither
 splitSky = opts.splitSky
 
-toprocess = np.genfromtxt(dbList,dtype=None,names=['dbName','simuType','nside','coadd','fieldType','nproc'])
+toprocess = np.genfromtxt(dbList, dtype=None, names=[
+                          'dbName', 'simuType', 'nside', 'coadd', 'fieldType', 'nproc'])
 
-print('there',toprocess)
+print('there', toprocess)
 
 n_per_slice = 1
 n_process = len(toprocess)
-lproc = list(range(0,n_process,n_per_slice))
+lproc = list(range(0, n_process, n_per_slice))
 if splitSky:
-    RAs = np.linspace(0.,360.,11)
+    RAs = np.linspace(0., 360., 11)
 else:
-    RAs = [0.,360.]
+    RAs = [0., 360.]
 
-for i,val in enumerate(lproc):
-#proc in toprocess:
+for i, val in enumerate(lproc):
+    # proc in toprocess:
     for ira in range(len(RAs)-1):
         RA_min = RAs[ira]
         RA_max = RAs[ira+1]
-        batch_new(dbDir,dbExtens,'run_scripts/metrics/run_metrics_fromnpy',outDir,8,1,metricName,toprocess[val:val+n_per_slice],nodither,RA_min,RA_max)
-   
-                      
-if (n_process & 1)&(n_per_slice>1):
+        batch_new(dbDir, dbExtens, 'run_scripts/metrics/run_metrics_fromnpy', outDir,
+                  8, 1, metricName, toprocess[val:val+n_per_slice], nodither, RA_min, RA_max)
+
+
+if (n_process & 1) & (n_per_slice > 1):
     for ira in range(len(RAs)-1):
         RA_min = Ras[ira]
         RA_max = Ras[ira+1]
-        batch_new(dbDir,dbExtens,'run_scripts/metrics/run_metrics_fromnpy',outDir,8,1,metricName,toprocess[-1],nodither,RA_min,RA_max)
-
+        batch_new(dbDir, dbExtens, 'run_scripts/metrics/run_metrics_fromnpy',
+                  outDir, 8, 1, metricName, toprocess[-1], nodither, RA_min, RA_max)

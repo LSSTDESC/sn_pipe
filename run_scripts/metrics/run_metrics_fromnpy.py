@@ -4,7 +4,7 @@ import matplotlib
 import numpy as np
 import healpy as hp
 from metricWrapper import CadenceMetricWrapper, SNRMetricWrapper
-from metricWrapper import SNRRateMetricWrapper, NSNMetricWrapper
+from metricWrapper import ObsRateMetricWrapper, NSNMetricWrapper
 from metricWrapper import SLMetricWrapper
 from sn_tools.sn_obs import renameFields, pixelate, GetShape, ObsPixel, ProcessArea
 from sn_tools.sn_obs import season as seasoncalc
@@ -259,8 +259,8 @@ if metric == 'Cadence':
 if metric == 'SL':
     metricList.append(SLMetricWrapper(
         nside=nside, coadd=coadd, fieldType=fieldType))
-if metric == 'SNRRate':
-    metricList.append(SNRRateMetricWrapper(nside=nside, coadd=coadd))
+if metric == 'ObsRate':
+    metricList.append(ObsRateMetricWrapper(nside=nside, coadd=coadd))
 
 if 'SNR' in metric:
     band = metric[-1]
