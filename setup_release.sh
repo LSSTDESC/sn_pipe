@@ -2,7 +2,7 @@
 
 location=$1
 script_loc=$2
-release='sims_w_2019_23'
+release='sims_w_2020_04'
 declare -A arr
 #arr['NERSC']='/global/common/software/lsst/cori-haswell-gcc/stack/setup_w_2018_13-sims_2_7_0.sh'
 arr['NERSC']='/global/common/software/lsst/cori-haswell-gcc/stack/setup_w_2018_19-sims_2_8_0.sh'
