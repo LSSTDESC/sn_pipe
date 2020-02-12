@@ -8,97 +8,105 @@ from sn_tools.sn_cadence_tools import ReferenceData
 from sn_tools.sn_utils import GetReference
 import os
 import multiprocessing
+import healpy as hp
 
 
-class CadenceMetricWrapper:
-    def __init__(self, season=-1, coadd=True, fieldType='DD', nside=64, ramin=0., ramax=360., decmin=-1.0, decmax=-1.0):
+class MetricWrapper:
+    def __init__(self, name='Cadence', season=-1, coadd=True, fieldType='DD', nside=64, ramin=0., ramax=360., decmin=-1.0, decmax=-1.0):
 
-        self.metric = SNCadenceMetric(coadd=coadd, nside=nside)
-        self.name = 'CadenceMetric_{}_nside_{}_coadd_{}_{}_{}_{}_{}'.format(
-            fieldType, nside, coadd, ramin, ramax, decmin, decmax)
+        self.name = '{}Metric_{}_nside_{}_coadd_{}_{}_{}_{}_{}'.format(name,
+                                                                       fieldType, nside, coadd, ramin, ramax, decmin, decmax)
 
-    def run(self, obs, filterCol='filter'):
+        self.metric = None
 
+    def run(self, obs):
         return self.metric.run(obs)
 
 
-class SNRMetricWrapper:
-    def __init__(self, z=0.2, x1=-2.0, color=0.2, names_ref=['SNCosmo'], coadd=False, dirfiles='reference_files', dirFakes='input/Fake_cadence', shift=10., season=-1, nside=64, band='g', fieldType='WFD', ramin=0., ramax=360., decmin=-1.0, decmax=-1.0):
+class CadenceMetricWrapper(MetricWrapper):
+    def __init__(self, name='Cadence', season=-1, coadd=True, fieldType='DD', nside=64, ramin=0., ramax=360., decmin=-1.0, decmax=-1.0, metadata={}):
+        super(CadenceMetricWrapper, self).__init__(
+            name=name, season=season, coadd=coadd, fieldType=fieldType,
+            nside=nside, ramin=ramin, ramax=ramax, decmin=decmin, decmax=decmax)
 
-        self.z = z
-        self.coadd = coadd
-        self.names_ref = names_ref
-        self.season = season
-        self.shift = shift
-        self.name = 'SNR{}Metric_{}_nside_{}_coadd_{}_{}_{}_{}_{}'.format(
-            band, fieldType, nside, coadd, ramin, ramax, decmin, decmax)
-        self.fake_file = '{}/{}.yaml'.format(dirFakes, 'Fake_cadence')
-        self.band = band
+        self.metric = SNCadenceMetric(
+            coadd=coadd, nside=nside, verbose=metadata.verbose)
+
+
+class SNRMetricWrapper(MetricWrapper):
+    def __init__(self, name='SNR', season=-1, coadd=True, fieldType='DD', nside=64, ramin=0., ramax=360., decmin=-1.0, decmax=-1.0, metadata={}):
+        super(SNRMetricWrapper, self).__init__(
+            name=name, season=season, coadd=coadd, fieldType=fieldType,
+            nside=nside, ramin=ramin, ramax=ramax, decmin=decmin, decmax=decmax)
+
+        shift = 10.
+        x1 = -2.0
+        color = 0.2
+
+        fake_file = '{}/{}.yaml'.format(metadata.dirFakes, 'Fake_cadence')
 
         Li_files = []
         mag_to_flux_files = []
-        for name in names_ref:
-            Li_files.append(
-                '{}/Li_{}_{}_{}.npy'.format(dirfiles, name, x1, color))
-            mag_to_flux_files.append(
-                '{}/Mag_to_Flux_{}.npy'.format(dirfiles, name))
 
-        bands = 'griz'
-        self.lim_sn = {}
+        #names_ref = list(metadata.names_ref)
+        for name in [metadata.names_ref]:
+            Li_files.append(
+                '{}/Li_{}_{}_{}.npy'.format(metadata.dirRefs, name, x1, color))
+            mag_to_flux_files.append(
+                '{}/Mag_to_Flux_{}.npy'.format(metadata.dirRefs, name))
+
+        lim_sn = ReferenceData(
+            Li_files, mag_to_flux_files, metadata.band, metadata.z)
+
+        self.metric = SNSNRMetric(lim_sn=lim_sn, fake_file=fake_file, coadd=coadd,
+                                  names_ref=[metadata.names_ref], shift=shift, season=season, z=metadata.z, verbose=metadata.verbose)
+
+
+class ObsRateMetricWrapper(MetricWrapper):
+    def __init__(self, name='ObsRate', season=-1, coadd=True, fieldType='DD', nside=64, ramin=0., ramax=360., decmin=-1.0, decmax=-1.0, metadata={}):
+        super(ObsRateMetricWrapper, self).__init__(
+            name=name, season=season, coadd=coadd, fieldType=fieldType,
+            nside=nside, ramin=ramin, ramax=ramax, decmin=decmin, decmax=decmax)
+
+        x1 = -2.0
+        color = 0.2
+
+        Li_files = []
+        mag_to_flux_files = []
+        for name in [metadata.names_ref]:
+            Li_files.append(
+                '{}/Li_{}_{}_{}.npy'.format(metadata.dirRefs, name, x1, color))
+            mag_to_flux_files.append(
+                '{}/Mag_to_Flux_{}.npy'.format(metadata.dirRefs, name))
+
+        #self.bands = bands
+        bands = 'gri'
+        lim_sn = {}
         for band in bands:
-            self.lim_sn[band] = ReferenceData(
-                Li_files, mag_to_flux_files, band, z)
-
-    def run(self, obs, filterCol='filter'):
-        idx = obs[filterCol] == self.band
-        sel = obs[idx]
-        metric = SNSNRMetric(lim_sn=self.lim_sn[self.band], fake_file=self.fake_file, coadd=self.coadd,
-                             names_ref=self.names_ref, shift=self.shift, season=self.season, z=self.z)
-        return metric.run(np.copy(sel))
-
-
-class ObsRateMetricWrapper:
-    def __init__(self, z=0.3, x1=-2.0, color=0.2, names_ref=['SNCosmo'], fieldType='WFD', nside=64, coadd=False, dirfiles='reference_files', season=-1, bands='gri', ramin=0., ramax=360., decmin=-1.0, decmax=-1.0):
-
-        self.z = z
-        self.coadd = coadd
-        self.names_ref = names_ref
-        self.season = season
-        self.name = 'ObsRateMetric_{}_nside_{}_coadd_{}_{}_{}_{}_{}'.format(
-            fieldType, nside, coadd, ramin, ramax, decmin, decmax)
-        Li_files = []
-        mag_to_flux_files = []
-        for name in names_ref:
-            Li_files.append(
-                '{}/Li_{}_{}_{}.npy'.format(dirfiles, name, x1, color))
-            mag_to_flux_files.append(
-                '{}/Mag_to_Flux_{}.npy'.format(dirfiles, name))
-
-        self.bands = bands
-        self.lim_sn = {}
-        for band in self.bands:
-            self.lim_sn[band] = ReferenceData(
-                Li_files, mag_to_flux_files, band, z)
+            lim_sn[band] = ReferenceData(
+                Li_files, mag_to_flux_files, band, metadata.z)
 
         SNR = [30., 40., 30.]  # WFD SNR cut to estimate sum(Li**2)
 
-        self.snr_ref = dict(zip(self.bands, SNR))
+        snr_ref = dict(zip(bands, SNR))
 
-    def run(self, obs, filterCol='filter'):
-        metric = SNObsRateMetric(lim_sn=self.lim_sn, names_ref=self.names_ref,
-                                 coadd=self.coadd, season=self.season, z=self.z, bands=self.bands, snr_ref=self.snr_ref)
-        return metric.run(np.copy(obs))
+        self.metric = SNObsRateMetric(lim_sn=lim_sn, names_ref=[metadata.names_ref],
+                                      coadd=coadd, season=season, z=metadata.z, bands=bands, snr_ref=snr_ref, verbose=metadata.verbose)
 
 
-class NSNMetricWrapper:
-    def __init__(self, fieldType='DD', nside=64, pixArea=9.6, season=-1, templateDir='', ploteffi=False, verbose=False, coadd=0, outputType='zlims', proxy_level=0, ramin=0., ramax=360., decmin=-1.0, decmax=-1.0, lightOutput=True, T0s='all'):
+class NSNMetricWrapper(MetricWrapper):
+    def __init__(self, name='NSN', season=-1, coadd=True, fieldType='DD',
+                 nside=64, ramin=0., ramax=360., decmin=-1.0,
+                 decmax=-1.0, metadata={}):
+        super(NSNMetricWrapper, self).__init__(
+            name=name, season=season, coadd=coadd, fieldType=fieldType,
+            nside=nside, ramin=ramin, ramax=ramax, decmin=decmin, decmax=decmax)
 
+        verbose = True
         zmax = 1.1
         if fieldType == 'WFD':
             zmax = 0.6
 
-        self.name = 'NSNMetric_{}_{}_nside_{}_coadd_{}_{}_{}_{}_{}'.format(
-            fieldType, outputType, nside, coadd, ramin, ramax, decmin, decmax)
         self.Instrument = {}
         self.Instrument['name'] = 'LSST'  # name of the telescope (internal)
         # dir of throughput
@@ -116,7 +124,7 @@ class NSNMetricWrapper:
                      (2.0, -0.2), (2.0, 0.0), (2.0, 0.2)]
         # (2.0, -0.2)] #(2.0, 0.0), (2.0, 0.2)]
 
-        if proxy_level > 0:
+        if metadata.proxy_level > 0:
             x1_colors = [(-2.0, 0.2), (0.0, 0.0)]
 
         print('Loading reference files')
@@ -125,7 +133,8 @@ class NSNMetricWrapper:
         for j in range(len(x1_colors)):
             x1 = x1_colors[j][0]
             color = x1_colors[j][1]
-            fname = '{}/LC_{}_{}_vstack.hdf5'.format(templateDir, x1, color)
+            fname = '{}/LC_{}_{}_vstack.hdf5'.format(
+                metadata.templateDir, x1, color)
             p = multiprocessing.Process(
                 name='Subprocess_main-'+str(j), target=self.load, args=(fname, j, result_queue))
             p.start()
@@ -172,12 +181,19 @@ class NSNMetricWrapper:
                                       names=('x1', 'color', 'weight_x1', 'weight_x1', 'weight_tot'))
 
         # metric instance
+        pixArea = hp.nside2pixarea(nside, degrees=True)
 
         self.metric = SNNSNMetric(
-            lc_reference, season=season, zmax=zmax, pixArea=pixArea, verbose=verbose, ploteffi=ploteffi, N_bef=N_bef, N_aft=N_aft, snr_min=snr_min, N_phase_min=N_phase_min, N_phase_max=N_phase_max, outputType=outputType, proxy_level=proxy_level, x1_color_dist=x1_color_dist, coadd=coadd, lightOutput=lightOutput, T0s=T0s)
-
-    def run(self, obs):
-        return self.metric.run(obs)
+            lc_reference, season=season, zmax=zmax, pixArea=pixArea,
+            verbose=metadata.verbose, ploteffi=metadata.ploteffi,
+            N_bef=N_bef, N_aft=N_aft,
+            snr_min=snr_min,
+            N_phase_min=N_phase_min,
+            N_phase_max=N_phase_max,
+            outputType=metadata.outputType,
+            proxy_level=metadata.proxy_level,
+            x1_color_dist=x1_color_dist,
+            coadd=coadd, lightOutput=metadata.lightOutput, T0s=metadata.T0s)
 
     def load(self, fname, j=-1, output_q=None):
 
@@ -190,13 +206,11 @@ class NSNMetricWrapper:
             return tab_tot
 
 
-class SLMetricWrapper:
-    def __init__(self, season=-1, coadd=0, nside=64, fieldType='WFD', ramin=0., ramax=360., decmin=-1.0, decmax=-1.0):
+class SLMetricWrapper(MetricWrapper):
+    def __init__(self, name='SL', season=-1, coadd=0, nside=64, fieldType='WFD', ramin=0., ramax=360., decmin=-1.0, decmax=-1.0, metadata={}):
+        super(SLMetricWrapper, self).__init__(
+            name=name, season=season, coadd=coadd, fieldType=fieldType,
+            nside=nside, ramin=ramin, ramax=ramax, decmin=decmin, decmax=decmax)
 
-        #self.name = 'SLMetric_{}'.format(fieldType)
-        self.name = 'SLMetric_{}_nside_{}_coadd_{}_{}_{}_{}_{}'.format(
-            fieldType, nside, coadd, ramin, ramax, decmin, decmax)
-        self.metric = SLSNMetric(season=season, nside=nside, coadd=coadd)
-
-    def run(self, obs):
-        return self.metric.run(obs)
+        self.metric = SLSNMetric(
+            season=season, nside=nside, coadd=coadd, verbose=metadata.verbose)
