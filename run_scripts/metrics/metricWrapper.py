@@ -9,46 +9,81 @@ from sn_tools.sn_utils import GetReference
 import os
 import multiprocessing
 import healpy as hp
+import yaml
 
 
 class MetricWrapper:
-    def __init__(self, name='Cadence', season=-1, coadd=True, fieldType='DD', nside=64, ramin=0., ramax=360., decmin=-1.0, decmax=-1.0):
+    def __init__(self, name='Cadence', season=-1,
+                 coadd=True, fieldType='DD', nside=64,
+                 ramin=0., ramax=360., decmin=-1.0, decmax=-1.0,
+                 metadata={}, outDir=''):
 
         self.name = '{}Metric_{}_nside_{}_coadd_{}_{}_{}_{}_{}'.format(name,
                                                                        fieldType, nside, coadd, ramin, ramax, decmin, decmax)
 
         self.metric = None
 
+        self.metadata = vars(metadata)
+
+        # select values to dump
+        self.metaout = ['name', 'seasons', 'coadd', 'fieldType',
+                        'nside', 'ramin', 'ramax', 'decmin', 'decmax', 'metric', 'Output dir', 'remove_dithering']
+
+        self.metadata['name'] = self.name
+        self.metadata['metric'] = name
+        self.metadata['Output dir'] = outDir
+        self.outDir = outDir
+
     def run(self, obs):
         return self.metric.run(obs)
 
+    def saveConfig(self):
+        ti = dict(zip(self.metaout, [self.metadata[k] for k in self.metaout]))
+        nameOut = '{}/{}_conf.yaml'.format(self.outDir, self.name)
+        print('Saving configuration file', nameOut)
+        with open(nameOut, 'w') as file:
+            yaml.dump(ti, file)
+
 
 class CadenceMetricWrapper(MetricWrapper):
-    def __init__(self, name='Cadence', season=-1, coadd=True, fieldType='DD', nside=64, ramin=0., ramax=360., decmin=-1.0, decmax=-1.0, metadata={}):
+    def __init__(self, name='Cadence', season=-1,
+                 coadd=True, fieldType='DD', nside=64,
+                 ramin=0., ramax=360., decmin=-1.0, decmax=-1.0,
+                 metadata={}, outDir=''):
         super(CadenceMetricWrapper, self).__init__(
             name=name, season=season, coadd=coadd, fieldType=fieldType,
-            nside=nside, ramin=ramin, ramax=ramax, decmin=decmin, decmax=decmax)
+            nside=nside, ramin=ramin, ramax=ramax,
+            decmin=decmin, decmax=decmax, metadata=metadata, outDir=outDir)
 
         self.metric = SNCadenceMetric(
             coadd=coadd, nside=nside, verbose=metadata.verbose)
 
+        self.saveConfig()
+
 
 class SNRMetricWrapper(MetricWrapper):
-    def __init__(self, name='SNR', season=-1, coadd=True, fieldType='DD', nside=64, ramin=0., ramax=360., decmin=-1.0, decmax=-1.0, metadata={}):
+    def __init__(self, name='SNR', season=-1,
+                 coadd=True, fieldType='DD', nside=64,
+                 ramin=0., ramax=360., decmin=-1.0, decmax=-1.0,
+                 metadata={}, outDir=''):
         super(SNRMetricWrapper, self).__init__(
             name=name, season=season, coadd=coadd, fieldType=fieldType,
-            nside=nside, ramin=ramin, ramax=ramax, decmin=decmin, decmax=decmax)
+            nside=nside, ramin=ramin, ramax=ramax,
+            decmin=decmin, decmax=decmax,
+            metadata=metadata, outDir=outDir)
+
+        self.metaout += ['x1', 'color', 'dirFakes', 'dirRefs', 'band', 'z']
 
         shift = 10.
-        x1 = -2.0
-        color = 0.2
+        x1 = metadata.x1
+        color = metadata.color
 
         fake_file = '{}/{}.yaml'.format(metadata.dirFakes, 'Fake_cadence')
 
         Li_files = []
         mag_to_flux_files = []
 
-        #names_ref = list(metadata.names_ref)
+        # names_ref = list(metadata.names_ref)
         for name in [metadata.names_ref]:
             Li_files.append(
                 '{}/Li_{}_{}_{}.npy'.format(metadata.dirRefs, name, x1, color))
@@ -60,16 +95,28 @@ class SNRMetricWrapper(MetricWrapper):
 
         self.metric = SNSNRMetric(lim_sn=lim_sn, fake_file=fake_file, coadd=coadd,
                                   names_ref=[metadata.names_ref], shift=shift, season=season, z=metadata.z, verbose=metadata.verbose)
+        self.saveConfig()
 
 
 class ObsRateMetricWrapper(MetricWrapper):
-    def __init__(self, name='ObsRate', season=-1, coadd=True, fieldType='DD', nside=64, ramin=0., ramax=360., decmin=-1.0, decmax=-1.0, metadata={}):
+    def __init__(self, name='ObsRate', season=-1,
+                 coadd=True, fieldType='DD', nside=64,
+                 ramin=0., ramax=360., decmin=-1.0, decmax=-1.0,
+                 metadata={}, outDir=''):
         super(ObsRateMetricWrapper, self).__init__(
             name=name, season=season, coadd=coadd, fieldType=fieldType,
-            nside=nside, ramin=ramin, ramax=ramax, decmin=decmin, decmax=decmax)
+            nside=nside, ramin=ramin, ramax=ramax,
+            decmin=decmin, decmax=decmax,
+            metadata=metadata, outDir=outDir)
 
-        x1 = -2.0
-        color = 0.2
+        self.metaout += ['x1', 'color', 'dirRefs', 'z', 'bands', 'SNR']
+
+        x1 = metadata.x1
+        color = metadata.color
+        bands = 'gri'
+        SNR = [30., 40., 30.]  # WFD SNR cut to estimate sum(Li**2)
+        self.metadata['bands'] = bands
+        self.metadata['SNR'] = SNR
 
         Li_files = []
         mag_to_flux_files = []
@@ -79,28 +126,30 @@ class ObsRateMetricWrapper(MetricWrapper):
             mag_to_flux_files.append(
                 '{}/Mag_to_Flux_{}.npy'.format(metadata.dirRefs, name))
 
-        #self.bands = bands
-        bands = 'gri'
+        # self.bands = bands
+
         lim_sn = {}
         for band in bands:
             lim_sn[band] = ReferenceData(
                 Li_files, mag_to_flux_files, band, metadata.z)
-
-        SNR = [30., 40., 30.]  # WFD SNR cut to estimate sum(Li**2)
 
         snr_ref = dict(zip(bands, SNR))
 
         self.metric = SNObsRateMetric(lim_sn=lim_sn, names_ref=[metadata.names_ref],
                                       coadd=coadd, season=season, z=metadata.z, bands=bands, snr_ref=snr_ref, verbose=metadata.verbose)
 
+        self.saveConfig()
+
 
 class NSNMetricWrapper(MetricWrapper):
     def __init__(self, name='NSN', season=-1, coadd=True, fieldType='DD',
                  nside=64, ramin=0., ramax=360., decmin=-1.0,
-                 decmax=-1.0, metadata={}):
+                 decmax=-1.0, metadata={}, outDir=''):
         super(NSNMetricWrapper, self).__init__(
             name=name, season=season, coadd=coadd, fieldType=fieldType,
-            nside=nside, ramin=ramin, ramax=ramax, decmin=decmin, decmax=decmax)
+            nside=nside, ramin=ramin, ramax=ramax,
+            decmin=decmin, decmax=decmax,
+            metadata=metadata, outDir=outDir)
 
         verbose = True
         zmax = 1.1
@@ -195,6 +244,17 @@ class NSNMetricWrapper(MetricWrapper):
             x1_color_dist=x1_color_dist,
             coadd=coadd, lightOutput=metadata.lightOutput, T0s=metadata.T0s)
 
+        self.metadata['N_bef'] = N_bef
+        self.metadata['N_aft'] = N_aft
+        self.metadata['snr_min'] = snr_min
+        self.metadata['N_phase_min'] = N_phase_min
+        self.metadata['N_phase_max'] = N_phase_max
+
+        self.metaout += ['ploteffi', 'outputType',
+                         'proxy_level', 'lightOutput', 'T0s',
+                         'N_bef', 'N_aft', 'snr_min', 'N_phase_min', 'N_phase_max']
+        self.saveConfig()
+
     def load(self, fname, j=-1, output_q=None):
 
         lc_ref = GetReference(
@@ -207,10 +267,17 @@ class NSNMetricWrapper(MetricWrapper):
 
 
 class SLMetricWrapper(MetricWrapper):
-    def __init__(self, name='SL', season=-1, coadd=0, nside=64, fieldType='WFD', ramin=0., ramax=360., decmin=-1.0, decmax=-1.0, metadata={}):
+    def __init__(self, name='SL', season=-1,
+                 coadd=0, nside=64, fieldType='WFD',
+                 ramin=0., ramax=360., decmin=-1.0, decmax=-1.0,
+                 metadata={}, outDir=''):
         super(SLMetricWrapper, self).__init__(
             name=name, season=season, coadd=coadd, fieldType=fieldType,
-            nside=nside, ramin=ramin, ramax=ramax, decmin=decmin, decmax=decmax)
+            nside=nside, ramin=ramin, ramax=ramax,
+            decmin=decmin, decmax=decmax,
+            metadata=metadata, outDir=outDir)
 
         self.metric = SLSNMetric(
             season=season, nside=nside, coadd=coadd, verbose=metadata.verbose)
+
+        self.saveConfig()

@@ -169,8 +169,8 @@ parser.add_option("--fieldType", type="str", default='DD',
                   help="field type DD or WFD[%default]")
 parser.add_option("--zmax", type="float", default='1.2',
                   help="zmax for simu [%default]")
-parser.add_option("--dithering", type="int", default='0',
-                  help="dithering for DDF [%default]")
+parser.add_option("--remove_dithering", type="int", default='0',
+                  help="remove dithering for DDF [%default]")
 parser.add_option("--simuType", type="int", default='0',
                   help="flag for new simulations [%default]")
 parser.add_option("--saveData", type="int", default='0',
@@ -179,8 +179,8 @@ parser.add_option("--metric", type="str", default='cadence',
                   help="metric to process [%default]")
 parser.add_option("--coadd", type="int", default='1',
                   help="nightly coaddition [%default]")
-parser.add_option("--nodither", type="str", default='',
-                  help="to remove dithering - for DDF only[%default]")
+# parser.add_option("--nodither", type="str", default='',
+#                  help="to remove dithering - for DDF only[%default]")
 parser.add_option("--ramin", type=float, default=0.,
                   help="ra min for obs area - for WDF only[%default]")
 parser.add_option("--ramax", type=float, default=360.,
@@ -213,6 +213,10 @@ parser.add_option("--dirFakes", type=str, default='input/Fake_cadence',
                   help="dir of fake files for the metric[%default]")
 parser.add_option("--names_ref", type=str, default='SNCosmo',
                   help="ref name for the ref files for the metric[%default]")
+parser.add_option("--x1", type=float, default=-2.0,
+                  help="Supernova stretch[%default]")
+parser.add_option("--color", type=float, default=0.2,
+                  help="Supernova color[%default]")
 
 opts, args = parser.parse_args()
 
@@ -220,8 +224,11 @@ print('Start processing...', opts)
 
 
 # prepare outputDir
+nodither = ''
+if opts.remove_dithering:
+    nodither = '_nodither'
 outputDir = '{}/{}{}/{}'.format(opts.outDir,
-                                opts.dbName, opts.nodither, opts.metric)
+                                opts.dbName, nodither, opts.metric)
 if not os.path.isdir(outputDir):
     os.makedirs(outputDir)
 
@@ -250,7 +257,7 @@ metricList.append(globals()[classname](name=opts.metric, season=season_int,
                                        nside=opts.nside,
                                        ramin=opts.ramin, ramax=opts.ramax,
                                        decmin=opts.decmin, decmax=opts.decmax,
-                                       metadata=opts))
+                                       metadata=opts, outDir=outputDir))
 
 # loading observations
 
@@ -333,5 +340,5 @@ for j in range(len(tabpix)-1):
     print('Field', healpixels[ida:idb])
     p = multiprocessing.Process(name='Subprocess-'+str(j), target=loop_area, args=(
         healpixels[ida:idb], metricList, observations, opts.nside,
-        outputDir, opts.dbName, opts.saveData, opts.nodither, RaCol, DecCol, j, result_queue))
+        outputDir, opts.dbName, opts.saveData, opts.remove_dithering, RaCol, DecCol, j, result_queue))
     p.start()
