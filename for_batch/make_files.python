@@ -8,12 +8,12 @@ def genFile(files,fName,postfix):
     script.write(firstline)
     r = []
     for fi in files:
-    	dbName = fi.split('/')[-1].split('.')[0]
+    	dbName = fi.split('/')[-1].split('.db')[0]
     	r.append(len(dbName))
 
     ljust = np.max(r)
     for fi in files:
-    	dbName = fi.split('/')[-1].split('.')[0]
+    	dbName = fi.split('/')[-1].split('.db')[0]
     	dbName=dbName.ljust(ljust)
     	line = '{} {}\n'.format(dbName,postfix)
     	print(line)
@@ -21,7 +21,7 @@ def genFile(files,fName,postfix):
 
     script.close()
 
-dirFiles = '/sps/lsst/cadence/LSST_SN_PhG/cadence_db/fbs_1.4'
+dirFiles = '/sps/lsst/cadence/LSST_SN_PhG/cadence_db/fbs_1.4/db'
 
 files = glob.glob('{}/*.db'.format(dirFiles))
 
