@@ -26,7 +26,8 @@ def batch(dbDir, dbName, scriptref, nside, simuType, outDir, nprocprog, nproccom
 
     script = open(scriptName, "w")
     script.write(qsub + "\n")
-    script.write("#!/usr/local/bin/bash\n")
+    # script.write("#!/usr/local/bin/bash\n")
+    script.write("#!/bin/env bash\n")
     script.write(" cd " + cwd + "\n")
     script.write(" echo 'sourcing setups' \n")
     script.write(" source setup_release.sh CCIN2P3\n")
@@ -85,7 +86,8 @@ def batch_new(dbDir, dbExtens, scriptref, outDir, nproccomp,
 
     script = open(scriptName, "w")
     script.write(qsub + "\n")
-    script.write("#!/usr/local/bin/bash\n")
+    # script.write("#!/usr/local/bin/bash\n")
+    script.write("#!/bin/env bash\n")
     script.write(" cd " + cwd + "\n")
     script.write(" echo 'sourcing setups' \n")
     script.write(" source setup_release.sh CCIN2P3\n")
@@ -106,7 +108,7 @@ def batch_new(dbDir, dbExtens, scriptref, outDir, nproccomp,
         script.write(cmd_+" \n")
     script.write("EOF" + "\n")
     script.close()
-    #os.system("sh "+scriptName)
+    os.system("sh "+scriptName)
 
 
 def batch_cmd(scriptref, dbDir, dbExtens, outDir,
