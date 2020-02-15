@@ -17,9 +17,31 @@ import pandas as pd
 
 
 class Summary:
-    def __init__(self, dirFile, metricName,
-                 fieldType, nside, forPlot, fname=None):
+    def __init__(self, dirFile, metricName='NSN',
+                 fieldType='DD', nside=128, forPlot=pd.DataFrame(), fname=''):
+        """
+        Class to transform in put data and match to DD fields
 
+        Parameters
+        ---------------
+        dirFile: str
+          directory of the files to process
+        metricName: str, opt
+          name of the metric to consider (default: NSN)
+        fieldType: str,opt
+          field type to consider (default: DD)
+        nside: int, opt
+          nside healpix parameter (default: 128)
+        forPlot: pandas df, opt
+          list of cadences to process and associated plot parameters (default: empty df)
+        fname: str, opt
+          output file name for summary of the results
+
+        Returns
+        ----------
+
+
+        """
         x1_colors = [(-2.0, 0.2), (0.0, 0.0)]
         self.corr = dict(zip(x1_colors, ['faint', 'medium']))
         df = self.process_loop(dirFile, metricName, fieldType,
@@ -28,12 +50,25 @@ class Summary:
         self.data = self.identify_DD(df)
 
     def identify_DD(self, df):
+        """
+        Method to match df data to DD fields
+
+        Parameters
+        ---------------
+        df: pandas df
+          data (results from a metric) to match to DD fields
+
+        Returns
+        ----------
+        pandas df with matched DD information added.
+
+        """""
 
         fields_DD = DDFields()
         dfb = pd.DataFrame()
         for field in fields_DD:
             dataSel = dataInside(
-                df.to_records(), field['RA'], field['Dec'], 10., 10., 'pixRa', 'pixDec')
+                df.to_records(index=False), field['RA'], field['Dec'], 10., 10., 'pixRa', 'pixDec')
             if dataSel is not None:
                 print(type(dataSel))
                 dfSel = pd.DataFrame(np.copy(dataSel))
@@ -48,6 +83,27 @@ class Summary:
         return dfb
 
     def process_loop(self, dirFile, metricName, fieldType, nside, forPlot):
+        """
+        Method to loop on all the files and process the data
+
+        Parameters
+        --------------
+        dirFile: str
+          directory of the files to process
+        metricName: str, opt
+          name of the metric to consider (default: NSN)
+        fieldType: str,opt
+          field type to consider (default: DD)
+        nside: int, opt
+          nside healpix parameter (default: 128)
+        forPlot: pandas df, opt
+          list of cadences to process and associated plot parameters (default: empty df)
+
+        Returns
+        ----------
+        pandas df.
+
+        """
 
         metricTot = None
 
@@ -59,8 +115,8 @@ class Summary:
             dfi = self.process(dirFile, dbName, metricName,
                                fieldType, nside, forPlot)
             df = pd.concat([df, dfi], sort=False)
-            if io >= 2:
-                break
+            # if io >= 2:
+            #    break
 
         return df
 
@@ -86,14 +142,15 @@ class Summary:
                 sel = metricValues[idx]
                 print(sel[['x1', 'color']])
                 sel['zlim_{}'.format(vals)] = sel['zlim']
-                sel['nsn_zlim_{}'.format(vals)] = sel['nsn']
-                sel['nsn_med_zlim_{}'.format(vals)] = sel['nsn_med']
+                sel['nsn_z{}'.format(vals)] = sel['nsn']
+                sel['nsn_med_z{}'.format(vals)] = sel['nsn_med']
                 sel = sel.drop(
                     columns=['x1', 'color', 'zlim', 'nsn', 'nsn_med', 'index'])
                 newdf[vals] = sel
 
             finaldf = newdf['faint'].merge(
                 newdf['medium'], left_on=vars, right_on=vars)
+            finaldf['cadence'] = dbName
 
         return finaldf
 
@@ -331,8 +388,8 @@ if not os.path.isfile(fname):
 mysum = Summary(dirFile, 'NSN',
                 'DD', nside, forPlot).data
 
-# print(test)
-metricTot = mysum.to_records()
+print(mysum.columns)
+metricTot = mysum.to_records(index=False)
 
 print('oo', metricTot.dtype, type(metricTot))
 # print(test)
