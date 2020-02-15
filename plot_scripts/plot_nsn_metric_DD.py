@@ -70,9 +70,8 @@ class Summary:
             dataSel = dataInside(
                 df.to_records(index=False), field['RA'], field['Dec'], 10., 10., 'pixRa', 'pixDec')
             if dataSel is not None:
-                print(type(dataSel))
+                print('hello', field, len(dataSel))
                 dfSel = pd.DataFrame(np.copy(dataSel))
-                print(field.dtype)
                 dfSel['fieldname'] = field['name']
                 dfSel['fieldId'] = field['fieldId']
                 dfSel['RA'] = field['RA']
@@ -126,7 +125,7 @@ class Summary:
             dirFile, dbName, metricName, metricName, fieldType, nside)
         print('looking for', search_path)
         vars = ['pixRa', 'pixDec', 'healpixID', 'season', 'status']
-
+        #vars = ['healpixID', 'season']
         fileNames = glob.glob(search_path)
         print(fileNames)
         finaldf = pd.DataFrame()
@@ -134,23 +133,22 @@ class Summary:
             # plt.plot(metricValues['pixRa'],metricValues['pixDec'],'ko')
             # plt.show()
             metricValues = loopStack(fileNames, 'astropyTable').to_pandas()
-            print(metricValues.columns)
+            metricValues = metricValues.round({'pixRa': 3, 'pixDec': 3})
             newdf = {}
             for key, vals in self.corr.items():
                 idx = np.abs(key[0]-metricValues['x1']) < 1.e-5
                 idx &= np.abs(key[1]-metricValues['color']) < 1.e-5
                 sel = metricValues[idx]
-                print(sel[['x1', 'color']])
-                sel['zlim_{}'.format(vals)] = sel['zlim']
-                sel['nsn_z{}'.format(vals)] = sel['nsn']
-                sel['nsn_med_z{}'.format(vals)] = sel['nsn_med']
-                sel = sel.drop(
+                sel.loc[:, 'zlim_{}'.format(vals)] = sel['zlim']
+                sel.loc[:, 'nsn_z{}'.format(vals)] = sel['nsn']
+                sel.loc[:, 'nsn_med_z{}'.format(vals)] = sel['nsn_med']
+                newdf[vals] = sel.drop(
                     columns=['x1', 'color', 'zlim', 'nsn', 'nsn_med', 'index'])
-                newdf[vals] = sel
 
             finaldf = newdf['faint'].merge(
                 newdf['medium'], left_on=vars, right_on=vars)
-            finaldf['cadence'] = dbName
+
+        finaldf['cadence'] = dbName
 
         return finaldf
 
@@ -223,8 +221,9 @@ def summary(forPlot, fname):
 
             metricTot = append(metricTot, tab)
 
-    # return metricTot
-    np.save(fname, np.copy(metricTot))
+    print('resultat', metricTot)
+    return metricTot
+    #np.save(fname, np.copy(metricTot))
 
 
 def match_colors(data):
@@ -306,8 +305,10 @@ def getVals(fields_DD, tab, cadence, nside=64, plotting=False):
     for field in fields_DD:
         dataSel = dataInside(
             tab, field['RA'], field['Dec'], 10., 10., 'pixRa', 'pixDec')
+
         if dataSel is not None:
             dataSel = match_colors(dataSel)
+            print('alors', field, len(dataSel))
             if dataSel is not None:
                 dataSel = rf.append_fields(dataSel, 'fieldname', [
                                            field['name'].ljust(7)]*len(dataSel))
@@ -324,7 +325,7 @@ def getVals(fields_DD, tab, cadence, nside=64, plotting=False):
                 else:
                     dataTot = np.concatenate((dataTot, dataSel))
 
-    print(dataTot)
+    # print(dataTot)
     return dataTot
 
 
@@ -380,15 +381,31 @@ x1 = opts.x1
 color = opts.color
 
 # Summary: to reproduce the plots faster
-"""
+
 fname = 'Summary_DD_{}.npy'.format(opts.simuVersion)
-if not os.path.isfile(fname):
-    summary(forPlot, fname)
-"""
+# if not os.path.isfile(fname):
+#resa = summary(forPlot, fname)
+
 mysum = Summary(dirFile, 'NSN',
                 'DD', nside, forPlot).data
-
+"""
 print(mysum.columns)
+what = ['healpixID', 'nsn_zfaint', 'zlim_faint',
+        'season', 'fieldname', 'cadence']
+what = ['pixRa', 'pixDec', 'healpixID', 'season', 'zlim_faint',
+        'nsn_zfaint', 'nsn_med_zfaint', 'zlim_medium', 'nsn_zmedium',
+        'nsn_med_zmedium', 'cadence', 'fieldname', ]
+
+for healpixID in np.unique(resa['healpixID']):
+    idx = resa['healpixID'] == healpixID
+    print(resa[idx][what])
+    idb = mysum['healpixID'] == healpixID
+    print(mysum[idb][what])
+    break
+
+
+print(test)
+"""
 metricTot = mysum.to_records(index=False)
 
 print('oo', metricTot.dtype, type(metricTot))
