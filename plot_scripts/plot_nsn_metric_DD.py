@@ -18,9 +18,9 @@ import pandas as pd
 
 class Summary:
     def __init__(self, dirFile, metricName='NSN',
-                 fieldType='DD', nside=128, forPlot=pd.DataFrame(), fname=''):
+                 fieldType='DD', nside=128, forPlot=pd.DataFrame(), simuVersion=''):
         """
-        Class to transform in put data and match to DD fields
+        Class to transform input data and match to DD fields
 
         Parameters
         ---------------
@@ -34,20 +34,29 @@ class Summary:
           nside healpix parameter (default: 128)
         forPlot: pandas df, opt
           list of cadences to process and associated plot parameters (default: empty df)
-        fname: str, opt
-          output file name for summary of the results
+        simuVersion: str, opt
+          tag for output file name for summary of the results(default: '')
 
         Returns
         ----------
 
 
         """
-        x1_colors = [(-2.0, 0.2), (0.0, 0.0)]
-        self.corr = dict(zip(x1_colors, ['faint', 'medium']))
-        df = self.process_loop(dirFile, metricName, fieldType,
-                               nside, forPlot)
 
-        self.data = self.identify_DD(df)
+        fname = 'Summary_{}_{}.npy'.format(fieldType, simuVersion)
+        if not os.path.isfile(fname):
+
+            x1_colors = [(-2.0, 0.2), (0.0, 0.0)]
+            self.corr = dict(zip(x1_colors, ['faint', 'medium']))
+            df = self.process_loop(dirFile, metricName, fieldType,
+                                   nside, forPlot)
+
+            self.data = self.identify_DD(df).to_records()
+
+            np.save(fname, self.data)
+
+        else:
+            self.data = np.load(fname)
 
     def identify_DD(self, df):
         """
@@ -100,7 +109,19 @@ class Summary:
 
         Returns
         ----------
-        pandas df.
+        pandas df with the following cols:
+         pixRa: RA of the sn pixel location
+         pixDec: Dec of the sn pixel location
+         healpixID: healpixID of the sn pixel location
+         season: season number
+         status:  status of the processing
+         zlim_faint: redshift limit for faint sn
+         nsn_zfaint:  number of sn with z<= zfaint
+         nsn_med_zfaint: number of medium sn with z<= zfaint
+         zlim_medium: redshift limit for medium sn
+         nsn_zmedium: number of sn with z<= zmedium
+         nsn_med_zmedium: number of medium sn with z<= zmedium
+         cadence: cadence name
 
         """
 
@@ -112,20 +133,55 @@ class Summary:
         for dbName in forPlot['dbName']:
             io += 1
             dfi = self.process(dirFile, dbName, metricName,
-                               fieldType, nside, forPlot)
+                               fieldType, nside)
             df = pd.concat([df, dfi], sort=False)
-            # if io >= 2:
-            #    break
 
         return df
 
-    def process(self, dirFile, dbName, metricName, fieldType, nside, forPlot):
+    def process(self, dirFile, dbName, metricName, fieldType, nside):
+        """
+        Single file processing
+        This method load the files corresponding to dbName and transform it
+        so as to have all infos on one line.
+
+
+        Parameters
+        ----------------
+        dirFile: str
+         directory where the files are located
+        dbName: str
+          name of the cadence to processe
+        metricName: str
+          name of the metric of interest
+        fieldType: str
+          field type: DD or WFD
+        nside: int
+          nside for healpix tessallation
+
+
+        Returns
+        -----------
+         pandas df with the following cols:
+          pixRa: RA of the sn pixel location
+          pixDec: Dec of the sn pixel location
+          healpixID: healpixID of the sn pixel location
+          season: season number
+          status:  status of the processing
+          zlim_faint: redshift limit for faint sn
+          nsn_zfaint:  number of sn with z<= zfaint
+          nsn_med_zfaint: number of medium sn with z<= zfaint
+          zlim_medium: redshift limit for medium sn
+          nsn_zmedium: number of sn with z<= zmedium
+          nsn_med_zmedium: number of medium sn with z<= zmedium
+          cadence: cadence name
+
+        """
 
         search_path = '{}/{}/{}/*{}Metric_{}*_nside_{}_*.hdf5'.format(
             dirFile, dbName, metricName, metricName, fieldType, nside)
         print('looking for', search_path)
         vars = ['pixRa', 'pixDec', 'healpixID', 'season', 'status']
-        #vars = ['healpixID', 'season']
+        # vars = ['healpixID', 'season']
         fileNames = glob.glob(search_path)
         print(fileNames)
         finaldf = pd.DataFrame()
@@ -153,56 +209,12 @@ class Summary:
         return finaldf
 
 
-def summary_old(forPlot):
-
-    for val in forPlot:
-        dbName = val['dbName']
-        search_path = '{}/{}/{}/*NSNMetric_{}*_nside_{}_*'.format(
-            dirFile, dbName, metricName, fieldType, nside)
-        print('looking for', search_path)
-        fileNames = glob.glob(search_path)
-        # fileName='{}/{}_CadenceMetric_{}.npy'.format(dirFile,dbName,band)
-        print(fileNames)
-        #metricValues = np.load(fileName)
-        #metricValues = loopStack(fileNames).to_records(index=False)
-        metricValues = np.array(loopStack(fileNames, 'astropyTable'))
-        # plt.plot(metricValues['pixRa'],metricValues['pixDec'],'ko')
-        # plt.show()
-
-        tab = getVals(fields_DD, metricValues, dbName.ljust(adjl), nside)
-
-        # plt.plot(sel['pixRa'],sel['pixDec'],'ko')
-        # plt.show()
-        """
-        idx = metricValues['filter']=='all'
-        sel = metricValues[idx]
-        #print(sel[['pixRa','pixDec','filter']])
-        print(sel.dtype)
-        for (pixRa,pixDec) in np.unique(sel[['pixRa','pixDec']]):
-        idd = np.abs(sel['pixRa']-pixRa)<1.e-5
-        idd &= np.abs(sel['pixDec']-pixDec)<1.e-5
-        print(len(sel[idd]))
-        print(sel[idd][['pixRa','pixDec','healpixID','season','filter']])
-        break
-        #    print(val)
-        #print(test)
-        print(len(np.unique(sel[['pixRa','pixDec']])),len(sel))
-        print(tab.dtype,np.sum(sel['pixArea']))
-        idb = fields_DD['fieldname'] == 'COSMOS'.ljust(7)
-        #sn_plot.plotMollview(nside,sel,'season_length','season_length','days',1.,'',dbName,saveFig=False,seasons=-1,type='mollview', fieldzoom=fields_DD[idb])
-        """
-
-        #sn_plot.plotMollview(nside,sel,'zlim','zlim - faint SN','',0.,'',dbName,saveFig=False,seasons=-1,type='mollview')
-        # plt.show()
-
-        metricTot = append(metricTot, tab)
-
-
+"""
 def summary(forPlot, fname):
 
     metricTot = None
     for dbName in forPlot['dbName']:
-        #dbName = val['dbName']
+        # dbName = val['dbName']
         search_path = '{}/{}/{}/*NSNMetric_{}*_nside_{}_*.hdf5'.format(
             dirFile, dbName, metricName, fieldType, nside)
         print('looking for', search_path)
@@ -223,7 +235,7 @@ def summary(forPlot, fname):
 
     print('resultat', metricTot)
     return metricTot
-    #np.save(fname, np.copy(metricTot))
+    # np.save(fname, np.copy(metricTot))
 
 
 def match_colors(data):
@@ -251,7 +263,7 @@ def match_colors(data):
                 nsn_med[corr[(x1, color)]] = selb['nsn_med'][0]
                 nsn[corr[(x1, color)]] = selb['nsn'][0]
             else:
-                #zlim[corr[(x1,color)]] = -1.
+                # zlim[corr[(x1,color)]] = -1.
 
                 good_event = False
         if good_event:
@@ -283,7 +295,7 @@ def getFields(elaisRa=0.0):
     r.append(('CDFS'.ljust(7), 3, 1427, 53.00, -27.44))
     r.append(('ELAIS'.ljust(7), 4, 744, elaisRa, -45.52))
     r.append(('SPT'.ljust(7), 5, 290, 349.39, -63.32))
-    #r.append(('Fake'.ljust(7), 6, 111, 0.0, 0.0))
+    # r.append(('Fake'.ljust(7), 6, 111, 0.0, 0.0))
     r.append(('ADFS'.ljust(7), 6, 290, 61.00, -48.0))
     fields_DD = np.rec.fromrecords(
         r, names=['fieldname', 'fieldnum', 'fieldId', 'Ra', 'Dec'])
@@ -327,7 +339,7 @@ def getVals(fields_DD, tab, cadence, nside=64, plotting=False):
 
     # print(dataTot)
     return dataTot
-
+"""
 
 parser = OptionParser(
     description='Display Cadence metric results for DD fields')
@@ -340,10 +352,8 @@ parser.add_option("--fieldType", type="str", default='DD',
                   help="field type - DD, WFD, Fake [%default]")
 parser.add_option("--simuVersion", type="str", default='fbs14',
                   help="simulation version[%default]")
-parser.add_option("--x1", type="float", default=-2.0,
-                  help="SN x1 for display[%default]")
-parser.add_option("--color", type="float", default=0.2,
-                  help="SN color for display[%default]")
+parser.add_option("--snType", type="str", default='faint',
+                  help="SN type: faint or medium[%default]")
 
 opts, args = parser.parse_args()
 
@@ -352,18 +362,21 @@ dirFile = opts.dirFile
 nside = opts.nside
 fieldType = opts.fieldType
 metricName = 'NSN'
+simuVersion = opts.simuVersion
+snType = opts.snType
 
 # Loading input file with the list of cadences to take into account and siaplay features
 filename = 'plot_scripts/cadenceCustomize_{}.csv'.format(opts.simuVersion)
 
-#forPlot = pd.read_csv(filename).to_records()
+# forPlot = pd.read_csv(filename).to_records()
 forPlot = pd.read_csv(filename)
 
 print(forPlot)
 
 
 # get DD fields
-#fields_DD = getFields(5.)
+# fields_DD = getFields(5.)
+"""
 fields_DD = DDFields()
 
 lengths = [len(val) for val in forPlot['dbName']]
@@ -372,47 +385,17 @@ adjl = np.max(lengths)
 
 metricTot = None
 metricTot_med = None
-
+"""
 # get pixelArea
 pixArea = hp.nside2pixarea(nside, degrees=True)
 
-# get x1 and color for SN
-x1 = opts.x1
-color = opts.color
-
 # Summary: to reproduce the plots faster
 
-fname = 'Summary_DD_{}.npy'.format(opts.simuVersion)
-# if not os.path.isfile(fname):
-#resa = summary(forPlot, fname)
-
-mysum = Summary(dirFile, 'NSN',
-                'DD', nside, forPlot).data
-"""
-print(mysum.columns)
-what = ['healpixID', 'nsn_zfaint', 'zlim_faint',
-        'season', 'fieldname', 'cadence']
-what = ['pixRa', 'pixDec', 'healpixID', 'season', 'zlim_faint',
-        'nsn_zfaint', 'nsn_med_zfaint', 'zlim_medium', 'nsn_zmedium',
-        'nsn_med_zmedium', 'cadence', 'fieldname', ]
-
-for healpixID in np.unique(resa['healpixID']):
-    idx = resa['healpixID'] == healpixID
-    print(resa[idx][what])
-    idb = mysum['healpixID'] == healpixID
-    print(mysum[idb][what])
-    break
-
-
-print(test)
-"""
-metricTot = mysum.to_records(index=False)
+metricTot = Summary(dirFile, 'NSN',
+                    'DD', nside, forPlot, simuVersion).data
 
 print('oo', metricTot.dtype, type(metricTot))
-# print(test)
-fieldnames = np.unique(metricTot['fieldname'])
-#nsn_plot.plot_DDSummary(metricTot, dict(zip(dbNames,mmarkers)),dict(zip(fieldnames,colors)),colors_cad)
-nsn_plot.plot_DDSummary(metricTot, forPlot)
+nsn_plot.plot_DDSummary(metricTot, forPlot, sntype=snType)
 plt.show()
 
 fontsize = 15
@@ -421,19 +404,21 @@ fields_DD = getFields()
 
 # grab median values
 """
-df = pd.DataFrame(np.copy(metricTot)).groupby(['healpixID','fieldnum','filter','cadence']).median().reset_index()
+df = pd.DataFrame(np.copy(metricTot)).groupby(
+    ['healpixID','fieldnum','filter','cadence']).median().reset_index()
 
-#print(df)
+# print(df)
 metricTot = df.to_records(index=False)
 idx = metricTot['filter']=='all'
 sel = metricTot[idx]
 """
 
 figleg = 'nside = {}'.format(nside)
-# sn_plot.plotDDLoop(nside,dbNames,metricTot,'zlim_faint','$z_{lim}^{faint}$',markers,colors,mfc,adjl,fields_DD,figleg)
-#sn_plot.plotDDLoop(nside,dbNames,sel,'cadence_mean','cadence [days]',markers,colors,mfc,adjl,fields_DD,figleg)
+# sn_plot.plotDDLoop(nside, dbNames, metricTot, 'zlim_faint',
+                   '$z_{lim}^{faint}$', markers, colors, mfc, adjl, fields_DD, figleg)
+# sn_plot.plotDDLoop(nside,dbNames,sel,'cadence_mean','cadence [days]',markers,colors,mfc,adjl,fields_DD,figleg)
 
-#fig,ax = plt.subplots()
+# fig,ax = plt.subplots()
 
 
 # print(metricTot.dtype,type(metricTot))
@@ -451,9 +436,9 @@ figleg = 'nside = {}'.format(nside)
 # sn_plot.plotDDFit(metricTot,'nsn_med_zmedium','nsn_med_zfaint','zlim_medium','zlim_faint')
 
 
-df = pd.DataFrame(metricTot)
+df=pd.DataFrame(metricTot)
 
-sums = df.groupby(['fieldnum', 'fieldname', 'cadence', 'nside', 'season'])[
+sums=df.groupby(['fieldnum', 'fieldname', 'cadence', 'nside', 'season'])[
     'pixArea'].sum().reset_index()
 
 idx = sums['pixArea'] > 1.
