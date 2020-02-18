@@ -5,138 +5,24 @@ from sn_tools.sn_io import Read_Sqlite
 from sn_tools.sn_cadence_tools import AnaOS
 import os
 import matplotlib.pyplot as plt
-import multiprocessing
 import pandas as pd
+from sn_tools.sn_utils import MultiProc
 
 
-class Process:
-    def __init__(self, dbDir, dbExtens, outName, toprocess, nproc=8):
-        """
-        Class to process cadence files
-        Results are stored in outName as a numpy array
+def func(proc, params):
+    
+    n_cluster = 5
+    print('hello man',proc.dtype)
+    dbName = proc['dbName'].decode()
+    if 'euclid' in dbName:
+        n_cluster = 6
 
-        Parameters
-        ---------------
-        dbDir: str
-         directory where the files are located
-        dbExtens:
-         extension (db or npy) of the files
-        outName: str
-         name of the output file where the results of the processing are stored
-        toprocess: pandas DataFrame
-         df with (at least) a column dbName: list of cadences to process
-        nproc: int, opt
-         number of proc to use for the processing
+    dbDir = params['dbDir']
+    dbExtens = params['dbExtens']
+    ljustdb = params['ljustdb']
+    ana = AnaOS(dbDir, dbName, dbExtens, n_cluster, ljustdb).stat
 
-        """
-
-        # Process using multiprocessing
-        res = self.multi(dbDir, dbExtens, toprocess, nproc)
-
-        # save the results
-        np.save(outName, res)
-
-    def multi(self, dbDir, dbExtens, toprocess, nproc):
-        """
-        Method to perform multiprocessing
-
-        Parameters
-        ---------------
-        dbDir: str
-         directory where the files are located
-        dbExtens:
-         extension (db or npy) of the files
-        toprocess: pandas DataFrame
-         df with (at least) a column dbName: list of cadences to process
-        nproc: int, opt
-         number of proc to use for the processing
-
-        Returns
-        -----------
-        numpy array with processed data
-
-        """
-
-        lengths = [len(val) for val in toprocess['dbName']]
-        ljustdb = np.max(lengths)
-
-        # multiprocessing parameters
-        nz = len(toprocess)
-        tabmulti = np.linspace(0, nz-1, nproc+1, dtype='int')
-        result_queue = multiprocessing.Queue()
-
-        # loop on processings
-        for j in range(len(tabmulti)-1):
-            ida = tabmulti[j]
-            idb = tabmulti[j+1]
-
-            p = multiprocessing.Process(name='Subprocess-'+str(j), target=self.anaOS_multi,
-                                        args=(toprocess[ida:idb], dbDir, dbExtens, ljustdb, j, result_queue))
-            p.start()
-
-        resultdict = {}
-        # get the results in a dict
-
-        for i in range(len(tabmulti)-1):
-            resultdict.update(result_queue.get())
-
-        for p in multiprocessing.active_children():
-            p.join()
-
-        restot = None
-
-        # gather the results
-        for key, vals in resultdict.items():
-            if restot is None:
-                restot = vals
-            else:
-                restot = np.concatenate((restot, vals))
-                # res=pd.concat([res,vals],sort_index=False)
-                # restot = None
-
-        return restot
-
-    def anaOS_multi(self, toprocess, dbDir, dbExtens, ljustdb, j=0, output_q=None):
-        """
-        Method to process the data
-
-        Parameters
-        ---------------
-        toprocess: pandas DataFrame
-         df with (at least) a column dbName: list of cadences to process
-        dbDir: str
-         directory where the files are located
-        dbExtens:
-         extension (db or npy) of the files
-        ljustdb: int
-         internal parameter for AnaOS
-
-
-
-        Returns
-        -----------
-        numpy array with processed data
-
-
-        """
-
-        restot = None
-        for io, proc in enumerate(toprocess):
-            n_cluster = 5
-            dbName = proc['dbName'].decode()
-            if 'euclid' in dbName:
-                n_cluster = 6
-            ana = AnaOS(dbDir, dbName, dbExtens, n_cluster, ljustdb).stat
-            if ana is not None:
-                if restot is None:
-                    restot = ana
-                else:
-                    restot = np.concatenate((restot, ana))
-
-        if output_q is not None:
-            return output_q.put({j: restot})
-        else:
-            return restot
+    return ana
 
 
 def mystr(thestr):
@@ -369,7 +255,19 @@ outName = 'Nvisits.npy'
 if not os.path.isfile(outName):
     toprocess = np.genfromtxt(dbList, dtype=None, names=[
         'dbName', 'simuType', 'nside', 'coadd', 'fieldType', 'nproc'])
-    Process(dbDir, dbExtens, outName, toprocess, nproc=8)
+
+    lengths = [len(val) for val in toprocess['dbName']]
+    ljustdb = np.max(lengths)
+    params = {} 
+    params['dbDir'] =dbDir
+    params['dbExtens'] =dbExtens
+    params['ljustdb'] =ljustdb
+
+    #Process(dbDir, dbExtens, outName, toprocess, nproc=8)
+    print('hhh',toprocess)
+
+    data = MultiProc(toprocess,'dbName',params,func,nproc=8).data
+    np.save(outName,data)
 
 
 tab = pd.DataFrame(np.load(outName))
