@@ -415,7 +415,7 @@ sel = metricTot[idx]
 
 figleg = 'nside = {}'.format(nside)
 # sn_plot.plotDDLoop(nside, dbNames, metricTot, 'zlim_faint',
-                   '$z_{lim}^{faint}$', markers, colors, mfc, adjl, fields_DD, figleg)
+#                   '$z_{lim}^{faint}$', markers, colors, mfc, adjl, fields_DD, figleg)
 # sn_plot.plotDDLoop(nside,dbNames,sel,'cadence_mean','cadence [days]',markers,colors,mfc,adjl,fields_DD,figleg)
 
 # fig,ax = plt.subplots()
@@ -436,9 +436,9 @@ figleg = 'nside = {}'.format(nside)
 # sn_plot.plotDDFit(metricTot,'nsn_med_zmedium','nsn_med_zfaint','zlim_medium','zlim_faint')
 
 
-df=pd.DataFrame(metricTot)
+df = pd.DataFrame(metricTot)
 
-sums=df.groupby(['fieldnum', 'fieldname', 'cadence', 'nside', 'season'])[
+sums = df.groupby(['fieldnum', 'fieldname', 'cadence', 'nside', 'season'])[
     'pixArea'].sum().reset_index()
 
 idx = sums['pixArea'] > 1.
