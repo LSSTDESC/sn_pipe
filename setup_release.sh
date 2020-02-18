@@ -1,40 +1,54 @@
 #!/bin/bash
 
-location=$1
-script_loc=$2
-release='sims_w_2020_04'
-declare -A arr
-#arr['NERSC']='/global/common/software/lsst/cori-haswell-gcc/stack/setup_w_2018_13-sims_2_7_0.sh'
-arr['NERSC']='/global/common/software/lsst/cori-haswell-gcc/stack/setup_w_2018_19-sims_2_8_0.sh'
-arr['CCIN2P3']='/cvmfs/sw.lsst.eu/linux-x86_64/lsst_sims/'${release}'/loadLSST.bash'
-arr['mylaptop']='/cvmfs/sw.lsst.eu/linux-x86_64/lsst_sims/'${release}'/loadLSST.bash'
+OS=$1
 
-if [ ! -z ${script_loc} ]
+if [ $OS != 'Linux' ] && [ $OS != 'Mac' ]
 then
-    arr[$1]=$2
-fi
-#echo ${arr[@]}
-
-if [ -z ${location} ]
-then
-    echo 'This script requires at least one  parameter' ${location}
-    echo 'Possible values are: ' ${!arr[@]}
-    echo 'Please rerun this script with one of these values or use:'
-    echo 'python SN_MAF/setups/setup_metric.sh MYENV full_path_to_release_stack'
-    echo 'where the stack release should include the lsst_sim package'
-    return
+    echo 'Unknown Operating System'
+    echo 'Possibilities are Linux or Mac'
+    echo 'Can not go further'
+    set -e
 fi
 
 
-if [[ ! ${arr[$location]} ]]
+dir_rel=''
+if [ $OS == 'Linux' ] 
 then
-    echo 'Problem here. We do not know where you would like to run'
-    echo 'and which setup (stack) script you would like to use' 
-    echo 'Try the following command'
-    echo 'python sn_maf/setups/setup_metric.sh MYENV full_path_to_release_stack'
-    echo 'where the stack release should include the lsst_sim package'
-else
-    thescript=${arr[$location]}
-    source ${thescript}
-    setup lsst_sims
+    dir_rel='/cvmfs/sw.lsst.eu/linux-x86_64'
 fi
+
+if [ $OS == 'Mac' ] 
+then
+    dir_rel='/cvmfs/sw.lsst.eu/darwin-x86_64'
+fi
+
+#get the shell
+myshell=$(echo $SHELL | rev | cut -d "/" -f1  | rev)
+
+echo 'the shell is' $myshell
+
+# get distribs
+array=($(ls -dtr $dir_rel/lsst_sims/*))
+
+# print possible distribs
+
+len=${#array[*]}
+
+i=0
+while [ $i -lt $len ]; do
+echo "$i: ${array[$i]}"
+let i++
+done
+
+# choose the latest-1 release installed
+
+release=${array[$len-2]}
+
+#Fill a file with the release chosen
+
+echo "release: ${release}" >& current_release.yaml
+
+# make the setups
+echo 'Setting-up' ${release}
+source ${release}/loadLSST.$myshell
+setup lsst_sims
