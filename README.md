@@ -43,10 +43,11 @@ All rights reserved.
  - ls /cvmfs/sw.lsst.eu/linux-x86_64/lsst_sims/ -> provides a list of lsst_sim releases available.
  - The "setup" is done this way:
  ```
-   - source /cvmfs/sw.lsst.eu/linux-x86_64/lsst_sims/sims_w_2019_20/loadLSST.bash
-   - setup lsst_sims
+   - on Linux: source setup_release.sh Linux
+   - on Mac: source setup_release.sh Mac
 ```
-
+- The release (automatically) chosen may be found in the current_release.yaml file.
+ 
 **Important : you have to make this setup prior to any operation described below**
 
 ###  Installation
@@ -57,8 +58,8 @@ The Survey Strategy Support pipeline is supposed to be modular, in the sense tha
 
 | Task | package | command for installation|
 |----|----|----|
-| SN metrics | sn_metrics | pip install . --user --install-option="--package=metrics" --install-option="--branch=thebranch"|
-| LC simulations | sn_simulation|pip install . --user --install-option="--package=simulation" --install-option="--branch=thebranch"|
+| SN metrics | sn_metrics | python install_sn_pack.py --package=metrics --gitbranch=thebranch|
+| LC simulations | sn_simulation|python install_sn_pack.py --package=simulation --gitbranch=thebranch|
 
 ## **Running the metrics**
 
