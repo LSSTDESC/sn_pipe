@@ -6,11 +6,10 @@ import matplotlib.pylab as plt
 import argparse
 from optparse import OptionParser
 import glob
-from sn_tools.sn_obs import dataInside
 import healpy as hp
 import numpy.lib.recfunctions as rf
 import pandas as pd
-from sn_tools.sn_cadence_tools import DDFields
+from sn_tools.sn_cadence_tools import DDFields,Match_DD
 import os
 import csv
 import pandas as pd
@@ -44,6 +43,7 @@ class Summary:
         """
 
         fname = 'Summary_{}_{}.npy'.format(fieldType, simuVersion)
+        fields_DD = DDFields()
         if not os.path.isfile(fname):
 
             x1_colors = [(-2.0, 0.2), (0.0, 0.0)]
@@ -51,44 +51,12 @@ class Summary:
             df = self.process_loop(dirFile, metricName, fieldType,
                                    nside, forPlot)
 
-            self.data = self.identify_DD(df).to_records()
+            self.data = Match_DD(fields_DD,df).to_records()
 
             np.save(fname, self.data)
 
         else:
             self.data = np.load(fname)
-
-    def identify_DD(self, df):
-        """
-        Method to match df data to DD fields
-
-        Parameters
-        ---------------
-        df: pandas df
-          data (results from a metric) to match to DD fields
-
-        Returns
-        ----------
-        pandas df with matched DD information added.
-
-        """""
-
-        fields_DD = DDFields()
-        dfb = pd.DataFrame()
-        for field in fields_DD:
-            dataSel = dataInside(
-                df.to_records(index=False), field['RA'], field['Dec'], 10., 10., 'pixRa', 'pixDec')
-            if dataSel is not None:
-                print('hello', field, len(dataSel))
-                dfSel = pd.DataFrame(np.copy(dataSel))
-                dfSel['fieldname'] = field['name']
-                dfSel['fieldId'] = field['fieldId']
-                dfSel['RA'] = field['RA']
-                dfSel['Dec'] = field['Dec']
-                dfSel['fieldnum'] = field['fieldnum']
-                dfb = pd.concat([dfb, dfSel], sort=False)
-
-        return dfb
 
     def process_loop(self, dirFile, metricName, fieldType, nside, forPlot):
         """
@@ -399,7 +367,7 @@ nsn_plot.plot_DDSummary(metricTot, forPlot, sntype=snType)
 plt.show()
 
 fontsize = 15
-fields_DD = getFields()
+fields_DD = DDFields()
 # print(metricTot[['cadence','filter']])
 
 # grab median values
