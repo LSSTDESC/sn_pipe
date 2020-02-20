@@ -12,7 +12,7 @@ There are currently four metrics implemented. They can all be processed using th
 
 | Metric| Documentation|
 |----|----|
-| Cadence | [How run the Cadence metric](docs/Metrics/Cadence.md) |
+| Cadence | [How run the Cadence metric](Cadence.md) |
 
 ## Analyze the metrics
 
