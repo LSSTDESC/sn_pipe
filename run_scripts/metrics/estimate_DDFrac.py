@@ -2,7 +2,7 @@ from sn_tools.sn_obs import renameFields, getFields
 from optparse import OptionParser
 import numpy as np
 from sn_tools.sn_io import Read_Sqlite
-from sn_tools.sn_cadence_tools import AnaOS
+from sn_tools.sn_cadence_tools import AnaOS, DDFields
 import os
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -12,23 +12,17 @@ from sn_tools.sn_utils import MultiProc
 def func(proc, params):
     
     n_cluster = 5
-    print('hello man',proc.dtype)
     dbName = proc['dbName'].decode()
     if 'euclid' in dbName:
         n_cluster = 6
 
     dbDir = params['dbDir']
     dbExtens = params['dbExtens']
-    ljustdb = params['ljustdb']
-    ana = AnaOS(dbDir, dbName, dbExtens, n_cluster, ljustdb).stat
+    fields = DDFields()
+
+    ana = AnaOS(dbDir, dbName, dbExtens, n_cluster,fields).stat
 
     return ana
-
-
-def mystr(thestr):
-
-    return thestr.ljust(9)
-
 
 def Nvisits_night_test(df, cadence=3.,
                        season_length=6,
@@ -58,177 +52,77 @@ def Nvisits_night_test(df, cadence=3.,
 
     """
 
-    print(df)
-    df['Field'] = df['Field'].str.strip()
-    df['cadence'] = df['cadence'].str.strip()
+   
+    df['Nvisits_DD'] = frac_DD*(df['DD']+df['WFD'])
+    df['Nvisits_DD'] /= season_length*nseasons*nfields*30./cadence
 
-    rs = df.groupby(['cadence']).apply(lambda x: pd.DataFrame({'Nvisits_DD': frac_DD*(x[x['Field'] == 'DD']
-                                                                                       ['Nvisits'].values+x[x['Field'] == 'WFD']['Nvisits'].values)})).reset_index()
-
-    rs['Nvisits_DD'] /= season_length*nseasons*nfields*30./cadence
-
-    print(rs[['cadence', 'Nvisits_DD']])
+    print(df[['cadence', 'Nvisits_DD']])
 
 
-class PlotStat:
-    def __init__(self, df):
-        """
-        Class to display some results related to DDFs
+def plots(df, fields=['COSMOS']):
+    """
+    Function performing a set of plots
+    
+    Parameters
+    ----------------
+    df: pandas df
+     df with variables to plot
+    fields: list(str)
+     fields to display
 
-        Parameters
-        ----------------
-        df: pandas DataFrame
-         df with the following cols:
-         cadence: cadence name 
-         Field: field name 
-         Nvisits: number of visits
+    """
 
-        """
+    # sort the df by DD fraction
+    df = df.sort_values(by=['frac_DD'])
+    
+    # plot DD fraction
+    plotDD(df, 'frac_DD', 'DD frac')
+    
+    # loop on fields to plot filter allocation
+    
+    for field in fields:
+        for band in 'ugrizy':
+            cola = '{}'.format(field)
+            colb = '{}_{}'.format(field, band)
+            dfb = df[['cadence', cola, colb]]
+            bandfrac = '{}_frac_{}'.format(field, band)
+            dfb.loc[:, bandfrac] = dfb[colb]/dfb[cola]
+            plotDD(dfb, bandfrac,
+                        '{} - {} band frac'.format(field, band))
+        for val in ['area','width_RA','width_Dec']:
+            plotDD(df,'{}_{}'.format(field, val),
+                        '{} - {}'.format(field, val))
 
-        # DD fields names
+def plotDD(df, what, leg):
+    """
 
-        self.fields = ['COSMOS', 'ELAIS', 'XMM-LSS',
-                       'CDFS', 'SPT', 'ADFS1', 'ADFS2']
+    Method to plot(barh)  some variables: cadence vs what
+    
+    Parameters
+    ----------------
+    df: pandas df
+     df with data to plot
+    what: str
+     x-axis variable to plot
+    leg: str
+     x-axis legend
 
-        # estimate some stat from initial df
-        rbtot = self.calc(df)
+    """
 
-        # plots
-        self.plots(rbtot)
+    fig, ax = plt.subplots()
+    fontsize = 12
 
-    def calc(self, df):
-        """
-        Method to estimate, for each cadence:
-         - DD fraction
-         - number of visits per field (in total and per band)
-
-        Parameters
-        ----------------
-        df: pandas DataFrame
-         df with the following cols:
-         cadence: cadence name 
-         Field: field name 
-         Nvisits: number of visits
-
-        Returns
-        ------------
-        pandas df with the following cols:
-         cadence: cadence name
-         frac_DD: DD fraction
-         for field in self.fields:
-          field: number of visits
-          for band in 'ugrizy':
-           field_band: number of visits
-
-        """
-
-        df['Field'] = df['Field'].str.strip()
-        df['cadence'] = df['cadence'].str.strip()
-
-        rbtot = df.groupby(['cadence']).apply(lambda x: pd.DataFrame({'frac_DD': x[x['Field'] == 'DD']
-                                                                      ['Nvisits'].values/(x[x['Field'] == 'DD']
-                                                                                          ['Nvisits'].values+x[x['Field'] == 'WFD']['Nvisits'].values)})).reset_index()
-
-        # rbtot = pd.DataFrame()
-        for field in self.fields:
-            for b in ['', '_u', '_g', '_r', '_i', '_z', '_y']:
-                rb = df.groupby(['cadence']).apply(
-                    lambda x: self.Nvisits(x, '{}{}'.format(field, b))).reset_index()
-
-                if rbtot.empty:
-                    rbtot = rb.copy()
-                else:
-                    rbtot = rbtot.merge(
-                        rb, left_on=['cadence', 'level_1'], right_on=['cadence', 'level_1'])
-
-        return rbtot
-
-    def Nvisits(self, grp, field):
-        """
-        Method to estimate the number of visits of a group
-
-        Parameters
-        ----------------
-        grp: pandas df group
-         data to process
-        field: str
-         name of the field to consider
-
-        Returns
-        -----------
-        pandas df with one row: number of visits (colname=field)
-
-        """
-
-        idx = grp['Field'] == field
-
-        val = 0
-        if len(grp[idx]) > 0:
-            val = grp[idx]['Nvisits'].values
-
-        df = pd.DataFrame(columns=[field])
-        df.loc[0] = val
-
-        return df
-
-    def plots(self, df):
-        """
-        Method performing a set of plots
-
-        Parameters
-        ----------------
-        df: pandas df
-          df with variables to plot
-
-        """
-
-        # sort the df by DD fraction
-        df = df.sort_values(by=['frac_DD'])
-
-        # plot DD fraction
-        self.plotDD(df, 'frac_DD', 'DD frac')
-
-        # loop on fields to plot filter allocation
-
-        for field in ['COSMOS']:
-            for band in 'ugrizy':
-                cola = '{}'.format(field)
-                colb = '{}_{}'.format(field, band)
-                dfb = df[['cadence', cola, colb]]
-                bandfrac = '{}_frac_{}'.format(field, band)
-                dfb.loc[:, bandfrac] = dfb[colb]/dfb[cola]
-                self.plotDD(dfb, bandfrac,
-                            '{} - {} band frac'.format(field, band))
-
-    def plotDD(self, df, what, leg):
-        """
-
-        Method to plot(barh)  some variables: cadence vs what
-
-        Parameters
-        ----------------
-        df: pandas df
-         df with data to plot
-        what: str
-         x-axis variable to plot
-        leg: str
-         x-axis legend
-
-        """
-
-        fig, ax = plt.subplots()
-        fontsize = 12
-        ax.barh(df['cadence'], df[what])
-
-        xmin, xmax = ax.get_xlim()
-        ax.set_xlim([0.0, xmax])
-        ax.set_xlabel(leg, fontsize=fontsize)
-        # ax.yaxis.label.set_size(3.)
-        ax.tick_params(axis='x', labelsize=fontsize)
-        ax.tick_params(axis='y', labelsize=fontsize-5.)
-        plt.grid(axis='x')
-        plt.tight_layout()
-
+    df = df.sort_values(by=what)
+    ax.barh(df['cadence'], df[what])
+    
+    xmin, xmax = ax.get_xlim()
+    ax.set_xlim([0.0, xmax])
+    ax.set_xlabel(leg, fontsize=fontsize)
+    # ax.yaxis.label.set_size(3.)
+    ax.tick_params(axis='x', labelsize=fontsize)
+    ax.tick_params(axis='y', labelsize=fontsize-5.)
+    plt.grid(axis='x')
+    plt.tight_layout()
 
 parser = OptionParser()
 parser.add_option("--dbList", type="str", default='List.txt',
@@ -249,36 +143,27 @@ if dbDir == '':
 dbList = opts.dbList
 dbExtens = opts.dbExtens
 
-
 outName = 'Nvisits.npy'
 
 if not os.path.isfile(outName):
     toprocess = np.genfromtxt(dbList, dtype=None, names=[
         'dbName', 'simuType', 'nside', 'coadd', 'fieldType', 'nproc'])
-
-    lengths = [len(val) for val in toprocess['dbName']]
-    ljustdb = np.max(lengths)
     params = {} 
     params['dbDir'] =dbDir
     params['dbExtens'] =dbExtens
-    params['ljustdb'] =ljustdb
 
-    #Process(dbDir, dbExtens, outName, toprocess, nproc=8)
-    print('hhh',toprocess)
-
-    data = MultiProc(toprocess,'dbName',params,func,nproc=8).data
-    np.save(outName,data)
+    data = MultiProc(toprocess,params,func,nproc=8).data
+    np.save(outName,data.to_records(index=False))
 
 
 tab = pd.DataFrame(np.load(outName))
 
 # this is a check: number of visits per obs night with
 # cadence, season_length, nseasons and nfields chosen
-# Nvisits_night_test(tab)
-
-# Estimate DD fraction for cadences considered in dbList
+#Nvisits_night_test(tab)
 
 
-PlotStat(tab)
+# Plots
+plots(tab)
 
 plt.show()
