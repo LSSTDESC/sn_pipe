@@ -6,15 +6,15 @@
 python install_sn_pack.py --package=metrics --gitbranch=thebranch
 ```
 
-## Run the metrics
+## Run and analyze the metrics
 
-There are currently four metrics implemented. They can all be processed using the script run_scripts/metrics/run_metrics_fromnpy.py. Arguments used with this script will depend on the metric to run:
+| Metric| Process| Analyze | Output plots|
+|----|----|----|----|
+| [Cadence](Cadence.md) | [Cadence metric run](Cadence_run.md) | [Cadence metric analysis](Cadence_plot.md)| cadence vs m5; redshift limit|
+| [SNR](SNR.md) | [SNR metric run](SNR_run.md) | [SNR metric analysis](SNR_plot.md)| SN rate with SNR>SNR_min|
+| [ObsRate](ObsRate.md)| [ObsRate metric run ](ObsRate_run.md) | [ObsRate metric analysis](ObsRate_plot.md)| SN observing rate|
+| [NSN](NSN.md)| [NSN metric run](NSN_run.md) | [NSN metric analysis](NSN_plot.md)| NSN vs redshift limit|
 
-| Metric| Documentation|
-|----|----|
-| Cadence | [How run the Cadence metric](Cadence.md) |
-
-## Analyze the metrics
 
 
 If you have comments, suggestions or questions, please [write us an issue](https://github.com/LSSTDESC/sn_pipe/issues).
