@@ -239,7 +239,7 @@ metricList = []
 
 available_metrics = ['NSN', 'Cadence', 'SL', 'ObsRate', 'SNR']
 if opts.metric not in available_metrics:
-    print('Sorry to inform you that', metric, 'is not a metric available')
+    print('Sorry to inform you that', opts.metric, 'is not a metric available')
     print('list of possible metrics:')
     print(available_metrics)
     sys.exit(0)
