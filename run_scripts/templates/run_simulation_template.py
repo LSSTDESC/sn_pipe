@@ -7,7 +7,7 @@ import glob
 import multiprocessing
 import time
 
-def Replace_input(input_file, x1, color, z, prodid, fakename,output_file):
+def Replace_input(input_file, x1, color, z, prodid, fakename,outDir,output_file):
     with open(input_file, 'r') as file:
         filedata = file.read()
     filedata = filedata.replace('zval', str(z))
@@ -15,6 +15,7 @@ def Replace_input(input_file, x1, color, z, prodid, fakename,output_file):
     filedata = filedata.replace('fakename', fakename)
     filedata = filedata.replace('x1val', str(x1))
     filedata = filedata.replace('colorval', str(color))
+    filedata = filedata.replace('outdirname', outDir)
 
     with open(output_file, 'w') as file:
         file.write(filedata)
@@ -74,6 +75,10 @@ def Process_LC(fname, lc_out, ilc, x1, color):
 
 
 def Run(input_orig, cad_orig, zval,x1, color,outdir,ilc):
+
+    if not os.path.isdir('input_prod'):
+        os.makedirs('input_prod')
+    
     mjd_min = -21.*(1.+zval)
     mjd_max = 63.*(1.+zval)
     duration = (mjd_max-mjd_min)
@@ -83,7 +88,7 @@ def Run(input_orig, cad_orig, zval,x1, color,outdir,ilc):
     prodid = 'Fake_{}_{}_{}'.format(zval,x1,color)
     fake_name = 'input_prod/Fake_cadence_{}_{}_{}.yaml'.format(x1,color,zval)
     input_fakes = 'input_prod/input_fakes_{}_{}_{}.yaml'.format(x1,color,zval)
-    Replace_input(input_orig, x1, color, zval, prodid, fake_name,input_fakes)
+    Replace_input(input_orig, x1, color, zval, prodid, fake_name,outdir,input_fakes)
     Replace_fake(cad_orig, duration, mjd_min, cad, fake_name)
 
     cmd = 'python run_scripts/simulation/run_simulation.py '+input_fakes
@@ -171,6 +176,8 @@ parser.add_option("--simul", type="int", default=1, help="perform simulation [%d
 parser.add_option("--lcdiff", type="int", default=0, help="produce LC with flux derivatives[%default]")
 parser.add_option("--zmin", type="float", default=0.01, help="zmin [%default]")
 parser.add_option("--zmax", type="float", default=1.0, help="zmax [%default]")
+parser.add_option("--outDir", type="str", default='Templates_new', help="output directory for [%default]")
+parser.add_option("--outDirFinal", type="str", default='Templates_final_new', help="output directory for [%default]")
 opts, args = parser.parse_args()
 
 #Example on how to use this code:
@@ -181,13 +188,14 @@ opts, args = parser.parse_args()
 
 input_orig = 'input/templates/param_fakesimulation_template.yaml'
 cad_orig = 'input/templates/Fake_cadence_template.yaml'
-outDir = '/sps/lsst/data/dev/pgris/Templates_new'
-outDirFinal = '/sps/lsst/data/dev/pgris/Templates_final_new'
+outDir = opts.outDir
+outDirFinal = opts.outDirFinal
+
 if not os.path.isdir(outDir):
     os.makedirs(outDir)
+
 if not os.path.isdir(outDirFinal):
     os.makedirs(outDirFinal)
-
 
 x1 = opts.x1
 color = opts.color
@@ -196,8 +204,6 @@ simul = opts.simul
 lcdiff = opts.lcdiff
 zmin = opts.zmin
 zmax = opts.zmax
-
-
 
 if simul:
     simuLC(x1,color,nproc,input_orig,cad_orig,outDir,zmin,zmax)

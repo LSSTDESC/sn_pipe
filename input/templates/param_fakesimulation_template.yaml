@@ -53,7 +53,7 @@ Display_LC : #display during LC simulations
    display: False
    time: 10 #display during time (sec) before closing
 Output:
-    directory: /sps/lsst/data/dev/pgris/Templates_new/x1val_colorval
+    directory: outdirname/x1val_colorval
     save: True
 Multiprocessing:
     nproc: 1
