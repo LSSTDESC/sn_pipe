@@ -17,7 +17,7 @@ from sn_tools.sn_obs import pavingSky, getFields
 import glob
 from numpy import genfromtxt
 from sn_tools.sn_io import getObservations
-from sn_tools.sn_cadence_tools import ClusterObs
+from sn_tools.sn_cadence_tools import ClusterObs,DDFields
 import yaml
 import sys
 
@@ -43,7 +43,8 @@ def loop_area(pointings, metricList, observations, nside, outDir, dbName, saveDa
     # myprocess = ProcessArea(nside,'fieldRA', 'fieldDec',j,outDir,dbName,saveData)
     print('hhh', RaCol, DecCol, saveData)
     myprocess = ProcessArea(nside, RaCol, DecCol, j, outDir, dbName, saveData)
-    for pointing in pointings:
+    #for pointing in pointings:
+    for index, pointing in pointings.iterrows():
         ipoint += 1
         # print('pointing',ipoint)
 
@@ -201,6 +202,8 @@ parser.add_option("--seasons", type=str, default='-1',
                   help="seasons to process[%default]")
 parser.add_option("--verbose", type=int, default=0,
                   help="verbose mode for the metric[%default]")
+parser.add_option("--timer", type=int, default=0,
+                  help="timer mode for the metric[%default]")
 parser.add_option("--ploteffi", type=int, default=0,
                   help="plot efficiencies for the metric[%default]")
 parser.add_option("--z", type=float, default=0.3,
@@ -244,7 +247,7 @@ if opts.metric not in available_metrics:
     print(available_metrics)
     sys.exit(0)
 
-season_int = list(opts.seasons.strip())
+season_int = list(opts.seasons.split(','))
 if season_int[0] == '-':
     season_int = -1
 else:
@@ -252,6 +255,7 @@ else:
 
 classname = '{}MetricWrapper'.format(opts.metric)
 
+print('seasons',season_int)
 metricList.append(globals()[classname](name=opts.metric, season=season_int,
                                        coadd=opts.coadd, fieldType=opts.fieldType,
                                        nside=opts.nside,
@@ -289,13 +293,14 @@ if opts.fieldType == 'DD':
     # get clusters out of these obs
     radius = 3.0
 
+    DD = DDFields()
     clusters = ClusterObs(
-        observations, nclusters=nclusters, dbName=opts.dbName).clusters
+        observations, nclusters=nclusters, dbName=opts.dbName,fields=DD).clusters
 
-    clusters = rf.append_fields(clusters, 'radius', [radius]*len(clusters))
-
-    areas = rf.rename_fields(clusters, {'RA': 'Ra'})
-
+    #clusters = rf.append_fields(clusters, 'radius', [radius]*len(clusters))
+    clusters['radius'] = radius
+    #areas = rf.rename_fields(clusters, {'RA': 'Ra'})
+    areas = clusters.rename(columns={'RA': 'Ra'})
 
 else:
     if opts.fieldType == 'WFD':

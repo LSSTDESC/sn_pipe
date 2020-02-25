@@ -200,7 +200,7 @@ class NSNMetricWrapper(MetricWrapper):
                 lc_reference[x1_colors[j]] = resultdict[j]
 
         print('Reference data loaded', lc_reference.keys())
-
+        
         # LC selection criteria
 
         if fieldType == 'DD':
@@ -234,7 +234,8 @@ class NSNMetricWrapper(MetricWrapper):
 
         self.metric = SNNSNMetric(
             lc_reference, season=season, zmax=zmax, pixArea=pixArea,
-            verbose=metadata.verbose, ploteffi=metadata.ploteffi,
+            verbose=metadata.verbose, timer=metadata.timer,
+            ploteffi=metadata.ploteffi,
             N_bef=N_bef, N_aft=N_aft,
             snr_min=snr_min,
             N_phase_min=N_phase_min,
