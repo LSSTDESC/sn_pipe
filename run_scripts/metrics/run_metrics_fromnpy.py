@@ -57,24 +57,8 @@ def loop_area(pointings, metricList, observations, nside, outDir, dbName, saveDa
         resdict = myprocess(observations, metricList, pointing['Ra'], pointing['Dec'],
                             pointing['radius'], pointing['radius'], ipoint, nodither, display=False)
 
-    """
-        for key in resfi.keys():
-            if resdict[key] is not None:
-                if resfi[key] is None:
-                    resfi[key] = resdict[key]
-                else:
-                    # print('vstack',key,resfi[key],resdict[key])
-                    # resfi[key] = np.vstack([resfi[key], resdict[key]])
-                    resfi[key] = np.concatenate((resfi[key], resdict[key]))
-    """
-    print('end of processing for', j, time.time()-time_ref)
 
-    """
-    if output_q is not None:
-        return output_q.put({j: resfi})
-    else:
-        return resfi
-    """
+    print('end of processing for', j, time.time()-time_ref)
 
 
 def loop(healpixels, band, metricList, shape, observations, j=0, output_q=None):
