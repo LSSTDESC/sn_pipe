@@ -90,8 +90,8 @@ def batch_new(dbDir, dbExtens, scriptref, outDir, nproccomp,
     script.write("#!/bin/env bash\n")
     script.write(" cd " + cwd + "\n")
     script.write(" echo 'sourcing setups' \n")
-    script.write(" source setup_release.sh CCIN2P3\n")
-    script.write(" source export.sh CCIN2P3\n")
+    script.write(" source setup_release.sh Linux\n")
+    #script.write(" source export.sh CCIN2P3\n")
     script.write("echo 'sourcing done' \n")
     """
     script.write("export PYTHONPATH=sn_tools:$PYTHONPATH \n")
