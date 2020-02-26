@@ -20,7 +20,7 @@ from sn_tools.sn_io import getObservations
 from sn_tools.sn_cadence_tools import ClusterObs,DDFields
 import yaml
 import sys
-
+import pandas as pd
 
 def loop_area(pointings, metricList, observations, nside, outDir, dbName, saveData, nodither, RaCol, DecCol, j=0, output_q=None):
 
@@ -322,6 +322,8 @@ else:
         Dec = np.unique(observations[DecCol])[0]
         areas = pavingSky(Ra-radius/2., Ra+radius/2., Dec -
                           radius/2., Dec+radius/2., radius)
+
+    areas = pd.DataFrame(areas)
 
 
 print('observations', len(observations), len(areas))
