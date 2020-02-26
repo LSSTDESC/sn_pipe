@@ -58,7 +58,7 @@ def batch(dbDir, dbName, scriptref, nside, simuType, outDir, nprocprog, nproccom
 
 def batch_new(dbDir, dbExtens, scriptref, outDir, nproccomp,
               saveData, metric, toprocess, nodither,
-              RA_min=0.0, RA_max=360.0, Dec_min=-1.0, Dec_max=-1.0):
+              RA_min=0.0, RA_max=360.0, Dec_min=-1.0, Dec_max=-1.0,band=''):
 
     cwd = os.getcwd()
     dirScript = cwd + "/scripts"
@@ -103,7 +103,7 @@ def batch_new(dbDir, dbExtens, scriptref, outDir, nproccomp,
     for proc in toprocess:
         cmd_ = batch_cmd(scriptref, dbDir, dbExtens, outDir,
                          saveData, metric, proc, nodither,
-                         RA_min, RA_max, Dec_min, Dec_max)
+                         RA_min, RA_max, Dec_min, Dec_max,band)
 
         script.write(cmd_+" \n")
     script.write("EOF" + "\n")
@@ -113,7 +113,7 @@ def batch_new(dbDir, dbExtens, scriptref, outDir, nproccomp,
 
 def batch_cmd(scriptref, dbDir, dbExtens, outDir,
               saveData, metric, proc, nodither,
-              RA_min, RA_max, Dec_min, Dec_max):
+              RA_min, RA_max, Dec_min, Dec_max,band):
 
     cmd = 'python {}.py --dbDir {} --dbName {} --dbExtens {}'.format(
         scriptref, dbDir, proc['dbName'].decode(), dbExtens)
@@ -131,6 +131,8 @@ def batch_cmd(scriptref, dbDir, dbExtens, outDir,
     cmd += ' --ramax {}'.format(RA_max)
     cmd += ' --decmin {}'.format(Dec_min)
     cmd += ' --decmax {}'.format(Dec_max)
+    if band != '':
+        cmd += ' --band {}'.format(band)
 
     return cmd
 
@@ -176,6 +178,8 @@ parser.add_option("--nodither", type="str", default='',
                   help="db extension [%default]")
 parser.add_option("--splitSky", type="int", default=0,
                   help="db extension [%default]")
+parser.add_option("--band", type="str", default='',
+                  help="db extension [%default]")
 
 opts, args = parser.parse_args()
 
@@ -184,6 +188,8 @@ print('Start processing...')
 dbList = opts.dbList
 metricName = opts.metricName
 dbDir = opts.dbDir
+band = opts.band
+
 if dbDir == '':
     dbDir = '/sps/lsst/cadence/LSST_SN_CADENCE/cadence_db'
 dbExtens = opts.dbExtens
@@ -211,7 +217,7 @@ for i, val in enumerate(lproc):
         RA_min = RAs[ira]
         RA_max = RAs[ira+1]
         batch_new(dbDir, dbExtens, 'run_scripts/metrics/run_metrics_fromnpy', outDir,
-                  8, 1, metricName, toprocess[val:val+n_per_slice], nodither, RA_min, RA_max)
+                  8, 1, metricName, toprocess[val:val+n_per_slice], nodither, RA_min, RA_max,band=band)
 
 
 if (n_process & 1) & (n_per_slice > 1):
@@ -219,4 +225,4 @@ if (n_process & 1) & (n_per_slice > 1):
         RA_min = Ras[ira]
         RA_max = Ras[ira+1]
         batch_new(dbDir, dbExtens, 'run_scripts/metrics/run_metrics_fromnpy',
-                  outDir, 8, 1, metricName, toprocess[-1], nodither, RA_min, RA_max)
+                  outDir, 8, 1, metricName, toprocess[-1], nodither, RA_min, RA_max,band=band)

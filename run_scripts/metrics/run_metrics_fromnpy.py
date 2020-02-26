@@ -240,7 +240,7 @@ metricList = []
 
 # check whether the metric is available
 
-available_metrics = ['NSN', 'Cadence', 'SL', 'ObsRate', 'SNR']
+available_metrics = ['NSN', 'Cadence', 'SL', 'ObsRate', 'SNRr','SNRz']
 if opts.metric not in available_metrics:
     print('Sorry to inform you that', opts.metric, 'is not a metric available')
     print('list of possible metrics:')
@@ -253,9 +253,14 @@ if season_int[0] == '-':
 else:
     season_int = list(map(int, season_int))
 
-classname = '{}MetricWrapper'.format(opts.metric)
+metricname = opts.metric
+if 'SNR' in opts.metric:
+    metricname='SNR'
 
-print('seasons',season_int)
+classname = '{}MetricWrapper'.format(metricname)
+
+print('seasons and metric',season_int,metricname)
+
 metricList.append(globals()[classname](name=opts.metric, season=season_int,
                                        coadd=opts.coadd, fieldType=opts.fieldType,
                                        nside=opts.nside,
