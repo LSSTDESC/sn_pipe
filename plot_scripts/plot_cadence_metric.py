@@ -52,29 +52,17 @@ for name in namesRef:
     mag_to_flux_files = ['{}/Mag_to_Flux_{}.npy'.format(refDir,name)]
 
 
-search_file = '{}/{}/Cadence/*CadenceMetric_{}_nside_{}*'.format(dirFile,dbName,fieldtype,nside)
+search_file = '{}/{}/Cadence/*CadenceMetric_{}_nside_{}*.hdf5'.format(dirFile,dbName,fieldtype,nside)
 print('searching for',search_file)
 fileNames = glob.glob(search_file)
-#fileName='{}/{}_CadenceMetric_{}.npy'.format(dirFile,dbName,band)
-print(fileNames)
-#metricValues = np.load(fileName)
-#metricValues = loopStack(fileNames).to_records(index=False)
 
 metricValues = loopStack(fileNames,'astropyTable')
-#print('hello',metricValues['filter'].dtype)
-#metricValues['filter'] = metricValues['filter'].astype(h5py.special_dtype(vlen=str))
-#metricValues['filter'] = metricValues['filter'].astype(str)
-#print('hellp',metricValues.dtype)
-
-
-#metricValues = np.array(metricValues)
-#print('hello',metricValues['filter'].dtype)
-idx = metricValues['filter'] == band.encode()
+idx = metricValues['filter'] == band
 
 metricValues = Table(metricValues[idx])
-print('here',metricValues)
 
-#sn_plot.plotMollview(64,metricValues,'cadence_mean','cadence','days',1.,30.,band,dbName,saveFig=True)
+# Mollview plots
+sn_plot.plotMollview(64,metricValues,'cadence_mean','cadence','days',1.,30.,band,dbName,saveFig=True)
 #sn_plot.plotMollview(64,metricValues,'m5_mean','m5','mag',24.,26.,band,dbName,saveFig=True)
 
 sn_plot.plotCadence(band,Li_files,mag_to_flux_files,
@@ -84,7 +72,5 @@ sn_plot.plotCadence(band,Li_files,mag_to_flux_files,
                     mag_range=mag_range, dt_range=dt_range,
                     dbName=dbName,
                     saveFig=False,m5_str='m5_median')
-    
-
 
 plt.show()
