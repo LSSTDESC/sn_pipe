@@ -6,6 +6,7 @@ from mpl_toolkits.axes_grid1.inset_locator import zoomed_inset_axes,mark_inset
 import glob
 from sn_tools.sn_io import loopStack
 import csv
+import pandas as pd
 
 class PlotSummary:
     def __init__(self, x1=-2.0, color=0.2, namesRef=['SNCosmo'],
@@ -38,7 +39,7 @@ class PlotSummary:
 
     def loadFile(self,dirFile, dbName, fieldtype,metricName, nside=64):
     
-        fileName  ='{}/{}/{}_{}*.npy'.format(dirFile,dbName,dbName,metricName)
+        fileName  ='{}/{}/{}/{}_{}*.hdf5'.format(dirFile,dbName,metricName,dbName,metricName)
         """
         if fieldtype != '':
             fileName  ='{}/{}/{}_{}_{}_nside_{}_*.hdf5'.format(dirFile,dbName,dbName,metricName,fieldtype,nside)
@@ -49,11 +50,13 @@ class PlotSummary:
         print('looking for',fileName)
         
         fileNames = glob.glob(fileName)
-        print(fileNames,len(fileNames))
+
+        metricValues = loopStack(fileNames, 'astropyTable')
+        #print(fileNames,len(fileNames))
         """
         metricValues = loopStack(fileNames,'astropyTable')
         """
-        metricValues = np.load(fileNames[0])
+        #metricValues = np.load(fileNames[0])
         """
         if not os.path.isfile(fileName):
             return None
@@ -250,8 +253,8 @@ def plotBand(ax,band,medVals,label='True', shiftx = -0.003, shifty = -0.004,excl
     
     
 
-#dirFile = '/sps/lsst/users/gris/MetricOutput'
-dirFile = '/sps/lsst/users/gris/MetricSummary'
+dirFile = '/sps/lsst/users/gris/MetricOutput'
+#dirFile = '/sps/lsst/users/gris/MetricSummary'
 
 
 plt.rcParams['xtick.labelsize'] = 16
@@ -261,10 +264,17 @@ plt.rcParams['axes.labelsize'] = 18
 plt.rcParams['lines.linewidth'] = 2.5
 plt.rcParams['figure.figsize'] = (10, 7)
 
-forPlot = np.loadtxt('plot_scripts/cadenceCustomizefb13.txt',
-                     dtype={'names': ('dbName', 'newName', 'group','Namepl','color','marker'),'formats': ('U39', 'U39','U12','U18','U7','U1')})
+#forPlot = np.loadtxt('plot_scripts/cadenceCustomizefb13.txt',
+#                     dtype={'names': ('dbName', 'newName', 'group','Namepl','color','marker'),'formats': ('U39', 'U39','U12','U18','U7','U1')})
+
+simuVersion = 'fbs14'
+filename = 'plot_scripts/cadenceCustomize_{}.csv'.format(simuVersion)
+
+# forPlot = pd.read_csv(filename).to_records()
+forPlot = pd.read_csv(filename)
 
 print(forPlot)
+
 plotSum = PlotSummary()
 
 bands = 'rz'
