@@ -38,6 +38,7 @@ def func(tab, params):
             dirFile, dbName, fieldType, nside)
     
     fileNames = glob.glob(fsearch)
+    print('files',fileNames)
     if not fileNames:
         return None
     metricValues = loopStack(fileNames).to_records(index=False)
@@ -45,7 +46,8 @@ def func(tab, params):
 
     df =pd.DataFrame(metricValues)
     df.loc[:,'cadence'] = dbName
-    tab = Match_DD(fields_DD,df).to_records()
+    #tab = Match_DD(fields_DD,df).to_records(index=False)
+    tab = Match_DD(fields_DD,df)
     
     return tab
 
@@ -83,7 +85,7 @@ dbList = opts.dbList
 
 
 # get the list to process
-toprocess = pd.read_csv(dbList).to_records()
+toprocess = pd.read_csv(dbList).to_records(index=False)
 
 outName = 'DD_Cadence_Summary.npy'
 
@@ -102,7 +104,7 @@ if not os.path.isfile(outName):
 
     data = MultiProc(toprocess,params,func,nproc=8).data
 
-    np.save(outName,data)
+    np.save(outName,data.to_records(index=False))
 
 # load the summary file
 
@@ -114,6 +116,7 @@ fields_DD = DDFields()
 fields=opts.fields_to_Display.split(',')
 
 # Plots: season_length, cadence, max_gap (median over seasons) per field
+print('ooooooo',metricTot.dtype)
 if opts.globalPlot:
     sn_plot.plotDDCadence_barh(metricTot,'season_length','season length [days]',bands=['all'],fields=fields)
     sn_plot.plotDDCadence_barh(metricTot,'cadence_mean','cadence [days]',bands=['all'],fields=fields)

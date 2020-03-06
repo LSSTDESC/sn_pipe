@@ -73,4 +73,8 @@ sn_plot.plotCadence(band,Li_files,mag_to_flux_files,
                     dbName=dbName,
                     saveFig=False,m5_str='m5_median')
 
+fig, ax = plt.subplots()
+#ax.plot(metricValues['pixRA'],metricValues['pixDec'],'ko')
+ax.hist(metricValues['cadence_mean'],histtype='step',bins=20)
+print(np.min(metricValues['cadence_mean']), np.max(metricValues['cadence_mean']))
 plt.show()
