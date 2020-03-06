@@ -5,7 +5,7 @@ import numpy as np
 from metricWrapper import CadenceMetricWrapper, SNRMetricWrapper
 from metricWrapper import ObsRateMetricWrapper, NSNMetricWrapper
 from metricWrapper import SLMetricWrapper
-from sn_tools.sn_obs import renameFields, pixelate, GetShape, ObsPixel, ProcessArea
+from sn_tools.sn_obs import renameFields, pixelate, GetShape, ObsPixel, ProcessArea,DataToPixels, ProcessPixels
 from sn_tools.sn_obs import season as seasoncalc
 from optparse import OptionParser
 import time
@@ -14,7 +14,7 @@ import os
 import numpy.lib.recfunctions as rf
 from sn_stackers.coadd_stacker import CoaddStacker
 from sn_tools.sn_obs import pavingSky, getFields
-import glob
+#import glob
 from numpy import genfromtxt
 from sn_tools.sn_io import getObservations
 from sn_tools.sn_cadence_tools import ClusterObs,DDFields
@@ -22,41 +22,30 @@ import yaml
 import sys
 import pandas as pd
 
-def loop_area(pointings, metricList, observations, nside, outDir, dbName, saveData, nodither, RaCol, DecCol, j=0, output_q=None):
+def loop_area(pointings, metricList, observations, nside, outDir, dbName, saveData=False, nodither=False, RACol='', DecCol='', j=0, output_q=None):
 
-    resfi = {}
-    # print(np.unique(observations[['fieldRA', 'fieldDec']]))
+    print('processing area', j, pointings)
 
-    print('processing pointings', j, pointings)
+    #print('before stacker',observations[['observationStartMJD','filter','fieldRA','fieldDec','visitExposureTime']][:50])
 
-    for metric in metricList:
-        resfi[metric.name] = None
-        listf = glob.glob('{}/*_{}_{}*'.format(outDir, metric.name, j))
-        if len(listf) > 0:
-            for val in listf:
-                os.system('rm {}'.format(val))
-
-    # print(test)
+    #observations.sort(order=['observationStartMJD'])
+    #print(test)
     time_ref = time.time()
-    # print('Starting processing', len(pointings),j)
     ipoint = 1
-    # myprocess = ProcessArea(nside,'fieldRA', 'fieldDec',j,outDir,dbName,saveData)
-    print('hhh', RaCol, DecCol, saveData)
-    myprocess = ProcessArea(nside, RaCol, DecCol, j, outDir, dbName, saveData)
-    #for pointing in pointings:
+ 
+    datapixels = DataToPixels(nside, RACol, DecCol, j, outDir, dbName, saveData)
+    procpix = ProcessPixels(metricList,j,outDir=outDir, dbName=dbName, saveData=saveData)
+    
     for index, pointing in pointings.iterrows():
         ipoint += 1
-        # print('pointing',ipoint)
+        print('pointing',ipoint)
 
-        """
-        myprocess = ProcessArea(
-            nside, pointing['Ra'], pointing['Dec'], pointing['radius'], pointing['radius'], 'fieldRA', 'fieldDec',j,outDir,dbName)
-        """
-        # resdict = myprocess.process(observations, metricList,ipoint)
+        # get the pixels
+        pixels= datapixels(observations, pointing['RA'], pointing['Dec'],
+                            pointing['radius_RA'], pointing['radius_Dec'], ipoint, nodither, display=False)
 
-        resdict = myprocess(observations, metricList, pointing['Ra'], pointing['Dec'],
-                            pointing['radius'], pointing['radius'], ipoint, nodither, display=False)
-
+        #datapixels.plot(pixels)
+        procpix(pixels,datapixels.observations,ipoint)
 
     print('end of processing for', j, time.time()-time_ref)
 
@@ -91,7 +80,7 @@ def loop(healpixels, band, metricList, shape, observations, j=0, output_q=None):
         # scanzone = shape.shape(healpixID=healpixID)
 
         obsFocalPlane = ObsPixel(nside=nside, data=observations,
-                                 RaCol='fieldRA', DecCol='fieldDec')
+                                 RACol='fieldRA', DecCol='fieldDec')
 
         obsMatch = obsFocalPlane.matchFast(pixel, ax=ax)
         # obsMatch = obsFocalPlane.matchQuery(healpixID)
@@ -261,11 +250,13 @@ observations = getObservations(opts.dbDir, opts.dbName, opts.dbExtens)
 observations = renameFields(observations)
 
 dictArea = {}
-radius = 10.
-RaCol = 'fieldRA'
+radius = 3
+RACol = 'fieldRA'
 DecCol = 'fieldDec'
-if 'Ra' in observations.dtype.names:
-    RaCol = 'Ra'
+aeras = None
+
+if 'RA' in observations.dtype.names:
+    RACol = 'RA'
     DecCol = 'Dec'
 
 if opts.fieldType == 'DD':
@@ -278,7 +269,7 @@ if opts.fieldType == 'DD':
     observations = getFields(
         observations, opts.fieldType, fieldIds, opts.nside)
 
-    print('before cluster', len(observations))
+    print('before cluster', len(observations),observations.dtype)
     # get clusters out of these obs
     radius = 3.0
 
@@ -288,9 +279,11 @@ if opts.fieldType == 'DD':
 
     #clusters = rf.append_fields(clusters, 'radius', [radius]*len(clusters))
     clusters['radius'] = radius
-    #areas = rf.rename_fields(clusters, {'RA': 'Ra'})
-    areas = clusters.rename(columns={'RA': 'Ra'})
-
+    #areas = rf.rename_fields(clusters, {'RA': 'RA'})
+    areas = clusters.rename(columns={'RA': 'RA'})
+    patches = pd.DataFrame(areas)
+    patches = patches.rename(columns={"width_RA": "radius_RA", "width_Dec": "radius_Dec"})
+    
 else:
     if opts.fieldType == 'WFD':
         observations = getFields(observations, 'WFD')
@@ -300,26 +293,26 @@ else:
             # in that case min and max dec are given by obs strategy
             minDec = np.min(observations['fieldDec'])-3.
             maxDec = np.max(observations['fieldDec'])+3.
-        areas = pavingSky(opts.ramin, opts.ramax, minDec, maxDec, radius)
-        # areas = pavingSky(20., 40., -40., -30., radius)
+        areas = pavingSky(opts.ramin, opts.ramax, minDec, maxDec, radius,radius)
         print(observations.dtype)
 
     if opts.fieldType == 'Fake':
-        # in that case: only one (Ra,Dec)
+        # in that case: only one (RA,Dec)
         radius = 0.1
-        Ra = np.unique(observations[RaCol])[0]
+        RA = np.unique(observations[RACol])[0]
         Dec = np.unique(observations[DecCol])[0]
-        areas = pavingSky(Ra-radius/2., Ra+radius/2., Dec -
-                          radius/2., Dec+radius/2., radius)
+        areas = pavingSky(RA-radius/2., RA+radius/2., Dec -
+                          radius/2., Dec+radius/2., radius,radius)
 
-    areas = pd.DataFrame(areas)
+    patches = pd.DataFrame(areas.patches)
 
 
-print('observations', len(observations), len(areas))
+#areas.plot()
+print('observations', len(observations), len(patches))
 
 timeref = time.time()
 
-healpixels = areas
+healpixels = patches
 npixels = int(len(healpixels))
 
 
@@ -336,5 +329,5 @@ for j in range(len(tabpix)-1):
     print('Field', healpixels[ida:idb])
     p = multiprocessing.Process(name='Subprocess-'+str(j), target=loop_area, args=(
         healpixels[ida:idb], metricList, observations, opts.nside,
-        outputDir, opts.dbName, opts.saveData, opts.remove_dithering, RaCol, DecCol, j, result_queue))
+        outputDir, opts.dbName, opts.saveData, opts.remove_dithering, RACol, DecCol, j, result_queue))
     p.start()
