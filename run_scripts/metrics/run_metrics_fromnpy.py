@@ -5,7 +5,7 @@ import numpy as np
 from metricWrapper import CadenceMetricWrapper, SNRMetricWrapper
 from metricWrapper import ObsRateMetricWrapper, NSNMetricWrapper
 from metricWrapper import SLMetricWrapper
-from sn_tools.sn_obs import renameFields, pixelate, GetShape, ObsPixel, ProcessArea,DataToPixels, ProcessPixels
+from sn_tools.sn_obs import renameFields, pixelate, GetShape, ObsPixel,DataToPixels, ProcessPixels
 from sn_tools.sn_obs import season as seasoncalc
 from optparse import OptionParser
 import time
@@ -35,7 +35,9 @@ def loop_area(pointings, metricList, observations, nside, outDir, dbName, saveDa
  
     datapixels = DataToPixels(nside, RACol, DecCol, j, outDir, dbName, saveData)
     procpix = ProcessPixels(metricList,j,outDir=outDir, dbName=dbName, saveData=saveData)
-    
+
+    #print('eee',pointings)
+
     for index, pointing in pointings.iterrows():
         ipoint += 1
         print('pointing',ipoint)
@@ -44,8 +46,21 @@ def loop_area(pointings, metricList, observations, nside, outDir, dbName, saveDa
         pixels= datapixels(observations, pointing['RA'], pointing['Dec'],
                             pointing['radius_RA'], pointing['radius_Dec'], ipoint, nodither, display=False)
 
+        # select pixels that are inside the original area
+
+        #idx = np.abs(pixels['pixRA']-pointing['RA'])<=pointing['radius_RA']/2.
+        #idx &= np.abs(pixels['pixDec']-pointing['Dec'])<=pointing['radius_Dec']/2.
+
+        idx = (pixels['pixRA']-pointing['RA'])>=-pointing['radius_RA']/2.
+        idx &= (pixels['pixRA']-pointing['RA'])<pointing['radius_RA']/2.
+        idx &= (pixels['pixDec']-pointing['Dec'])>=-pointing['radius_Dec']/2.
+        idx &= (pixels['pixDec']-pointing['Dec'])<pointing['radius_Dec']/2.
+
+        
+        #print('cut',RA,widthRA,Dec,widthDec)
+        
         #datapixels.plot(pixels)
-        procpix(pixels,datapixels.observations,ipoint)
+        procpix(pixels[idx],datapixels.observations,ipoint)
 
     print('end of processing for', j, time.time()-time_ref)
 
@@ -64,10 +79,10 @@ def loop(healpixels, band, metricList, shape, observations, j=0, output_q=None):
     print('season', time.time()-time_ref, np.unique(observations['season']))
     idx = observations['season'] == 1
     observations = observations[idx]
-    print('bbbb', len(observations))
+    print('number of observations', len(observations))
 
     for pixel in healpixels:
-        # for healpixID in [35465]:
+        
         time_ref = time.time()
         ax = None
         if display:
@@ -250,7 +265,7 @@ observations = getObservations(opts.dbDir, opts.dbName, opts.dbExtens)
 observations = renameFields(observations)
 
 dictArea = {}
-radius = 3
+radius = 5.
 RACol = 'fieldRA'
 DecCol = 'fieldDec'
 aeras = None
@@ -291,8 +306,8 @@ else:
         maxDec = opts.decmax
         if minDec == -1.0 and maxDec == -1.0:
             # in that case min and max dec are given by obs strategy
-            minDec = np.min(observations['fieldDec'])-3.
-            maxDec = np.max(observations['fieldDec'])+3.
+            minDec = np.min(observations['fieldDec'])-radius
+            maxDec = np.max(observations['fieldDec'])+radius
         areas = pavingSky(opts.ramin, opts.ramax, minDec, maxDec, radius,radius)
         print(observations.dtype)
 
@@ -331,3 +346,4 @@ for j in range(len(tabpix)-1):
         healpixels[ida:idb], metricList, observations, opts.nside,
         outputDir, opts.dbName, opts.saveData, opts.remove_dithering, RACol, DecCol, j, result_queue))
     p.start()
+
