@@ -50,93 +50,23 @@ def loop_area(pointings, metricList, observations, nside, outDir, dbName, saveDa
 
         #idx = np.abs(pixels['pixRA']-pointing['RA'])<=pointing['radius_RA']/2.
         #idx &= np.abs(pixels['pixDec']-pointing['Dec'])<=pointing['radius_Dec']/2.
-
+        """
+        idx = (pixels['pixRA']-pointing['RA'])>=-pointing['radius_RA']/np.cos(pointing['radius_Dec'])/2.
+        idx &= (pixels['pixRA']-pointing['RA'])<pointing['radius_RA']/np.cos(pointing['radius_Dec'])/2.
+        """
         idx = (pixels['pixRA']-pointing['RA'])>=-pointing['radius_RA']/2.
         idx &= (pixels['pixRA']-pointing['RA'])<pointing['radius_RA']/2.
         idx &= (pixels['pixDec']-pointing['Dec'])>=-pointing['radius_Dec']/2.
         idx &= (pixels['pixDec']-pointing['Dec'])<pointing['radius_Dec']/2.
 
         
-        #print('cut',RA,widthRA,Dec,widthDec)
+        print('cut',pointing['RA'],pointing['radius_RA'],pointing['Dec'],pointing['radius_Dec'])
         
         #datapixels.plot(pixels)
+        print('after selection',len(pixels[idx]))
         procpix(pixels[idx],datapixels.observations,ipoint)
 
     print('end of processing for', j, time.time()-time_ref)
-
-
-def loop(healpixels, band, metricList, shape, observations, j=0, output_q=None):
-
-    display = True
-    resfi = {}
-    for metric in metricList:
-        resfi[metric.name] = None
-
-    print('starting here')
-    time_ref = time.time()
-    print('rr', len(observations))
-    observations = seasoncalc(observations)
-    print('season', time.time()-time_ref, np.unique(observations['season']))
-    idx = observations['season'] == 1
-    observations = observations[idx]
-    print('number of observations', len(observations))
-
-    for pixel in healpixels:
-        
-        time_ref = time.time()
-        ax = None
-        if display:
-            fig, ax = plt.subplots()
-
-        # scanzone = shape.shape()
-        # plt.show()
-        ##
-        time_ref = time.time()
-        # scanzone = shape.shape(healpixID=healpixID)
-
-        obsFocalPlane = ObsPixel(nside=nside, data=observations,
-                                 RACol='fieldRA', DecCol='fieldDec')
-
-        obsMatch = obsFocalPlane.matchFast(pixel, ax=ax)
-        # obsMatch = obsFocalPlane.matchQuery(healpixID)
-        if display:
-            fig.suptitle(pixel['healpixID'])
-            plt.show()
-        if obsMatch is None:
-            continue
-        print(len(obsMatch))
-        # print(obsMatch.dtype)
-        # print('after obs match',time.time()-time_ref)
-        resdict = {}
-        for metric in metricList:
-            # print('metric',metric.name)
-            # print(metric.run(band,seasonsel))
-            # print('FP')
-            # print(metric.run(band,season(obsMatch)))
-            """
-            if band != 'all':
-                resdict[metric.name] = metric.run(band, season(obsMatch))
-            else:
-                if metric.name == 'CadenceMetric':
-                    resdict[metric.name] = metric.run(band, season(obsMatch))
-            """
-            # print(season(obsMatch))
-            # resdict[metric.name] = metric.run(season(obsMatch))
-            resdict[metric.name] = metric.run(obsMatch)
-        for key in resfi.keys():
-            if resdict[key] is not None:
-                if resfi[key] is None:
-                    resfi[key] = resdict[key]
-                else:
-                    # print('vstack',key,resfi[key],resdict[key])
-                    # resfi[key] = np.vstack([resfi[key], resdict[key]])
-                    resfi[key] = np.concatenate((resfi[key], resdict[key]))
-
-    if output_q is not None:
-        return output_q.put({j: resfi})
-    else:
-        return resfi
-
 
 parser = OptionParser()
 
@@ -286,7 +216,7 @@ if opts.fieldType == 'DD':
 
     print('before cluster', len(observations),observations.dtype)
     # get clusters out of these obs
-    radius = 3.0
+    radius = 7.0
 
     DD = DDFields()
     clusters = ClusterObs(
@@ -297,6 +227,8 @@ if opts.fieldType == 'DD':
     #areas = rf.rename_fields(clusters, {'RA': 'RA'})
     areas = clusters.rename(columns={'RA': 'RA'})
     patches = pd.DataFrame(areas)
+    patches['width_RA'] = radius
+    patches['width_Dec'] = radius
     patches = patches.rename(columns={"width_RA": "radius_RA", "width_Dec": "radius_Dec"})
     
 else:
@@ -337,11 +269,18 @@ result_queue = multiprocessing.Queue()
 
 print('observations', len(observations))
 for j in range(len(tabpix)-1):
-    # for j in range(7,8):
+#for j in range(0,1):
     ida = tabpix[j]
     idb = tabpix[j+1]
-
+    
     print('Field', healpixels[ida:idb])
+    
+    field = healpixels[ida:idb]
+
+    """
+    idx = field['fieldName'] == 'SPT'
+    if len(field[idx])>0:
+    """
     p = multiprocessing.Process(name='Subprocess-'+str(j), target=loop_area, args=(
         healpixels[ida:idb], metricList, observations, opts.nside,
         outputDir, opts.dbName, opts.saveData, opts.remove_dithering, RACol, DecCol, j, result_queue))
