@@ -6,14 +6,283 @@ from optparse import OptionParser
 import time
 import multiprocessing
 import os
-from numpy import genfromtxt
+import glob
 import sys
+import random
+import pandas as pd
 from metricWrapper import CadenceMetricWrapper, SNRMetricWrapper
 from metricWrapper import ObsRateMetricWrapper, NSNMetricWrapper
 from metricWrapper import SLMetricWrapper
 from sn_tools.sn_obs import DataToPixels, ProcessPixels,renameFields,patchObs
 from sn_tools.sn_io import getObservations
 
+class processMetrics:
+    def __init__(self,dbDir,dbName,dbExtens,
+                 fieldType,nside,
+                 RAmin,RAmax,
+                 Decmin,Decmax,
+                 saveData,remove_dithering,
+                 outDir,nprocs,metricList,
+                 pixelmap_dir='',npixels=0):
+        """
+        Class to process data ie run metrics on a set of pixels
+
+        Parameters
+        --------------
+        dbDir: str
+          dir location of observing strategy file
+        dbName: str
+           observing strategy name
+        dbExtens: str
+           database extension (npy, db, ...)
+        fieldType: str
+            type of field: DD, WFD, Fakes
+        nside: int
+           healpix nside parameter
+        RAmin: float
+          min RA of the area to process
+        RAmax: float
+          max RA of the area to process
+       Decmin: float
+          min Dec of the area to process
+        Decmax: float
+          max Dec of the area to process
+        saveData: bool
+          to save ouput data or not
+        remove_dithering: bool
+          to remove dithering (to use for DD studies)
+        outDir: str
+          output directory location
+        nprocs: int,
+          number of cores to run
+        metricList: list(metrics)
+           list of metrics to process
+        pixelmap_dir: str, opt
+           location directory where maps pixels<->observations are (default: '')
+        npixels: int, opt
+           number of pixels to run on (default: 0)
+
+        """
+
+        self.dbDir = dbDir
+        self.dbName = dbName
+        self.dbExtens = dbExtens
+        self.fieldType =fieldType
+        self.nside = nside
+        self.RAmin = RAmin
+        self.RAmax = RAmax
+        self.Decmin = Decmin
+        self.Decmax = Decmax
+        self.saveData = saveData
+        self.remove_dithering = remove_dithering
+        self.outDir = outDir
+        self.nprocs = nprocs
+        self.metricList = metricList
+        self.pixelmap_dir = pixelmap_dir
+        self.npixels = npixels
+        
+        observations, patches = self.load()
+
+      
+
+        
+        # select observation in this area
+        idx = observations[self.RACol]>=RAmin-5.
+        idx &= observations[self.RACol]<RAmax+5.
+        idx &= observations[self.DecCol]>=Decmin-5.
+        idx &= observations[self.DecCol]<Decmax+5.
+
+        print('before',len(observations))
+        observations = observations[idx]
+        print('after',len(observations))
+
+        import matplotlib.pyplot as plt
+        plt.plot(observations[self.RACol],observations[self.DecCol],'ko')
+        plt.show()
+
+        
+        if self.pixelmap_dir == '':
+            self.multiprocess(patches,observations)
+        else:
+            # load the pixel maps
+            print('alors',self.pixelmap_dir,self.fieldType,self.nside,self.dbName,self.npixels)
+            search_path = '{}/{}/{}*{}*_nside_{}*.npy'.format(self.pixelmap_dir,self.dbName,self.dbName,self.fieldType,self.nside)
+            print(search_path)
+            pixelmap_files = glob.glob(search_path)
+            print(pixelmap_files)
+            pixeldict = {}
+            npix_tot = 0
+            for  i,pixfile in enumerate(pixelmap_files):
+                tab = np.load(pixfile)
+                print(i,len(np.unique(tab['healpixID'])))
+                npix_tot += len(np.unique(tab['healpixID']))
+                pixeldict[i] = tab
+
+            # get random pixels from these
+            random_pixels = self.randomPixels(pixeldict,npix_tot)
+
+            print('ici',np.unique(random_pixels['healpixID']),len(random_pixels))
+            procpix = ProcessPixels(self.metricList,self.npixels,outDir=self.outDir, dbName=self.dbName, saveData=self.saveData)
+            procpix(random_pixels,observations,self.npixels)
+
+                
+    def load(self):
+        """
+        Method to load observations and patches dims on the sky
+
+        Returns
+        ------------
+       observations: numpy array
+         numpy array with observations
+       patches: pandas df
+        patches coordinates on the sky
+        """
+
+        # loading observations
+
+        observations = getObservations(self.dbDir, self.dbName, self.dbExtens)
+
+        # rename fields
+
+        observations = renameFields(observations)
+
+        self.RACol = 'fieldRA'
+        self.DecCol = 'fieldDec'
+
+        if 'RA' in observations.dtype.names:
+            self.RACol = 'RA'
+            self.DecCol = 'Dec'
+    
+        observations, patches = patchObs(observations, self.fieldType,
+                                         self.dbName,
+                                         self.nside,
+                                         self.RAmin,self.RAmax,
+                                         self.Decmin,self.Decmax,
+                                         self.RACol, self.DecCol,
+                                         display=False)
+
+        return observations, patches
+
+    def multiprocess(self, patches,observations):
+        """
+        Method to perform multiprocessing of metrics
+        
+        Parameters
+        ---------------
+        patches: pandas df
+          patches coordinates on the sky
+        observations: numpy array
+         numpy array with observations
+
+        """
+
+        timeref = time.time()
+
+        healpixels = patches
+        npixels = int(len(healpixels))
+
+        tabpix = np.linspace(0, npixels, self.nprocs+1, dtype='int')
+        print(tabpix, len(tabpix))
+        result_queue = multiprocessing.Queue()
+
+        # multiprocessing
+        for j in range(len(tabpix)-1):
+            ida = tabpix[j]
+            idb = tabpix[j+1]
+    
+            print('Field', healpixels[ida:idb])
+    
+            field = healpixels[ida:idb]
+
+            """
+            idx = field['fieldName'] == 'SPT'
+            if len(field[idx])>0:
+            """
+            p = multiprocessing.Process(name='Subprocess-'+str(j), target=self.processPatch, args=(
+                healpixels[ida:idb], observations, j, result_queue))
+            p.start()
+
+
+    def processPatch(self,pointings, observations,j=0, output_q=None):
+        """
+        Method to process a patch
+
+        Parameters
+        --------------
+        pointings: numpy array
+          array with a set of area on the sky
+        observations: numpy array
+           array of observations
+        j: int, opt
+          index number of multiprocessing (default: 0)
+        output_q: multiprocessing.Queue(), opt
+          queue of the multiprocessing (default: None)
+        """
+
+        print('processing area', j, pointings)
+
+        time_ref = time.time()
+        ipoint = 1
+ 
+        datapixels = DataToPixels(self.nside, self.RACol, self.DecCol, j, self.outDir, self.dbName)
+        procpix = ProcessPixels(self.metricList,j,outDir=self.outDir, dbName=self.dbName, saveData=self.saveData)
+
+        for index, pointing in pointings.iterrows():
+            ipoint += 1
+            print('pointing',ipoint)
+
+            # get the pixels
+            pixels= datapixels(observations, pointing['RA'], pointing['Dec'],
+                               pointing['radius_RA'], pointing['radius_Dec'], ipoint, self.remove_dithering, display=False)
+
+            # select pixels that are inside the original area
+
+            idx = (pixels['pixRA']-pointing['RA'])>=-pointing['radius_RA']/2.
+            idx &= (pixels['pixRA']-pointing['RA'])<pointing['radius_RA']/2.
+            idx &= (pixels['pixDec']-pointing['Dec'])>=-pointing['radius_Dec']/2.
+            idx &= (pixels['pixDec']-pointing['Dec'])<pointing['radius_Dec']/2.
+
+        
+            print('cut',pointing['RA'],pointing['radius_RA'],pointing['Dec'],pointing['radius_Dec'])
+        
+            #datapixels.plot(pixels)
+            print('after selection',len(pixels[idx]))
+            procpix(pixels[idx],datapixels.observations,ipoint)
+
+        print('end of processing for', j, time.time()-time_ref)
+        
+    def randomPixels(self, pixeldict, npix_tot):
+        """
+        Method to choose a random set of pixels
+
+        Parameters
+        ---------------
+        pixeldict: dict
+          dict with int as keys and tabas items
+          where tab is an array of healpix ID
+
+        Returns
+        ---------
+        random_pixels: pandas df
+          selected pixels from random choice
+
+        """
+        # get random pixels
+
+        random_pixels = pd.DataFrame()
+        for (key, vals) in pixeldict.items():
+            hIDs = np.unique(vals['healpixID'])
+            frac = len(hIDs)/npix_tot
+            nrandom = int(self.npixels*frac)
+            healpixIDs = random.sample(hIDs.tolist(),nrandom)
+            print(healpixIDs,type(healpixIDs))
+            valsdf = pd.DataFrame(vals)
+            ido = valsdf['healpixID'].isin(healpixIDs)
+            random_pixels = pd.concat((random_pixels,valsdf[ido]),sort=False)
+
+
+        return random_pixels
+    
 def processPatch(pointings, metricList, observations, nside, outDir, dbName, saveData=False, nodither=False, RACol='', DecCol='', j=0, output_q=None):
 
     print('processing area', j, pointings)
@@ -130,6 +399,10 @@ parser.add_option("--x1", type=float, default=-2.0,
                   help="Supernova stretch[%default]")
 parser.add_option("--color", type=float, default=0.2,
                   help="Supernova color[%default]")
+parser.add_option("--pixelmap", type=str, default='',
+                  help="dir where to find pixel maps[%default]")
+parser.add_option("--npixels", type=int, default=0,
+                  help="number of pixels to process[%default]")
 
 opts, args = parser.parse_args()
 
@@ -169,7 +442,7 @@ if 'SNR' in opts.metric:
 
 classname = '{}MetricWrapper'.format(metricname)
 
-print('seasons and metric',season_int,metricname)
+
 
 metricList.append(globals()[classname](name=opts.metric, season=season_int,
                                        coadd=opts.coadd, fieldType=opts.fieldType,
@@ -178,6 +451,17 @@ metricList.append(globals()[classname](name=opts.metric, season=season_int,
                                        Decmin=opts.Decmin, Decmax=opts.Decmax,
                                        metadata=opts, outDir=outputDir))
 
+print('seasons and metric',season_int,metricname, opts.pixelmap,opts.npixels)
+process = processMetrics(opts.dbDir,opts.dbName,opts.dbExtens,
+                         opts.fieldType,opts.nside,
+                         opts.RAmin,opts.RAmax,
+                         opts.Decmin,opts.Decmax,
+                         opts.saveData,opts.remove_dithering,
+                         outputDir,opts.nproc,metricList,
+                         opts.pixelmap,opts.npixels)
+
+
+"""
 # loading observations
 
 observations = getObservations(opts.dbDir, opts.dbName, opts.dbExtens)
@@ -221,13 +505,9 @@ for j in range(len(tabpix)-1):
     print('Field', healpixels[ida:idb])
     
     field = healpixels[ida:idb]
-
-    """
-    idx = field['fieldName'] == 'SPT'
-    if len(field[idx])>0:
-    """
     p = multiprocessing.Process(name='Subprocess-'+str(j), target=processPatch, args=(
         healpixels[ida:idb], metricList, observations, opts.nside,
         outputDir, opts.dbName, opts.saveData, opts.remove_dithering, RACol, DecCol, j, result_queue))
     p.start()
 
+"""
