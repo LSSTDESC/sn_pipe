@@ -44,6 +44,7 @@ def func(tab, params):
     metricValues = loopStack(fileNames).to_records(index=False)
     fields_DD = DDFields()
 
+    print('hhboooo',len(metricValues),len(np.unique(metricValues['healpixID'])))
     df =pd.DataFrame(metricValues)
     df.loc[:,'cadence'] = dbName
     #tab = Match_DD(fields_DD,df).to_records(index=False)
@@ -105,9 +106,10 @@ if not os.path.isfile(outName):
     data = MultiProc(toprocess,params,func,nproc=8).data
 
     np.save(outName,data.to_records(index=False))
-
+    
 # load the summary file
 
+#metricTot = data.to_records(index=False)
 metricTot = np.load(outName)
 fontsize = 15
 fields_DD = DDFields()
@@ -117,10 +119,22 @@ fields=opts.fields_to_Display.split(',')
 
 # Plots: season_length, cadence, max_gap (median over seasons) per field
 print('ooooooo',metricTot.dtype)
+
+#estimate the area covered here
+ido = metricTot['filter'] == 'all'
+sel = pd.DataFrame(metricTot[ido])
+
+print(sel.columns)
+sel= sel.groupby(['fieldname','season','filter','cadence']).apply(lambda x : pd.DataFrame({'pixArea': [x['pixArea'].sum()],
+                                                                                           'pixDec': [x['pixDec'].median()],})).reset_index()
+#print(sel.groupby(['fieldname','season']).apply(lambda x : x['pixArea'].sum()).reset_index())
+print(sel)
+plt.plot(sel['pixDec'],sel['pixArea'],'ko')
 if opts.globalPlot:
     sn_plot.plotDDCadence_barh(metricTot,'season_length','season length [days]',bands=['all'],fields=fields)
     sn_plot.plotDDCadence_barh(metricTot,'cadence_mean','cadence [days]',bands=['all'],fields=fields)
     sn_plot.plotDDCadence_barh(metricTot,'gap_max','max gap [days]',bands=['all'],fields=fields)
+    sn_plot.plotDDCadence_barh(sel.to_records(index=False),'pixArea','area [deg2]',bands=['all'],fields=fields)
 
 
 # Plots: number of visits per night 
