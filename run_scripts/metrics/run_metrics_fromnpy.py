@@ -1,28 +1,20 @@
 # import matplotlib.pyplot as plt
-import matplotlib
+#import matplotlib
 # matplotlib.use('agg')
 import numpy as np
-from metricWrapper import CadenceMetricWrapper, SNRMetricWrapper
-from metricWrapper import ObsRateMetricWrapper, NSNMetricWrapper
-from metricWrapper import SLMetricWrapper
-from sn_tools.sn_obs import renameFields, pixelate, GetShape, ObsPixel,DataToPixels, ProcessPixels
-from sn_tools.sn_obs import season as seasoncalc
 from optparse import OptionParser
 import time
 import multiprocessing
 import os
-import numpy.lib.recfunctions as rf
-from sn_stackers.coadd_stacker import CoaddStacker
-from sn_tools.sn_obs import pavingSky, getFields
-#import glob
 from numpy import genfromtxt
-from sn_tools.sn_io import getObservations
-from sn_tools.sn_cadence_tools import ClusterObs,DDFields
-import yaml
 import sys
-import pandas as pd
+from metricWrapper import CadenceMetricWrapper, SNRMetricWrapper
+from metricWrapper import ObsRateMetricWrapper, NSNMetricWrapper
+from metricWrapper import SLMetricWrapper
+from sn_tools.sn_obs import DataToPixels, ProcessPixels,renameFields,patchObs
+from sn_tools.sn_io import getObservations
 
-def loop_area(pointings, metricList, observations, nside, outDir, dbName, saveData=False, nodither=False, RACol='', DecCol='', j=0, output_q=None):
+def processPatch(pointings, metricList, observations, nside, outDir, dbName, saveData=False, nodither=False, RACol='', DecCol='', j=0, output_q=None):
 
     print('processing area', j, pointings)
 
@@ -100,14 +92,14 @@ parser.add_option("--coadd", type="int", default='1',
                   help="nightly coaddition [%default]")
 # parser.add_option("--nodither", type="str", default='',
 #                  help="to remove dithering - for DDF only[%default]")
-parser.add_option("--ramin", type=float, default=0.,
-                  help="ra min for obs area - for WDF only[%default]")
-parser.add_option("--ramax", type=float, default=360.,
-                  help="ra max for obs area - for WDF only[%default]")
-parser.add_option("--decmin", type=float, default=-1.,
-                  help="dec min for obs area - for WDF only[%default]")
-parser.add_option("--decmax", type=float, default=-1.,
-                  help="dec max for obs area - for WDF only[%default]")
+parser.add_option("--RAmin", type=float, default=0.,
+                  help="RA min for obs area - for WDF only[%default]")
+parser.add_option("--RAmax", type=float, default=360.,
+                  help="RA max for obs area - for WDF only[%default]")
+parser.add_option("--Decmin", type=float, default=-1.,
+                  help="Dec min for obs area - for WDF only[%default]")
+parser.add_option("--Decmax", type=float, default=-1.,
+                  help="Dec max for obs area - for WDF only[%default]")
 parser.add_option("--proxy_level", type=int, default=0,
                   help="proxy level for the metric[%default]")
 parser.add_option("--T0s", type=str, default='all',
@@ -182,8 +174,8 @@ print('seasons and metric',season_int,metricname)
 metricList.append(globals()[classname](name=opts.metric, season=season_int,
                                        coadd=opts.coadd, fieldType=opts.fieldType,
                                        nside=opts.nside,
-                                       ramin=opts.ramin, ramax=opts.ramax,
-                                       decmin=opts.decmin, decmax=opts.decmax,
+                                       RAmin=opts.RAmin, RAmax=opts.RAmax,
+                                       Decmin=opts.Decmin, Decmax=opts.Decmax,
                                        metadata=opts, outDir=outputDir))
 
 # loading observations
@@ -194,67 +186,21 @@ observations = getObservations(opts.dbDir, opts.dbName, opts.dbExtens)
 
 observations = renameFields(observations)
 
-dictArea = {}
-radius = 5.
 RACol = 'fieldRA'
 DecCol = 'fieldDec'
-aeras = None
 
 if 'RA' in observations.dtype.names:
     RACol = 'RA'
     DecCol = 'Dec'
-
-if opts.fieldType == 'DD':
-    nclusters = 5
-    if 'euclid' in opts.dbName:
-        nclusters = 6
-
-    print(np.unique(observations['fieldId']))
-    fieldIds = [290, 744, 1427, 2412, 2786]
-    observations = getFields(
-        observations, opts.fieldType, fieldIds, opts.nside)
-
-    print('before cluster', len(observations),observations.dtype)
-    # get clusters out of these obs
-    radius = 7.0
-
-    DD = DDFields()
-    clusters = ClusterObs(
-        observations, nclusters=nclusters, dbName=opts.dbName,fields=DD).clusters
-
-    #clusters = rf.append_fields(clusters, 'radius', [radius]*len(clusters))
-    clusters['radius'] = radius
-    #areas = rf.rename_fields(clusters, {'RA': 'RA'})
-    areas = clusters.rename(columns={'RA': 'RA'})
-    patches = pd.DataFrame(areas)
-    patches['width_RA'] = radius
-    patches['width_Dec'] = radius
-    patches = patches.rename(columns={"width_RA": "radius_RA", "width_Dec": "radius_Dec"})
     
-else:
-    if opts.fieldType == 'WFD':
-        observations = getFields(observations, 'WFD')
-        minDec = opts.decmin
-        maxDec = opts.decmax
-        if minDec == -1.0 and maxDec == -1.0:
-            # in that case min and max dec are given by obs strategy
-            minDec = np.min(observations['fieldDec'])-radius
-            maxDec = np.max(observations['fieldDec'])+radius
-        areas = pavingSky(opts.ramin, opts.ramax, minDec, maxDec, radius,radius)
-        print(observations.dtype)
+observations, patches = patchObs(observations, opts.fieldType,
+                                 opts.dbName,
+                                 opts.nside,
+                                 opts.RAmin,opts.RAmax,
+                                 opts.Decmin,opts.Decmax,
+                                 RACol, DecCol,
+                                 display=False)
 
-    if opts.fieldType == 'Fake':
-        # in that case: only one (RA,Dec)
-        radius = 0.1
-        RA = np.unique(observations[RACol])[0]
-        Dec = np.unique(observations[DecCol])[0]
-        areas = pavingSky(RA-radius/2., RA+radius/2., Dec -
-                          radius/2., Dec+radius/2., radius,radius)
-
-    patches = pd.DataFrame(areas.patches)
-
-
-#areas.plot()
 print('observations', len(observations), len(patches))
 
 timeref = time.time()
@@ -267,9 +213,8 @@ tabpix = np.linspace(0, npixels, opts.nproc+1, dtype='int')
 print(tabpix, len(tabpix))
 result_queue = multiprocessing.Queue()
 
-print('observations', len(observations))
+# multiprocessing
 for j in range(len(tabpix)-1):
-#for j in range(0,1):
     ida = tabpix[j]
     idb = tabpix[j+1]
     
@@ -281,7 +226,7 @@ for j in range(len(tabpix)-1):
     idx = field['fieldName'] == 'SPT'
     if len(field[idx])>0:
     """
-    p = multiprocessing.Process(name='Subprocess-'+str(j), target=loop_area, args=(
+    p = multiprocessing.Process(name='Subprocess-'+str(j), target=processPatch, args=(
         healpixels[ida:idb], metricList, observations, opts.nside,
         outputDir, opts.dbName, opts.saveData, opts.remove_dithering, RACol, DecCol, j, result_queue))
     p.start()
