@@ -62,7 +62,10 @@ idx = metricValues['filter'] == band
 metricValues = Table(metricValues[idx])
 
 # Mollview plots
-sn_plot.plotMollview(64,metricValues,'cadence_mean','cadence','days',1.,30.,band,dbName,saveFig=True)
+for season in [1,2]:
+    idx = metricValues['season'] == season
+    ssel = metricValues[idx]
+    sn_plot.plotMollview(64,ssel,'cadence_mean','cadence','days',1.,30.,band,dbName,saveFig=False)
 #sn_plot.plotMollview(64,metricValues,'m5_mean','m5','mag',24.,26.,band,dbName,saveFig=True)
 
 sn_plot.plotCadence(band,Li_files,mag_to_flux_files,
@@ -75,6 +78,17 @@ sn_plot.plotCadence(band,Li_files,mag_to_flux_files,
 
 fig, ax = plt.subplots()
 #ax.plot(metricValues['pixRA'],metricValues['pixDec'],'ko')
-ax.hist(metricValues['cadence_mean'],histtype='step',bins=20)
-print(np.min(metricValues['cadence_mean']), np.max(metricValues['cadence_mean']))
+print(metricValues.dtype)
+for season in np.unique(metricValues['season']):
+        idx = metricValues['season'] == season
+        ssel = metricValues[idx]
+        #ax.hist(ssel['cadence_mean'],histtype='step',bins=30)
+        print(np.min(ssel['cadence_mean']), np.max(ssel['cadence_mean']),season,len(ssel),len(np.unique(ssel['healpixID'])))
+        ax.plot(ssel['pixRA'],ssel['pixDec'],'ko')
+        for healpixID in np.unique(ssel['healpixID']):
+            io = ssel['healpixID'] == healpixID
+            bo = ssel[io][['pixRA','pixDec']]
+            if len(bo) > 1:
+                print(season,bo)
+        plt.show()
 plt.show()
