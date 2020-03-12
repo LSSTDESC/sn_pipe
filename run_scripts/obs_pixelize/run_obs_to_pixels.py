@@ -256,21 +256,21 @@ class procObsPixels:
             pixels = datapixels(observations, pointing['RA'], pointing['Dec'],
                                 pointing['radius_RA'], pointing['radius_Dec'], ipoint, self.nodither, display=False)
 
-            # select pixels that are inside the original area
+            if pixels is not None:
+                # select pixels that are inside the original area
 
-            idx = (pixels['pixRA']-pointing['RA']) >= -pointing['radius_RA']/2.
-            idx &= (pixels['pixRA']-pointing['RA']) < pointing['radius_RA']/2.
-            idx &= (pixels['pixDec']-pointing['Dec']) >= - \
-                pointing['radius_Dec']/2.
-            idx &= (pixels['pixDec']-pointing['Dec']
-                    ) < pointing['radius_Dec']/2.
+                idx = (pixels['pixRA']-pointing['RA']) >= -pointing['radius_RA']/2.
+                idx &= (pixels['pixRA']-pointing['RA']) < pointing['radius_RA']/2.
+                idx &= (pixels['pixDec']-pointing['Dec']) >= - \
+                    pointing['radius_Dec']/2.
+                idx &= (pixels['pixDec']-pointing['Dec']
+                ) < pointing['radius_Dec']/2.
 
-            pixelsTot = pd.concat((pixelsTot, pixels[idx]), sort=False)
+                pixelsTot = pd.concat((pixelsTot, pixels[idx]), sort=False)
 
             # datapixels.plot(pixels)
         print('end of processing for', j, time.time()-time_ref)
-        print(type(pixelsTot))
-        print(test)
+        
         if output_q is not None:
             return output_q.put({j: pixelsTot})
         else:
@@ -305,9 +305,9 @@ parser.add_option("--RAmax", type=float, default=360.,
                   help="RA max for obs area - [%default]")
 parser.add_option("--nRA", type=int, default=10,
                   help="number of RA patches - [%default]")
-parser.add_option("--Decmin", type=float, default=-80.,
+parser.add_option("--Decmin", type=float, default=-1.,
                   help="Dec min for obs area - [%default]")
-parser.add_option("--Decmax", type=float, default=30.,
+parser.add_option("--Decmax", type=float, default=-1.,
                   help="Dec max for obs area - [%default]")
 parser.add_option("--nDec", type=int, default=1,
                   help="number of Dec patches - [%default]")
@@ -339,4 +339,5 @@ for patch in patches:
                          patch['RAmin'], patch['RAmax'],
                          patch['Decmin'], patch['Decmax'], opts.nside,
                          opts.nprocs, saveData=opts.saveData)
-    break
+    #break
+    
