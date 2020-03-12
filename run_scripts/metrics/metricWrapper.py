@@ -15,11 +15,12 @@ import yaml
 class MetricWrapper:
     def __init__(self, name='Cadence', season=-1,
                  coadd=True, fieldType='DD', nside=64,
-                 RAmin=0., RAmax=360., Decmin=-1.0, Decmax=-1.0,
-                 metadata={}, outDir=''):
+                 RAmin=0., RAmax=360.,
+                 Decmin=-1.0, Decmax=-1.0,
+                 npixels=0,metadata={}, outDir=''):
 
-        self.name = '{}Metric_{}_nside_{}_coadd_{}_{}_{}_{}_{}'.format(name,
-                                                                       fieldType, nside, coadd, RAmin, RAmax, Decmin, Decmax)
+        self.name = '{}Metric_{}_nside_{}_coadd_{}_{}_{}_{}_{}_npixels_{}'.format(name,
+                                                                          fieldType, nside, coadd, RAmin, RAmax, Decmin, Decmax,npixels)
 
         self.metric = None
 
@@ -48,12 +49,14 @@ class MetricWrapper:
 class CadenceMetricWrapper(MetricWrapper):
     def __init__(self, name='Cadence', season=-1,
                  coadd=True, fieldType='DD', nside=64,
-                 RAmin=0., RAmax=360., Decmin=-1.0, Decmax=-1.0,
+                 RAmin=0., RAmax=360.,
+                 Decmin=-1.0, Decmax=-1.0,
+                 npixels=0,
                  metadata={}, outDir=''):
         super(CadenceMetricWrapper, self).__init__(
             name=name, season=season, coadd=coadd, fieldType=fieldType,
             nside=nside, RAmin=RAmin, RAmax=RAmax,
-            Decmin=Decmin, Decmax=Decmax, metadata=metadata, outDir=outDir)
+            Decmin=Decmin, Decmax=Decmax, npixels=npixels,metadata=metadata, outDir=outDir)
 
         self.metric = SNCadenceMetric(
             coadd=coadd, nside=nside, verbose=metadata.verbose)
@@ -64,12 +67,14 @@ class CadenceMetricWrapper(MetricWrapper):
 class SNRMetricWrapper(MetricWrapper):
     def __init__(self, name='SNR', season=-1,
                  coadd=True, fieldType='DD', nside=64,
-                 RAmin=0., RAmax=360., Decmin=-1.0, Decmax=-1.0,
+                 RAmin=0., RAmax=360.,
+                 Decmin=-1.0, Decmax=-1.0,
+                 npixels=0,
                  metadata={}, outDir=''):
         super(SNRMetricWrapper, self).__init__(
             name=name, season=season, coadd=coadd, fieldType=fieldType,
             nside=nside, RAmin=RAmin, RAmax=RAmax,
-            Decmin=Decmin, Decmax=Decmax,
+            Decmin=Decmin, Decmax=Decmax,npixels=npixels,
             metadata=metadata, outDir=outDir)
 
         self.metaout += ['x1', 'color', 'dirFakes', 'dirRefs', 'band', 'z']
@@ -101,12 +106,15 @@ class SNRMetricWrapper(MetricWrapper):
 class ObsRateMetricWrapper(MetricWrapper):
     def __init__(self, name='ObsRate', season=-1,
                  coadd=True, fieldType='DD', nside=64,
-                 RAmin=0., RAmax=360., Decmin=-1.0, Decmax=-1.0,
+                 RAmin=0., RAmax=360.,
+                 Decmin=-1.0, Decmax=-1.0,
+                 npixels=0,
                  metadata={}, outDir=''):
         super(ObsRateMetricWrapper, self).__init__(
             name=name, season=season, coadd=coadd, fieldType=fieldType,
             nside=nside, RAmin=RAmin, RAmax=RAmax,
             Decmin=Decmin, Decmax=Decmax,
+            npixels=npixels,
             metadata=metadata, outDir=outDir)
 
         self.metaout += ['x1', 'color', 'dirRefs', 'z', 'bands', 'SNR']
@@ -143,12 +151,15 @@ class ObsRateMetricWrapper(MetricWrapper):
 
 class NSNMetricWrapper(MetricWrapper):
     def __init__(self, name='NSN', season=-1, coadd=True, fieldType='DD',
-                 nside=64, RAmin=0., RAmax=360., Decmin=-1.0,
-                 Decmax=-1.0, metadata={}, outDir=''):
+                 nside=64, RAmin=0., RAmax=360.,
+                 Decmin=-1.0,Decmax=-1.0,
+                 npixels=0,
+                 metadata={}, outDir=''):
         super(NSNMetricWrapper, self).__init__(
             name=name, season=season, coadd=coadd, fieldType=fieldType,
             nside=nside, RAmin=RAmin, RAmax=RAmax,
             Decmin=Decmin, Decmax=Decmax,
+            npixels=npixels,
             metadata=metadata, outDir=outDir)
 
         verbose = True
@@ -270,12 +281,15 @@ class NSNMetricWrapper(MetricWrapper):
 class SLMetricWrapper(MetricWrapper):
     def __init__(self, name='SL', season=-1,
                  coadd=0, nside=64, fieldType='WFD',
-                 RAmin=0., RAmax=360., Decmin=-1.0, Decmax=-1.0,
+                 RAmin=0., RAmax=360.,
+                 Decmin=-1.0, Decmax=-1.0,
+                 npixels=0,
                  metadata={}, outDir=''):
         super(SLMetricWrapper, self).__init__(
             name=name, season=season, coadd=coadd, fieldType=fieldType,
             nside=nside, RAmin=RAmin, RAmax=RAmax,
             Decmin=Decmin, Decmax=Decmax,
+            npixels=npixels,
             metadata=metadata, outDir=outDir)
 
         self.metric = SLSNMetric(
