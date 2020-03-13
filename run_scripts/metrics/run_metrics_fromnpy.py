@@ -440,7 +440,7 @@ parser.add_option("--x1", type=float, default=-2.0,
                   help="Supernova stretch[%default]")
 parser.add_option("--color", type=float, default=0.2,
                   help="Supernova color[%default]")
-parser.add_option("--pixelmap", type=str, default='',
+parser.add_option("--pixelmap_dir", type=str, default='',
                   help="dir where to find pixel maps[%default]")
 parser.add_option("--npixels", type=int, default=0,
                   help="number of pixels to process[%default]")
@@ -492,14 +492,14 @@ metricList.append(globals()[classname](name=opts.metric, season=season_int,
                                        Decmin=opts.Decmin, Decmax=opts.Decmax,
                                        npixels=opts.npixels,metadata=opts, outDir=outputDir))
 
-print('seasons and metric',season_int,metricname, opts.pixelmap,opts.npixels)
+print('seasons and metric',season_int,metricname, opts.pixelmap_dir,opts.npixels)
 process = processMetrics(opts.dbDir,opts.dbName,opts.dbExtens,
                          opts.fieldType,opts.nside,
                          opts.RAmin,opts.RAmax,
                          opts.Decmin,opts.Decmax,
                          opts.saveData,opts.remove_dithering,
                          outputDir,opts.nproc,metricList,
-                         opts.pixelmap,opts.npixels)
+                         opts.pixelmap_dir,opts.npixels)
 
 
 """
