@@ -49,6 +49,7 @@ def batch(dbDir, dbName,dbExtens, scriptref, outDir, nproc,
     cmd += ' --simuType {}'.format(simuType)
     cmd += ' --saveData {}'.format(saveData)
     cmd += ' --outDir {}'.format(outDir)
+    cmd += ' --fieldType {}'.format(fieldType)
 
     script.write(cmd +" \n")
     script.write("EOF" + "\n")
@@ -65,19 +66,19 @@ parser.add_option("--dbDir", type="str", default='', help="db dir [%default]")
 parser.add_option("--dbExtens", type="str", default='db',
                   help="db extension [%default]")
 parser.add_option("--nodither", type="str", default='',
-                  help="db extension [%default]")
+                  help="to remove dithering [%default]")
 parser.add_option("--nside", type="int", default=64,
                   help="healpix nside[%default]")
 
 opts, args = parser.parse_args()
 
-print('Start processing...')
+print('Start processing...',opts)
 
 dbList = opts.dbList
 dbDir = opts.dbDir
 
 if dbDir == '':
-    dbDir = '/sps/lsst/cadence/LSST_SN_PhG/cadence_db/fbs_1.4'
+    dbDir = '/sps/lsst/cadence/LSST_SN_PhG/cadence_db/fbs_1.4/db'
 
 dbExtens = opts.dbExtens
 
@@ -86,7 +87,7 @@ outDir = '/sps/lsst/users/gris/ObsPixelized'
 toprocess = np.genfromtxt(dbList, dtype=None, names=[
                           'dbName', 'simuType', 'nside', 'coadd', 'fieldType', 'nproc'])
 
-print('there', toprocess)
+#print('there', toprocess)
 scriptref='run_scripts/obs_pixelize/run_obs_to_pixels.py'
 for val in toprocess:
     batch(dbDir, val['dbName'],dbExtens,scriptref, outDir,val['nproc'],
