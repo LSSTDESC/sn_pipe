@@ -1,169 +1,289 @@
 import os
 import numpy as np
 from optparse import OptionParser
+import glob
 
-
-def batch(dbDir, dbName, scriptref, nside, simuType, outDir, nprocprog, nproccomp, fieldType, saveData, metric, coadd):
-
-    cwd = os.getcwd()
-    dirScript = cwd + "/scripts"
-
-    if not os.path.isdir(dirScript):
-        os.makedirs(dirScript)
-
-    dirLog = cwd + "/logs"
-    if not os.path.isdir(dirLog):
-        os.makedirs(dirLog)
-
-    id = '{}_{}_{}_{}'.format(dbName, nside, fieldType, metric)
-    name_id = 'metric_{}'.format(id)
-    log = dirLog + '/'+name_id+'.log'
-
-    qsub = 'qsub -P P_lsst -l sps=1,ct=10:00:00,h_vmem=16G -j y -o {} -pe multicores {} <<EOF'.format(
-        log, nproccomp)
-    #qsub = "qsub -P P_lsst -l sps=1,ct=05:00:00,h_vmem=16G -j y -o "+ log + " <<EOF"
-    scriptName = dirScript+'/'+name_id+'.sh'
-
-    script = open(scriptName, "w")
-    script.write(qsub + "\n")
-    # script.write("#!/usr/local/bin/bash\n")
-    script.write("#!/bin/env bash\n")
-    script.write(" cd " + cwd + "\n")
-    script.write(" echo 'sourcing setups' \n")
-    script.write(" source setup_release.sh CCIN2P3\n")
-    script.write(" source export.sh CCIN2P3\n")
-    script.write("echo 'sourcing done' \n")
+def go_for_batch(toproc,splitSky,
+                 dbDir,dbExtens,outDir,metricName,
+                 nodither,nside,fieldType,band,
+                 pixelmap_dir,npixels):
     """
-    script.write("export PYTHONPATH=sn_tools:$PYTHONPATH \n")
-    script.write("export PYTHONPATH=sn_metrics:$PYTHONPATH \n")
-    script.write("export PYTHONPATH=sn_stackers:$PYTHONPATH \n")
+    Function to prepare and start batches
+
+    Parameters
+    ----------------
+    toproc: numpy array
+      data (dbName, ...) to process
+    splitSky: bool
+      to split the batches in sky patches
+    dbDir: str
+      dir where observing strategy files are located
+    dbExtens: str
+      extension of obs. strategy files (npy or db)
+    outDir: str
+      output directory for the produced data
+    metricName: str
+      name of the metric to run
+    nodither: bool
+      to remove the dithereing (useful for dedicated DD studies)
+    nside: int
+      healpix nside parameter
+    fieldType: str
+      type of field to process (DD, WFD, Fakes)
+    band: str
+      band to consider (for some metrics like SNR)
+    pixelmap_dir: str
+      directory where pixel maps (ie matched pixel positions and observations) are located
+    npixels: int
+      number of pixels to process
+
+
     """
-    script.write("echo $PYTHONPATH \n")
-
-    cmd = 'python {}.py --dbDir {} --dbName {}'.format(
-        scriptref, dbDir, dbName)
-    cmd += ' --nproc {} --nside {} --simuType {}'.format(
-        nprocprog, nside, simuType)
-    cmd += ' --outDir {}'.format(outDir)
-    cmd += ' --fieldType {}'.format(fieldType)
-    cmd += ' --saveData {}'.format(saveData)
-    cmd += ' --metric {}'.format(metric)
-    cmd += ' --coadd {}'.format(coadd)
-    cmd += ' --nodither {}'.format(nodither)
-    script.write(cmd+" \n")
-    script.write("EOF" + "\n")
-    script.close()
-    #os.system("sh "+scriptName)
 
 
-def batch_new(dbDir, dbExtens, scriptref, outDir, nproccomp,
-              saveData, metric, toprocess, nodither,
-              RA_min=0.0, RA_max=360.0, Dec_min=-1.0, Dec_max=-1.0,band=''):
+    # get the observing strategy name
+    dbName = toproc['dbName'].decode()
 
-    cwd = os.getcwd()
-    dirScript = cwd + "/scripts"
+    if pixelmap_dir == '':
 
-    if not os.path.isdir(dirScript):
-        os.makedirs(dirScript)
+        # first case: no pixelmap - run on all the pixels - possibility to split the sky
+        n_per_slice = 1
+        RAs = [0., 360.]
+        if splitSky:
+            RAs = np.linspace(0., 360., 11)
 
-    dirLog = cwd + "/logs"
-    if not os.path.isdir(dirLog):
-        os.makedirs(dirLog)
+        for ira in range(len(RAs)-1):
+            RA_min = RAs[ira]
+            RA_max = RAs[ira+1]
+            batchclass(dbName,dbDir, dbExtens, 'run_scripts/metrics/run_metrics_fromnpy', 
+                       outDir, 8, 1, metricName, toproc, 
+                       nodither, nside, fieldType,RA_min, RA_max,band,
+                       pixelmap_dir,npixels)
 
-    dbName = toprocess['dbName'][0].decode()
-    nside = toprocess['nside'][0]
-    fieldType = toprocess['fieldType'][0].decode()
-    id = '{}_{}_{}_{}{}_{}_{}_{}_{}'.format(
-        dbName, nside, fieldType, metric, nodither, RA_min, RA_max, Dec_min, Dec_max)
+    else:
+        # second case: there are pixelmaps available -> run on them
+        # first: get the skymap
+        fileSky = glob.glob('{}/skypatch*.npy'.format(pixelmap_dir))
+        skyMap = np.load(fileSky[0])
+        
+        print(skyMap)
+        # get the total number of pixels in this skyMap
+        
+        #get the total number of pixels - this is requested if npixels >= 0 and npixels!=-1
+        # npixels=-1 means processing all pixels
 
-    name_id = 'metric_{}'.format(id)
-    log = dirLog + '/'+name_id+'.log'
+        npixels_tot = 0
+        if npixels >0:
+            for val in skyMap:
+                search_path = '{}/{}/{}_{}_nside_{}_{}_{}_{}_{}.npy'.format(pixelmap_dir,dbName,dbName,fieldType,nside,val['RAmin'],val['RAmax'],val['Decmin'],val['Decmax'])
+                ffi = glob.glob(search_path)
+                tab = np.load(ffi[0])
+                #print(len(np.unique(tab['healpixID'])))
+                npixels_tot += len(np.unique(tab['healpixID']))
 
-    qsub = 'qsub -P P_lsst -l sps=1,ct=24:00:00,h_vmem=16G -j y -o {} -pe multicores {} <<EOF'.format(
-        log, nproccomp)
-    #qsub = "qsub -P P_lsst -l sps=1,ct=05:00:00,h_vmem=16G -j y -o "+ log + " <<EOF"
-    scriptName = dirScript+'/'+name_id+'.sh'
+        #print(npixels_tot)
 
-    script = open(scriptName, "w")
-    script.write(qsub + "\n")
-    # script.write("#!/usr/local/bin/bash\n")
-    script.write("#!/bin/env bash\n")
-    script.write(" cd " + cwd + "\n")
-    script.write(" echo 'sourcing setups' \n")
-    script.write(" source setup_release.sh Linux\n")
-    #script.write(" source export.sh CCIN2P3\n")
-    script.write("echo 'sourcing done' \n")
-    """
-    script.write("export PYTHONPATH=sn_tools:$PYTHONPATH \n")
-    script.write("export PYTHONPATH=sn_metrics:$PYTHONPATH \n")
-    script.write("export PYTHONPATH=sn_stackers:$PYTHONPATH \n")
-    """
-    script.write("echo $PYTHONPATH \n")
+        #now redo the loop and run batches
+        for val in skyMap:
+            # get the number of pixels for this map
+            search_path = '{}/{}/{}_{}_nside_{}_{}_{}_{}_{}.npy'.format(pixelmap_dir,dbName,dbName,fieldType,nside,val['RAmin'],val['RAmax'],val['Decmin'],val['Decmax'])
+            ffi = glob.glob(search_path)
+            tab = np.load(ffi[0])
+            npixels_map = len(np.unique(tab['healpixID']))
+            npixel_proc = npixels
+            if npixels >0 :
+                npixel_proc = int(npixels*npixels_map/npixels_tot)
+            batchclass(dbName,dbDir, dbExtens, 'run_scripts/metrics/run_metrics_fromnpy', 
+                       outDir, 8, 1, metricName, toproc, 
+                       nodither, nside, fieldType,val['RAmin'], val['RAmax'],band=band,
+                       pixelmap_dir=pixelmap_dir,npixels=npixel_proc)
+       
+            
 
-    for proc in toprocess:
-        cmd_ = batch_cmd(scriptref, dbDir, dbExtens, outDir,
-                         saveData, metric, proc, nodither,
-                         RA_min, RA_max, Dec_min, Dec_max,band)
 
+class batchclass:
+    def __init__(self,dbName,dbDir, dbExtens, scriptref, outDir, nproccomp,
+                 saveData, metric, toprocess, nodither,nside,
+                 fieldType='WFD',
+                 RA_min=0.0, RA_max=360.0, 
+                 Dec_min=-1.0, Dec_max=-1.0,band='',
+                 pixelmap_dir='',npixels=0):
+        """
+        class to prepare and launch batches
+
+        Parameters
+        ----------------
+        dbName: str
+          observing strategy name
+        dbDir: str
+          location dir of obs. strat. file
+        dbExtens: str
+          obs. strat. file extension (db or npy)
+        scriptref: str
+          reference script to use in the batch
+        outDir: str
+          output directory location
+        nproccomp: int
+          number of multiproc used
+        saveData: bool
+          to save the data on disk or not
+        metric: str
+          name of the metric to run
+        toprocess: numpy array
+          array of data to process
+        nodither: bool
+          to remove dither (can be usefull for DD studies)
+        nside: int
+          healpix nside parameter
+        fieldType: str, opt
+          type of field to process - DD, WFD, Fakes (default: WFD)
+        RA_min: float, opt
+          min RA of the area to process (default:0.0)
+        RA_max: float, opt
+          max RA of the area to process (default: =360.0) 
+        Dec_min: float, opt
+          min Dec of the area to process (default: -1.0)
+        Dec_max: float, opt
+          max Dec of the area to process (default: -1.0)
+        band: str, opt
+          band to process (default: '')
+        pixelmap_dir: str, opt
+          location directory of pixelmaps (default: '')
+        npixels: int, opt
+          number of pixels to process (default: 0)
+
+        """
+
+
+        self.dbName = dbName
+        self.dbDir = dbDir
+        self.dbExtens = dbExtens
+        self.scriptref =  scriptref
+        self.outDir =  outDir
+        self.nproccomp = nproccomp
+        self.saveData =  saveData
+        self.metric = metric
+        self.toprocess =  toprocess
+        self.nodither = nodither
+        self.RA_min = RA_min
+        self.RA_max = RA_max
+        self.Dec_min = Dec_min
+        self.Dec_max = Dec_max
+        self.band = band
+        self.nside = nside
+        self.fieldType = fieldType
+        self.pixelmap_dir = pixelmap_dir
+        self.npixels = npixels
+
+        dirScript, name_id, log = self.prepareOut()
+        
+        self.script(dirScript, name_id, log,toprocess)
+
+        
+
+    def prepareOut(self):
+        """
+        Method to prepare for the batch
+
+        directories for scripts and log files are defined here.
+        
+
+        """
+
+
+        self.cwd = os.getcwd()
+        dirScript = self.cwd + "/scripts"
+
+        if not os.path.isdir(dirScript):
+            os.makedirs(dirScript)
+
+        dirLog = self.cwd + "/logs"
+        if not os.path.isdir(dirLog):
+            os.makedirs(dirLog)
+
+        id = '{}_{}_{}_{}{}_{}_{}_{}_{}'.format(
+            self.dbName, self.nside, self.fieldType, self.metric, 
+            self.nodither, self.RA_min, self.RA_max, self.Dec_min, self.Dec_max)
+
+        name_id = 'metric_{}'.format(id)
+        log = dirLog + '/'+name_id+'.log'
+
+        return dirScript, name_id, log
+
+    def script(self,dirScript,name_id,log,proc):
+        """
+        Method to generate and run the script to be executed
+         
+        Parameters
+        ----------------
+        dirScript: str
+          location directory of the script
+        name_id: str
+          id for the script
+        log: str
+          location directory for the log files
+        proc: numpy array
+          data to process
+
+        """
+        # qsub command
+        qsub = 'qsub -P P_lsst -l sps=1,ct=24:00:00,h_vmem=16G -j y -o {} -pe multicores {} <<EOF'.format(
+        log, self.nproccomp)
+
+        scriptName = dirScript+'/'+name_id+'.sh'
+
+        # fill the script
+        script = open(scriptName, "w")
+        script.write(qsub + "\n")
+        script.write("#!/bin/env bash\n")
+        script.write(" cd " + self.cwd + "\n")
+        script.write(" echo 'sourcing setups' \n")
+        script.write(" source setup_release.sh Linux\n")
+        script.write("echo 'sourcing done' \n")
+
+        
+        cmd_ = self.batch_cmd(proc)
         script.write(cmd_+" \n")
-    script.write("EOF" + "\n")
-    script.close()
-    os.system("sh "+scriptName)
 
+        script.write("EOF" + "\n")
+        script.close()
+        os.system("sh "+scriptName)
 
-def batch_cmd(scriptref, dbDir, dbExtens, outDir,
-              saveData, metric, proc, nodither,
-              RA_min, RA_max, Dec_min, Dec_max,band):
+    def batch_cmd(self,proc):
+        """
+        Method for the batch command
 
-    cmd = 'python {}.py --dbDir {} --dbName {} --dbExtens {}'.format(
-        scriptref, dbDir, proc['dbName'].decode(), dbExtens)
-    cmd += ' --nproc {} --nside {} --simuType {}'.format(
-        proc['nproc'], proc['nside'], proc['simuType'])
-    cmd += ' --outDir {}'.format(outDir)
-    cmd += ' --fieldType {}'.format(proc['fieldType'].decode())
-    cmd += ' --saveData {}'.format(saveData)
-    cmd += ' --metric {}'.format(metric)
-    cmd += ' --coadd {}'.format(proc['coadd'])
-    if nodither != '':
-        cmd += ' --nodither {}'.format(nodither)
+        Parameters
+        ----------------
+        proc: numpy array
+          data to process
 
-    cmd += ' --ramin {}'.format(RA_min)
-    cmd += ' --ramax {}'.format(RA_max)
-    cmd += ' --decmin {}'.format(Dec_min)
-    cmd += ' --decmax {}'.format(Dec_max)
-    if band != '':
-        cmd += ' --band {}'.format(band)
+        """
 
-    return cmd
+        cmd = 'python {}.py --dbDir {} --dbName {} --dbExtens {}'.format(
+        self.scriptref, self.dbDir, proc['dbName'].decode(), self.dbExtens)
+        cmd += ' --nproc {} --nside {} --simuType {}'.format(
+            proc['nproc'], proc['nside'], proc['simuType'])
+        cmd += ' --outDir {}'.format(self.outDir)
+        cmd += ' --fieldType {}'.format(self.fieldType)
+        cmd += ' --saveData {}'.format(self.saveData)
+        cmd += ' --metric {}'.format(self.metric)
+        cmd += ' --coadd {}'.format(proc['coadd'])
+        if self.nodither != '':
+            cmd += ' --nodither {}'.format(self.nodither)
 
+        cmd += ' --RAmin {}'.format(self.RA_min)
+        cmd += ' --RAmax {}'.format(self.RA_max)
+        cmd += ' --Decmin {}'.format(self.Dec_min)
+        cmd += ' --Decmax {}'.format(self.Dec_max)
+        if self.band != '':
+            cmd += ' --band {}'.format(self.band)
 
-"""
-if fieldType =='DD':
-    dbNames = ['kraken_2026','ddf_0.23deg_1exp_pairsmix_10yrs','ddf_0.70deg_1exp_pairsmix_10yrs','ddf_pn_0.23deg_1exp_pairsmix_10yrs','ddf_pn_0.70deg_1exp_pairsmix_10yrs']
-    simuType = [0,1,1,1,1]
-    nproc=5
-    nside = 128
+        if self.pixelmap_dir != '':
+            cmd+= ' --pixelmap_dir {}'.format(self.pixelmap_dir)
+            cmd+= ' --npixels {}'.format(self.npixels)
 
-if fieldType =='WFD':
-    dbNames = ['kraken_2026','alt_sched','altsched_good_weather','alt_sched_rolling','baseline_1exp_nopairs_10yrs']
-    simuType = [1,2,2,2,1]
-    #dbNames = ['kraken_2026']
-    #dbNames = ['altsched_good_weather']
-    #'baseline_1exp_pairsame_10yrs','baseline_1exp_pairsmix_10yrs','baseline_2exp_pairsame_10yrs','baseline_2exp_pairsmix_10yrs','roll_mod2_sdf0.2mixed_10yrs']
-    #dbNames = ['alt_sched_rolling', 'kraken_2026','rolling_10yrs_opsim']
-    #simuType = [2,1,0]
-    dbNames = ['colossus_2667']
-    simuType = [2]
-    
-    #simuType = [1]
-    #simuType = [2]
-    nproc = 8
-    nside = 64
-    
-    dbNames = dbNames_oswg_paper
-    simuType = simuType_oswg_paper
-    
-"""
+        return cmd
 
 parser = OptionParser()
 
@@ -180,6 +300,14 @@ parser.add_option("--splitSky", type="int", default=0,
                   help="db extension [%default]")
 parser.add_option("--band", type="str", default='',
                   help="db extension [%default]")
+parser.add_option("--nside", type="int", default=64,
+                  help="nside healpix parameter[%default]")
+parser.add_option("--fieldType", type=str, default='WFD',
+                  help="field type[%default]")
+parser.add_option("--pixelmap_dir", type=str, default='',
+                  help="dir where to find pixel maps[%default]")
+parser.add_option("--npixels", type=int, default=0,
+                  help="number of pixels to process[%default]")
 
 opts, args = parser.parse_args()
 
@@ -194,35 +322,30 @@ if dbDir == '':
     dbDir = '/sps/lsst/cadence/LSST_SN_CADENCE/cadence_db'
 dbExtens = opts.dbExtens
 
-outDir = '/sps/lsst/users/gris/MetricOutput'
+outDir = '/sps/lsst/users/gris/MetricOutput_pixels'
 nodither = opts.nodither
 splitSky = opts.splitSky
+nside = opts.nside
+fieldType = opts.fieldType
+pixelmap_dir = opts.pixelmap_dir
+npixels = opts.npixels
 
 toprocess = np.genfromtxt(dbList, dtype=None, names=[
                           'dbName', 'simuType', 'nside', 'coadd', 'fieldType', 'nproc'])
 
-print('there', toprocess)
-
-n_per_slice = 1
-n_process = len(toprocess)
-lproc = list(range(0, n_process, n_per_slice))
-if splitSky:
-    RAs = np.linspace(0., 360., 11)
-else:
-    RAs = [0., 360.]
-
-for i, val in enumerate(lproc):
-    # proc in toprocess:
-    for ira in range(len(RAs)-1):
-        RA_min = RAs[ira]
-        RA_max = RAs[ira+1]
-        batch_new(dbDir, dbExtens, 'run_scripts/metrics/run_metrics_fromnpy', outDir,
-                  8, 1, metricName, toprocess[val:val+n_per_slice], nodither, RA_min, RA_max,band=band)
+#print('there', toprocess)
 
 
-if (n_process & 1) & (n_per_slice > 1):
-    for ira in range(len(RAs)-1):
-        RA_min = Ras[ira]
-        RA_max = Ras[ira+1]
-        batch_new(dbDir, dbExtens, 'run_scripts/metrics/run_metrics_fromnpy',
-                  outDir, 8, 1, metricName, toprocess[-1], nodither, RA_min, RA_max,band=band)
+"""
+proc  = batchclass(dbDir, dbExtens, scriptref, outDir, nproccomp,
+                 saveData, metric, toprocess, nodither,nside,
+                 RA_min=0.0, RA_max=360.0, 
+                 Dec_min=-1.0, Dec_max=-1.0,band=''
+"""
+
+for proc in toprocess:
+    myproc = go_for_batch(proc,splitSky,
+                          dbDir,dbExtens,outDir,
+                          metricName,nodither,nside,fieldType,
+                          band,pixelmap_dir,npixels)
+    #break
