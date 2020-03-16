@@ -17,10 +17,10 @@ class MetricWrapper:
                  coadd=True, fieldType='DD', nside=64,
                  RAmin=0., RAmax=360.,
                  Decmin=-1.0, Decmax=-1.0,
-                 npixels=0,metadata={}, outDir=''):
+                 npixels=0, metadata={}, outDir=''):
 
         self.name = '{}Metric_{}_nside_{}_coadd_{}_{}_{}_{}_{}_npixels_{}'.format(name,
-                                                                          fieldType, nside, coadd, RAmin, RAmax, Decmin, Decmax,npixels)
+                                                                                  fieldType, nside, coadd, RAmin, RAmax, Decmin, Decmax, npixels)
 
         self.metric = None
 
@@ -56,7 +56,7 @@ class CadenceMetricWrapper(MetricWrapper):
         super(CadenceMetricWrapper, self).__init__(
             name=name, season=season, coadd=coadd, fieldType=fieldType,
             nside=nside, RAmin=RAmin, RAmax=RAmax,
-            Decmin=Decmin, Decmax=Decmax, npixels=npixels,metadata=metadata, outDir=outDir)
+            Decmin=Decmin, Decmax=Decmax, npixels=npixels, metadata=metadata, outDir=outDir)
 
         self.metric = SNCadenceMetric(
             coadd=coadd, nside=nside, verbose=metadata.verbose)
@@ -74,7 +74,7 @@ class SNRMetricWrapper(MetricWrapper):
         super(SNRMetricWrapper, self).__init__(
             name=name, season=season, coadd=coadd, fieldType=fieldType,
             nside=nside, RAmin=RAmin, RAmax=RAmax,
-            Decmin=Decmin, Decmax=Decmax,npixels=npixels,
+            Decmin=Decmin, Decmax=Decmax, npixels=npixels,
             metadata=metadata, outDir=outDir)
 
         self.metaout += ['x1', 'color', 'dirFakes', 'dirRefs', 'band', 'z']
@@ -152,7 +152,7 @@ class ObsRateMetricWrapper(MetricWrapper):
 class NSNMetricWrapper(MetricWrapper):
     def __init__(self, name='NSN', season=-1, coadd=True, fieldType='DD',
                  nside=64, RAmin=0., RAmax=360.,
-                 Decmin=-1.0,Decmax=-1.0,
+                 Decmin=-1.0, Decmax=-1.0,
                  npixels=0,
                  metadata={}, outDir=''):
         super(NSNMetricWrapper, self).__init__(
@@ -211,7 +211,7 @@ class NSNMetricWrapper(MetricWrapper):
                 lc_reference[x1_colors[j]] = resultdict[j]
 
         print('Reference data loaded', lc_reference.keys())
-        
+
         # LC selection criteria
 
         if fieldType == 'DD':
@@ -240,26 +240,28 @@ class NSNMetricWrapper(MetricWrapper):
         x1_color_dist = np.genfromtxt('reference_files/Dist_X1_Color_JLA_high_z.txt', dtype=None,
                                       names=('x1', 'color', 'weight_x1', 'weight_c', 'weight_tot'))
 
-
         print(x1_color_dist)
-        
-        x1vals = np.arange(-3.,5.,2.)
-        cvals = np.arange(-0.3,0.5,0.2)
 
-        r = []
-        for ix in range(len(x1vals)-1):
-            ii = x1_color_dist['x1'] >= x1vals[ix]
-            ii &= x1_color_dist['x1'] < x1vals[ix+1]
-            x1med = np.median([x1vals[ix],x1vals[ix+1]])
-            for ic in range(len(cvals)-1):
-                iib = x1_color_dist['color'] >= cvals[ic]
-                iib &= x1_color_dist['color'] < cvals[ic+1]
-                cmed = np.median([cvals[ic],cvals[ic+1]])
-                print(x1med,np.round(cmed,1),np.sum(x1_color_dist[ii&iib]['weight_tot']))
-                r.append((np.round(x1med,1),np.round(cmed,1),np.sum(x1_color_dist[ii&iib]['weight_tot'])))
-        
-        x1_color_dist = np.rec.fromrecords(r, names=['x1', 'color','weight_tot'])
+        if metadata.proxy_level == 1:
+            x1vals = np.arange(-3., 5., 2.)
+            cvals = np.arange(-0.3, 0.5, 0.2)
 
+            r = []
+            for ix in range(len(x1vals)-1):
+                ii = x1_color_dist['x1'] >= x1vals[ix]
+                ii &= x1_color_dist['x1'] < x1vals[ix+1]
+                x1med = np.median([x1vals[ix], x1vals[ix+1]])
+                for ic in range(len(cvals)-1):
+                    iib = x1_color_dist['color'] >= cvals[ic]
+                    iib &= x1_color_dist['color'] < cvals[ic+1]
+                    cmed = np.median([cvals[ic], cvals[ic+1]])
+                    print(x1med, np.round(cmed, 1), np.sum(
+                        x1_color_dist[ii & iib]['weight_tot']))
+                    r.append((np.round(x1med, 1), np.round(cmed, 1),
+                              np.sum(x1_color_dist[ii & iib]['weight_tot'])))
+
+            x1_color_dist = np.rec.fromrecords(
+                r, names=['x1', 'color', 'weight_tot'])
 
         # metric instance
         pixArea = hp.nside2pixarea(nside, degrees=True)
