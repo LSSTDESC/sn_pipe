@@ -184,7 +184,7 @@ class NSNMetricWrapper(MetricWrapper):
                      (2.0, -0.2), (2.0, 0.0), (2.0, 0.2)]
         # (2.0, -0.2)] #(2.0, 0.0), (2.0, 0.2)]
 
-        if metadata.proxy_level > 0:
+        if metadata.proxy_level == 2:
             x1_colors = [(-2.0, 0.2), (0.0, 0.0)]
 
         print('Loading reference files')
@@ -238,7 +238,28 @@ class NSNMetricWrapper(MetricWrapper):
         # load x1_color_dist
 
         x1_color_dist = np.genfromtxt('reference_files/Dist_X1_Color_JLA_high_z.txt', dtype=None,
-                                      names=('x1', 'color', 'weight_x1', 'weight_x1', 'weight_tot'))
+                                      names=('x1', 'color', 'weight_x1', 'weight_c', 'weight_tot'))
+
+
+        print(x1_color_dist)
+        
+        x1vals = np.arange(-3.,5.,2.)
+        cvals = np.arange(-0.3,0.5,0.2)
+
+        r = []
+        for ix in range(len(x1vals)-1):
+            ii = x1_color_dist['x1'] >= x1vals[ix]
+            ii &= x1_color_dist['x1'] < x1vals[ix+1]
+            x1med = np.median([x1vals[ix],x1vals[ix+1]])
+            for ic in range(len(cvals)-1):
+                iib = x1_color_dist['color'] >= cvals[ic]
+                iib &= x1_color_dist['color'] < cvals[ic+1]
+                cmed = np.median([cvals[ic],cvals[ic+1]])
+                print(x1med,np.round(cmed,1),np.sum(x1_color_dist[ii&iib]['weight_tot']))
+                r.append((np.round(x1med,1),np.round(cmed,1),np.sum(x1_color_dist[ii&iib]['weight_tot'])))
+        
+        x1_color_dist = np.rec.fromrecords(r, names=['x1', 'color','weight_tot'])
+
 
         # metric instance
         pixArea = hp.nside2pixarea(nside, degrees=True)
