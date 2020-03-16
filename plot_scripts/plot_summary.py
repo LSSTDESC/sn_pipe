@@ -80,8 +80,10 @@ class Summary:
         
         fileNames = glob.glob(fileName)
 
-        metricValues = np.load(fileNames[0])
+        print('found',fileNames)
+        metricValues = np.load(fileNames[0],allow_pickle=True)
 
+        print('iii',metricValues)
         return metricValues 
 
 
@@ -107,8 +109,10 @@ class Summary:
 
         print('loading here',dirFile, dbName, bands)
         metricValuesCad = self.loadFile(dirFile, dbName, 'WFD','Cadence')
-        #metricValuesSNR =  self.loadFile(dirFile, dbName,'','SNR{}'.format(band))
-        metricValuesSNR =  self.loadFile(dirFile, dbName,'WFD','ObsRate')
+        for band in bands:
+            metricValuesSNR =  self.loadFile(dirFile, dbName,'','SNR{}'.format(band))
+
+        #metricValuesSNR =  self.loadFile(dirFile, dbName,'WFD','ObsRate')
         if metricValuesCad is None or metricValuesSNR is None:
             return None
         
@@ -192,13 +196,13 @@ plt.rcParams['axes.labelsize'] = 18
 plt.rcParams['lines.linewidth'] = 2.5
 plt.rcParams['figure.figsize'] = (10, 7)
 
-forPlot = pd.read_csv(filename)
+forPlot = pd.read_csv(filename,comment='#')
 
 print(forPlot)
 
 Sum = Summary()
 
-bands = 'rz'
+bands = 'r'
 if not os.path.isfile('Summary.npy'):
     medList = []
     for dbName in forPlot['dbName']:
@@ -212,7 +216,7 @@ if not os.path.isfile('Summary.npy'):
     np.save('Summary.npy',np.copy(medValues))
 
 print(forPlot)
-bands = 'rz'
+bands = 'r'
 medValues = np.load('Summary.npy')
 
 # now plot

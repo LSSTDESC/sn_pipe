@@ -25,12 +25,12 @@ print('Start processing...')
 
 dbDir = opts.dbDir
 if dbDir == '':
-    dbDir = '/sps/lsst/users/gris/MetricOutput'
+    dbDir = '/sps/lsst/users/gris/MetricOutput_pixels'
 
 dbName = opts.dbName
 outDir = opts.outDir
 if outDir == '':
-    outDir = '/sps/lsst/users/gris/MetricSummary'
+    outDir = '/sps/lsst/users/gris/MetricSummary_pixels'
 
 if not os.path.isdir(outDir):
     os.makedirs(outDir)
