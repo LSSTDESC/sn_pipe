@@ -227,7 +227,7 @@ class batchclass:
 
         """
         # qsub command
-        qsub = 'qsub -P P_lsst -l sps=1,ct=24:00:00,h_vmem=16G -j y -o {} -pe multicores {} <<EOF'.format(
+        qsub = 'qsub -P P_lsst -l sps=1,ct=12:00:00,h_vmem=16G -j y -o {} -pe multicores {} <<EOF'.format(
         log, self.nproccomp)
 
         scriptName = dirScript+'/'+name_id+'.sh'
@@ -247,7 +247,7 @@ class batchclass:
 
         script.write("EOF" + "\n")
         script.close()
-        os.system("sh "+scriptName)
+        #os.system("sh "+scriptName)
 
     def batch_cmd(self,proc):
         """
