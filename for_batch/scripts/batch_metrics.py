@@ -6,7 +6,7 @@ import glob
 def go_for_batch(toproc,splitSky,
                  dbDir,dbExtens,outDir,metricName,
                  nodither,nside,fieldType,band,
-                 pixelmap_dir,npixels):
+                 pixelmap_dir,npixels, proxy_level):
     """
     Function to prepare and start batches
 
@@ -36,7 +36,8 @@ def go_for_batch(toproc,splitSky,
       directory where pixel maps (ie matched pixel positions and observations) are located
     npixels: int
       number of pixels to process
-
+    proxy_level: int
+      proxy level - for NSN metric only (possible values: 0,1,2)
 
     """
 
@@ -57,8 +58,9 @@ def go_for_batch(toproc,splitSky,
             RA_max = RAs[ira+1]
             batchclass(dbName,dbDir, dbExtens, 'run_scripts/metrics/run_metrics_fromnpy', 
                        outDir, 8, 1, metricName, toproc, 
-                       nodither, nside, fieldType,RA_min, RA_max,band,
-                       pixelmap_dir,npixels)
+                       nodither, nside, fieldType,RA_min, RA_max,
+                       -1.0,-1.0,band,
+                       pixelmap_dir,npixels,proxy_level)
 
     else:
         # second case: there are pixelmaps available -> run on them
@@ -95,8 +97,10 @@ def go_for_batch(toproc,splitSky,
                 npixel_proc = int(npixels*npixels_map/npixels_tot)
             batchclass(dbName,dbDir, dbExtens, 'run_scripts/metrics/run_metrics_fromnpy', 
                        outDir, 8, 1, metricName, toproc, 
-                       nodither, nside, fieldType,val['RAmin'], val['RAmax'],band=band,
-                       pixelmap_dir=pixelmap_dir,npixels=npixel_proc)
+                       nodither, nside, fieldType,val['RAmin'], val['RAmax'],
+                       val['Decmin'],val['Decmax'],band=band,
+                       pixelmap_dir=pixelmap_dir,npixels=npixel_proc,
+                       proxy_level=proxy_level)
        
             
 
@@ -107,7 +111,7 @@ class batchclass:
                  fieldType='WFD',
                  RA_min=0.0, RA_max=360.0, 
                  Dec_min=-1.0, Dec_max=-1.0,band='',
-                 pixelmap_dir='',npixels=0):
+                 pixelmap_dir='',npixels=0,proxy_level=-1):
         """
         class to prepare and launch batches
 
@@ -151,6 +155,8 @@ class batchclass:
           location directory of pixelmaps (default: '')
         npixels: int, opt
           number of pixels to process (default: 0)
+        proxy_level: int, opt
+          proxy level for NSN metric (default: -1)
 
         """
 
@@ -174,6 +180,7 @@ class batchclass:
         self.fieldType = fieldType
         self.pixelmap_dir = pixelmap_dir
         self.npixels = npixels
+        self.proxy_level = proxy_level
 
         dirScript, name_id, log = self.prepareOut()
         
@@ -187,9 +194,7 @@ class batchclass:
 
         directories for scripts and log files are defined here.
         
-
         """
-
 
         self.cwd = os.getcwd()
         dirScript = self.cwd + "/scripts"
@@ -204,6 +209,8 @@ class batchclass:
         id = '{}_{}_{}_{}{}_{}_{}_{}_{}'.format(
             self.dbName, self.nside, self.fieldType, self.metric, 
             self.nodither, self.RA_min, self.RA_max, self.Dec_min, self.Dec_max)
+        if self.proxy_level > -1:
+            id += '_proxy_level_{}'.format(self.proxy_level)
 
         name_id = 'metric_{}'.format(id)
         log = dirLog + '/'+name_id+'.log'
@@ -280,8 +287,10 @@ class batchclass:
             cmd += ' --band {}'.format(self.band)
 
         if self.pixelmap_dir != '':
-            cmd+= ' --pixelmap_dir {}'.format(self.pixelmap_dir)
-            cmd+= ' --npixels {}'.format(self.npixels)
+            cmd += ' --pixelmap_dir {}'.format(self.pixelmap_dir)
+            cmd += ' --npixels {}'.format(self.npixels)
+        if self.proxy_level > -1:
+            cmd += ' --proxy_level {}'.format(self.proxy_level) 
 
         return cmd
 
@@ -291,7 +300,8 @@ parser.add_option("--dbList", type="str", default='WFD.txt',
                   help="dbList to process  [%default]")
 parser.add_option("--metricName", type="str", default='SNR',
                   help="metric to process  [%default]")
-parser.add_option("--dbDir", type="str", default='', help="db dir [%default]")
+parser.add_option("--dbDir", type="str", default='/sps/lsst/cadence/LSST_SN_PhG/cadence_db/fbs_1.4/db', 
+                  help="db dir [%default]")
 parser.add_option("--dbExtens", type="str", default='npy',
                   help="db extension [%default]")
 parser.add_option("--nodither", type="str", default='',
@@ -308,6 +318,10 @@ parser.add_option("--pixelmap_dir", type=str, default='',
                   help="dir where to find pixel maps[%default]")
 parser.add_option("--npixels", type=int, default=0,
                   help="number of pixels to process[%default]")
+parser.add_option("--outDir",type=str,default='/sps/lsst/users/gris/MetricOutput_pixels',
+                  help="output directory[%default]")
+parser.add_option("--proxy_level", type=int, default=-1,
+                  help="proxy level - For NSN metric only[%default]")
 
 opts, args = parser.parse_args()
 
@@ -317,23 +331,21 @@ dbList = opts.dbList
 metricName = opts.metricName
 dbDir = opts.dbDir
 band = opts.band
-
-if dbDir == '':
-    dbDir = '/sps/lsst/cadence/LSST_SN_CADENCE/cadence_db'
 dbExtens = opts.dbExtens
 
-outDir = '/sps/lsst/users/gris/MetricOutput_pixels'
+outDir = opts.outDir
 nodither = opts.nodither
 splitSky = opts.splitSky
 nside = opts.nside
 fieldType = opts.fieldType
 pixelmap_dir = opts.pixelmap_dir
 npixels = opts.npixels
+proxy_level = opts.proxy_level
 
 toprocess = np.genfromtxt(dbList, dtype=None, names=[
                           'dbName', 'simuType', 'nside', 'coadd', 'fieldType', 'nproc'])
 
-#print('there', toprocess)
+print('there', toprocess)
 
 
 """
@@ -347,5 +359,5 @@ for proc in toprocess:
     myproc = go_for_batch(proc,splitSky,
                           dbDir,dbExtens,outDir,
                           metricName,nodither,nside,fieldType,
-                          band,pixelmap_dir,npixels)
+                          band,pixelmap_dir,npixels,proxy_level)
     #break

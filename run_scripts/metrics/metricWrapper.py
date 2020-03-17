@@ -240,7 +240,7 @@ class NSNMetricWrapper(MetricWrapper):
         x1_color_dist = np.genfromtxt('reference_files/Dist_X1_Color_JLA_high_z.txt', dtype=None,
                                       names=('x1', 'color', 'weight_x1', 'weight_c', 'weight_tot'))
 
-        print(x1_color_dist)
+        #print(x1_color_dist)
 
         if metadata.proxy_level == 1:
             x1vals = np.arange(-3., 5., 2.)
