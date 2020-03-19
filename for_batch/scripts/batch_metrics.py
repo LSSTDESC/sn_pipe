@@ -345,9 +345,11 @@ proxy_level = opts.proxy_level
 toprocess = np.genfromtxt(dbList, dtype=None, names=[
                           'dbName', 'simuType', 'nside', 'coadd', 'fieldType', 'nproc'])
 
-print('there', toprocess)
+print('there', toprocess,type(toprocess),toprocess.size)
 
 
+if toprocess.size == 1:
+    toprocess= np.array([toprocess])
 """
 proc  = batchclass(dbDir, dbExtens, scriptref, outDir, nproccomp,
                  saveData, metric, toprocess, nodither,nside,
