@@ -184,7 +184,7 @@ class processMetrics:
         print(tabpix, len(tabpix))
         result_queue = multiprocessing.Queue()
 
-        print('in multi process', npixels)
+        print('in multi process', npixels, self.nprocs)
         # multiprocessing
         for j in range(len(tabpix)-1):
             ida = tabpix[j]
@@ -193,8 +193,9 @@ class processMetrics:
             print('Field', j, len(healpixels[ida:idb]))
 
             field = healpixels[ida:idb]
+
             """
-            idx = field['fieldName'] == 'COSMOS'
+            idx = field['fieldName'] == 'SPT'
             if len(field[idx]) > 0:
             """
             p = multiprocessing.Process(name='Subprocess-'+str(j), target=func, args=(
