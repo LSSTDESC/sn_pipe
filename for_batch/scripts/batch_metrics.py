@@ -211,6 +211,8 @@ class batchclass:
             self.nodither, self.RA_min, self.RA_max, self.Dec_min, self.Dec_max)
         if self.proxy_level > -1:
             id += '_proxy_level_{}'.format(self.proxy_level)
+        if self.pixelmap_dir != '':
+            id += '_frompixels_{}'.format(self.npixels)
 
         name_id = 'metric_{}'.format(id)
         log = dirLog + '/'+name_id+'.log'
@@ -254,7 +256,7 @@ class batchclass:
 
         script.write("EOF" + "\n")
         script.close()
-        #os.system("sh "+scriptName)
+        os.system("sh "+scriptName)
 
     def batch_cmd(self,proc):
         """
