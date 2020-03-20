@@ -60,7 +60,7 @@ def go_for_batch(toproc,splitSky,
                        outDir, 8, 1, metricName, toproc, 
                        nodither, nside, fieldType,RA_min, RA_max,
                        -1.0,-1.0,band,
-                       pixelmap_dir,npixels,proxy_level)
+                       pixelmap_dir,npixels,proxy_level,npixels)
 
     else:
         # second case: there are pixelmaps available -> run on them
@@ -92,15 +92,19 @@ def go_for_batch(toproc,splitSky,
             ffi = glob.glob(search_path)
             tab = np.load(ffi[0])
             npixels_map = len(np.unique(tab['healpixID']))
+
+            #print('pixel_map',val['RAmin'],val['RAmax'],npixels_map)
             npixel_proc = npixels
             if npixels >0 :
-                npixel_proc = int(npixels*npixels_map/npixels_tot)
+                num = float(npixels*npixels_map)/float(npixels_tot)
+                npixel_proc = int(round(num))
+                #print('hoio',npixel_proc,num)
             batchclass(dbName,dbDir, dbExtens, 'run_scripts/metrics/run_metrics_fromnpy', 
                        outDir, 8, 1, metricName, toproc, 
                        nodither, nside, fieldType,val['RAmin'], val['RAmax'],
                        val['Decmin'],val['Decmax'],band=band,
                        pixelmap_dir=pixelmap_dir,npixels=npixel_proc,
-                       proxy_level=proxy_level)
+                       proxy_level=proxy_level,npixels_tot=npixels)
        
             
 
@@ -111,7 +115,8 @@ class batchclass:
                  fieldType='WFD',
                  RA_min=0.0, RA_max=360.0, 
                  Dec_min=-1.0, Dec_max=-1.0,band='',
-                 pixelmap_dir='',npixels=0,proxy_level=-1):
+                 pixelmap_dir='',npixels=0,npixels_tot=0,
+                 proxy_level=-1):
         """
         class to prepare and launch batches
 
@@ -155,6 +160,8 @@ class batchclass:
           location directory of pixelmaps (default: '')
         npixels: int, opt
           number of pixels to process (default: 0)
+        npixels_tot: int, opt
+          number of pixels initially to process (default: 0)
         proxy_level: int, opt
           proxy level for NSN metric (default: -1)
 
@@ -180,6 +187,7 @@ class batchclass:
         self.fieldType = fieldType
         self.pixelmap_dir = pixelmap_dir
         self.npixels = npixels
+        self.npixels_tot = npixels_tot
         self.proxy_level = proxy_level
 
         dirScript, name_id, log = self.prepareOut()
@@ -212,7 +220,7 @@ class batchclass:
         if self.proxy_level > -1:
             id += '_proxy_level_{}'.format(self.proxy_level)
         if self.pixelmap_dir != '':
-            id += '_frompixels_{}'.format(self.npixels)
+            id += '_frompixels_{}_{}'.format(self.npixels,self.npixels_tot)
 
         name_id = 'metric_{}'.format(id)
         log = dirLog + '/'+name_id+'.log'
