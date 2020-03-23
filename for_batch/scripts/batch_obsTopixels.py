@@ -62,7 +62,8 @@ parser = OptionParser()
 
 parser.add_option("--dbList", type="str", default='WFD.txt',
                   help="dbList to process  [%default]")
-parser.add_option("--dbDir", type="str", default='', help="db dir [%default]")
+parser.add_option("--dbDir", type="str", 
+                  default='/sps/lsst/cadence/LSST_SN_PhG/cadence_db/fbs_1.4/db', help="db dir [%default]")
 parser.add_option("--dbExtens", type="str", default='db',
                   help="db extension [%default]")
 parser.add_option("--nodither", type="str", default='',
@@ -70,19 +71,18 @@ parser.add_option("--nodither", type="str", default='',
 parser.add_option("--nside", type="int", default=64,
                   help="healpix nside[%default]")
 
+parser.add_option("--outDir", type="str", 
+                  default='/sps/lsst/users/gris/ObsPixelized',
+                  help="output directory[%default]")
+
 opts, args = parser.parse_args()
 
 print('Start processing...',opts)
 
 dbList = opts.dbList
 dbDir = opts.dbDir
-
-if dbDir == '':
-    dbDir = '/sps/lsst/cadence/LSST_SN_PhG/cadence_db/fbs_1.4/db'
-
 dbExtens = opts.dbExtens
-
-outDir = '/sps/lsst/users/gris/ObsPixelized'
+outDir = opts.outDir
 
 toprocess = np.genfromtxt(dbList, dtype=None, names=[
                           'dbName', 'simuType', 'nside', 'coadd', 'fieldType', 'nproc'])
