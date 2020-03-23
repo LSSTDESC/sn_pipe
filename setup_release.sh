@@ -27,6 +27,16 @@ myshell=$(echo $SHELL | rev | cut -d "/" -f1  | rev)
 
 echo 'the shell is' $myshell
 
+myshell='sh'
+
+echo $myshell
+if [ $myshell == 'sh' ] 
+then
+    myshell='bash'
+fi
+
+echo $myshell
+
 # get distribs
 array=($(ls -dtr $dir_rel/lsst_sims/*))
 
