@@ -16,7 +16,7 @@ class MetricAna:
     def __init__(self, dbDir, dbName,
                  metricName='NSN', fieldType='WFD',
                  nside=64,
-                 x1=-2.0, color=0.2):
+                 x1=-2.0, color=0.2, npixels=-1):
         """
         class to analyze results from NSN metric
 
@@ -36,11 +36,13 @@ class MetricAna:
           x1 SN value (default: -2.0)
         color: float, opt
           color SN value (default: 0.2)
-
+        npixels: int, opt
+          total number of pixels for this strategy
 
         """
 
         self.nside = nside
+        self.npixels = npixels
 
         # loading data (metric values)
         search_path = '{}/{}/{}/*NSNMetric_{}*_nside_{}_*.hdf5'.format(
@@ -48,144 +50,120 @@ class MetricAna:
         print('looking for', search_path)
         fileNames = glob.glob(search_path)
         # fileName='{}/{}_CadenceMetric_{}.npy'.format(dirFile,dbName,band)
-        print(fileNames)
+        # print(fileNames)
         metricValues = np.array(loopStack(fileNames, 'astropyTable'))
         idx = np.abs(metricValues['x1']-x1) < 1.e-6
         idx &= np.abs(metricValues['color']-color) < 1.e-6
-        self.data = metricValues[idx]
+        idx &= metricValues['status'] == 1
+        # idx &= metricValues['season'] == 5
+        self.data = pd.DataFrame(metricValues[idx])
 
-    def plotMollview(self, varName, leg, op, xmin, xmax):
+        self.ratiopixels = 1
+        self.npixels_eff = len(self.data['healpixID'].unique())
+        if npixels > 0:
+            self.ratiopixels = float(
+                npixels)/float(self.npixels_eff)
+
+        self.zlim = self.zlim_med()
+        self.nsn, self.sig_nsn = self.nSN_tot()
+        self.nsn_extrapol = int(np.round(self.nsn*self.ratiopixels))
+
+    def zlim_med(self):
+        """
+        Method to estimate the median redshift limit over the pixels
+
+        Returns
+        ----------
+        median zlim (float)
+        """
+        meds = self.data.groupby(['healpixID']).median().reset_index()
+        meds = meds.round({'zlim': 2})
+
+        return meds['zlim'].median()
+
+    def nSN_tot(self):
+        """
+        Method to estimate the total number of supernovae (and error)
+
+        Returns
+        -----------
+        nsn, sig_nsn: int, int
+          number of sn and sigma
+        """
+        sums = self.data.groupby(['healpixID']).sum().reset_index()
+        sums['nsn_med'] = sums['nsn_med'].astype(int)
+
+        return sums['nsn_med'].sum(), int(np.sqrt(sums['var_nsn_med'].sum()))
+
+    def plot(self):
+        """
+        Method to plot two Mollview of the metric results:
+        - redshift limit 
+        - number of well-sampled supernovae
+
+        """
+
+        # this is to estimate the median zlim over the sky
+        meds = self.data.groupby(['healpixID']).median().reset_index()
+        meds = meds.round({'zlim': 2})
+        self.plotMollview(meds, 'zlim', 'zlimit', np.median,
+                          xmin=0.1, xmax=0.4)
+
+        # this is to plot the total number of SN (per pixels) over the sky
+        sums = self.data.groupby(['healpixID']).sum().reset_index()
+        sums['nsn_med'] = sums['nsn_med'].astype(int)
+        self.plotMollview(sums, 'nsn_med', 'NSN', np.sum,
+                          xmin=10., xmax=25.)
+
+    def plotMollview(self, data, varName, leg, op, xmin, xmax):
         """
         Method to display results as a Mollweid map
+
+        Parameters
+        ---------------
+        data: pandas df
+          data to consider
+        varName: str
+          name of the variable to display
+        leg: str
+          legend of the plot
+        op: operator
+          operator to apply to the pixelize data (median, sum, ...)
+        xmin: float
+          min value for the display
+        xmax: float
+         max value for the display
 
         """
         npix = hp.nside2npix(self.nside)
 
-        fig, ax = plt.subplots()
         hpxmap = np.zeros(npix, dtype=np.float)
         hpxmap = np.full(hpxmap.shape, -0.1)
-        hpxmap[self.data['healpixID'].astype(int)] += self.data[varName]
+        hpxmap[data['healpixID'].astype(
+            int)] += data[varName]
         norm = plt.cm.colors.Normalize(xmin, xmax)
         cmap = plt.cm.jet
         cmap.set_under('w')
-        resleg = op(self.data[varName])
+        resleg = op(data[varName])
+        title = '{}: {}'.format(leg, resleg)
 
-        plt.sca(ax)
         hp.mollview(hpxmap, min=xmin, max=xmax, cmap=cmap,
-                    title='{}: {}'.format(leg, resleg), nest=True, norm=norm)
+                    title=title, nest=True, norm=norm)
         hp.graticule()
 
-
-def match_colors(data):
-
-    # print('here',data)
-    x1_colors = [(-2.0, 0.2), (0.0, 0.0)]
-    corr = dict(zip(x1_colors, ['faint', 'medium']))
-    r = []
-    for (healpixID, season) in np.unique(data[['healpixID', 'season']]):
-        idx = data['healpixID'] == healpixID
-        idx &= data['season'] == season
-        zlim = {}
-        nsn_med = {}
-        nsn = {}
-        seldata = data[idx]
-        pixRa = np.unique(seldata['pixRa'])[0]
-        pixDec = np.unique(seldata['pixDec'])[0]
-        good_event = True
-        for (x1, color) in x1_colors:
-            idxb = np.abs(seldata['x1']-x1) < 1.e-5
-            idxb &= np.abs(seldata['color']-color) < 1.e-5
-            selb = seldata[idxb]
-            if len(selb) > 0:
-                zlim[corr[(x1, color)]] = selb['zlim'][0]
-                nsn_med[corr[(x1, color)]] = selb['nsn_med'][0]
-                nsn[corr[(x1, color)]] = selb['nsn'][0]
-            else:
-                # zlim[corr[(x1,color)]] = -1.
-
-                good_event = False
-        if good_event:
-            r.append((healpixID, season, pixRa, pixDec,
-                      zlim['faint'], zlim['medium'], nsn_med['faint'], nsn_med['medium'], nsn['faint'], nsn['medium']))
-
-    return np.rec.fromrecords(r, names=['healpixID', 'season',
-                                        'pixRa', 'pixDec',
-                                        'zlim_faint', 'zlim_medium',
-                                        'nsn_med_zfaint', 'nsn_med_zmedium',
-                                        'nsn_zfaint', 'nsn_zmedium'])
-
-
-def append(metricTot, sel):
-
-    if metricTot is None:
-        metricTot = np.copy(sel)
-    else:
-        metricTot = np.concatenate((metricTot, np.copy(sel)))
-
-    return metricTot
-
-
-def getFields(elaisRa=0.0):
-
-    r = []
-    r.append(('COSMOS '.ljust(7), 1, 2786, 150.36, 2.84))
-    r.append(('XMM-LSS', 2, 2412, 34.39, -5.09))
-    r.append(('CDFS'.ljust(7), 3, 1427, 53.00, -27.44))
-    r.append(('ELAIS'.ljust(7), 4, 744, elaisRa, -45.52))
-    r.append(('SPT'.ljust(7), 5, 290, 349.39, -63.32))
-    # r.append(('Fake'.ljust(7), 6, 111, 0.0, 0.0))
-    r.append(('ADFS'.ljust(7), 6, 290, 61.00, -48.0))
-    fields_DD = np.rec.fromrecords(
-        r, names=['fieldname', 'fieldnum', 'fieldId', 'Ra', 'Dec'])
-    return fields_DD
-
-
-"""
-def getVals(fields_DD, tab, cadence, nside=64, plotting=False):
-
-    pixArea = hp.nside2pixarea(nside, degrees=True)
-
-    if plotting:
-        fig, ax = plt.subplots()
-
-    r = []
-    dataTot = None
-
-    print(tab)
-    print(tab.dtype)
-    for field in fields_DD:
-        dataSel = dataInside(
-            tab, field['Ra'], field['Dec'], 10., 10., 'pixRa', 'pixDec')
-        if dataSel is not None:
-            dataSel = match_colors(dataSel)
-            if dataSel is not None:
-                dataSel = rf.append_fields(dataSel, 'fieldname', [
-                                           field['fieldname']]*len(dataSel))
-                dataSel = rf.append_fields(dataSel, 'fieldnum', [
-                                           int(field['fieldnum'])]*len(dataSel))
-                dataSel = rf.append_fields(
-                    dataSel, 'cadence', [cadence]*len(dataSel))
-                dataSel = rf.append_fields(
-                    dataSel, 'nside', [nside]*len(dataSel))
-                dataSel = rf.append_fields(
-                    dataSel, 'pixArea', [pixArea]*len(dataSel))
-                if dataTot is None:
-                    dataTot = dataSel
-                else:
-                    dataTot = np.concatenate((dataTot, dataSel))
-
-    print(dataTot)
-    return dataTot
-"""
 
 parser = OptionParser(
     description='Display Cadence metric results for DD fields')
 parser.add_option("--dirFile", type="str", default='',
                   help="file directory [%default]")
-parser.add_option("--nside", type="int", default=128,
+parser.add_option("--nside", type="int", default=64,
                   help="nside for healpixels [%default]")
-parser.add_option("--fieldType", type="str", default='DD',
+parser.add_option("--fieldType", type="str", default='WFD',
                   help="field type - DD, WFD, Fake [%default]")
+parser.add_option("--nPixelsFile", type="str", default='ObsPixels_fbs14_nside_64.npy',
+                  help="file with the total number of pixels per obs. strat.[%default]")
+
+
 opts, args = parser.parse_args()
 
 # Load parameters
@@ -196,6 +174,7 @@ if dirFile == '':
 nside = opts.nside
 fieldType = opts.fieldType
 metricName = 'NSN'
+nPixelsFile = opts.nPixelsFile
 
 dbNames = ['descddf_v1.4_10yrs']
 
@@ -204,10 +183,18 @@ metricTot_med = None
 pixArea = hp.nside2pixarea(nside, degrees=True)
 x1 = -2.0
 color = 0.2
+Npixels = np.load(nPixelsFile)
+print(Npixels.dtype)
 
-for dbName in dbNames:
-    myana = MetricAna(dirFile, dbName, metricName, fieldType, nside)
-    myana.plotMollview('zlim', 'zlimit', np.median, xmin=0.1, xmax=0.4)
-    myana.plotMollview('nsn', 'NSN', np.sum, xmin=0., xmax=3.)
+toproc = pd.read_csv('toread.csv')
+for index, val in toproc.iterrows():
+    dbName = val['dbName']
+    dirFile = val['dirFile']
+    idx = Npixels['dbName'] == dbName
+    myana = MetricAna(dirFile, dbName, metricName, fieldType,
+                      nside, npixels=Npixels[idx]['npixels'].item())
+    print(myana.zlim, myana.nsn, myana.sig_nsn,
+          myana.npixels_eff, myana.nsn_extrapol)
+    # myana.plot()
 
 plt.show()
