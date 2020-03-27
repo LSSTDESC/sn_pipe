@@ -1,4 +1,4 @@
-from sn_design_dd_survey.wrapper import Data, Nvisits_cadence
+from sn_design_dd_survey.wrapper import Data, Nvisits_cadence, Mod_z
 from sn_design_dd_survey.budget import DD_Budget
 from sn_design_dd_survey.snr import SNR, SNR_plot
 from sn_design_dd_survey.signal_bands import RestFrameBands
@@ -6,7 +6,8 @@ from sn_design_dd_survey import plt
 
 import os
 import multiprocessing
-
+import pandas as pd
+import numpy as np
 
 # Step 1: Load the data needed for analysis
 # ----------------------------------------
@@ -118,9 +119,13 @@ configName = 'input/sn_studies/DD_scen1.yaml'
 # configName = 'input/sn_studies/DD_scen2.yaml'
 # configName = 'input/sn_studies/DD_scen3.yaml'
 
-dd_budget = 0.001
-mybud = DD_Budget(configName, myvisits_ref.nvisits_cadence,
-                  myvisits_seasons.nvisits_cadence,
+nvisits_cadence = Mod_z('Nvisits_cadence_Nvisits_median_m5_filter.npy').nvisits
+nvisits_cadence_season = Mod_z(
+    'Nvisits_cadence_Nvisits_median_m5_field_filter_season_mod.npy').nvisits
+
+dd_budget = 0.01
+mybud = DD_Budget(configName, nvisits_cadence,
+                  nvisits_cadence_season,
                   runtype='Nvisits_single')
 
 # mybud.plot_budget_zlim(dd_budget=-1)
