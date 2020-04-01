@@ -215,25 +215,25 @@ class NSNMetricWrapper(MetricWrapper):
         # LC selection criteria
 
         if fieldType == 'DD':
-            N_bef = 2
-            N_aft = 5
+            n_bef = 2
+            n_aft = 5
             snr_min = 5.
-            N_phase_min = 1
-            N_phase_max = 1
+            n_phase_min = 1
+            n_phase_max = 1
 
         if fieldType == 'WFD':
-            N_bef = 2
-            N_aft = 5
+            n_bef = 2
+            n_aft = 5
             snr_min = 0.
-            N_phase_min = 0
-            N_phase_max = 0
+            n_phase_min = 0
+            n_phase_max = 0
 
         if fieldType == 'Fake':
-            N_bef = 0
-            N_aft = 0
+            n_bef = 0
+            n_aft = 0
             snr_min = 0.
-            N_phase_min = 0
-            N_phase_max = 0
+            n_phase_min = 0
+            n_phase_max = 0
 
         # load x1_color_dist
 
@@ -270,24 +270,24 @@ class NSNMetricWrapper(MetricWrapper):
             lc_reference, season=season, zmax=zmax, pixArea=pixArea,
             verbose=metadata.verbose, timer=metadata.timer,
             ploteffi=metadata.ploteffi,
-            N_bef=N_bef, N_aft=N_aft,
+            n_bef=n_bef, n_aft=n_aft,
             snr_min=snr_min,
-            N_phase_min=N_phase_min,
-            N_phase_max=N_phase_max,
+            n_phase_min=n_phase_min,
+            n_phase_max=n_phase_max,
             outputType=metadata.outputType,
             proxy_level=metadata.proxy_level,
             x1_color_dist=x1_color_dist,
             coadd=coadd, lightOutput=metadata.lightOutput, T0s=metadata.T0s)
 
-        self.metadata['N_bef'] = N_bef
-        self.metadata['N_aft'] = N_aft
+        self.metadata['n_bef'] = n_bef
+        self.metadata['n_aft'] = n_aft
         self.metadata['snr_min'] = snr_min
-        self.metadata['N_phase_min'] = N_phase_min
-        self.metadata['N_phase_max'] = N_phase_max
+        self.metadata['n_phase_min'] = n_phase_min
+        self.metadata['n_phase_max'] = n_phase_max
 
         self.metaout += ['ploteffi', 'outputType',
                          'proxy_level', 'lightOutput', 'T0s',
-                         'N_bef', 'N_aft', 'snr_min', 'N_phase_min', 'N_phase_max']
+                         'n_bef', 'n_aft', 'snr_min', 'n_phase_min', 'n_phase_max']
         self.saveConfig()
 
     def load(self, fname, j=-1, output_q=None):
