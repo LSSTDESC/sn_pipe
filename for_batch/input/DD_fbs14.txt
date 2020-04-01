@@ -74,3 +74,7 @@ euclidddf_v1.4_10yrs                   1	     128    1	  DD	    5
 bulges_i_heavy_v1.4_10yrs              1	     128    1	  DD	    5
 twi_filters_5_v1.4_10yrs               1	     128    1	  DD	    5
 footprint_bluer_footprintv1.4_10yrs    1	     128    1	  DD	    5
+flexddf_v1.4_10yrs                     1             128    1     DD        5
+darkddf_v1.4_10yrs                     1             128    1     DD        5
+longseasonddf_v1.4_10yrs               1             128    1     DD        5
+flexddf_moreu_v1.4_10yrs               1             128    1     DD        5
