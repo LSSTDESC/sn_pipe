@@ -70,7 +70,6 @@ parser.add_option("--nodither", type="str", default='',
                   help="to remove dithering [%default]")
 parser.add_option("--nside", type="int", default=64,
                   help="healpix nside[%default]")
-
 parser.add_option("--outDir", type="str", 
                   default='/sps/lsst/users/gris/ObsPixelized',
                   help="output directory[%default]")
