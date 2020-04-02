@@ -37,7 +37,7 @@ class processMetrics:
         dbExtens: str
            database extension (npy, db, ...)
         fieldType: str
-            type of field: DD, WFD, Fakes
+            type of field: DD, WFD, Fake
         nside: int
            healpix nside parameter
         RAmin: float
@@ -104,7 +104,7 @@ class processMetrics:
             self.multiprocess(patches, observations, self.processPatch)
         else:
             # load the pixel maps
-            print('alors', self.pixelmap_dir, self.fieldType,
+            print('pixel map loading', self.pixelmap_dir, self.fieldType,
                   self.nside, self.dbName, self.npixels)
             search_path = '{}/{}/{}_{}_nside_{}_{}_{}_{}_{}.npy'.format(self.pixelmap_dir,
                                                                         self.dbName, self.dbName,
@@ -225,6 +225,7 @@ class processMetrics:
 
         datapixels = DataToPixels(
             self.nside, self.RACol, self.DecCol, j, self.outDir, self.dbName)
+
         procpix = ProcessPixels(
             self.metricList, j, outDir=self.outDir, dbName=self.dbName, saveData=self.saveData)
 
@@ -238,19 +239,24 @@ class processMetrics:
 
             # select pixels that are inside the original area
 
-            idx = (pixels['pixRA']-pointing['RA']) >= -pointing['radius_RA']/2.
-            idx &= (pixels['pixRA']-pointing['RA']) < pointing['radius_RA']/2.
-            idx &= (pixels['pixDec']-pointing['Dec']) >= - \
-                pointing['radius_Dec']/2.
-            idx &= (pixels['pixDec']-pointing['Dec']
-                    ) < pointing['radius_Dec']/2.
+            pixels_run = pixels
+            if self.fieldType != 'Fake':
+                idx = (pixels['pixRA']-pointing['RA']) >= - \
+                    pointing['radius_RA']/2.
+                idx &= (pixels['pixRA']-pointing['RA']
+                        ) < pointing['radius_RA']/2.
+                idx &= (pixels['pixDec']-pointing['Dec']) >= - \
+                    pointing['radius_Dec']/2.
+                idx &= (pixels['pixDec']-pointing['Dec']
+                        ) < pointing['radius_Dec']/2.
+                pixels_run = pixels[idx]
 
             print('cut', pointing['RA'], pointing['radius_RA'],
                   pointing['Dec'], pointing['radius_Dec'])
 
             # datapixels.plot(pixels)
-            print('after selection', len(pixels[idx]))
-            procpix(pixels[idx], datapixels.observations, ipoint)
+            print('after selection', len(pixels_run))
+            procpix(pixels_run, datapixels.observations, ipoint)
 
         print('end of processing for', j, time.time()-time_ref)
 
@@ -438,7 +444,7 @@ parser.add_option("--band", type=str, default='r',
                   help="band for the metric[%default]")
 parser.add_option("--dirRefs", type=str, default='reference_files',
                   help="dir of reference files for the metric[%default]")
-parser.add_option("--dirFakes", type=str, default='input/Fake_cadence',
+parser.add_option("--dirFake", type=str, default='input/Fake_cadence',
                   help="dir of fake files for the metric[%default]")
 parser.add_option("--names_ref", type=str, default='SNCosmo',
                   help="ref name for the ref files for the metric[%default]")
