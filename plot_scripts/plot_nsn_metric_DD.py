@@ -9,7 +9,8 @@ import glob
 import healpy as hp
 import numpy.lib.recfunctions as rf
 import pandas as pd
-from sn_tools.sn_cadence_tools import DDFields,Match_DD
+from sn_tools.sn_cadence_tools import Match_DD
+from sn_tools.sn_obs import DDFields
 import os
 import csv
 import pandas as pd
@@ -17,7 +18,7 @@ import pandas as pd
 
 class Summary:
     def __init__(self, dirFile, metricName='NSN',
-                 fieldType='DD', nside=128, forPlot=pd.DataFrame(), simuVersion=''):
+                 fieldType='DD', nside=128, forPlot=pd.DataFrame(), outName=''):
         """
         Class to transform input data and match to DD fields
 
@@ -42,21 +43,22 @@ class Summary:
 
         """
 
-        fname = 'Summary_{}_{}.npy'.format(fieldType, simuVersion)
+        #fname = 'Summary_{}_{}.npy'.format(fieldType, simuVersion)
+
         fields_DD = DDFields()
-        if not os.path.isfile(fname):
+        if not os.path.isfile(outName):
 
             x1_colors = [(-2.0, 0.2), (0.0, 0.0)]
             self.corr = dict(zip(x1_colors, ['faint', 'medium']))
             df = self.process_loop(dirFile, metricName, fieldType,
                                    nside, forPlot)
 
-            self.data = Match_DD(fields_DD,df).to_records()
+            self.data = Match_DD(fields_DD, df).to_records()
 
-            np.save(fname, self.data)
+            np.save(outName, self.data)
 
         else:
-            self.data = np.load(fname)
+            self.data = np.load(outName, allow_pickle=True)
 
     def process_loop(self, dirFile, metricName, fieldType, nside, forPlot):
         """
@@ -78,7 +80,7 @@ class Summary:
         Returns
         ----------
         pandas df with the following cols:
-         pixRa: RA of the sn pixel location
+         pixRA: RA of the sn pixel location
          pixDec: Dec of the sn pixel location
          healpixID: healpixID of the sn pixel location
          season: season number
@@ -130,7 +132,7 @@ class Summary:
         Returns
         -----------
          pandas df with the following cols:
-          pixRa: RA of the sn pixel location
+          pixRA: RA of the sn pixel location
           pixDec: Dec of the sn pixel location
           healpixID: healpixID of the sn pixel location
           season: season number
@@ -148,16 +150,16 @@ class Summary:
         search_path = '{}/{}/{}/*{}Metric_{}*_nside_{}_*.hdf5'.format(
             dirFile, dbName, metricName, metricName, fieldType, nside)
         print('looking for', search_path)
-        vars = ['pixRa', 'pixDec', 'healpixID', 'season', 'status']
+        vars = ['pixRA', 'pixDec', 'healpixID', 'season', 'status']
         # vars = ['healpixID', 'season']
         fileNames = glob.glob(search_path)
         print(fileNames)
         finaldf = pd.DataFrame()
         if fileNames:
-            # plt.plot(metricValues['pixRa'],metricValues['pixDec'],'ko')
+            # plt.plot(metricValues['pixRA'],metricValues['pixDec'],'ko')
             # plt.show()
             metricValues = loopStack(fileNames, 'astropyTable').to_pandas()
-            metricValues = metricValues.round({'pixRa': 3, 'pixDec': 3})
+            metricValues = metricValues.round({'pixRA': 3, 'pixDec': 3})
             newdf = {}
             for key, vals in self.corr.items():
                 idx = np.abs(key[0]-metricValues['x1']) < 1.e-5
@@ -166,8 +168,9 @@ class Summary:
                 sel.loc[:, 'zlim_{}'.format(vals)] = sel['zlim']
                 sel.loc[:, 'nsn_z{}'.format(vals)] = sel['nsn']
                 sel.loc[:, 'nsn_med_z{}'.format(vals)] = sel['nsn_med']
+
                 newdf[vals] = sel.drop(
-                    columns=['x1', 'color', 'zlim', 'nsn', 'nsn_med', 'index'])
+                    columns=['x1', 'color', 'zlim', 'nsn', 'nsn_med'])
 
             finaldf = newdf['faint'].merge(
                 newdf['medium'], left_on=vars, right_on=vars)
@@ -190,13 +193,13 @@ def summary(forPlot, fname):
         # fileName='{}/{}_CadenceMetric_{}.npy'.format(dirFile,dbName,band)
         print(fileNames)
         if fileNames:
-            # plt.plot(metricValues['pixRa'],metricValues['pixDec'],'ko')
+            # plt.plot(metricValues['pixRA'],metricValues['pixDec'],'ko')
             # plt.show()
             metricValues = np.array(loopStack(fileNames, 'astropyTable'))
 
             tab = getVals(fields_DD, metricValues, dbName.ljust(adjl), nside)
 
-            # plt.plot(sel['pixRa'],sel['pixDec'],'ko')
+            # plt.plot(sel['pixRA'],sel['pixDec'],'ko')
             # plt.show()
 
             metricTot = append(metricTot, tab)
@@ -219,7 +222,7 @@ def match_colors(data):
         nsn_med = {}
         nsn = {}
         seldata = data[idx]
-        pixRa = np.unique(seldata['pixRa'])[0]
+        pixRA = np.unique(seldata['pixRA'])[0]
         pixDec = np.unique(seldata['pixDec'])[0]
         good_event = True
         for (x1, color) in x1_colors:
@@ -235,11 +238,11 @@ def match_colors(data):
 
                 good_event = False
         if good_event:
-            r.append((healpixID, season, pixRa, pixDec,
+            r.append((healpixID, season, pixRA, pixDec,
                       zlim['faint'], zlim['medium'], nsn_med['faint'], nsn_med['medium'], nsn['faint'], nsn['medium']))
 
     return np.rec.fromrecords(r, names=['healpixID', 'season',
-                                        'pixRa', 'pixDec',
+                                        'pixRA', 'pixDec',
                                         'zlim_faint', 'zlim_medium',
                                         'nsn_med_zfaint', 'nsn_med_zmedium',
                                         'nsn_zfaint', 'nsn_zmedium'])
@@ -284,7 +287,7 @@ def getVals(fields_DD, tab, cadence, nside=64, plotting=False):
     print(tab.dtype)
     for field in fields_DD:
         dataSel = dataInside(
-            tab, field['RA'], field['Dec'], 10., 10., 'pixRa', 'pixDec')
+            tab, field['RA'], field['Dec'], 10., 10., 'pixRA', 'pixDec')
 
         if dataSel is not None:
             dataSel = match_colors(dataSel)
@@ -318,10 +321,13 @@ parser.add_option("--nside", type="int", default=128,
                   help="nside for healpixels [%default]")
 parser.add_option("--fieldType", type="str", default='DD',
                   help="field type - DD, WFD, Fake [%default]")
-parser.add_option("--simuVersion", type="str", default='fbs14',
-                  help="simulation version[%default]")
+parser.add_option("--dbList", type="str", default='plot_scripts/cadenceCustomize_fbs14.csv',
+                  help="list of cadences to display[%default]")
 parser.add_option("--snType", type="str", default='faint',
                   help="SN type: faint or medium[%default]")
+parser.add_option("--outName", type="str", default='Summary_DD_fbs14.npy',
+                  help="output name for the summary[%default]")
+
 
 opts, args = parser.parse_args()
 
@@ -330,11 +336,11 @@ dirFile = opts.dirFile
 nside = opts.nside
 fieldType = opts.fieldType
 metricName = 'NSN'
-simuVersion = opts.simuVersion
 snType = opts.snType
+outName = opts.outName
 
 # Loading input file with the list of cadences to take into account and siaplay features
-filename = 'plot_scripts/cadenceCustomize_{}.csv'.format(opts.simuVersion)
+filename = opts.dbList
 
 # forPlot = pd.read_csv(filename).to_records()
 forPlot = pd.read_csv(filename)
@@ -360,7 +366,7 @@ pixArea = hp.nside2pixarea(nside, degrees=True)
 # Summary: to reproduce the plots faster
 
 metricTot = Summary(dirFile, 'NSN',
-                    'DD', nside, forPlot, simuVersion).data
+                    'DD', nside, forPlot, outName).data
 
 print('oo', metricTot.dtype, type(metricTot))
 nsn_plot.plot_DDSummary(metricTot, forPlot, sntype=snType)

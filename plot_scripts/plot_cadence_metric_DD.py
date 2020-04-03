@@ -8,17 +8,17 @@ import glob
 import healpy as hp
 import numpy.lib.recfunctions as rf
 import pandas as pd
-from sn_tools.sn_cadence_tools import DDFields,Match_DD
+from sn_tools.sn_cadence_tools import Match_DD
+from sn_tools.sn_obs import DDFields
 import os
 import pandas as pd
 from sn_tools.sn_utils import MultiProc
 
 
-
 def func(tab, params):
     """
     Function analysing cadence files generated from the Cadence metric
-    
+
     Parameters
     ----------------
     tab: array
@@ -28,35 +28,37 @@ def func(tab, params):
 
 
     """
-
+    print('processing here', tab)
     dbName = tab['dbName']
     dirFile = params['dirFile']
     fieldType = params['fieldType']
     nside = params['nside']
     ljustdb = params['ljustdb']
     fsearch = '{}/{}/Cadence/*CadenceMetric_{}*_nside_{}_*.hdf5'.format(
-            dirFile, dbName, fieldType, nside)
-    
+        dirFile, dbName, fieldType, nside)
+
     fileNames = glob.glob(fsearch)
-    print('files',fileNames)
+    print('files', fileNames)
     if not fileNames:
         return None
     metricValues = loopStack(fileNames).to_records(index=False)
     fields_DD = DDFields()
 
-    print('hhboooo',len(metricValues),len(np.unique(metricValues['healpixID'])))
-    df =pd.DataFrame(metricValues)
-    df.loc[:,'cadence'] = dbName
+    print('hhboooo', len(metricValues), len(
+        np.unique(metricValues['healpixID'])))
+    df = pd.DataFrame(metricValues)
+    df.loc[:, 'cadence'] = dbName
     #tab = Match_DD(fields_DD,df).to_records(index=False)
-    tab = Match_DD(fields_DD,df)
-    
+    tab = Match_DD(fields_DD, df)
+
     return tab
+
 
 parser = OptionParser(
     description='Display Cadence metric results for DD fields')
-parser.add_option("--dirFile", type="str", default='',
+parser.add_option("--dirFile", type="str", default='/sps/lsst/users/gris/MetricOutput',
                   help="file directory [%default]")
-parser.add_option("--dbList", type="str", default='',
+parser.add_option("--dbList", type="str", default='plot_scripts/cadenceCustomize_fbs14.csv',
                   help="dbList  [%default]")
 parser.add_option("--nside", type="int", default=128,
                   help="nside for healpixels [%default]")
@@ -72,14 +74,13 @@ parser.add_option("--fields_to_Display", type="str", default='COSMOS',
                   help="name of the field to display - for opts globalPlot and visitsPlot [%default]")
 parser.add_option("--os_to_Display", type="str", default='descddf,agnddf',
                   help="name of the OS to display - for opts obsPlot [%default]")
+parser.add_option("--outName", type="str", default='DD_Cadence_Summary.npy',
+                  help="name for output file [%default]")
 
 opts, args = parser.parse_args()
 
 # Load parameters
 dirFile = opts.dirFile
-if dirFile == '':
-    dirFile = '/sps/lsst/users/gris/MetricOutput'
-
 nside = opts.nside
 fieldType = opts.fieldType
 dbList = opts.dbList
@@ -88,7 +89,8 @@ dbList = opts.dbList
 # get the list to process
 toprocess = pd.read_csv(dbList).to_records(index=False)
 
-outName = 'DD_Cadence_Summary.npy'
+print('alore', toprocess)
+outName = opts.outName
 
 lengths = [len(val) for val in toprocess['dbName']]
 ljustdb = np.max(lengths)
@@ -96,65 +98,68 @@ ljustdb = np.max(lengths)
 # summary file: to generate if needed
 
 if not os.path.isfile(outName):
-  
+
     params = {}
     params['dirFile'] = dirFile
     params['fieldType'] = fieldType
     params['nside'] = nside
     params['ljustdb'] = ljustdb
 
-    data = MultiProc(toprocess,params,func,nproc=8).data
+    data = MultiProc(toprocess, params, func, nproc=4).data
 
-    np.save(outName,data.to_records(index=False))
-    
+    np.save(outName, data.to_records(index=False))
+
 # load the summary file
 
 #metricTot = data.to_records(index=False)
-metricTot = np.load(outName)
+metricTot = np.load(outName, allow_pickle=True)
 fontsize = 15
 fields_DD = DDFields()
 
 # list of fields to display
-fields=opts.fields_to_Display.split(',')
+fields = opts.fields_to_Display.split(',')
 
 # Plots: season_length, cadence, max_gap (median over seasons) per field
-print('ooooooo',metricTot.dtype)
+print('ooooooo', metricTot.dtype)
 
-#estimate the area covered here
+# estimate the area covered here
 ido = metricTot['filter'] == 'all'
 sel = pd.DataFrame(metricTot[ido])
 
 print(sel.columns)
-sel= sel.groupby(['fieldname','season','filter','cadence']).apply(lambda x : pd.DataFrame({'pixArea': [x['pixArea'].sum()],
-                                                                                           'pixDec': [x['pixDec'].median()],})).reset_index()
+sel = sel.groupby(['fieldname', 'season', 'filter', 'cadence']).apply(lambda x: pd.DataFrame({'pixArea': [x['pixArea'].sum()],
+                                                                                              'pixDec': [x['pixDec'].median()], })).reset_index()
 #print(sel.groupby(['fieldname','season']).apply(lambda x : x['pixArea'].sum()).reset_index())
 print(sel)
-plt.plot(sel['pixDec'],sel['pixArea'],'ko')
+plt.plot(sel['pixDec'], sel['pixArea'], 'ko')
 if opts.globalPlot:
-    sn_plot.plotDDCadence_barh(metricTot,'season_length','season length [days]',bands=['all'],fields=fields)
-    sn_plot.plotDDCadence_barh(metricTot,'cadence_mean','cadence [days]',bands=['all'],fields=fields)
-    sn_plot.plotDDCadence_barh(metricTot,'gap_max','max gap [days]',bands=['all'],fields=fields)
-    sn_plot.plotDDCadence_barh(sel.to_records(index=False),'pixArea','area [deg2]',bands=['all'],fields=fields)
+    sn_plot.plotDDCadence_barh(
+        metricTot, 'season_length', 'season length [days]', bands=['all'], fields=fields)
+    sn_plot.plotDDCadence_barh(metricTot, 'cadence_mean', 'cadence [days]', bands=[
+                               'all'], fields=fields)
+    sn_plot.plotDDCadence_barh(metricTot, 'gap_max', 'max gap [days]', bands=[
+                               'all'], fields=fields)
+    sn_plot.plotDDCadence_barh(sel.to_records(
+        index=False), 'pixArea', 'area [deg2]', bands=['all'], fields=fields)
 
 
-# Plots: number of visits per night 
+# Plots: number of visits per night
 
 if opts.visitsPlot:
-    sn_plot.plotDDCadence_barh(metricTot, 
-                               'visitExposureTime', 'N$_{visits}$/night', 
-                               bands=['g','r','i','z','y'],fields=fields,scale=30.)
+    sn_plot.plotDDCadence_barh(metricTot,
+                               'visitExposureTime', 'N$_{visits}$/night',
+                               bands=['g', 'r', 'i', 'z', 'y'], fields=fields, scale=30.)
 
-## These are plot for a given observing strategy
+# These are plot for a given observing strategy
 
 # choose the variables to draw
 if opts.obsPlot:
     vars = ['visitExposureTime', 'cadence_mean', 'numExposures']
     legends = ['Exposure Time [sec]/night',
-           'cadence [days]', 'N$_visits$/observing night']
+               'cadence [days]', 'N$_visits$/observing night']
     todraw = dict(zip(vars, legends))
 
-    
-    dbChoice  = opts.os_to_Display.split(',')
+    dbChoice = opts.os_to_Display.split(',')
     pattern = '|'.join(dbChoice)
 
     df = pd.DataFrame(toprocess)
@@ -167,6 +172,3 @@ if opts.obsPlot:
             sn_plot.plotDDCadence(metricTot, dbName, key,
                                   vals, ljustdb, fields_DD)
 plt.show()
-
-
-
