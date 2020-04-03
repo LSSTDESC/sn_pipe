@@ -74,3 +74,7 @@ wfd_depth_scale0.85_noddf_v1.4_10yrs,wfd_noddf,wfd_noddf,wfd_noddf,orange,*
 wfd_depth_scale0.90_noddf_v1.4_10yrs,wfd_noddf,wfd_noddf,wfd_noddf,orange,*
 wfd_depth_scale0.95_noddf_v1.4_10yrs,wfd_noddf,wfd_noddf,wfd_noddf,orange,*
 wfd_depth_scale0.99_noddf_v1.4_10yrs,wfd_noddf,wfd_noddf,wfd_noddf,orange,*
+flexddf_v1.4_10yrs, flexddf,flexddf,flexddf,orange,*
+darkddf_v1.4_10yrs, darkddf,darkddf,darkddf,black,s
+longseasonddf_v1.4_10yrs,longseasonddf,longseasonddf,longseasonddf,red,o
+flexddf_moreu_v1.4_10yrs,flexddf_moreu,flexddf_moreu,flexddf_moreu,m,<
