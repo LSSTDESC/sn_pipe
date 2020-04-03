@@ -13,6 +13,58 @@ from sn_tools.sn_obs import DDFields
 import os
 import pandas as pd
 from sn_tools.sn_utils import MultiProc
+import csv
+
+
+def write_to_csv(what, df, fieldType='DD', bands=['all']):
+    """"
+    Method to write metric results to csv files
+
+    Parameters
+    ---------------
+    what: str
+      the variable (df col)
+    df: pandas df
+      data to process
+    fieldType: str, opt
+      field type (DD or WFD)
+    bands: list(str)
+      bands to consider
+
+    Returns
+    ----------
+    csv file with name  "{}_{}.csv".format(what, fieldType)
+
+    """
+
+    sel = df
+
+    csvfile = "{}_{}.csv".format(what, fieldType)
+    dbNames = sel['cadence'].unique()
+    dbNamew = [dbName.split('_')[0] for dbName in dbNames]
+    with open(csvfile, "w") as output:
+        writer = csv.writer(output, lineterminator='\n')
+        db = [' ']
+        db += dbNamew
+        writer.writerow(db)
+        for fieldname in sel['fieldname'].unique():
+            io = sel['fieldname'] == fieldname
+            sela = sel[io]
+            rr = [fieldname]
+            for vv in dbNames:
+                ik = sela['cadence'] == vv
+                selabb = sela[ik]
+                rband = []
+                for b in bands:
+                    ib = selabb['filter'] == b
+                    selfi = selabb[ib]
+                    ro = selfi[what].values
+                    if len(ro) > 0:
+                        rband.append(np.round(ro[0], 1))
+                    else:
+                        rband.append(0)
+                rr += ["/".join(map(str, rband))]
+            writer.writerow(rr)
 
 
 def func(tab, params):
@@ -76,6 +128,9 @@ parser.add_option("--os_to_Display", type="str", default='descddf,agnddf',
                   help="name of the OS to display - for opts obsPlot [%default]")
 parser.add_option("--outName", type="str", default='DD_Cadence_Summary.npy',
                   help="name for output file [%default]")
+parser.add_option("--write_to_csv", type="int", default=0,
+                  help="to write stat on csv files [%default]")
+
 
 opts, args = parser.parse_args()
 
@@ -84,7 +139,7 @@ dirFile = opts.dirFile
 nside = opts.nside
 fieldType = opts.fieldType
 dbList = opts.dbList
-
+write_csv = opts.write_to_csv
 
 # get the list to process
 toprocess = pd.read_csv(dbList).to_records(index=False)
@@ -171,4 +226,23 @@ if opts.obsPlot:
         for key, vals in todraw.items():
             sn_plot.plotDDCadence(metricTot, dbName, key,
                                   vals, ljustdb, fields_DD)
+
+if write_csv:
+
+    dfa = pd.DataFrame(np.copy(metricTot))
+
+    df = dfa.groupby(['cadence', 'fieldname', 'filter']).median().reset_index()
+
+    df['cadence'] = df['cadence'].map(lambda x: '_'.join(x.split('_')[:4]))
+
+    print(df.columns)
+
+    #cadence_mean, season_length, gap_max
+    for val in ['cadence_mean', 'season_length', 'gap_max']:
+        write_to_csv(val, df)
+
+    # number of exposures per observing night
+    df['numExposures'] = df['numExposures'].astype(int)
+    write_to_csv('numExposures', df, bands='ugrizy')
+
 plt.show()
