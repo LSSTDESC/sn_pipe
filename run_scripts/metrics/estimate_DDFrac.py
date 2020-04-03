@@ -2,7 +2,8 @@ from sn_tools.sn_obs import renameFields, getFields
 from optparse import OptionParser
 import numpy as np
 from sn_tools.sn_io import Read_Sqlite
-from sn_tools.sn_cadence_tools import AnaOS, DDFields
+from sn_tools.sn_cadence_tools import AnaOS
+from sn_tools.sn_obs import DDFields
 import os
 import matplotlib.pyplot as plt
 import pandas as pd
