@@ -156,7 +156,7 @@ if not os.path.isfile(outName):
     np.save(outName, data.to_records(index=False))
 
 
-tab = pd.DataFrame(np.load(outName))
+tab = pd.DataFrame(np.load(outName, allow_pickle=True))
 
 # this is a check: number of visits per obs night with
 # cadence, season_length, nseasons and nfields chosen
