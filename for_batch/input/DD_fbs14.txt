@@ -70,11 +70,11 @@ weather_1.2_v1.4_10yrs                 1	     128    1	  DD	    5
 wfd_depth_scale0.95_v1.4_10yrs         1	     128    1	  DD	    5
 wfd_depth_scale0.85_noddf_v1.4_10yrs   1	     128    1	  DD	    5
 pair_strategy_0_v1.4_10yrs             1	     128    1	  DD	    5
-euclidddf_v1.4_10yrs                   1	     128    1	  DD	    5
+euclidddf_v1.4_10yrs                   1	     128    1	  DD	    6
 bulges_i_heavy_v1.4_10yrs              1	     128    1	  DD	    5
 twi_filters_5_v1.4_10yrs               1	     128    1	  DD	    5
 footprint_bluer_footprintv1.4_10yrs    1	     128    1	  DD	    5
-flexddf_v1.4_10yrs                     1             128    1     DD        5
-darkddf_v1.4_10yrs                     1             128    1     DD        5
-longseasonddf_v1.4_10yrs               1             128    1     DD        5
-flexddf_moreu_v1.4_10yrs               1             128    1     DD        5
+flexddf_v1.4_10yrs                     1             128    1     DD        6
+darkddf_v1.4_10yrs                     1             128    1     DD        6
+longseasonddf_v1.4_10yrs               1             128    1     DD        6
+flexddf_moreu_v1.4_10yrs               1             128    1     DD        6
