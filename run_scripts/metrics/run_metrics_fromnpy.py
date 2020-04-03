@@ -158,7 +158,7 @@ class processMetrics:
                                          self.RAmin, self.RAmax,
                                          self.Decmin, self.Decmax,
                                          self.RACol, self.DecCol,
-                                         display=False)
+                                         display=False, nclusters=self.nprocs)
 
         return observations, patches
 
