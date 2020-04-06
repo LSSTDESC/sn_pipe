@@ -39,9 +39,9 @@ def write_to_csv(what, df, fieldType='DD', bands=['all']):
 
     sel = df
 
-    csvfile = "{}_{}.csv".format(what, fieldType)
+    csvfile = "{}_{}_{}.csv".format(what, fieldType, ''.join(bands))
     dbNames = sel['cadence'].unique()
-    dbNamew = [dbName.split('_')[0] for dbName in dbNames]
+    dbNamew = [dbName.split('_v1')[0] for dbName in dbNames]
     with open(csvfile, "w") as output:
         writer = csv.writer(output, lineterminator='\n')
         db = [' ']
@@ -62,8 +62,11 @@ def write_to_csv(what, df, fieldType='DD', bands=['all']):
                     if len(ro) > 0:
                         rband.append(np.round(ro[0], 1))
                     else:
-                        rband.append(0)
-                rr += ["/".join(map(str, rband))]
+                        rband.append('-')
+                if rband.count('-') == len(rband):
+                    rr += ['-']
+                else:
+                    rr += ["/".join(map(str, rband))]
             writer.writerow(rr)
 
 
@@ -100,7 +103,7 @@ def func(tab, params):
         np.unique(metricValues['healpixID'])))
     df = pd.DataFrame(metricValues)
     df.loc[:, 'cadence'] = dbName
-    #tab = Match_DD(fields_DD,df).to_records(index=False)
+    # tab = Match_DD(fields_DD,df).to_records(index=False)
     tab = Match_DD(fields_DD, df)
 
     return tab
@@ -166,7 +169,7 @@ if not os.path.isfile(outName):
 
 # load the summary file
 
-#metricTot = data.to_records(index=False)
+# metricTot = data.to_records(index=False)
 metricTot = np.load(outName, allow_pickle=True)
 fontsize = 15
 fields_DD = DDFields()
@@ -175,7 +178,6 @@ fields_DD = DDFields()
 fields = opts.fields_to_Display.split(',')
 
 # Plots: season_length, cadence, max_gap (median over seasons) per field
-print('ooooooo', metricTot.dtype)
 
 # estimate the area covered here
 ido = metricTot['filter'] == 'all'
@@ -184,9 +186,9 @@ sel = pd.DataFrame(metricTot[ido])
 print(sel.columns)
 sel = sel.groupby(['fieldname', 'season', 'filter', 'cadence']).apply(lambda x: pd.DataFrame({'pixArea': [x['pixArea'].sum()],
                                                                                               'pixDec': [x['pixDec'].median()], })).reset_index()
-#print(sel.groupby(['fieldname','season']).apply(lambda x : x['pixArea'].sum()).reset_index())
-print(sel)
-plt.plot(sel['pixDec'], sel['pixArea'], 'ko')
+# print(sel.groupby(['fieldname','season']).apply(lambda x : x['pixArea'].sum()).reset_index())
+
+# plt.plot(sel['pixDec'], sel['pixArea'], 'ko')
 if opts.globalPlot:
     sn_plot.plotDDCadence_barh(
         metricTot, 'season_length', 'season length [days]', bands=['all'], fields=fields)
@@ -233,16 +235,32 @@ if write_csv:
 
     df = dfa.groupby(['cadence', 'fieldname', 'filter']).median().reset_index()
 
+    print(df['cadence'].unique())
+
     df['cadence'] = df['cadence'].map(lambda x: '_'.join(x.split('_')[:4]))
 
-    print(df.columns)
+    print('bis', df['cadence'].unique())
+    df['numExposures'] = df['numExposures'].astype(int)
 
-    #cadence_mean, season_length, gap_max
-    for val in ['cadence_mean', 'season_length', 'gap_max']:
+    # reset numexposures for all
+    idx = df['filter'] == 'all'
+    df.loc[idx, 'numExposures'] = 0
+
+    df['numExposures_tot'] = df.groupby(
+        ['cadence', 'fieldname'])['numExposures'].transform('sum')
+    """
+    sums = pd.DataFrame()
+    sums['numExposures'] = df.groupby(['cadence', 'fieldname'])[
+        'numExposures'].sum().reset_index()
+    sums['filter'] = 'all'
+    """
+    print(df['numExposures_tot'])
+    # = df[~idx]['numExposures'].median().sum()
+    # cadence_mean, season_length, gap_max
+    for val in ['cadence_mean', 'season_length', 'gap_max', 'numExposures_tot']:
         write_to_csv(val, df)
 
     # number of exposures per observing night
-    df['numExposures'] = df['numExposures'].astype(int)
     write_to_csv('numExposures', df, bands='ugrizy')
 
 plt.show()
