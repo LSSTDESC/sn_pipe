@@ -77,6 +77,7 @@ def plots(df, fields=['COSMOS']):
     df = df.sort_values(by=['frac_DD'])
 
     # plot DD fraction
+    df['cadence'] = df['cadence'].map(lambda x: x.split('_v1')[0])
     plotDD(df, 'frac_DD', 'DD frac')
 
     # loop on fields to plot filter allocation
@@ -112,7 +113,7 @@ def plotDD(df, what, leg):
     """
 
     fig, ax = plt.subplots()
-    fontsize = 12
+    fontsize = 15
 
     df = df.sort_values(by=what)
     ax.barh(df['cadence'], df[what])
@@ -122,7 +123,7 @@ def plotDD(df, what, leg):
     ax.set_xlabel(leg, fontsize=fontsize)
     # ax.yaxis.label.set_size(3.)
     ax.tick_params(axis='x', labelsize=fontsize)
-    ax.tick_params(axis='y', labelsize=fontsize-5.)
+    ax.tick_params(axis='y', labelsize=fontsize)
     plt.grid(axis='x')
     plt.tight_layout()
 
