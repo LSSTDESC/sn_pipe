@@ -2,6 +2,7 @@ from sn_design_dd_survey.wrapper import Data, Nvisits_cadence, Mod_z
 from sn_design_dd_survey.budget import DD_Budget
 from sn_design_dd_survey.snr import SNR, SNR_plot
 from sn_design_dd_survey.signal_bands import RestFrameBands
+from sn_design_dd_survey.utils import ShowVisits
 from sn_design_dd_survey import plt
 
 import os
@@ -111,8 +112,10 @@ myvisits_ref = Nvisits_cadence(
     snr_calc.SNR, cadence, theDir, m5file, m5_type, 'Nvisits', bands)
 
 if plot_nvisits:
-    myvisits_ref.plot()
+    # myvisits_ref.plot()
+    myvisits = ShowVisits('Nvisits_cadence_Nvisits_median_m5_filter.npy')
 
+    myvisits(z=0.2)
     plt.show()
 
 configName = 'input/sn_studies/DD_scen1.yaml'
@@ -122,6 +125,9 @@ configName = 'input/sn_studies/DD_scen2.yaml'
 nvisits_cadence = Mod_z('Nvisits_cadence_Nvisits_median_m5_filter.npy').nvisits
 nvisits_cadence_season = Mod_z(
     'Nvisits_cadence_Nvisits_median_m5_field_filter_season.npy').nvisits
+
+print(nvisits_cadence.columns)
+
 
 dd_budget = 0.03
 mybud = DD_Budget(configName, nvisits_cadence,
