@@ -63,7 +63,7 @@ if not os.path.isdir(SNRDir):
 # choose one SNR distribution
 SNR_par = dict(zip(['max', 'step', 'choice'], [80., 2., 'Nvisits']))
 
-snr_calc = SNR(SNRDir, data, SNR_par, verbose=True)
+snr_calc = SNR(SNRDir, data, SNR_par, verbose=False)
 
 # plot the results
 
@@ -116,14 +116,14 @@ if plot_nvisits:
     plt.show()
 
 configName = 'input/sn_studies/DD_scen1.yaml'
-# configName = 'input/sn_studies/DD_scen2.yaml'
+configName = 'input/sn_studies/DD_scen2.yaml'
 # configName = 'input/sn_studies/DD_scen3.yaml'
 
 nvisits_cadence = Mod_z('Nvisits_cadence_Nvisits_median_m5_filter.npy').nvisits
 nvisits_cadence_season = Mod_z(
-    'Nvisits_cadence_Nvisits_median_m5_field_filter_season_mod.npy').nvisits
+    'Nvisits_cadence_Nvisits_median_m5_field_filter_season.npy').nvisits
 
-dd_budget = 0.01
+dd_budget = 0.03
 mybud = DD_Budget(configName, nvisits_cadence,
                   nvisits_cadence_season,
                   runtype='Nvisits_single')
