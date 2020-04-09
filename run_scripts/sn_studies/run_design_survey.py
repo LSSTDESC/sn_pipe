@@ -2,7 +2,7 @@ from sn_design_dd_survey.wrapper import Data, Nvisits_cadence, Mod_z
 from sn_design_dd_survey.budget import DD_Budget
 from sn_design_dd_survey.snr import SNR, SNR_plot
 from sn_design_dd_survey.signal_bands import RestFrameBands
-from sn_design_dd_survey.utils import ShowVisits
+from sn_design_dd_survey.showvisits import ShowVisits
 from sn_design_dd_survey import plt
 
 import os
@@ -21,7 +21,7 @@ bands = 'grizy'
 plot_input = False
 plot_snr = False
 plot_nvisits = False
-plot = True
+plot = False
 
 theDir = 'input/sn_studies'
 fname = 'Fakes_NSNMetric_Fake_lc_nside_64_coadd_0_0.0_360.0_-1.0_-1.0_0.hdf5'
@@ -111,25 +111,24 @@ m5_type = 'median_m5_filter'
 myvisits_ref = Nvisits_cadence(
     snr_calc.SNR, cadence, theDir, m5file, m5_type, 'Nvisits', bands)
 
-if plot_nvisits:
+plot = True
+if plot:
     # myvisits_ref.plot()
-    myvisits = ShowVisits('Nvisits_cadence_Nvisits_median_m5_filter.npy')
+    myvisits = ShowVisits(
+        'Nvisits_cadence_Nvisits_median_m5_filter.npy', cadence=3)
 
-    myvisits(z=0.2)
     plt.show()
 
-configName = 'input/sn_studies/DD_scen1.yaml'
-configName = 'input/sn_studies/DD_scen2.yaml'
+
+configName = 'DD_scen1'
+configName = 'DD_scen2'
 # configName = 'input/sn_studies/DD_scen3.yaml'
 
 nvisits_cadence = Mod_z('Nvisits_cadence_Nvisits_median_m5_filter.npy').nvisits
 nvisits_cadence_season = Mod_z(
     'Nvisits_cadence_Nvisits_median_m5_field_filter_season.npy').nvisits
 
-print(nvisits_cadence.columns)
 
-
-dd_budget = 0.03
 mybud = DD_Budget(configName, nvisits_cadence,
                   nvisits_cadence_season,
                   runtype='Nvisits_single')
@@ -138,8 +137,9 @@ mybud = DD_Budget(configName, nvisits_cadence,
 #mybud.plot_budget_visits(fieldName='COSMOS', season=1, dd_budget=-1)
 
 # mybud.plot_budget_zlim(dd_budget=dd_budget)
-mybud.plot_budget_visits(fieldName='COSMOS', season=1, dd_budget=dd_budget)
+#mybud.plot_budget_visits(fieldName='COSMOS', season=1, dd_budget=dd_budget)
 
+# mybud.gui()
 
 # mybud.printVisits(dd_budget)
 
