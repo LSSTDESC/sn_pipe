@@ -97,7 +97,7 @@ cmd += ' --dbDir .'
 cmd += ' --dbName {}'.format(fake_output)
 cmd += ' --dbExtens npy'
 cmd += ' --nproc 1'
-cmd += ' --metric {} --fieldType {} --templateDir ../../Templates'.format(
+cmd += ' --metric {} --fieldType {} --templateDir ../Templates'.format(
     metric, fieldType)
 cmd += ' --proxy_level 2 --RAmin {} --RAmax {} --Decmin {} --Decmax {}'.format(
     RAmin, RAmax, Decmin, Decmax)
@@ -112,6 +112,6 @@ filename = '{}/{}/{}/'.format(lc_outDir, fake_output, metric)
 filename += '{}_{}Metric_{}_nside_64_coadd_0_{}_{}_{}_{}_npixels_0_0.hdf5'.format(
     fake_output, metric, fieldType, RAmin, RAmax, Decmin, Decmax)
 
-plotLC(filename)
+plotLC(filename, corrFisher=True)
 
 plt.show()

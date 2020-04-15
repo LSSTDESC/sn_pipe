@@ -4,6 +4,7 @@ from sn_design_dd_survey.snr import SNR, SNR_plot
 from sn_design_dd_survey.signal_bands import RestFrameBands
 from sn_design_dd_survey.showvisits import ShowVisits
 from sn_design_dd_survey import plt
+from sn_DD_opti.showvisits import ShowVisits
 
 import os
 import multiprocessing
@@ -26,6 +27,7 @@ plot = False
 theDir = 'input/sn_studies'
 fname = 'Fakes_NSNMetric_Fake_lc_nside_64_coadd_0_0.0_360.0_-1.0_-1.0_0.hdf5'
 m5file = 'medValues.npy'
+m5file = 'medValues_flexddf_v1.4_10yrs_DD.npy'
 
 data = Data(theDir, fname, m5file, x1, color,
             blue_cutoff, red_cutoff, bands=bands)
@@ -111,27 +113,27 @@ m5_type = 'median_m5_filter'
 myvisits_ref = Nvisits_cadence(
     snr_calc.SNR, cadence, theDir, m5file, m5_type, 'Nvisits', bands)
 
-plot = True
-if plot:
-    # myvisits_ref.plot()
-    myvisits = ShowVisits(
-        'Nvisits_cadence_Nvisits_median_m5_filter.npy', cadence=3)
 
-    plt.show()
+# visualization of the results is done with the sn_DD_Opti package
+nvisits_cadence = 'Nvisits_cadence_Nvisits_median_m5_filter.npy'
+nvisits_cadence_season = 'Nvisits_cadence_Nvisits_median_m5_field_filter_season.npy'
 
+dir_config = 'sn_DD_Opti/input'
+dir_config = '.'
+ShowVisits(nvisits_cadence, cadence=1, dir_config=dir_config)
 
-configName = 'DD_scen1'
-configName = 'DD_scen2'
+#configName = 'DD_scen1'
+#configName = 'DD_scen2'
 # configName = 'input/sn_studies/DD_scen3.yaml'
 
-nvisits_cadence = Mod_z('Nvisits_cadence_Nvisits_median_m5_filter.npy').nvisits
-nvisits_cadence_season = Mod_z(
-    'Nvisits_cadence_Nvisits_median_m5_field_filter_season.npy').nvisits
+#nvisits_cadence = Mod_z('Nvisits_cadence_Nvisits_median_m5_filter.npy').nvisits
+# nvisits_cadence_season = Mod_z(
+#    'Nvisits_cadence_Nvisits_median_m5_field_filter_season.npy').nvisits
 
 
-mybud = DD_Budget(configName, nvisits_cadence,
-                  nvisits_cadence_season,
-                  runtype='Nvisits_single')
+# mybud = DD_Budget(configName, nvisits_cadence,
+#                  nvisits_cadence_season,
+#                  runtype='Nvisits_single')
 
 # mybud.plot_budget_zlim(dd_budget=-1)
 #mybud.plot_budget_visits(fieldName='COSMOS', season=1, dd_budget=-1)
