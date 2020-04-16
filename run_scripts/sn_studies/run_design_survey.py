@@ -4,7 +4,8 @@ from sn_design_dd_survey.snr import SNR, SNR_plot
 from sn_design_dd_survey.signal_bands import RestFrameBands
 from sn_design_dd_survey.showvisits import ShowVisits
 from sn_design_dd_survey import plt
-from sn_DD_opti.showvisits import ShowVisits
+from sn_DD_opti.showvisits import GUI_Visits
+from sn_DD_opti.budget import GUI_Budget
 
 import os
 import multiprocessing
@@ -120,29 +121,14 @@ nvisits_cadence_season = 'Nvisits_cadence_Nvisits_median_m5_field_filter_season.
 
 dir_config = 'sn_DD_Opti/input'
 dir_config = '.'
-ShowVisits(nvisits_cadence, cadence=1, dir_config=dir_config)
 
-#configName = 'DD_scen1'
-#configName = 'DD_scen2'
-# configName = 'input/sn_studies/DD_scen3.yaml'
+# this is to display the number of visits vs z for a given cadence
+#GUI_Visits(nvisits_cadence, cadence=3, dir_config=dir_config)
 
-#nvisits_cadence = Mod_z('Nvisits_cadence_Nvisits_median_m5_filter.npy').nvisits
-# nvisits_cadence_season = Mod_z(
-#    'Nvisits_cadence_Nvisits_median_m5_field_filter_season.npy').nvisits
+# this is to display budget vs zlim (and filter allocation)
 
-
-# mybud = DD_Budget(configName, nvisits_cadence,
-#                  nvisits_cadence_season,
-#                  runtype='Nvisits_single')
-
-# mybud.plot_budget_zlim(dd_budget=-1)
-#mybud.plot_budget_visits(fieldName='COSMOS', season=1, dd_budget=-1)
-
-# mybud.plot_budget_zlim(dd_budget=dd_budget)
-#mybud.plot_budget_visits(fieldName='COSMOS', season=1, dd_budget=dd_budget)
-
-# mybud.gui()
-
-# mybud.printVisits(dd_budget)
+GUI_Budget(nvisits_cadence,
+           nvisits_cadence_season,
+           runtype='Nvisits_single', dir_config='.')
 
 plt.show()
