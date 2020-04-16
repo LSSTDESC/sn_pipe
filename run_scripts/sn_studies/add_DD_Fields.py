@@ -12,12 +12,16 @@ parser.add_option("--dbDir", type="str",
                   default='../../../DB_Files', help="db dir [%default]")
 parser.add_option("--outDir", type="str", default='.',
                   help="output dir [%default]")
+parser.add_option("--outputType", type='str', default='all',
+                  help="output type: all or medians [%default]")
+
 
 opts, args = parser.parse_args()
 
 dbName = opts.dbName
 dbDir = opts.dbDir
 outDir = opts.outDir
+outputType = opts.outputType
 
 # store Data in pandas df
 tab = pd.DataFrame(
@@ -41,12 +45,17 @@ for field in tab['fieldname'].unique():
     print(field, np.unique(seas['season']))
     tabseas = pd.concat((tabseas, pd.DataFrame(np.copy(seas))))
 
+if outputType == 'all':
+    # save without medians
+    np.save('{}_with_fields.npy'.format(dbName),
+            tabseas.to_records(index=False))
 
-# get median values
-groups = tabseas.groupby(
-    ['fieldname', 'season', 'filter']).median().reset_index()
+if outputType == 'median':
+    # get median values
+    groups = tabseas.groupby(
+        ['fieldname', 'season', 'filter']).median().reset_index()
 
-print(groups)
+    print(groups)
 
-# save in npy file
-np.save('medValues_{}.npy'.format(dbName), groups.to_records(index=False))
+    # save in npy file
+    np.save('medValues_{}.npy'.format(dbName), groups.to_records(index=False))
