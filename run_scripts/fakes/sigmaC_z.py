@@ -112,6 +112,6 @@ filename = '{}/{}/{}/'.format(lc_outDir, fake_output, metric)
 filename += '{}_{}Metric_{}_nside_64_coadd_0_{}_{}_{}_{}_npixels_0_0.hdf5'.format(
     fake_output, metric, fieldType, RAmin, RAmax, Decmin, Decmax)
 
-plotLC(filename, corrFisher=True)
+plotLC(filename, corrFisher=False)
 
 plt.show()
