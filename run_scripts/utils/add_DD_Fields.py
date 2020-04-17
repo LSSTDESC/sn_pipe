@@ -30,9 +30,16 @@ tab = np.load('{}/{}.npy'.format(dbDir, dbName), allow_pickle=True)
 # get DDFields
 DDF = DDFields()
 
+print(tab.dtype.names)
+
 nclusters = 6
+
 tab = rf.append_fields(tab, 'fieldRA', tab['RA'])
 tab = rf.append_fields(tab, 'fieldDec', tab['Dec'])
+tab = rf.append_fields(tab, 'observationStartMJD', tab['mjd'])
+tab = rf.append_fields(tab, 'visitExposureTime', tab['exptime'])
+tab = rf.append_fields(tab, 'filter', tab['band'])
+
 clusters = ClusterObs(tab, nclusters, dbName, DDF).dataclus
 
 # tab = pd.DataFrame(np.copy(clusters.dataclus))
@@ -55,12 +62,14 @@ for io, name in enumerate(tabseas['fieldName'].unique()):
 plt.show()
 """
 # remove some columns
-todrop = ['healpixID', 'pixRA', 'pixDec', 'ebv']
-tabseas = tabseas.drop(columns=todrop)
+colsadded = ['fieldRA', 'fieldDec',
+             'observationStartMJD', 'visitExposureTime', 'filter']
+tabseas = tabseas.drop(columns=colsadded)
 
 
 if outputType == 'all':
     # save without medians
+    tabseas['band'] = tabseas['band'].astype(str)
     np.save('{}_with_fields.npy'.format(dbName),
             tabseas.to_records(index=False))
 
