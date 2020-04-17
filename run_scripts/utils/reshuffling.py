@@ -27,8 +27,8 @@ nvisits = pd.read_csv('{}/{}.csv'.format(dirConfig, config)
                       ).to_dict(orient='records')[0]
 
 # correct for the number of exposures and times
-tab['numExposures'] = tab.apply(lambda x: nvisits[x['filter']], axis=1)
-tab['visitExposureTime'] *= tab['numExposures']
+tab['numExposures'] = tab.apply(lambda x: nvisits[x['band']], axis=1)
+tab['exptime'] *= tab['numExposures']
 tab['visitTime'] *= tab['numExposures']
 
 # remove dithering (if any)
@@ -38,20 +38,24 @@ tab['visitTime'] *= tab['numExposures']
 
 # get medians
 med_night = tab.groupby(['fieldName', 'night',
-                         'filter', 'season']).median().reset_index()
+                         'band', 'season']).median().reset_index()
 
 # m5 should also be modified
 med_night['fiveSigmaDepth'] += 1.25*np.log(med_night['numExposures'])
 
 # remove columns associated to DD fields
+"""
 todrop = ['fieldName', 'healpixID', 'pixRA',
           'pixDec', 'ebv', 'RA', 'Dec', 'season']
-finaldf = med_night.drop(columns=todrop)
+"""
+#todrop = ['RA', 'Dec', 'season']
+#finaldf = med_night.drop(columns=todrop)
 
+finaldf = med_night
 print(finaldf.columns)
 
-print(finaldf[['visitExposureTime', 'numExposures',
-               'visitTime', 'fiveSigmaDepth', 'fieldRA', 'fieldDec']])
+print(finaldf[['exptime', 'numExposures',
+               'visitTime', 'fiveSigmaDepth', 'RA', 'Dec']])
 
 # save in npy file
 
