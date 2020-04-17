@@ -24,7 +24,7 @@ class processMetrics:
                  Decmin, Decmax,
                  saveData, remove_dithering,
                  outDir, nprocs, metricList,
-                 pixelmap_dir='', npixels=0):
+                 pixelmap_dir='', npixels=0, nclusters=5, radius=4.):
         """
         Class to process data ie run metrics on a set of pixels
 
@@ -81,7 +81,8 @@ class processMetrics:
         self.metricList = metricList
         self.pixelmap_dir = pixelmap_dir
         self.npixels = npixels
-
+        self.nclusters = nclusters
+        self.radius = radius
         observations, patches = self.load()
 
         # select observation in this area
@@ -158,7 +159,8 @@ class processMetrics:
                                          self.RAmin, self.RAmax,
                                          self.Decmin, self.Decmax,
                                          self.RACol, self.DecCol,
-                                         display=False, nclusters=self.nprocs)
+                                         display=False,
+                                         nclusters=self.nclusters, radius=self.radius)
 
         return observations, patches
 
@@ -233,6 +235,8 @@ class processMetrics:
             ipoint += 1
             print('pointing', ipoint)
 
+            # print('there man', np.unique(observations[[self.RACol, self.DecCol]]), pointing[[
+            #      'RA', 'Dec', 'radius_RA', 'radius_Dec']])
             # get the pixels
             pixels = datapixels(observations, pointing['RA'], pointing['Dec'],
                                 pointing['radius_RA'], pointing['radius_Dec'], ipoint, self.remove_dithering, display=False)
@@ -240,7 +244,7 @@ class processMetrics:
             # select pixels that are inside the original area
 
             pixels_run = pixels
-            if self.fieldType != 'Fake':
+            if self.fieldType != 'Fake' and self.fieldType != 'DD':
                 idx = (pixels['pixRA']-pointing['RA']) >= - \
                     pointing['radius_RA']/2.
                 idx &= (pixels['pixRA']-pointing['RA']
@@ -456,6 +460,11 @@ parser.add_option("--pixelmap_dir", type=str, default='',
                   help="dir where to find pixel maps[%default]")
 parser.add_option("--npixels", type=int, default=0,
                   help="number of pixels to process[%default]")
+parser.add_option("--nclusters", type=int, default=0,
+                  help="number of clusters in data (DD only)[%default]")
+parser.add_option("--radius", type=float, default=4.,
+                  help="radius around clusters (DD and Fakes)[%default]")
+
 
 opts, args = parser.parse_args()
 
@@ -511,7 +520,8 @@ process = processMetrics(opts.dbDir, opts.dbName, opts.dbExtens,
                          opts.Decmin, opts.Decmax,
                          opts.saveData, opts.remove_dithering,
                          outputDir, opts.nproc, metricList,
-                         opts.pixelmap_dir, opts.npixels)
+                         opts.pixelmap_dir, opts.npixels,
+                         opts.nclusters, opts.radius)
 
 
 """
