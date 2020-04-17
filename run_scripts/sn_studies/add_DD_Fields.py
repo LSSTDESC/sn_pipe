@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 from sn_tools.sn_obs import DDFields, season
-from sn_tools.sn_cadence_tools import Match_DD
+from sn_tools.sn_clusters import ClusterObs
 import matplotlib.pyplot as plt
 from optparse import OptionParser
 
@@ -24,33 +24,31 @@ outDir = opts.outDir
 outputType = opts.outputType
 
 # store Data in pandas df
-tab = pd.DataFrame(
-    np.load('{}/{}.npy'.format(dbDir, dbName), allow_pickle=True))
+tab = np.load('{}/{}.npy'.format(dbDir, dbName), allow_pickle=True)
 
 # get DDFields
 DDF = DDFields()
 
-print('ddd', DDF)
-tab.loc[:, 'pixRA'] = tab['fieldRA']
-tab.loc[:, 'pixDec'] = tab['fieldDec']
+nclusters = 6
 
-# match DD to observations
-tab = Match_DD(DDF, tab, radius=3.)
 
+clusters = ClusterObs(tab, nclusters, dbName, DDF).dataclus
+
+# tab = pd.DataFrame(np.copy(clusters.dataclus))
 # estimate seasons
 tabseas = pd.DataFrame()
-for field in tab['fieldname'].unique():
-    idx = tab['fieldname'] == field
-    sel = tab[idx]
-    seas = season(sel.to_records(index=False))
+for field in clusters['fieldName'].unique():
+    idx = clusters['fieldName'] == field
+    sel = clusters[idx]
+    seas = season(sel.to_records())
     print(field, np.unique(seas['season']))
     tabseas = pd.concat((tabseas, pd.DataFrame(np.copy(seas))))
 
 """
 colors = ['k', 'r', 'g', 'b', 'y', 'm']
 fig, ax = plt.subplots()
-for io, name in enumerate(tabseas['fieldname'].unique()):
-    ii = tabseas['fieldname'] == name
+for io, name in enumerate(tabseas['fieldName'].unique()):
+    ii = tabseas['fieldName'] == name
     sel = tabseas[ii]
     ax.plot(sel['fieldRA'], sel['fieldDec'], '{}.'.format(colors[io]))
 plt.show()
