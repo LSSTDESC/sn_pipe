@@ -31,7 +31,10 @@ tab['numExposures'] = tab.apply(lambda x: nvisits[x['filter']], axis=1)
 tab['visitExposureTime'] *= tab['numExposures']
 tab['visitTime'] *= tab['numExposures']
 
-# print(tab)
+# remove dithering (if any)
+tab['fieldRA'] = tab.groupby(['fieldname'])['fieldRA'].transform('mean')
+tab['fieldDec'] = tab.groupby(['fieldname'])['fieldDec'].transform('mean')
+
 
 # get medians
 med_night = tab.groupby(['fieldname', 'night',
@@ -48,7 +51,7 @@ finaldf = med_night.drop(columns=todrop)
 print(finaldf.columns)
 
 print(finaldf[['visitExposureTime', 'numExposures',
-               'visitTime', 'fiveSigmaDepth']])
+               'visitTime', 'fiveSigmaDepth', 'fieldRA', 'fieldDec']])
 
 # save in npy file
 
