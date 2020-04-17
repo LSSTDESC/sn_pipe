@@ -4,6 +4,7 @@ from sn_tools.sn_obs import DDFields, season
 from sn_tools.sn_clusters import ClusterObs
 import matplotlib.pyplot as plt
 from optparse import OptionParser
+import numpy.lib.recfunctions as rf
 
 parser = OptionParser()
 parser.add_option("--dbName", type="str", default='flexddf_v1.4_10yrs_DD',
@@ -30,8 +31,8 @@ tab = np.load('{}/{}.npy'.format(dbDir, dbName), allow_pickle=True)
 DDF = DDFields()
 
 nclusters = 6
-
-
+tab = rf.append_fields(tab, 'fieldRA', tab['RA'])
+tab = rf.append_fields(tab, 'fieldDec', tab['Dec'])
 clusters = ClusterObs(tab, nclusters, dbName, DDF).dataclus
 
 # tab = pd.DataFrame(np.copy(clusters.dataclus))

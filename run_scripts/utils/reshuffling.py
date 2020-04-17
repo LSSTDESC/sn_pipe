@@ -32,8 +32,8 @@ tab['visitExposureTime'] *= tab['numExposures']
 tab['visitTime'] *= tab['numExposures']
 
 # remove dithering (if any)
-tab['fieldRA'] = tab.groupby(['fieldName'])['fieldRA'].transform('mean')
-tab['fieldDec'] = tab.groupby(['fieldName'])['fieldDec'].transform('mean')
+#tab['fieldRA'] = tab.groupby(['fieldName'])['fieldRA'].transform('mean')
+#tab['fieldDec'] = tab.groupby(['fieldName'])['fieldDec'].transform('mean')
 
 
 # get medians
@@ -45,7 +45,7 @@ med_night['fiveSigmaDepth'] += 1.25*np.log(med_night['numExposures'])
 
 # remove columns associated to DD fields
 todrop = ['fieldName', 'healpixID', 'pixRA',
-          'pixDec', 'ebv', 'RA', 'Dec']
+          'pixDec', 'ebv', 'RA', 'Dec', 'season']
 finaldf = med_night.drop(columns=todrop)
 
 print(finaldf.columns)

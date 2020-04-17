@@ -259,7 +259,7 @@ class processMetrics:
                   pointing['Dec'], pointing['radius_Dec'])
 
             # datapixels.plot(pixels)
-            print('after selection', len(pixels_run))
+            print('after selection', len(pixels_run), datapixels.observations)
             procpix(pixels_run, datapixels.observations, ipoint)
 
         print('end of processing for', j, time.time()-time_ref)

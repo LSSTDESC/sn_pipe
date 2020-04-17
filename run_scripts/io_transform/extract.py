@@ -2,6 +2,7 @@ import numpy as np
 from optparse import OptionParser
 from sn_tools.sn_io import getObservations
 from sn_tools.sn_obs import renameFields, patchObs
+import numpy.lib.recfunctions as rf
 
 parser = OptionParser()
 
@@ -39,7 +40,9 @@ nside = 64
 # loading observations
 
 observations = getObservations(dbDir, dbName, dbExtens)
+orig_names = observations.dtype.names
 
+print('before renaming', observations.dtype)
 # rename fields
 
 observations = renameFields(observations)
@@ -59,8 +62,23 @@ observations, patches = patchObs(observations, fieldType,
                                  RACol, DecCol,
                                  display=False)
 
+# drop fields not originally present
+observations = rf.drop_fields(
+    observations, ['healpixID', 'pixRA', 'pixDec', 'ebv'])
 
-print(len(observations))
+# rename fields that were modified in the process
+
+observations = rf.rename_fields(
+    observations, {'fieldRA': 'RA',
+                   'fieldDec': 'Dec',
+                   'visitExposureTime': 'exptime',
+                   'observationStartMJD': 'mjd',
+                   'filter': 'band'})
+
+# check that erverything is fine
+print(set(observations.dtype.names)-set(orig_names))
+assert(set(observations.dtype.names) == set(orig_names))
+print(len(observations), observations.dtype)
 """
 import matplotlib.pyplot as plt
 plt.plot(observations['fieldRA'], observations['fieldDec'], 'ko')
