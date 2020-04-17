@@ -103,6 +103,7 @@ cmd += ' --proxy_level 2 --RAmin {} --RAmax {} --Decmin {} --Decmax {}'.format(
     RAmin, RAmax, Decmin, Decmax)
 cmd += ' --coadd 0 --T0s one --output lc --saveData 1'
 cmd += ' --outDir {}'.format(lc_outDir)
+cmd += ' --radius 0.1'
 
 os.system(cmd)
 
