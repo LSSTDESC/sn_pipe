@@ -30,11 +30,12 @@ tab = pd.DataFrame(
 # get DDFields
 DDF = DDFields()
 
+print('ddd', DDF)
 tab.loc[:, 'pixRA'] = tab['fieldRA']
 tab.loc[:, 'pixDec'] = tab['fieldDec']
 
 # match DD to observations
-tab = Match_DD(DDF, tab)
+tab = Match_DD(DDF, tab, radius=3.)
 
 # estimate seasons
 tabseas = pd.DataFrame()
@@ -44,6 +45,16 @@ for field in tab['fieldname'].unique():
     seas = season(sel.to_records(index=False))
     print(field, np.unique(seas['season']))
     tabseas = pd.concat((tabseas, pd.DataFrame(np.copy(seas))))
+
+"""
+colors = ['k', 'r', 'g', 'b', 'y', 'm']
+fig, ax = plt.subplots()
+for io, name in enumerate(tabseas['fieldname'].unique()):
+    ii = tabseas['fieldname'] == name
+    sel = tabseas[ii]
+    ax.plot(sel['fieldRA'], sel['fieldDec'], '{}.'.format(colors[io]))
+plt.show()
+"""
 
 if outputType == 'all':
     # save without medians
