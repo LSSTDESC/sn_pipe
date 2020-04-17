@@ -53,6 +53,10 @@ for io, name in enumerate(tabseas['fieldName'].unique()):
     ax.plot(sel['fieldRA'], sel['fieldDec'], '{}.'.format(colors[io]))
 plt.show()
 """
+# remove some columns
+todrop = ['healpixID', 'pixRA', 'pixDec', 'ebv']
+tabseas = tabseas.drop(columns=todrop)
+
 
 if outputType == 'all':
     # save without medians
