@@ -2,6 +2,7 @@ import yaml
 import numpy as np
 from sn_tools.sn_cadence_tools import GenerateFakeObservations
 from optparse import OptionParser
+import numpy.lib.recfunctions as rf
 
 parser = OptionParser()
 
@@ -24,6 +25,11 @@ print(config)
 mygen = GenerateFakeObservations(config, sequences=seqs).Observations
 
 print(mygen)
+
+
+# add a night column
+
+mygen = rf.append_fields(mygen, 'night', list(range(1, len(mygen)+1)))
 print(mygen.dtype)
 
 np.save('{}.npy'.format(outputName), np.copy(mygen))
