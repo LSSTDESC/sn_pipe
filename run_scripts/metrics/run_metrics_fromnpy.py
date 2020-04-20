@@ -285,7 +285,7 @@ class processMetrics:
 
         valsdf = pd.DataFrame(self.pixelmap)
         ido = valsdf['healpixID'].isin(pixels)
-        procpix(valsdf[ido], observations, self.npixels)
+        procpix(valsdf[ido], np.copy(observations), self.npixels)
 
         print('end of processing for', j, time.time()-time_ref)
 
