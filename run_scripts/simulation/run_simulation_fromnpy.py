@@ -4,7 +4,8 @@ import numpy as np
 import healpy as hp
 #from metricWrapper import CadenceMetricWrapper, SNRMetricWrapper
 from sn_mafsim.sn_maf_simulation import SNMetric
-from sn_tools.sn_obs import renameFields, pixelate, season, GetShape, ObsPixel,ProcessArea
+#from sn_tools.sn_obs import renameFields, pixelate, season, GetShape, ObsPixel,ProcessArea
+from sn_tools.sn_obs import renameFields, pixelate, season, ProcessArea
 from optparse import OptionParser
 import time
 import multiprocessing
@@ -12,11 +13,12 @@ import yaml
 import os
 from sn_tools.sn_utils import GetReference
 import pandas as pd
-from sn_tools.sn_obs import pavingSky,getFields
+from sn_tools.sn_obs import pavingSky, getFields
 import glob
 from sn_tools.sn_io import getObservations
 from sn_tools.sn_cadence_tools import ClusterObs
 import numpy.lib.recfunctions as rf
+
 
 def selectDD(obs, nside):
 
@@ -32,7 +34,7 @@ def selectDD(obs, nside):
     else:
         names = obs.dtype.names
         if 'fieldId' in names:
-            print(np.unique(obs[['fieldId','note']]))
+            print(np.unique(obs[['fieldId', 'note']]))
             idx = obs['fieldId'] == 0
             return pixelate(obs[idx], nside, RaCol='fieldRA', DecCol='fieldDec')
         else:
@@ -41,27 +43,28 @@ def selectDD(obs, nside):
                DD except by selecting pixels with a large number of visits
             """
             pixels = pixelate(obs, nside, RaCol='fieldRA', DecCol='fieldDec')
-            
+
             df = pd.DataFrame(np.copy(pixels))
 
-            groups = df.groupby('healpixID').filter(lambda x: len(x)>5000)
+            groups = df.groupby('healpixID').filter(lambda x: len(x) > 5000)
 
-            group_DD = groups.groupby(['fieldRA','fieldDec']).filter(lambda x: len(x)>4000)
+            group_DD = groups.groupby(['fieldRA', 'fieldDec']).filter(
+                lambda x: len(x) > 4000)
 
-
-            #return np.array(group_DD.to_records().view(type=np.matrix))
+            # return np.array(group_DD.to_records().view(type=np.matrix))
             return group_DD.to_records(index=False)
 
 
-def makeYaml(input_file, dbDir, dbName, nside, nproc, 
-             diffflux,seasnum,outDir,fieldType,
-             x1,color,zmin,zmax,simu,
-             x1colorType,zType,daymaxType):
+def makeYaml(input_file, dbDir, dbName, nside, nproc,
+             diffflux, seasnum, outDir, fieldType,
+             x1, color, zmin, zmax, simu,
+             x1colorType, zType, daymaxType):
 
     with open(input_file, 'r') as file:
         filedata = file.read()
 
-    prodid = '{}_{}_{}_seas_{}_{}_{}'.format(simu,fieldType,dbName, seasnum, x1,color)
+    prodid = '{}_{}_{}_seas_{}_{}_{}'.format(
+        simu, fieldType, dbName, seasnum, x1, color)
     fullDbName = '{}/{}.npy'.format(dbDir, dbName)
     filedata = filedata.replace('prodid', prodid)
     filedata = filedata.replace('fullDbName', fullDbName)
@@ -75,51 +78,50 @@ def makeYaml(input_file, dbDir, dbName, nside, nproc,
     filedata = filedata.replace('colorval', str(color))
     filedata = filedata.replace('zmin', str(zmin))
     filedata = filedata.replace('zmax', str(zmax))
-    filedata = filedata.replace('x1colorType',x1colorType)
-    filedata = filedata.replace('zType',zType)
-    filedata = filedata.replace('daymaxType',daymaxType)
-
+    filedata = filedata.replace('x1colorType', x1colorType)
+    filedata = filedata.replace('zType', zType)
+    filedata = filedata.replace('daymaxType', daymaxType)
 
     if fieldType == 'DD':
         filedata = filedata.replace('fcoadd', 'True')
     else:
-        filedata = filedata.replace('fcoadd', 'False') 
+        filedata = filedata.replace('fcoadd', 'False')
     return yaml.load(filedata, Loader=yaml.FullLoader)
 
 
-#def loop_area(pointings,metricList, observations, nside, outDir,dbName,saveData,nodither,RaCol,DecCol,j=0, output_q=None):
-def loop_area(pointings,config, x0_tab,reference_lc,coadd,observations, nside, outDir,dbName,saveData,nodither,RaCol,DecCol,j=0, output_q=None):
+# def loop_area(pointings,metricList, observations, nside, outDir,dbName,saveData,nodither,RaCol,DecCol,j=0, output_q=None):
+def loop_area(pointings, config, x0_tab, reference_lc, coadd, observations, nside, outDir, dbName, saveData, nodither, RaCol, DecCol, j=0, output_q=None):
 
-    
-    #this is to take multiproc into account
-    config['ProductionID'] = '{}_{}'.format(config['ProductionID'],j)
-    metric = SNMetric(config=config, x0_norm=x0_tab,reference_lc=reference_lc,coadd=coadd)
-   
-    print('processing pointings',j,pointings,observations.dtype)
-    
+    # this is to take multiproc into account
+    config['ProductionID'] = '{}_{}'.format(config['ProductionID'], j)
+    metric = SNMetric(config=config, x0_norm=x0_tab,
+                      reference_lc=reference_lc, coadd=coadd)
+
+    print('processing pointings', j, pointings, observations.dtype)
+
     time_ref = time.time()
-    
+
     ipoint = 1
-    
-    myprocess = ProcessArea(nside,RaCol,DecCol,j,outDir,dbName,saveData)
+
+    myprocess = ProcessArea(nside, RaCol, DecCol, j, outDir, dbName, saveData)
     for pointing in pointings:
         ipoint += 1
-       
-        resdict = myprocess(observations, [metric], pointing['Ra'], pointing['Dec'], pointing['radius'], pointing['radius'],ipoint,nodither,display=False)
-        
- 
+
+        resdict = myprocess(observations, [metric], pointing['Ra'], pointing['Dec'],
+                            pointing['radius'], pointing['radius'], ipoint, nodither, display=False)
+
     if hasattr(metric, 'type'):
-        if metric.type=='simulation':
+        if metric.type == 'simulation':
             metric.simu.Finish()
-    print('end of processing for', j,time.time()-time_ref)
+    print('end of processing for', j, time.time()-time_ref)
 
 
-def loop(x1,color,zmin,zmax,healpixels, obsFocalPlane, dbDir, dbName, fieldType, outDir, nside, diffflux,seasnum,x0_tab,reference_lc,simu,j=0, output_q=None):
+def loop(x1, color, zmin, zmax, healpixels, obsFocalPlane, dbDir, dbName, fieldType, outDir, nside, diffflux, seasnum, x0_tab, reference_lc, simu, j=0, output_q=None):
 
     config = makeYaml('input/simulation/param_simulation_gen.yaml',
-                      dbDir, dbName, nside, 8, diffflux, seasnum,outDir,fieldType,x1,color,zmin,zmax,simu)
-    
-    metric = SNMetric(config=config, x0_norm=x0_tab,reference_lc=reference_lc)
+                      dbDir, dbName, nside, 8, diffflux, seasnum, outDir, fieldType, x1, color, zmin, zmax, simu)
+
+    metric = SNMetric(config=config, x0_norm=x0_tab, reference_lc=reference_lc)
     for io, healpixID in enumerate(healpixels):
         obsMatch = obsFocalPlane.matchFast(healpixID)
         metric.run(season(obsMatch))
@@ -159,7 +161,8 @@ parser.add_option("--diffflux", type="int", default=0,
                   help="flag for diff flux[%default]")
 parser.add_option("--season", type="int", default=-1,
                   help="season to process[%default]")
-parser.add_option("--fieldType", type="str", default='DD', help="field - DD or WFD[%default]")
+parser.add_option("--fieldType", type="str", default='DD',
+                  help="field - DD or WFD[%default]")
 parser.add_option("--x1colorType", type="str", default='fixed',
                   help="x1color type (fixed,random) [%default]")
 parser.add_option("--zType", type="str", default='uniform',
@@ -233,9 +236,9 @@ simu = 'sncosmo'
 
 # Load the (config) yaml file
 config = makeYaml('input/simulation/param_simulation_gen.yaml',
-                  dbDir, dbName, nside, 1,diffflux, 
+                  dbDir, dbName, nside, 1, diffflux,
                   seasnum, outDir, fieldType, x1, color,
-                  zmin,zmax,simu,x1colorType,zType,daymaxType)
+                  zmin, zmax, simu, x1colorType, zType, daymaxType)
 
 # check whether X0_norm file exist or not (and generate it if necessary)
 absMag = config['SN parameters']['absmag']
@@ -251,11 +254,11 @@ if not os.path.isfile(x0normFile):
             absmag=absMag, outfile=x0normFile)
 
 x0_tab = np.load(x0normFile)
- 
+
 reference_lc = None
 if 'sn_fast' in config['Simulator']['name']:
     simu = 'sn_fast'
-    print('Loading reference LCs from',config['Simulator']['Reference File'])
+    print('Loading reference LCs from', config['Simulator']['Reference File'])
     reference_lc = GetReference(
         config['Simulator']['Reference File'],
         config['Simulator']['Gamma File'],
@@ -264,9 +267,9 @@ if 'sn_fast' in config['Simulator']['name']:
 
 # loading observations
 
-observations = getObservations(dbDir, dbName,dbExtens)
+observations = getObservations(dbDir, dbName, dbExtens)
 
-#rename fields
+# rename fields
 
 observations = renameFields(observations)
 
@@ -275,51 +278,52 @@ radius = 5.
 RaCol = 'fieldRA'
 DecCol = 'fieldDec'
 if 'Ra' in observations.dtype.names:
-     RaCol = 'Ra'
-     DecCol = 'Dec'
+    RaCol = 'Ra'
+    DecCol = 'Dec'
 
 if fieldType == 'DD':
     n_clusters = 5
     if 'euclid' in dbName:
         n_clusters = 6
 
-    fieldIds = [290,744,1427, 2412, 2786]
-    observations = getFields(observations, fieldType, fieldIds,nside)
-   
+    fieldIds = [290, 744, 1427, 2412, 2786]
+    observations = getFields(observations, fieldType, fieldIds, nside)
+
     # get clusters out of these obs
 
-    clusters = ClusterObs(observations,n_clusters=n_clusters,dbName=dbName).clusters
+    clusters = ClusterObs(
+        observations, n_clusters=n_clusters, dbName=dbName).clusters
 
-    clusters = rf.append_fields(clusters,'radius',[radius]*len(clusters))
+    clusters = rf.append_fields(clusters, 'radius', [radius]*len(clusters))
 
-    
-    areas = rf.rename_fields(clusters,{'RA':'Ra'})
+    areas = rf.rename_fields(clusters, {'RA': 'Ra'})
 
-    print('yes',areas)
+    print('yes', areas)
     print(observations.dtype)
 
 else:
     if fieldType == 'WFD':
-        observations = getFields(observations,'WFD')
+        observations = getFields(observations, 'WFD')
         minDec = decmin
         maxDec = decmax
         if decmin == -1.0 and decmax == -1.0:
-            #in that case min and max dec are given by obs strategy
+            # in that case min and max dec are given by obs strategy
             minDec = np.min(observations['fieldDec'])-3.
             maxDec = np.max(observations['fieldDec'])+3.
-        areas = pavingSky(ramin,ramax, minDec,maxDec, radius)
+        areas = pavingSky(ramin, ramax, minDec, maxDec, radius)
         #areas = pavingSky(20., 40., -40., -30., radius)
         print(observations.dtype)
-        
+
     if fieldType == 'Fake':
-        #in that case: only one (Ra,Dec)
+        # in that case: only one (Ra,Dec)
         radius = 0.1
         Ra = np.unique(observations[RaCol])[0]
         Dec = np.unique(observations[DecCol])[0]
-        areas = pavingSky(Ra-radius/2.,Ra+radius/2.,Dec-radius/2.,Dec+radius/2.,radius)
+        areas = pavingSky(Ra-radius/2., Ra+radius/2., Dec -
+                          radius/2., Dec+radius/2., radius)
 
-#print(observations.dtype)
-#print(test)
+# print(observations.dtype)
+# print(test)
 
 
 # remove pixels with a "too-high" E(B-V)
@@ -340,9 +344,9 @@ metricList = []
 
 config = makeYaml('input/simulation/param_simulation_gen.yaml',
                   dbDir, dbName, nside, 8, diffflux, seasnum,
-                  outDir,fieldType,x1,color,zmin,zmax,simu,
-                  x1colorType,zType,daymaxType)
-    
+                  outDir, fieldType, x1, color, zmin, zmax, simu,
+                  x1colorType, zType, daymaxType)
+
 with open('prod_yaml/result.yml', 'w') as yaml_file:
     yaml.dump(config, yaml_file, default_flow_style=False)
 
@@ -373,11 +377,11 @@ if nproc > 1:
     if tabpix[-1]-tabpix[-2] <= 100:
         tabpix.remove(tabpix[-2])
 """
-tabpix = np.linspace(0,npixels,nproc+1,dtype='int') 
+tabpix = np.linspace(0, npixels, nproc+1, dtype='int')
 print(tabpix, len(tabpix))
 result_queue = multiprocessing.Queue()
 for j in range(len(tabpix)-1):
-#for j in range(0,1):
+    # for j in range(0,1):
     ida = tabpix[j]
     idb = tabpix[j+1]
     """
@@ -389,9 +393,6 @@ for j in range(len(tabpix)-1):
         healpixels[ida:idb],metricList, observations, nside,outDir,dbName, saveData,nodither,RaCol,DecCol,j, result_queue))
     """
     p = multiprocessing.Process(name='Subprocess-'+str(j), target=loop_area, args=(
-        healpixels[ida:idb],config,x0_tab,reference_lc,coadd, observations, nside,outDir,dbName, saveData,nodither,RaCol,DecCol,j, result_queue))
-
-
+        healpixels[ida:idb], config, x0_tab, reference_lc, coadd, observations, nside, outDir, dbName, saveData, nodither, RaCol, DecCol, j, result_queue))
 
     p.start()
-
