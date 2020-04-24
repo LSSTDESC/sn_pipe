@@ -61,6 +61,10 @@ The Survey Strategy Support pipeline is supposed to be modular, in the sense tha
 | SN metrics | sn_metrics | python pip_sn_pack.py --action install --package=metrics --gitbranch=thebranch|
 | LC simulations | sn_simulation|python pip_sn_pack.py --action install --package=simulation --gitbranch=thebranch|
 
+
+## [sn_pipe content](docs/Gen/sn_pipe.md)
+
+
 ## [How to install, run and analyze the metrics](docs/Metrics/METRICS.md)
 
 ### Installing requested packages

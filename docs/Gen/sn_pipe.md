@@ -1,0 +1,21 @@
+# sn_pipe 
+
+.
+ * doc
+ * [for_batch](for_batch.md)
+ * input
+ * LICENCE
+ * notebooks
+ * pip_sn_pack.py
+ * plot_scripts
+ * reference_files
+ * requirements.txt
+ * run_scripts
+ * SALT2_Files
+ * setup.py
+ * setup_release.sh
+ * README.md
+ * current_release.yaml
+ * doctest.xml
+ * docs
+ * tree_md.sh
