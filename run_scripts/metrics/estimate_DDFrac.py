@@ -12,15 +12,13 @@ from sn_tools.sn_utils import MultiProc
 
 def func(proc, params):
 
-    n_cluster = 5
+    n_cluster = proc['nproc']
     dbName = proc['dbName'].decode()
-    if 'euclid' in dbName:
-        n_cluster = 6
-
     dbDir = params['dbDir']
     dbExtens = params['dbExtens']
     fields = DDFields()
 
+    print('go', dbDir, dbName, dbExtens, n_cluster)
     ana = AnaOS(dbDir, dbName, dbExtens, n_cluster, fields).stat
 
     return ana
@@ -149,11 +147,15 @@ outName = 'Nvisits.npy'
 if not os.path.isfile(outName):
     toprocess = np.genfromtxt(dbList, dtype=None, names=[
         'dbName', 'simuType', 'nside', 'coadd', 'fieldType', 'nproc'])
+    """
+    if len(toprocess.shape) == 1:
+        toprocess = np.array([toprocess])
+    """
     params = {}
     params['dbDir'] = dbDir
     params['dbExtens'] = dbExtens
-
-    data = MultiProc(toprocess, params, func, nproc=8).data
+    print('toprocess', params)
+    data = MultiProc(toprocess, params, func, nproc=1).data
     np.save(outName, data.to_records(index=False))
 
 
