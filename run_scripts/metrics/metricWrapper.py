@@ -162,7 +162,7 @@ class NSNMetricWrapper(MetricWrapper):
             npixels=npixels,
             metadata=metadata, outDir=outDir)
 
-        verbose = True
+        zmin = 0.
         zmax = 1.1
         if fieldType == 'WFD':
             zmax = 0.6
@@ -215,8 +215,8 @@ class NSNMetricWrapper(MetricWrapper):
         # LC selection criteria
 
         if fieldType == 'DD':
-            n_bef = 2
-            n_aft = 5
+            n_bef = 4
+            n_aft = 10
             snr_min = 5.
             n_phase_min = 1
             n_phase_max = 1
@@ -240,7 +240,7 @@ class NSNMetricWrapper(MetricWrapper):
         x1_color_dist = np.genfromtxt('reference_files/Dist_X1_Color_JLA_high_z.txt', dtype=None,
                                       names=('x1', 'color', 'weight_x1', 'weight_c', 'weight_tot'))
 
-        #print(x1_color_dist)
+        # print(x1_color_dist)
 
         if metadata.proxy_level == 1:
             x1vals = np.arange(-3., 5., 2.)
@@ -267,7 +267,8 @@ class NSNMetricWrapper(MetricWrapper):
         pixArea = hp.nside2pixarea(nside, degrees=True)
 
         self.metric = SNNSNMetric(
-            lc_reference, season=season, zmax=zmax, pixArea=pixArea,
+            lc_reference, season=season, zmin=zmin,
+            zmax=zmax, pixArea=pixArea,
             verbose=metadata.verbose, timer=metadata.timer,
             ploteffi=metadata.ploteffi,
             n_bef=n_bef, n_aft=n_aft,
