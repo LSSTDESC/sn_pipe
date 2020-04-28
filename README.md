@@ -26,7 +26,9 @@ Copyright (c) 2019, the sn_pipe contributors on GitHub, https://github.com/LSSTD
 All rights reserved.
 ```
 
+## **Overview of the pipeline**
 
+![Image description](docs/sn_pipe_scheme.png)
 
 ## **Instruction for installation**
 
@@ -47,8 +49,11 @@ All rights reserved.
    - on Mac: source setup_release.sh Mac
 ```
 - The release (automatically) chosen may be found in the current_release.yaml file.
- 
-**Important : you have to make this setup prior to any operation described below**
+
+**Important : you have to make this setup prior to any use of the pipeline**
+
+
+
 
 ###  Installation
 
