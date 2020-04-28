@@ -13,7 +13,7 @@ import yaml
 import os
 from sn_tools.sn_utils import GetReference
 import pandas as pd
-from sn_tools.sn_obs import pavingSky, getFields
+from sn_tools.sn_obs import PavingSky, getFields
 import glob
 from sn_tools.sn_io import getObservations
 from sn_tools.sn_cadence_tools import ClusterObs
@@ -310,7 +310,7 @@ else:
             # in that case min and max dec are given by obs strategy
             minDec = np.min(observations['fieldDec'])-3.
             maxDec = np.max(observations['fieldDec'])+3.
-        areas = pavingSky(ramin, ramax, minDec, maxDec, radius)
+        areas = PavingSky(ramin, ramax, minDec, maxDec, radius)
         #areas = pavingSky(20., 40., -40., -30., radius)
         print(observations.dtype)
 
@@ -319,7 +319,7 @@ else:
         radius = 0.1
         Ra = np.unique(observations[RaCol])[0]
         Dec = np.unique(observations[DecCol])[0]
-        areas = pavingSky(Ra-radius/2., Ra+radius/2., Dec -
+        areas = PavingSky(Ra-radius/2., Ra+radius/2., Dec -
                           radius/2., Dec+radius/2., radius)
 
 # print(observations.dtype)
