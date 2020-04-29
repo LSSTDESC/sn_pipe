@@ -192,7 +192,7 @@ parser.add_option("--fieldType", type="str", default='WFD',
                   help="field type - DD, WFD, Fake [%default]")
 parser.add_option("--nPixelsFile", type="str", default='ObsPixels_fbs14_nside_64.npy',
                   help="file with the total number of pixels per obs. strat.[%default]")
-parser.add_option("--listdb", type="str", default='WFD.csv',
+parser.add_option("--listdb", type="str", default='plot_scripts/input/WFD_test.csv',
                   help="list of dbnames to process [%default]")
 
 opts, args = parser.parse_args()
