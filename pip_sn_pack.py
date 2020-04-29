@@ -59,7 +59,7 @@ parser = OptionParser()
 
 parser.add_option("--package", type="str", default='metrics',
                   help="package name to install [%default]")
-parser.add_option("--gitbranch", type="str", default='dev',
+parser.add_option("--gitbranch", type="str", default='master',
                   help="gitbranch of the package [%default]")
 parser.add_option("--action", type="str", default='list',
                   help="action to perform: list, install, uninstall [%default]")

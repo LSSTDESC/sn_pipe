@@ -35,6 +35,20 @@ class InstallCommand(install):
         # install dependencies first
         cmd = 'pip install --user -r requirements.txt --no-deps'
         os.system(cmd)
+
+        if self.package != 'all':
+            # now install the requested package
+            cmd = 'pip install --user git+https://github.com/lsstdesc/{}.git@{}'.format(
+                self.package, self.branch)
+            os.system(cmd)
+        else:
+            packgs = ['sn_metrics', 'sn_simulation', 'sn_fit']
+            for pack in packgs:
+                cmd = 'pip install --user git+https://github.com/lsstdesc/{}.git@{}'.format(
+                    pack, self.branch)
+                os.system(cmd)
+
+        """
         if self.package == 'metrics':
             cmd = 'pip install --user git+https://github.com/lsstdesc/sn_metrics.git@{}'.format(
                 self.branch)
@@ -49,7 +63,7 @@ class InstallCommand(install):
             cmd = 'pip install --user git+https://github.com/lsstdesc/sn_studies.git@{}'.format(
                 self.branch)
             os.system(cmd)
-
+        """
         install.run(self)
 
 
