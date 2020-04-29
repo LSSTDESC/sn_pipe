@@ -26,51 +26,56 @@ Copyright (c) 2019, the sn_pipe contributors on GitHub, https://github.com/LSSTD
 All rights reserved.
 ```
 
-## **Overview of the pipeline**
+## Overview of the pipeline
 
 ![Image description](docs/sn_pipe_scheme.png)
 
-## **Instruction for installation**
-
-### Getting the package from github
+## Getting the package from github
 ```
- git clone -b thebranch https://github.com/lsstdesc/sn_pipe
+ git clone https://github.com/lsstdesc/sn_pipe
  ```
- where thebranch is the branch you would like to use (main, dev, dev_stable, ...)
 
-### Environnement setup
+## Environnement setup 
  - The pipeline uses lsst_sim package
  - cernvmfs may be used to have some lsst_sim releases available.
  - to install cvmfs: https://sw.lsst.eu/installation.html
  - ls /cvmfs/sw.lsst.eu/linux-x86_64/lsst_sims/ -> provides a list of lsst_sim releases available.
- - The "setup" is done this way:
- ```
-   - on Linux: source setup_release.sh Linux
-   - on Mac: source setup_release.sh Mac
+ - Instruction to "setup" your environment [here](docs/Gen/usage_setup_release.md)
+
 ```
-- The release (automatically) chosen may be found in the current_release.yaml file.
-
 **Important : you have to make this setup prior to any use of the pipeline**
+```
 
-
-
-
-###  Installation
+## Installation 
 
 The Survey Strategy Support pipeline is supposed to be modular, in the sense that only needed git packages are installed for a given task. The current tasks that may be run are:
 - supernovae metrics using the sn_metrics package
 - light curve simulation using the sn_simulation package
+- light curve fit using the sn_fit package
 
 | Task | package | command for installation|
 |----|----|----|
-| SN metrics | sn_metrics | python pip_sn_pack.py --action install --package=metrics --gitbranch=thebranch|
-| LC simulations | sn_simulation|python pip_sn_pack.py --action install --package=simulation --gitbranch=thebranch|
+| SN metrics | sn_metrics | python pip_sn_pack.py --action install --package=sn_metrics |
+| LC simulations | sn_simulation|python pip_sn_pack.py --action install --package=sn_simulation |
+| LC fit | sn_fit |python pip_sn_pack.py --action install --package=sn_fit |
+|all | all | python pip_sn_pack.py --action install --package=all| 
+
+## How to...
+
+### [Run and analyze the metrics](docs/Metrics/METRICS.md)
+
+### Run and analyze light curve simulation
+
+### Run and analyze light curve fitting
 
 
-## [sn_pipe content](docs/Gen/sn_pipe.md)
+## sn_pipe structure
+
+### [sn_pipe content](docs/Gen/sn_pipe.md)
+
+###  [sn_pipe full tree](docs/Gen/sn_pipe_fulltree.md)
 
 
-## [How to install, run and analyze the metrics](docs/Metrics/METRICS.md)
 
 ### Installing requested packages
 - pip install . --user --install-option="--package=metrics" --install-option="--branch=thebranch"
