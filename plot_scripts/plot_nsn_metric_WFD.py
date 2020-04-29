@@ -10,10 +10,29 @@ import glob
 import healpy as hp
 import numpy.lib.recfunctions as rf
 import pandas as pd
+import os
+
+
+def mscatter(x, y, ax=None, m=None, **kw):
+    import matplotlib.markers as mmarkers
+    ax = ax or plt.gca()
+    sc = ax.scatter(x, y, **kw)
+    if (m is not None) and (len(m) == len(x)):
+        paths = []
+        for marker in m:
+            if isinstance(marker, mmarkers.MarkerStyle):
+                marker_obj = marker
+            else:
+                marker_obj = mmarkers.MarkerStyle(marker)
+            path = marker_obj.get_path().transformed(
+                marker_obj.get_transform())
+            paths.append(path)
+        sc.set_paths(paths)
+    return sc
 
 
 class MetricAna:
-    def __init__(self, dbDir, dbName,
+    def __init__(self, dbDir, dbInfo,
                  metricName='NSN', fieldType='WFD',
                  nside=64,
                  x1=-2.0, color=0.2, npixels=-1):
@@ -24,8 +43,8 @@ class MetricAna:
         ---------------
         dbDir: str
           location directory where the files to process are
-        dbName: str
-          observing strategy name
+        dbInfo: pandas df
+          info from observing strategy (dbName, plotName, color, marker)
         metricName: str
           name of the metric used to generate the files
         fieldType: str, opt
@@ -46,7 +65,7 @@ class MetricAna:
 
         # loading data (metric values)
         search_path = '{}/{}/{}/*NSNMetric_{}*_nside_{}_*.hdf5'.format(
-            dirFile, dbName, metricName, fieldType, nside)
+            dirFile, dbInfo['dbName'], metricName, fieldType, nside)
         print('looking for', search_path)
         fileNames = glob.glob(search_path)
         # fileName='{}/{}_CadenceMetric_{}.npy'.format(dirFile,dbName,band)
@@ -64,9 +83,19 @@ class MetricAna:
             self.ratiopixels = float(
                 npixels)/float(self.npixels_eff)
 
-        self.zlim = self.zlim_med()
-        self.nsn, self.sig_nsn = self.nSN_tot()
-        self.nsn_extrapol = int(np.round(self.nsn*self.ratiopixels))
+        zlim = self.zlim_med()
+        nsn, sig_nsn = self.nSN_tot()
+        nsn_extrapol = int(np.round(nsn*self.ratiopixels))
+
+        resdf = pd.DataFrame([zlim], columns=['zlim'])
+        resdf['nsn'] = [nsn]
+        resdf['sig_nsn'] = [sig_nsn]
+        resdf['nsn_extra'] = [nsn_extrapol]
+        resdf['dbName'] = dbInfo['dbName']
+        resdf['plotName'] = dbInfo['plotName']
+        resdf['color'] = dbInfo['color']
+        resdf['marker'] = dbInfo['marker']
+        self.data = resdf
 
     def zlim_med(self):
         """
@@ -153,7 +182,8 @@ class MetricAna:
 
 
 parser = OptionParser(
-    description='Display Cadence metric results for DD fields')
+    description='Display NSN metric results for WFD fields')
+
 parser.add_option("--dirFile", type="str", default='',
                   help="file directory [%default]")
 parser.add_option("--nside", type="int", default=64,
@@ -162,7 +192,8 @@ parser.add_option("--fieldType", type="str", default='WFD',
                   help="field type - DD, WFD, Fake [%default]")
 parser.add_option("--nPixelsFile", type="str", default='ObsPixels_fbs14_nside_64.npy',
                   help="file with the total number of pixels per obs. strat.[%default]")
-
+parser.add_option("--listdb", type="str", default='WFD.csv',
+                  help="list of dbnames to process [%default]")
 
 opts, args = parser.parse_args()
 
@@ -175,26 +206,54 @@ nside = opts.nside
 fieldType = opts.fieldType
 metricName = 'NSN'
 nPixelsFile = opts.nPixelsFile
-
-dbNames = ['descddf_v1.4_10yrs']
+listdb = opts.listdb
 
 metricTot = None
 metricTot_med = None
+
+toproc = pd.read_csv(listdb)
+
 pixArea = hp.nside2pixarea(nside, degrees=True)
 x1 = -2.0
 color = 0.2
-Npixels = np.load(nPixelsFile)
+
+if os.path.isfile(nPixelsFile):
+    Npixels = np.load(nPixelsFile)
+else:
+    print('File with the total number of pixels not found')
+    r = toproc.copy()
+    r['npixels'] = 0.
+    Npixels = r.to_records(index=False)
+
 print(Npixels.dtype)
 
-toproc = pd.read_csv('toread.csv')
+# this is to get summary values here
+resdf = pd.DataFrame()
 for index, val in toproc.iterrows():
     dbName = val['dbName']
-    dirFile = val['dirFile']
     idx = Npixels['dbName'] == dbName
-    myana = MetricAna(dirFile, dbName, metricName, fieldType,
-                      nside, npixels=Npixels[idx]['npixels'].item())
-    print(myana.zlim, myana.nsn, myana.sig_nsn,
-          myana.npixels_eff, myana.nsn_extrapol)
-    # myana.plot()
+    npixels = Npixels[idx]['npixels'].item()
+    metricdata = MetricAna(dirFile, val, metricName, fieldType,
+                           nside, npixels=npixels).data
+    resdf = pd.concat((resdf, metricdata))
 
+print(resdf)
+
+# Summary plot
+
+# color=resdf['color'].tolist())
+
+fig, ax = plt.subplots()
+
+mscatter(resdf['zlim'], resdf['nsn'], ax=ax,
+         m=resdf['marker'].to_list(), c=resdf['color'].to_list())
+
+ax.grid()
+ax.set_xlabel('$z_{faint}$')
+ax.set_ylabel('$N_{SN}(z\leq z_{faint})$')
+
+"""
+plt.scatter(resdf['zlim'], resdf['nsn'], lineStyle='None',
+            markers=resdf['marker'].to_list())
+"""
 plt.show()
