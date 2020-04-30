@@ -7,7 +7,9 @@ telescope = Telescope(airmass=1.2)
 
 outName = 'gamma_test.hdf5'
 mag_range = np.arange(15., 38., 1.)
-exptimes = np.arange(1., 9000., 10.)
+exptimes = np.arange(0., 9000., 10.)
+exptimes[0] = 1.
+
 Gamma(bands, telescope, outName,
       mag_range=mag_range,
       exptimes=exptimes)
