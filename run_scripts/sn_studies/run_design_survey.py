@@ -4,8 +4,8 @@ from sn_design_dd_survey.snr import SNR, SNR_plot
 from sn_design_dd_survey.signal_bands import RestFrameBands
 from sn_design_dd_survey.showvisits import ShowVisits
 from sn_design_dd_survey import plt
-from sn_DD_opti.showvisits import GUI_Visits
-from sn_DD_opti.budget import GUI_Budget
+#from sn_DD_opti.showvisits import GUI_Visits
+#from sn_DD_opti.budget import GUI_Budget
 
 import os
 import multiprocessing
@@ -65,15 +65,15 @@ if not os.path.isdir(SNRDir):
 
 
 # choose one SNR distribution
-SNR_par = dict(zip(['max', 'step', 'choice'], [80., 2., 'Nvisits']))
+SNR_par = dict(zip(['max', 'step', 'choice'], [80., 1., 'Nvisits']))
 
-snr_calc = SNR(SNRDir, data, SNR_par, verbose=False)
+snr_calc = SNR(SNRDir, data, SNR_par, save_SNR_combi=True, verbose=False)
 
 # plot the results
 
 # load m5 reference values - here: med value per field per filter per season
 # m5_type = 'median_m5_field_filter_season'  # m5 values
-
+print(test)
 if plot_snr:
     snrplot = SNR_plot('SNR_files', -2.0, 0.2, 2.0, 380.,
                        800., 3., theDir, m5file, 'median_m5_filter')
@@ -126,9 +126,10 @@ dir_config = '.'
 #GUI_Visits(nvisits_cadence, cadence=3, dir_config=dir_config)
 
 # this is to display budget vs zlim (and filter allocation)
-
+"""
 GUI_Budget(nvisits_cadence,
            nvisits_cadence_season,
            runtype='Nvisits_single', dir_config='.')
 
 plt.show()
+"""
