@@ -61,7 +61,6 @@ def load_params(paramFile):
     params = Table()
     for i, key in enumerate(f.keys()):
         pars = Table.read(paramFile, path=key)
-        print('jj', pars)
         params = vstack([params, pars])
 
     return params
@@ -104,7 +103,7 @@ def plotLC(table, ax, band_id, inum=0):
 
 
 thedir = 'Output_Simu'
-parName = 'Fake_DESC_simulation_7.hdf5'
+parName = 'Simu_sncosmo_Fake_Fake_DESC_seas_-1_-2.0_0.2.hdf5'
 
 params = load_params('{}/{}'.format(thedir, parName))
 
