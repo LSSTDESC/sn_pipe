@@ -1,9 +1,9 @@
+from simuWrapper import SimuWrapper
+from optparse import OptionParser
+from sn_tools.sn_process import Process
+import numpy as np
 import matplotlib
 matplotlib.use('agg')
-import numpy as np
-from sn_tools.sn_process import Process
-from optparse import OptionParser
-from simuWrapper import SimuWrapper
 
 parser = OptionParser()
 
@@ -78,7 +78,7 @@ metricList = [SimuWrapper(opts.dbDir, opts.dbName, opts.nside,
                           opts.fieldType, opts.x1, opts.color,
                           opts.zmin, opts.zmax, opts.simulator,
                           opts.x1colorType, opts.zType,
-                          opts.daymaxType)]
+                          opts.daymaxType, opts.coadd)]
 
 # now perform the processing
 Process(opts.dbDir, opts.dbName, opts.dbExtens,
