@@ -159,3 +159,10 @@ class SimuWrapper:
 
         """
         return self.metric.run(obs)
+
+    def finish(self):
+        """
+        Method to save metadata to disk
+
+        """
+        self.metric.simu.Finish()
