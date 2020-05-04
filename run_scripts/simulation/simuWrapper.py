@@ -17,7 +17,7 @@ class SimuWrapper:
 
     def __init__(self, dbDir, dbName, nside, nproc, diffflux,
                  seasnum, outDir, fieldType, x1, color,
-                 zmin, zmax, simu, x1colorType, zType, daymaxType):
+                 zmin, zmax, simu, x1colorType, zType, daymaxType, coadd):
 
         self.dbDir = dbDir
         self.dbName = dbName
@@ -35,6 +35,7 @@ class SimuWrapper:
         self.x1colorType = x1colorType
         self.zType = zType
         self.daymaxType = daymaxType
+        self.coadd = coadd
 
         self.name = 'simulation'
 
@@ -143,7 +144,7 @@ class SimuWrapper:
         filedata = filedata.replace('x1colorType', self.x1colorType)
         filedata = filedata.replace('zType', self.zType)
         filedata = filedata.replace('daymaxType', self.daymaxType)
-        filedata = filedata.replace('fcoadd', 'True')
+        filedata = filedata.replace('fcoadd', str(self.coadd))
 
         return yaml.load(filedata, Loader=yaml.FullLoader)
 
