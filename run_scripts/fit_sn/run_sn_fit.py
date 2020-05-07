@@ -2,15 +2,16 @@ import yaml
 import argparse
 import time
 import h5py
-from astropy.table import Table
+from astropy.table import Table, vstack
 from importlib import import_module
 from sn_tools.sn_telescope import Telescope
 import os
 import numpy as np
 import multiprocessing
 from optparse import OptionParser
-from sn_tools.sn_utils import MbCov
+from sn_fit.mbcov import MbCov
 import glob
+
 
 alpha = 0.14
 beta = 3.1
@@ -31,7 +32,7 @@ def makeYaml(input_file, dbDir, prodid, outDir, nproc):
 def dump(outname, names, val, inum):
 
     # dump the results in a hdf5 file
-    #res = Table(np.rec.fromrecords(val,names = names))
+    # res = Table(np.rec.fromrecords(val,names = names))
     Table(rows=val, names=names).write(
         outname, 'fit_lc_{}'.format(inum), append=True, compression=True)
 
@@ -43,53 +44,53 @@ def procelem(lc_name, simul, fit, covmb, j=0, output_q=None):
         lc = None
         # if simu['n_lc_points'] > 0:
         lc = Table.read(lc_name, path='lc_{}'.format(simu['id_hdf5']))
-        names, vals = fit(lc)
-        if covmb is not None:
-            covDict = mbcovCalc(covmb, names, vals)
-            names += [key for key in covDict.keys()]
-            vals += [covDict[key] for key in covDict.keys()]
+        resfit = fit(lc)
+        idx = resfit['fitstatus'] == 'fitok'
+        if len(resfit[idx]) > 0:
+            if covmb is not None:
+                covDict = mbcovCalc(covmb, resfit)
+                for key in covDict.keys():
+                    resfit[key] = [covDict[key]]
 
-        res.append(tuple(vals))
+            res = vstack([res, resfit])
 
     # dump('{}_{}'.format(fit.fit_out,j),names,val,j)
 
     print('done', j)
     if output_q is not None:
-        return output_q.put({j: (names, res)})
+        return output_q.put({j: res})
     else:
-        return (names, res)
+        return res
 
 
-def mbcovCalc(covmb, names, vals):
+def mbcovCalc(covmb, vals):
 
     cov = np.ndarray(shape=(3, 3), dtype=float, order='F')
-    cov[0, 0] = vals[names.index('Cov_x0x0')]
-    cov[1, 1] = vals[names.index('Cov_x1x1')]
-    cov[2, 2] = vals[names.index('Cov_colorcolor')]
-    cov[0, 1] = vals[names.index('Cov_x0x1')]
-    cov[0, 2] = vals[names.index('Cov_x0color')]
-    cov[1, 2] = vals[names.index('Cov_x1color')]
+    cov[0, 0] = vals['Cov_x0x0'].data
+    cov[1, 1] = vals['Cov_x1x1'].data
+    cov[2, 2] = vals['Cov_colorcolor'].data
+    cov[0, 1] = vals['Cov_x0x1'].data
+    cov[0, 2] = vals['Cov_x0color'].data
+    cov[1, 2] = vals['Cov_x1color'].data
     cov[2, 1] = cov[1, 2]
     cov[1, 0] = cov[0, 1]
     cov[2, 0] = cov[0, 2]
 
-    params = dict(zip(['x0', 'x1', 'c'], [vals[names.index(
-        'x0_fit')], vals[names.index('x1_fit')], vals[names.index('color_fit')]]))
+    params = dict(zip(['x0', 'x1', 'c'], [vals['x0_fit'].data,
+                                          vals['x1_fit'].data, vals['color_fit'].data]))
 
     resu = covmb.mbCovar(params, cov, ['x0', 'x1', 'c'])
-
     sigmu_sq = resu['Cov_mbmb']
-    sigmu_sq += alpha**2 * \
-        vals[names.index('Cov_x1x1')]+beta**2 * \
-        vals[names.index('Cov_colorcolor')]
+    sigmu_sq += alpha**2 * vals['Cov_x1x1'].data + \
+        beta**2 * vals['Cov_colorcolor'].data
     sigmu_sq += 2.*alpha*resu['Cov_x1mb']
-    sigmu_sq += -2.*alpha*beta*vals[names.index('Cov_x1color')]
+    sigmu_sq += -2.*alpha*beta*vals['Cov_x1color'].data
     sigmu_sq += -2.*beta*resu['Cov_colormb']
     sigmu = 0.
     if sigmu_sq >= 0.:
         sigmu = np.sqrt(sigmu_sq)
 
-    resu['sigma_mu'] = sigmu
+    resu['sigma_mu'] = sigmu.item()
     return resu
 
 
@@ -121,13 +122,6 @@ def multiproc(simu_name='', lc_name='', fit=None, covmb=None, nproc=1):
         idb = batch[i+1]
         if ida > 0 and (ida % nref) == 0:
             print('Running', ida)
-        """
-        for j in range(ida,idb):
-            simul = simu[j]
-            lc = None
-            if simul['n_lc_points'] > 0:
-                lc =  Table.read(lc_name, path='lc_'+str(simul['id_hdf5']))
-        """
         p = multiprocessing.Process(name='Subprocess-'+str(i), target=procelem, args=(
             lc_name, simu[ida:idb], fit, covmb, i, result_queue))
         p.start()
@@ -140,23 +134,15 @@ def multiproc(simu_name='', lc_name='', fit=None, covmb=None, nproc=1):
     for p in multiprocessing.active_children():
         p.join()
 
-    val = []
+    val = Table()
     print('dumping results')
     for j in range(len(batch)-1):
-        if resultdict[j][0] is not None and resultdict[j][1] is not None:
-            names = resultdict[j][0]
-            val += resultdict[j][1]
-    """
-        if ida > 0 and (ida%nref) == 0:
-            inum+=1
-            fit.dump(names,val,inum)
-            names = ' '
-            val = []
-    """
+        val = vstack([val, resultdict[j]])
+
     print('finishing')
     if len(val) > 0:
         inum += 1
-        fit.dump(names, val, inum)
+        fit.dump(val, inum)
 
 
 class Fit_All:
@@ -173,18 +159,12 @@ class Fit_All:
 
     def __call__(self, lc, j=-1, output_q=None):
 
-        names, val = self.fitter(lc)
+        resfit = self.fitter(lc)
 
         if output_q is not None:
-            if names is not None and val is not None:
-                output_q.put({j: (list(names), list(val))})
-            else:
-                output_q.put({j: (names, val)})
+            output_q.put({j: resfit})
         else:
-            if names is not None and val is not None:
-                return (list(names), list(val))
-            else:
-                return (names, val)
+            return resfit
 
     def prepareSave(self, outdir, prodid):
 
@@ -196,11 +176,11 @@ class Fit_All:
         if os.path.exists(self.fit_out):
             os.remove(self.fit_out)
 
-    def dump(self, names, val, inum):
+    def dump(self, tab, inum):
 
         # dump the results in a hdf5 file
-        #res = Table(np.rec.fromrecords(val,names = names))
-        tab = Table(rows=val, names=names)
+        # res = Table(np.rec.fromrecords(val,names = names))
+        # tab = Table(rows=val, names=names)
         tab['fitstatus'] = tab['fitstatus'].astype(
             h5py.special_dtype(vlen=str))
         tab.write(self.fit_out, 'fit_lc_{}'.format(
@@ -215,7 +195,7 @@ parser.add_argument('config_filename',
 
 def run(dirFiles, prodid, outDir, nproc, covmb=None):
     # YAML input file.
-    #config = yaml.load(open(config_filename))
+    # config = yaml.load(open(config_filename))
     config = makeYaml('input/fit_sn/param_fit_gen.yaml',
                       dirFiles, prodid, outDir, nproc)
     print(config)
@@ -277,7 +257,7 @@ if mbCalc:
     covmb = MbCov(salt2Dir, paramNames=dict(
         zip(['x0', 'x1', 'color'], ['x0', 'x1', 'c'])))
 
-#prefix = 'sncosmo_DD'
+# prefix = 'sncosmo_DD'
 files = glob.glob('{}/Simu_{}_{}*.hdf5'.format(dirFiles, opts.prefix, prodid))
 
 for fi in files:
