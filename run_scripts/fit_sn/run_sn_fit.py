@@ -6,7 +6,7 @@ from astropy.table import Table, vstack
 import numpy as np
 import multiprocessing
 from optparse import OptionParser
-from sn_fit.sn_fit import Fitting
+from sn_fit.process_fit import Fitting
 from sn_fit.mbcov import MbCov
 import glob
 
