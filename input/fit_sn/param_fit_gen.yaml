@@ -13,7 +13,8 @@ Fitter:
     name : sn_fitter.fit_sncosmo          # Simulator name: sncosmo,snana, snsim, ...
     model : salt2-extended   # spectra model
     version : 1.0                     #version
-Display : False  #display during LC fit
+    covmb: covmbcalc # to estimate covmb after fitted values
+Display : displayval  #display during LC fit
 Output:
     directory: outDir
     save: True
