@@ -2,22 +2,31 @@ ProductionID: prodid
 SN parameters:
    Id : 100                   # Id of the first SN
    x1_color:                    # stretch and color
-       type : x1colorType #random or fixed
-       min : [x1val,colorval]
-       max : [0.2,0.2]
        rate :  JLA
        dirFile: 'reference_files'
+   x1 :
+       type: x1Type
+       min: x1min
+       max: x1max
+       step: x1step
+   color :
+       type: colorType
+       min: colormin
+       max: colormax
+       step: colorstep
    z :              # redshift
        type : zType
        min : zmin
        max : zmax
        step: 0.02
        rate : Perrett # Type Ia volumetric rate : Perrett, Ripoche, Dilday.
-   daymax:                 # Tmax (obs. frame)
+   daymax :                 # Tmax (obs. frame)
        type : daymaxType #uniform or random or unique
        step : 2. # if uniform: step (in day) between Tmin(obs) and Tmax(obs)      
    min_rf_phase : -20.        # obs min phase (rest frame)
    max_rf_phase : 60.         # obs max phase (rest frame)
+   min_rf_phase_qual : -15.        # obs min phase (rest frame) (qual cuts)
+   max_rf_phase_qual : 45.         # obs max phase (rest frame) (qual cuts)
    absmag : -19.0906          # peak abs mag
    band : bessellB             # band for absmag
    magsys : vega              # magsys for absmag
