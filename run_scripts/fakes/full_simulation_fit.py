@@ -43,7 +43,10 @@ os.system(cmd)
 # now run the full simulation on these data
 cmd = 'python run_scripts/simulation/run_simulation_fromnpy.py --dbDir .'
 cmd += ' --dbName {}'.format(opts.fake_output)
-cmd += ' --dbExtens npy --x1 -2.0 --color 0.2 --fieldType Fake'
+cmd += ' --dbExtens npy'
+cmd += ' --x1min -2.0 --x1Type unique'
+cmd += ' --colormin 0.2 --colorType unique'
+cmd += ' --fieldType Fake'
 cmd += ' --coadd 0 --radius 0.1 --saveData 1'
 cmd += ' --outDir {}'.format(outDir_simu)
 print(cmd)

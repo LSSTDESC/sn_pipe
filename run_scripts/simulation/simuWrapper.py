@@ -1,4 +1,5 @@
-from sn_mafsim.sn_maf_simulation import SNMAFSimulation
+#from sn_mafsim.sn_maf_simulation import SNMAFSimulation
+from sn_wrapper.sn_simu import SNSimulation
 import numpy as np
 import yaml
 import os
@@ -16,8 +17,10 @@ class SimuWrapper:
     """
 
     def __init__(self, dbDir, dbName, nside, nproc, diffflux,
-                 seasnum, outDir, fieldType, x1, color,
-                 zmin, zmax, simu, x1colorType, zType, daymaxType, coadd):
+                 seasnum, outDir, fieldType,
+                 x1Type, x1min, x1max, x1step,
+                 colorType, colormin, colormax, colorstep,
+                 zType, zmin, zmax, zstep, simu, daymaxType, coadd):
 
         self.dbDir = dbDir
         self.dbName = dbName
@@ -27,12 +30,17 @@ class SimuWrapper:
         self.seasnum = seasnum
         self.outDir = outDir
         self.fieldType = fieldType
-        self.x1 = x1
-        self.color = color
+        self.x1Type = x1Type
+        self.x1min = x1min
+        self.x1max = x1max
+        self.x1step = x1step
+        self.colorType = colorType
+        self.colormin = colormin
+        self.colormax = colormax
+        self.colorstep = colorstep
         self.zmin = zmin
         self.zmax = zmax
         self.simu = simu
-        self.x1colorType = x1colorType
         self.zType = zType
         self.daymaxType = daymaxType
         self.coadd = coadd
@@ -49,8 +57,10 @@ class SimuWrapper:
         reference_lc = self.load_reference(config)
 
         # now define the metric instance
-        self.metric = SNMAFSimulation(config=config, x0_norm=x0_tab,
-                                      reference_lc=reference_lc, coadd=config['Observations']['coadd'])
+        # self.metric = SNMAFSimulation(config=config, x0_norm=x0_tab,
+        #                              reference_lc=reference_lc, coadd=config['Observations']['coadd'])
+        self.metric = SNSimulation(
+            config=config, x0_norm=x0_tab)
 
     def x0(self, config):
         """
@@ -127,7 +137,7 @@ class SimuWrapper:
             filedata = file.read()
 
         prodid = '{}_{}_{}_seas_{}_{}_{}'.format(
-            self.simu, self.fieldType, self.dbName, self.seasnum, self.x1, self.color)
+            self.simu, self.fieldType, self.dbName, self.seasnum, self.x1min, self.colormin)
         fullDbName = '{}/{}.npy'.format(self.dbDir, self.dbName)
         filedata = filedata.replace('prodid', prodid)
         filedata = filedata.replace('fullDbName', fullDbName)
@@ -137,11 +147,16 @@ class SimuWrapper:
         filedata = filedata.replace('diffflux', str(self.diffflux))
         filedata = filedata.replace('seasval', str(self.seasnum))
         filedata = filedata.replace('ftype', self.fieldType)
-        filedata = filedata.replace('x1val', str(self.x1))
-        filedata = filedata.replace('colorval', str(self.color))
+        filedata = filedata.replace('x1Type', self.x1Type)
+        filedata = filedata.replace('x1min', str(self.x1min))
+        filedata = filedata.replace('x1max', str(self.x1max))
+        filedata = filedata.replace('x1step', str(self.x1step))
+        filedata = filedata.replace('colorType', self.colorType)
+        filedata = filedata.replace('colormin', str(self.colormin))
+        filedata = filedata.replace('colormax', str(self.colormax))
+        filedata = filedata.replace('colorstep', str(self.colorstep))
         filedata = filedata.replace('zmin', str(self.zmin))
         filedata = filedata.replace('zmax', str(self.zmax))
-        filedata = filedata.replace('x1colorType', self.x1colorType)
         filedata = filedata.replace('zType', self.zType)
         filedata = filedata.replace('daymaxType', self.daymaxType)
         filedata = filedata.replace('fcoadd', str(self.coadd))
@@ -165,4 +180,4 @@ class SimuWrapper:
         Method to save metadata to disk
 
         """
-        self.metric.simu.Finish()
+        self.metric.Finish()

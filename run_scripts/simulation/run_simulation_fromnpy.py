@@ -25,19 +25,31 @@ parser.add_option("--season", type="int", default=-1,
                   help="season to process[%default]")
 parser.add_option("--fieldType", type="str", default='DD',
                   help="field - DD or WFD[%default]")
-parser.add_option("--x1colorType", type="str", default='fixed',
-                  help="x1color type (fixed,random) [%default]")
+parser.add_option("--x1Type", type="str", default='unique',
+                  help="x1 type (unique,random,uniform) [%default]")
+parser.add_option("--x1min", type=float, default=-2.0,
+                  help="x1 min if x1Type=unique (x1val) or uniform[%default]")
+parser.add_option("--x1max", type=float, default=2.0,
+                  help="x1 max - if x1Type=uniform[%default]")
+parser.add_option("--x1step", type=float, default=0.1,
+                  help="x1 step - if x1Type=uniform[%default]")
+parser.add_option("--colorType", type="str", default='unique',
+                  help="color type (unique,random,uniform) [%default]")
+parser.add_option("--colormin", type=float, default=0.2,
+                  help="color min if colorType=unique (colorval) or uniform[%default]")
+parser.add_option("--colormax", type=float, default=0.3,
+                  help="color max - if colorType=uniform[%default]")
+parser.add_option("--colorstep", type=float, default=0.1,
+                  help="color step - if colorType=uniform[%default]")
 parser.add_option("--zType", type="str", default='uniform',
-                  help="x1color type (fixed,uniform,random) [%default]")
+                  help=" zcolor type (unique,uniform,random) [%default]")
 parser.add_option("--daymaxType", type="str", default='unique',
-                  help="x1color type (unique,uniform,random) [%default]")
-parser.add_option("--x1", type="float", default='0.0',
-                  help="x1 SN [%default]")
-parser.add_option("--color", type="float", default='0.0',
-                  help="color SN [%default]")
-parser.add_option("--zmin", type="float", default='0.0',
+                  help="daymax type (unique,uniform,random) [%default]")
+parser.add_option("--zmin", type="float", default=0.0,
                   help="min redshift [%default]")
-parser.add_option("--zmax", type="float", default='1.0',
+parser.add_option("--zmax", type="float", default=1.0,
+                  help="max redshift [%default]")
+parser.add_option("--zstep", type="float", default=0.02,
                   help="max redshift [%default]")
 parser.add_option("--saveData", type="int", default=1,
                   help="to save data [%default]")
@@ -75,10 +87,11 @@ print('Start processing...')
 metricList = [SimuWrapper(opts.dbDir, opts.dbName, opts.nside,
                           opts.nproc, opts.diffflux,
                           opts.season, opts.outDir,
-                          opts.fieldType, opts.x1, opts.color,
-                          opts.zmin, opts.zmax, opts.simulator,
-                          opts.x1colorType, opts.zType,
-                          opts.daymaxType, opts.coadd)]
+                          opts.fieldType,
+                          opts.x1Type, opts.x1min, opts.x1max, opts.x1step,
+                          opts.colorType, opts.colormin, opts.colormax, opts.colorstep,
+                          opts.zType, opts.zmin, opts.zmax, opts.zstep,
+                          opts.simulator, opts.daymaxType, opts.coadd)]
 
 # now perform the processing
 Process(opts.dbDir, opts.dbName, opts.dbExtens,

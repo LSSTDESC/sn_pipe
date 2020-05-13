@@ -1,5 +1,5 @@
 import os
-from sn_design_dd_survey.ana_file import Anadf
+#from sn_design_dd_survey.ana_file import Anadf
 import h5py
 from astropy.table import Table, vstack
 import pandas as pd
@@ -52,7 +52,7 @@ def plotLC(filename, x1=-2.0, color=0.2, corrFisher=True):
     idx = np.abs(lc['x1']-x1) < 1.e-5
     idx &= np.abs(lc['color']-color) < 1.e-5
 
-    Anadf(lc[idx]).plotzlim()
+    # Anadf(lc[idx]).plotzlim()
 
 
 parser = OptionParser()
@@ -97,7 +97,7 @@ cmd += ' --dbDir .'
 cmd += ' --dbName {}'.format(fake_output)
 cmd += ' --dbExtens npy'
 cmd += ' --nproc 1'
-cmd += ' --metric {} --fieldType {} --templateDir ../Templates'.format(
+cmd += ' --metric {} --fieldType {} --templateDir ../../sn_pipe_doc/Templates'.format(
     metric, fieldType)
 cmd += ' --proxy_level 2 --RAmin {} --RAmax {} --Decmin {} --Decmax {}'.format(
     RAmin, RAmax, Decmin, Decmax)
