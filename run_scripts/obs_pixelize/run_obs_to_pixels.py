@@ -246,7 +246,7 @@ class procObsPixels:
         ipoint = 1
 
         datapixels = DataToPixels(
-            self.nside, self.RACol, self.DecCol,self.outDir, self.dbName)
+            self.nside, self.RACol, self.DecCol, self.outDir, self.dbName)
         pixelsTot = pd.DataFrame()
         for index, pointing in pointings.iterrows():
             ipoint += 1
@@ -259,18 +259,20 @@ class procObsPixels:
             if pixels is not None:
                 # select pixels that are inside the original area
 
-                idx = (pixels['pixRA']-pointing['RA']) >= -pointing['radius_RA']/2.
-                idx &= (pixels['pixRA']-pointing['RA']) < pointing['radius_RA']/2.
+                idx = (pixels['pixRA']-pointing['RA']) >= - \
+                    pointing['radius_RA']/2.
+                idx &= (pixels['pixRA']-pointing['RA']
+                        ) < pointing['radius_RA']/2.
                 idx &= (pixels['pixDec']-pointing['Dec']) >= - \
                     pointing['radius_Dec']/2.
                 idx &= (pixels['pixDec']-pointing['Dec']
-                ) < pointing['radius_Dec']/2.
+                        ) < pointing['radius_Dec']/2.
 
                 pixelsTot = pd.concat((pixelsTot, pixels[idx]), sort=False)
 
             # datapixels.plot(pixels)
         print('end of processing for', j, time.time()-time_ref)
-        
+
         if output_q is not None:
             return output_q.put({j: pixelsTot})
         else:
@@ -339,5 +341,4 @@ for patch in patches:
                          patch['RAmin'], patch['RAmax'],
                          patch['Decmin'], patch['Decmax'], opts.nside,
                          opts.nprocs, saveData=opts.saveData)
-    #break
-    
+    # break
