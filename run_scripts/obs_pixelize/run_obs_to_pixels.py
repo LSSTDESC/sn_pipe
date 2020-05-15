@@ -246,7 +246,7 @@ class procObsPixels:
         ipoint = 1
 
         datapixels = DataToPixels(
-            self.nside, self.RACol, self.DecCol, j, self.outDir, self.dbName)
+            self.nside, self.RACol, self.DecCol,self.outDir, self.dbName)
         pixelsTot = pd.DataFrame()
         for index, pointing in pointings.iterrows():
             ipoint += 1
@@ -254,7 +254,7 @@ class procObsPixels:
 
             # get the pixels
             pixels = datapixels(observations, pointing['RA'], pointing['Dec'],
-                                pointing['radius_RA'], pointing['radius_Dec'], ipoint, self.nodither, display=False)
+                                pointing['radius_RA'], pointing['radius_Dec'], self.nodither, display=False)
 
             if pixels is not None:
                 # select pixels that are inside the original area
