@@ -21,14 +21,15 @@ def genFile(files,fName,postfix):
 
     script.close()
 
-dirFiles = '/sps/lsst/cadence/LSST_SN_PhG/cadence_db/fbs_1.4/db'
+fbsvers = 'fbs_1.5'
+dirFiles = '/sps/lsst/cadence/LSST_SN_PhG/cadence_db/{}/db'.format(fbsvers)
 
 files = glob.glob('{}/*.db'.format(dirFiles))
 
 print(files)
 
-DD_postfix = '1	     128    1	  DD	    5'
+DD_postfix = '1	     128    1	  DD	    6'
 WFD_postfix = '0	     64    1	  WFD	    8'
 
-genFile(files,'DD_fbs14.txt',DD_postfix)
-genFile(files,'WFD_fbs14.txt',WFD_postfix)
+genFile(files,'DD_fbs15.txt',DD_postfix)
+genFile(files,'WFD_fbs15.txt',WFD_postfix)
