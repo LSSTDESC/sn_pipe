@@ -6,6 +6,7 @@ from sn_metrics.sn_nsn_metric import SNNSNMetric
 from sn_metrics.sn_sl_metric import SLSNMetric
 from sn_tools.sn_cadence_tools import ReferenceData
 from sn_tools.sn_utils import GetReference
+from sn_tools.sn_telescope import Telescope
 import os
 import multiprocessing
 import healpy as hp
@@ -167,15 +168,21 @@ class NSNMetricWrapper(MetricWrapper):
         if fieldType == 'WFD':
             zmax = 0.6
 
-        self.Instrument = {}
-        self.Instrument['name'] = 'LSST'  # name of the telescope (internal)
+        tel_par = {}
+        tel_par['name'] = 'LSST'  # name of the telescope (internal)
         # dir of throughput
-        self.Instrument['throughput_dir'] = 'LSST_THROUGHPUTS_BASELINE'
-        self.Instrument['atmos_dir'] = 'THROUGHPUTS_DIR'  # dir of atmos
-        self.Instrument['airmass'] = 1.2  # airmass value
-        self.Instrument['atmos'] = True  # atmos
-        self.Instrument['aerosol'] = False  # aerosol
+        tel_par['throughput_dir'] = 'LSST_THROUGHPUTS_BASELINE'
+        tel_par['atmos_dir'] = 'THROUGHPUTS_DIR'  # dir of atmos
+        tel_par['airmass'] = 1.2  # airmass value
+        tel_par['atmos'] = True  # atmos
+        tel_par['aerosol'] = False  # aerosol
 
+        self.telescope = Telescope(name=tel_par['name'],
+                                   throughput_dir=tel_par['throughput_dir'],
+                                   atmos_dir=tel_par['atmos_dir'],
+                                   atmos=tel_par['atmos'],
+                                   aerosol=tel_par['aerosol'],
+                                   airmass=tel_par['airmass'])
         lc_reference = {}
         self.gamma_reference = 'reference_files/gamma.hdf5'
 
@@ -294,7 +301,7 @@ class NSNMetricWrapper(MetricWrapper):
     def load(self, fname, j=-1, output_q=None):
 
         lc_ref = GetReference(
-            fname, self.gamma_reference, self.Instrument)
+            fname, self.gamma_reference, self.telescope)
 
         if output_q is not None:
             output_q.put({j: lc_ref})
