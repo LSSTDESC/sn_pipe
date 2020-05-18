@@ -76,6 +76,7 @@ def procelem(lc_name, simul, fit, j=0, output_q=None):
     for simu in simul:
         lc = None
         lc = Table.read(lc_name, path='lc_{}'.format(simu['id_hdf5']))
+        lc.convert_bytestring_to_unicode()
         resfit = fit(lc)
         res = vstack([res, resfit])
 

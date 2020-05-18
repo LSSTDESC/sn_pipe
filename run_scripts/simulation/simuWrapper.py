@@ -54,7 +54,7 @@ class SimuWrapper:
         x0_tab = self.x0(config)
 
         # load references if simulator = sn_fast
-        reference_lc = self.load_reference(config)
+        #reference_lc = self.load_reference(config)
 
         # now define the metric instance
         # self.metric = SNMAFSimulation(config=config, x0_norm=x0_tab,
@@ -180,4 +180,4 @@ class SimuWrapper:
         Method to save metadata to disk
 
         """
-        self.metric.Finish()
+        self.metric.save_metadata()
