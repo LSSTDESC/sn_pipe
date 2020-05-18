@@ -89,8 +89,9 @@ class SimuWrapper:
 
         return np.load(x0normFile)
 
+    """
     def load_reference(self, config):
-        """
+        
         Method to load reference LC for fast simulation
 
         Parameters
@@ -102,7 +103,7 @@ class SimuWrapper:
         -----------
         reference data from class GetReference
 
-        """
+        
 
         ref_lc = None
 
@@ -116,6 +117,7 @@ class SimuWrapper:
             print('Reference LCs loaded')
 
         return ref_lc
+    """
 
     def makeYaml(self, input_file):
         """
@@ -160,6 +162,7 @@ class SimuWrapper:
         filedata = filedata.replace('zType', self.zType)
         filedata = filedata.replace('daymaxType', self.daymaxType)
         filedata = filedata.replace('fcoadd', str(self.coadd))
+        filedata = filedata.replace('mysimu', self.simu)
 
         return yaml.load(filedata, Loader=yaml.FullLoader)
 

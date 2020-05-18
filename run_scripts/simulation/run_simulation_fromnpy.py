@@ -51,7 +51,7 @@ parser.add_option("--zmax", type="float", default=1.0,
                   help="max redshift [%default]")
 parser.add_option("--zstep", type="float", default=0.02,
                   help="max redshift [%default]")
-parser.add_option("--saveData", type="int", default=1,
+parser.add_option("--saveData", type="int", default=0,
                   help="to save data [%default]")
 parser.add_option("--nodither", type="int", default=0,
                   help="to remove dithering [%default]")
@@ -75,7 +75,7 @@ parser.add_option("--nclusters", type=int, default=0,
                   help="number of clusters in data (DD only)[%default]")
 parser.add_option("--radius", type=float, default=4.,
                   help="radius around clusters (DD and Fakes)[%default]")
-parser.add_option("--simulator", type=str, default='sncosmo',
+parser.add_option("--simulator", type=str, default='sn_cosmo',
                   help="simulator to use[%default]")
 
 opts, args = parser.parse_args()
