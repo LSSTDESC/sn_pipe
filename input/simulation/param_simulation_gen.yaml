@@ -34,6 +34,7 @@ SN parameters:
    salt2Dir: SALT2_Files #dir where SALT2 files are located
    blue_cutoff : 380.
    red_cutoff : 800.
+   dust: True
 Cosmology:
    Model : w0waCDM      # Cosmological model
    Omega_m : 0.30             # Omega_m
