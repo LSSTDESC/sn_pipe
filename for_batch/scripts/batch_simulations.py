@@ -553,9 +553,9 @@ parser.add_option("--colorstep", type=float, default=0.05,
 
 parser.add_option("--zType", type=str, default='unique',
                   help="z type - unique, uniform, random[%default]")
-parser.add_option("--zmin", type=float, default=-2.0,
+parser.add_option("--zmin", type=float, default=0.1,
                   help="z min value [%default]")
-parser.add_option("--zmax", type=float, default=2.0,
+parser.add_option("--zmax", type=float, default=1.0,
                   help="z max [%default]")
 parser.add_option("--zstep", type=float, default=0.1,
                   help="z step - type = uniform only[%default]")
