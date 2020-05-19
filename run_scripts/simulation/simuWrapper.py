@@ -20,7 +20,7 @@ class SimuWrapper:
                  seasnum, outDir, fieldType,
                  x1Type, x1min, x1max, x1step,
                  colorType, colormin, colormax, colorstep,
-                 zType, zmin, zmax, zstep, simu, daymaxType, coadd):
+                 zType, zmin, zmax, zstep, simu, daymaxType, daymaxstep, coadd):
 
         self.dbDir = dbDir
         self.dbName = dbName
@@ -43,6 +43,7 @@ class SimuWrapper:
         self.simu = simu
         self.zType = zType
         self.daymaxType = daymaxType
+        self.daymaxstep = daymaxstep
         self.coadd = coadd
 
         self.name = 'simulation'
@@ -161,6 +162,7 @@ class SimuWrapper:
         filedata = filedata.replace('zmax', str(self.zmax))
         filedata = filedata.replace('zType', self.zType)
         filedata = filedata.replace('daymaxType', self.daymaxType)
+        filedata = filedata.replace('daymaxstep', self.daymaxstep)
         filedata = filedata.replace('fcoadd', str(self.coadd))
         filedata = filedata.replace('mysimu', self.simu)
 

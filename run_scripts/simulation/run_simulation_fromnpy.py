@@ -45,6 +45,8 @@ parser.add_option("--zType", type="str", default='uniform',
                   help=" zcolor type (unique,uniform,random) [%default]")
 parser.add_option("--daymaxType", type="str", default='unique',
                   help="daymax type (unique,uniform,random) [%default]")
+parser.add_option("--daymaxstep", type=float, default=1,
+                  help="daymax step [%default]")
 parser.add_option("--zmin", type="float", default=0.0,
                   help="min redshift [%default]")
 parser.add_option("--zmax", type="float", default=1.0,
@@ -91,7 +93,7 @@ metricList = [SimuWrapper(opts.dbDir, opts.dbName, opts.nside,
                           opts.x1Type, opts.x1min, opts.x1max, opts.x1step,
                           opts.colorType, opts.colormin, opts.colormax, opts.colorstep,
                           opts.zType, opts.zmin, opts.zmax, opts.zstep,
-                          opts.simulator, opts.daymaxType, opts.coadd)]
+                          opts.simulator, opts.daymaxType, opts.daymaxstep, opts.coadd)]
 
 # now perform the processing
 Process(opts.dbDir, opts.dbName, opts.dbExtens,
