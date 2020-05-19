@@ -162,7 +162,7 @@ class SimuWrapper:
         filedata = filedata.replace('zmax', str(self.zmax))
         filedata = filedata.replace('zType', self.zType)
         filedata = filedata.replace('daymaxType', self.daymaxType)
-        filedata = filedata.replace('daymaxstep', self.daymaxstep)
+        filedata = filedata.replace('daymaxstep', str(self.daymaxstep))
         filedata = filedata.replace('fcoadd', str(self.coadd))
         filedata = filedata.replace('mysimu', self.simu)
 
