@@ -77,6 +77,8 @@ class MetricAna:
         # idx &= metricValues['season'] == 5
         self.data = pd.DataFrame(metricValues[idx])
 
+        print('data', self.data[['x1', 'color', 'zlim',
+                                 'nsn_med', 'nsn']], self.data.columns)
         self.ratiopixels = 1
         self.npixels_eff = len(self.data['healpixID'].unique())
         if npixels > 0:
@@ -95,7 +97,7 @@ class MetricAna:
         resdf['plotName'] = dbInfo['plotName']
         resdf['color'] = dbInfo['color']
         resdf['marker'] = dbInfo['marker']
-        self.data = resdf
+        self.data_summary = resdf
 
     def zlim_med(self):
         """
@@ -136,13 +138,13 @@ class MetricAna:
         meds = self.data.groupby(['healpixID']).median().reset_index()
         meds = meds.round({'zlim': 2})
         self.plotMollview(meds, 'zlim', 'zlimit', np.median,
-                          xmin=0.1, xmax=0.4)
+                          xmin=0.01, xmax=0.4)
 
         # this is to plot the total number of SN (per pixels) over the sky
         sums = self.data.groupby(['healpixID']).sum().reset_index()
         sums['nsn_med'] = sums['nsn_med'].astype(int)
         self.plotMollview(sums, 'nsn_med', 'NSN', np.sum,
-                          xmin=10., xmax=25.)
+                          xmin=1., xmax=25.)
 
     def plotMollview(self, data, varName, leg, op, xmin, xmax):
         """
@@ -234,8 +236,9 @@ for index, val in toproc.iterrows():
     idx = Npixels['dbName'] == dbName
     npixels = Npixels[idx]['npixels'].item()
     metricdata = MetricAna(dirFile, val, metricName, fieldType,
-                           nside, npixels=npixels).data
-    resdf = pd.concat((resdf, metricdata))
+                           nside, npixels=npixels)
+    metricdata.plot()
+    resdf = pd.concat((resdf, metricdata.data_summary))
 
 print(resdf)
 
