@@ -54,7 +54,7 @@ parser.add_option("--Decmin", type=float, default=-1.,
                   help="Dec min for obs area - for WDF only[%default]")
 parser.add_option("--Decmax", type=float, default=-1.,
                   help="Dec max for obs area - for WDF only[%default]")
-parser.add_option("--proxy_level", type=int, default=0,
+parser.add_option("--proxy_level", type=int, default=2,
                   help="proxy level for the metric[%default]")
 parser.add_option("--T0s", type=str, default='all',
                   help="T0 values to consider[%default]")
