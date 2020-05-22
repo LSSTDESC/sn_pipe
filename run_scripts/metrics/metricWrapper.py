@@ -229,8 +229,8 @@ class NSNMetricWrapper(MetricWrapper):
             n_phase_max = 1
 
         if fieldType == 'WFD':
-            n_bef = 2
-            n_aft = 5
+            n_bef = 4
+            n_aft = 10
             snr_min = 0.
             n_phase_min = 0
             n_phase_max = 0
