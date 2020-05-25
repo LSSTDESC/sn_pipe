@@ -11,6 +11,96 @@ import healpy as hp
 import numpy.lib.recfunctions as rf
 import pandas as pd
 import os
+import multiprocessing
+
+
+def processMulti(toproc, Npixels, outFile, nproc=1):
+    """
+    Function to analyze metric output using multiprocesses
+    The results are stored in outFile (npy file)
+
+    Parameters
+    --------------
+    toproc: pandas df
+      data to process
+    Npixels: numpy array
+      array of the total number of pixels per OS
+    outFile: str
+       output file name
+    nproc: int, opt
+      number of cores to use for the processing
+
+    """
+
+    nfi = len(toproc)
+    tabfi = np.linspace(0, nfi, nproc+1, dtype='int')
+
+    print(tabfi)
+    result_queue = multiprocessing.Queue()
+
+    # launching the processes
+    for j in range(len(tabfi)-1):
+        ida = tabfi[j]
+        idb = tabfi[j+1]
+
+        p = multiprocessing.Process(name='Subprocess-'+str(j), target=processLoop, args=(
+            toproc[ida:idb], Npixels, j, result_queue))
+        p.start()
+
+    # grabing the results
+    resultdict = {}
+
+    for j in range(len(tabfi)-1):
+        resultdict.update(result_queue.get())
+
+    for p in multiprocessing.active_children():
+        p.join()
+
+    resdf = pd.DataFrame()
+    for j in range(len(tabfi)-1):
+        resdf = pd.concat((resdf, resultdict[j]))
+
+    print('finally', resdf.columns)
+    # saving the results in a npy file
+    np.save(outFile, resdf.to_records(index=False))
+
+
+def processLoop(toproc, Npixels, j=0, output_q=None):
+    """
+    Function to analyze a set of metric result files
+
+    Parameters
+    --------------
+    toproc: pandas df
+      data to process
+    Npixels: numpy array
+      array of the total number of pixels per OS
+    j: int, opt
+       internal int for the multiprocessing
+    output_q: multiprocessing.queue
+      queue for multiprocessing
+
+    Returns
+    -----------
+    pandas df with the following cols:
+    zlim, nsn, sig_nsn, nsn_extra, dbName, plotName, color,marker
+    """
+    # this is to get summary values here
+    resdf = pd.DataFrame()
+    for index, val in toproc.iterrows():
+        dbName = val['dbName']
+        idx = Npixels['dbName'] == dbName
+        npixels = Npixels[idx]['npixels'].item()
+        metricdata = MetricAna(dirFile, val, metricName, fieldType,
+                               nside, npixels=npixels)
+        # metricdata.plot()
+        if metricdata.data_summary is not None:
+            resdf = pd.concat((resdf, metricdata.data_summary))
+
+    if output_q is not None:
+        output_q.put({j: resdf})
+    else:
+        return resdf
 
 
 def mscatter(x, y, ax=None, m=None, **kw):
@@ -62,6 +152,9 @@ class MetricAna:
 
         self.nside = nside
         self.npixels = npixels
+        self.x1 = x1
+        self.color = color
+        self.dbInfo = dbInfo
 
         # loading data (metric values)
         search_path = '{}/{}/{}/*NSNMetric_{}*_nside_{}_*.hdf5'.format(
@@ -70,18 +163,29 @@ class MetricAna:
         fileNames = glob.glob(search_path)
         # fileName='{}/{}_CadenceMetric_{}.npy'.format(dirFile,dbName,band)
         # print(fileNames)
+        if len(fileNames) > 0:
+            self.data_summary = self.process(fileNames)
+        else:
+            print('Missing files for', dbInfo['dbName'])
+            self.data_summary = None
+
+    def process(self, fileNames):
+
         metricValues = np.array(loopStack(fileNames, 'astropyTable'))
-        idx = np.abs(metricValues['x1']-x1) < 1.e-6
-        idx &= np.abs(metricValues['color']-color) < 1.e-6
+        idx = np.abs(metricValues['x1']-self.x1) < 1.e-6
+        idx &= np.abs(metricValues['color']-self.color) < 1.e-6
         idx &= metricValues['status'] == 1
-        # idx &= metricValues['season'] == 5
+        idx &= metricValues['zlim'] > 0.
+        idx &= metricValues['nsn_med'] > 0.
+
         self.data = pd.DataFrame(metricValues[idx])
 
-        print('data', self.data[['x1', 'color', 'zlim',
-                                 'nsn_med', 'nsn']], self.data.columns)
+        print('data', self.data[['healpixID', 'pixRA', 'pixDec', 'x1', 'color', 'zlim',
+                                 'nsn_med', 'nsn', 'season']], self.data.columns)
+        print(len(np.unique(self.data[['healpixID', 'season']])))
         self.ratiopixels = 1
         self.npixels_eff = len(self.data['healpixID'].unique())
-        if npixels > 0:
+        if self.npixels > 0:
             self.ratiopixels = float(
                 npixels)/float(self.npixels_eff)
 
@@ -93,11 +197,11 @@ class MetricAna:
         resdf['nsn'] = [nsn]
         resdf['sig_nsn'] = [sig_nsn]
         resdf['nsn_extra'] = [nsn_extrapol]
-        resdf['dbName'] = dbInfo['dbName']
-        resdf['plotName'] = dbInfo['plotName']
-        resdf['color'] = dbInfo['color']
-        resdf['marker'] = dbInfo['marker']
-        self.data_summary = resdf
+        resdf['dbName'] = self.dbInfo['dbName']
+        resdf['plotName'] = self.dbInfo['plotName']
+        resdf['color'] = self.dbInfo['color']
+        resdf['marker'] = self.dbInfo['marker']
+        return resdf
 
     def zlim_med(self):
         """
@@ -138,13 +242,13 @@ class MetricAna:
         meds = self.data.groupby(['healpixID']).median().reset_index()
         meds = meds.round({'zlim': 2})
         self.plotMollview(meds, 'zlim', 'zlimit', np.median,
-                          xmin=0.01, xmax=0.4)
+                          xmin=0.01, xmax=np.max(meds['zlim'])+0.1)
 
         # this is to plot the total number of SN (per pixels) over the sky
         sums = self.data.groupby(['healpixID']).sum().reset_index()
         sums['nsn_med'] = sums['nsn_med'].astype(int)
         self.plotMollview(sums, 'nsn_med', 'NSN', np.sum,
-                          xmin=1., xmax=25.)
+                          xmin=0., xmax=np.max(sums['nsn_med'])+1)
 
     def plotMollview(self, data, varName, leg, op, xmin, xmax):
         """
@@ -229,18 +333,13 @@ else:
 
 print(Npixels.dtype)
 
-# this is to get summary values here
-resdf = pd.DataFrame()
-for index, val in toproc.iterrows():
-    dbName = val['dbName']
-    idx = Npixels['dbName'] == dbName
-    npixels = Npixels[idx]['npixels'].item()
-    metricdata = MetricAna(dirFile, val, metricName, fieldType,
-                           nside, npixels=npixels)
-    metricdata.plot()
-    resdf = pd.concat((resdf, metricdata.data_summary))
+outFile = 'Summary_WFD.npy'
 
-print(resdf)
+if not os.path.isfile(outFile):
+    processMulti(toproc, Npixels, outFile, nproc=4)
+
+resdf = pd.DataFrame(np.load(outFile, allow_pickle=True))
+print(resdf.columns)
 
 # Summary plot
 
