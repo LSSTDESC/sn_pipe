@@ -231,9 +231,9 @@ class NSNMetricWrapper(MetricWrapper):
         if fieldType == 'WFD':
             n_bef = 4
             n_aft = 10
-            snr_min = 0.
-            n_phase_min = 0
-            n_phase_max = 0
+            snr_min = 5.
+            n_phase_min = 1
+            n_phase_max = 1
 
         if fieldType == 'Fake':
             n_bef = 0
