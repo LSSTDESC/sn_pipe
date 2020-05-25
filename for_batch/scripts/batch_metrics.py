@@ -2,6 +2,7 @@ import os
 import numpy as np
 from optparse import OptionParser
 import glob
+import pandas as pd
 
 def go_for_batch(toproc,splitSky,
                  dbDir,dbExtens,outDir,metricName,
@@ -43,7 +44,8 @@ def go_for_batch(toproc,splitSky,
 
 
     # get the observing strategy name
-    dbName = toproc['dbName'].decode()
+    #dbName = toproc['dbName'].decode()
+    dbName = toproc['dbName']
 
     if pixelmap_dir == '':
 
@@ -283,7 +285,7 @@ class batchclass:
         """
 
         cmd = 'python {}.py --dbDir {} --dbName {} --dbExtens {}'.format(
-        self.scriptref, self.dbDir, proc['dbName'].decode(), self.dbExtens)
+        self.scriptref, self.dbDir, proc['dbName'], self.dbExtens)
         cmd += ' --nproc {} --nside {} --simuType {}'.format(
             proc['nproc'], proc['nside'], proc['simuType'])
         cmd += ' --outDir {}'.format(self.outDir)
@@ -357,14 +359,15 @@ pixelmap_dir = opts.pixelmap_dir
 npixels = opts.npixels
 proxy_level = opts.proxy_level
 
-toprocess = np.genfromtxt(dbList, dtype=None, names=[
-                          'dbName', 'simuType', 'nside', 'coadd', 'fieldType', 'nproc'])
+#toprocess = np.genfromtxt(dbList, dtype=None, names=[
+#                          'dbName', 'simuType', 'nside', 'coadd', 'fieldType', 'nproc'])
 
+toprocess = pd.read_csv(dbList)
 print('there', toprocess,type(toprocess),toprocess.size)
 
 
-if toprocess.size == 1:
-    toprocess= np.array([toprocess])
+#if toprocess.size == 1:
+#    toprocess= np.array([toprocess])
 """
 proc  = batchclass(dbDir, dbExtens, scriptref, outDir, nproccomp,
                  saveData, metric, toprocess, nodither,nside,
@@ -372,7 +375,7 @@ proc  = batchclass(dbDir, dbExtens, scriptref, outDir, nproccomp,
                  Dec_min=-1.0, Dec_max=-1.0,band=''
 """
 
-for proc in toprocess:
+for index, proc in toprocess.iterrows():
     myproc = go_for_batch(proc,splitSky,
                           dbDir,dbExtens,outDir,
                           metricName,nodither,nside,fieldType,
