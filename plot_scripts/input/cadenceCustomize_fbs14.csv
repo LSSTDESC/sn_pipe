@@ -1,4 +1,4 @@
-dbName,newName,group,Namepl,color,marker
+dbName,newName,group,plotName,color,marker
 agnddf_v1.4_10yrs,agnddf,agnddf,ddf,r,*
 alt_roll_mod2_dust_sdf_0.20_v1.4_10yrs,alt_roll,alt_roll,alt,b,*
 baseline_2snapsv1.4_10yrs,baseline,baseline,baseline,b,>
