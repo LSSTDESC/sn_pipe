@@ -217,7 +217,7 @@ class NSNMetricWrapper(MetricWrapper):
             if resultdict[j] is not None:
                 lc_reference[x1_colors[j]] = resultdict[j]
 
-        print('Reference data loaded', lc_reference.keys())
+        print('Reference data loaded', lc_reference.keys(), fieldType)
 
         # LC selection criteria
 
@@ -227,6 +227,7 @@ class NSNMetricWrapper(MetricWrapper):
             snr_min = 5.
             n_phase_min = 1
             n_phase_max = 1
+            zlim_coeff = 0.95
 
         if fieldType == 'WFD':
             n_bef = 4
@@ -234,6 +235,7 @@ class NSNMetricWrapper(MetricWrapper):
             snr_min = 5.
             n_phase_min = 1
             n_phase_max = 1
+            zlim_coeff = -1.
 
         if fieldType == 'Fake':
             n_bef = 0
@@ -241,6 +243,7 @@ class NSNMetricWrapper(MetricWrapper):
             snr_min = 0.
             n_phase_min = 0
             n_phase_max = 0
+            zlim_coeff = 0.95
 
         # load x1_color_dist
 
@@ -285,17 +288,19 @@ class NSNMetricWrapper(MetricWrapper):
             outputType=metadata.outputType,
             proxy_level=metadata.proxy_level,
             x1_color_dist=x1_color_dist,
-            coadd=coadd, lightOutput=metadata.lightOutput, T0s=metadata.T0s)
+            coadd=coadd, lightOutput=metadata.lightOutput,
+            T0s=metadata.T0s, zlim_coeff=zlim_coeff)
 
         self.metadata['n_bef'] = n_bef
         self.metadata['n_aft'] = n_aft
         self.metadata['snr_min'] = snr_min
         self.metadata['n_phase_min'] = n_phase_min
         self.metadata['n_phase_max'] = n_phase_max
+        self.metadata['zlim_coeff'] = zlim_coeff
 
         self.metaout += ['ploteffi', 'outputType',
                          'proxy_level', 'lightOutput', 'T0s',
-                         'n_bef', 'n_aft', 'snr_min', 'n_phase_min', 'n_phase_max']
+                         'n_bef', 'n_aft', 'snr_min', 'n_phase_min', 'n_phase_max', 'zlim_coeff']
         self.saveConfig()
 
     def load(self, fname, j=-1, output_q=None):
