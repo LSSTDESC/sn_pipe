@@ -362,7 +362,7 @@ proxy_level = opts.proxy_level
 #toprocess = np.genfromtxt(dbList, dtype=None, names=[
 #                          'dbName', 'simuType', 'nside', 'coadd', 'fieldType', 'nproc'])
 
-toprocess = pd.read_csv(dbList)
+toprocess = pd.read_csv(dbList,comment='#')
 print('there', toprocess,type(toprocess),toprocess.size)
 
 
