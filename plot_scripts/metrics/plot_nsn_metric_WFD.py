@@ -93,7 +93,8 @@ def processLoop(toproc, Npixels, j=0, output_q=None):
         npixels = Npixels[idx]['npixels'].item()
         metricdata = MetricAna(dirFile, val, metricName, fieldType,
                                nside, npixels=npixels)
-        # metricdata.plot()
+        metricdata.plot()
+        plt.show()
         if metricdata.data_summary is not None:
             resdf = pd.concat((resdf, metricdata.data_summary))
 
@@ -290,7 +291,7 @@ class MetricAna:
 parser = OptionParser(
     description='Display NSN metric results for WFD fields')
 
-parser.add_option("--dirFile", type="str", default='',
+parser.add_option("--dirFile", type="str", default='/sps/lsst/users/gris/MetricOutput',
                   help="file directory [%default]")
 parser.add_option("--nside", type="int", default=64,
                   help="nside for healpixels [%default]")
@@ -305,9 +306,6 @@ opts, args = parser.parse_args()
 
 # Load parameters
 dirFile = opts.dirFile
-if dirFile == '':
-    dirFile = '/sps/lsst/users/gris/MetricOutput'
-
 nside = opts.nside
 fieldType = opts.fieldType
 metricName = 'NSN'
