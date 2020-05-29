@@ -1,7 +1,6 @@
 import numpy as np
 import sn_plotters.sn_cadencePlotters as sn_plot
 import sn_plotters.sn_NSNPlotters as nsn_plot
-from sn_tools.sn_io import loopStack
 import matplotlib.pylab as plt
 import argparse
 from optparse import OptionParser
@@ -91,10 +90,11 @@ def processLoop(toproc, Npixels, j=0, output_q=None):
         dbName = val['dbName']
         idx = Npixels['dbName'] == dbName
         npixels = Npixels[idx]['npixels'].item()
-        metricdata = MetricAna(dirFile, val, metricName, fieldType,
-                               nside, npixels=npixels)
-        metricdata.plot()
-        plt.show()
+        metricdata = nsn_plot.NSNAnalysis(dirFile, val, metricName, fieldType,
+                                          nside, npixels=npixels)
+
+        # metricdata.plot()
+        # plt.show()
         if metricdata.data_summary is not None:
             resdf = pd.concat((resdf, metricdata.data_summary))
 
@@ -122,170 +122,71 @@ def mscatter(x, y, ax=None, m=None, **kw):
     return sc
 
 
-class MetricAna:
-    def __init__(self, dbDir, dbInfo,
-                 metricName='NSN', fieldType='WFD',
-                 nside=64,
-                 x1=-2.0, color=0.2, npixels=-1):
-        """
-        class to analyze results from NSN metric
+def print_best(resdf, ref_var='nsn', num=10, name='a'):
+    """
+    Method to print the "best" OS maximizing ref_var
 
-        Parameters
-        ---------------
-        dbDir: str
-          location directory where the files to process are
-        dbInfo: pandas df
-          info from observing strategy (dbName, plotName, color, marker)
-        metricName: str
-          name of the metric used to generate the files
-        fieldType: str, opt
-          field type (DD, WFD) (default: WFD)
-        nside: int,opt
-          healpix nside parameter (default: 64)
-        x1: float, opt
-          x1 SN value (default: -2.0)
-        color: float, opt
-          color SN value (default: 0.2)
-        npixels: int, opt
-          total number of pixels for this strategy
+    Parameters
+    --------------
+    resdf: pandas df
+      data to process
+    ref_var: str, opt
+      variable chosen to rank the strategies (default: nsn)
+    num: int, opt
+      number of OS to display)
 
-        """
+    """
 
-        self.nside = nside
-        self.npixels = npixels
-        self.x1 = x1
-        self.color = color
-        self.dbInfo = dbInfo
+    ressort = pd.DataFrame(resdf)
+    ressort = ressort.sort_values(by=[ref_var], ascending=False)
+    ressort['rank'] = ressort[ref_var].rank(
+        ascending=False, method='first').astype('int')
+    print(ressort[['dbName', ref_var, 'rank']][:num])
+    ressort['dbName'] = ressort['dbName'].str.split('v1.4_10yrs').str[0]
+    ressort['dbName'] = ressort['dbName'].str.rstrip('_')
+    ressort[['dbName', ref_var, 'rank']][:].to_csv(
+        'OS_best_{}.csv'.format(name), index=False)
 
-        # loading data (metric values)
-        search_path = '{}/{}/{}/*NSNMetric_{}*_nside_{}_*.hdf5'.format(
-            dirFile, dbInfo['dbName'], metricName, fieldType, nside)
-        print('looking for', search_path)
-        fileNames = glob.glob(search_path)
-        # fileName='{}/{}_CadenceMetric_{}.npy'.format(dirFile,dbName,band)
-        # print(fileNames)
-        if len(fileNames) > 0:
-            self.data_summary = self.process(fileNames)
-        else:
-            print('Missing files for', dbInfo['dbName'])
-            self.data_summary = None
 
-    def process(self, fileNames):
+def plot_Summary(resdf, ref=False, ref_var='nsn'):
+    """
+    Method to draw the summary plot nSN vs zlim
 
-        metricValues = np.array(loopStack(fileNames, 'astropyTable'))
-        idx = np.abs(metricValues['x1']-self.x1) < 1.e-6
-        idx &= np.abs(metricValues['color']-self.color) < 1.e-6
-        idx &= metricValues['status'] == 1
-        idx &= metricValues['zlim'] > 0.
-        idx &= metricValues['nsn_med'] > 0.
+    Parameters
+    ---------------
+    resdf: pandas df
+      dat to plot
+    ref: bool, opt
+      if true, results are displayed from a reference cadence (default: False)
+    ref_var: str, opt
+      column from which the reference OS is chosen (default: nsn_ref
 
-        self.data = pd.DataFrame(metricValues[idx])
+    """
 
-        print('data', self.data[['healpixID', 'pixRA', 'pixDec', 'x1', 'color', 'zlim',
-                                 'nsn_med', 'nsn', 'season']], self.data.columns)
-        print(len(np.unique(self.data[['healpixID', 'season']])))
-        self.ratiopixels = 1
-        self.npixels_eff = len(self.data['healpixID'].unique())
-        if self.npixels > 0:
-            self.ratiopixels = float(
-                npixels)/float(self.npixels_eff)
+    fig, ax = plt.subplots()
 
-        zlim = self.zlim_med()
-        nsn, sig_nsn = self.nSN_tot()
-        nsn_extrapol = int(np.round(nsn*self.ratiopixels))
+    zlim_ref = -1
+    nsn_ref = -1
 
-        resdf = pd.DataFrame([zlim], columns=['zlim'])
-        resdf['nsn'] = [nsn]
-        resdf['sig_nsn'] = [sig_nsn]
-        resdf['nsn_extra'] = [nsn_extrapol]
-        resdf['dbName'] = self.dbInfo['dbName']
-        resdf['plotName'] = self.dbInfo['plotName']
-        resdf['color'] = self.dbInfo['color']
-        resdf['marker'] = self.dbInfo['marker']
-        return resdf
+    if ref:
+        ido = np.argmax(resdf[ref_var])
+        zlim_ref = resdf.loc[ido, 'zlim']
+        nsn_ref = resdf.loc[ido, 'nsn']
 
-    def zlim_med(self):
-        """
-        Method to estimate the median redshift limit over the pixels
+    print('oooo', zlim_ref, nsn_ref)
 
-        Returns
-        ----------
-        median zlim (float)
-        """
-        meds = self.data.groupby(['healpixID']).median().reset_index()
-        meds = meds.round({'zlim': 2})
+    if zlim_ref > 0:
+        mscatter(zlim_ref-resdf['zlim'], resdf['nsn']/nsn_ref, ax=ax,
+                 m=resdf['marker'].to_list(), c=resdf['color'].to_list())
+    else:
+        mscatter(resdf['zlim'], resdf['nsn'], ax=ax,
+                 m=resdf['marker'].to_list(), c=resdf['color'].to_list())
 
-        return meds['zlim'].median()
-
-    def nSN_tot(self):
-        """
-        Method to estimate the total number of supernovae (and error)
-
-        Returns
-        -----------
-        nsn, sig_nsn: int, int
-          number of sn and sigma
-        """
-        sums = self.data.groupby(['healpixID']).sum().reset_index()
-        sums['nsn_med'] = sums['nsn_med'].astype(int)
-
-        return sums['nsn_med'].sum(), int(np.sqrt(sums['var_nsn_med'].sum()))
-
-    def plot(self):
-        """
-        Method to plot two Mollview of the metric results:
-        - redshift limit 
-        - number of well-sampled supernovae
-
-        """
-
-        # this is to estimate the median zlim over the sky
-        meds = self.data.groupby(['healpixID']).median().reset_index()
-        meds = meds.round({'zlim': 2})
-        self.plotMollview(meds, 'zlim', 'zlimit', np.median,
-                          xmin=0.01, xmax=np.max(meds['zlim'])+0.1)
-
-        # this is to plot the total number of SN (per pixels) over the sky
-        sums = self.data.groupby(['healpixID']).sum().reset_index()
-        sums['nsn_med'] = sums['nsn_med'].astype(int)
-        self.plotMollview(sums, 'nsn_med', 'NSN', np.sum,
-                          xmin=0., xmax=np.max(sums['nsn_med'])+1)
-
-    def plotMollview(self, data, varName, leg, op, xmin, xmax):
-        """
-        Method to display results as a Mollweid map
-
-        Parameters
-        ---------------
-        data: pandas df
-          data to consider
-        varName: str
-          name of the variable to display
-        leg: str
-          legend of the plot
-        op: operator
-          operator to apply to the pixelize data (median, sum, ...)
-        xmin: float
-          min value for the display
-        xmax: float
-         max value for the display
-
-        """
-        npix = hp.nside2npix(self.nside)
-
-        hpxmap = np.zeros(npix, dtype=np.float)
-        hpxmap = np.full(hpxmap.shape, -0.1)
-        hpxmap[data['healpixID'].astype(
-            int)] += data[varName]
-        norm = plt.cm.colors.Normalize(xmin, xmax)
-        cmap = plt.cm.jet
-        cmap.set_under('w')
-        resleg = op(data[varName])
-        title = '{}: {}'.format(leg, resleg)
-
-        hp.mollview(hpxmap, min=xmin, max=xmax, cmap=cmap,
-                    title=title, nest=True, norm=norm)
-        hp.graticule()
+    for ii, row in resdf.iterrows():
+        ax.text(zlim_ref-row['zlim'], row['nsn']/nsn_ref, row['dbName'])
+    ax.grid()
+    ax.set_xlabel('$z_{faint}$')
+    ax.set_ylabel('$N_{SN}(z\leq z_{faint})$')
 
 
 parser = OptionParser(
@@ -301,6 +202,8 @@ parser.add_option("--nPixelsFile", type="str", default='ObsPixels_fbs14_nside_64
                   help="file with the total number of pixels per obs. strat.[%default]")
 parser.add_option("--listdb", type="str", default='plot_scripts/input/WFD_test.csv',
                   help="list of dbnames to process [%default]")
+parser.add_option("--tagbest", type="str", default='snpipe_a',
+                  help="tag for the best OS [%default]")
 
 opts, args = parser.parse_args()
 
@@ -311,6 +214,7 @@ fieldType = opts.fieldType
 metricName = 'NSN'
 nPixelsFile = opts.nPixelsFile
 listdb = opts.listdb
+tagbest = opts.tagbest
 
 metricTot = None
 metricTot_med = None
@@ -331,7 +235,7 @@ else:
 
 print(Npixels.dtype)
 
-outFile = 'Summary_WFD.npy'
+outFile = 'Summary_WFD_{}.npy'.format(tagbest)
 
 if not os.path.isfile(outFile):
     processMulti(toproc, Npixels, outFile, nproc=4)
@@ -341,19 +245,7 @@ print(resdf.columns)
 
 # Summary plot
 
-# color=resdf['color'].tolist())
+plot_Summary(resdf, ref=True)
 
-fig, ax = plt.subplots()
-
-mscatter(resdf['zlim'], resdf['nsn'], ax=ax,
-         m=resdf['marker'].to_list(), c=resdf['color'].to_list())
-
-ax.grid()
-ax.set_xlabel('$z_{faint}$')
-ax.set_ylabel('$N_{SN}(z\leq z_{faint})$')
-
-"""
-plt.scatter(resdf['zlim'], resdf['nsn'], lineStyle='None',
-            markers=resdf['marker'].to_list())
-"""
-plt.show()
+print_best(resdf, num=20, name=tagbest)
+# plt.show()
