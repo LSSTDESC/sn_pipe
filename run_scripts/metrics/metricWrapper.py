@@ -233,9 +233,9 @@ class NSNMetricWrapper(MetricWrapper):
             n_bef = 4
             n_aft = 10
             snr_min = 0.
-            n_phase_min = 0
-            n_phase_max = 0
-            zlim_coeff = 0.90
+            n_phase_min = 1
+            n_phase_max = 1
+            zlim_coeff = 0.85
 
         if fieldType == 'Fake':
             n_bef = 0
