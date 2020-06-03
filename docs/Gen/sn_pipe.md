@@ -10,7 +10,7 @@
  * plot_scripts: set of scripts to plot pipeline results
  * reference_files: set of reference files to run the pipeline
  * requirements.txt: list of required packages to run the pipeline (for pip)
- * run_scripts: set of scripts to run the pipeline
+ * [run_scripts](run_scripts.md): set of scripts to run the pipeline
  * SALT2_Files: set of SALT2 files used in the pipeline
  * setup.py: setup file for pip installation
  * setup_release.sh: setup file to setup lsst_sims release ([usage](usage_setup_release.md))
