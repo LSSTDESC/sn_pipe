@@ -3,6 +3,7 @@ import h5py
 import numpy as np
 from astropy.table import Table, vstack
 import pprint
+from optparse import OptionParser
 
 
 def plotParameters(fieldname, fieldid, tab, season):
@@ -102,14 +103,24 @@ def plotLC(table, ax, band_id, inum=0):
                       verticalalignment='center', transform=ax[i, j].transAxes)
 
 
-thedir = 'Output_Simu'
-parName = 'Simu_sncosmo_Fake_Fake_DESC_seas_-1_-2.0_0.2.hdf5'
+parser = OptionParser()
 
-params = load_params('{}/{}'.format(thedir, parName))
+parser.add_option("--dbName", type="str", default='alt_sched',
+                  help="db name [%default]")
+parser.add_option("--dbDir", type="str", default='Output_Simu',
+                  help="dir location of the results [%default]")
+
+opts, args = parser.parse_args()
+
+print('Start processing...', opts)
+
+parName = 'Simu_{}.hdf5'.format(opts.dbName)
+
+params = load_params('{}/{}'.format(opts.dbDir, parName))
 
 print(params)
 
-lcFile = '{}/LC_sncosmo_Fake_Fake_DESC_seas_-1_-2.0_0.2.hdf5'.format(thedir)
+lcFile = '{}/LC_{}.hdf5'.format(opts.dbDir, opts.dbName)
 f = h5py.File(lcFile, 'r')
 print(f.keys(), len(f.keys()))
 
