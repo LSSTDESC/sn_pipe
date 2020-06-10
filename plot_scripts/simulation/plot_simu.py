@@ -5,6 +5,11 @@ from astropy.table import Table, vstack
 import pprint
 from optparse import OptionParser
 
+fontsize = 10
+plt.yticks(size=fontsize)
+plt.xticks(size=fontsize)
+colors = dict(zip('ugrizy', 'bcgyrm'))
+
 
 class SimuPlot:
     """
@@ -21,10 +26,21 @@ class SimuPlot:
 
     def __init__(self, dbDir, dbName):
 
-        # load simulation parameters
-        parName = 'Simu_{}.hdf5'.format(opts.dbName)
+        self.dbDir = dbDir
+        self.dbName = dbName
 
-        self.simuPars = self.load_params('{}/{}'.format(opts.dbDir, parName))
+        # some display parameters
+        self.bands = 'ugrizy'
+        self.band_id = dict(
+            zip(self.bands, [(0, 0), (0, 1), (1, 0), (1, 1), (2, 0), (2, 1)]))
+
+        # load simulation parameters
+        parName = 'Simu_{}.hdf5'.format(self.dbName)
+        params = self.load_params('{}/{}'.format(self.dbDir, parName))
+        # loop on this file using the simuPars list
+        # select only LC with status=1
+        ik = params['status'] == 1
+        self.simuPars = params[ik]
 
     def load_params(self, paramFile):
         """
@@ -85,102 +101,109 @@ class SimuPlot:
             axis.tick_params(axis='x', labelsize=thesize)
             axis.tick_params(axis='y', labelsize=thesize)
 
+    def plotLoopLC(self, pause_time=5):
+        """
+        Function to plot LC in loop
 
-def plotParameters(fieldname, fieldid, tab, season):
-    """ Plot simulation parameters
-    parameters ('X1', 'Color', 'DayMax', 'z')
-    Input
-    ---------
-    fieldname: (DD or WFD)
-    fieldid: (as given by OpSim)
-    tab: recarray of parameters
-    season: season
+        Parameters
+        ---------------
+        pause_time: int, opt
+          time of the window persistency (in sec) (default: 5 sec)
+        """
 
-    Returns
-    ---------
-    Plot (x1,color,dayMax,z)
-    """
+        # get LC file
+        lcFile = '{}/LC_{}.hdf5'.format(self.dbDir, self.dbName)
+        f = h5py.File(lcFile, 'r')
+        print(f.keys(), len(f.keys()))
 
-    idx = tab['season'] == season
-    sel = tab[idx]
-    thesize = 15
-    toplot = ['x1', 'color', 'daymax', 'z']
-    fig, ax = plt.subplots(ncols=2, nrows=2, figsize=(10, 9))
-    title = '{} - fieldid {} - season {}'.format(fieldname, fieldid, season)
-    fig.suptitle(title, fontsize=thesize)
+        simpars = self.simuPars
 
-    for i, var in enumerate(toplot):
-        ix = int(i/2)
-        iy = i % 2
-        axis = ax[ix][iy]
-        i  # f var != 'z':
-        axis.hist(sel[var], histtype='step')  # bins=len(sel[var]))
-        axis.set_xlabel(var, fontsize=20)
-        axis.set_ylabel('Number of entries', fontsize=thesize)
-        axis.tick_params(axis='x', labelsize=thesize)
-        axis.tick_params(axis='y', labelsize=thesize)
+        # for i, key in enumerate(f.keys()):
+        for par in simpars:
+            print('status', par['status'])
+            lc = Table.read(lcFile, path='lc_{}'.format(par['index_hdf5']))
 
+            fig, ax = plt.subplots(ncols=2, nrows=3, figsize=(12, 8))
+            pprint.pprint(lc.meta)  # metadata
+            figtitle = '($x_1,c$)=({},{})'.format(
+                lc.meta['x1'], lc.meta['color'])
+            figtitle += ' - z={}'.format(np.round(lc.meta['z'], 2))
+            figtitle += ' \n daymax={}'.format(np.round(lc.meta['daymax'], 2))
+            fig.suptitle(figtitle)
 
-def load_params(paramFile):
-    """
-    Function to load simulation parameters
+            # print(lc)  # light curve points
+            self.plotLC(lc, ax, self.band_id)
+            plt.draw()
+            plt.pause(pause_time)
+            plt.close()
 
-    Parameters
-    ---------------
-    paramFile: str
-       name of the parameter file
+    def plotLC(self, table, ax, band_id):
+        """
+        Method to plot produced LC
 
-    Returns
-    -----------
-    params: astropy table
-       with simulation parameters
+        Parameters
+        ---------------
+        table: astropy table
+          LC to display
+        ax: matplotlib axis
+         to display
+        band_id: int
+         id of the band
+        """
 
-    """
+        for band in 'ugrizy':
+            i = band_id[band][0]
+            j = band_id[band][1]
+            # ax[i,j].set_yscale("log")
+            idx = table['band'] == 'LSST::'+band
+            sel = table[idx]
 
-    f = h5py.File(paramFile, 'r')
-    print(f.keys(), len(f.keys()))
-    params = Table()
-    for i, key in enumerate(f.keys()):
-        pars = Table.read(paramFile, path=key)
-        params = vstack([params, pars])
+            ax[i, j].errorbar(sel['time'], sel['flux_e_sec'], yerr=sel['flux_e_sec']/sel['snr_m5'],
+                              markersize=200000., color=colors[band], linewidth=1)
+            if i > 1:
+                ax[i, j].set_xlabel('MJD [day]', {'fontsize': fontsize})
+            ax[i, j].set_ylabel('Flux [pe/sec]', {'fontsize': fontsize})
+            ax[i, j].text(0.1, 0.9, band, horizontalalignment='center',
+                          verticalalignment='center', transform=ax[i, j].transAxes)
 
-    return params
+    def checkLC(self):
+        # get LC file
+        lcFile = '{}/LC_{}.hdf5'.format(self.dbDir, self.dbName)
+        f = h5py.File(lcFile, 'r')
+        print(f.keys(), len(f.keys()))
 
+        # stack all LCs
+        lctot = Table()
+        for i, key in enumerate(f.keys()):
+            lc = Table.read(lcFile, path=key)
+            print(lc.columns)
+            lctot = vstack([lctot, lc])
+            # break
 
-def plotLC(table, ax, band_id, inum=0):
-    """
-    Method to plot produced LC
+        toplot = dict(zip(['snr_m5', 'gamma', 'flux_e_sec'], [
+                      'snr_interp', 'gamma_interp', 'flux_e_sec_int']))
 
-    Parameters
-    ---------------
-    table: astropy table
-       LC
-    ax: matplotlib axis
-      to display
-    band_id: int
-      id of the band
-    inum: int, opt
-      ?? (default: 0)
-    """
+        toplot = dict(zip(['snr_m5', 'gamma'], [
+                      'snr_interp', 'gamma_interp']))
 
-    fontsize = 10
-    plt.yticks(size=fontsize)
-    plt.xticks(size=fontsize)
-    for band in 'ugrizy':
-        i = band_id[band][0]
-        j = band_id[band][1]
-        # ax[i,j].set_yscale("log")
-        idx = table['band'] == 'LSST::'+band
-        sel = table[idx]
-        # print('hello',band,inum,len(sel))
-        #ax[band_id[band][0]][band_id[band][1]].errorbar(sel['time'],sel['mag'],yerr = sel['magerr'],color=colors[band])
-        ax[i, j].errorbar(sel['time'], sel['flux_e_sec'], yerr=sel['flux_e_sec']/sel['snr_m5'],
-                          markersize=200000., color=colors[band], linewidth=1)
-        if i > 1:
-            ax[i, j].set_xlabel('MJD [day]', {'fontsize': fontsize})
-        ax[i, j].set_ylabel('Flux [pe/sec]', {'fontsize': fontsize})
-        ax[i, j].text(0.1, 0.9, band, horizontalalignment='center',
-                      verticalalignment='center', transform=ax[i, j].transAxes)
+        for key, vv in toplot.items():
+            print(key, vv, lctot[key], lctot[vv])
+            fig, ax = plt.subplots()
+
+            #ax.hist(lctot[key]/lctot[vv], histtype='step', bins=100)
+            rat = lctot[key]/lctot[vv]
+            io = rat <= 0.98
+            lctot['rat_{}'.format(key)] = rat
+            print(lctot[io][['mag', 'm5', 'snr_m5',
+                             'snr_interp', 'rat_{}'.format(key)]])
+            ax.plot(lctot['mag']-lctot['m5'],
+                    lctot[key]/lctot[vv], 'ko')
+            #ax.plot(lctot['band'], lctot[key]/lctot[vv], 'ko')
+
+            ax.set_xlabel('{} ratio'.format(key))
+            ax.set_ylabel('number of entries')
+
+        plt.show()
 
 
 parser = OptionParser()
@@ -199,49 +222,14 @@ splot = SimuPlot(opts.dbDir, opts.dbName)
 # get the simulation parameters
 simupars = splot.simuPars
 
-print('NSN', len(simupars))
+print('Number of simulated supernovae', len(simupars))
 # get columns
 
 cols = simupars.columns
 
 print(cols)
 
-splot.plotParameters()
+# splot.plotParameters()
+# splot.plotLoopLC()
 
-plt.show()
-
-
-parName = 'Simu_{}.hdf5'.format(opts.dbName)
-
-params = load_params('{}/{}'.format(opts.dbDir, parName))
-
-print(params)
-
-lcFile = '{}/LC_{}.hdf5'.format(opts.dbDir, opts.dbName)
-f = h5py.File(lcFile, 'r')
-print(f.keys(), len(f.keys()))
-
-bands = 'ugrizy'
-band_id = dict(zip(bands, [(0, 0), (0, 1), (1, 0), (1, 1), (2, 0), (2, 1)]))
-colors = dict(zip(bands, 'bcgyrm'))
-
-zref = 0.7
-for i, key in enumerate(f.keys()):
-
-    lc = Table.read(lcFile, path=key)
-
-    if np.abs(lc.meta['z']-zref) < 1.e-5:
-        fig, ax = plt.subplots(ncols=2, nrows=3, figsize=(12, 8))
-        pprint.pprint(lc.meta)  # metadata
-        figtitle = '($x_1,c$)=({},{})'.format(
-            lc.meta['x1'], lc.meta['color'])
-        figtitle += ' - z={}'.format(lc.meta['z'])
-        figtitle += ' \n daymax={}'.format(lc.meta['daymax'])
-        fig.suptitle(figtitle)
-
-        # print(lc)  # light curve points
-        plotLC(lc, ax, band_id, i)
-        plt.draw()
-        plt.pause(5)
-        plt.close()
-        # break
+splot.checkLC()
