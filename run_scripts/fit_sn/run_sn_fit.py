@@ -75,10 +75,11 @@ def procelem(lc_name, simul, fit, j=0, output_q=None):
     res = Table()
     for simu in simul:
         lc = None
-        lc = Table.read(lc_name, path='lc_{}'.format(simu['id_hdf5']))
+        lc = Table.read(lc_name, path='lc_{}'.format(simu['index_hdf5']))
         lc.convert_bytestring_to_unicode()
-        resfit = fit(lc)
-        res = vstack([res, resfit])
+        if simu['status'] == 1:
+            resfit = fit(lc)
+            res = vstack([res, resfit])
 
     print('done', j)
     if output_q is not None:

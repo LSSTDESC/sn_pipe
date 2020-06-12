@@ -53,6 +53,7 @@ cmd += ' --fieldType Fake'
 cmd += ' --coadd 0 --radius 0.1'
 cmd += ' --outDir {}'.format(outDir_simu)
 cmd += ' --simulator {}'.format(simulator)
+cmd += ' --nproc 1'
 print(cmd)
 os.system(cmd)
 
