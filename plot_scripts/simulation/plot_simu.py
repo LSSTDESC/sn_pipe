@@ -174,34 +174,32 @@ class SimuPlot:
 
         # stack all LCs
         lctot = Table()
+        ptime = []
         for i, key in enumerate(f.keys()):
             lc = Table.read(lcFile, path=key)
             print(lc.columns)
+            ptime.append(lc.meta['ptime'])
             lctot = vstack([lctot, lc])
             # break
 
-        toplot = dict(zip(['snr_m5', 'gamma', 'flux_e_sec'], [
-                      'snr_interp', 'gamma_interp', 'flux_e_sec_int']))
-
-        toplot = dict(zip(['snr_m5', 'gamma'], [
-                      'snr_interp', 'gamma_interp']))
+        # print(lctot.columns)
+        toplot = {}
+        if 'gamma_interp' in lctot.columns:
+            toplot = dict(zip(['snr_m5', 'gamma', 'flux_e_sec'], [
+                'snr_m5_interp', 'gamma_interp', 'flux_e_sec_interp']))
 
         for key, vv in toplot.items():
-            print(key, vv, lctot[key], lctot[vv])
             fig, ax = plt.subplots()
 
-            #ax.hist(lctot[key]/lctot[vv], histtype='step', bins=100)
-            rat = lctot[key]/lctot[vv]
-            io = rat <= 0.98
-            lctot['rat_{}'.format(key)] = rat
-            print(lctot[io][['mag', 'm5', 'snr_m5',
-                             'snr_interp', 'rat_{}'.format(key)]])
-            ax.plot(lctot['mag']-lctot['m5'],
-                    lctot[key]/lctot[vv], 'ko')
+            ax.hist(lctot[key]/lctot[vv], histtype='step', bins=100)
             #ax.plot(lctot['band'], lctot[key]/lctot[vv], 'ko')
 
             ax.set_xlabel('{} ratio'.format(key))
             ax.set_ylabel('number of entries')
+
+        fig, ax = plt.subplots()
+        ax.hist(ptime, histtype='step', bins=100)
+        print('ptime', np.median(ptime))
 
         plt.show()
 
