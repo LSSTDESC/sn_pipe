@@ -7,7 +7,7 @@ Set of scripts to run the Survey Strategy Support pipeline
    * make_fake.py
    * sigmaC_z.py
  * fit_sn: to fit supernovae light curves
-   * run_sn_fit.py
+   * [run_sn_fit.py](../Fit/usage_run_sn_fit.md)
  * io_transform: to perform some io transformation 
    * extract.py
  * obs_pixelize: to associate (simulated) observations to pixels in the sky
@@ -17,9 +17,9 @@ Set of scripts to run the Survey Strategy Support pipeline
    * convert_to_npy.py
    * Loop_convert.py
  * simulation: to perform supernova simulation
-   * run_simulation.py ([usage](../Simulation/usage_run_simulation.md))
+   * [run_simulation.py](../Simulation/usage_run_simulation.md)
    * run_simulation_MAF.py
-   * make_yaml.py ([usage](../Simulation/make_yaml.md))
+   * [make_yaml.py](../Simulation/make_yaml.md)
    * simuWrapper.py
  * sn_studies: some studies around supernovae
    * check_snr.py
@@ -41,7 +41,7 @@ Set of scripts to run the Survey Strategy Support pipeline
      * metricWrapper.py
      * run_cadence_metric.py
      * run_global_metric.py
-     * run_metrics.py([usage](../Metrics/usage_run_metrics.md))
+     * [run_metrics.py](../Metrics/usage_run_metrics.md)
      * run_ObsRate_metric.py
      * run_sl_metric.py
      * run_snr_metric.py
