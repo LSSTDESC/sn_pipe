@@ -1,135 +1,130 @@
-import matplotlib.pyplot as plt
-import lsst.sims.maf.metricBundles as metricBundles
-import lsst.sims.maf.slicers as slicers
-import lsst.sims.maf.db as db
-import lsst.sims.maf.utils as utils
-import argparse
-import time
-import yaml
-from importlib import import_module
-import sqlite3
+from simuWrapper import SimuWrapper, MakeYaml
+from optparse import OptionParser
+from sn_tools.sn_process import Process
 import numpy as np
-from sn_tools.sn_cadence_tools import GenerateFakeObservations
 import os
-from sn_tools.sn_utils import GetReference
+import yaml
 
-parser = argparse.ArgumentParser(
-    description='Run a SN metric from a configuration file')
-parser.add_argument('config_filename',
-                    help='Configuration file in YAML format.')
+parser = OptionParser()
 
+parser.add_option("--dbName", type="str", default='descddf_v1.4_10yrs',
+                  help="db name [%default]")
+parser.add_option("--dbDir", type="str",
+                  default=' /sps/lsst/cadence/LSST_SN_CADENCE/cadence_db', help="db dir [%default]")
+parser.add_option("--dbExtens", type="str", default='npy',
+                  help="db extension [%default]")
+parser.add_option("--outDir", type="str", default='Output_Simu',
+                  help="output dir [%default]")
+parser.add_option("--nside", type="int", default=64,
+                  help="healpix nside [%default]")
+parser.add_option("--nproc", type="int", default='8',
+                  help="number of proc  [%default]")
+parser.add_option("--diffflux", type="int", default=0,
+                  help="flag for diff flux[%default]")
+parser.add_option("--season", type="int", default=-1,
+                  help="season to process[%default]")
+parser.add_option("--fieldType", type="str", default='DD',
+                  help="field - DD or WFD[%default]")
+parser.add_option("--x1Type", type="str", default='unique',
+                  help="x1 type (unique,random,uniform) [%default]")
+parser.add_option("--x1min", type=float, default=-2.0,
+                  help="x1 min if x1Type=unique (x1val) or uniform[%default]")
+parser.add_option("--x1max", type=float, default=2.0,
+                  help="x1 max - if x1Type=uniform[%default]")
+parser.add_option("--x1step", type=float, default=0.1,
+                  help="x1 step - if x1Type=uniform[%default]")
+parser.add_option("--colorType", type="str", default='unique',
+                  help="color type (unique,random,uniform) [%default]")
+parser.add_option("--colormin", type=float, default=0.2,
+                  help="color min if colorType=unique (colorval) or uniform[%default]")
+parser.add_option("--colormax", type=float, default=0.3,
+                  help="color max - if colorType=uniform[%default]")
+parser.add_option("--colorstep", type=float, default=0.1,
+                  help="color step - if colorType=uniform[%default]")
+parser.add_option("--zType", type="str", default='uniform',
+                  help=" zcolor type (unique,uniform,random) [%default]")
+parser.add_option("--daymaxType", type="str", default='unique',
+                  help="daymax type (unique,uniform,random) [%default]")
+parser.add_option("--daymaxstep", type=float, default=1,
+                  help="daymax step [%default]")
+parser.add_option("--zmin", type="float", default=0.0,
+                  help="min redshift [%default]")
+parser.add_option("--zmax", type="float", default=1.0,
+                  help="max redshift [%default]")
+parser.add_option("--zstep", type="float", default=0.02,
+                  help="max redshift [%default]")
+parser.add_option("--saveData", type="int", default=0,
+                  help="to save data [%default]")
+parser.add_option("--nodither", type="int", default=0,
+                  help="to remove dithering [%default]")
+parser.add_option("--coadd", type="int", default=1,
+                  help="to coadd or not[%default]")
+parser.add_option("--RAmin", type=float, default=0.,
+                  help="RA min for obs area - for WDF only[%default]")
+parser.add_option("--RAmax", type=float, default=360.,
+                  help="RA max for obs area - for WDF only[%default]")
+parser.add_option("--Decmin", type=float, default=-1.,
+                  help="Dec min for obs area - for WDF only[%default]")
+parser.add_option("--Decmax", type=float, default=-1.,
+                  help="Dec max for obs area - for WDF only[%default]")
+parser.add_option("--remove_dithering", type="int", default='0',
+                  help="remove dithering for DDF [%default]")
+parser.add_option("--pixelmap_dir", type=str, default='',
+                  help="dir where to find pixel maps[%default]")
+parser.add_option("--npixels", type=int, default=0,
+                  help="number of pixels to process[%default]")
+parser.add_option("--nclusters", type=int, default=0,
+                  help="number of clusters in data (DD only)[%default]")
+parser.add_option("--radius", type=float, default=4.,
+                  help="radius around clusters (DD and Fakes)[%default]")
+parser.add_option("--simulator", type=str, default='sn_cosmo',
+                  help="simulator to use[%default]")
+parser.add_option("--prodid", type=str, default='Test',
+                  help="prod id for the simulation[%default]")
 
-def run(config_filename):
-    # YAML input file.
-    config = yaml.load(open(config_filename), Loader=yaml.FullLoader)
-    # print(config)
-    outDir = 'Test'  # this is for MAF
+opts, args = parser.parse_args()
 
-    # grab the db filename from yaml input file
-    dbFile = config['Observations']['filename']
-
-    """
-    conn = sqlite3.connect(dbFile)
-    cur = conn.cursor()
-    table_name='Proposal'
-    result = cur.execute("PRAGMA table_info('%s')" % table_name).fetchall()
-    print('Results',result)
-    cur.execute("SELECT * FROM Proposal")
-    rows = cur.fetchall()
-    for row in rows:
-        print(row)
-    print('end')
-    cur.execute('PRAGMA TABLE_INFO({})'.format('ObsHistory'))
-    
-    names = [tup[1] for tup in cur.fetchall()]
-    print(names)
-    """
-
-    #check whether X0_norm file exist or not (and generate it if necessary)
-    absMag = config['SN parameters']['absmag']
-    salt2Dir = config['SN parameters']['salt2Dir']
-    model = config['Simulator']['model']
-    version = str(config['Simulator']['version'])
-
-    x0normFile = 'reference_files/X0_norm_{}.npy'.format(absMag)
-
-    if not os.path.isfile(x0normFile):
-        from sn_tools.sn_utils import X0_norm
-        X0_norm(salt2Dir=salt2Dir,model=model, version=version, absmag=absMag,outfile=x0normFile)
-
-    x0_tab = np.load(x0normFile)
-
-    reference_lc = None
-    if 'sn_fast' in config['Simulator']['name']:
-        print('Loading reference LCs from',config['Simulator']['Reference File'])
-        reference_lc = GetReference(
-            config['Simulator']['Reference File'],config['Instrument'])
-        print('Reference LCs loaded')
-
-
-
-    module = import_module(config['Metric'])
-
-    if dbFile != 'None':
-        if dbFile.endswith('.db'):
-            opsimdb = db.OpsimDatabase(dbFile)
-            version = opsimdb.opsimVersion
-            propinfo, proptags = opsimdb.fetchPropInfo()
-            print('proptags and propinfo', proptags, propinfo)
-
-            # grab the fieldtype (DD or WFD) from yaml input file
-            fieldtype = config['Observations']['fieldtype']
-            slicer = slicers.HealpixSlicer(nside=config['Pixelisation']['nside'])
-
-            # print('slicer',slicer.pixArea,slicer.slicePoints['ra'])
-            #print('alors condif', config)
-            metric = module.SNMetric(
-                config=config, coadd=config['Observations']['coadd'],x0_norm=x0_tab,reference_lc=reference_lc)
-
-            sqlconstraint = opsimdb.createSQLWhere(fieldtype, proptags)
-
-            mb = metricBundles.MetricBundle(metric, slicer, sqlconstraint)
-
-            mbD = {0: mb}
-            
-            resultsDb = db.ResultsDb(outDir=outDir)
-            
-            mbg = metricBundles.MetricBundleGroup(mbD, opsimdb,
-                                              outDir=outDir, resultsDb=resultsDb)
-            
-            mbg.runAll()
-            
-
-        if dbFile.endswith('.npy'):
-            metric = module.SNMetric(
-                config=config, coadd=False,x0_norm=x0_tab,reference_lc=reference_lc)
-            
-            observations = np.load(dbFile)
-
-            metric.run(observations)
-
-        if metric.save_status:
-            metric.simu.Finish()
-
-    else:
-        config_fake = yaml.load(open(config['Param_file']), Loader=yaml.FullLoader)
-        fake_obs = GenerateFakeObservations(config_fake).Observations
-
-        metric = module.SNMetric(config=config,coadd=config['Observations']['coadd'],
-                                 x0_norm=x0_tab)
-        metric.run(fake_obs)
-       
-    # mbg.plotAll(closefigs=False)
-    # plt.show()
+print('Start processing...')
 
 
-def main(args):
-    print('running')
-    time_ref = time.time()
-    run(args.config_filename)
-    print('Time', time.time()-time_ref)
+# Generate the yaml file
+# build the yaml file
 
+makeYaml = MakeYaml(opts.dbDir, opts.dbName, opts.dbExtens, opts.nside,
+                    opts.nproc, opts.diffflux, opts.season, opts.outDir,
+                    opts.fieldType,
+                    opts.x1Type, opts.x1min, opts.x1max, opts.x1step,
+                    opts.colorType, opts.colormin, opts.colormax, opts.colorstep,
+                    opts.zType, opts.zmin, opts.zmax, opts.zstep,
+                    opts.simulator, opts.daymaxType, opts.daymaxstep,
+                    opts.coadd, opts.prodid)
 
-if __name__ == '__main__':
-    args = parser.parse_args()
-    main(args)
+yaml_orig = 'input/simulation/param_simulation_gen.yaml'
+
+yaml_params = makeYaml.genYaml(yaml_orig)
+
+print(yaml_params)
+
+# save on disk
+
+# create outputdir if does not exist
+if not os.path.isdir(opts.outDir):
+    os.makedirs(opts.outDir)
+
+yaml_name = '{}/{}.yaml'.format(opts.outDir, opts.prodid)
+with open(yaml_name, 'w') as f:
+    data = yaml.dump(yaml_params, f)
+
+# define what to process using simuWrapper
+
+metricList = [SimuWrapper(yaml_name)]
+
+# now perform the processing
+Process(opts.dbDir, opts.dbName, opts.dbExtens,
+        opts.fieldType, opts.nside,
+        opts.RAmin, opts.RAmax,
+        opts.Decmin, opts.Decmax,
+        opts.saveData, opts.remove_dithering,
+        opts.outDir, opts.nproc, metricList,
+        opts.pixelmap_dir, opts.npixels,
+        opts.nclusters, opts.radius)

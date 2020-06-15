@@ -1,9 +1,8 @@
-from simuWrapper import SimuWrapper
 from optparse import OptionParser
-from sn_tools.sn_process import Process
-import numpy as np
-import matplotlib
-matplotlib.use('agg')
+import yaml
+import os
+from simuWrapper import MakeYaml
+
 
 parser = OptionParser()
 
@@ -59,48 +58,37 @@ parser.add_option("--nodither", type="int", default=0,
                   help="to remove dithering [%default]")
 parser.add_option("--coadd", type="int", default=1,
                   help="to coadd or not[%default]")
-parser.add_option("--RAmin", type=float, default=0.,
-                  help="RA min for obs area - for WDF only[%default]")
-parser.add_option("--RAmax", type=float, default=360.,
-                  help="RA max for obs area - for WDF only[%default]")
-parser.add_option("--Decmin", type=float, default=-1.,
-                  help="Dec min for obs area - for WDF only[%default]")
-parser.add_option("--Decmax", type=float, default=-1.,
-                  help="Dec max for obs area - for WDF only[%default]")
-parser.add_option("--remove_dithering", type="int", default='0',
-                  help="remove dithering for DDF [%default]")
-parser.add_option("--pixelmap_dir", type=str, default='',
-                  help="dir where to find pixel maps[%default]")
-parser.add_option("--npixels", type=int, default=0,
-                  help="number of pixels to process[%default]")
-parser.add_option("--nclusters", type=int, default=0,
-                  help="number of clusters in data (DD only)[%default]")
-parser.add_option("--radius", type=float, default=4.,
-                  help="radius around clusters (DD and Fakes)[%default]")
 parser.add_option("--simulator", type=str, default='sn_cosmo',
                   help="simulator to use[%default]")
+parser.add_option("--prodid", type=str, default='Test',
+                  help="prodid of the simulation [%default]")
+
 
 opts, args = parser.parse_args()
 
-print('Start processing...')
+# build the yaml file
 
-# define what to process using simuWrapper
+makeYaml = MakeYaml(opts.dbDir, opts.dbName, opts.dbExtens, opts.nside,
+                    opts.nproc, opts.diffflux, opts.season, opts.outDir,
+                    opts.fieldType,
+                    opts.x1Type, opts.x1min, opts.x1max, opts.x1step,
+                    opts.colorType, opts.colormin, opts.colormax, opts.colorstep,
+                    opts.zType, opts.zmin, opts.zmax, opts.zstep,
+                    opts.simulator, opts.daymaxType, opts.daymaxstep,
+                    opts.coadd, opts.prodid)
 
-metricList = [SimuWrapper(opts.dbDir, opts.dbName, opts.nside,
-                          opts.nproc, opts.diffflux,
-                          opts.season, opts.outDir,
-                          opts.fieldType,
-                          opts.x1Type, opts.x1min, opts.x1max, opts.x1step,
-                          opts.colorType, opts.colormin, opts.colormax, opts.colorstep,
-                          opts.zType, opts.zmin, opts.zmax, opts.zstep,
-                          opts.simulator, opts.daymaxType, opts.daymaxstep, opts.coadd)]
+yaml_orig = 'input/simulation/param_simulation_gen.yaml'
 
-# now perform the processing
-Process(opts.dbDir, opts.dbName, opts.dbExtens,
-        opts.fieldType, opts.nside,
-        opts.RAmin, opts.RAmax,
-        opts.Decmin, opts.Decmax,
-        opts.saveData, opts.remove_dithering,
-        opts.outDir, opts.nproc, metricList,
-        opts.pixelmap_dir, opts.npixels,
-        opts.nclusters, opts.radius)
+yaml_params = makeYaml.genYaml(yaml_orig)
+
+print(yaml_params)
+
+# save on disk
+
+# create outputdir if does not exist
+if not os.path.isdir(opts.outDir):
+    os.makedirs(opts.outDir)
+
+yaml_name = '{}/{}.yaml'.format(opts.outDir, opts.prodid)
+with open(yaml_name, 'w') as f:
+    data = yaml.dump(yaml_params, f)
