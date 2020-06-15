@@ -17,8 +17,9 @@ Set of scripts to run the Survey Strategy Support pipeline
    * convert_to_npy.py
    * Loop_convert.py
  * simulation: to perform supernova simulation
-   * run_simulation_fromnpy.py
-   * run_simulation.py
+   * run_simulation.py ([usage](../Simulation/usage_run_simulation.md))
+   * run_simulation_MAF.py
+   * make_yaml.py ([usage](../Simulation/make_yaml.md))
    * simuWrapper.py
  * sn_studies: some studies around supernovae
    * check_snr.py
