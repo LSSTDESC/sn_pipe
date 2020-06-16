@@ -8,11 +8,11 @@ def addoption(cmd, name, val):
 
 x1_color = [(-2.0, 0.2)]
 zmin = 0.01
-zmax = 0.05
+zmax = 1.1
 zstep = 0.01
 nproc = 4
-outDirLC = 'boou'
-outDirTemplates = 'Tempp_bbb'
+outDirLC = 'fakes_for_templates'
+outDirTemplates = 'Template_LC'
 
 for (x1, color) in x1_color:
     # generate LCs

@@ -156,7 +156,9 @@ def SimuFakes(x1, color, z, outDir):
     # run simulation on this
     cmd = 'python run_scripts/simulation/run_simulation_from_yaml.py'
     cmd += ' --config_yaml {}/{}'.format(genfakes.outDir, genfakes.config_out)
-    cmd += ' --radius 0.1'
+    cmd += ' --radius 0.01'
+    cmd += ' --RAmin 0.'
+    cmd += ' --RAmax 0.1'
     os.system(cmd)
 
 
