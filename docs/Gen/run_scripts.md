@@ -46,6 +46,9 @@ Set of scripts to run the Survey Strategy Support pipeline
  ### templates: to produce template LC files (used by the fast simulator)
    * run_diffflux.py
    * run_simulation_template.py
+   * [run_template_LC.py](../Templates/usage_run_template_LC.md)
+   * [run_template_vstack.py](../Templates/usage_run_template_vstack.md)
+   * simuLoop.py (usage: python simuLoop.py)
  ### utils
    * add_DD_Fields.py
    * calcGamma.py
