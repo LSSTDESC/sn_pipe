@@ -106,6 +106,7 @@ class LCStack:
         table_new.add_column(Column([x1]*len(table_new), name='x1'))
         table_new.add_column(
             Column([color]*len(table_new), name='color'))
+        table_new['z'] = table_new.meta['z']
         # table_new.write(lc_out, path='lc_'+str(ilc),
         table_new.write(lc_out, path='lc_'+str(ilc),
                         append=True, compression=True)
