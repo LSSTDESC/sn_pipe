@@ -2,29 +2,39 @@ ProductionID:  prodid
 SN parameters:
    Id : 100                   # Id of the first SN
    x1_color:                    # stretch and color
-       type : fixed  #random or fixed
-       min : [x1val,colorval]
-       max : [2.0,0.2]
        rate :  JLA
        dirFile: 'reference_files'
+   x1 :
+       type: unique
+       min: x1val
+       max: 3.
+       step: 0.01
+   color :
+       type: unique
+       min: colorval
+       max: 0.2
+       step: 0.1
    z :              # redshift
        type : unique
        min : zval
-       max : 0.9
-       step: 0.01
+       max : 1.
+       step: 0.02
        rate : Perrett # Type Ia volumetric rate : Perrett, Ripoche, Dilday.
-   daymax:                 # Tmax (obs. frame)
+   daymax :                 # Tmax (obs. frame)
        type : unique #uniform or random or unique
-       step : 1 # if uniform: step (in day) between Tmin(obs) and Tmax(obs)      
+       step : 2. # if uniform: step (in day) between Tmin(obs) and Tmax(obs)       
    min_rf_phase : -20.        # obs min phase (rest frame)
    max_rf_phase : 60.         # obs max phase (rest frame)
+   min_rf_phase_qual : -15.        # obs min phase (rest frame) (qual cuts)
+   max_rf_phase_qual : 45.         # obs max phase (rest frame) (qual cuts)
    absmag : -19.0906          # peak abs mag
    band : bessellB             # band for absmag
    magsys : vega              # magsys for absmag
    differential_flux: True
    salt2Dir: SALT2_Files  
-   blue_cutoff : 350.
+   blue_cutoff : 380.
    red_cutoff : 800.
+   dust: False
 Cosmology:
    Model : w0waCDM      # Cosmological model
    Omega_m : 0.30             # Omega_m
@@ -40,14 +50,16 @@ Instrument:
    atmos : True  #atmos
    aerosol : False  #aerosol
 Observations: 
-   filename: None  # Name of db obs file (full path)
-   fieldtype: None #DD or WFD
+   filename: datatoprocess  # Name of db obs file (full path)
+   fieldtype: Fake #DD or WFD
    coadd: False # this is the coaddition per night
-   season: 1 #season to simulate (-1 = all seasons)
+   season: [1] #season to simulate (-1 = all seasons)
 Simulator :
     name : sn_simulator.sn_cosmo   # Simulator: sn_cosmo,sn_sim,sn_ana, sn_fast
     model : salt2-extended   # spectra model
     version : 1.0                     #version
+    Template Dir: /home/philippe/LSST/sn_pipe_doc/Templates
+    Gamma File: reference_files/gamma.hdf5
 Host Parameters: None         # Host parameters
 Display_LC : #display during LC simulations
    display: False
@@ -57,7 +69,5 @@ Output:
     save: True
 Multiprocessing:
     nproc: 1
-Metric: sn_mafsim.sn_maf_simulation
-Param_file: fakename
 Pixelisation:
     nside: 64
