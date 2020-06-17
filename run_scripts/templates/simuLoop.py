@@ -8,7 +8,7 @@ def addoption(cmd, name, val):
 
 x1_color = [(-2.0, 0.2)]
 zmin = 0.01
-zmax = 1.1
+zmax = 0.05
 zstep = 0.01
 nproc = 4
 outDirLC = 'fakes_for_templates'

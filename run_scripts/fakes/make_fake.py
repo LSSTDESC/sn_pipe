@@ -21,15 +21,15 @@ seqs = opts.seqs
 
 config = yaml.load(open(configName), Loader=yaml.FullLoader)
 
-print(config)
+# print(config)
 mygen = GenerateFakeObservations(config, sequences=seqs).Observations
 
-print(mygen)
+# print(mygen)
 
 
 # add a night column
 
 mygen = rf.append_fields(mygen, 'night', list(range(1, len(mygen)+1)))
-print(mygen.dtype)
+# print(mygen.dtype)
 
 np.save('{}.npy'.format(outputName), np.copy(mygen))
