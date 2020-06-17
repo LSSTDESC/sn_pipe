@@ -1,5 +1,6 @@
 import os
 import numpy as np
+from optparse import OptionParser
 
 def addoption(cmd, name, val):
     cmd += ' --{} {}'.format(name, val)
@@ -48,6 +49,9 @@ def batch(x1, color, nproc=8, zmin=0.01,zmax=1.2,zstep=0.01,outDirLC='',outDirTe
     if what == 'simu':
         print(cmd)
         script.write(cmd+"\n")
+        script.write("EOF" + "\n")
+        script.close()
+        os.system("sh "+scriptName)
 
 
 
@@ -59,26 +63,31 @@ def batch(x1, color, nproc=8, zmin=0.01,zmax=1.2,zstep=0.01,outDirLC='',outDirTe
     cmd = addoption(cmd, 'outDir', outDirTemplates)
     if what == 'vstack':
         print(cmd)
-        script.write(cmd+" \n")
-    script.write("EOF" + "\n")
-    script.close()
-    if what=='simu':
-        os.system("sh "+scriptName)
+        os.system(cmd)
 
+
+parser = OptionParser()
+
+parser.add_option("--action", type="str", default='simu',
+                  help="what to do: simu or vstack[%default]")
+
+opts, args = parser.parse_args()
 
 x1_colors = [(-2.0, -0.2), (-2.0, 0.0), (-2.0, 0.2),
              (0.0, -0.2), (0.0, 0.0), (0.0, 0.2),
              (2.0, -0.2), (2.0, 0.0), (2.0, 0.2)]
 
 zmax = [1.1, 1.1, 0.8, 1.2, 1.2, 1.2, 1.2, 1.2, 1.2]
+x1_colors = [(-2.0, 0.2),(0.0, 0.0)]
+zmax = [0.8,1.2]
 
 zmax_dict = dict(zip(x1_colors, zmax))
 
 outDirLC = '/sps/lsst/users/gris/fakes_for_templates'
 outDirTemplates = '/sps/lsst/users/gris/Template_LC'
 
-what='vstack'
+
 for (x1, color) in x1_colors:
     batch(x1, color, zmax=zmax_dict[(x1, color)],
-          outDirLC=outDirLC,outDirTemplates=outDirTemplates,what=what)
-    break
+          outDirLC=outDirLC,outDirTemplates=outDirTemplates,what=opts.action)
+    
