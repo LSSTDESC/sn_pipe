@@ -62,7 +62,8 @@ def batch(x1, color, nproc=8, zmin=0.01,zmax=1.2,zstep=0.01,outDirLC='',outDirTe
         script.write(cmd+" \n")
     script.write("EOF" + "\n")
     script.close()
-    os.system("sh "+scriptName)
+    if what=='simu':
+        os.system("sh "+scriptName)
 
 
 x1_colors = [(-2.0, -0.2), (-2.0, 0.0), (-2.0, 0.2),
@@ -76,7 +77,7 @@ zmax_dict = dict(zip(x1_colors, zmax))
 outDirLC = '/sps/lsst/users/gris/fakes_for_templates'
 outDirTemplates = '/sps/lsst/users/gris/Template_LC'
 
-what='simu'
+what='vstack'
 for (x1, color) in x1_colors:
     batch(x1, color, zmax=zmax_dict[(x1, color)],
           outDirLC=outDirLC,outDirTemplates=outDirTemplates,what=what)
