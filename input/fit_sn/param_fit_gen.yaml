@@ -1,4 +1,4 @@
-ProductionID: prodid
+ProductionID: prodidmain
 Instrument:
    name : LSST       #name of the telescope (internal)
    throughput_dir : LSST_THROUGHPUTS_BASELINE #dir of throughput
@@ -7,10 +7,10 @@ Instrument:
    atmos : True  #atmos
    aerosol : False  #aerosol
 Simulations: 
-   filename: Simu_prodid.hdf5   # Name of simulation  file
+   prodid : prodidsimu   # Name of simulation  file
    dirname : dbDir     # dir of obs file
 Fitter:
-    name : sn_fitter.fit_sncosmo          # Simulator name: sncosmo,snana, snsim, ...
+    name : sn_fitter.fit_fittername       # fitter name: sncosmo,snfast,...
     model : salt2-extended   # spectra model
     version : 1.0                     #version
     covmb: covmbcalc # to estimate covmb after fitted values

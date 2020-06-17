@@ -18,7 +18,7 @@ SN parameters:
        type : zType
        min : zmin
        max : zmax
-       step: 0.02
+       step: zstep
        rate : Perrett # Type Ia volumetric rate : Perrett, Ripoche, Dilday.
    daymax :                 # Tmax (obs. frame)
        type : daymaxType #uniform or random or unique
