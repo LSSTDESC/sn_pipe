@@ -203,8 +203,6 @@ parser.add_option("--mbcov", type="int", default=0,
                   help="mbcol calc [%default]")
 parser.add_option("--display", type="int", default=0,
                   help="to display fit in real-time[%default]")
-parser.add_option("--prefix", type=str, default='sncosmo_DD',
-                  help="prefix for input file[%default]")
 
 
 opts, args = parser.parse_args()
@@ -224,11 +222,13 @@ if mbCalc:
         zip(['x0', 'x1', 'color'], ['x0', 'x1', 'c'])))
 
 # prefix = 'sncosmo_DD'
-files = glob.glob('{}/Simu_{}_{}*.hdf5'.format(dirFiles, opts.prefix, prodid))
+files = glob.glob('{}/Simu_{}*.hdf5'.format(dirFiles, prodid))
 
 for fi in files:
+    """
     prodid = '{}_{}'.format(opts.prefix, fi.split(
         '{}_'.format(opts.prefix))[-1].split('.hdf5')[0])
+    """
     # make and load config file
     config = makeYaml('input/fit_sn/param_fit_gen.yaml',
                       dirFiles, prodid, outDir, nproc, mbCalc, display)
