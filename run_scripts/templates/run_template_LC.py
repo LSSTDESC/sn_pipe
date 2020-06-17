@@ -200,8 +200,8 @@ class MultiSimuFakes:
         for i in range(nproc):
             ida = batch[i]
             idb = batch[i+1]
-            p = multiprocessing.Process(name='Subprocess-'+str(i), target=self.zLoop, args=(
-                zrange[ida:idb]))
+            p = multiprocessing.Process(
+                name='Subprocess-'+str(i), target=self.zLoop, args=(np.array([zrange[ida:idb]])))
             p.start()
             print('start', i)
 
@@ -217,7 +217,6 @@ class MultiSimuFakes:
         if isinstance(zval, np.float):
             zval = [zval]
         for z in zval:
-            print('processing', z)
             SimuFakes(self.x1, self.color, z, self.outDir)
 
 
