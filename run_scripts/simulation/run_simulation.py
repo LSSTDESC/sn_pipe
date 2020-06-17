@@ -86,7 +86,6 @@ opts, args = parser.parse_args()
 
 print('Start processing...')
 
-
 # Generate the yaml file
 # build the yaml file
 

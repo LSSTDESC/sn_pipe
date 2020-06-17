@@ -90,6 +90,7 @@ class MakeYaml:
         self.colorstep = colorstep
         self.zmin = zmin
         self.zmax = zmax
+        self.zstep = zstep
         self.simu = simu
         self.zType = zType
         self.daymaxType = daymaxType
@@ -135,6 +136,7 @@ class MakeYaml:
         filedata = filedata.replace('colorstep', str(self.colorstep))
         filedata = filedata.replace('zmin', str(self.zmin))
         filedata = filedata.replace('zmax', str(self.zmax))
+        filedata = filedata.replace('zstep', str(self.zstep))
         filedata = filedata.replace('zType', self.zType)
         filedata = filedata.replace('daymaxType', self.daymaxType)
         filedata = filedata.replace('daymaxstep', str(self.daymaxstep))

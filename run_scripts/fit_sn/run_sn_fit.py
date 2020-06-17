@@ -11,7 +11,7 @@ from sn_fit.mbcov import MbCov
 import glob
 
 
-def makeYaml(input_file, dbDir, prodid, outDir, nproc, covmb=0, display=0):
+def makeYaml(input_file, dbDir, prodid, outDir, nproc, fitter, covmb=0, display=0):
     """
     Function to replace generic parameters of a yaml file
 
@@ -40,10 +40,12 @@ def makeYaml(input_file, dbDir, prodid, outDir, nproc, covmb=0, display=0):
     with open(input_file, 'r') as file:
         filedata = file.read()
 
-    filedata = filedata.replace('prodid', prodid)
+    filedata = filedata.replace('prodidmain', '{}_{}'.format(prodid, fitter))
+    filedata = filedata.replace('prodidsimu', prodid)
     filedata = filedata.replace('outDir', outDir)
     filedata = filedata.replace('dbDir', dbDir)
     filedata = filedata.replace('nnproc', str(nproc))
+    filedata = filedata.replace('fittername', fitter)
     filedata = filedata.replace('covmbcalc', str(covmb))
     filedata = filedata.replace('displayval', str(display))
 
@@ -175,10 +177,13 @@ def process(config, covmb=None):
     # simu_file: astropy table with SN parameters
     # lc file: astropy tables with light curves
 
-    simu_name = config['Simulations']['dirname']+'/Simu_'+prodid+'.hdf5'
-    lc_name = config['Simulations']['dirname']+'/LC_'+prodid+'.hdf5'
+    dirSimu = config['Simulations']['dirname']
+    prodidSimu = config['Simulations']['prodid']
+    simu_name = '{}/Simu_{}.hdf5'.format(dirSimu, prodidSimu)
+    lc_name = '{}/LC_{}.hdf5'.format(dirSimu, prodidSimu)
 
     # Fitting instance
+    print('ooooo')
     fit = Fitting(config, covmb=covmb)
 
     # Loop on the simu_file to grab and fit simulated LCs
@@ -203,6 +208,8 @@ parser.add_option("--mbcov", type="int", default=0,
                   help="mbcol calc [%default]")
 parser.add_option("--display", type="int", default=0,
                   help="to display fit in real-time[%default]")
+parser.add_option("--fitter", type="str", default='sn_cosmo',
+                  help="fitter to use [%default]")
 
 
 opts, args = parser.parse_args()
@@ -213,6 +220,7 @@ prodid = opts.prodid
 nproc = opts.nproc
 mbCalc = opts.mbcov
 display = opts.display
+fitter = opts.fitter
 
 
 covmb = None
@@ -220,18 +228,14 @@ if mbCalc:
     salt2Dir = 'SALT2_Files'
     covmb = MbCov(salt2Dir, paramNames=dict(
         zip(['x0', 'x1', 'color'], ['x0', 'x1', 'c'])))
+search_path = '{}/Simu_{}*.hdf5'.format(dirFiles, prodid)
+files = glob.glob(search_path)
 
-# prefix = 'sncosmo_DD'
-files = glob.glob('{}/Simu_{}*.hdf5'.format(dirFiles, prodid))
-
+print('yep', files, search_path)
 for fi in files:
-    """
-    prodid = '{}_{}'.format(opts.prefix, fi.split(
-        '{}_'.format(opts.prefix))[-1].split('.hdf5')[0])
-    """
     # make and load config file
     config = makeYaml('input/fit_sn/param_fit_gen.yaml',
-                      dirFiles, prodid, outDir, nproc, mbCalc, display)
+                      dirFiles, prodid, outDir, nproc, fitter, mbCalc, display)
     print(config)
     # now run
     process(config, covmb=covmb)

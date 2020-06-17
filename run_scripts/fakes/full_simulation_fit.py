@@ -43,6 +43,8 @@ x1 = np.round(opts.x1, 1)
 color = np.round(opts.color, 1)
 
 
+prodid = '{}_Fake_{}_seas_-1_{}_{}'.format(simulator, fake_output, x1, color)
+
 # first step: create fake data from yaml configuration file
 cmd = 'python run_scripts/fakes/make_fake.py --config {} --output {}'.format(
     fake_config, fake_output)
@@ -50,7 +52,7 @@ cmd = 'python run_scripts/fakes/make_fake.py --config {} --output {}'.format(
 os.system(cmd)
 
 # now run the full simulation on these data
-prodid = '{}_Fake_{}_seas_-1_{}_{}'.format(simulator, fake_output, x1, color)
+
 cmd = 'python run_scripts/simulation/run_simulation.py --dbDir .'
 cmd += ' --dbName {}'.format(opts.fake_output)
 cmd += ' --dbExtens npy'
@@ -64,16 +66,33 @@ cmd += ' --nproc 1'
 cmd += ' --RAmin 0.0'
 cmd += ' --RAmax 0.1'
 cmd += ' --prodid {}'.format(prodid)
+cmd += ' --zmin 0.01'
+cmd += ' --zmax 1.0'
+cmd += ' --zstep 0.01'
 print(cmd)
 os.system(cmd)
 
-# now fit these light curves
+# now fit these light curves - using sncosmo simulator
 
 cmd = 'python run_scripts/fit_sn/run_sn_fit.py'
 cmd += ' --dirFiles {}'.format(outDir_simu)
 cmd += ' --prodid {}'.format(prodid)
-cmd += ' --mbcov 0 --nproc 4'.format(simulator)
+cmd += ' --mbcov 0 --nproc 4'
 cmd += ' --outDir {}'.format(outDir_fit)
 
 print(cmd)
 os.system(cmd)
+
+
+# if LC have been produced with sn_fast, also transform LC to SN from Fisher matrices
+
+if 'fast' in simulator:
+    cmd = 'python run_scripts/fit_sn/run_sn_fit.py'
+    cmd += ' --dirFiles {}'.format(outDir_simu)
+    cmd += ' --prodid {}'.format(prodid)
+    cmd += ' --mbcov 0 --nproc 1'
+    cmd += ' --outDir {}'.format(outDir_fit)
+    cmd += ' --fitter sn_fast'
+
+    print(cmd)
+    os.system(cmd)
