@@ -8,7 +8,7 @@ def addoption(cmd, name, val):
 
 
 
-def batch(x1, color, nproc=8, zmin=0.01,zmax=1.2,zstep=0.01,outDirLC='',outDirTemplates='',what='simu'):
+def batch(x1, color, nproc=8, zmin=0.01,zmax=1.2,zstep=0.01,dust=1,ebvofMW=-1.,outDirLC='',outDirTemplates='',what='simu'):
 
     cwd = os.getcwd()
     dirScript = cwd + "/scripts"
@@ -46,6 +46,9 @@ def batch(x1, color, nproc=8, zmin=0.01,zmax=1.2,zstep=0.01,outDirLC='',outDirTe
     cmd = addoption(cmd, 'zstep', zstep)
     cmd = addoption(cmd, 'nproc', nproc)
     cmd = addoption(cmd, 'outDir', outDirLC)
+    cmd = addoption(cmd,'dust',dust)
+    cmd = addoption(cmd,'ebvofMW',ebvofMW)
+
     if what == 'simu':
         print(cmd)
         script.write(cmd+"\n")
@@ -85,9 +88,11 @@ zmax_dict = dict(zip(x1_colors, zmax))
 
 outDirLC = '/sps/lsst/users/gris/fakes_for_templates'
 outDirTemplates = '/sps/lsst/users/gris/Template_LC'
-
+dust = 1
+ebvs = np.arange(0.0,0.07,0.01)
 
 for (x1, color) in x1_colors:
-    batch(x1, color, zmax=zmax_dict[(x1, color)],
-          outDirLC=outDirLC,outDirTemplates=outDirTemplates,what=opts.action)
+    for ebv in ebvs:
+        batch(x1, color, zmax=zmax_dict[(x1, color)],dust=dust,ebvofMW=ebv,
+              outDirLC=outDirLC,outDirTemplates=outDirTemplates,what=opts.action)
     
