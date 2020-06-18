@@ -71,11 +71,14 @@ class MakeYamlSimulation:
 
     """
 
-    def __init__(self, x1, color, z, config_orig, outDir, datatoprocess, outDirSimu):
+    def __init__(self, x1, color, z, dust, ebvofMW,
+                 config_orig, outDir, datatoprocess, outDirSimu):
         # grab parameters
         self.x1 = x1
         self.color = color
         self.z = z
+        self.dust = dust
+        self.ebvofMW = ebvofMW
         self.outDir = outDir
         self.config_orig = config_orig
         self.config_out = 'params_fakes_{}_{}_{}.yaml'.format(x1, color, z)
@@ -86,7 +89,9 @@ class MakeYamlSimulation:
 
     def makeYaml(self):
 
-        prodid = 'Fake_{}_{}_{}'.format(self.x1, self.color, self.z)
+        prodid = 'Fake_{}_{}_{}_{}_{}'.format(
+            self.x1, self.color, self.z, self.dust, self.ebvofMW)
+        print('reading', self.config_orig)
         with open(self.config_orig, 'r') as file:
             filedata = file.read()
             filedata = filedata.replace('zval', str(self.z))
@@ -95,12 +100,14 @@ class MakeYamlSimulation:
             filedata = filedata.replace('x1val', str(self.x1))
             filedata = filedata.replace('colorval', str(self.color))
             filedata = filedata.replace('outdirname', self.outDirSimu)
+            filedata = filedata.replace('dustval', str(int(self.dust)))
+            filedata = filedata.replace('ebvofMWval', str(self.ebvofMW))
 
         with open('{}/{}'.format(self.outDir, self.config_out), 'w') as file:
             file.write(filedata)
 
 
-def SimuFakes(x1, color, z, outDir):
+def SimuFakes(x1, color, z, dust, ebvofMW, outDir):
     """
     method to simulate LC from fake observations
 
@@ -112,6 +119,10 @@ def SimuFakes(x1, color, z, outDir):
        SN color
     z: float
        SN redshift
+    dust: bool
+      to apply dust effects
+    ebvofMW: float
+      ebv of MW
     outDir: str
       output directory
     """
@@ -151,7 +162,7 @@ def SimuFakes(x1, color, z, outDir):
     # make input yaml file
     config_orig = 'input/templates/param_fakesimulation_template.yaml'
     genfakes = MakeYamlSimulation(
-        x1, color, z, config_orig, fake_simu_yaml, '{}.npy'.format(fake_output), fake_simu_data)
+        x1, color, z, dust, ebvofMW, config_orig, fake_simu_yaml, '{}.npy'.format(fake_output), fake_simu_data)
 
     # run simulation on this
     cmd = 'python run_scripts/simulation/run_simulation_from_yaml.py'
@@ -182,13 +193,19 @@ class MultiSimuFakes:
       number of procs
     outDir: str
       output directory
+    dust: bool
+      to apply dust effects
+    ebvofMW: float
+      ebv of MW if dust=1
     """
 
-    def __init__(self, x1, color, zmin, zmax, zstep, nproc, outDir):
+    def __init__(self, x1, color, zmin, zmax, zstep, nproc, outDir, dust, ebvofMW):
 
         self.x1 = x1
         self.color = color
         self.outDir = outDir
+        self.dust = dust
+        self.ebvofMW = ebvofMW
 
         zrange = np.arange(zmin, zmax, zstep)
 
@@ -217,7 +234,8 @@ class MultiSimuFakes:
         if isinstance(zval, np.float):
             zval = [zval]
         for z in zval:
-            SimuFakes(self.x1, self.color, z, self.outDir)
+            SimuFakes(self.x1, self.color, z, self.dust,
+                      self.ebvofMW, self.outDir)
 
 
 parser = OptionParser()
@@ -231,8 +249,13 @@ parser.add_option("--zstep", type="float",
                   default=0.01, help="zstep [%default]")
 parser.add_option("--outDir", type="str",
                   default='Test_fakes', help=" output directory [%default]")
+parser.add_option("--dust", type="int",
+                  default=1, help=" to apply dust effects[%default]")
+parser.add_option("--ebvofMW", type="float",
+                  default=-1, help="ebvofMW to apply if dust=1 [%default]")
+
 
 opts, args = parser.parse_args()
 
 MultiSimuFakes(opts.x1, opts.color, opts.zmin,
-               opts.zmax, opts.zstep, opts.nproc, opts.outDir)
+               opts.zmax, opts.zstep, opts.nproc, opts.outDir, opts.dust, opts.ebvofMW)
