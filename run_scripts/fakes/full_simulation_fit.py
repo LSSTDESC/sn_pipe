@@ -26,6 +26,12 @@ parser.add_option("--x1", type=float, default=-2.0,
                   help="SN x1 [%default]")
 parser.add_option("--color", type=float, default=0.2,
                   help="SN color[%default]")
+parser.add_option("--zmin", type=float, default=0.01,
+                  help="min redshift[%default]")
+parser.add_option("--zmax", type=float, default=1.0,
+                  help="min redshift[%default]")
+parser.add_option("--zstep", type=float, default=0.01,
+                  help="step redshift[%default]")
 parser.add_option("--dust", type=int, default=1,
                   help="to apply dust effects [%default]")
 parser.add_option("--ebvofMW", type=float, default=-1.,
@@ -46,6 +52,9 @@ x1 = np.round(opts.x1, 1)
 color = np.round(opts.color, 1)
 dust = opts.dust
 ebvofMW = opts.ebvofMW
+zmin = opts.zmin
+zmax = opts.zmax
+zstep = opts.zstep
 
 
 prodid = '{}_Fake_{}_seas_-1_{}_{}_{}_{}'.format(
@@ -72,9 +81,9 @@ cmd += ' --nproc 1'
 cmd += ' --RAmin 0.0'
 cmd += ' --RAmax 0.1'
 cmd += ' --prodid {}'.format(prodid)
-cmd += ' --zmin 0.01'
-cmd += ' --zmax 1.0'
-cmd += ' --zstep 0.01'
+cmd += ' --zmin {}'.format(zmin)
+cmd += ' --zmax {}'.format(zmax)
+cmd += ' --zstep {}'.format(zstep)
 cmd += ' --dust {}'.format(dust)
 cmd += ' --ebvofMW {}'.format(ebvofMW)
 print(cmd)
