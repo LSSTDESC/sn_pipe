@@ -26,7 +26,10 @@ parser.add_option("--x1", type=float, default=-2.0,
                   help="SN x1 [%default]")
 parser.add_option("--color", type=float, default=0.2,
                   help="SN color[%default]")
-
+parser.add_option("--dust", type=int, default=1,
+                  help="to apply dust effects [%default]")
+parser.add_option("--ebvofMW", type=float, default=-1.,
+                  help="ebvofMW value[%default]")
 
 opts, args = parser.parse_args()
 
@@ -41,9 +44,12 @@ outDir_fit = opts.outDir_fit
 simulator = opts.simulator
 x1 = np.round(opts.x1, 1)
 color = np.round(opts.color, 1)
+dust = opts.dust
+ebvofMW = opts.ebvofMW
 
 
-prodid = '{}_Fake_{}_seas_-1_{}_{}'.format(simulator, fake_output, x1, color)
+prodid = '{}_Fake_{}_seas_-1_{}_{}_{}_{}'.format(
+    simulator, fake_output, x1, color, dust, ebvofMW)
 
 # first step: create fake data from yaml configuration file
 cmd = 'python run_scripts/fakes/make_fake.py --config {} --output {}'.format(
@@ -69,6 +75,8 @@ cmd += ' --prodid {}'.format(prodid)
 cmd += ' --zmin 0.01'
 cmd += ' --zmax 1.0'
 cmd += ' --zstep 0.01'
+cmd += ' --dust {}'.format(dust)
+cmd += ' --ebvofMW {}'.format(ebvofMW)
 print(cmd)
 os.system(cmd)
 

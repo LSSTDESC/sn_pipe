@@ -34,7 +34,8 @@ SN parameters:
    salt2Dir: SALT2_Files #dir where SALT2 files are located
    blue_cutoff : 380.
    red_cutoff : 800.
-   dust: True
+   dust: dustbool
+   ebvofMW: ebvofMWval
 Cosmology:
    Model : w0waCDM      # Cosmological model
    Omega_m : 0.30             # Omega_m
@@ -60,7 +61,8 @@ Simulator :
     model : salt2-extended   # spectra model
     version : 1.0                     #version
     #Reference File: SN_MAF/Reference_Files/LC_Ref_-2.0_0.2.hdf5
-    Template Dir: /home/philippe/LSST/sn_pipe_doc/Templates
+    #Template Dir: /home/philippe/LSST/sn_pipe_doc/Templates
+    Template Dir: Template_LC
     Gamma File: reference_files/gamma.hdf5
 Host Parameters: None         # Host parameters
 Display_LC : #display during LC simulations
