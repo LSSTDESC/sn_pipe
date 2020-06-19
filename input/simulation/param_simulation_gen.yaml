@@ -34,7 +34,6 @@ SN parameters:
    salt2Dir: SALT2_Files #dir where SALT2 files are located
    blue_cutoff : 380.
    red_cutoff : 800.
-   dust: dustbool
    ebvofMW: ebvofMWval
 Cosmology:
    Model : w0waCDM      # Cosmological model
@@ -64,6 +63,7 @@ Simulator :
     #Template Dir: /home/philippe/LSST/sn_pipe_doc/Templates
     Template Dir: Template_LC
     Gamma File: reference_files/gamma.hdf5
+    DustCorr Dir: reference_files
 Host Parameters: None         # Host parameters
 Display_LC : #display during LC simulations
    display: False
@@ -75,3 +75,4 @@ Multiprocessing:
     nproc: nnproc
 Pixelisation:
     nside: nnside
+Web path : https://me.lsst.eu/gris/DESC_SN_pipeline

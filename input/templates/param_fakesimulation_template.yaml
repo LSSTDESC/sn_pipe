@@ -72,3 +72,4 @@ Multiprocessing:
     nproc: 1
 Pixelisation:
     nside: 64
+Web path : https://me.lsst.eu/gris/DESC_SN_pipeline
