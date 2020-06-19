@@ -32,8 +32,6 @@ parser.add_option("--zmax", type=float, default=1.0,
                   help="min redshift[%default]")
 parser.add_option("--zstep", type=float, default=0.01,
                   help="step redshift[%default]")
-parser.add_option("--dust", type=int, default=1,
-                  help="to apply dust effects [%default]")
 parser.add_option("--ebvofMW", type=float, default=-1.,
                   help="ebvofMW value[%default]")
 
@@ -45,26 +43,29 @@ RAmin = opts.RAmin
 RAmax = opts.RAmax
 Decmin = opts.Decmin
 Decmax = opts.Decmax
+#outDir_simu = '{}_ebvofMW_{}'.format(opts.outDir_simu, opts.ebvofMW)
+#outDir_fit = '{}_ebvofMW_{}'.format(opts.outDir_fit, opts.ebvofMW)
 outDir_simu = opts.outDir_simu
 outDir_fit = opts.outDir_fit
 simulator = opts.simulator
 x1 = np.round(opts.x1, 1)
 color = np.round(opts.color, 1)
-dust = opts.dust
 ebvofMW = opts.ebvofMW
 zmin = opts.zmin
 zmax = opts.zmax
 zstep = opts.zstep
 
 
-prodid = '{}_Fake_{}_seas_-1_{}_{}_{}_{}'.format(
-    simulator, fake_output, x1, color, dust, ebvofMW)
+prodid = '{}_Fake_{}_seas_-1_{}_{}_ebvofMW_{}'.format(
+    simulator, fake_output, x1, color, ebvofMW)
+
 
 # first step: create fake data from yaml configuration file
 cmd = 'python run_scripts/fakes/make_fake.py --config {} --output {}'.format(
     fake_config, fake_output)
 
 os.system(cmd)
+
 
 # now run the full simulation on these data
 
@@ -84,10 +85,10 @@ cmd += ' --prodid {}'.format(prodid)
 cmd += ' --zmin {}'.format(zmin)
 cmd += ' --zmax {}'.format(zmax)
 cmd += ' --zstep {}'.format(zstep)
-cmd += ' --dust {}'.format(dust)
 cmd += ' --ebvofMW {}'.format(ebvofMW)
 print(cmd)
 os.system(cmd)
+
 
 # now fit these light curves - using sncosmo simulator
 

@@ -183,9 +183,8 @@ def process(config, covmb=None):
     lc_name = '{}/LC_{}.hdf5'.format(dirSimu, prodidSimu)
 
     # Fitting instance
-    print('ooooo')
-    fit = Fitting(config, covmb=covmb)
 
+    fit = Fitting(config, covmb=covmb)
     # Loop on the simu_file to grab and fit simulated LCs
     multiproc(simu_name=simu_name, lc_name=lc_name, fit=fit,
               covmb=covmb, nproc=config['Multiprocessing']['nproc'])

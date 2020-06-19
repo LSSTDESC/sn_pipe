@@ -63,8 +63,6 @@ class MakeYaml:
        to coadd (True) or not (Fals) observations per night
     prodid: str
        production id ; the resulting yaml file is prodid.yaml
-    dust: bool
-      to apply dust effects or not
     ebvmw: float
       to specify an extinction value
     """
@@ -73,7 +71,7 @@ class MakeYaml:
                  seasnum, outDir, fieldType,
                  x1Type, x1min, x1max, x1step,
                  colorType, colormin, colormax, colorstep,
-                 zType, zmin, zmax, zstep, simu, daymaxType, daymaxstep, coadd, prodid, dust, ebvofMW):
+                 zType, zmin, zmax, zstep, simu, daymaxType, daymaxstep, coadd, prodid, ebvofMW):
 
         self.dbDir = dbDir
         self.dbName = dbName
@@ -101,7 +99,6 @@ class MakeYaml:
         self.daymaxstep = daymaxstep
         self.coadd = coadd
         self.prodid = prodid
-        self.dust = dust
         self.ebvofMW = ebvofMW
 
     def genYaml(self, input_file):
@@ -148,7 +145,6 @@ class MakeYaml:
         filedata = filedata.replace('daymaxstep', str(self.daymaxstep))
         filedata = filedata.replace('fcoadd', str(self.coadd))
         filedata = filedata.replace('mysimu', self.simu)
-        filedata = filedata.replace('dustbool', str(self.dust))
         filedata = filedata.replace('ebvofMWval', str(self.ebvofMW))
 
         return yaml.load(filedata, Loader=yaml.FullLoader)
