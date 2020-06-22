@@ -54,12 +54,16 @@ class DustEffects:
 
         # merge files in one astropy Table
         tabtot = Table()
+        finalOutName = '{}.hdf5'.format(self.outName)
+        check_rm(finalOutName)
         for io in range(nproc):
             print('processing', io)
             fName = 'Dust_{}_{}_{}.hdf5'.format(x1, color, io)
             tabtot = vstack([tabtot, loadStack(fName)])
+            # remove the file since no more needed
+            os.system('rm {}'.format(fName))
 
-        tabtot.write('{}.hdf5'.format(self.outName), 'dust', compression=True)
+        tabtot.write(finalOutName, 'dust', compression=True)
 
     def multiprocess(self, simu_ref, lc_dust_ref, lc_dust_files):
         """
