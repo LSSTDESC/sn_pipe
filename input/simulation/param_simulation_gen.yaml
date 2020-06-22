@@ -62,7 +62,8 @@ Simulator :
     #Reference File: SN_MAF/Reference_Files/LC_Ref_-2.0_0.2.hdf5
     #Template Dir: /home/philippe/LSST/sn_pipe_doc/Templates
     Template Dir: Template_LC
-    Gamma File: reference_files/gamma.hdf5
+    Gamma Dir: reference_files
+    Gamma File: gamma.hdf5
     DustCorr Dir: reference_files
 Host Parameters: None         # Host parameters
 Display_LC : #display during LC simulations

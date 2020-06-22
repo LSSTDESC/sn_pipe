@@ -1,8 +1,9 @@
-#from sn_mafsim.sn_maf_simulation import SNMAFSimulation
+# from sn_mafsim.sn_maf_simulation import SNMAFSimulation
 from sn_wrapper.sn_simu import SNSimulation
 import numpy as np
 import yaml
 import os
+from sn_tools.sn_io import check_get_file
 
 
 class MakeYaml:
@@ -33,7 +34,7 @@ class MakeYaml:
        x1 type for simulation (unique, uniform, random)
      x1min: float
        x1 min value
-     x1max: float 
+     x1max: float
        x1 max value
      x1step: float
         x1 step value
@@ -41,7 +42,7 @@ class MakeYaml:
        color type for simulation (unique, uniform, random)
      colormin: float
        color min value
-     colormax: float 
+     colormax: float
        color max value
      colorstep: float
         color step value
@@ -49,7 +50,7 @@ class MakeYaml:
        z type for simulation (unique, uniform, random)
      zmin: float
        z min value
-     zmax: float 
+     zmax: float
        z max value
      zstep: float
         z step value
@@ -173,7 +174,7 @@ class SimuWrapper:
         x0_tab = self.x0(config)
 
         # load references if simulator = sn_fast
-        #reference_lc = self.load_reference(config)
+        # reference_lc = self.load_reference(config)
 
         # now define the metric instance
         # self.metric = SNMAFSimulation(config=config, x0_norm=x0_tab,
@@ -196,12 +197,20 @@ class SimuWrapper:
         """
         # check whether X0_norm file exist or not (and generate it if necessary)
         absMag = config['SN parameters']['absmag']
-        salt2Dir = config['SN parameters']['salt2Dir']
-        model = config['Simulator']['model']
-        version = str(config['Simulator']['version'])
-
         x0normFile = 'reference_files/X0_norm_{}.npy'.format(absMag)
         if not os.path.isfile(x0normFile):
+            # if this file does not exist, grab it from a web server
+            check_get_file(config['Web path'], 'reference_files',
+                           'X0_norm_{}.npy'.format(absMag))
+
+        if not os.path.isfile(x0normFile):
+            # if the file could not be found, then have to generate it!
+            salt2Dir = config['SN parameters']['salt2Dir']
+            model = config['Simulator']['model']
+            version = str(config['Simulator']['version'])
+
+            # need the SALT2 dir for this
+            check_get_dir(config['Web path'], 'SALT2', salt2Dir)
             from sn_tools.sn_utils import X0_norm
             X0_norm(salt2Dir=salt2Dir, model=model, version=version,
                     absmag=absMag, outfile=x0normFile)
