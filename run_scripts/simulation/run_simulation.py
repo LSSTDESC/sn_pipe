@@ -17,9 +17,9 @@ parser.add_option("--outDir", type="str", default='Output_Simu',
                   help="output dir [%default]")
 parser.add_option("--nside", type="int", default=64,
                   help="healpix nside [%default]")
-parser.add_option("--nproc", type="int", default='8',
+parser.add_option("--nproc", type=int, default=8,
                   help="number of proc  [%default]")
-parser.add_option("--diffflux", type="int", default=0,
+parser.add_option("--diffflux", type=int, default=0,
                   help="flag for diff flux[%default]")
 parser.add_option("--season", type="int", default=-1,
                   help="season to process[%default]")
@@ -121,6 +121,7 @@ with open(yaml_name, 'w') as f:
 metricList = [SimuWrapper(yaml_name)]
 
 # now perform the processing
+
 Process(opts.dbDir, opts.dbName, opts.dbExtens,
         opts.fieldType, opts.nside,
         opts.RAmin, opts.RAmax,
