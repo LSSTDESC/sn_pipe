@@ -35,6 +35,7 @@ SN parameters:
    blue_cutoff : 380.
    red_cutoff : 800.
    ebvofMW: ebvofMWval
+   NSN factor: 1
 Cosmology:
    Model : w0waCDM      # Cosmological model
    Omega_m : 0.30             # Omega_m
