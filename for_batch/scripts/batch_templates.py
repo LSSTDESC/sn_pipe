@@ -88,15 +88,16 @@ zmax = [1.1, 1.1, 0.8, 1.2, 1.2, 1.2, 1.2, 1.2, 1.2]
 x1_colors = [(-2.0, 0.2), (0.0, 0.0)]
 zmax = [0.8, 1.2]
 
+x1_colors = [(-2.0,0.2)]
+zmax = [0.8]
 zmax_dict = dict(zip(x1_colors, zmax))
 
 outDirLC = '/sps/lsst/users/gris/fakes_for_templates'
 outDirTemplates = '/sps/lsst/users/gris/Template_LC'
-dust = 1
 bluecutoff = 380.
 redcutoff = 800.
-ebvs = np.arange(0.0, 0.07, 0.01)
-ebvs = [0.0]
+#ebvs = np.arange(0.0, 0.07, 0.01)
+ebvofMW = 0.0
 
 outDirLC = '{}_{}_{}_ebvofMW_{}'.format(
     outDirLC, bluecutoff, redcutoff, ebvofMW)
@@ -105,9 +106,9 @@ outDirTemplates = '{}_{}_{}_ebvofMW_{}'.format(
 
 
 for (x1, color) in x1_colors:
-    for ebv in ebvs:
-        batch(x1, color, zmax=zmax_dict[(x1, color)],
-              ebvofMW=ebv,
-              bluecutoff=bluecutoff,
-              redcutoff=redcutoff,
-              outDirLC=outDirLC, outDirTemplates=outDirTemplates, what=opts.action)
+    #for ebv in ebvs:
+    batch(x1, color, zmax=zmax_dict[(x1, color)],
+          ebvofMW=ebvofMW,
+          bluecutoff=bluecutoff,
+          redcutoff=redcutoff,
+          outDirLC=outDirLC, outDirTemplates=outDirTemplates, what=opts.action)
