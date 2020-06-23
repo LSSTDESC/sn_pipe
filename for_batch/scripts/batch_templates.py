@@ -22,7 +22,8 @@ def batch(x1, color, nproc=8, zmin=0.01, zmax=1.2, zstep=0.01, ebvofMW=-1.,
     if not os.path.isdir(dirLog):
         os.makedirs(dirLog)
 
-    id = '{}_{}'.format(x1, color)
+    id = '{}_{}_{}_{}_ebvofMW_{}'.format(
+        x1, color, bluecutoff, redcutoff, ebvofMW)
     name_id = 'template_{}'.format(id)
     log = dirLog + '/'+name_id+'.log'
 
