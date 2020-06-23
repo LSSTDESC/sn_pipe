@@ -34,6 +34,11 @@ parser.add_option("--zstep", type=float, default=0.01,
                   help="step redshift[%default]")
 parser.add_option("--ebvofMW", type=float, default=-1.,
                   help="ebvofMW value[%default]")
+parser.add_option("--bluecutoff", type=float, default=380,
+                  help="blue cutoff for SN[%default]")
+parser.add_option("--redcutoff", type=float, default=800,
+                  help="red cutoff for SN[%default]")
+
 
 opts, args = parser.parse_args()
 
@@ -51,13 +56,15 @@ simulator = opts.simulator
 x1 = np.round(opts.x1, 1)
 color = np.round(opts.color, 1)
 ebvofMW = opts.ebvofMW
+bluecutoff = opts.bluecutoff
+redcutoff = opts.redcutoff
 zmin = opts.zmin
 zmax = opts.zmax
 zstep = opts.zstep
 
 
-prodid = '{}_Fake_{}_seas_-1_{}_{}_ebvofMW_{}'.format(
-    simulator, fake_output, x1, color, ebvofMW)
+prodid = '{}_Fake_{}_seas_-1_{}_{}_{}_{}_ebvofMW_{}'.format(
+    simulator, fake_output, x1, color, bluecutoff, redcutoff, ebvofMW)
 
 
 # first step: create fake data from yaml configuration file
@@ -86,6 +93,10 @@ cmd += ' --zmin {}'.format(zmin)
 cmd += ' --zmax {}'.format(zmax)
 cmd += ' --zstep {}'.format(zstep)
 cmd += ' --ebvofMW {}'.format(ebvofMW)
+cmd += ' --bluecutoff {}'.format(bluecutoff)
+cmd += ' --redcutoff {}'.format(redcutoff)
+cmd += ' --npixels -1'
+
 print(cmd)
 os.system(cmd)
 

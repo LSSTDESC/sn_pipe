@@ -66,13 +66,20 @@ class MakeYaml:
        production id ; the resulting yaml file is prodid.yaml
     ebvmw: float
       to specify an extinction value
+    bluecutoff: float
+       blue cutoff for SN
+    redcutoff: float
+       redcutoff for SN
     """
 
     def __init__(self, dbDir, dbName, dbExtens, nside, nproc, diffflux,
                  seasnum, outDir, fieldType,
                  x1Type, x1min, x1max, x1step,
                  colorType, colormin, colormax, colorstep,
-                 zType, zmin, zmax, zstep, simu, daymaxType, daymaxstep, coadd, prodid, ebvofMW):
+                 zType, zmin, zmax, zstep,
+                 simu, daymaxType, daymaxstep,
+                 coadd, prodid,
+                 ebvofMW, bluecutoff, redcutoff):
 
         self.dbDir = dbDir
         self.dbName = dbName
@@ -101,6 +108,8 @@ class MakeYaml:
         self.coadd = coadd
         self.prodid = prodid
         self.ebvofMW = ebvofMW
+        self.bluecutoff = bluecutoff
+        self.redcutoff = redcutoff
 
     def genYaml(self, input_file):
         """
@@ -147,6 +156,8 @@ class MakeYaml:
         filedata = filedata.replace('fcoadd', str(self.coadd))
         filedata = filedata.replace('mysimu', self.simu)
         filedata = filedata.replace('ebvofMWval', str(self.ebvofMW))
+        filedata = filedata.replace('bluecutoffval', str(self.bluecutoff))
+        filedata = filedata.replace('redcutoffval', str(self.redcutoff))
 
         return yaml.load(filedata, Loader=yaml.FullLoader)
 

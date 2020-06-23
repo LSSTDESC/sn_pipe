@@ -32,8 +32,8 @@ SN parameters:
    magsys : vega              # magsys for absmag
    differential_flux: diffflux # to estimate differential flux
    salt2Dir: SALT2_Files #dir where SALT2 files are located
-   blue_cutoff : 380.
-   red_cutoff : 800.
+   blue_cutoff : bluecutoffval
+   red_cutoff : redcutoffval
    ebvofMW: ebvofMWval
    NSN factor: 1
 Cosmology:

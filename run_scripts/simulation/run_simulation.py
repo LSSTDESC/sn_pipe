@@ -83,6 +83,10 @@ parser.add_option("--prodid", type=str, default='Test',
                   help="prod id tag[%default]")
 parser.add_option("--ebvofMW", type=float, default=-1.,
                   help="ebvofMW value[%default]")
+parser.add_option("--bluecutoff", type=float, default=380.,
+                  help="blue cutoff for SN[%default]")
+parser.add_option("--redcutoff", type=float, default=800.,
+                  help="red cutoff for SN[%default]")
 
 opts, args = parser.parse_args()
 
@@ -98,7 +102,7 @@ makeYaml = MakeYaml(opts.dbDir, opts.dbName, opts.dbExtens, opts.nside,
                     opts.colorType, opts.colormin, opts.colormax, opts.colorstep,
                     opts.zType, opts.zmin, opts.zmax, opts.zstep,
                     opts.simulator, opts.daymaxType, opts.daymaxstep,
-                    opts.coadd, opts.prodid, opts.ebvofMW)
+                    opts.coadd, opts.prodid, opts.ebvofMW, opts.bluecutoff, opts.redcutoff)
 
 yaml_orig = 'input/simulation/param_simulation_gen.yaml'
 
