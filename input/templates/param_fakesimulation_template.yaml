@@ -32,8 +32,8 @@ SN parameters:
    magsys : vega              # magsys for absmag
    differential_flux: True
    salt2Dir: SALT2_Files  
-   blue_cutoff : 380.
-   red_cutoff : 800.
+   blue_cutoff : bluecutoffval
+   red_cutoff : redcutoffval
    dust : dustval
    ebvofMW : ebvofMWval
 Cosmology:
@@ -60,7 +60,9 @@ Simulator :
     model : salt2-extended   # spectra model
     version : 1.0                     #version
     Template Dir: /home/philippe/LSST/sn_pipe_doc/Templates
-    Gamma File: reference_files/gamma.hdf5
+    Gamma Dir: reference_files
+    Gamma File: gamma.hdf5
+    DustCorr Dir: reference_files
 Host Parameters: None         # Host parameters
 Display_LC : #display during LC simulations
    display: False

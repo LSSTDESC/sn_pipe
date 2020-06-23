@@ -19,19 +19,29 @@ class LCStack:
       location dir where LCs are
     outDir: str
       output directory where stacked LC will be located
+    bluecutoff: float
+       blue cutoff for SN
+    redcutoff: float
+       red cutoff for SN
+    ebvofMW: float
+      ebvofMW value (dust)
     """
 
-    def __init__(self, x1, color, lcDir, outDir):
+    def __init__(self, x1, color, lcDir, outDir, bluecutoff, redcutoff, ebvofMW):
 
          # create output directory
         if not os.path.isdir(outDir):
             os.makedirs(outDir)
 
-        lc_out = outDir+'/LC_'+str(x1)+'_'+str(color)+'.hdf5'
+        lc_name = 'LC_{}_{}_{}_{}_ebvofMW_{}'.format(
+            x1, color, bluecutoff, redcutoff, ebvofMW)
+        lc_out = '{}/{}.hdf5'.format(outDir, lc_name)
         if os.path.exists(lc_out):
             os.remove(lc_out)
 
-        files = glob.glob(lcDir+'/'+str(x1)+'_'+str(color)+'/LC*')
+        lc_dir = '{}/{}_{}/LC*'.format(
+            lcDir, x1, color)
+        files = glob.glob(lc_dir)
 
         for ilc, fi in enumerate(files):
             self.transform_LC(fi, lc_out, 200+ilc, x1, color)
@@ -112,6 +122,14 @@ parser.add_option('--lcDir', type='str', default='Test_fakes',
                   help='lc directory[%default]')
 parser.add_option('--outDir', type='str',
                   default='Templates_final_new', help='output directory for [%default]')
+parser.add_option("--ebvofMW", type=float,
+                  default=0, help="ebvofMW to apply [%default]")
+parser.add_option("--bluecutoff", type=float,
+                  default=380, help="blue cutoff for SN[%default]")
+parser.add_option("--redcutoff", type=float,
+                  default=800, help="blue cutoff for SN[%default]")
+
 opts, args = parser.parse_args()
 
-LCStack(opts.x1, opts.color, opts.lcDir, opts.outDir)
+LCStack(opts.x1, opts.color, opts.lcDir, opts.outDir,
+        opts.bluecutoff, opts.redcutoff, opts.ebvofMW)

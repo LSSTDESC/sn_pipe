@@ -59,6 +59,10 @@ class MakeYamlSimulation:
       SN color
     z: float
       redshift
+    bluecutoff: float
+      blue cutoff for SN
+    redcutoff: float
+      red cutoff for SN
     config_orig: str
       original yaml file used to generate the new yaml file
     outDir: str
@@ -71,7 +75,7 @@ class MakeYamlSimulation:
 
     """
 
-    def __init__(self, x1, color, z, ebvofMW,
+    def __init__(self, x1, color, z, ebvofMW, bluecutoff, redcutoff,
                  config_orig, outDir, datatoprocess, outDirSimu):
         # grab parameters
         self.x1 = x1
@@ -83,13 +87,15 @@ class MakeYamlSimulation:
         self.config_out = 'params_fakes_{}_{}_{}.yaml'.format(x1, color, z)
         self.datatoprocess = datatoprocess
         self.outDirSimu = outDirSimu
+        self.bluecutoff = bluecutoff
+        self.redcutoff = redcutoff
 
         self.makeYaml()
 
     def makeYaml(self):
 
-        prodid = 'Fake_{}_{}_{}_{}'.format(
-            self.x1, self.color, self.z, self.ebvofMW)
+        prodid = 'Fake_{}_{}_{}_{}_{}_ebvofMW_{}'.format(
+            self.x1, self.color, self.z, self.bluecutoff, self.redcutoff, self.ebvofMW)
         print('reading', self.config_orig)
         with open(self.config_orig, 'r') as file:
             filedata = file.read()
@@ -100,12 +106,14 @@ class MakeYamlSimulation:
             filedata = filedata.replace('colorval', str(self.color))
             filedata = filedata.replace('outdirname', self.outDirSimu)
             filedata = filedata.replace('ebvofMWval', str(self.ebvofMW))
+            filedata = filedata.replace('bluecutoffval', str(self.bluecutoff))
+            filedata = filedata.replace('redcutoffval', str(self.redcutoff))
 
         with open('{}/{}'.format(self.outDir, self.config_out), 'w') as file:
             file.write(filedata)
 
 
-def SimuFakes(x1, color, z, ebvofMW, outDir):
+def SimuFakes(x1, color, z, ebvofMW, bluecutoff, redcutoff, outDir):
     """
     method to simulate LC from fake observations
 
@@ -119,6 +127,10 @@ def SimuFakes(x1, color, z, ebvofMW, outDir):
        SN redshift
     ebvofMW: float
       ebv of MW
+    bluecutoff: float
+      blue cutoff for SN
+    redcutoff: float
+      red cutoff for SN
     outDir: str
       output directory
     """
@@ -158,7 +170,7 @@ def SimuFakes(x1, color, z, ebvofMW, outDir):
     # make input yaml file
     config_orig = 'input/templates/param_fakesimulation_template.yaml'
     genfakes = MakeYamlSimulation(
-        x1, color, z, ebvofMW, config_orig, fake_simu_yaml, '{}.npy'.format(fake_output), fake_simu_data)
+        x1, color, z, ebvofMW, bluecutoff, redcutoff, config_orig, fake_simu_yaml, '{}.npy'.format(fake_output), fake_simu_data)
 
     # run simulation on this
     cmd = 'python run_scripts/simulation/run_simulation_from_yaml.py'
@@ -191,14 +203,20 @@ class MultiSimuFakes:
       output directory
     ebvofMW: float
       ebv of MW 
+    bluecutoff: float
+      blue cutoff for SN
+    redcutoff: float
+      red cutoff for SN
     """
 
-    def __init__(self, x1, color, zmin, zmax, zstep, nproc, outDir, ebvofMW):
+    def __init__(self, x1, color, zmin, zmax, zstep, nproc, outDir, ebvofMW, bluecutoff, redcutoff):
 
         self.x1 = x1
         self.color = color
         self.outDir = outDir
         self.ebvofMW = ebvofMW
+        self.bluecutoff = bluecutoff
+        self.redcutoff = redcutoff
 
         zrange = np.arange(zmin, zmax, zstep)
 
@@ -228,7 +246,7 @@ class MultiSimuFakes:
             zval = [zval]
         for z in zval:
             SimuFakes(self.x1, self.color, z,
-                      self.ebvofMW, self.outDir)
+                      self.ebvofMW, self.bluecutoff, self.redcutoff, self.outDir)
 
 
 parser = OptionParser()
@@ -242,11 +260,17 @@ parser.add_option("--zstep", type="float",
                   default=0.01, help="zstep [%default]")
 parser.add_option("--outDir", type="str",
                   default='Test_fakes', help=" output directory [%default]")
-parser.add_option("--ebvofMW", type="float",
-                  default=-1, help="ebvofMW to apply [%default]")
+parser.add_option("--ebvofMW", type=float,
+                  default=0, help="ebvofMW to apply [%default]")
+parser.add_option("--bluecutoff", type=float,
+                  default=380, help="blue cutoff for SN[%default]")
+parser.add_option("--redcutoff", type=float,
+                  default=800, help="blue cutoff for SN[%default]")
 
 
 opts, args = parser.parse_args()
 
 MultiSimuFakes(opts.x1, opts.color, opts.zmin,
-               opts.zmax, opts.zstep, opts.nproc, opts.outDir, opts.ebvofMW)
+               opts.zmax, opts.zstep, opts.nproc,
+               opts.outDir, opts.ebvofMW,
+               opts.bluecutoff, opts.redcutoff)
