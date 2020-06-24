@@ -53,9 +53,9 @@ Options:
 
 ### Examples ###
 <ul>
-<li>  Simulation using one proc, nside_healpix =64, (x1,color) = (0.0,0.0), z in range [0.01, 1.] (step: 0.1), daymax step of 1 day, on 1 pixel of the sky, for the OS file baseline_v1.4_10yrs.db located in ../../DB_Files, on WFD
+<li>  Simulation using one proc, nside_healpix =64, (x1,color) = (-2.0,0.2), z in range [0.01, 1.] (random), random daymax, on 1 pixel of the sky, for the OS file baseline_v1.4_10yrs.db located in ../../DB_Files, on WFD
       <ul>
-     <li> python run_scripts/simulation/run_simulation.py --nproc 1 --nside 64 --x1Type unique --x1min 0.0 --colorType unique --colormin 0.0 --zType uniform --zmin 0.01 --zmax 1.0 --zstep 0.01 --daymaxType uniform --daymaxstep 1. --npixel 1 --dbName baseline_v1.4_10yrs --dbDir ../../DB_Files --dbExtens db --fieldType WFD --Ramin 36. --RAmax 72. --radius_RA 36. --Decmin -40. --Decmax -41. --radius_Dec 1.</li>
+     <li>python run_scripts/simulation/run_simulation.py --nproc 1 --nside 64 --x1Type random --x1min -2.0 --x1max -2.0 --colorType random --colormin 0.2 --colormax 0.2 --zType random --zmin 0.01 --zmax 0.6 --zstep 0.01 --daymaxType random --daymaxstep 1. --npixel 1 --dbName baseline_v1.4_10yrs --dbDir ../../DB_Files --dbExtens db --fieldType WFD --RAmin 36. --RAmax 40 --Decmin -41. --Decmax -37 --radius 4. </li>
      </ul>
      </li>
 
