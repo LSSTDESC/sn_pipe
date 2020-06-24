@@ -227,7 +227,9 @@ cols = simupars.columns
 
 print(cols)
 
+print(splot.simuPars)
 # splot.plotParameters()
-# splot.plotLoopLC()
+splot.plotLoopLC()
 
-splot.checkLC()
+
+# splot.checkLC()
