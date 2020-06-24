@@ -38,24 +38,24 @@ Options:
   --RAmax=RAMAX         RA max for obs area - for WDF only[360.0]
   --Decmin=DECMIN       Dec min for obs area - for WDF only[-1.0]
   --Decmax=DECMAX       Dec max for obs area - for WDF only[-1.0]
-  --remove_dithering=REMOVE_DITHERING
-                        remove dithering for DDF [0]
-  --pixelmap_dir=PIXELMAP_DIR
-                        dir where to find pixel maps[]
+  --remove_dithering=REMOVE_DITHERING          remove dithering for DDF [0]
+  --pixelmap_dir=PIXELMAP_DIR   dir where to find pixel maps[]
   --npixels=NPIXELS     number of pixels to process[0]
-  --nclusters=NCLUSTERS
-                        number of clusters in data (DD only)[0]
+  --nclusters=NCLUSTERS  number of clusters in data (DD only)[0]
   --radius=RADIUS       radius around clusters (DD and Fakes)[4.0]
-  --simulator=SIMULATOR
-                        simulator to use[sn_cosmo]
-  --prodid=PRODID       prod id for the simulation[Test]
+  --simulator=SIMULATOR  simulator to use[sn_cosmo]
+  --prodid=PRODID       prod id tag[Test]
+  --ebvofMW=EBVOFMW     ebvofMW value[-1.0]
+  --bluecutoff=BLUECUTOFF  blue cutoff for SN[380.0]
+  --redcutoff=REDCUTOFF    red cutoff for SN[800.0]
+
 </pre>
 
 ### Examples ###
 <ul>
 <li>  Simulation using one proc, nside_healpix =64, (x1,color) = (0.0,0.0), z in range [0.01, 1.] (step: 0.1), daymax step of 1 day, on 1 pixel of the sky, for the OS file baseline_v1.4_10yrs.db located in ../../DB_Files, on WFD
       <ul>
-     <li> python run_scripts/simulation/run_simulation.py  --dbDir --dbName --dbExtens --nproc 1 --nside 64 --x1Type unique --x1min 0.0 --colorType unique --colormin 0.0 --zType uniform --zmin 0.01 --zmax 1.0 --zstep 0.01 --daymaxType uniform --daymaxstep 1. --npixel 1 --dbName baseline_v1.4_10yrs --dbDir ../../DB_Files --dbExtens db --fieldType WFD</li>
+     <li> python run_scripts/simulation/run_simulation.py --nproc 1 --nside 64 --x1Type unique --x1min 0.0 --colorType unique --colormin 0.0 --zType uniform --zmin 0.01 --zmax 1.0 --zstep 0.01 --daymaxType uniform --daymaxstep 1. --npixel 1 --dbName baseline_v1.4_10yrs --dbDir ../../DB_Files --dbExtens db --fieldType WFD --Ramin 36. --RAmax 72. --radius_RA 36. --Decmin -40. --Decmax -41. --radius_Dec 1.</li>
      </ul>
      </li>
 
