@@ -83,9 +83,9 @@ parser.add_option("--prodid", type=str, default='Test',
                   help="prod id tag[%default]")
 parser.add_option("--ebvofMW", type=float, default=-1.,
                   help="ebvofMW value[%default]")
-parser.add_option("--bluecutoff", type=float, default=380.,
+parser.add_option("--bluecutoff", type=float, default=380.0,
                   help="blue cutoff for SN[%default]")
-parser.add_option("--redcutoff", type=float, default=800.,
+parser.add_option("--redcutoff", type=float, default=800.0,
                   help="red cutoff for SN[%default]")
 
 opts, args = parser.parse_args()
