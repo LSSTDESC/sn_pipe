@@ -5,7 +5,7 @@ from sn_metrics.sn_obsrate_metric import SNObsRateMetric
 from sn_metrics.sn_nsn_metric import SNNSNMetric
 from sn_metrics.sn_sl_metric import SLSNMetric
 from sn_tools.sn_cadence_tools import ReferenceData
-from sn_tools.sn_utils import GetReference
+from sn_tools.sn_utils import GetReference, LoadDust
 from sn_tools.sn_telescope import Telescope
 from sn_tools.sn_io import check_get_file
 import os
@@ -281,11 +281,16 @@ class NSNMetricWrapper(MetricWrapper):
             x1_color_dist = np.rec.fromrecords(
                 r, names=['x1', 'color', 'weight_tot'])
 
-        # metric instance
         pixArea = hp.nside2pixarea(nside, degrees=True)
 
+        # loading dust file
+        dustDir = 'reference_files'
+        dustFile = 'Dust_{}_{}.hdf5'.format(-2.0, 0.2)
+        dustcorr = LoadDust(dustDir, dustFile, web_path).dustcorr
+
+        # metric instance
         self.metric = SNNSNMetric(
-            lc_reference, season=season, zmin=zmin,
+            lc_reference, dustcorr, season=season, zmin=zmin,
             zmax=zmax, pixArea=pixArea,
             verbose=metadata.verbose, timer=metadata.timer,
             ploteffi=metadata.ploteffi,
