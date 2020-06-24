@@ -7,6 +7,7 @@ from sn_metrics.sn_sl_metric import SLSNMetric
 from sn_tools.sn_cadence_tools import ReferenceData
 from sn_tools.sn_utils import GetReference
 from sn_tools.sn_telescope import Telescope
+from sn_tools.sn_io import check_get_file
 import os
 import multiprocessing
 import healpy as hp
@@ -155,7 +156,7 @@ class NSNMetricWrapper(MetricWrapper):
                  nside=64, RAmin=0., RAmax=360.,
                  Decmin=-1.0, Decmax=-1.0,
                  npixels=0,
-                 metadata={}, outDir=''):
+                 metadata={}, outDir='', bluecutoff=380.0, redcutoff=800.0):
         super(NSNMetricWrapper, self).__init__(
             name=name, season=season, coadd=coadd, fieldType=fieldType,
             nside=nside, RAmin=RAmin, RAmax=RAmax,
@@ -184,7 +185,11 @@ class NSNMetricWrapper(MetricWrapper):
                                    aerosol=tel_par['aerosol'],
                                    airmass=tel_par['airmass'])
         lc_reference = {}
-        self.gamma_reference = 'reference_files/gamma.hdf5'
+
+        templateDir = 'Template_LC'
+        gammaDir = 'reference_files'
+        gammaName = 'gamma.hdf5'
+        web_path = 'https://me.lsst.eu/gris/DESC_SN_pipeline'
 
         x1_colors = [(-2.0, -0.2), (-2.0, 0.0), (-2.0, 0.2),
                      (0.0, -0.2), (0.0, 0.0), (0.0, 0.2),
@@ -200,10 +205,10 @@ class NSNMetricWrapper(MetricWrapper):
         for j in range(len(x1_colors)):
             x1 = x1_colors[j][0]
             color = x1_colors[j][1]
-            fname = '{}/LC_{}_{}_vstack.hdf5'.format(
-                metadata.templateDir, x1, color)
+            fname = 'LC_{}_{}_{}_{}_ebvofMW_0.0_vstack.hdf5'.format(
+                x1, color, bluecutoff, redcutoff)
             p = multiprocessing.Process(
-                name='Subprocess_main-'+str(j), target=self.load, args=(fname, j, result_queue))
+                name='Subprocess_main-'+str(j), target=self.load, args=(templateDir, fname, gammaDir, gammaName, web_path, j, result_queue))
             p.start()
 
         resultdict = {}
@@ -247,7 +252,10 @@ class NSNMetricWrapper(MetricWrapper):
 
         # load x1_color_dist
 
-        x1_color_dist = np.genfromtxt('reference_files/Dist_X1_Color_JLA_high_z.txt', dtype=None,
+        fName = 'Dist_X1_Color_JLA_high_z.txt'
+        fDir = 'reference_files'
+        check_get_file(web_path, fDir, fName)
+        x1_color_dist = np.genfromtxt('{}/{}'.format(fDir, fName), dtype=None,
                                       names=('x1', 'color', 'weight_x1', 'weight_c', 'weight_tot'))
 
         # print(x1_color_dist)
@@ -303,10 +311,10 @@ class NSNMetricWrapper(MetricWrapper):
                          'n_bef', 'n_aft', 'snr_min', 'n_phase_min', 'n_phase_max', 'zlim_coeff']
         self.saveConfig()
 
-    def load(self, fname, j=-1, output_q=None):
+    def load(self, templateDir, fname, gammaDir, gammaName, web_path, j=-1, output_q=None):
 
-        lc_ref = GetReference(
-            fname, self.gamma_reference, self.telescope)
+        lc_ref = GetReference(templateDir,
+                              fname, gammaDir, gammaName, web_path, self.telescope)
 
         if output_q is not None:
             output_q.put({j: lc_ref})
