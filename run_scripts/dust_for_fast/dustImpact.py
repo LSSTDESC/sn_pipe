@@ -290,6 +290,7 @@ zmin = opts.zmin
 zmax = opts.zmax
 zstep = opts.zstep
 
+fakeFile = 'input/Fake_cadence/Fake_cadence.yaml'
 
 x1 = np.round(opts.x1, 2)
 color = np.round(opts.color, 2)
@@ -304,6 +305,8 @@ cmd += ' --zmin {}'.format(opts.zmin)
 cmd += ' --zmax {}'.format(opts.zmax)
 cmd += ' --zstep {}'.format(opts.zstep)
 cmd += ' --outDir_simu {}'.format(outSimu)
+cmd += ' --fake_config {}'.format(fakeFile)
+
 
 # ebvofMW values
 ebvals = list(np.arange(0.0, 0.06, 0.005))
