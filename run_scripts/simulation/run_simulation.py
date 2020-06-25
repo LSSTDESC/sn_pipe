@@ -71,7 +71,7 @@ parser.add_option("--remove_dithering", type="int", default='0',
                   help="remove dithering for DDF [%default]")
 parser.add_option("--pixelmap_dir", type=str, default='',
                   help="dir where to find pixel maps[%default]")
-parser.add_option("--npixels", type=int, default=0,
+parser.add_option("--npixels", type=int, default=-1,
                   help="number of pixels to process[%default]")
 parser.add_option("--nclusters", type=int, default=0,
                   help="number of clusters in data (DD only)[%default]")
