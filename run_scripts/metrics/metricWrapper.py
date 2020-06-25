@@ -190,7 +190,11 @@ class NSNMetricWrapper(MetricWrapper):
         gammaDir = 'reference_files'
         gammaName = 'gamma.hdf5'
         web_path = 'https://me.lsst.eu/gris/DESC_SN_pipeline'
-
+        # loading dust file
+        dustDir = 'reference_files'
+        dustcorr={}
+        
+        
         x1_colors = [(-2.0, -0.2), (-2.0, 0.0), (-2.0, 0.2),
                      (0.0, -0.2), (0.0, 0.0), (0.0, 0.2),
                      (2.0, -0.2), (2.0, 0.0), (2.0, 0.2)]
@@ -205,6 +209,9 @@ class NSNMetricWrapper(MetricWrapper):
         for j in range(len(x1_colors)):
             x1 = x1_colors[j][0]
             color = x1_colors[j][1]
+            dustFile = 'Dust_{}_{}.hdf5'.format(-2.0, 0.2)
+            dustcorr[x1_colors[j]] = LoadDust(dustDir, dustFile, web_path).dustcorr
+            
             fname = 'LC_{}_{}_{}_{}_ebvofMW_0.0_vstack.hdf5'.format(
                 x1, color, bluecutoff, redcutoff)
             p = multiprocessing.Process(
@@ -282,11 +289,6 @@ class NSNMetricWrapper(MetricWrapper):
                 r, names=['x1', 'color', 'weight_tot'])
 
         pixArea = hp.nside2pixarea(nside, degrees=True)
-
-        # loading dust file
-        dustDir = 'reference_files'
-        dustFile = 'Dust_{}_{}.hdf5'.format(-2.0, 0.2)
-        dustcorr = LoadDust(dustDir, dustFile, web_path).dustcorr
 
         # metric instance
         self.metric = SNNSNMetric(
