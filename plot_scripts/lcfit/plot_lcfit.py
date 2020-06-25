@@ -82,6 +82,7 @@ class FitPlots:
 
             ax.plot(sel[varx], np.sqrt(sel[vary]), label=key)
 
+            """
             interp = interp1d(
                 np.sqrt(sel[vary]), sel[varx], bounds_error=False, fill_value=0.)
 
@@ -94,7 +95,7 @@ class FitPlots:
             ax.plot([zlim]*2, [0., 0.08], linestyle='--', color='k')
             mystr = 'z$_{lim}$'
             ax.text(zlim-0.03, 0.085, '{}={}'.format(mystr, np.round(zlim, 2)))
-
+            """
         # Compare variation
         if len(tabs) < 1:
 
@@ -126,12 +127,12 @@ dictfiles = {}
 
 for bluecutoff in [360.0, 370.0, 380.0]:
     for ebvofMW in [0.0]:
-        thedir = 'Output_Fit_{}_ebvofMW_{}'.format(bluecutoff, ebvofMW)
-        fi_cosmo_cosmo = 'Fit_sn_cosmo_Fake_Fake_DESC_seas_-1_-2.0_0.2_{}_800_ebvofMW_{}_sn_cosmo.hdf5'.format(
+        thedir = 'Output_Fit_{}_800.0_ebvofMW_{}'.format(bluecutoff, ebvofMW)
+        fi_cosmo_cosmo = 'Fit_sn_cosmo_Fake_Fake_DESC_seas_-1_-2.0_0.2_{}_800.0_ebvofMW_{}_sn_cosmo.hdf5'.format(
             bluecutoff, ebvofMW)
-        fi_fast_cosmo = 'Fit_sn_fast_Fake_Fake_DESC_seas_-1_-2.0_0.2_{}_800_ebvofMW_{}_sn_cosmo.hdf5'.format(
+        fi_fast_cosmo = 'Fit_sn_fast_Fake_Fake_DESC_seas_-1_-2.0_0.2_{}_800.0_ebvofMW_{}_sn_cosmo.hdf5'.format(
             bluecutoff, ebvofMW)
-        fi_fast_fast = 'Fit_sn_fast_Fake_Fake_DESC_seas_-1_-2.0_0.2_{}_800_ebvofMW_{}_sn_fast.hdf5'.format(
+        fi_fast_fast = 'Fit_sn_fast_Fake_Fake_DESC_seas_-1_-2.0_0.2_{}_800.0_ebvofMW_{}_sn_fast.hdf5'.format(
             bluecutoff, ebvofMW)
 
         dictfiles['cosmo_cosmo_{}_{}'.format(bluecutoff,
