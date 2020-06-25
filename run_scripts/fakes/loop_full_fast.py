@@ -1,15 +1,27 @@
 import numpy as np
 import os
 
-for bluecutoff in [360.0, 370.0, 380.0]:
+simus = ['sn_cosmo']
+ebvs = [0.0]
+redcutoff = 800.0
+blues = [360.0, 370.0, 380.0]
+blues = [360.]
+for bluecutoff in blues:
     bluecutoff = np.round(bluecutoff, 1)
-    cmd_comm = 'python run_scripts/fakes/full_simulation_fit.py  --ebvofMW 0.0 --outDir_simu Output_Simu_{}_ebvofMW_0.0 --outDir_fit Output_Fit_{}_ebvofMW_0.0 --bluecutoff {}'.format(
-        bluecutoff, bluecutoff, bluecutoff)
+    for ebv in ebvs:
+        cmd_comm = 'python run_scripts/fakes/full_simulation_fit.py  --ebvofMW {} --outDir_simu Output_Simu_{}_{}_ebvofMW_{} --outDir_fit Output_Fit_{}_{}_ebvofMW_{} --bluecutoff {} --redcutoff {}'.format(
+            ebv, bluecutoff, redcutoff, ebv, bluecutoff, redcutoff, ebv, bluecutoff, redcutoff)
 
-    cmd = cmd_comm
-    cmd += ' --simulator sn_fast'
-    os.system(cmd)
+        # fast simulator
+        # for simu in
+        for simu in simus:
+            cmd = cmd_comm
+            cmd += ' --simulator {}'.format(simu)
+            os.system(cmd)
 
-    cmd = cmd_comm
-    cmd += ' --simulator sn_cosmo'
-    os.system(cmd)
+        """
+        # sncosmo simulator
+        cmd = cmd_comm
+        cmd += ' --simulator sn_cosmo'
+        os.system(cmd)
+        """
