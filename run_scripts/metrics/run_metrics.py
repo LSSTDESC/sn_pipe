@@ -92,7 +92,8 @@ parser.add_option("--nclusters", type=int, default=0,
                   help="number of clusters in data (DD only)[%default]")
 parser.add_option("--radius", type=float, default=4.,
                   help="radius around clusters (DD and Fakes)[%default]")
-
+parser.add_option("--ebvofMW", type=float, default=-1.0,
+                  help="E(B-V) of MW for dust corrections[%default]")
 
 opts, args = parser.parse_args()
 
@@ -138,7 +139,7 @@ metricList.append(globals()[classname](name=opts.metric, season=season_int,
                                        nside=opts.nside,
                                        RAmin=opts.RAmin, RAmax=opts.RAmax,
                                        Decmin=opts.Decmin, Decmax=opts.Decmax,
-                                       npixels=opts.npixels, metadata=opts, outDir=outputDir))
+                                       npixels=opts.npixels, metadata=opts, outDir=outputDir, ebvofMW=opts.ebvofMW))
 
 print('seasons and metric', season_int,
       metricname, opts.pixelmap_dir, opts.npixels)

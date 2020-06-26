@@ -19,10 +19,10 @@ class MetricWrapper:
                  coadd=True, fieldType='DD', nside=64,
                  RAmin=0., RAmax=360.,
                  Decmin=-1.0, Decmax=-1.0,
-                 npixels=0, metadata={}, outDir=''):
+                 npixels=0, metadata={}, outDir='', ebvofMW=-1.0):
 
-        self.name = '{}Metric_{}_nside_{}_coadd_{}_{}_{}_{}_{}_npixels_{}'.format(name,
-                                                                                  fieldType, nside, coadd, RAmin, RAmax, Decmin, Decmax, npixels)
+        self.name = '{}Metric_{}_nside_{}_coadd_{}_{}_{}_{}_{}_npixels_{}_ebvofMW_{}'.format(name,
+                                                                                             fieldType, nside, coadd, RAmin, RAmax, Decmin, Decmax, npixels, ebvofMW)
 
         self.metric = None
 
@@ -30,7 +30,7 @@ class MetricWrapper:
 
         # select values to dump
         self.metaout = ['name', 'seasons', 'coadd', 'fieldType',
-                        'nside', 'RAmin', 'RAmax', 'Decmin', 'Decmax', 'metric', 'Output dir', 'remove_dithering']
+                        'nside', 'RAmin', 'RAmax', 'Decmin', 'Decmax', 'metric', 'Output dir', 'remove_dithering', 'ebvofMW']
 
         self.metadata['name'] = self.name
         self.metadata['metric'] = name
@@ -156,13 +156,13 @@ class NSNMetricWrapper(MetricWrapper):
                  nside=64, RAmin=0., RAmax=360.,
                  Decmin=-1.0, Decmax=-1.0,
                  npixels=0,
-                 metadata={}, outDir='', bluecutoff=380.0, redcutoff=800.0):
+                 metadata={}, outDir='', ebvofMW=-1.0, bluecutoff=380.0, redcutoff=800.0):
         super(NSNMetricWrapper, self).__init__(
             name=name, season=season, coadd=coadd, fieldType=fieldType,
             nside=nside, RAmin=RAmin, RAmax=RAmax,
             Decmin=Decmin, Decmax=Decmax,
             npixels=npixels,
-            metadata=metadata, outDir=outDir)
+            metadata=metadata, outDir=outDir, ebvofMW=ebvofMW)
 
         zmin = 0.
         zmax = 1.1
@@ -190,6 +190,9 @@ class NSNMetricWrapper(MetricWrapper):
         gammaDir = 'reference_files'
         gammaName = 'gamma.hdf5'
         web_path = 'https://me.lsst.eu/gris/DESC_SN_pipeline'
+        # loading dust file
+        dustDir = 'reference_files'
+        dustcorr = {}
 
         x1_colors = [(-2.0, -0.2), (-2.0, 0.0), (-2.0, 0.2),
                      (0.0, -0.2), (0.0, 0.0), (0.0, 0.2),
@@ -207,6 +210,9 @@ class NSNMetricWrapper(MetricWrapper):
             color = x1_colors[j][1]
             fname = 'LC_{}_{}_{}_{}_ebvofMW_0.0_vstack.hdf5'.format(
                 x1, color, bluecutoff, redcutoff)
+            dustFile = 'Dust_{}_{}.hdf5'.format(x1, color)
+            dustcorr[x1_colors[j]] = LoadDust(
+                dustDir, dustFile, web_path).dustcorr
             p = multiprocessing.Process(
                 name='Subprocess_main-'+str(j), target=self.load, args=(templateDir, fname, gammaDir, gammaName, web_path, j, result_queue))
             p.start()
@@ -283,11 +289,6 @@ class NSNMetricWrapper(MetricWrapper):
 
         pixArea = hp.nside2pixarea(nside, degrees=True)
 
-        # loading dust file
-        dustDir = 'reference_files'
-        dustFile = 'Dust_{}_{}.hdf5'.format(-2.0, 0.2)
-        dustcorr = LoadDust(dustDir, dustFile, web_path).dustcorr
-
         # metric instance
         self.metric = SNNSNMetric(
             lc_reference, dustcorr, season=season, zmin=zmin,
@@ -302,7 +303,7 @@ class NSNMetricWrapper(MetricWrapper):
             proxy_level=metadata.proxy_level,
             x1_color_dist=x1_color_dist,
             coadd=coadd, lightOutput=metadata.lightOutput,
-            T0s=metadata.T0s, zlim_coeff=zlim_coeff)
+            T0s=metadata.T0s, zlim_coeff=zlim_coeff, ebvofMW=ebvofMW)
 
         self.metadata['n_bef'] = n_bef
         self.metadata['n_aft'] = n_aft
