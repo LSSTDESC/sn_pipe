@@ -309,7 +309,7 @@ cmd += ' --fake_config {}'.format(fakeFile)
 
 
 # ebvofMW values
-ebvals = list(np.arange(0.0, 0.06, 0.005))
+ebvals = list(np.arange(0.0, 0.30, 0.01))
 
 for ebv in ebvals:
     comd = cmd
