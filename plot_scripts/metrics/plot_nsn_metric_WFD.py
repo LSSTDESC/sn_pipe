@@ -1,6 +1,5 @@
 import numpy as np
-import sn_plotters.sn_cadencePlotters as sn_plot
-import sn_plotters.sn_NSNPlotters as nsn_plot
+import sn_plotter_metrics.nsnPlot as nsn_plot
 import matplotlib.pylab as plt
 import argparse
 from optparse import OptionParser

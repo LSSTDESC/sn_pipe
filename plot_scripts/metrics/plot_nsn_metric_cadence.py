@@ -1,5 +1,5 @@
 import numpy as np
-import sn_plotters.sn_NSNPlotters as nsn_plot
+import sn_plotter_metrics.nsnPlot as nsn_plot
 from optparse import OptionParser
 import pandas as pd
 import matplotlib.pyplot as plt
