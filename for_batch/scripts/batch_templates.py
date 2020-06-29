@@ -108,13 +108,15 @@ outDirTemplates = '{}_{}_{}'.format(
 
 for (x1, color) in x1_colors:
     for ebvofMW in ebvs:
-        outDirLC = '{}_{}_{}_ebvofMW_{}'.format(
+        ebvofMW = np.round(ebvofMW,2)
+        outDirLC_ebv = '{}_{}_{}_ebvofMW_{}'.format(
             outDirLC, bluecutoff, redcutoff,ebvofMW)
-        outDirTemplates = '{}_{}_{}_ebvofMW_{}'.format(
+        outDirTemplates_ebv = '{}_{}_{}_ebvofMW_{}'.format(
             outDirTemplates, bluecutoff, redcutoff,ebvofMW)
+        
         batch(x1, color, zmax=zmax_dict[(x1, color)],
               ebvofMW=ebvofMW,
               bluecutoff=bluecutoff,
               redcutoff=redcutoff,
-              outDirLC=outDirLC, outDirTemplates=outDirTemplates, what=opts.action)
+              outDirLC=outDirLC_ebv, outDirTemplates=outDirTemplates_ebv, what=opts.action)
         
