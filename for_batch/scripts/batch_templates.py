@@ -96,19 +96,20 @@ outDirLC = '/sps/lsst/users/gris/fakes_for_templates'
 outDirTemplates = '/sps/lsst/users/gris/Template_LC'
 bluecutoff = 380.
 redcutoff = 800.
-#ebvs = np.arange(0.0, 0.07, 0.01)
-ebvofMW = 0.0
+ebvs = np.arange(0.0, 0.40, 0.01)
+#ebvofMW = 0.0
 
-outDirLC = '{}_{}_{}_ebvofMW_{}'.format(
-    outDirLC, bluecutoff, redcutoff, ebvofMW)
-outDirTemplates = '{}_{}_{}_ebvofMW_{}'.format(
-    outDirTemplates, bluecutoff, redcutoff, ebvofMW)
+outDirLC = '{}_{}_{}'.format(
+    outDirLC, bluecutoff, redcutoff)
+outDirTemplates = '{}_{}_{}'.format(
+    outDirTemplates, bluecutoff, redcutoff)
 
 
 for (x1, color) in x1_colors:
-    #for ebv in ebvs:
-    batch(x1, color, zmax=zmax_dict[(x1, color)],
-          ebvofMW=ebvofMW,
-          bluecutoff=bluecutoff,
-          redcutoff=redcutoff,
-          outDirLC=outDirLC, outDirTemplates=outDirTemplates, what=opts.action)
+    for ebvofMW in ebvs:
+        batch(x1, color, zmax=zmax_dict[(x1, color)],
+              ebvofMW=ebvofMW,
+              bluecutoff=bluecutoff,
+              redcutoff=redcutoff,
+              outDirLC=outDirLC, outDirTemplates=outDirTemplates, what=opts.action)
+        
