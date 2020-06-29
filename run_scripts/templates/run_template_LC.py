@@ -178,6 +178,7 @@ def SimuFakes(x1, color, z, ebvofMW, bluecutoff, redcutoff, outDir):
     cmd += ' --radius 0.01'
     cmd += ' --RAmin 0.'
     cmd += ' --RAmax 0.1'
+    cmd += ' -- npixels 1'
     os.system(cmd)
 
 
