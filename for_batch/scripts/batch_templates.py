@@ -99,14 +99,19 @@ redcutoff = 800.
 ebvs = np.arange(0.0, 0.40, 0.01)
 #ebvofMW = 0.0
 
+"""
 outDirLC = '{}_{}_{}'.format(
     outDirLC, bluecutoff, redcutoff)
 outDirTemplates = '{}_{}_{}'.format(
     outDirTemplates, bluecutoff, redcutoff)
-
+"""
 
 for (x1, color) in x1_colors:
     for ebvofMW in ebvs:
+        outDirLC = '{}_{}_{}_ebvofMW_{}'.format(
+            outDirLC, bluecutoff, redcutoff,ebvofMW)
+        outDirTemplates = '{}_{}_{}_ebvofMW_{}'.format(
+            outDirTemplates, bluecutoff, redcutoff,ebvofMW)
         batch(x1, color, zmax=zmax_dict[(x1, color)],
               ebvofMW=ebvofMW,
               bluecutoff=bluecutoff,
