@@ -37,14 +37,16 @@ class DustEffects:
         self.outName = 'Dust_{}_{}'.format(self.x1, self.color)
 
         # get all the files
-        lc_dust_files = glob.glob('{}/LC*.hdf5'.format(dirSimu))
+        lc_dust_files = glob.glob(
+            '{}/LC*_{}_{}_ebvofMW_*.hdf5'.format(dirSimu, self.x1, self.color))
 
         # among the dust files, there should be one finishing with ebvofMW_0.hdf5
         # this will be the reference LC file to estimate dust effects
 
         simu_dust_ref = glob.glob(
-            '{}/Simu*_ebvofMW_0.0.hdf5'.format(dirSimu))[0]
-        lc_dust_ref = glob.glob('{}/LC*_ebvofMW_0.0.hdf5'.format(dirSimu))[0]
+            '{}/Simu*_{}_{}_ebvofMW_0.0.hdf5'.format(dirSimu, self.x1, self.color))[0]
+        lc_dust_ref = glob.glob(
+            '{}/LC*_{}_{}_ebvofMW_0.0.hdf5'.format(dirSimu, self.x1, self.color))[0]
 
         # get astropy Table of Simu_dust_ref
         simu_ref = self.loadSimu(simu_dust_ref)
