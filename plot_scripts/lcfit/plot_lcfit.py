@@ -1,29 +1,30 @@
 import matplotlib.pyplot as plt
+from optparse import OptionParser
+import pandas as pd
 from sn_plotter_fitlc.fitlcPlot import FitPlots
 
+
+parser = OptionParser()
+
+parser.add_option("--prodids", type="str", default='input/plots/podids_fit.csv',
+                  help="prodid [%default]")
+parser.add_option("--fileDir", type="str", default='Output_Fit',
+                  help="dir location of the results [%default]")
+
+
+opts, args = parser.parse_args()
+
+theDir = opts.fileDir
+thelist = opts.prodids
+
+data = pd.read_csv(thelist,delimiter=',')
+
 dictfiles = {}
-x1 = -2.0
-color = 0.2
 
-for bluecutoff in [360., 380.0]:
-    for ebvofMW in [0.0]:
-        thedir = 'Output_Fit_{}_800.0_ebvofMW_{}'.format(bluecutoff, ebvofMW)
-        fi_cosmo_cosmo = 'Fit_sn_cosmo_Fake_Fake_DESC_seas_-1_{}_{}_{}_800.0_ebvofMW_{}_sn_cosmo.hdf5'.format(x1, color,
-                                                                                                              bluecutoff, ebvofMW)
-        fi_fast_cosmo = 'Fit_sn_fast_Fake_Fake_DESC_seas_-1_{}_{}_{}_800.0_ebvofMW_{}_sn_cosmo.hdf5'.format(x1, color,
-                                                                                                            bluecutoff, ebvofMW)
-        fi_fast_fast = 'Fit_sn_fast_Fake_Fake_DESC_seas_-1_{}_{}_{}_800.0_ebvofMW_{}_sn_fast.hdf5'.format(x1, color,
-                                                                                                          bluecutoff, ebvofMW)
+for indx,val in data.iterrows():
+    dictfiles[val['nickname']] = '{}/Fit_{}.hdf5'.format(theDir,val['prodid'])
 
-        dictfiles['cosmo_cosmo_{}_{}'.format(bluecutoff,
-                                             ebvofMW)] = '{}/{}'.format(thedir, fi_cosmo_cosmo)
-        """
-        dictfiles['fast_cosmo_{}_{}'.format(bluecutoff,
-                                            ebvofMW)]='{}/{}'.format(thedir, fi_fast_cosmo)
-        dictfiles['fast_fast_{}_{}'.format(bluecutoff,
-                                           ebvofMW)]='{}/{}'.format(thedir, fi_fast_fast)
-        """
-
+print(data)
 fitplot = FitPlots(dictfiles)
 fitplot.plot2D(fitplot.SN_table, 'z', 'Cov_colorcolor',
                '$z$', '$\sigma_{color}$')
