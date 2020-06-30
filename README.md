@@ -64,7 +64,7 @@ The Survey Strategy Support pipeline is supposed to be modular, in the sense tha
 
 To uninstall the pipeline: python pip_sn_pack.py --action uninstall --package=all 
 
-## How to...
+## How to
 
 ### [Run and analyze the metrics](docs/Metrics/METRICS.md)
 
@@ -79,8 +79,9 @@ To uninstall the pipeline: python pip_sn_pack.py --action uninstall --package=al
 
 ###  [sn_pipe full tree](docs/Gen/sn_pipe_fulltree.md)
 
+##
 
-
+<!-- 
 ### Installing requested packages
 - pip install . --user --install-option="--package=metrics" --install-option="--branch=thebranch"
 
@@ -115,3 +116,4 @@ To uninstall the pipeline: python pip_sn_pack.py --action uninstall --package=al
 - output: two files, hdf5 format:
   - Simu_*.hdf5: astropy table with the list of parameters used for simulation
   - LC*.hdf5: list of (astropy tables) light curves. Each table is composed of metadata (simulation parameters) and of a table with LC points.  
+-->

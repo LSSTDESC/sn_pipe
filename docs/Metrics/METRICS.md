@@ -3,7 +3,7 @@
 ## Installation of the metrics package
 
 ```
-python install_sn_pack.py --package=metrics --gitbranch=thebranch
+python pip_sn_pack.py --action install --package=sn_metrics
 ```
 
 ## Run and analyze the metrics
@@ -15,8 +15,5 @@ python install_sn_pack.py --package=metrics --gitbranch=thebranch
 | [ObsRate](ObsRate.md)| [ObsRate metric run ](ObsRate_run.md) | [ObsRate metric analysis](ObsRate_plot.md)| SN observing rate|
 | [NSN](NSN.md)| [NSN metric run](NSN_run.md) | [NSN metric analysis](NSN_plot.md)| NSN vs redshift limit|
 
-
-
-If you have comments, suggestions or questions, please [write us an issue](https://github.com/LSSTDESC/sn_pipe/issues).
 
 
