@@ -44,7 +44,7 @@ class InstallCommand(install):
                     self.package, self.branch)
                 os.system(cmd)
             else:
-                packgs = ['sn_metrics', 'sn_simulation', 'sn_fit','sn_plotters']
+                packgs = ['sn_metrics', 'sn_simulation', 'sn_fit_lc','sn_plotters']
                 for pack in packgs:
                     cmd = 'pip install --user git+https://github.com/lsstdesc/{}.git@{}'.format(
                         pack, self.branch)
