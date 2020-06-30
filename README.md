@@ -48,17 +48,21 @@ All rights reserved.
 
 ## Installation 
 
+```
+Installation of sn_pipe: python pip_sn_pack.py --action install --package=sn_pipe
+```
+
 The Survey Strategy Support pipeline is supposed to be modular, in the sense that only needed git packages are installed for a given task. The current tasks that may be run are:
-- supernovae metrics using the sn_metrics package
-- light curve simulation using the sn_simulation package
-- light curve fit using the sn_fit package
 
 | Task | package | command for installation|
 |----|----|----|
 | SN metrics | sn_metrics | python pip_sn_pack.py --action install --package=sn_metrics |
 | LC simulations | sn_simulation|python pip_sn_pack.py --action install --package=sn_simulation |
 | LC fit | sn_fit |python pip_sn_pack.py --action install --package=sn_fit |
+| Plot | sn_plotters |python pip_sn_pack.py --action install --package=sn_plotters |
 |all | all | python pip_sn_pack.py --action install --package=all| 
+
+To uninstall the pipeline: python pip_sn_pack.py --action uninstall --package=all 
 
 ## How to...
 
