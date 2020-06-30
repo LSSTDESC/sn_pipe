@@ -1,6 +1,6 @@
 import numpy as np
-import sn_plotters.sn_cadencePlotters as sn_plot
-import sn_plotters.sn_NSNPlotters as nsn_plot
+import sn_plotter_metrics.cadencePlot as sn_plot
+import sn_plotter_metrics.nsnPlot as nsn_plot
 from sn_tools.sn_io import loopStack
 import matplotlib.pylab as plt
 import argparse
