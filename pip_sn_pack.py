@@ -57,7 +57,7 @@ def cmd_install(package, gitbranch):
 
 parser = OptionParser()
 
-parser.add_option("--package", type="str", default='metrics',
+parser.add_option("--package", type="str", default='sn_pipe',
                   help="package name to install [%default]")
 parser.add_option("--gitbranch", type="str", default='master',
                   help="gitbranch of the package [%default]")

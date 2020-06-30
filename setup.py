@@ -33,8 +33,9 @@ class InstallCommand(install):
 
     def run(self):
         # install dependencies first
-        cmd = 'pip install --user -r requirements.txt --no-deps'
-        os.system(cmd)
+        if self.package =='sn_pipe':
+            cmd = 'pip install --user -r requirements.txt --no-deps'
+            os.system(cmd)
 
         if self.package != 'all':
             # now install the requested package
@@ -42,7 +43,7 @@ class InstallCommand(install):
                 self.package, self.branch)
             os.system(cmd)
         else:
-            packgs = ['sn_metrics', 'sn_simulation', 'sn_fit']
+            packgs = ['sn_metrics', 'sn_simulation', 'sn_fit','sn_plotters']
             for pack in packgs:
                 cmd = 'pip install --user git+https://github.com/lsstdesc/{}.git@{}'.format(
                     pack, self.branch)
