@@ -8,9 +8,9 @@ def addoption(cmd, name, val):
     return cmd
 
 
-def batch(x1, color, nproc=8, zmin=0.01, zmax=1.2, zstep=0.01, ebvofMW=-1.,
+def process(x1, color, nproc=8, zmin=0.01, zmax=1.2, zstep=0.01, ebvofMW=-1.,
           bluecutoff=380., redcutoff=800.,
-          outDirLC='', outDirTemplates='', what='simu'):
+          outDirLC='', outDirTemplates='', what='simu',mode='batch'):
 
     cwd = os.getcwd()
     dirScript = cwd + "/scripts"
@@ -54,10 +54,14 @@ def batch(x1, color, nproc=8, zmin=0.01, zmax=1.2, zstep=0.01, ebvofMW=-1.,
 
     if what == 'simu':
         print(cmd)
-        script.write(cmd+"\n")
-        script.write("EOF" + "\n")
-        script.close()
-        os.system("sh "+scriptName)
+        if mode == 'batch':
+            script.write(cmd+"\n")
+            script.write("EOF" + "\n")
+            script.close()
+            os.system("sh "+scriptName)
+        else:
+            os.system(cmd)
+            
 
     # stack produced LCs
     cmd = 'python run_scripts/templates/run_template_vstack.py'
@@ -77,6 +81,9 @@ parser = OptionParser()
 
 parser.add_option("--action", type="str", default='simu',
                   help="what to do: simu or vstack[%default]")
+parser.add_option("--mode", type="str", default='batch',
+                  help="how to run: batch or interactive [%default]")
+
 
 opts, args = parser.parse_args()
 
@@ -114,9 +121,11 @@ for (x1, color) in x1_colors:
         outDirTemplates_ebv = '{}_{}_{}_ebvofMW_{}'.format(
             outDirTemplates, bluecutoff, redcutoff,ebvofMW)
         
-        batch(x1, color, zmax=zmax_dict[(x1, color)],
-              ebvofMW=ebvofMW,
-              bluecutoff=bluecutoff,
-              redcutoff=redcutoff,
-              outDirLC=outDirLC_ebv, outDirTemplates=outDirTemplates_ebv, what=opts.action)
+        process(x1, color, zmax=zmax_dict[(x1, color)],
+                ebvofMW=ebvofMW,
+                bluecutoff=bluecutoff,
+                redcutoff=redcutoff,
+                outDirLC=outDirLC_ebv, 
+                outDirTemplates=outDirTemplates_ebv, 
+                what=opts.action,mode=opts.mode)
         
