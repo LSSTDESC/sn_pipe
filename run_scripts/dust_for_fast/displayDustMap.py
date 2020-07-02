@@ -5,6 +5,12 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 
+plt.rcParams['xtick.labelsize'] = 12
+plt.rcParams['ytick.labelsize'] = 12
+plt.rcParams['axes.labelsize'] = 12
+plt.rcParams['legend.fontsize'] = 12
+plt.rcParams['font.size'] = 12
+
 
 def getDustMap(nside=64):
     """
@@ -64,7 +70,7 @@ def plotDustMap(dustmap, ebvofMW_cut=0.25):
 
     """
     npixels = np.unique(dustmap['npixels'])
-    idx = dustmap['ebvofMW'] <= 0.25
+    idx = dustmap['ebvofMW'] <= ebvofMW_cut
 
     dustmap = dustmap[idx]
 
@@ -85,12 +91,35 @@ def plotDustMap(dustmap, ebvofMW_cut=0.25):
     hp.graticule()
 
 
+def plotDustHist(dustmap, ebvofMW_cut=0.25):
+    """
+    Function to plot the dustmap (ebvofMW) in Mollweid view
+
+    Parameters
+    ---------------
+    dustmap: pandas df
+      data to display
+    ebvofMW_cut: float, opt
+       cut for the display (default: 0.25)
+
+    """
+    npixels = np.unique(dustmap['npixels'])
+    idx = dustmap['ebvofMW'] <= ebvofMW_cut
+
+    dustmap = dustmap[idx]
+
+    fig, ax = plt.subplots()
+    ax.hist(dustmap['ebvofMW'], histtype='step', bins=100)
+    ax.set_xlabel('E(B-V)')
+    ax.set_ylabel('Number of Entries')
+
+
 nside = 128
 
 dustmap = getDustMap(nside=nside)
 
 plotDustMap(dustmap)
-
+plotDustHist(dustmap)
 
 #plt.plot(vec[0], vec[1], 'ko')
 plt.show()
