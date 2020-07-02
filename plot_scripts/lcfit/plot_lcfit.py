@@ -17,16 +17,16 @@ opts, args = parser.parse_args()
 theDir = opts.fileDir
 thelist = opts.prodids
 
-data = pd.read_csv(thelist,delimiter=',')
+data = pd.read_csv(thelist, delimiter=',')
 
 dictfiles = {}
 
-for indx,val in data.iterrows():
-    dictfiles[val['nickname']] = '{}/Fit_{}.hdf5'.format(theDir,val['prodid'])
+for indx, val in data.iterrows():
+    dictfiles[val['nickname']] = '{}/Fit_{}.hdf5'.format(theDir, val['prodid'])
 
 print(data)
 fitplot = FitPlots(dictfiles)
 fitplot.plot2D(fitplot.SN_table, 'z', 'Cov_colorcolor',
-               '$z$', '$\sigma_{color}$')
+               '$z$', '$\sigma_{color}$', compare=True)
 
 plt.show()
