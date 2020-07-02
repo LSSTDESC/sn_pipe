@@ -2,8 +2,8 @@ import h5py
 import glob
 from optparse import OptionParser
 import os
-from astropy.table import Table, Column, vstack
-
+from astropy.table import Table, Column, vstack,join,unique
+import numpy as np
 
 class LCStack:
     """
@@ -43,6 +43,7 @@ class LCStack:
             lcDir, x1, color)
         files = glob.glob(lc_dir)
 
+        print('files ',files)
         for ilc, fi in enumerate(files):
             self.transform_LC(fi, lc_out, 200+ilc, x1, color)
 
@@ -97,6 +98,12 @@ class LCStack:
             epsilona = tablea.meta['epsilon_'+vals[ii]]
             epsilonb = tableb.meta['epsilon_'+vals[ii]]
             assert((epsilona == -epsilonb))
+            if len(table_new) != len(tablea):
+                taba, tabb = self.adjust(table_new,tablea,tableb)
+                tablea = Table(taba)
+                tableb = Table(tabb)
+            #print(len(tablea['flux']),len(tableb),len(table_new))
+            #print(tablea['flux'],tableb['flux'],epsilona)
             col = (tablea['flux']-tableb['flux'])/(2.*epsilona)
             table_new.add_column(Column(col, name='d'+vals[ii]))
         bands = [b[-1] for b in table_new['band']]
@@ -112,6 +119,63 @@ class LCStack:
 
         table_new.write(lc_out, path='lc_'+str(ilc),
                         append=True, compression=True)
+
+    def adjust(self, tabref, taba, tabb):
+        """
+        Method to 'adjust' taba  and tabb data to tabref
+
+        Parameters
+        ----------------
+        tabref: astropy table
+           reference table
+        taba, tabb: astropy tables
+           table to 'align' to tabref
+
+        Returns
+        -----------
+        the two 'aligned' astropy tables
+
+        """
+
+        # the 'alignment' will be made using the time column
+
+
+        tabref['time'] = np.round(tabref['time'],3)
+        taba['time'] = np.round(taba['time'],3)
+        tabb['time'] = np.round(tabb['time'],3)
+        
+        resa = self.align(tabref,taba)
+        resb = self.align(tabref,tabb)
+
+        return resa,resb
+        
+    def align(self,tabref, taba):
+
+        tabajoin = join(tabref,taba,keys=['time'],join_type='left')
+
+        cols = tabajoin.columns
+
+        csel = []
+        
+        for c in cols:
+            if '_2' in c and 'index' not in c and 'band' not in c:
+                csel.append(c)
+
+        csel.append('time')
+        csel.append('band_1')
+
+
+        tabanew = Table(tabajoin[csel])
+        tabanew['flux_2'].fill_value=0.0
+        tabanew = tabanew.filled()
+        
+        for vv in csel:
+            if '_2' in vv or '_1' in vv:
+                tabanew[vv].name= '_'.join(vv.split('_')[:-1])
+
+        return unique(tabanew, keys=['time','band'])
+
+
 
 
 parser = OptionParser()
