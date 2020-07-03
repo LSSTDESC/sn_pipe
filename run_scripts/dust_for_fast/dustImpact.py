@@ -292,10 +292,10 @@ zmin = opts.zmin
 zmax = opts.zmax
 zstep = opts.zstep
 
-fakeFile = 'input/Fake_cadence/Fake_cadence.yaml'
-
 x1 = np.round(opts.x1, 2)
 color = np.round(opts.color, 2)
+
+fakeFile = 'input/Fake_cadence/Fake_cadence.yaml'
 
 outSimu = 'Output_Simu_dust'
 # first step: simulation with some dust varying values
