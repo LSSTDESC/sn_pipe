@@ -66,13 +66,11 @@ class DustEffects_Templates:
         df = df.round({'z': 2, 'phase': 2, 'ebvofMW': 3})
 
         df = df.sort_values(by=['z'])
-        print('before', len(df), pd.unique(df['z']))
+
         if zrange is not None:
-            print(zrange)
             idx = df['z'].isin(zrange)
             df = df[idx]
 
-        print('hhhh', len(df))
         return df
 
     def getVals(self, grp, phases):
@@ -174,6 +172,8 @@ parser.add_option("--zmax", type=float, default=0.8,
                   help="redshift max value [%default]")
 parser.add_option("--zstep", type=float, default=0.05,
                   help="redshift step value[%default]")
+parser.add_option("--zfiltering", type=int, default=0,
+                  help="to filter z values [%default]")
 parser.add_option("--bluecutoff", type=float, default=380.0,
                   help="blue cutoff value [%default]")
 parser.add_option("--redcutoff", type=float, default=800.0,
@@ -184,9 +184,11 @@ parser.add_option("--dirFiles", type=str, default='../Templates',
 
 opts, args = parser.parse_args()
 
-zrange = np.arange(opts.zmin, opts.zmax, opts.zstep)
-zrange = list(np.round(zrange, 2))
-zrange[0] = 0.01
-#zRange = None
+zrange = None
+if opts.zfiltering:
+    zrange = np.arange(opts.zmin, opts.zmax, opts.zstep)
+    zrange = list(np.round(zrange, 2))
+    zrange[0] = 0.01
+
 DustEffects_Templates(opts.x1, opts.color, opts.bluecutoff,
                       opts.redcutoff, opts.dirFiles, zrange)
