@@ -208,16 +208,16 @@ class NSNMetricWrapper(MetricWrapper):
         for j in range(len(x1_colors)):
             x1 = x1_colors[j][0]
             color = x1_colors[j][1]
-            dustFile = 'Dust_{}_{}_{}_{}.hdf5'.format(
-                x1, color, bluecutoff, redcutoff)
-            dustcorr[x1_colors[j]] = LoadDust(
-                dustDir, dustFile, web_path).dustcorr
 
             fname = 'LC_{}_{}_{}_{}_ebvofMW_0.0_vstack.hdf5'.format(
                 x1, color, bluecutoff, redcutoff)
-            dustFile = 'Dust_{}_{}.hdf5'.format(x1, color)
-            dustcorr[x1_colors[j]] = LoadDust(
-                dustDir, dustFile, web_path).dustcorr
+            if np.abs(ebvofMW) > 0.:
+                dustFile = 'Dust_{}_{}_{}_{}.hdf5'.format(
+                    x1, color, bluecutoff, redcutoff)
+                dustcorr[x1_colors[j]] = LoadDust(
+                    dustDir, dustFile, web_path).dustcorr
+            else:
+                dustcorr[x1_colors[j]] = None
             p = multiprocessing.Process(
                 name='Subprocess_main-'+str(j), target=self.load, args=(templateDir, fname, gammaDir, gammaName, web_path, j, result_queue))
             p.start()
