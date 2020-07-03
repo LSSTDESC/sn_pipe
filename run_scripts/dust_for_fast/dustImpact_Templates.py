@@ -5,6 +5,7 @@ from scipy.interpolate import interp1d
 import numpy as np
 import matplotlib.pyplot as plt
 from astropy.table import Table
+from optparse import OptionParser
 
 
 class DustEffects_Templates:
@@ -23,9 +24,11 @@ class DustEffects_Templates:
       red cut-off
     dirFile: str
       dir where LC files are located
+    zrange: array
+      redshift values to consider
     """
 
-    def __init__(self, x1, color, bluecutoff, redcutoff, dirFile):
+    def __init__(self, x1, color, bluecutoff, redcutoff, dirFile, zrange):
 
         self.x1 = x1
         self.color = color
@@ -35,9 +38,9 @@ class DustEffects_Templates:
         prefix = 'LC_{}_{}_{}_{}_ebvofMW'.format(
             x1, color, bluecutoff, redcutoff)
 
-        self.process(dirFile, prefix)
+        self.process(dirFile, prefix, zrange)
 
-    def loadData(self, ff):
+    def loadData(self, ff, zrange=None):
         """
         Method to load the data in ff
 
@@ -61,6 +64,15 @@ class DustEffects_Templates:
 
         df['ebvofMW'] = ebvofMW
         df = df.round({'z': 2, 'phase': 2, 'ebvofMW': 3})
+
+        df = df.sort_values(by=['z'])
+        print('before', len(df), pd.unique(df['z']))
+        if zrange is not None:
+            print(zrange)
+            idx = df['z'].isin(zrange)
+            df = df[idx]
+
+        print('hhhh', len(df))
         return df
 
     def getVals(self, grp, phases):
@@ -92,40 +104,89 @@ class DustEffects_Templates:
         resdf = resdf.rename(columns={'ratio_flux_e_sec': 'ratio_flux'})
         return resdf
 
-    def process(self, thedir, prefix):
+    def process(self, thedir, prefix, zRange=None):
+        """
+        Method to process the data
+        The idea is to loop on input files and estimate 
+        the ratio of flux and Fisher elements wrt a reference file corresponding
+        to ebvofMW=0.0
 
-        fis = glob.glob('{}/{}_*_vstack.hdf5'.format(thedir, prefix))
+        Parameters
+        ---------------
+        thedir: str
+          location directory of the files
+        prefix: str
+          a tag for the files to process
+        zrange: array, opt
+          redshift values to consider (default: None = all values considered)
 
+        """
+
+        # get the reference table
         reffile = glob.glob('{}/{}_0.0_vstack.hdf5'.format(thedir, prefix))
 
         print(reffile)
-        dataref = self.loadData(reffile[0])
+        dataref = self.loadData(reffile[0], zrange)
 
+        # get the list of files to process
+        fis = glob.glob('{}/{}_*_vstack.hdf5'.format(thedir, prefix))
+
+        # phases array: common to all process
         phases = np.around(np.arange(-20., 55., 0.1), 2)
 
+        # dftot: where results will be stored
         dftot = pd.DataFrame()
-        for ff in fis:
-            datadf = self.loadData(ff)
 
+        # loop on files
+        for ff in fis:
+            # loading the file
+            datadf = self.loadData(ff, zrange)
+
+            # merge with reference
             dfmerge = dataref.merge(
                 datadf, on=['z', 'phase', 'band'])
 
+            # estimate ratios in self.getVals
             res = dfmerge.groupby(['band', 'z']).apply(
                 lambda x: self.getVals(x, phases)).reset_index()
 
             print(res)
 
+            # stack the results
             dftot = pd.concat((dftot, res))
 
+        # save result as an astropy Table
         outName = 'Dust_{}_{}_{}_{}.hdf5'.format(
             self.x1, self.color, self.bluecutoff, self.redcutoff)
         Table.from_pandas(dftot).write(outName, 'dust',
                                        compression=True, append=True)
 
 
-thedir = '../Templates'
-x1 = -2.0
-color = 0.2
-bluecutoff = 380.0
-redcutoff = 800.0
-DustEffects_Templates(x1, color, bluecutoff, redcutoff, thedir)
+parser = OptionParser()
+
+parser.add_option("--x1", type=float, default=-2.0,
+                  help="SN x1 [%default]")
+parser.add_option("--color", type=float, default=0.2,
+                  help="SN color [%default]")
+parser.add_option("--zmin", type=float, default=0.0,
+                  help="redshift min value [%default]")
+parser.add_option("--zmax", type=float, default=0.8,
+                  help="redshift max value [%default]")
+parser.add_option("--zstep", type=float, default=0.05,
+                  help="redshift step value[%default]")
+parser.add_option("--bluecutoff", type=float, default=380.0,
+                  help="blue cutoff value [%default]")
+parser.add_option("--redcutoff", type=float, default=800.0,
+                  help="red cutoff value [%default]")
+parser.add_option("--dirFiles", type=str, default='../Templates',
+                  help="location dir of the files to process [%default]")
+
+
+opts, args = parser.parse_args()
+
+zrange = np.arange(opts.zmin, opts.zmax, opts.zstep)
+zrange = list(np.round(zrange, 2))
+zrange[0] = 0.01
+#zRange = None
+DustEffects_Templates(opts.x1, opts.color, opts.bluecutoff,
+                      opts.redcutoff, opts.dirFiles, zrange)
