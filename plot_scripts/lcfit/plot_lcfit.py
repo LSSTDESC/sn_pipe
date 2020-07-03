@@ -17,7 +17,7 @@ opts, args = parser.parse_args()
 theDir = opts.fileDir
 thelist = opts.prodids
 
-data = pd.read_csv(thelist, delimiter=',')
+data = pd.read_csv(thelist, delimiter=',', comment='#')
 
 dictfiles = {}
 
