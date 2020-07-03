@@ -63,7 +63,7 @@ Simulator :
     Template Dir: /home/philippe/LSST/sn_pipe_doc/Templates
     Gamma Dir: reference_files
     Gamma File: gamma.hdf5
-    DustCorr Dir: reference_files
+    DustCorr Dir: Template_Dust
 Host Parameters: None         # Host parameters
 Display_LC : #display during LC simulations
    display: False

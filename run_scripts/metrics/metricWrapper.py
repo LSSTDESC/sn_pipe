@@ -191,7 +191,7 @@ class NSNMetricWrapper(MetricWrapper):
         gammaName = 'gamma.hdf5'
         web_path = 'https://me.lsst.eu/gris/DESC_SN_pipeline'
         # loading dust file
-        dustDir = 'reference_files'
+        dustDir = 'Template_Dust'
         dustcorr = {}
 
         x1_colors = [(-2.0, -0.2), (-2.0, 0.0), (-2.0, 0.2),
@@ -208,7 +208,8 @@ class NSNMetricWrapper(MetricWrapper):
         for j in range(len(x1_colors)):
             x1 = x1_colors[j][0]
             color = x1_colors[j][1]
-            dustFile = 'Dust_{}_{}.hdf5'.format(x1, color)
+            dustFile = 'Dust_{}_{}_{}_{}.hdf5'.format(
+                x1, color, bluecutoff, redcutoff)
             dustcorr[x1_colors[j]] = LoadDust(
                 dustDir, dustFile, web_path).dustcorr
 
