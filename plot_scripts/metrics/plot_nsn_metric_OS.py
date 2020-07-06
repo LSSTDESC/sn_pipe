@@ -33,8 +33,13 @@ dbInfo = pd.DataFrame([[dbName, 'test', 'test', 'test', 'r', '*']],
 metricdata = nsn_plot.NSNAnalysis(dirFile, dbInfo.loc[0], metricName, fieldType,
                                   nside)
 
-metricdata.plot()
+metricdata.Mollview_median('zlim', 'zlim')
+metricdata.Mollview_median('ebvofMW', 'E(B-V)')
+metricdata.Mollview_median('cadence', 'cadence')
+metricdata.Mollview_median('season_length', 'season length')
+metricdata.Mollview_sum('nsn_med', 'NSN')
 
-print('booo', metricdata.data.columns)
-metricdata.plot_season(metricdata.data, 'm5_med', np.median)
+
+print('data names', metricdata.data.columns)
+#metricdata.plot_season(metricdata.data, 'm5_med', np.median)
 plt.show()
