@@ -16,8 +16,17 @@ Once zlim has been estimated, the number of type Ia supernovae is given for medi
 ## How to run this metric
 
 There are currently two ways to run this metric:
-<ul>
-<li> using python script [run_metrics.py](usage_run_metrics.md)
-</ul>
+* using python script [run_metrics.py](usage_run_metrics.md)
+
+Output of this metric is composed of two files:
+
+* a .yaml file containing all the parameters used for the processing
+* a .hdf5 file containing the results of the metric (astropy tables)
+
 
 ## Output analysis
+
+The analysis of the metric results may be performed using the sn_plotters package. Two types of plots (the scripts are available in plot_scripts/metrics):
+* for a given Observing Strategy (OS), plots of zlim, NSN, observing parameters may be obtained using the following script: [plot_nsn_metric_OS.py](../Plots/usage_plot_nsn_metric_OS.md)
+* for a set of OS: a summary plot (NSN, zlim) may be obtained using [plot_nsn_metric_DD_summary.py](../Plots/usage_plot_nsn_metric_DD_summary.md) (for DD) and [plot_nsn_metric_WFD_summary.py](../Plots/usage_plot_nsn_metric_WFD_summary.md) (for WFD).
+
