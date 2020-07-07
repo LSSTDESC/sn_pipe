@@ -8,8 +8,8 @@ Set of scripts to plot the Survey Strategy Support pipeline results
 
    * plot_summary.py
    * plot_snr_metric.py
-   * plot_nsn_metric_WFD_summary.py
-   * plot_nsn_metric_OS.py
+   * [plot_nsn_metric_WFD_summary.py](../Plots/usage_plot_nsn_metric_WFD_summary.md)
+   * [plot_nsn_metric_OS.py](../Plots/usage_plot_nsn_metric_OS.md)
    * plot_LC.py
    * plot_global.py
    * plot_cadence_metric.py
