@@ -2,7 +2,7 @@ import os
 import numpy as np
 from optparse import OptionParser
 import glob
-
+import pandas as pd
 """
 def batch(dbDir, dbName, scriptref, nproc, season, diffflux, outDir):
     cwd = os.getcwd()
@@ -202,8 +202,8 @@ def go_for_batch(toproc, splitSky,
     """
 
     # get the observing strategy name
-    dbName = toproc['dbName'].decode()
-
+    #dbName = toproc['dbName'].decode()
+    dbName = toproc['dbName']
     if pixelmap_dir == '':
 
         # first case: no pixelmap - run on all the pixels - possibility to split the sky
@@ -215,7 +215,7 @@ def go_for_batch(toproc, splitSky,
         for ira in range(len(RAs)-1):
             RA_min = RAs[ira]
             RA_max = RAs[ira+1]
-            batchclass(dbName, dbDir, dbExtens, 'run_scripts/simulation/run_simulation_fromnpy',
+            batchclass(dbName, dbDir, dbExtens, 'run_scripts/simulation/run_simulation',
                        outDir, 8, toproc,
                        nodither, nside, fieldType, RA_min, RA_max,
                        -1.0, -1.0,
@@ -264,7 +264,7 @@ def go_for_batch(toproc, splitSky,
                 num = float(npixels*npixels_map)/float(npixels_tot)
                 npixel_proc = int(round(num))
                 # print('hoio',npixel_proc,num)
-            batchclass(dbName, dbDir, dbExtens, 'run_scripts/simulation/run_simulation_fromnpy',
+            batchclass(dbName, dbDir, dbExtens, 'run_scripts/simulation/run_simulation',
                        outDir, 8, toproc,
                        nodither, nside, fieldType, val['RAmin'], val['RAmax'],
                        val['Decmin'], val['Decmax'],
@@ -458,7 +458,7 @@ class batchclass:
 
         script.write("EOF" + "\n")
         script.close()
-        #os.system("sh "+scriptName)
+        os.system("sh "+scriptName)
 
     def batch_cmd(self, proc):
         """
@@ -472,9 +472,13 @@ class batchclass:
         """
 
         cmd = 'python {}.py --dbDir {} --dbName {} --dbExtens {}'.format(
-            self.scriptref, self.dbDir, proc['dbName'].decode(), self.dbExtens)
+            self.scriptref, self.dbDir, proc['dbName'], self.dbExtens)
+        """
         cmd += ' --nproc {} --nside {} --simuType {}'.format(
             proc['nproc'], proc['nside'], proc['simuType'])
+        """
+        cmd += ' --nproc {} --nside {}'.format(
+            proc['nproc'], proc['nside'])
         cmd += ' --outDir {}'.format(self.outDir)
         cmd += ' --fieldType {}'.format(self.fieldType)
         cmd += ' --coadd {}'.format(proc['coadd'])
@@ -531,7 +535,7 @@ parser.add_option("--pixelmap_dir", type=str, default='',
                   help="dir where to find pixel maps[%default]")
 parser.add_option("--npixels", type=int, default=0,
                   help="number of pixels to process[%default]")
-parser.add_option("--outDir", type=str, default='/sps/lsst/users/gris/MetricOutput_pixels',
+parser.add_option("--outDir", type=str, default='/sps/lsst/users/gris/Simulations',
                   help="output directory[%default]")
 parser.add_option("--x1Type", type=str, default='unique',
                   help="x1 type - unique, uniform, random[%default]")
@@ -597,7 +601,7 @@ zstep = opts.zstep
 
 daymaxType = opts.daymaxType
 daymaxstep = opts.daymaxstep
-
+"""
 toprocess = np.genfromtxt(dbList, dtype=None, names=[
     'dbName', 'simuType', 'nside', 'coadd', 'fieldType', 'nproc'])
 
@@ -605,8 +609,11 @@ print('there', toprocess, type(toprocess), toprocess.size)
 
 if toprocess.size == 1:
     toprocess = np.array([toprocess])
+"""
+toprocess = pd.read_csv(dbList, comment='#')
+print('there', toprocess, type(toprocess), toprocess.size)
 
-for proc in toprocess:
+for index, proc in toprocess.iterrows():
     myproc = go_for_batch(proc, splitSky,
                           dbDir, dbExtens, outDir,
                           nodither, nside, fieldType,
