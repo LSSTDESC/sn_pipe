@@ -4,7 +4,7 @@ from optparse import OptionParser
 import pandas as pd
 
 
-def batch(dbDir, dbName, dbExtens, scriptref, nproc):
+def batch(dbDir, dbName, dbExtens, scriptref, nproc,outDir):
     cwd = os.getcwd()
     dirScript = cwd + "/scripts"
 
@@ -32,8 +32,8 @@ def batch(dbDir, dbName, dbExtens, scriptref, nproc):
     script.write(" echo 'sourcing setups' \n")
     script.write(" source setup_release.sh Linux\n")
 
-    cmd = 'python {}.py --dbDir {} --dbName {} --dbExtens {} --nproc {}'.format(
-        scriptref, dbDir, dbName, dbExtens, nproc)
+    cmd = 'python {}.py --dbDir {} --dbName {} --dbExtens {} --nproc {} --outDir {}'.format(
+        scriptref, dbDir, dbName, dbExtens, nproc,outDir)
     script.write(cmd+" \n")
     script.write("EOF" + "\n")
     script.close()
@@ -45,6 +45,9 @@ parser = OptionParser()
 parser.add_option("--fileList", type="str", default='global.csv',
                   help="what to do: simu or vstack[%default]")
 
+parser.add_option("--outDir", type="str", default='/sps/lsst/users/gris/Global',
+                  help="output directory [%default]")
+
 opts, args = parser.parse_args()
 
 toproc = pd.read_csv(opts.fileList, comment='#')
@@ -52,4 +55,4 @@ toproc = pd.read_csv(opts.fileList, comment='#')
 for index, row in toproc.iterrows():
     print(row['dbDir'], row['dbName'], row['dbExtens'])
     batch(row['dbDir'], row['dbName'], row['dbExtens'],
-          'run_scripts/metrics/run_global_metric', 8)
+          'run_scripts/metrics/run_global_metric', 8,opts.outDir)
