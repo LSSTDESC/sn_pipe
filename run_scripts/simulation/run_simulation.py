@@ -19,6 +19,8 @@ parser.add_option("--nside", type="int", default=64,
                   help="healpix nside [%default]")
 parser.add_option("--nproc", type=int, default=8,
                   help="number of proc  [%default]")
+parser.add_option("--nprocsimu", type=int, default=1,
+                  help="number of proc at the simulation stage [%default]")
 parser.add_option("--diffflux", type=int, default=0,
                   help="flag for diff flux[%default]")
 parser.add_option("--season", type="int", default=-1,
@@ -96,7 +98,7 @@ print('Start processing...')
 # build the yaml file
 
 makeYaml = MakeYaml(opts.dbDir, opts.dbName, opts.dbExtens, opts.nside,
-                    opts.nproc, opts.diffflux, opts.season, opts.outDir,
+                    opts.nprocsimu, opts.diffflux, opts.season, opts.outDir,
                     opts.fieldType,
                     opts.x1Type, opts.x1min, opts.x1max, opts.x1step,
                     opts.colorType, opts.colormin, opts.colormax, opts.colorstep,
