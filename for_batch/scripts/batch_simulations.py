@@ -453,14 +453,14 @@ class batchclass:
         script.write(" source setup_release.sh Linux\n")
         script.write("echo 'sourcing done' \n")
 
-        cmd_ = self.batch_cmd(proc)
+        cmd_ = self.batch_cmd(proc,name_id)
         script.write(cmd_+" \n")
 
         script.write("EOF" + "\n")
         script.close()
-        os.system("sh "+scriptName)
+        #os.system("sh "+scriptName)
 
-    def batch_cmd(self, proc):
+    def batch_cmd(self, proc,name_id):
         """
         Method for the batch command
 
@@ -512,6 +512,7 @@ class batchclass:
         cmd += ' --daymaxType {}'.format(self.daymaxType)
         cmd += ' --daymaxstep {}'.format(self.daymaxstep)
 
+        cmd += ' --prodid {}'.format(name_id)
         return cmd
 
 
