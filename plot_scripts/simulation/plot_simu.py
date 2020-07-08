@@ -1,4 +1,3 @@
-import matplotlib.pyplot as plt
 import h5py
 import numpy as np
 from astropy.table import Table, vstack
@@ -22,6 +21,8 @@ splot = SimuPlot(opts.fileDir, opts.prodid)
 # get the simulation parameters
 simupars = splot.simuPars
 
+#plt.show()
+
 print('Number of simulated supernovae', len(simupars))
 # get columns
 
@@ -30,7 +31,11 @@ cols = simupars.columns
 print(cols)
 
 print(splot.simuPars)
-# splot.plotParameters()
+
+# plotting SN parameters
+splot.plotParameters()
+
+# display LC loop
 splot.plotLoopLC()
 
 
