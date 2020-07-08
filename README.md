@@ -68,7 +68,7 @@ To uninstall the pipeline: python pip_sn_pack.py --action uninstall --package=al
 
 ### [Run and analyze the metrics](docs/Metrics/Metrics.md)
 
-### Run and analyze light curve simulation
+### [Run and analyze light curve simulation](docs/Simulation/Simulation.md)
 
 ### Run and analyze light curve fitting
 
