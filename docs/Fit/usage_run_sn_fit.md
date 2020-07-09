@@ -1,7 +1,6 @@
 ### Usage: run_sn_fit.py [options] ###
 <pre>
 
-
 Options:
   -h, --help           show this help message and exit
   --dirFiles=DIRFILES  location dir of the
@@ -11,7 +10,8 @@ Options:
   --nproc=NPROC        number of proc [1]
   --mbcov=MBCOV        mbcol calc [0]
   --display=DISPLAY    to display fit in real-time[0]
-  --prefix=PREFIX      prefix for input file[sncosmo_DD]
+  --fitter=FITTER      fitter to use [sn_cosmo]
+
 
 </pre>
 
