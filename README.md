@@ -70,7 +70,7 @@ To uninstall the pipeline: python pip_sn_pack.py --action uninstall --package=al
 
 ### [Run and analyze light curve simulation](docs/Simulation/Simulation.md)
 
-### Run and analyze light curve fitting
+### [Run and analyze light curve fitting](docs/Fit/Fit.md)
 
 
 ## sn_pipe structure
