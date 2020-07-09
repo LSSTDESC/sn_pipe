@@ -1,4 +1,3 @@
-# from sn_mafsim.sn_maf_simulation import SNMAFSimulation
 from sn_simu_wrapper.sn_simu import SNSimulation
 import numpy as np
 import yaml
