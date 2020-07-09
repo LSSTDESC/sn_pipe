@@ -105,7 +105,7 @@ os.system(cmd)
 
 cmd = 'python run_scripts/fit_sn/run_sn_fit.py'
 cmd += ' --dirFiles {}'.format(outDir_simu)
-cmd += ' --prodid {}'.format(prodid)
+cmd += ' --prodid {}_0'.format(prodid)
 cmd += ' --mbcov 0 --nproc 4'
 cmd += ' --outDir {}'.format(outDir_fit)
 
@@ -118,7 +118,7 @@ os.system(cmd)
 if 'fast' in simulator:
     cmd = 'python run_scripts/fit_sn/run_sn_fit.py'
     cmd += ' --dirFiles {}'.format(outDir_simu)
-    cmd += ' --prodid {}'.format(prodid)
+    cmd += ' --prodid {}_0'.format(prodid)
     cmd += ' --mbcov 0 --nproc 1'
     cmd += ' --outDir {}'.format(outDir_fit)
     cmd += ' --fitter sn_fast'
