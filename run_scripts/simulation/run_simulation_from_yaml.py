@@ -52,6 +52,19 @@ nside = config['Pixelisation']['nside']
 outDir = config['Output']['directory']
 nproc = config['Multiprocessing']['nproc']
 print(dbDir, dbName, dbExtens, fieldType, nside)
+prodid = config['ProductionID']
+
+
+# save on disk
+
+# create outputdir if does not exist
+if not os.path.isdir(outDir):
+    os.makedirs(outDir)
+
+yaml_name = '{}/{}.yaml'.format(outDir, prodid)
+with open(yaml_name, 'w') as f:
+    data = yaml.dump(config, f)
+
 
 # now perform the processing
 Process(dbDir, dbName, dbExtens,
