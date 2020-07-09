@@ -1,28 +1,41 @@
-ProductionID: DD_baseline2018a_Cosmo
+ProductionID: Simu_notebook
 SN parameters:
    Id : 100                   # Id of the first SN
    x1_color:                    # stretch and color
-       type : fixed #random or fixed
-       min : [-2.0,0.2]
-       max : [0.2,0.2]
        rate :  JLA
-       dirFile: '../reference_files'
+       dirFile: 'reference_files'
+   x1 :
+       type: unique
+       min: 0.0
+       max: 2.0
+       step: 0.01
+   color :
+       type: unique
+       min: 0.0
+       max: 0.2
+       step: 0.01
    z :              # redshift
        type : uniform
        min : 0.01
-       max : 0.9
+       max : 1.1
        step: 0.05
        rate : Perrett # Type Ia volumetric rate : Perrett, Ripoche, Dilday.
-   daymax:                 # Tmax (obs. frame)
+   daymax :                 # Tmax (obs. frame)
        type : unique #uniform or random or unique
-       step : 1 # if uniform: step (in day) between Tmin(obs) and Tmax(obs)      
+       step : 2. # if uniform: step (in day) between Tmin(obs) and Tmax(obs)      
    min_rf_phase : -20.        # obs min phase (rest frame)
    max_rf_phase : 60.         # obs max phase (rest frame)
+   min_rf_phase_qual : -15.        # obs min phase (rest frame) (qual cuts)
+   max_rf_phase_qual : 45.         # obs max phase (rest frame) (qual cuts)
    absmag : -19.0906          # peak abs mag
    band : bessellB             # band for absmag
    magsys : vega              # magsys for absmag
-   differential_flux: False
-   salt2Dir: '../SALT2_Files'
+   differential_flux: 0  # to estimate differential flux
+   salt2Dir: SALT2_Files #dir where SALT2 files are located
+   blue_cutoff : 380.0
+   red_cutoff : 800.0
+   ebvofMW: -1.0
+   NSN factor: 1
 Cosmology:
    Model : w0waCDM      # Cosmological model
    Omega_m : 0.30             # Omega_m
@@ -39,16 +52,20 @@ Instrument:
    aerosol : False  #aerosol
 Observations: 
    #filename: /sps/lsst/cadence/LSST_SN_PhG/cadence_db/opsim_db/kraken_2026.db # Name of db obs file (full path)
-   filename: /home/philippe/LSST/DB_Files/kraken_2026.db
+   filename: fullDbName
    fieldtype: DD #DD or WFD
-   coadd: True # this is the coaddition per night
-   season: 1 #season to simulate (-1 = all seasons)
+   coadd: 1 # this is the coaddition per night
+   season: [2,3] #season to simulate (-1 = all seasons)
 Simulator :
-    name : sn_simulator.sn_cosmo        # Simulator name: sn_cosmo,sn_sim,sn_ana, sn_fast
+    name : sn_simulator.sn_cosmo      # Simulator name: sn_cosmo,sn_fast
     model : salt2-extended   # spectra model
     version : 1.0                     #version
     #Reference File: SN_MAF/Reference_Files/LC_Ref_-2.0_0.2.hdf5
-    Reference File: LC_Test_today.hdf5
+    #Template Dir: /home/philippe/LSST/sn_pipe_doc/Templates
+    Template Dir: Template_LC
+    Gamma Dir: reference_files
+    Gamma File: gamma.hdf5
+    DustCorr Dir: Template_Dust
 Host Parameters: None         # Host parameters
 Display_LC : #display during LC simulations
    display: False
@@ -58,6 +75,6 @@ Output:
     save: True
 Multiprocessing:
     nproc: 1
-Metric: sn_mafsim.sn_maf_simulation
 Pixelisation:
     nside: 64
+Web path : https://me.lsst.eu/gris/DESC_SN_pipeline
