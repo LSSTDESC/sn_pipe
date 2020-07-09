@@ -15,6 +15,7 @@ Set of scripts to run the Survey Strategy Support pipeline
    * run_sl_metric.py
    * run_snr_metric.py
 ### simulation: to perform supernova simulation
+   * [run_simulation_from_yaml.py](../Simulation/usage_run_simulation_yaml.md)
    * [run_simulation.py](../Simulation/usage_run_simulation.md)
    * run_simulation_MAF.py
    * [make_yaml.py](../Simulation/make_yaml.md)
