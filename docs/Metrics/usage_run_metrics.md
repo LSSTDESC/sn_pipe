@@ -54,15 +54,9 @@ Options:
 
 ### Examples ###
 
-<ul>
-<li>  run the (nSN, zlim) metric for DD fieds, OS name=descddf_v1.4_10yrs.db located in ../../DB_Files, nclusters(=nDDF)=5, using 4 procs:
-      <ul>
-     <li> python run_scripts/metrics/run_metrics.py --dbDir ../../DB_Files --dbName descddf_v1.4_10yrs --dbExtens npy --fieldType DD --metric NSN --nclusters 5 --nproc 4 </li>
-     </ul>
-     </li>
-<li>  run the (nSN, zlim) metric for WFD fieds, OS name=descddf_v1.4_10yrs.db located in ../../DB_Files, using 4 procs, on one pixel located in a region defined in RA in [36.,40.] and Dec in [-41.,-37.] 
-      <ul>
-     <li>python run_scripts/metrics/run_metrics.py --dbDir ../../DB_Files --dbName descddf_v1.4_10yrs --dbExtens npy --fieldType WFD --metric NSN --nproc 4 --npixels 1 --RAmin 36. --RAmax 40 --Decmin -41. --Decmax -37 --radius 4. --verbose 1 --ebvofMW 0.0
-       </ul>
-     </li>
-</li>
+ - run the **(nSN, zlim) metric** for DD fieds, OS name=descddf_v1.4_10yrs.db located in ../../DB_Files, nclusters(=nDDF)=5, using 4 procs:
+   - python run_scripts/metrics/run_metrics.py --dbDir ../../DB_Files --dbName descddf_v1.4_10yrs --dbExtens npy --fieldType DD --metric NSN --nclusters 5 --nproc 4 
+ - run the **(nSN, zlim) metric** for WFD fieds, OS name=descddf_v1.4_10yrs.db located in ../../DB_Files, using 4 procs, on one pixel located in a region defined in RA in [36.,40.] and Dec in [-41.,-37.] 
+   - python run_scripts/metrics/run_metrics.py --dbDir ../../DB_Files --dbName descddf_v1.4_10yrs --dbExtens npy --fieldType WFD --metric NSN --nproc 4 --npixels 1 --RAmin 36. --RAmax 40 --Decmin -41. --Decmax -37 --radius 4. --verbose 1 --ebvofMW 0.0
+ - run the **cadence metric** for WFD fields, OS name=descddf_v1.5_10yrs.db located in ../../DB_Files, on 10 pixels licated in (RA,Dec): [20,24]x[-20,-24], r-band (default)
+   - python run_scripts/metrics/run_metrics.py --dbDir ../../DB_Files --dbName descddf_v1.5_10yrs --dbExtens db --fieldType WFD --metric Cadence --nproc 1 --npixels 10 --RAmin 20. --RAmax 24. --Decmin -24. --Decmax -20 --radius 4. --saveData 1
