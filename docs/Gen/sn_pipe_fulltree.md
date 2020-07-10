@@ -8,20 +8,15 @@
 │   └── zlim_r.png
 ├── docs
 │   ├── Gen
-│   │   ├── for_batch.cmd~
 │   │   ├── for_batch.md
-│   │   ├── for_batch.md~
 │   │   ├── sn_pipe.md
-│   │   ├── sn_pipe.md~
 │   │   ├── test.md
 │   │   ├── usage_pip_sn_pack.md
-│   │   ├── usage_pip_sn_pack.md~
-│   │   ├── usage_setup_release.md
-│   │   └── usage_setup_release.md~
+│   │   └── usage_setup_release.md
 │   ├── Metrics
 │   │   ├── Cadence.md
 │   │   ├── Cadence_run.md
-│   │   └── METRICS.md
+│   │   └── Metrics.md
 │   ├── sn_pipe_scheme.png
 │   └── tree_md.sh
 ├── for_batch
