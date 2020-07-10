@@ -22,7 +22,7 @@ parser.add_option("--fieldtype", type="str", default='WFD',
 parser.add_option("--nside", type="int", default=64,
                   help="file directory [%default]")
 parser.add_option("--web_path", type=str, default='https://me.lsst.eu/gris/DESC_SN_pipeline',
-                  help='url where to find some files necessary to run')
+                  help='url where to find some files necessary to run[%default]')
 
 opts, args = parser.parse_args()
 
