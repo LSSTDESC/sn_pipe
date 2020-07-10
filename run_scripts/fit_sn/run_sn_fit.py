@@ -9,6 +9,7 @@ from optparse import OptionParser
 from sn_fit.process_fit import Fitting
 from sn_fit.mbcov import MbCov
 import glob
+import os
 
 
 def makeYaml(input_file, dbDir, prodid, outDir, nproc, fitter, covmb=0, display=0):
@@ -235,6 +236,10 @@ files = glob.glob(search_path)
 config = makeYaml('input/fit_sn/param_fit_gen.yaml',
                   dirFiles, prodid, outDir, nproc, fitter, mbCalc, display)
 print(config)
+
+# create outputdir if necessary
+if not os.path.isdir(outDir):
+    os.makedirs(outDir)
 
 yaml_name = '{}/{}.yaml'.format(outDir, prodid)
 with open(yaml_name, 'w') as f:
