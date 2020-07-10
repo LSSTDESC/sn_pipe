@@ -15,7 +15,7 @@ Once zlim has been estimated, the number of type Ia supernovae is given for medi
 
 ## How to run this metric
 
-There are currently two ways to run this metric:
+There are currently one way to run this metric:
 * using python script [run_metrics.py](usage_run_metrics.md)
 
 Output of this metric is composed of two files:
