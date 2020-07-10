@@ -117,8 +117,9 @@ def multiproc(simu_name, lc_name, fit, covmb=None, nproc=1):
     f = h5py.File(simu_name, 'r')
     print(f.keys())
     # reading the simu file
+    simu = Table()
     for i, key in enumerate(f.keys()):
-        simu = Table.read(simu_name, path=key)
+        simu = vstack([simu, Table.read(simu_name, path=key)])
 
     # multiprocessing parameters
     nlc = len(simu)
@@ -147,7 +148,7 @@ def multiproc(simu_name, lc_name, fit, covmb=None, nproc=1):
     for j in range(nproc):
         val = vstack([val, resultdict[j]])
 
-    print('dumping results')
+    print('dumping results', len(val.columns))
     if len(val) > 0:
         inum += 1
         fit.dump(val, inum)
