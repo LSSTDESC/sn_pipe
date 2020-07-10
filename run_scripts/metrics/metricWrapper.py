@@ -54,11 +54,11 @@ class CadenceMetricWrapper(MetricWrapper):
                  RAmin=0., RAmax=360.,
                  Decmin=-1.0, Decmax=-1.0,
                  npixels=0,
-                 metadata={}, outDir=''):
+                 metadata={}, outDir='', ebvofMW=-1.0, bluecutoff=380.0, redcutoff=800.0):
         super(CadenceMetricWrapper, self).__init__(
             name=name, season=season, coadd=coadd, fieldType=fieldType,
             nside=nside, RAmin=RAmin, RAmax=RAmax,
-            Decmin=Decmin, Decmax=Decmax, npixels=npixels, metadata=metadata, outDir=outDir)
+            Decmin=Decmin, Decmax=Decmax, npixels=npixels, metadata=metadata, outDir=outDir, ebvofMW=ebvofMW)
 
         self.metric = SNCadenceMetric(
             coadd=coadd, nside=nside, verbose=metadata.verbose)
@@ -72,12 +72,12 @@ class SNRMetricWrapper(MetricWrapper):
                  RAmin=0., RAmax=360.,
                  Decmin=-1.0, Decmax=-1.0,
                  npixels=0,
-                 metadata={}, outDir=''):
+                 metadata={}, outDir='', ebvofMW=-1.0, bluecutoff=380.0, redcutoff=800.0):
         super(SNRMetricWrapper, self).__init__(
             name=name, season=season, coadd=coadd, fieldType=fieldType,
             nside=nside, RAmin=RAmin, RAmax=RAmax,
             Decmin=Decmin, Decmax=Decmax, npixels=npixels,
-            metadata=metadata, outDir=outDir)
+            metadata=metadata, outDir=outDir, ebvofMW=ebvofMW)
 
         self.metaout += ['x1', 'color', 'dirFakes', 'dirRefs', 'band', 'z']
 
@@ -111,13 +111,13 @@ class ObsRateMetricWrapper(MetricWrapper):
                  RAmin=0., RAmax=360.,
                  Decmin=-1.0, Decmax=-1.0,
                  npixels=0,
-                 metadata={}, outDir=''):
+                 metadata={}, outDir='', ebvofMW=-1.0, bluecutoff=380.0, redcutoff=800.0):
         super(ObsRateMetricWrapper, self).__init__(
             name=name, season=season, coadd=coadd, fieldType=fieldType,
             nside=nside, RAmin=RAmin, RAmax=RAmax,
             Decmin=Decmin, Decmax=Decmax,
             npixels=npixels,
-            metadata=metadata, outDir=outDir)
+            metadata=metadata, outDir=outDir, ebvofMW=ebvofMW)
 
         self.metaout += ['x1', 'color', 'dirRefs', 'z', 'bands', 'SNR']
 
