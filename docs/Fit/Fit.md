@@ -7,8 +7,9 @@ python pip_sn_pack.py --action install --package sn_fit_lc
 
 ## Run the fit
 
-It is done through the script [run_sn_fit.py](usage_run_sn_fit.md)
-
+It may be done through:
+  - the script [run_sn_fit.py](usage_run_sn_fit.md)
+  - the following notebook: SNFitLC.ipynb (notebooks directory)
 ## Output
 
 If the processing was uneventful, two files should be available in the output directory: prodid.yaml and Fit_prodid_fitter.hdf5
@@ -26,4 +27,4 @@ It is possible to display some of the results of the fit using the sn_plotters p
 python pip_sn_pack.py --action install --package sn_plotters
 ```
 
-Some plots may be obtained using [plot_lcfit.py](../Plots/usage_plot_lcfit.md)
+Some plots may be obtained using [plot_lcfit.py](../Plots/usage_plot_lcfit.md). The notebook SNFitLC.ipynb also illustrate how to access the file output of the fitting procedure and how to make plots.
