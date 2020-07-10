@@ -230,11 +230,15 @@ if mbCalc:
 search_path = '{}/Simu_{}*.hdf5'.format(dirFiles, prodid)
 files = glob.glob(search_path)
 
-print('yep', files, search_path)
+# make and load config file
+config = makeYaml('input/fit_sn/param_fit_gen.yaml',
+                  dirFiles, prodid, outDir, nproc, fitter, mbCalc, display)
+print(config)
+
+yaml_name = '{}/{}.yaml'.format(outDir, prodid)
+with open(yaml_name, 'w') as f:
+    data = yaml.dump(config, f)
+
 for fi in files:
-    # make and load config file
-    config = makeYaml('input/fit_sn/param_fit_gen.yaml',
-                      dirFiles, prodid, outDir, nproc, fitter, mbCalc, display)
-    print(config)
     # now run
     process(config, covmb=covmb)
