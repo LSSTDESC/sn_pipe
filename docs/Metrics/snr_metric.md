@@ -23,7 +23,7 @@ This metric may be run yearly, per season or using the complete survey.
 
 There are currently two ways of running this metric
  - use the script [run_metrics.py](usage_run_metrics.md)
- - use the notebook SNCadence.ipynb located in the notebooks directory.
+ - use the notebook SNSNR.ipynb located in the notebooks directory.
 
 ## Output analysis
 
