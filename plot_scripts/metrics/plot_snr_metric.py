@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pylab as plt
-import sn_plotters.sn_snrPlotters as sn_plot
+import sn_plotter_metrics.snrPlot as sn_plot
 from optparse import OptionParser
 from sn_tools.sn_io import loopStack
 import glob
@@ -11,10 +11,12 @@ parser.add_option("--dbName", type="str",
 parser.add_option("--dirFile", type="str", default='',
                   help="file directory [%default]")
 parser.add_option("--band", type="str", default='r', help="band [%default]")
-parser.add_option("--fieldtype", type="str", default='WFD', help="band [%default]")
+parser.add_option("--fieldtype", type="str",
+                  default='WFD', help="band [%default]")
 parser.add_option("--metricName", type="str",
                   default='SNRMetric', help="metric name[%default]")
-parser.add_option("--nside", type="int", default=64, help="nside from healpix [%default]")
+parser.add_option("--nside", type="int", default=64,
+                  help="nside from healpix [%default]")
 
 opts, args = parser.parse_args()
 
@@ -32,14 +34,18 @@ namesRef = ['SNCosmo']
 #fileName = '{}/{}_{}_{}.npy'.format(dirFile, dbName, metricName, band)
 #metricValues = np.load(fileName)
 
-fileNames = glob.glob('{}/{}/*{}_{}_nside_{}*'.format(dirFile,dbName,metricName,fieldtype,nside))
-#fileName='{}/{}_CadenceMetric_{}.npy'.format(dirFile,dbName,band)
+search_name = '{}/{}/{}/*{}Metric_{}_nside_{}*.hdf5'.format(
+    dirFile, dbName, metricName, metricName, fieldtype, nside)
+print('search name', search_name)
+fileNames = glob.glob(search_name)
+
+# fileName='{}/{}_CadenceMetric_{}.npy'.format(dirFile,dbName,band)
 print(fileNames)
 
-metricValues = loopStack(fileNames,'astropyTable')
+metricValues = loopStack(fileNames, 'astropyTable')
 
 print(metricValues.dtype)
-sn_plot.detecFracPlot(metricValues, nside, namesRef)
-#sn_plot.detecFracHist(metricValues, namesRef)
+#sn_plot.detecFracPlot(metricValues, nside, namesRef)
+sn_plot.detecFracHist(metricValues, namesRef)
 
 plt.show()

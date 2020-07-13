@@ -79,13 +79,15 @@ class SNRMetricWrapper(MetricWrapper):
             Decmin=Decmin, Decmax=Decmax, npixels=npixels,
             metadata=metadata, outDir=outDir, ebvofMW=ebvofMW)
 
-        self.metaout += ['x1', 'color', 'dirFakes', 'dirRefs', 'band', 'z']
+        self.metaout += ['x1', 'color', 'dirFake', 'dirRefs', 'band', 'z']
 
         shift = 10.
         x1 = metadata.x1
         color = metadata.color
 
-        fake_file = '{}/{}.yaml'.format(metadata.dirFakes, 'Fake_cadence')
+        print(metadata)
+        fake_file = '{}/{}.yaml'.format(metadata.dirFake,
+                                        'Fake_cadence_snrmetric')
 
         Li_files = []
         mag_to_flux_files = []
