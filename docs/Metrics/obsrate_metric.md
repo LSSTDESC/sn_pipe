@@ -1,7 +1,7 @@
-# SNR metric
+# ObsRate metric
 
 ## Definition
-This metric is an estimate of the fraction of faint [(x1,color) = (-2.0,0.2)] supernovae with a Signal-to-Noise Ratio (SNR) higher or equal to the SNR corresponding to a regular cadence. It is defined per band and is a reasonable estimate of the gap effects on SN detection.
+This metric is an estimate of the observation rate of faint [(x1,color) = (-2.0,0.2)] using gri (default) bands. It is defined as the fraction of supernovae with minimal SNR per band.
 
 Let us suppose that we have a set of measurements of (fluxes,error fluxes): (f<sub>i</sub>,&sigma;<sub>i</sub>). Then the Signal-to-Noise Ratio (SNR) may be written, per band b:
 
@@ -17,7 +17,6 @@ where f<sub>i</sub><sup>5,b</sup> is the 5-&sigma; flux related to the 5&sigma; 
 
 Since m<sub>5</sub> is given by observing conditions, it is possible to estimate SNR<sup>b>/sup> provided a flux template for supernovae is available.
 
-
 ## Installation of the metric package
 
 ```
@@ -26,9 +25,10 @@ python pip_sn_pack.py --action install --package=sn_metrics
 
 ## Input parameters
 
+- x1
+- color
  - band
- - configuration file for fakes
- - mag_range: magnitude range considered
+ - SNRs
  - Li_files : list of npy files with light curves
  - mag_to_flux : list of npy files with mag to flux conversion
 
@@ -36,9 +36,7 @@ This metric may be run yearly, per season or using the complete survey.
 
 ## How to run this metric
 
-There are currently two ways of running this metric
  - use the script [run_metrics.py](usage_run_metrics.md)
- - use the notebook SNSNR.ipynb located in the notebooks directory.
 
 ## Output analysis
 
@@ -48,4 +46,4 @@ The analysis/display of the metric results can be done using the sn_plotters pac
 python pip_sn_pack.py --action install --package=sn_plotters
 ```
 
-The script [plot_snr_metric.py](../Plots/usage_plot_snr_metric.md) may be used to display the results. An illustration of the plots obtained is also available in the above-mentioned notebook.
+The script [plot_snr_metric.py](../Plots/usage_plot_snr_metric.md) may be used to display the results.
