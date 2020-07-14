@@ -1,0 +1,10 @@
+ProductionID: toto
+Observations:
+   #filename: /sps/lsst/cadence/LSST_SN_CADENCE/cadence_db/2018-06-WPC/kraken_2026.db
+   #filename: /sps/lsst/cadence/LSST_SN_PhG/cadence_db/opsim_db/kraken_2026.db # Name of db obs file (full path)
+   filename: /sps/lsst/cadence/LSST_SN_CADENCE/cadence_db/2018-06-WPC/kraken_2026.db
+   fieldtype: WFD #DD or WFD
+   season: -1 #season to simulate (-1 = all seasons)
+Pixelisation:
+    nside: 64
+Metric: sn_metrics.sn_sl_metric

@@ -1,0 +1,5 @@
+dbDir,dbName,dbExtens
+/sps/lsst/cadence/LSST_SN_PhG/cadence_db/fbs_1.5/db,baseline_v1.5_10yrs,db
+/sps/lsst/cadence/LSST_SN_PhG/cadence_db/fbs_1.4/db,baseline_v1.4_10yrs,db
+/sps/lsst/cadence/LSST_SN_PhG/cadence_db/fbs_1.6/db,alt_base_v1.6_10yrs,db
+/sps/lsst/cadence/LSST_SN_PhG/cadence_db/fbs_1.6/db,baseline_nexp1_v1.6_10yrs,db

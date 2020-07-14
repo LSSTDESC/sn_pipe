@@ -1,0 +1,78 @@
+ProductionID:  prodid
+SN parameters:
+   Id : 100                   # Id of the first SN
+   x1_color:                    # stretch and color
+       rate :  JLA
+       dirFile: 'reference_files'
+   x1 :
+       type: unique
+       min: x1val
+       max: 3.
+       step: 0.01
+   color :
+       type: unique
+       min: colorval
+       max: 0.2
+       step: 0.1
+   z :              # redshift
+       type : unique
+       min : zval
+       max : 1.
+       step: 0.02
+       rate : Perrett # Type Ia volumetric rate : Perrett, Ripoche, Dilday.
+   daymax :                 # Tmax (obs. frame)
+       type : unique #uniform or random or unique
+       step : 2. # if uniform: step (in day) between Tmin(obs) and Tmax(obs)       
+   min_rf_phase : -20.        # obs min phase (rest frame)
+   max_rf_phase : 60.         # obs max phase (rest frame)
+   min_rf_phase_qual : -15.        # obs min phase (rest frame) (qual cuts)
+   max_rf_phase_qual : 45.         # obs max phase (rest frame) (qual cuts)
+   absmag : -19.0906          # peak abs mag
+   band : bessellB             # band for absmag
+   magsys : vega              # magsys for absmag
+   differential_flux: True
+   salt2Dir: SALT2_Files  
+   blue_cutoff : bluecutoffval
+   red_cutoff : redcutoffval
+   dust : dustval
+   ebvofMW : ebvofMWval
+   NSN factor: 1
+Cosmology:
+   Model : w0waCDM      # Cosmological model
+   Omega_m : 0.30             # Omega_m
+   Omega_l : 0.70             # Omega_l
+   H0 : 72.0                  # H0
+   w0 : -1.0                  # w0
+   wa : 0.0                   # wa
+Instrument:
+   name : LSST       #name of the telescope (internal)
+   throughput_dir : LSST_THROUGHPUTS_BASELINE #dir of throughput
+   atmos_dir : THROUGHPUTS_DIR   #dir of atmos
+   airmass : 1.1   #airmass value
+   atmos : True  #atmos
+   aerosol : False  #aerosol
+Observations: 
+   filename: datatoprocess  # Name of db obs file (full path)
+   fieldtype: Fake #DD or WFD
+   coadd: False # this is the coaddition per night
+   season: [1] #season to simulate (-1 = all seasons)
+Simulator :
+    name : sn_simulator.sn_cosmo   # Simulator: sn_cosmo,sn_sim,sn_ana, sn_fast
+    model : salt2-extended   # spectra model
+    version : 1.0                     #version
+    Template Dir: /home/philippe/LSST/sn_pipe_doc/Templates
+    Gamma Dir: reference_files
+    Gamma File: gamma.hdf5
+    DustCorr Dir: Template_Dust
+Host Parameters: None         # Host parameters
+Display_LC : #display during LC simulations
+   display: False
+   time: 10 #display during time (sec) before closing
+Output:
+    directory: outdirname/x1val_colorval
+    save: True
+Multiprocessing:
+    nproc: 1
+Pixelisation:
+    nside: 64
+Web path : https://me.lsst.eu/gris/DESC_SN_pipeline

@@ -1,0 +1,21 @@
+RA: 0.0
+Dec: 0.0
+seasons: [1.]
+season_length: 180. #season_length (days)
+bands: ['g','r','i','z','y'] #bands to consider
+#cadence: [1.,1.,1.,1.,1.] # cadence[day] per band
+cadence: [3.,3.,3.,3.,3.] # cadence[day] per band
+#Cadence: [0.5,0.5,0.5,0.5,0.5] # Cadence[day] per band
+m5: [24.51,24.06,23.62,23.00,22.17] #5-sigma depth values
+Nvisits: [10,20,20,26,20]
+#Nvisits: [1,7,100,46]
+#Nvisits: [1,7,50,23,119]
+#Nvisits: [2,4,8,25,4]
+Exposure_Time: [30.,30.,30.,30.,30.]
+shift_days:  0.0069444 #in days: 10./(24.*60.)
+MJD_min: [-40.]
+seeingEff: [0.87,0.83,0.80,0.78,0.76]
+seeingGeom: [0.87,0.83,0.80,0.78,0.76]
+airmass: [1.2,1.2,1.2,1.2,1.2]
+sky: [1.2,1.2,1.2,1.2,1.2]
+moonphase: [0.5,0.5,0.5,0.5,0.5]
