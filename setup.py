@@ -33,7 +33,7 @@ class InstallCommand(install):
 
     def run(self):
         # install dependencies first
-        if self.package =='sn_pipe':
+        if self.package == 'sn_pipe':
             cmd = 'pip install --user -r requirements.txt --no-deps'
             os.system(cmd)
 
@@ -44,7 +44,8 @@ class InstallCommand(install):
                     self.package, self.branch)
                 os.system(cmd)
             else:
-                packgs = ['sn_metrics', 'sn_simulation', 'sn_fit_lc','sn_plotters']
+                packgs = ['sn_metrics', 'sn_simulation',
+                          'sn_fit_lc', 'sn_plotters']
                 for pack in packgs:
                     cmd = 'pip install --user git+https://github.com/lsstdesc/{}.git@{}'.format(
                         pack, self.branch)
@@ -71,7 +72,7 @@ class InstallCommand(install):
 
 setup(
     name='sn_pipe',
-    version='0.1',
+    version='1.0.0',
     description='A framework to run the Survey Strategy Support pipeline for supernovae',
     url='http://github.com/lsstdesc/sn_pipe',
     author='Philippe Gris',
