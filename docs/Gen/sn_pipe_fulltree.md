@@ -1,11 +1,4 @@
 ```bash
-|-- current_release.yaml
-|-- doc
-|   |-- cadence_m5_r.png
-|   |-- snr_z_season_1.png
-|   |-- yaml_cadence.md
-|   |-- yaml_snr.md
-|   |-- zlim_r.png
 |-- docs
 |   |-- Figures
 |   |   |-- LC_1.png
