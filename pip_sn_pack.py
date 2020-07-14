@@ -34,7 +34,7 @@ def cmd_list():
     return cmd
 
 
-def cmd_install(package, gitbranch):
+def cmd_install(package, verbose):
     """
     Function to generate the command to install a package using pip
 
@@ -50,8 +50,12 @@ def cmd_install(package, gitbranch):
     cmd: str
       cmd to apply
     """
-    cmd = "pip install . --user --install-option=\"--package={}\" --install-option=\"--branch={}\"".format(
-        pack, gitbranch)
+    if verbose:
+        cmd = "pip -v install . --user --install-option=\"--package={}\"".format(
+            pack)
+    else:
+        cmd = "pip install . --user --install-option=\"--package={}\"".format(
+            pack)
     return cmd
 
 
@@ -59,8 +63,8 @@ parser = OptionParser()
 
 parser.add_option("--package", type="str", default='sn_pipe',
                   help="package name to install [%default]")
-parser.add_option("--gitbranch", type="str", default='master',
-                  help="gitbranch of the package [%default]")
+parser.add_option("--verbose", type=int, default=0,
+                  help="verbose mode for pip installation [%default]")
 parser.add_option("--action", type="str", default='list',
                   help="action to perform: list, install, uninstall [%default]")
 
@@ -68,11 +72,11 @@ opts, args = parser.parse_args()
 
 
 pack = opts.package
-gitbranch = opts.gitbranch
+verbose = opts.verbose
 action = opts.action
 
 if action == 'install':
-    os.system(cmd_install(pack, gitbranch))
+    os.system(cmd_install(pack, verbose))
 
 if action == 'list':
     os.system(cmd_list())

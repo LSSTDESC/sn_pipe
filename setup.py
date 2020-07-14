@@ -5,6 +5,7 @@ import os
 from setuptools.command.install import install
 # from pip.req import parse_requirements
 from pip._internal.req import parse_requirements
+import numpy as np
 
 
 class InstallCommand(install):
@@ -12,8 +13,7 @@ class InstallCommand(install):
 
     description = 'Script to install requested package to run Survey Strategy Support Pipeline'
     user_options = install.user_options + [
-        ('package=', None, 'package to install'),
-        ('branch=', None, 'git branch to consider')
+        ('package=', None, 'package to install')
     ]
 
     def initialize_options(self):
@@ -21,7 +21,11 @@ class InstallCommand(install):
         # Each user option must be listed here with their default value.
         install.initialize_options(self)
         self.package = ''
-        self.branch = 'dev'
+        self.packgs = ['sn_metrics', 'sn_simulation',
+                       'sn_fit_lc', 'sn_plotters']
+        # load package versions
+        self.packvers = np.loadtxt('pack_version.txt', dtype={'names': (
+            'packname', 'version'), 'formats': ('U15', 'U15')})
 
     def finalize_options(self):
         """Post-process options."""
@@ -40,33 +44,21 @@ class InstallCommand(install):
         else:
             if self.package != 'all':
                 # now install the requested package
-                cmd = 'pip install --user git+https://github.com/lsstdesc/{}.git@{}'.format(
-                    self.package, self.branch)
+                # get the version for this package
+                idx = self.packvers['packname'] == self.package
+                version = self.packvers[idx]['version'].item()
+                cmd = 'pip install -v --user git+https://github.com/lsstdesc/{}.git@{}'.format(
+                    self.package, version)
                 os.system(cmd)
             else:
-                packgs = ['sn_metrics', 'sn_simulation',
-                          'sn_fit_lc', 'sn_plotters']
-                for pack in packgs:
+                for pack in self.packgs:
+                    # get the version for this package
+                    idx = self.packvers['packname'] == pack
+                    version = self.packvers[idx]['version'].item()
                     cmd = 'pip install --user git+https://github.com/lsstdesc/{}.git@{}'.format(
-                        pack, self.branch)
+                        pack, version)
                     os.system(cmd)
 
-        """
-        if self.package == 'metrics':
-            cmd = 'pip install --user git+https://github.com/lsstdesc/sn_metrics.git@{}'.format(
-                self.branch)
-            os.system(cmd)
-
-        if self.package == 'simulation':
-            cmd = 'pip install --user git+https://github.com/lsstdesc/sn_simulation.git@{}'.format(
-                self.branch)
-            os.system(cmd)
-
-        if self.package == 'studies':
-            cmd = 'pip install --user git+https://github.com/lsstdesc/sn_studies.git@{}'.format(
-                self.branch)
-            os.system(cmd)
-        """
         install.run(self)
 
 

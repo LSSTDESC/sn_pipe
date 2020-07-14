@@ -1,0 +1,5 @@
+# list of packages and tagged github version
+sn_metrics v1.0.0
+sn_simulation v1.0.0
+sn_fit_lc v1.0.0
+sn_plotters v1.0.0
