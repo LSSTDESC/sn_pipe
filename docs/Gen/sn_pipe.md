@@ -1,7 +1,6 @@
 # sn_pipe 
 
 .
- * doc
  * [for_batch](for_batch.md): set of scripts and input file to run the pipeline in batch mode
  * input: set of input files
  * LICENCE: licence file
