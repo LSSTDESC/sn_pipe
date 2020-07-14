@@ -1,5 +1,0 @@
-# Cadence Metric
-
-``
-Definition here
-``
