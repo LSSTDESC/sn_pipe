@@ -6,4 +6,7 @@ The Global metric may be used to estimate Observing Strategies properties per ob
 
 
 ## How to run this metric
- - use the script [run_global_metric.py](usage_run_global.py)
+ - use the script [run_global_metric.py](usage_run_global.md)
+
+## How to analyze this metric
+ - used the script [plot_global.py](../Plots/usage_plot_global.md)
