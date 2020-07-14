@@ -5,6 +5,7 @@
  * input: set of input files
  * LICENCE: licence file
  * notebooks: set of notebooks to run the pipeline
+ * pack_version.txt: list of packages and version for sn_pipe
  * pip_sn_pack.py: script to install/uninstall parts of the pipeline ([usage](usage_pip_sn_pack.md))
  * [plot_scripts](plot_scripts.md): set of scripts to plot pipeline results
  * reference_files: set of reference files to run the pipeline
