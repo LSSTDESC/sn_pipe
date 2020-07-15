@@ -6,5 +6,5 @@ dustmaps
 ###### Requirements with Version Specifiers ######
 #h5py==2.7.1
 #### git packages
-git+https://github.com/lsstdesc/sn_tools.git@dev#egg=sn_tools-v1.0.0
-git+https://github.com/lsstdesc/sn_stackers.git@dev#egg=sn_stackers-v1.0.0
+git+https://github.com/lsstdesc/sn_tools.git#egg=sn_tools-v1.0.0
+git+https://github.com/lsstdesc/sn_stackers.git#egg=sn_stackers-v1.0.0
