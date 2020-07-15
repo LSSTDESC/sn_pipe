@@ -64,7 +64,7 @@ class InstallCommand(install):
 
 setup(
     name='sn_pipe',
-    version='1.0.0',
+    version=__version__,
     description='A framework to run the Survey Strategy Support pipeline for supernovae',
     url='http://github.com/lsstdesc/sn_pipe',
     author='Philippe Gris',
