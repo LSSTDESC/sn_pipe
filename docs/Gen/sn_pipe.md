@@ -1,7 +1,8 @@
 # sn_pipe 
 
-.
+ * docs: sn_pipe doc
  * [for_batch](for_batch.md): set of scripts and input file to run the pipeline in batch mode
+ * \_\_init.py\_\_
  * input: set of input files
  * LICENCE: licence file
  * notebooks: set of notebooks to run the pipeline
@@ -16,3 +17,4 @@
  * setup_release.sh: setup file to setup lsst_sims release ([usage](usage_setup_release.md))
  * README.md: README file
  * docs: sn_pipe doc
+ * version.py: package version

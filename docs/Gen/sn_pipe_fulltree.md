@@ -102,6 +102,7 @@
 |   |-- templates
 |       |-- Fake_cadence_template.yaml
 |       |-- param_fakesimulation_template.yaml
+|-- \_\_init.py\_\_
 |-- LICENCE
 |-- notebooks
 |   |-- SNCadence.ipynb
@@ -189,5 +190,5 @@
 |       |-- run_visu_cadence.py
 |-- setup.py
 |-- setup_release.sh
-
+|-- version.py
 ```
