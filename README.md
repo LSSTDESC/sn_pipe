@@ -10,8 +10,10 @@ please contact the developers.
 
 ```
 ## Release Status
+|Release|Date|
+|---|---|
+|v1.0.0|2020/07/15|
 
-This code is under development and has not yet been released.
 
 
 
@@ -22,7 +24,7 @@ If you have comments, suggestions or questions, please [write us an issue](https
 This is open source software, available for re-use under the modified BSD license.
 
 ```
-Copyright (c) 2019, the sn_pipe contributors on GitHub, https://github.com/LSSTDESC/sn_pipe/graphs/contributors.
+Copyright (c) 2020, the sn_pipe contributors on GitHub, https://github.com/LSSTDESC/sn_pipe/graphs/contributors.
 All rights reserved.
 ```
 
