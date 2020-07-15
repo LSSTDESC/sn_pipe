@@ -32,7 +32,9 @@ All rights reserved.
 
 ## Getting the package from github
 ```
- git clone https://github.com/lsstdesc/sn_pipe
+ git clone https://github.com/lsstdesc/sn_pipe (master)
+or
+git clone -b <tag_name> https://github.com/lsstdesc/sn_pipe (release tag_name)
  ```
 
 ## Environnement setup 
