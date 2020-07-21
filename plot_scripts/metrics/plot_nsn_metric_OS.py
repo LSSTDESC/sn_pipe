@@ -33,11 +33,33 @@ dbInfo = pd.DataFrame([[dbName, 'test', 'test', 'test', 'r', '*']],
 metricdata = nsn_plot.NSNAnalysis(dirFile, dbInfo.loc[0], metricName, fieldType,
                                   nside)
 
+# Mollweid plots
 metricdata.Mollview_median('zlim', 'zlim')
 metricdata.Mollview_median('ebvofMW', 'E(B-V)')
 metricdata.Mollview_median('cadence', 'cadence')
 metricdata.Mollview_median('season_length', 'season length')
 metricdata.Mollview_sum('nsn_med', 'NSN')
+
+# Correlation plots
+# get the data to plot
+data = metricdata.data
+
+vars = [('cadence', 'cadence')]
+# estimate effective cadence per band
+for b in 'ugrizy':
+    data['cadence_{}'.format(b)] = data['season_length']/data['Nvisits_{}'.format(
+        b)]
+    vars.append(('cadence_{}'.format(b), 'cadence - {}'.format(b)))
+
+data = data[~data.isin([np.nan, np.inf, -np.inf]).any(1)]
+
+var = ('nsn_med', '#of supernovae')
+
+datamed = data.groupby(['healpixID']).median()
+datasum = data.groupby(['healpixID']).sum()
+
+for vv in vars:
+    metricdata.plotCorrel(datamed, datasum, x=vv, y=var)
 
 
 print('data names', metricdata.data.columns)

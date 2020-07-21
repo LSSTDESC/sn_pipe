@@ -147,7 +147,7 @@ def print_best(resdf, ref_var='nsn', num=10, name='a'):
         'OS_best_{}.csv'.format(name), index=False)
 
 
-def plot_Summary(resdf, ref=False, ref_var='nsn'):
+def plotSummary(resdf, ref=False, ref_var='nsn'):
     """
     Method to draw the summary plot nSN vs zlim
 
@@ -172,7 +172,7 @@ def plot_Summary(resdf, ref=False, ref_var='nsn'):
         zlim_ref = resdf.loc[ido, 'zlim']
         nsn_ref = resdf.loc[ido, 'nsn']
 
-    print('oooo', zlim_ref, nsn_ref)
+    print(zlim_ref, nsn_ref)
 
     if zlim_ref > 0:
         mscatter(zlim_ref-resdf['zlim'], resdf['nsn']/nsn_ref, ax=ax,
@@ -186,6 +186,55 @@ def plot_Summary(resdf, ref=False, ref_var='nsn'):
     ax.grid()
     ax.set_xlabel('$z_{faint}$')
     ax.set_ylabel('$N_{SN}(z\leq z_{faint})$')
+
+
+def plotCorrel(resdf, x=('', ''), y=('', '')):
+    """
+    Method for 2D plots
+
+    Parameters
+    ---------------
+    resdf: pandas df
+      data to plot
+    x: tuple
+      x-axis variable (first value: colname in resdf; second value: x-axis label)
+    y: tuple
+      y-axis variable (first value: colname in resdf; second value: y-axis label)
+    """
+
+    fig, ax = plt.subplots()
+
+    varx = resdf[x[0]]
+    vary = resdf[y[0]]
+
+    ax.plot(varx, vary, 'k.')
+
+    ax.set_xlabel(x[1])
+    ax.set_ylabel(y[1])
+
+
+def plotBarh(resdf, varname):
+    """
+    Method to plot varname - barh
+
+    Parameters
+    ---------------
+    resdf: pandas df
+      data to plot
+    varname: str
+       column to plot
+
+    """
+
+    fig, ax = plt.subplots()
+
+    resdf = resdf.sort_values(by=[varname])
+    resdf['dbName'] = resdf['dbName'].str.split('_10yrs', expand=True)[0]
+    ax.barh(resdf['dbName'], resdf[varname], color=resdf['color'])
+    ax.set_xlabel(r'{}'.format(varname))
+    ax.tick_params(axis='y', labelsize=10.)
+    plt.grid(axis='x')
+    plt.tight_layout
 
 
 parser = OptionParser(
@@ -244,7 +293,17 @@ print(resdf.columns)
 
 # Summary plot
 
-plot_Summary(resdf, ref=False)
+plotSummary(resdf, ref=False)
+
+# 2D plots
+plotCorrel(resdf, x=('cadence', 'cadence'), y=('nsn', '#number of supernovae'))
+plotBarh(resdf, 'cadence')
+
+"""
+for b in 'ugrizy':
+    plotCorrel(resdf, x=('cadence_{}'.format(b), 'cadence_{}'.format(b)), y=(
+        'nsn', '#number of supernovae'))
+"""
 
 print_best(resdf, num=20, name=tagbest)
 plt.show()
