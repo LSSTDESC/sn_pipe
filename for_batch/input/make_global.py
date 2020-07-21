@@ -13,6 +13,8 @@ parser.add_option("--dbDir", type="str", default='/sps/lsst/users/gris/Global',
 parser.add_option("--dbExtens", type="str", default='db',
                   help="db extension [%default]")
 
+parser.add_option("--outFile", type="str", default='global_fbs00.csv',
+                  help="output file name[%default]")
 
 
 opts, args = parser.parse_args()
@@ -24,6 +26,7 @@ df['dbDir'] = opts.dbDir
 
 print(df.columns)
 
-firstline='dbDir,dbName,dbExtens'
+firstline = 'dbDir,dbName,dbExtens'
 
-df[['dbDir','dbName','dbExtens']].to_csv('test.csv',header=firstline,index=False)
+df[['dbDir', 'dbName', 'dbExtens']].to_csv(
+    opts.outFile, header=firstline, index=False)
