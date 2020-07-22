@@ -147,6 +147,30 @@ def print_best(resdf, ref_var='nsn', num=10, name='a'):
         'OS_best_{}.csv'.format(name), index=False)
 
 
+def rankCadences(resdf, ref_var='nsn'):
+    """
+  Method to print the "best" OS maximizing ref_var
+
+  Parameters
+  --------------
+  resdf: pandas df
+    data to process
+  ref_var: str, opt
+    variable chosen to rank the strategies (default: nsn)
+
+    Returns
+    -----------
+    original pandas df plus rank
+    """
+
+    ressort = pd.DataFrame(resdf)
+    ressort = ressort.sort_values(by=[ref_var], ascending=False)
+    ressort['rank'] = ressort[ref_var].rank(
+        ascending=False, method='first').astype('int')
+
+    return ressort
+
+
 def plotSummary(resdf, ref=False, ref_var='nsn'):
     """
     Method to draw the summary plot nSN vs zlim
@@ -237,6 +261,26 @@ def plotBarh(resdf, varname):
     plt.tight_layout
 
 
+def filter(resdf, strfilt=['_noddf']):
+    """
+    Function to remove OS according to their names
+
+    Parameters
+    ---------------
+    resdf: pandas df
+      data to process
+    strfilt: list(str),opt
+     list of strings used to remove OS (default: ['_noddf']
+
+    """
+
+    for vv in strfilt:
+        idx = resdf['dbName'].str.contains(vv)
+        resdf = pd.DataFrame(resdf[~idx])
+
+    return resdf
+
+
 parser = OptionParser(
     description='Display NSN metric results for WFD fields')
 
@@ -290,20 +334,35 @@ if not os.path.isfile(outFile):
 
 resdf = pd.DataFrame(np.load(outFile, allow_pickle=True))
 print(resdf.columns)
+resdf['dbName'] = resdf['dbName'].str.split('_10yrs').str[0]
+# filter cadences here
+resdf = filter(resdf, ['_noddf', 'footprint_stuck_rolling', 'weather'])
+
+# rank cadences
+resdf = rankCadences(resdf)
+
+# select only the first 20
+
+idx = resdf['rank'] <= 20
+
+resdf = resdf[idx]
 
 # Summary plot
 
 plotSummary(resdf, ref=False)
 
+
 # 2D plots
+
 plotCorrel(resdf, x=('cadence', 'cadence'), y=('nsn', '#number of supernovae'))
 plotBarh(resdf, 'cadence')
 
-"""
+
 for b in 'ugrizy':
-    plotCorrel(resdf, x=('cadence_{}'.format(b), 'cadence_{}'.format(b)), y=(
-        'nsn', '#number of supernovae'))
-"""
+    plotBarh(resdf, 'Nvisits_{}'.format(b))
+    # plotCorrel(resdf, x=('cadence_{}'.format(b), 'cadence_{}'.format(b)), y=(
+    #    'nsn', '#number of supernovae'))
+
 
 print_best(resdf, num=20, name=tagbest)
 plt.show()
