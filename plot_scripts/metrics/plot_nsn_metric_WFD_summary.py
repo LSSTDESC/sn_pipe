@@ -197,16 +197,22 @@ def plotSummary(resdf, ref=False, ref_var='nsn'):
         nsn_ref = resdf.loc[ido, 'nsn']
 
     print(zlim_ref, nsn_ref)
-
+    """
     if zlim_ref > 0:
         mscatter(zlim_ref-resdf['zlim'], resdf['nsn']/nsn_ref, ax=ax,
                  m=resdf['marker'].to_list(), c=resdf['color'].to_list())
     else:
         mscatter(resdf['zlim'], resdf['nsn'], ax=ax,
                  m=resdf['marker'].to_list(), c=resdf['color'].to_list())
-
+    """
     for ii, row in resdf.iterrows():
-        ax.text(zlim_ref-row['zlim'], row['nsn']/nsn_ref, row['dbName'])
+        if zlim_ref > 0:
+            ax.text(zlim_ref-row['zlim'], row['nsn']/nsn_ref, row['dbName'])
+        else:
+            ax.plot(row['zlim'], row['nsn'], marker=row['marker'],
+                    color=row['color'], ms=10)
+            ax.text(row['zlim']+0.001, row['nsn'], row['dbName'], size=12)
+
     ax.grid()
     ax.set_xlabel('$z_{faint}$')
     ax.set_ylabel('$N_{SN}(z\leq z_{faint})$')
@@ -228,13 +234,17 @@ def plotCorrel(resdf, x=('', ''), y=('', '')):
 
     fig, ax = plt.subplots()
 
-    varx = resdf[x[0]]
-    vary = resdf[y[0]]
+    resdf = filter(resdf, ['alt_sched'])
+    for ik, row in resdf.iterrows():
+        varx = row[x[0]]
+        vary = row[y[0]]
 
-    ax.plot(varx, vary, 'k.')
+        ax.plot(varx, vary, marker=row['marker'], color=row['color'])
+        #ax.text(varx+0.1, vary, row['dbName'], size=10)
 
     ax.set_xlabel(x[1])
     ax.set_ylabel(y[1])
+    ax.grid()
 
 
 def plotBarh(resdf, varname):
@@ -343,26 +353,27 @@ resdf = rankCadences(resdf)
 
 # select only the first 20
 
-idx = resdf['rank'] <= 20
+
+idx = resdf['rank'] <= 22
 
 resdf = resdf[idx]
 
 # Summary plot
 
-plotSummary(resdf, ref=False)
+#plotSummary(resdf, ref=False)
 
 
 # 2D plots
 
+"""
 plotCorrel(resdf, x=('cadence', 'cadence'), y=('nsn', '#number of supernovae'))
 plotBarh(resdf, 'cadence')
-
+"""
 
 for b in 'ugrizy':
-    plotBarh(resdf, 'Nvisits_{}'.format(b))
+    plotBarh(resdf, 'cadence_{}'.format(b))
     # plotCorrel(resdf, x=('cadence_{}'.format(b), 'cadence_{}'.format(b)), y=(
     #    'nsn', '#number of supernovae'))
-
 
 print_best(resdf, num=20, name=tagbest)
 plt.show()
