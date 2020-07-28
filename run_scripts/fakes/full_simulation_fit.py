@@ -38,6 +38,8 @@ parser.add_option("--bluecutoff", type=float, default=380,
                   help="blue cutoff for SN[%default]")
 parser.add_option("--redcutoff", type=float, default=800,
                   help="red cutoff for SN[%default]")
+parser.add_option("--error_model", type=int, default=0,
+                  help="error model for flux error estimation [%default]")
 
 
 opts, args = parser.parse_args()
@@ -61,10 +63,10 @@ redcutoff = opts.redcutoff
 zmin = opts.zmin
 zmax = opts.zmax
 zstep = opts.zstep
+error_model = opts.error_model
 
-
-prodid = '{}_Fake_{}_seas_-1_{}_{}_{}_{}_ebvofMW_{}'.format(
-    simulator, fake_output, x1, color, bluecutoff, redcutoff, ebvofMW)
+prodid = '{}_Fake_{}_seas_-1_{}_{}_{}_{}_ebvofMW_{}_errormodel_{}'.format(
+    simulator, fake_output, x1, color, bluecutoff, redcutoff, ebvofMW,error_model)
 
 
 # first step: create fake data from yaml configuration file
@@ -96,6 +98,7 @@ cmd += ' --ebvofMW {}'.format(ebvofMW)
 cmd += ' --bluecutoff {}'.format(bluecutoff)
 cmd += ' --redcutoff {}'.format(redcutoff)
 cmd += ' --npixels -1'
+cmd +=' --error_model {}'.format(error_model)
 
 print(cmd)
 os.system(cmd)
