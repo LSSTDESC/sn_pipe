@@ -340,7 +340,7 @@ print(Npixels.dtype)
 outFile = 'Summary_WFD_{}.npy'.format(tagbest)
 
 if not os.path.isfile(outFile):
-    processMulti(toproc, Npixels, outFile, nproc=4)
+    processMulti(toproc, Npixels, outFile, nproc=8)
 
 resdf = pd.DataFrame(np.load(outFile, allow_pickle=True))
 print(resdf.columns)
@@ -370,10 +370,14 @@ plotCorrel(resdf, x=('cadence', 'cadence'), y=('nsn', '#number of supernovae'))
 plotBarh(resdf, 'cadence')
 """
 
-for b in 'ugrizy':
-    plotBarh(resdf, 'cadence_{}'.format(b))
+for b in 'grizy':
+    #plotBarh(resdf, 'cadence_{}'.format(b))
+    plotBarh(resdf, 'N_{}'.format(b))
+    for bb in 'grizy':
+         plotBarh(resdf, 'N_{}{}'.format(b,bb))
     # plotCorrel(resdf, x=('cadence_{}'.format(b), 'cadence_{}'.format(b)), y=(
     #    'nsn', '#number of supernovae'))
 
+plotBarh(resdf, 'N_total')
 print_best(resdf, num=20, name=tagbest)
 plt.show()
