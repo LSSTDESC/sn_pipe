@@ -61,10 +61,15 @@ class InstallCommand(install):
 
         install.run(self)
 
+# get the version here
+pkg_vars  = {}
 
+with open("version.py") as fp:
+    exec(fp.read(), pkg_vars)
+    
 setup(
     name='sn_pipe',
-    version='v1.0.0',
+    version= pkg_vars['__version__'],
     description='A framework to run the Survey Strategy Support pipeline for supernovae',
     url='http://github.com/lsstdesc/sn_pipe',
     author='Philippe Gris',
