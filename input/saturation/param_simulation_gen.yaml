@@ -1,4 +1,4 @@
-ProductionID: Saturation_nexp_exptime_x1v_colorv_seasonval
+ProductionID: Saturation_nexp_exptime_x1v_colorv_cadence_seasonval
 SN parameters:
    Id : 100                   # Id of the first SN
    x1_color:                    # stretch and color
@@ -51,8 +51,7 @@ Instrument:
    atmos : True  #atmos
    aerosol : False  #aerosol
 Observations: 
-   #filename: /sps/lsst/cadence/LSST_SN_PhG/cadence_db/opsim_db/kraken_2026.db # Name of db obs file (full path)
-   filename: Observations_nexp_exptime.npy
+   filename: Observations_nexp_exptime_cadence.npy
    fieldtype: Fake #DD or WFD
    coadd: 0 # this is the coaddition per night
    season: [seasonval]  #season to simulate (-1 = all seasons)
