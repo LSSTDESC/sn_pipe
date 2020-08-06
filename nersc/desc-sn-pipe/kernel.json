@@ -1,0 +1,10 @@
+{
+  "argv": [
+    "/global/common/software/lsst/common/miniconda/kernels/desc-sn-pipe.sh",
+    "-f",
+    "{connection_file}"
+  ],
+  "display_name": "desc-sn-pipe",
+  "language": "python"
+}
+
