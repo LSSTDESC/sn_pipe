@@ -1,14 +1,15 @@
 from sn_tools.sn_visu import CadenceMovie, SnapNight
 from optparse import OptionParser
 import matplotlib.pyplot as plt
+import numpy as np
 
 parser = OptionParser()
 
 parser.add_option("--dbName", type="str", default='alt_sched',
                   help="db name [%default]")
 parser.add_option("--dbDir", type="str", default='', help="db dir [%default]")
-parser.add_option("--nights", type="int", default='2',
-                  help="number of nights to display [%default]")
+parser.add_option("--nights", type="str", default='1,2',
+                  help="list of nights to display  [%default]")
 parser.add_option("--saveMovie", type="int", default=0,
                   help="flag to save movie [%default]")
 parser.add_option("--realTime", type="int", default=0,
@@ -25,13 +26,17 @@ dbDir = opts.dbDir
 if dbDir == '':
     dbDir = '/sps/lsst/cadence/LSST_SN_CADENCE/cadence_db'
 dbName = opts.dbName
-nights = opts.nights
 saveMovie = opts.saveMovie
 realTime = opts.realTime
 saveFig = opts.saveFig
 areaTime = opts.areaTime
 dispType = opts.dispType
 
+if '-' not in opts.nights:
+    nights = list(map(int,opts.nights.split(',')))
+else:
+    nights = list(map(int,opts.nights.split('-')))
+    nights = range(np.min(nights),np.max(nights))
 
 if dispType == 'cadence':
     CadenceMovie(dbDir=dbDir, dbName=dbName, title=dbName, nights=nights,
