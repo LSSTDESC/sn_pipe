@@ -69,7 +69,7 @@ Simulator :
 Host Parameters: None         # Host parameters
 Display_LC : #display during LC simulations
    display: False
-   time: 1 #display during time (sec) before closing
+   time: 5 #display during time (sec) before closing
 Output:
     directory: Output_Simu
     save: True
