@@ -39,11 +39,12 @@ or
 git clone -b <tag_name> https://github.com/lsstdesc/sn_pipe (release tag_name)
  ```
 
-## Environnement setup 
- - The pipeline uses lsst_sim package
- - cernvmfs may be used to have some lsst_sim releases available.
- - to install cvmfs: https://sw.lsst.eu/installation.html
- - ls /cvmfs/sw.lsst.eu/linux-x86_64/lsst_sims/ -> provides a list of lsst_sim releases available.
+## Environnement setup
+- [on your machine](docs/Installation/computer.md)
+- [at NERSC](docs/Installation/nersc.md)
+- at CCIN2P3
+ 
+ 
  - Instruction to "setup" your environment [here](docs/Gen/usage_setup_release.md)
 
 ```
