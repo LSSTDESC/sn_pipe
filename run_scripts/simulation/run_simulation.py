@@ -89,6 +89,8 @@ parser.add_option("--bluecutoff", type=float, default=380.0,
                   help="blue cutoff for SN[%default]")
 parser.add_option("--redcutoff", type=float, default=800.0,
                   help="red cutoff for SN[%default]")
+parser.add_option("--error_model", type=int, default=0,
+                  help="error model for flux estimation[%default]")
 
 opts, args = parser.parse_args()
 
@@ -104,7 +106,7 @@ makeYaml = MakeYaml(opts.dbDir, opts.dbName, opts.dbExtens, opts.nside,
                     opts.colorType, opts.colormin, opts.colormax, opts.colorstep,
                     opts.zType, opts.zmin, opts.zmax, opts.zstep,
                     opts.simulator, opts.daymaxType, opts.daymaxstep,
-                    opts.coadd, opts.prodid, opts.ebvofMW, opts.bluecutoff, opts.redcutoff)
+                    opts.coadd, opts.prodid, opts.ebvofMW, opts.bluecutoff, opts.redcutoff,opts.error_model)
 
 yaml_orig = 'input/simulation/param_simulation_gen.yaml'
 

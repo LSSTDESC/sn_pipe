@@ -8,7 +8,7 @@ parser = OptionParser()
 
 parser.add_option("--prodids", type="str", default='input/plots/podids_fit.csv',
                   help="prodid [%default]")
-parser.add_option("--fileDir", type="str", default='Output_Fit',
+parser.add_option("--fileDir", type="str", default='',
                   help="dir location of the results [%default]")
 
 
@@ -19,14 +19,17 @@ thelist = opts.prodids
 
 data = pd.read_csv(thelist, delimiter=',', comment='#')
 
+if theDir != '':
+    data['dirfile'] = theDir
+
 dictfiles = {}
 
 for indx, val in data.iterrows():
-    dictfiles[val['nickname']] = '{}/Fit_{}.hdf5'.format(theDir, val['prodid'])
+    dictfiles[val['nickname']] = '{}/Fit_{}.hdf5'.format(val['dirfile'], val['prodid'])
 
 print(data)
 fitplot = FitPlots(dictfiles)
 fitplot.plot2D(fitplot.SN_table, 'z', 'Cov_colorcolor',
-               '$z$', '$\sigma_{color}$', compare=True)
+               '$z$', '$\sigma_{color}$', compare=False)
 
 plt.show()

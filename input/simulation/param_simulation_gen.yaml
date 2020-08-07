@@ -60,6 +60,7 @@ Simulator :
     name : sn_simulator.mysimu      # Simulator name: sn_cosmo,sn_sim,sn_ana, sn_fast
     model : salt2-extended   # spectra model
     version : 1.0                     #version
+    error_model: errmod #error model in sn flux estimation
     #Reference File: SN_MAF/Reference_Files/LC_Ref_-2.0_0.2.hdf5
     #Template Dir: /home/philippe/LSST/sn_pipe_doc/Templates
     Template Dir: Template_LC

@@ -69,6 +69,8 @@ class MakeYaml:
        blue cutoff for SN
     redcutoff: float
        redcutoff for SN
+    error_model: int
+      error model for flux error estimation
     """
 
     def __init__(self, dbDir, dbName, dbExtens, nside, nproc, diffflux,
@@ -78,7 +80,7 @@ class MakeYaml:
                  zType, zmin, zmax, zstep,
                  simu, daymaxType, daymaxstep,
                  coadd, prodid,
-                 ebvofMW, bluecutoff, redcutoff):
+                 ebvofMW, bluecutoff, redcutoff,error_model):
 
         self.dbDir = dbDir
         self.dbName = dbName
@@ -109,6 +111,7 @@ class MakeYaml:
         self.ebvofMW = ebvofMW
         self.bluecutoff = bluecutoff
         self.redcutoff = redcutoff
+        self.error_model = error_model
 
     def genYaml(self, input_file):
         """
@@ -157,7 +160,8 @@ class MakeYaml:
         filedata = filedata.replace('ebvofMWval', str(self.ebvofMW))
         filedata = filedata.replace('bluecutoffval', str(self.bluecutoff))
         filedata = filedata.replace('redcutoffval', str(self.redcutoff))
-
+        filedata = filedata.replace('errmod', str(self.error_model))
+        
         return yaml.load(filedata, Loader=yaml.FullLoader)
 
 

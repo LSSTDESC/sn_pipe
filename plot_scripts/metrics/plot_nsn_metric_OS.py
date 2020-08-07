@@ -34,11 +34,16 @@ metricdata = nsn_plot.NSNAnalysis(dirFile, dbInfo.loc[0], metricName, fieldType,
                                   nside)
 
 # Mollweid plots
-metricdata.Mollview_median('zlim', 'zlim')
-metricdata.Mollview_median('ebvofMW', 'E(B-V)')
-metricdata.Mollview_median('cadence', 'cadence')
-metricdata.Mollview_median('season_length', 'season length')
-metricdata.Mollview_sum('nsn_med', 'NSN')
+dbName = dbName.split('_10yrs')[0]
+metricdata.Mollview_median('zlim_faint', '{} - zlim_faint'.format(dbName))
+#metricdata.Mollview_median('ebvofMW', 'E(B-V)')
+metricdata.Mollview_median('cadence', '{} -  cadence'.format(dbName))
+metricdata.Mollview_median('season_length', '{} -  season length'.format(dbName))
+metricdata.Mollview_sum('nsn_med_faint', '{} -  NSN'.format(dbName))
+for b in 'ugrizy':
+    metricdata.Mollview_median('N_{}'.format(b), '{} - Nvisits - {} band'.format(dbName,b))
+
+plt.show()
 
 # Correlation plots
 # get the data to plot
