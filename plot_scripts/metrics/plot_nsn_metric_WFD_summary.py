@@ -247,7 +247,7 @@ def plotCorrel(resdf, x=('', ''), y=('', '')):
     ax.grid()
 
 
-def plotBarh(resdf, varname):
+def plotBarh(resdf, varname,leg):
     """
     Method to plot varname - barh
 
@@ -260,16 +260,17 @@ def plotBarh(resdf, varname):
 
     """
 
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(10,5))
+    fig.subplots_adjust(left=0.3)
 
     resdf = resdf.sort_values(by=[varname])
     resdf['dbName'] = resdf['dbName'].str.split('_10yrs', expand=True)[0]
     ax.barh(resdf['dbName'], resdf[varname], color=resdf['color'])
-    ax.set_xlabel(r'{}'.format(varname))
-    ax.tick_params(axis='y', labelsize=10.)
+    ax.set_xlabel(r'{}'.format(leg))
+    ax.tick_params(axis='y', labelsize=15.)
     plt.grid(axis='x')
-    plt.tight_layout
-
+    #plt.tight_layout
+    plt.savefig('Plots_pixels/Summary_{}.png'.format(varname))
 
 def filter(resdf, strfilt=['_noddf']):
     """
@@ -321,7 +322,7 @@ tagbest = opts.tagbest
 metricTot = None
 metricTot_med = None
 
-toproc = pd.read_csv(listdb)
+toproc = pd.read_csv(listdb,comment='#')
 
 pixArea = hp.nside2pixarea(nside, degrees=True)
 x1 = -2.0
@@ -369,15 +370,22 @@ resdf = resdf[idx]
 plotCorrel(resdf, x=('cadence', 'cadence'), y=('nsn', '#number of supernovae'))
 plotBarh(resdf, 'cadence')
 """
+plotBarh(resdf, 'cadence','cadence')
+plotBarh(resdf, 'season_length','season length')
+"""
+bandstat = ['u','g','r','i','z','y','gr','gi','gz','iz','uu','gg','rr','ii','zz','yy']
+for b in bandstat:
+    plotBarh(resdf, 'cadence_{}'.format(b),'Effective cadence - {} band'.format(b))
+    print('hello',resdf)
+"""
+#plotBarh(resdf, 'N_{}_tot'.format(b))
+"""
+for bb in 'grizy':
+plotBarh(resdf, 'N_{}{}'.format(b,bb))
+"""
+# plotCorrel(resdf, x=('cadence_{}'.format(b), 'cadence_{}'.format(b)), y=(
+#    'nsn', '#number of supernovae'))
 
-for b in 'grizy':
-    #plotBarh(resdf, 'cadence_{}'.format(b))
-    plotBarh(resdf, 'N_{}'.format(b))
-    for bb in 'grizy':
-         plotBarh(resdf, 'N_{}{}'.format(b,bb))
-    # plotCorrel(resdf, x=('cadence_{}'.format(b), 'cadence_{}'.format(b)), y=(
-    #    'nsn', '#number of supernovae'))
-
-plotBarh(resdf, 'N_total')
+#plotBarh(resdf, 'N_total')
 print_best(resdf, num=20, name=tagbest)
 plt.show()
