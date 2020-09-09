@@ -1,7 +1,7 @@
 from sn_saturation.psf_pixels import PSF_pixels,PlotPixel,PlotMaxFrac
 from sn_saturation.mag_saturation import MagToFlux,MagSaturation,PlotMagSat
 from sn_saturation.observations import Observations,prepareYaml
-from sn_saturation.sn_sat_effects import SaturationTime,plotTimeSaturation
+from sn_saturation.sn_sat_effects import SaturationTime,plotTimeSaturation,plot_gefficiency
 import numpy as np
 import time
 import matplotlib.pyplot as plt
@@ -221,7 +221,7 @@ PlotMagSat('gri',res_sat)
 # this is to generate observations : list of (nexp, exptime)
 nexp_expt = [(1,5),(1,15),(1,30)]
 obs = Observations('../DB_Files','descddf_v1.4_10yrs')
-cadence_obs = 1
+cadence_obs = 3
 # plot the seeing
 #obs.plotSeeings()
 
@@ -233,7 +233,7 @@ nexp_expt = [(1,15),(1,30)]
 x1_color = [(0.0,0.0)]
 seasons = [2]
 
-Simulations(nexp_expt=nexp_expt ,x1_color=x1_color,seasons=seasons,cadence=cadence_obs)
+#Simulations(nexp_expt=nexp_expt ,x1_color=x1_color,seasons=seasons,cadence=cadence_obs)
 
 #estimate the saturation time here
 estimateSaturationTime('Output_Simu',x1_color,seasons,nexp_expt,cadence_obs,nproc=8)
@@ -242,6 +242,6 @@ estimateSaturationTime('Output_Simu',x1_color,seasons,nexp_expt,cadence_obs,npro
 df = pd.DataFrame(np.load('TimeSat_{}.npy'.format(cadence_obs),allow_pickle=True))
 
 plotTimeSaturation(0.0,0.0,df)
-
+plot_gefficiency(0.0,0.0,df)
 
 plt.show()
