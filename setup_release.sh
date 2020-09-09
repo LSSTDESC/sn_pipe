@@ -52,7 +52,7 @@ done
 
 # choose the latest-1 release installed
 
-release=${array[$len-9]}
+release=${array[$len-2]}
 
 #Fill a file with the release chosen
 
