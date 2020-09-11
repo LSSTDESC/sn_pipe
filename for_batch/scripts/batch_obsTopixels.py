@@ -94,4 +94,4 @@ toprocess = pd.read_csv(dbList, comment='#')
 scriptref='run_scripts/obs_pixelize/run_obs_to_pixels.py'
 for io,val in toprocess.iterrows():
     batch(dbDir, val['dbName'],dbExtens,scriptref, outDir,val['nproc'],
-          1,val['fieldType'],val['simuType'],opts.nside)
+          1,val['fieldtype'],val['simuType'],opts.nside)
