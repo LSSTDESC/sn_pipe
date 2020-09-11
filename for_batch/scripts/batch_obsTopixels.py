@@ -1,6 +1,7 @@
 import os
 import numpy as np
 from optparse import OptionParser
+import pandas as pd
 
 def batch(dbDir, dbName,dbExtens, scriptref, outDir, nproc,
           saveData,fieldType,simuType,nside):
@@ -15,8 +16,8 @@ def batch(dbDir, dbName,dbExtens, scriptref, outDir, nproc,
     if not os.path.isdir(dirLog):
         os.makedirs(dirLog)
 
-    dbName = dbName.decode()
-    fieldType = fieldType.decode()
+    #dbName = dbName.decode()
+    #fieldType = fieldType.decode()
 
     id = '{}_{}_{}'.format(
         dbName, nside, fieldType)
@@ -83,11 +84,14 @@ dbDir = opts.dbDir
 dbExtens = opts.dbExtens
 outDir = opts.outDir
 
+"""
 toprocess = np.genfromtxt(dbList, dtype=None, names=[
                           'dbName', 'simuType', 'nside', 'coadd', 'fieldType', 'nproc'])
+"""
+toprocess = pd.read_csv(dbList, comment='#')
 
 #print('there', toprocess)
 scriptref='run_scripts/obs_pixelize/run_obs_to_pixels.py'
-for val in toprocess:
+for io,val in toprocess.iterrows():
     batch(dbDir, val['dbName'],dbExtens,scriptref, outDir,val['nproc'],
           1,val['fieldType'],val['simuType'],opts.nside)
