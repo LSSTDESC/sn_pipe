@@ -1,4 +1,4 @@
-from sn_tools.sn_visu import CadenceMovie, SnapNight
+from sn_tools.sn_visu import CadenceMovie, SnapNight,MoviePixels
 from optparse import OptionParser
 import matplotlib.pyplot as plt
 import numpy as np
@@ -19,7 +19,7 @@ parser.add_option("--saveFig", type="int", default=0,
 parser.add_option("--areaTime", type="int", default=0,
                   help="display observed area [%default]")
 parser.add_option("--dispType", type="str", default='cadence',
-                  help="what to display[%default]")
+                  help="what to display (cadence,snapshot,moviepixels) [%default]")
 opts, args = parser.parse_args()
 
 dbDir = opts.dbDir
@@ -45,4 +45,10 @@ if dispType == 'cadence':
 if dispType == 'snapshot':
     SnapNight(dbDir=dbDir, dbName=dbName, saveFig=saveFig,
               nights=nights, realTime=realTime, areaTime=areaTime)
+
+if dispType =='moviepixels':
+    nightmin = np.min(nights)
+    nightmax = np.max(nights)
+    MoviePixels(dbDir=dbDir, dbName=dbName, saveMovie=saveMovie, realTime=realTime,
+                saveFig=saveFig,nightmin=nightmin,nightmax=nightmax)
 
