@@ -145,7 +145,7 @@ def go_for_batch(toproc, splitSky,
                  x1Type, x1min, x1max, x1step,
                  colorType, colormin, colormax, colorstep,
                  zType, zmin, zmax, zstep,
-                 daymaxType, daymaxstep):
+                 daymaxType, daymaxstep,simulator):
     """
     Function to prepare and start batches
 
@@ -223,7 +223,7 @@ def go_for_batch(toproc, splitSky,
                        x1Type, x1min, x1max, x1step,
                        colorType, colormin, colormax, colorstep,
                        zType, zmin, zmax, zstep,
-                       daymaxType, daymaxstep)
+                       daymaxType, daymaxstep,simulator)
 
     else:
         # second case: there are pixelmaps available -> run on them
@@ -255,7 +255,7 @@ def go_for_batch(toproc, splitSky,
             search_path = '{}/{}/{}_{}_nside_{}_{}_{}_{}_{}.npy'.format(
                 pixelmap_dir, dbName, dbName, fieldType, nside, val['RAmin'], val['RAmax'], val['Decmin'], val['Decmax'])
             ffi = glob.glob(search_path)
-            tab = np.load(ffi[0])
+            tab = np.load(ffi[0],allow_pickle=True)
             npixels_map = len(np.unique(tab['healpixID']))
 
             # print('pixel_map',val['RAmin'],val['RAmax'],npixels_map)
@@ -273,7 +273,7 @@ def go_for_batch(toproc, splitSky,
                        x1Type=x1Type, x1min=x1min, x1max=x1max, x1step=x1step,
                        colorType=colorType, colormin=colormin, colormax=colormax, colorstep=colorstep,
                        zType=zType, zmin=zmin, zmax=zmax, zstep=zstep,
-                       daymaxType=daymaxType, daymaxstep=daymaxstep)
+                       daymaxType=daymaxType, daymaxstep=daymaxstep,simulator=simulator)
 
 
 class batchclass:
@@ -286,7 +286,7 @@ class batchclass:
                  x1Type='unique', x1min=-2.0, x1max=2.0, x1step=0.1,
                  colorType='unique', colormin=0.2, colormax=0.3, colorstep=0.05,
                  zType='uniform', zmin=0.01, zmax=1.0, zstep=0.1,
-                 daymaxType='unique', daymaxstep=1):
+                 daymaxType='unique', daymaxstep=1,simulator='sn_cosmo'):
         """
         class to prepare and launch batches
 
@@ -388,6 +388,7 @@ class batchclass:
         self.zstep = zstep
         self.daymaxType = daymaxType
         self.daymaxstep = daymaxstep
+        self.simulator = simulator
 
         dirScript, name_id, log = self.prepareOut()
 
@@ -458,7 +459,7 @@ class batchclass:
 
         script.write("EOF" + "\n")
         script.close()
-        os.system("sh "+scriptName)
+        #os.system("sh "+scriptName)
 
     def batch_cmd(self, proc,name_id):
         """
@@ -513,6 +514,8 @@ class batchclass:
         cmd += ' --daymaxstep {}'.format(self.daymaxstep)
 
         cmd += ' --prodid {}'.format(name_id)
+
+        cmd += ' --simulator {}'.format(simulator)
         return cmd
 
 
@@ -569,6 +572,8 @@ parser.add_option("--daymaxType", type=str, default='unique',
                   help="daymax type - unique, uniform, random[%default]")
 parser.add_option("--daymaxstep", type=float, default=1.,
                   help="daymax step - type = uniform only[%default]")
+parser.add_option("--simulator", type=str, default='sn_cosmo',
+                  help="simulator to use [%default]")
 
 opts, args = parser.parse_args()
 
@@ -602,6 +607,8 @@ zstep = opts.zstep
 
 daymaxType = opts.daymaxType
 daymaxstep = opts.daymaxstep
+simulator = opts.simulator
+
 """
 toprocess = np.genfromtxt(dbList, dtype=None, names=[
     'dbName', 'simuType', 'nside', 'coadd', 'fieldType', 'nproc'])
@@ -622,4 +629,4 @@ for index, proc in toprocess.iterrows():
                           x1Type, x1min, x1max, x1step,
                           colorType, colormin, colormax, colorstep,
                           zType, zmin, zmax, zstep,
-                          daymaxType, daymaxstep)
+                          daymaxType, daymaxstep,simulator)
