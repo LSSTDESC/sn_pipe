@@ -361,7 +361,7 @@ resdf = resdf[idx]
 
 # Summary plot
 
-#plotSummary(resdf, ref=False)
+plotSummary(resdf, ref=False)
 
 
 # 2D plots
@@ -371,6 +371,8 @@ plotCorrel(resdf, x=('cadence', 'cadence'), y=('nsn', '#number of supernovae'))
 plotBarh(resdf, 'cadence')
 """
 plotBarh(resdf, 'cadence','cadence')
+plotBarh(resdf, 'survey_area','survey area')
+plotBarh(resdf, 'nsn_per_sqdeg','NSN per sqdeg')
 plotBarh(resdf, 'season_length','season length')
 """
 bandstat = ['u','g','r','i','z','y','gr','gi','gz','iz','uu','gg','rr','ii','zz','yy']
