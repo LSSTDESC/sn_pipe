@@ -9,7 +9,7 @@ def addoption(cmd, name, val):
 
 
 def process(x1, color, nproc=8, zmin=0.01, zmax=1.2, zstep=0.01, ebvofMW=-1.,
-          bluecutoff=380., redcutoff=800.,
+          bluecutoff=380., redcutoff=800.,error_model=0,
           outDirLC='', outDirTemplates='', what='simu',mode='batch'):
 
     cwd = os.getcwd()
@@ -22,8 +22,11 @@ def process(x1, color, nproc=8, zmin=0.01, zmax=1.2, zstep=0.01, ebvofMW=-1.,
     if not os.path.isdir(dirLog):
         os.makedirs(dirLog)
 
-    id = '{}_{}_{}_{}_ebvofMW_{}'.format(
-        x1, color, bluecutoff, redcutoff, ebvofMW)
+    cutoff = '{}_{}'.format(bluecutoff, redcutoff)
+    if error_model>0:
+        cutoff = 'error_model'
+    id = '{}_{}_{}_ebvofMW_{}'.format(
+        x1, color, cutoff,ebvofMW)
     name_id = 'template_{}'.format(id)
     log = dirLog + '/'+name_id+'.log'
 
@@ -51,6 +54,7 @@ def process(x1, color, nproc=8, zmin=0.01, zmax=1.2, zstep=0.01, ebvofMW=-1.,
     cmd = addoption(cmd, 'ebvofMW', ebvofMW)
     cmd = addoption(cmd, 'bluecutoff', bluecutoff)
     cmd = addoption(cmd, 'redcutoff', redcutoff)
+    cmd = addoption(cmd, 'error_model', error_model)
 
     if what == 'simu':
         print(cmd)
@@ -103,28 +107,30 @@ outDirLC = '/sps/lsst/users/gris/fakes_for_templates'
 outDirTemplates = '/sps/lsst/users/gris/Template_LC'
 bluecutoff = 380.
 redcutoff = 800.
-ebvs = np.arange(0.0, 0.40, 0.01)
-#ebvofMW = 0.0
-
+#ebvs = np.arange(0.0, 0.40, 0.01)
+ebvs= [0.0]
+error_model = 1
 """
 outDirLC = '{}_{}_{}'.format(
     outDirLC, bluecutoff, redcutoff)
 outDirTemplates = '{}_{}_{}'.format(
     outDirTemplates, bluecutoff, redcutoff)
 """
-
+cutoff = '{}_{}'.format(bluecutoff, redcutoff)
+if error_model>0:
+    cutoff = 'error_model'
 for (x1, color) in x1_colors:
     for ebvofMW in ebvs:
         ebvofMW = np.round(ebvofMW,2)
-        outDirLC_ebv = '{}_{}_{}_ebvofMW_{}'.format(
-            outDirLC, bluecutoff, redcutoff,ebvofMW)
-        outDirTemplates_ebv = '{}_{}_{}_ebvofMW_{}'.format(
-            outDirTemplates, bluecutoff, redcutoff,ebvofMW)
+        outDirLC_ebv = '{}_{}_ebvofMW_{}'.format(outDirLC, cutoff,ebvofMW)
+        outDirTemplates_ebv = '{}_{}_ebvofMW_{}'.format(outDirTemplates, cutoff,ebvofMW)
         
+
         process(x1, color, zmax=zmax_dict[(x1, color)],
                 ebvofMW=ebvofMW,
                 bluecutoff=bluecutoff,
                 redcutoff=redcutoff,
+                error_model=error_model,
                 outDirLC=outDirLC_ebv, 
                 outDirTemplates=outDirTemplates_ebv, 
                 what=opts.action,mode=opts.mode)

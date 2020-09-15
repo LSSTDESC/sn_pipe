@@ -75,7 +75,7 @@ class MakeYamlSimulation:
 
     """
 
-    def __init__(self, x1, color, z, ebvofMW, bluecutoff, redcutoff,
+    def __init__(self, x1, color, z, ebvofMW, bluecutoff, redcutoff,error_model,
                  config_orig, outDir, datatoprocess, outDirSimu):
         # grab parameters
         self.x1 = x1
@@ -89,13 +89,17 @@ class MakeYamlSimulation:
         self.outDirSimu = outDirSimu
         self.bluecutoff = bluecutoff
         self.redcutoff = redcutoff
+        self.error_model = error_model
 
         self.makeYaml()
 
     def makeYaml(self):
 
-        prodid = 'Fake_{}_{}_{}_{}_{}_ebvofMW_{}'.format(
-            self.x1, self.color, self.z, self.bluecutoff, self.redcutoff, self.ebvofMW)
+        cutoff = '{}_{}'.format(self.bluecutoff, self.redcutoff)
+        if self.error_model > 0:
+            cutoff = self.error_model
+        prodid = 'Fake_{}_{}_{}_{}_ebvofMW_{}'.format(
+            self.x1, self.color, self.z, cutoff, self.ebvofMW)
         print('reading', self.config_orig)
         with open(self.config_orig, 'r') as file:
             filedata = file.read()
@@ -108,12 +112,13 @@ class MakeYamlSimulation:
             filedata = filedata.replace('ebvofMWval', str(self.ebvofMW))
             filedata = filedata.replace('bluecutoffval', str(self.bluecutoff))
             filedata = filedata.replace('redcutoffval', str(self.redcutoff))
+            filedata = filedata.replace('error_val', str(self.error_model))
 
         with open('{}/{}'.format(self.outDir, self.config_out), 'w') as file:
             file.write(filedata)
 
 
-def SimuFakes(x1, color, z, ebvofMW, bluecutoff, redcutoff, outDir):
+def SimuFakes(x1, color, z, ebvofMW, bluecutoff, redcutoff, error_model,outDir):
     """
     method to simulate LC from fake observations
 
@@ -170,7 +175,7 @@ def SimuFakes(x1, color, z, ebvofMW, bluecutoff, redcutoff, outDir):
     # make input yaml file
     config_orig = 'input/templates/param_fakesimulation_template.yaml'
     genfakes = MakeYamlSimulation(
-        x1, color, z, ebvofMW, bluecutoff, redcutoff, config_orig, fake_simu_yaml, '{}.npy'.format(fake_output), fake_simu_data)
+        x1, color, z, ebvofMW, bluecutoff, redcutoff, error_model,config_orig, fake_simu_yaml, '{}.npy'.format(fake_output), fake_simu_data)
 
     # run simulation on this
     cmd = 'python run_scripts/simulation/run_simulation_from_yaml.py'
@@ -210,7 +215,7 @@ class MultiSimuFakes:
       red cutoff for SN
     """
 
-    def __init__(self, x1, color, zmin, zmax, zstep, nproc, outDir, ebvofMW, bluecutoff, redcutoff):
+    def __init__(self, x1, color, zmin, zmax, zstep, nproc, outDir, ebvofMW, bluecutoff, redcutoff,error_model):
 
         self.x1 = x1
         self.color = color
@@ -218,6 +223,7 @@ class MultiSimuFakes:
         self.ebvofMW = ebvofMW
         self.bluecutoff = bluecutoff
         self.redcutoff = redcutoff
+        self.error_model = error_model
 
         zrange = np.arange(zmin, zmax, zstep)
 
@@ -247,7 +253,7 @@ class MultiSimuFakes:
             zval = [zval]
         for z in zval:
             SimuFakes(self.x1, self.color, z,
-                      self.ebvofMW, self.bluecutoff, self.redcutoff, self.outDir)
+                      self.ebvofMW, self.bluecutoff, self.redcutoff,self.error_model, self.outDir)
 
 
 parser = OptionParser()
@@ -267,6 +273,8 @@ parser.add_option("--bluecutoff", type=float,
                   default=380, help="blue cutoff for SN[%default]")
 parser.add_option("--redcutoff", type=float,
                   default=800, help="blue cutoff for SN[%default]")
+parser.add_option("--error_model", type=int,
+                  default=0, help="error model for SN[%default]")
 
 
 opts, args = parser.parse_args()
@@ -274,4 +282,4 @@ opts, args = parser.parse_args()
 MultiSimuFakes(opts.x1, opts.color, opts.zmin,
                opts.zmax, opts.zstep, opts.nproc,
                opts.outDir, opts.ebvofMW,
-               opts.bluecutoff, opts.redcutoff)
+               opts.bluecutoff, opts.redcutoff,opts.error_model)

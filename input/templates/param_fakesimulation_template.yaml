@@ -3,11 +3,11 @@ SN parameters:
    Id : 100                   # Id of the first SN
    x1_color:                    # stretch and color
        rate :  JLA
-       dirFile: 'reference_files'
-   x1 :
+       dirFile: 'reference_files'   
+    x1 :
        type: unique
        min: x1val
-       max: 3.
+       max: 3.0
        step: 0.01
    color :
        type: unique
@@ -17,12 +17,12 @@ SN parameters:
    z :              # redshift
        type : unique
        min : zval
-       max : 1.
+       max : 1.0
        step: 0.02
        rate : Perrett # Type Ia volumetric rate : Perrett, Ripoche, Dilday.
    daymax :                 # Tmax (obs. frame)
-       type : unique #uniform or random or unique
-       step : 2. # if uniform: step (in day) between Tmin(obs) and Tmax(obs)       
+       type : unique     #uniform or random or unique
+       step : 2. # if uniform: step (in day) between Tmin(obs) and Tmax(obs)
    min_rf_phase : -20.        # obs min phase (rest frame)
    max_rf_phase : 60.         # obs max phase (rest frame)
    min_rf_phase_qual : -15.        # obs min phase (rest frame) (qual cuts)
@@ -60,7 +60,8 @@ Simulator :
     name : sn_simulator.sn_cosmo   # Simulator: sn_cosmo,sn_sim,sn_ana, sn_fast
     model : salt2-extended   # spectra model
     version : 1.0                     #version
-    Template Dir: /home/philippe/LSST/sn_pipe_doc/Templates
+    error_model: error_val 
+    Template Dir: Template_LC
     Gamma Dir: reference_files
     Gamma File: gamma.hdf5
     DustCorr Dir: Template_Dust
