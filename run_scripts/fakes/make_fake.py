@@ -30,6 +30,11 @@ mygen = GenerateFakeObservations(config, sequences=seqs).Observations
 # add a night column
 
 mygen = rf.append_fields(mygen, 'night', list(range(1, len(mygen)+1)))
+
+# add Ra, dec columns
+mygen = rf.append_fields(mygen, 'Ra', mygen['fieldRA'])
+mygen = rf.append_fields(mygen, 'RA', mygen['fieldRA'])
+mygen = rf.append_fields(mygen, 'Dec', mygen['fieldRA'])
 # print(mygen.dtype)
 
 np.save('{}.npy'.format(outputName), np.copy(mygen))
