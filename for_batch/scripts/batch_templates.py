@@ -2,6 +2,28 @@ import os
 import numpy as np
 from optparse import OptionParser
 
+def createDirs(dirLC, dirTemplate):
+
+    # create output directory
+    if not os.path.isdir(dirLC):
+        os.makedirs(dirLC)
+
+    # List of requested directories
+    fake_obs_yaml = '{}/fake_obs_yaml'.format(dirLC)
+    fake_obs_data = '{}/fake_obs_data'.format(dirLC)
+    fake_simu_yaml = '{}/fake_simu_yaml'.format(dirLC)
+    fake_simu_data = '{}/fake_simu_data'.format(dirLC)
+
+    # create these directory if necessary
+    for vv in [fake_obs_yaml, fake_obs_data, fake_simu_yaml, fake_simu_data]:
+        if not os.path.isdir(vv):
+            os.makedirs(vv)
+
+    # create output directory
+    if not os.path.isdir(dirTemplate):
+        os.makedirs(dirTemplate) 
+
+    
 
 def addoption(cmd, name, val):
     cmd += ' --{} {}'.format(name, val)
@@ -76,6 +98,7 @@ def process(x1, color, nproc=8, zmin=0.01, zmax=1.2, zstep=0.01, ebvofMW=-1.,
     cmd = addoption(cmd, 'bluecutoff', bluecutoff)
     cmd = addoption(cmd, 'redcutoff', redcutoff)
     cmd = addoption(cmd, 'ebvofMW', ebvofMW)
+    cmd = addoption(cmd, 'error_model', error_model)
     if what == 'vstack':
         print(cmd)
         os.system(cmd)
@@ -119,13 +142,16 @@ outDirTemplates = '{}_{}_{}'.format(
 cutoff = '{}_{}'.format(bluecutoff, redcutoff)
 if error_model>0:
     cutoff = 'error_model'
-for (x1, color) in x1_colors:
-    for ebvofMW in ebvs:
-        ebvofMW = np.round(ebvofMW,2)
-        outDirLC_ebv = '{}_{}_ebvofMW_{}'.format(outDirLC, cutoff,ebvofMW)
-        outDirTemplates_ebv = '{}_{}_ebvofMW_{}'.format(outDirTemplates, cutoff,ebvofMW)
-        
 
+for ebvofMW in ebvs:
+    ebvofMW = np.round(ebvofMW,2)
+    outDirLC_ebv = '{}_{}_ebvofMW_{}'.format(outDirLC, cutoff,ebvofMW)
+    outDirTemplates_ebv = '{}_{}_ebvofMW_{}'.format(outDirTemplates, cutoff,ebvofMW)
+    
+    # create requested output directories
+    createDirs(outDirLC_ebv,outDirTemplates_ebv)
+    for (x1, color) in x1_colors:
+    
         process(x1, color, zmax=zmax_dict[(x1, color)],
                 ebvofMW=ebvofMW,
                 bluecutoff=bluecutoff,
