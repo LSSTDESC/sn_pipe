@@ -7,7 +7,8 @@ parser = OptionParser()
 
 parser.add_option("--dbName", type="str", default='alt_sched',
                   help="db name [%default]")
-parser.add_option("--dbDir", type="str", default='', help="db dir [%default]")
+parser.add_option("--dbDir", type="str", default='/sps/lsst/cadence/LSST_SN_CADENCE/cadence_db', help="db dir [%default]")
+parser.add_option("--dbDir_pixels", type="str", default='../ObsPixelized_circular_new/', help="db dir for pixel data[%default]")
 parser.add_option("--nights", type="str", default='1,2',
                   help="list of nights to display  [%default]")
 parser.add_option("--saveMovie", type="int", default=0,
@@ -23,8 +24,7 @@ parser.add_option("--dispType", type="str", default='cadence',
 opts, args = parser.parse_args()
 
 dbDir = opts.dbDir
-if dbDir == '':
-    dbDir = '/sps/lsst/cadence/LSST_SN_CADENCE/cadence_db'
+dbDir_pixels = opts.dbDir_pixels
 dbName = opts.dbName
 saveMovie = opts.saveMovie
 realTime = opts.realTime
@@ -49,6 +49,6 @@ if dispType == 'snapshot':
 if dispType =='moviepixels':
     nightmin = np.min(nights)
     nightmax = np.max(nights)
-    MoviePixels(dbDir=dbDir, dbName=dbName, saveMovie=saveMovie, realTime=realTime,
+    MoviePixels(dbDir=dbDir, dbDir_pixels=dbDir_pixels,dbName=dbName, saveMovie=saveMovie, realTime=realTime,
                 saveFig=saveFig,nightmin=nightmin,nightmax=nightmax)
 
