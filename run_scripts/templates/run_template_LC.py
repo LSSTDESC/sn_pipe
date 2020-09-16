@@ -140,9 +140,11 @@ def SimuFakes(x1, color, z, ebvofMW, bluecutoff, redcutoff, error_model,outDir):
       output directory
     """
 
+    """
     # create output directory
     if not os.path.isdir(outDir):
         os.makedirs(outDir)
+    """
 
     # List of requested directories
     fake_obs_yaml = '{}/fake_obs_yaml'.format(outDir)
@@ -150,11 +152,12 @@ def SimuFakes(x1, color, z, ebvofMW, bluecutoff, redcutoff, error_model,outDir):
     fake_simu_yaml = '{}/fake_simu_yaml'.format(outDir)
     fake_simu_data = '{}/fake_simu_data'.format(outDir)
 
+    """
     # create these directory if necessary
     for vv in [fake_obs_yaml, fake_obs_data, fake_simu_yaml, fake_simu_data]:
         if not os.path.isdir(vv):
             os.makedirs(vv)
-
+    """
     z = np.round(z, 2)
     x1 = np.round(x1, 1)
     color = np.round(color, 1)
@@ -278,6 +281,25 @@ parser.add_option("--error_model", type=int,
 
 
 opts, args = parser.parse_args()
+
+
+  
+# create output directory
+    
+if not os.path.isdir(opts.outDir):
+        os.makedirs(opts.outDir)
+
+# List of requested directories
+fake_obs_yaml = '{}/fake_obs_yaml'.format(opts.outDir)
+fake_obs_data = '{}/fake_obs_data'.format(opts.outDir)
+fake_simu_yaml = '{}/fake_simu_yaml'.format(opts.outDir)
+fake_simu_data = '{}/fake_simu_data'.format(opts.outDir)
+
+# create these directory if necessary
+for vv in [fake_obs_yaml, fake_obs_data, fake_simu_yaml, fake_simu_data]:
+    if not os.path.isdir(vv):
+        os.makedirs(vv)
+
 
 MultiSimuFakes(opts.x1, opts.color, opts.zmin,
                opts.zmax, opts.zstep, opts.nproc,

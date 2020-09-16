@@ -25,19 +25,29 @@ class LCStack:
        red cutoff for SN
     ebvofMW: float
       ebvofMW value (dust)
+    error_model: int
+      error model for SN
     """
 
-    def __init__(self, x1, color, lcDir, outDir, bluecutoff, redcutoff, ebvofMW):
+    def __init__(self, x1, color, lcDir, outDir, bluecutoff, redcutoff, ebvofMW, error_model):
 
          # create output directory
         if not os.path.isdir(outDir):
             os.makedirs(outDir)
+            
+        cutoff = '{}_{}'.format(bluecutoff, redcutoff)
+        if error_model:
+            cutoff='error_model'
 
-        lc_name = 'LC_{}_{}_{}_{}_ebvofMW_{}'.format(
-            x1, color, bluecutoff, redcutoff, ebvofMW)
+        lc_name = 'LC_{}_{}_{}_ebvofMW_{}'.format(
+            x1, color, cutoff, ebvofMW)
         lc_out = '{}/{}.hdf5'.format(outDir, lc_name)
         if os.path.exists(lc_out):
             os.remove(lc_out)
+
+        lc_out_v = '{}/{}_vstack.hdf5'.format(outDir, lc_name)
+        if os.path.exists(lc_out_v):
+            os.remove(lc_out_v)
 
         lc_dir = '{}/{}_{}/LC*'.format(
             lcDir, x1, color)
@@ -92,13 +102,15 @@ class LCStack:
         tab = Table.read(f, path='{}_0'.format(prefix_key))
         table_new = Table(tab)
 
+        print('looking at',fname,prefix_key)
+
         for ii, kk in enumerate(keys):
             tablea = Table.read(f, path='{}_{}'.format(prefix_key, kk))
             tableb = Table.read(f, path='{}_{}'.format(prefix_key, -kk))
             epsilona = tablea.meta['epsilon_'+vals[ii]]
             epsilonb = tableb.meta['epsilon_'+vals[ii]]
             assert((epsilona == -epsilonb))
-            if len(table_new) != len(tablea):
+            if (len(table_new) != len(tablea)) or (len(table_new) != len(tableb)):
                 taba, tabb = self.adjust(table_new,tablea,tableb)
                 tablea = Table(taba)
                 tableb = Table(tabb)
@@ -192,8 +204,10 @@ parser.add_option("--bluecutoff", type=float,
                   default=380, help="blue cutoff for SN[%default]")
 parser.add_option("--redcutoff", type=float,
                   default=800, help="blue cutoff for SN[%default]")
+parser.add_option("--error_model", type=int,
+                  default=0, help="error model for SN[%default]")
 
 opts, args = parser.parse_args()
 
 LCStack(opts.x1, opts.color, opts.lcDir, opts.outDir,
-        opts.bluecutoff, opts.redcutoff, opts.ebvofMW)
+        opts.bluecutoff, opts.redcutoff, opts.ebvofMW,opts.error_model)
