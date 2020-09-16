@@ -4,7 +4,7 @@ SN parameters:
    x1_color:                    # stretch and color
        rate :  JLA
        dirFile: 'reference_files'   
-    x1 :
+   x1 :
        type: unique
        min: x1val
        max: 3.0
