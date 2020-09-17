@@ -1,4 +1,17 @@
-nickname,prodid
-cosmo_cosmo,sn_cosmo_Fake_Fake_DESC_seas_-1_0.0_0.0_380.0_800.0_ebvofMW_0.1_0_sn_cosmo
-fast_cosmo,sn_fast_Fake_Fake_DESC_seas_-1_0.0_0.0_380.0_800.0_ebvofMW_0.1_0_sn_cosmo
-fast_fast,sn_fast_Fake_Fake_DESC_seas_-1_0.0_0.0_380.0_800.0_ebvofMW_0.1_0_sn_fast
+nickname,dirfile,prodid
+## error_model, snrmin=1.
+cosmo_cosmo_errmod_snr1,Output_Fit_error_model_ebvofMW_0.0_snrmin_1,sn_cosmo_Fake_Fake_DESC_seas_-1_-2.0_0.2_error_model_ebvofMW_0.0_0_sn_cosmo
+fast_fast_errmod_snr1,Output_Fit_error_model_ebvofMW_0.0_snrmin_1,sn_fast_Fake_Fake_DESC_seas_-1_-2.0_0.2_error_model_ebvofMW_0.0_0_sn_fast
+fast_cosmo_errmod_snr1,Output_Fit_error_model_ebvofMW_0.0_snrmin_1,sn_fast_Fake_Fake_DESC_seas_-1_-2.0_0.2_error_model_ebvofMW_0.0_0_sn_cosmo
+##error_model, snrmin=5.
+#cosmo_cosmo_errmod_snr5,Output_Fit_error_model_ebvofMW_0.0_snrmin_5,sn_cosmo_Fake_Fake_DESC_seas_-1_-2.0_0.2_error_model_ebvofMW_0.0_0_sn_cosmo
+#fast_fast_errmod_snr5,Output_Fit_error_model_ebvofMW_0.0_snrmin_5,sn_fast_Fake_Fake_DESC_seas_-1_-2.0_0.2_error_model_ebvofMW_0.0_0_sn_fast
+#fast_cosmo_errmod_snr5,Output_Fit_error_model_ebvofMW_0.0_snrmin_5,sn_fast_Fake_Fake_DESC_seas_-1_-2.0_0.2_error_model_ebvofMW_0.0_0_sn_cosmo
+##no error_model, snrmin=1.
+cosmo_cosmo_bluecutoff_snr1,Output_Fit_380.0_800.0_ebvofMW_0.0_snrmin_1,sn_cosmo_Fake_Fake_DESC_seas_-1_-2.0_0.2_380.0_800.0_ebvofMW_0.0_0_sn_cosmo
+fast_fast_bluecutoff_snr1,Output_Fit_380.0_800.0_ebvofMW_0.0_snrmin_1,sn_fast_Fake_Fake_DESC_seas_-1_-2.0_0.2_380.0_800.0_ebvofMW_0.0_0_sn_fast
+fast_cosmo_bluecutoff_snr1,Output_Fit_380.0_800.0_ebvofMW_0.0_snrmin_1,sn_fast_Fake_Fake_DESC_seas_-1_-2.0_0.2_380.0_800.0_ebvofMW_0.0_0_sn_cosmo
+##no error_model, snrmin=5.
+#cosmo_cosmo_bluecutoff_snr5,Output_Fit_380.0_800.0_ebvofMW_0.0_snrmin_5,sn_cosmo_Fake_Fake_DESC_seas_-1_-2.0_0.2_380.0_800.0_ebvofMW_0.0_0_sn_cosmo
+#fast_fast_bluecutoff_snr5,Output_Fit_380.0_800.0_ebvofMW_0.0_snrmin_5,sn_fast_Fake_Fake_DESC_seas_-1_-2.0_0.2_380.0_800.0_ebvofMW_0.0_0_sn_fast
+#fast_cosmo_bluecutoff_snr5,Output_Fit_380.0_800.0_ebvofMW_0.0_snrmin_5,sn_fast_Fake_Fake_DESC_seas_-1_-2.0_0.2_380.0_800.0_ebvofMW_0.0_0_sn_cosmo

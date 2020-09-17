@@ -27,18 +27,15 @@ simus = ['sn_fast', 'sn_cosmo']
 #simus = ['sn_cosmo']
 ebvs = [0.0]
 redcutoff = 800.0
-blues = [360.0, 370.0, 380.0]
 blues = [380.]
 fake_config = 'input/Fake_cadence/Fake_cadence.yaml'
 x1 = -2.0
 color = 0.2
-error_model = 1
 
-snrmin = 5.
+snrmin = 1.
 nbef = 4
 naft = 5
 
-#run(x1,color,simus,0.0,380.,800.,1,fake_config,snrmin,nbef,naft)
-
+run(x1,color,simus,0.0,380.,800.,1,fake_config,snrmin,nbef,naft)
 for bluecutoff in blues:
     run(x1,color,simus,0.0,bluecutoff,800.,0,fake_config,snrmin,nbef,naft)
