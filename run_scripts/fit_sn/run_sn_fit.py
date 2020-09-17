@@ -12,7 +12,9 @@ import glob
 import os
 
 
-def makeYaml(input_file, dbDir, prodid, outDir, nproc, fitter, covmb=0, display=0):
+def makeYaml(input_file, dbDir, prodid, outDir, nproc, fitter,
+             snrmin,nbef,naft,
+             covmb=0, display=0):
     """
     Function to replace generic parameters of a yaml file
 
@@ -47,6 +49,9 @@ def makeYaml(input_file, dbDir, prodid, outDir, nproc, fitter, covmb=0, display=
     filedata = filedata.replace('dbDir', dbDir)
     filedata = filedata.replace('nnproc', str(nproc))
     filedata = filedata.replace('fittername', fitter)
+    filedata = filedata.replace('snrval', str(snrmin))
+    filedata = filedata.replace('nbefval', str(nbef))
+    filedata = filedata.replace('naftval', str(naft))
     filedata = filedata.replace('covmbcalc', str(covmb))
     filedata = filedata.replace('displayval', str(display))
 
@@ -211,7 +216,12 @@ parser.add_option("--display", type="int", default=0,
                   help="to display fit in real-time[%default]")
 parser.add_option("--fitter", type="str", default='sn_cosmo',
                   help="fitter to use [%default]")
-
+parser.add_option("--snrmin", type=float, default=5.,
+                  help="min SNR for LC points to be fitter[%default]")
+parser.add_option("--nbef", type=int, default=4,
+                  help="min number of LC points before max[%default]")
+parser.add_option("--naft", type=int, default=5,
+                  help="min number of LC points after max[%default]")
 
 opts, args = parser.parse_args()
 
@@ -222,7 +232,9 @@ nproc = opts.nproc
 mbCalc = opts.mbcov
 display = opts.display
 fitter = opts.fitter
-
+snrmin = opts.snrmin
+nbef = opts.nbef
+naft = opts.naft
 
 covmb = None
 if mbCalc:
@@ -234,7 +246,9 @@ files = glob.glob(search_path)
 
 # make and load config file
 config = makeYaml('input/fit_sn/param_fit_gen.yaml',
-                  dirFiles, prodid, outDir, nproc, fitter, mbCalc, display)
+                  dirFiles, prodid, outDir, nproc, fitter,
+                  snrmin,nbef,naft,mbCalc, display)
+
 print(config)
 
 # create outputdir if necessary
