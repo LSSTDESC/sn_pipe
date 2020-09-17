@@ -14,6 +14,10 @@ Fitter:
     model : salt2-extended   # spectra model
     version : 1.0                     #version
     covmb: covmbcalc # to estimate covmb after fitted values
+LC_selection:
+    snrmin: snrval
+    nbef: nbefval
+    naft: naftval
 Display : displayval  #display during LC fit
 Output:
     directory: outDir
