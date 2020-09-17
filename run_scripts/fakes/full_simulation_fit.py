@@ -40,7 +40,12 @@ parser.add_option("--redcutoff", type=float, default=800,
                   help="red cutoff for SN[%default]")
 parser.add_option("--error_model", type=int, default=0,
                   help="error model for flux error estimation [%default]")
-
+parser.add_option("--snrmin", type=float, default=5.,
+                  help="min SNR for LC points to be fitter[%default]")
+parser.add_option("--nbef", type=int, default=4,
+                  help="min number of LC points before max[%default]")
+parser.add_option("--naft", type=int, default=5,
+                  help="min number of LC points after max[%default]")
 
 opts, args = parser.parse_args()
 
@@ -64,10 +69,16 @@ zmin = opts.zmin
 zmax = opts.zmax
 zstep = opts.zstep
 error_model = opts.error_model
+snrmin = opts.snrmin
+nbef = opts.nbef
+naft = opts.naft
 
-prodid = '{}_Fake_{}_seas_-1_{}_{}_{}_{}_ebvofMW_{}_errormodel_{}'.format(
-    simulator, fake_output, x1, color, bluecutoff, redcutoff, ebvofMW,error_model)
+cutoff = '{}_{}'.format(bluecutoff,redcutoff)
+if error_model:
+    cutoff = 'error_model'
 
+prodid = '{}_Fake_{}_seas_-1_{}_{}_{}_ebvofMW_{}'.format(
+    simulator, fake_output, x1, color, cutoff, ebvofMW,error_model)
 
 # first step: create fake data from yaml configuration file
 cmd = 'python run_scripts/fakes/make_fake.py --config {} --output {}'.format(
@@ -98,7 +109,7 @@ cmd += ' --ebvofMW {}'.format(ebvofMW)
 cmd += ' --bluecutoff {}'.format(bluecutoff)
 cmd += ' --redcutoff {}'.format(redcutoff)
 cmd += ' --npixels -1'
-cmd +=' --error_model {}'.format(error_model)
+cmd += ' --error_model {}'.format(error_model)
 
 print(cmd)
 os.system(cmd)
@@ -111,7 +122,9 @@ cmd += ' --dirFiles {}'.format(outDir_simu)
 cmd += ' --prodid {}_0'.format(prodid)
 cmd += ' --mbcov 0 --nproc 4'
 cmd += ' --outDir {}'.format(outDir_fit)
-
+cmd += ' --snrmin {}'.format(snrmin)
+cmd += ' --nbef {}'.format(nbef)
+cmd += ' --naft {}'.format(naft)
 print(cmd)
 os.system(cmd)
 
@@ -125,6 +138,8 @@ if 'fast' in simulator:
     cmd += ' --mbcov 0 --nproc 1'
     cmd += ' --outDir {}'.format(outDir_fit)
     cmd += ' --fitter sn_fast'
-
+    cmd += ' --snrmin {}'.format(snrmin)
+    cmd += ' --nbef {}'.format(nbef)
+    cmd += ' --naft {}'.format(naft)
     print(cmd)
     os.system(cmd)
