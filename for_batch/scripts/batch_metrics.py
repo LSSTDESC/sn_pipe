@@ -68,7 +68,7 @@ def go_for_batch(toproc, splitSky,
         # second case: there are pixelmaps available -> run on them
         # first: get the skymap
         fileSky = glob.glob('{}/skypatch*.npy'.format(pixelmap_dir))
-        skyMap = np.load(fileSky[0])
+        skyMap = np.load(fileSky[0],allow_pickle=True)
 
         print(skyMap)
         # get the total number of pixels in this skyMap
@@ -84,7 +84,7 @@ def go_for_batch(toproc, splitSky,
                 ffi = glob.glob(search_path)
                 if len(ffi) == 0:
                     print('potential problem here', search_path)
-                tab = np.load(ffi[0])
+                tab = np.load(ffi[0],allow_pickle=True)
                 # print(len(np.unique(tab['healpixID'])))
                 npixels_tot += len(np.unique(tab['healpixID']))
 
@@ -99,7 +99,7 @@ def go_for_batch(toproc, splitSky,
             if len(ffi) == 0:
                 print('potential problem here', search_path)
 
-            tab = np.load(ffi[0])
+            tab = np.load(ffi[0],allow_pickle=True)
             npixels_map = len(np.unique(tab['healpixID']))
 
             # print('pixel_map',val['RAmin'],val['RAmax'],npixels_map)
@@ -267,7 +267,7 @@ class batchclass:
 
         script.write("EOF" + "\n")
         script.close()
-        os.system("sh "+scriptName)
+        #os.system("sh "+scriptName)
 
     def batch_cmd(self, proc):
         """
