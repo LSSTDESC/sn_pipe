@@ -80,6 +80,7 @@ class SNRMetricWrapper(MetricWrapper):
             metadata=metadata, outDir=outDir, ebvofMW=ebvofMW)
 
         self.metaout += ['x1', 'color', 'dirFake', 'dirRefs', 'band', 'z']
+        web_path = 'https://me.lsst.eu/gris/DESC_SN_pipeline'
 
         shift = 10.
         x1 = metadata.x1
@@ -94,10 +95,14 @@ class SNRMetricWrapper(MetricWrapper):
 
         # names_ref = list(metadata.names_ref)
         for name in [metadata.names_ref]:
+            Li_name = 'Li_{}_{}_{}.npy'.format(name, x1, color)
+            mag_name = 'Mag_to_Flux_{}.npy'.format(name)
             Li_files.append(
-                '{}/Li_{}_{}_{}.npy'.format(metadata.dirRefs, name, x1, color))
+                '{}/{}'.format(metadata.dirRefs,Li_name))
             mag_to_flux_files.append(
-                '{}/Mag_to_Flux_{}.npy'.format(metadata.dirRefs, name))
+                '{}/{}'.format(metadata.dirRefs, mag_name))
+            check_get_file(web_path,metadata.dirRefs ,Li_name)
+            check_get_file(web_path,metadata.dirRefs ,mag_name)
 
         lim_sn = ReferenceData(
             Li_files, mag_to_flux_files, metadata.band, metadata.z)
