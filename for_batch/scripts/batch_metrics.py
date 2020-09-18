@@ -267,7 +267,7 @@ class batchclass:
 
         script.write("EOF" + "\n")
         script.close()
-        #os.system("sh "+scriptName)
+        os.system("sh "+scriptName)
 
     def batch_cmd(self, proc):
         """
