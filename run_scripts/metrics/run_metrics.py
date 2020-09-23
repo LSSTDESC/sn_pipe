@@ -70,7 +70,7 @@ parser.add_option("--timer", type=int, default=0,
                   help="timer mode for the metric[%default]")
 parser.add_option("--ploteffi", type=int, default=0,
                   help="plot efficiencies for the metric[%default]")
-parser.add_option("--z", type=float, default=0.3,
+parser.add_option("--z", type=float, default=0.2,
                   help="redshift for the metric[%default]")
 parser.add_option("--band", type=str, default='r',
                   help="band for the metric[%default]")
