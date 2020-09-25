@@ -42,12 +42,12 @@ def batch(dbNames,id,script,nightmin,nightmax,dbDir,dbDir_pixels,figDir,movieDir
     script.write(" source setup_release.sh Linux\n")
     script.write("echo 'sourcing done' \n")
 
-    for vv in dbNames:
-        dbName = ','.join(vv)
-        print('io',dbName)
-        cmd_ = '{} --dbName {}'.format(cmd_process,dbName)
+    #print('hhh',dbNames)
+    #for vv in dbNames:
+    dbName = ','.join(dbNames)
+    cmd_ = '{} --dbName {}'.format(cmd_process,dbName)
    
-        script.write(cmd_+" \n")
+    script.write(cmd_+" \n")
     
     script.write("EOF" + "\n")
     script.close()
@@ -86,19 +86,17 @@ dbList = pd.read_csv(opts.dbList, comment='#')
 print(dbList)
 
 dfs = np.split(dbList['dbName'].tolist(),[8])
-print('tt',type(dfs))
 
-tt = np.split(dfs,[10])
-print('iiiiii',tt)
+tt = np.split(dfs,[5])
 for iu,dd in enumerate(tt):
-    print('rr',dd)
-
-    batch(dd.tolist(),iu,
-          script='run_scripts/visu_cadence/run_visu_cadence.py',
-          nightmin=opts.nightmin,nightmax=opts.nightmax,
-          dbDir=opts.dbDir,dbDir_pixels=opts.dbDir_pixels,
-          figDir=opts.figDir,movieDir='{}/{}'.format(opts.movieDir,opts.version),
-          ffmpeg=opts.ffmpeg)
+    if len(dd) >0:
+        print('processing',dd[0].tolist())
+        batch(dd[0].tolist(),iu,
+              script='run_scripts/visu_cadence/run_visu_cadence.py',
+              nightmin=opts.nightmin,nightmax=opts.nightmax,
+              dbDir=opts.dbDir,dbDir_pixels=opts.dbDir_pixels,
+              figDir=opts.figDir,movieDir='{}/{}'.format(opts.movieDir,opts.version),
+              ffmpeg=opts.ffmpeg)
 
 """
  cmd = ' python run_scripts/visu_cadence/run_visu_cadence.py --dispType moviepixels --nights 1-730 --saveMovie 1 --dbDir_pixels /sps/lsst/users/gris/ObsPixelized_circular_new --dbDir /sps/lsst/cadence/LSST_SN_CADENCE/cadence_db --figDir /sps/lsst/users/gris/OS_Figures --movieDir /sps/lsst/users/gris/web/OS_Videos/Gaps --ffmpeg ../../ffmpeg/ffmpeg-4.3.1-i686-static/ffmpeg --dbName'
