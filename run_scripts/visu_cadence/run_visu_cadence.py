@@ -23,6 +23,9 @@ parser.add_option("--areaTime", type="int", default=0,
                   help="display observed area [%default]")
 parser.add_option("--dispType", type="str", default='cadence',
                   help="what to display (cadence,snapshot,moviepixels) [%default]")
+parser.add_option("--ffmpeg", type="str", default='ffmpeg',
+                  help="command to use ffmpeg [%default]")
+
 opts, args = parser.parse_args()
 
 dbDir = opts.dbDir
@@ -35,6 +38,7 @@ realTime = opts.realTime
 saveFig = opts.saveFig
 areaTime = opts.areaTime
 dispType = opts.dispType
+ffmpeg = opts.ffmpeg
 
 if '-' not in opts.nights:
     nights = list(map(int,opts.nights.split(',')))
@@ -54,5 +58,5 @@ if dispType =='moviepixels':
     nightmin = np.min(nights)
     nightmax = np.max(nights)
     MoviePixels(dbDir=dbDir, dbDir_pixels=dbDir_pixels,figDir=figDir,movieDir=movieDir,dbName=dbName, saveMovie=saveMovie, realTime=realTime,
-                saveFig=saveFig,nightmin=nightmin,nightmax=nightmax)
+                saveFig=saveFig,nightmin=nightmin,nightmax=nightmax,ffmpeg_cmd=ffmpeg)
 
