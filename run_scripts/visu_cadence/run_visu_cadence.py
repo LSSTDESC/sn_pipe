@@ -1,7 +1,25 @@
 from sn_tools.sn_visu import CadenceMovie, SnapNight,MoviePixels
 from optparse import OptionParser
-import matplotlib.pyplot as plt
 import numpy as np
+
+
+def multi_MoviePixels(dbDir,dbDir_pixels,figDir,movieDir,dbName, saveMovie, realTime,
+                    saveFig,nightmin,nightmax,ffmpeg_cmd,j, output_q):
+
+    MoviePixels(dbDir=dbDir,dbDir_pixels=dbDir_pixels,
+                figDir=figDir,movieDir=movieDir,
+                dbName=dbName, saveMovie=saveMovie,
+                realTime=realTime,
+                saveFig=saveFig,
+                nightmin=nightmin,nightmax=nightmax,
+                ffmpeg_cmd=ffmpeg)
+
+        
+    if output_q is not None:
+        return output_q.put({j:1})
+    else:
+        return 1
+
 
 parser = OptionParser()
 
@@ -60,18 +78,18 @@ if dispType =='moviepixels':
     dbNames = opts.dbName.split(',')
     print('processing Movie Pixels',dbNames)
     if len(dbNames) < 2:
-        MoviePixels(dbDir=dbDir, dbDir_pixels=dbDir_pixels,figDir=figDir,movieDir=movieDir,dbName=dbName, saveMovie=saveMovie, realTime=realTime,
+        MoviePixels(dbDir=dbDir,dbDir_pixels=dbDir_pixels,figDir=figDir,movieDir=movieDir,dbName=dbName, saveMovie=saveMovie, realTime=realTime,
                     saveFig=saveFig,nightmin=nightmin,nightmax=nightmax,ffmpeg_cmd=ffmpeg)
     else:
         import multiprocessing
         result_queue = multiprocessing.Queue()
 
-        procs = [multiprocessing.Process(name='Subprocess-{}'.format(dbName), target=MoviePixels,args=(dbDir,
-                                               dbDir_pixels,
-                                               figDir,movieDir,
-                                               dbName, saveMovie, realTime,
-                                               saveFig,nightmin,nightmax,10,64,ffmpeg)) for dbName in dbNames]
+        procs = [multiprocessing.Process(name='Subprocess-{}'.format(j), target=multi_MoviePixels,
+                                         args=(dbDir,dbDir_pixels,figDir,movieDir,dbName, saveMovie, realTime,
+                                         saveFig,nightmin,nightmax,ffmpeg,j,result_queue)) for j,dbName in enumerate(dbNames)]
 
         for p in procs:
             p.start()
         
+        for p in multiprocessing.active_children():
+            p.join()
