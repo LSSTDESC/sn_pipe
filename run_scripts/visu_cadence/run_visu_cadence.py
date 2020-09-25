@@ -6,7 +6,7 @@ import numpy as np
 parser = OptionParser()
 
 parser.add_option("--dbName", type="str", default='alt_sched',
-                  help="db name [%default]")
+                  help="db name(s) [%default]")
 parser.add_option("--dbDir", type="str", default='/sps/lsst/cadence/LSST_SN_CADENCE/cadence_db', help="db dir [%default]")
 parser.add_option("--dbDir_pixels", type="str", default='../ObsPixelized_circular_new/', help="db dir for pixel data[%default]")
 parser.add_option("--figDir", type="str", default='../OS_Figures', help="dir for figures [%default]")
@@ -57,6 +57,21 @@ if dispType == 'snapshot':
 if dispType =='moviepixels':
     nightmin = np.min(nights)
     nightmax = np.max(nights)
-    MoviePixels(dbDir=dbDir, dbDir_pixels=dbDir_pixels,figDir=figDir,movieDir=movieDir,dbName=dbName, saveMovie=saveMovie, realTime=realTime,
-                saveFig=saveFig,nightmin=nightmin,nightmax=nightmax,ffmpeg_cmd=ffmpeg)
+    dbNames = opts.dbName.split(',')
+    print('processing Movie Pixels',dbNames)
+    if len(dbNames) < 2:
+        MoviePixels(dbDir=dbDir, dbDir_pixels=dbDir_pixels,figDir=figDir,movieDir=movieDir,dbName=dbName, saveMovie=saveMovie, realTime=realTime,
+                    saveFig=saveFig,nightmin=nightmin,nightmax=nightmax,ffmpeg_cmd=ffmpeg)
+    else:
+        import multiprocessing
+        result_queue = multiprocessing.Queue()
 
+        procs = [multiprocessing.Process(name='Subprocess-{}'.format(dbName), target=MoviePixels,args=(dbDir,
+                                               dbDir_pixels,
+                                               figDir,movieDir,
+                                               dbName, saveMovie, realTime,
+                                               saveFig,nightmin,nightmax,10,64,ffmpeg)) for dbName in dbNames]
+
+        for p in procs:
+            p.start()
+        
