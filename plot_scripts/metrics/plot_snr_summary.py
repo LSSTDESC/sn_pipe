@@ -5,10 +5,10 @@ import numpy as np
 from astropy.table import Table, vstack
 import pandas as pd
 
-def test(grp,dirFile, metricName, fieldtype, nside):
+def process(grp,dirFile, metricName, fieldtype, nside,var):
     
     metricValues = load(dirFile, grp.name, metricName, fieldtype, nside)
-    med = summaryOS(metricValues,'frac_obs_SNCosmo')
+    med = summaryOS(metricValues,var)
 
     return pd.DataFrame({'frac':[med]})
     
@@ -32,6 +32,7 @@ def summaryOS(data,what):
     #loop on the season and remove seasons with too few pixels
     
     tab = Table()
+    print(data.columns)
     for band, season in np.unique(data[['band', 'season']]):
         idx = (data['band'] == band) & (data['season'] == season)
         sel = data[idx]
@@ -51,8 +52,11 @@ parser.add_option("--fieldtype", type="str",
                   default='WFD', help="band [%default]")
 parser.add_option("--metricName", type="str",
                   default='SNRr', help="metric name[%default]")
+parser.add_option("--var", type="str",
+                  default='frac_obs_SNCosmo', help="column name for the processing[%default]")
 parser.add_option("--nside", type="int", default=64,
                   help="nside from healpix [%default]")
+
     
 opts, args = parser.parse_args()
 
@@ -61,14 +65,16 @@ dbList= opts.dbList
 metricName = opts.metricName
 fieldtype = opts.fieldtype
 nside = opts.nside
+var = opts.var
 
 toprocess = pd.read_csv(dbList, comment='#')
 
-df = toprocess.groupby(['dbName']).apply(lambda x: test(x,dirFile, metricName, fieldtype, nside)).reset_index()
+
+df = toprocess.groupby(['dbName']).apply(lambda x: process(x,dirFile, metricName, fieldtype, nside,var)).reset_index()
 
 print(df)
 
-df.to_csv('Metric_SNRr.cvs',index=False)
+df.to_csv('Metric_{}.cvs'.format(metricName),index=False)
 """                                             
 df = pd.DataFrame()
 for io, val in toprocess.iterrows():
