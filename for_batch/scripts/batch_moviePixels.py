@@ -44,10 +44,13 @@ def batch(dbNames,id,script,nightmin,nightmax,dbDir,dbDir_pixels,figDir,movieDir
 
     #print('hhh',dbNames)
     #for vv in dbNames:
-    dbName = ','.join(dbNames)
-    cmd_ = '{} --dbName {}'.format(cmd_process,dbName)
+    dbSplit = np.array_split(dbNames,3)
+
+    for vvo in dbSplit:
+        dbName = ','.join(vvo)
+        cmd_ = '{} --dbName {}'.format(cmd_process,dbName)
    
-    script.write(cmd_+" \n")
+        script.write(cmd_+" \n")
     
     script.write("EOF" + "\n")
     script.close()
@@ -83,15 +86,17 @@ opts, args = parser.parse_args()
 
 dbList = pd.read_csv(opts.dbList, comment='#')
 
-print(dbList)
+print(dbList,len(dbList))
 
-dfs = np.split(dbList['dbName'].tolist(),[8])
+dfs = np.array_split(dbList['dbName'].to_list(),5)
 
-tt = np.split(dfs,[5])
-for iu,dd in enumerate(tt):
+for dd in dfs:
+    print(dd.shape)
+
+for iu,dd in enumerate(dfs):
     if len(dd) >0:
-        print('processing',dd[0].tolist())
-        batch(dd[0].tolist(),iu,
+        print('processing',dd)
+        batch(dd,iu,
               script='run_scripts/visu_cadence/run_visu_cadence.py',
               nightmin=opts.nightmin,nightmax=opts.nightmax,
               dbDir=opts.dbDir,dbDir_pixels=opts.dbDir_pixels,
