@@ -11,6 +11,7 @@ def batch(dbNames,id,script,nightmin,nightmax,dbDir,dbDir_pixels,figDir,movieDir
     cmd_process += ' --nights {}-{}'.format(nightmin,nightmax)
     cmd_process += ' --dbDir {} --dbDir_pixels {} --figDir {}  --movieDir {}'.format(dbDir,dbDir_pixels,figDir,movieDir) 
     cmd_process += ' --ffmpeg {}'.format(ffmpeg)
+    cmd_process += ' --mode batch'
     
 
     cwd = os.getcwd()

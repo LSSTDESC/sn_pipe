@@ -4,7 +4,7 @@ import numpy as np
 
 
 def multi_MoviePixels(dbDir,dbDir_pixels,figDir,movieDir,dbName, saveMovie, realTime,
-                    saveFig,nightmin,nightmax,ffmpeg_cmd,j, output_q):
+                    saveFig,nightmin,nightmax,ffmpeg_cmd,mode,j, output_q):
 
     MoviePixels(dbDir=dbDir,dbDir_pixels=dbDir_pixels,
                 figDir=figDir,movieDir=movieDir,
@@ -12,7 +12,7 @@ def multi_MoviePixels(dbDir,dbDir_pixels,figDir,movieDir,dbName, saveMovie, real
                 realTime=realTime,
                 saveFig=saveFig,
                 nightmin=nightmin,nightmax=nightmax,
-                ffmpeg_cmd=ffmpeg)
+                ffmpeg_cmd=ffmpeg,mode=mode)
 
         
     if output_q is not None:
@@ -43,6 +43,8 @@ parser.add_option("--dispType", type="str", default='cadence',
                   help="what to display (cadence,snapshot,moviepixels) [%default]")
 parser.add_option("--ffmpeg", type="str", default='ffmpeg',
                   help="command to use ffmpeg [%default]")
+parser.add_option("--mode", type="str", default='interactive',
+                  help="mode to use MoviePixels (interactive/batch) [%default]")
 
 opts, args = parser.parse_args()
 
@@ -57,6 +59,7 @@ saveFig = opts.saveFig
 areaTime = opts.areaTime
 dispType = opts.dispType
 ffmpeg = opts.ffmpeg
+mode = opts.mode
 
 if '-' not in opts.nights:
     nights = list(map(int,opts.nights.split(',')))
@@ -79,14 +82,14 @@ if dispType =='moviepixels':
     print('processing Movie Pixels',dbNames)
     if len(dbNames) < 2:
         MoviePixels(dbDir=dbDir,dbDir_pixels=dbDir_pixels,figDir=figDir,movieDir=movieDir,dbName=dbName, saveMovie=saveMovie, realTime=realTime,
-                    saveFig=saveFig,nightmin=nightmin,nightmax=nightmax,ffmpeg_cmd=ffmpeg)
+                    saveFig=saveFig,nightmin=nightmin,nightmax=nightmax,ffmpeg_cmd=ffmpeg,mode=mode)
     else:
         import multiprocessing
         result_queue = multiprocessing.Queue()
 
         procs = [multiprocessing.Process(name='Subprocess-{}'.format(j), target=multi_MoviePixels,
                                          args=(dbDir,dbDir_pixels,figDir,movieDir,dbName, saveMovie, realTime,
-                                         saveFig,nightmin,nightmax,ffmpeg,j,result_queue)) for j,dbName in enumerate(dbNames)]
+                                         saveFig,nightmin,nightmax,ffmpeg,mode,j,result_queue)) for j,dbName in enumerate(dbNames)]
 
         for p in procs:
             p.start()
