@@ -210,7 +210,7 @@ class SimuWrapper:
 
         """
         # check whether X0_norm file exist or not (and generate it if necessary)
-        absMag = config['SN parameters']['absmag']
+        absMag = config['SN']['absmag']
         x0normFile = 'reference_files/X0_norm_{}.npy'.format(absMag)
         if not os.path.isfile(x0normFile):
             # if this file does not exist, grab it from a web server
@@ -219,7 +219,7 @@ class SimuWrapper:
 
         if not os.path.isfile(x0normFile):
             # if the file could not be found, then have to generate it!
-            salt2Dir = config['SN parameters']['salt2Dir']
+            salt2Dir = config['SN']['salt2Dir']
             model = config['Simulator']['model']
             version = str(config['Simulator']['version'])
 

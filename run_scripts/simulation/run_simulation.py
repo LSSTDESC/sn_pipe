@@ -1,9 +1,17 @@
 from simuWrapper import SimuWrapper, MakeYaml
-from optparse import OptionParser
+import sn_simu_input as simu_input
+from sn_tools.sn_io import make_dict_from_config,make_dict_from_optparse
 from sn_tools.sn_process import Process
+from optparse import OptionParser
 import numpy as np
 import os
 import yaml
+
+
+# get all possible simulation parameters and put in a dict
+path = simu_input.__path__
+confDict = make_dict_from_config(path[0],'config_simulation.txt')
+
 
 parser = OptionParser()
 
@@ -13,54 +21,8 @@ parser.add_option("--dbDir", type="str",
                   default=' /sps/lsst/cadence/LSST_SN_CADENCE/cadence_db', help="db dir [%default]")
 parser.add_option("--dbExtens", type="str", default='npy',
                   help="db extension [%default]")
-parser.add_option("--outDir", type="str", default='Output_Simu',
-                  help="output dir [%default]")
-parser.add_option("--nside", type="int", default=64,
-                  help="healpix nside [%default]")
-parser.add_option("--nproc", type=int, default=8,
-                  help="number of proc  [%default]")
-parser.add_option("--nprocsimu", type=int, default=1,
-                  help="number of proc at the simulation stage [%default]")
-parser.add_option("--diffflux", type=int, default=0,
-                  help="flag for diff flux[%default]")
-parser.add_option("--season", type="int", default=-1,
-                  help="season to process[%default]")
-parser.add_option("--fieldType", type="str", default='DD',
-                  help="field - DD or WFD[%default]")
-parser.add_option("--x1Type", type="str", default='unique',
-                  help="x1 type (unique,random,uniform) [%default]")
-parser.add_option("--x1min", type=float, default=-2.0,
-                  help="x1 min if x1Type=unique (x1val) or uniform[%default]")
-parser.add_option("--x1max", type=float, default=2.0,
-                  help="x1 max - if x1Type=uniform[%default]")
-parser.add_option("--x1step", type=float, default=0.1,
-                  help="x1 step - if x1Type=uniform[%default]")
-parser.add_option("--colorType", type="str", default='unique',
-                  help="color type (unique,random,uniform) [%default]")
-parser.add_option("--colormin", type=float, default=0.2,
-                  help="color min if colorType=unique (colorval) or uniform[%default]")
-parser.add_option("--colormax", type=float, default=0.3,
-                  help="color max - if colorType=uniform[%default]")
-parser.add_option("--colorstep", type=float, default=0.1,
-                  help="color step - if colorType=uniform[%default]")
-parser.add_option("--zType", type="str", default='uniform',
-                  help=" zcolor type (unique,uniform,random) [%default]")
-parser.add_option("--daymaxType", type="str", default='unique',
-                  help="daymax type (unique,uniform,random) [%default]")
-parser.add_option("--daymaxstep", type=float, default=1,
-                  help="daymax step [%default]")
-parser.add_option("--zmin", type="float", default=0.0,
-                  help="min redshift [%default]")
-parser.add_option("--zmax", type="float", default=1.0,
-                  help="max redshift [%default]")
-parser.add_option("--zstep", type="float", default=0.02,
-                  help="max redshift [%default]")
-parser.add_option("--saveData", type="int", default=0,
-                  help="to save data [%default]")
 parser.add_option("--nodither", type="int", default=0,
                   help="to remove dithering [%default]")
-parser.add_option("--coadd", type="int", default=1,
-                  help="to coadd or not[%default]")
 parser.add_option("--RAmin", type=float, default=0.,
                   help="RA min for obs area - for WDF only[%default]")
 parser.add_option("--RAmax", type=float, default=360.,
@@ -79,23 +41,31 @@ parser.add_option("--nclusters", type=int, default=0,
                   help="number of clusters in data (DD only)[%default]")
 parser.add_option("--radius", type=float, default=4.,
                   help="radius around clusters (DD and Fakes)[%default]")
-parser.add_option("--simulator", type=str, default='sn_cosmo',
-                  help="simulator to use[%default]")
-parser.add_option("--prodid", type=str, default='Test',
-                  help="prod id tag[%default]")
-parser.add_option("--ebvofMW", type=float, default=-1.,
-                  help="ebvofMW value[%default]")
-parser.add_option("--bluecutoff", type=float, default=380.0,
-                  help="blue cutoff for SN[%default]")
-parser.add_option("--redcutoff", type=float, default=800.0,
-                  help="red cutoff for SN[%default]")
-parser.add_option("--error_model", type=int, default=0,
-                  help="error model for flux estimation[%default]")
+
+# parser for simulation parameters : 'dynamical' generation
+for key, vals in confDict.items():
+    vv = vals[1]
+    if vals[0] != 'str':
+        vv = eval('{}({})'.format(vals[0],vals[1]))
+    parser.add_option('--{}'.format(key),help='{} [%default]'.format(vals[2]),default=vv,type=vals[0],metavar='')
 
 opts, args = parser.parse_args()
 
 print('Start processing...')
 
+#load the new values
+newDict = {}
+for key, vals in confDict.items():
+    newval = eval('opts.{}'.format(key))
+    newDict[key]=(vals[0],newval)
+
+# new dict with configuration params
+yaml_params = make_dict_from_optparse(newDict)
+
+# one modif: full dbName
+yaml_params['Observations']['filename']='{}/{}.{}'.format(opts.dbDir, opts.dbName, opts.dbExtens)
+
+"""
 # Generate the yaml file
 # build the yaml file
 
@@ -111,16 +81,19 @@ makeYaml = MakeYaml(opts.dbDir, opts.dbName, opts.dbExtens, opts.nside,
 yaml_orig = 'input/simulation/param_simulation_gen.yaml'
 
 yaml_params = makeYaml.genYaml(yaml_orig)
-
+"""
 print(yaml_params)
 
 # save on disk
 
 # create outputdir if does not exist
-if not os.path.isdir(opts.outDir):
-    os.makedirs(opts.outDir)
+outDir = yaml_params['Output']['directory']
+prodid = yaml_params['ProductionID']
 
-yaml_name = '{}/{}.yaml'.format(opts.outDir, opts.prodid)
+if not os.path.isdir(outDir):
+    os.makedirs(outDir)
+
+yaml_name = '{}/{}.yaml'.format(outDir, prodid)
 with open(yaml_name, 'w') as f:
     data = yaml.dump(yaml_params, f)
 
