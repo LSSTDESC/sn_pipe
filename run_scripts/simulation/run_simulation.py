@@ -100,14 +100,18 @@ with open(yaml_name, 'w') as f:
 # define what to process using simuWrapper
 
 metricList = [SimuWrapper(yaml_name)]
-
+fieldType = yaml_params['Observations']['fieldtype']
+nside = yaml_params['Pixelisation']['nside']
+nproc = yaml_params['Multiprocessing']['nproc']
+saveData = 0
+outDir = yaml_params['Output']['directory']
 # now perform the processing
 
 Process(opts.dbDir, opts.dbName, opts.dbExtens,
-        opts.fieldType, opts.nside,
+        fieldType, nside,
         opts.RAmin, opts.RAmax,
         opts.Decmin, opts.Decmax,
-        opts.saveData, opts.remove_dithering,
-        opts.outDir, opts.nproc, metricList,
+        saveData, opts.remove_dithering,
+        outDir, nproc, metricList,
         opts.pixelmap_dir, opts.npixels,
         opts.nclusters, opts.radius)
