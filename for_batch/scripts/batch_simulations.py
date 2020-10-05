@@ -205,7 +205,8 @@ class batchclass:
             self.scriptref, self.dbDir, self.dbName, self.dbExtens)
 
         for opt, value in self.opts.__dict__.items():
-            if opt not in ['dbList','splitSky','ProductionID','Pixelisation_nside','Observations_fieldtype','Output_directory']:
+            if opt not in ['dbList','splitSky','ProductionID','Pixelisation_nside',
+                           'Observations_fieldtype','Output_directory','Observations_filename']:
                 cmd += ' --{} {}'.format(opt,value)
 
         cmd += ' --ProductionID {}'.format(name_id)
@@ -215,8 +216,10 @@ class batchclass:
         cmd += ' --Decmax {}'.format(self.Decmax)
         cmd += ' --nproc {}'.format(proc['nproc'].values[0])
         cmd += ' --Pixelisation_nside {}'.format(proc['nside'].values[0])
-        cmd += ' --Observations_fieldtype {}'.format(proc['simuType'].values[0])
+        cmd += ' --Observations_fieldtype {}'.format(proc['fieldtype'].values[0])
+        cmd += ' --Observations_filename {}/{}.{}'.format(self.dbDir,self.dbName,self.dbExtens)
         cmd += ' --Output_directory {}/{}'.format(opts.Output_directory,self.dbName)
+        
 
         return cmd
 
