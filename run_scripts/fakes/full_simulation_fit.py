@@ -92,24 +92,29 @@ os.system(cmd)
 cmd = 'python run_scripts/simulation/run_simulation.py --dbDir .'
 cmd += ' --dbName {}'.format(opts.fake_output)
 cmd += ' --dbExtens npy'
-cmd += ' --x1min {} --x1Type unique'.format(x1)
-cmd += ' --colormin {} --colorType unique'.format(color)
-cmd += ' --fieldType Fake'
-cmd += ' --coadd 0 --radius 0.01'
-cmd += ' --outDir {}'.format(outDir_simu)
-cmd += ' --simulator {}'.format(simulator)
-cmd += ' --nproc 1'
+cmd += ' --SN_x1_type unique'
+cmd += ' --SN_x1_min {}'.format(x1)
+cmd += ' --SN_color_type unique'
+cmd += ' --SN_color_min {}'.format(color)
+cmd += ' --SN_z_type uniform'
+cmd += ' --SN_z_min {}'.format(zmin)
+cmd += ' --SN_z_max {}'.format(zmax)
+cmd += ' --SN_z_step {}'.format(zstep)
+cmd += ' --SN_daymax_type unique'
+cmd += ' --Observations_fieldtype Fake'
+cmd += ' --Observations_coadd 0'
+cmd += ' --radius 0.01'
+cmd += ' --Output_directory {}'.format(outDir_simu)
+cmd += ' --Simulator_name sn_simulator.{}'.format(simulator)
+cmd += ' --Multiprocessing_nproc 1'
 cmd += ' --RAmin 0.0'
 cmd += ' --RAmax 0.1'
-cmd += ' --prodid {}'.format(prodid)
-cmd += ' --zmin {}'.format(zmin)
-cmd += ' --zmax {}'.format(zmax)
-cmd += ' --zstep {}'.format(zstep)
-cmd += ' --ebvofMW {}'.format(ebvofMW)
-cmd += ' --bluecutoff {}'.format(bluecutoff)
-cmd += ' --redcutoff {}'.format(redcutoff)
+cmd += '  --ProductionID {}'.format(prodid)
+cmd += ' --SN_ebvofMW {}'.format(ebvofMW)
+cmd += ' --SN_blueCutoff {}'.format(bluecutoff)
+cmd += ' --SN_redCutoff {}'.format(redcutoff)
 cmd += ' --npixels -1'
-cmd += ' --error_model {}'.format(error_model)
+cmd += ' --Simulator_errorModel {}'.format(error_model)
 
 print(cmd)
 os.system(cmd)
