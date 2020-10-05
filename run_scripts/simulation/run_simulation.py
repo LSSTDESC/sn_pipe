@@ -41,6 +41,8 @@ parser.add_option("--nclusters", type=int, default=0,
                   help="number of clusters in data (DD only)[%default]")
 parser.add_option("--radius", type=float, default=4.,
                   help="radius around clusters (DD and Fakes)[%default]")
+parser.add_option("--nproc", type=int, default=1,
+                  help="number of procs to run[%default]")
 
 # parser for simulation parameters : 'dynamical' generation
 for key, vals in confDict.items():
@@ -102,7 +104,6 @@ with open(yaml_name, 'w') as f:
 metricList = [SimuWrapper(yaml_name)]
 fieldType = yaml_params['Observations']['fieldtype']
 nside = yaml_params['Pixelisation']['nside']
-nproc = yaml_params['Multiprocessing']['nproc']
 saveData = 0
 outDir = yaml_params['Output']['directory']
 # now perform the processing
@@ -112,6 +113,6 @@ Process(opts.dbDir, opts.dbName, opts.dbExtens,
         opts.RAmin, opts.RAmax,
         opts.Decmin, opts.Decmax,
         saveData, opts.remove_dithering,
-        outDir, nproc, metricList,
+        outDir, opts.nproc, metricList,
         opts.pixelmap_dir, opts.npixels,
         opts.nclusters, opts.radius)
