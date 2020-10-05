@@ -46,16 +46,6 @@ def go_for_batch(toproc,dbDir,dbExtens,run_script,opts):
             RA_min = RAs[ira]
             RA_max = RAs[ira+1]
             batchclass(toproc, dbDir, dbExtens,run_script,RA_min,RA_max,Dec_min,Dec_max,opts)
-            """
-                       outDir, 8, toproc,
-                       nodither, nside, fieldType, RA_min, RA_max,
-                       -1.0, -1.0,
-                       pixelmap_dir, npixels, npixels,
-                       x1Type, x1min, x1max, x1step,
-                       colorType, colormin, colormax, colorstep,
-                       zType, zmin, zmax, zstep,
-                       daymaxType, daymaxstep,simulator)
-            """
     else:
         # second case: there are pixelmaps available -> run on them
         # first: get the skymap
@@ -146,7 +136,6 @@ class batchclass:
 
         dbName = self.dbName
         
-        print('oooo',self.opts)
         nside = self.opts.Pixelisation_nside
         fieldType = self.opts.Observations_fieldtype 
         nodither = self.opts.nodither
@@ -216,7 +205,7 @@ class batchclass:
             self.scriptref, self.dbDir, self.dbName, self.dbExtens)
 
         for opt, value in self.opts.__dict__.items():
-            if opt not in ['dbList','splitSky','ProductionID','Pixelisation_nside','Observations_fieldtype']:
+            if opt not in ['dbList','splitSky','ProductionID','Pixelisation_nside','Observations_fieldtype','Output_directory']:
                 cmd += ' --{} {}'.format(opt,value)
 
         cmd += ' --ProductionID {}'.format(name_id)
@@ -227,6 +216,7 @@ class batchclass:
         cmd += ' --nproc {}'.format(proc['nproc'].values[0])
         cmd += ' --Pixelisation_nside {}'.format(proc['nside'].values[0])
         cmd += ' --Observations_fieldtype {}'.format(proc['simuType'].values[0])
+        cmd += ' --Output_directory {}/{}'.format(opts.Output_directory,self.dbName)
 
         return cmd
 
@@ -260,50 +250,6 @@ for key, vals in confDict.items():
         vv = eval('{}({})'.format(vals[0],vals[1]))
     parser.add_option('--{}'.format(key),help='{} [%default]'.format(vals[2]),default=vv,type=vals[0],metavar='')
 
-
-"""
-parser.add_option("--nside", type="int", default=64,
-                  help="nside healpix parameter[%default]")
-parser.add_option("--fieldType", type=str, default='WFD',
-                  help="field type[%default]")
-
-
-parser.add_option("--outDir", type=str, default='/sps/lsst/users/gris/Simulations',
-                  help="output directory[%default]")
-parser.add_option("--x1Type", type=str, default='unique',
-                  help="x1 type - unique, uniform, random[%default]")
-parser.add_option("--x1min", type=float, default=-2.0,
-                  help="x1 min value [%default]")
-parser.add_option("--x1max", type=float, default=2.0,
-                  help="x1 max [%default]")
-parser.add_option("--x1step", type=float, default=0.1,
-                  help="x1 step - type = uniform only[%default]")
-
-parser.add_option("--colorType", type=str, default='unique',
-                  help="color type - unique, uniform, random[%default]")
-parser.add_option("--colormin", type=float, default=0.2,
-                  help="color min value [%default]")
-parser.add_option("--colormax", type=float, default=0.3,
-                  help="color max [%default]")
-parser.add_option("--colorstep", type=float, default=0.05,
-                  help="color step - type = uniform only[%default]")
-
-parser.add_option("--zType", type=str, default='unique',
-                  help="z type - unique, uniform, random[%default]")
-parser.add_option("--zmin", type=float, default=0.1,
-                  help="z min value [%default]")
-parser.add_option("--zmax", type=float, default=1.0,
-                  help="z max [%default]")
-parser.add_option("--zstep", type=float, default=0.1,
-                  help="z step - type = uniform only[%default]")
-
-parser.add_option("--daymaxType", type=str, default='unique',
-                  help="daymax type - unique, uniform, random[%default]")
-parser.add_option("--daymaxstep", type=float, default=1.,
-                  help="daymax step - type = uniform only[%default]")
-parser.add_option("--simulator", type=str, default='sn_cosmo',
-                  help="simulator to use [%default]")
-"""
 
 opts, args = parser.parse_args()
 
