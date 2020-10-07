@@ -103,13 +103,14 @@ with open(yaml_name, 'w') as f:
 
 metricList = [SimuWrapper(yaml_name)]
 fieldType = yaml_params['Observations']['fieldtype']
+fieldName = yaml_params['Observations']['fieldname']
 nside = yaml_params['Pixelisation']['nside']
 saveData = 0
 outDir = yaml_params['Output']['directory']
 # now perform the processing
 
 Process(opts.dbDir, opts.dbName, opts.dbExtens,
-        fieldType, nside,
+        fieldType, fieldName,nside,
         opts.RAmin, opts.RAmax,
         opts.Decmin, opts.Decmax,
         saveData, opts.remove_dithering,
