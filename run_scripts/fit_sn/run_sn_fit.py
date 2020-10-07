@@ -10,55 +10,11 @@ from sn_fit.process_fit import Fitting
 from sn_fit.mbcov import MbCov
 import glob
 import os
+import sn_fit_input as simu_fit
+from sn_tools.sn_io import make_dict_from_config,make_dict_from_optparse
+from sn_tools.sn_io import loopStack
 
-
-def makeYaml(input_file, dbDir, prodid, outDir, nproc, fitter,
-             snrmin,nbef,naft,
-             covmb=0, display=0):
-    """
-    Function to replace generic parameters of a yaml file
-
-    Parameters
-    --------------
-    input_file: str
-       input yaml file to modify
-    dbDir: str
-       database directory location
-    prodid: str
-       production id
-    outDir: str
-      output directory - where to put the results
-    nproc: int
-      number of procs for multiprocessing
-    covmb: int, opt
-      bool to estimate mb covariance data (default: 0)
-    display: int, opt
-      bool to display LC fit in real-time (default:0)
-
-    Returns
-    -----------
-    dict with modified parameters
-
-    """
-    with open(input_file, 'r') as file:
-        filedata = file.read()
-
-    filedata = filedata.replace('prodidmain', '{}_{}'.format(prodid, fitter))
-    filedata = filedata.replace('prodidsimu', prodid)
-    filedata = filedata.replace('outDir', outDir)
-    filedata = filedata.replace('dbDir', dbDir)
-    filedata = filedata.replace('nnproc', str(nproc))
-    filedata = filedata.replace('fittername', fitter)
-    filedata = filedata.replace('snrval', str(snrmin))
-    filedata = filedata.replace('nbefval', str(nbef))
-    filedata = filedata.replace('naftval', str(naft))
-    filedata = filedata.replace('covmbcalc', str(covmb))
-    filedata = filedata.replace('displayval', str(display))
-
-    return yaml.load(filedata, Loader=yaml.FullLoader)
-
-
-def procelem(lc_name, simul, fit, j=0, output_q=None):
+def procsimus(simu_names, fit, nproc=1,j=0, output_q=None):
     """
     Method to process (fit) a set of LC
     elementary cell of the multiprocessing effort
@@ -81,7 +37,50 @@ def procelem(lc_name, simul, fit, j=0, output_q=None):
 
     """
     res = Table()
-    for simu in simul:
+    time_ref = time.time()
+    for name in simu_names:
+        lc_name = name.replace('Simu_','LC_')
+        f = h5py.File(name, 'r')
+        print(f.keys())
+        # reading the simu file
+        simul = Table()
+        for i, key in enumerate(f.keys()):
+            simul = vstack([simul, Table.read(name, path=key)])
+
+        result_queue = multiprocessing.Queue()
+        nlc = len(simul)
+        t = np.linspace(0, nlc, nproc+1, dtype='int')
+        print(t)
+        
+        procs = [multiprocessing.Process(name='Subprocess-'+str(i), target=procelem, args=(
+            simul[t[i]:t[i+1]], lc_name,fit, i, result_queue)) for i in range(nproc)]
+
+        for p in procs:
+            p.start()
+
+        resultdict = {}
+        for ja in range(nproc):
+            resultdict.update(result_queue.get())
+
+        for p in multiprocessing.active_children():
+            p.join()
+
+       
+        for ja in range(nproc):
+            res = vstack([res, resultdict[ja]])
+            
+
+    print('done', j,time.time()-time_ref)
+    if output_q is not None:
+        return output_q.put({j: res})
+    else:
+        return res
+
+def procelem(simul, lc_name,fit,j=0, output_q=None):
+
+    res = Table()
+    for ilc,simu in enumerate(simul):
+        #print('fitting',j,ilc)
         lc = None
         lc = Table.read(lc_name, path='lc_{}'.format(simu['index_hdf5']))
         lc.convert_bytestring_to_unicode()
@@ -89,14 +88,13 @@ def procelem(lc_name, simul, fit, j=0, output_q=None):
             resfit = fit(lc)
             res = vstack([res, resfit])
 
-    print('done', j)
     if output_q is not None:
         return output_q.put({j: res})
     else:
-        return res
+        return res   
+            
 
-
-def multiproc(simu_name, lc_name, fit, covmb=None, nproc=1):
+def multiproc(simu_name,fit, covmb=None, nproc=1,nproc_indiv=1):
     """
     Method to grab and fit LC using multiprocessing
 
@@ -118,17 +116,19 @@ def multiproc(simu_name, lc_name, fit, covmb=None, nproc=1):
     astropy table with fitted parameters
 
     """
-
-    # getting the simu file
+    
+    # getting the simu files
+    """
     f = h5py.File(simu_name, 'r')
     print(f.keys())
     # reading the simu file
     simu = Table()
     for i, key in enumerate(f.keys()):
         simu = vstack([simu, Table.read(simu_name, path=key)])
-
+    """
+    #simu = loopStack(files,'astropyTable')
     # multiprocessing parameters
-    nlc = len(simu)
+    nlc = len(simu_name)
     t = np.linspace(0, nlc, nproc+1, dtype='int')
     print(t)
 
@@ -137,8 +137,8 @@ def multiproc(simu_name, lc_name, fit, covmb=None, nproc=1):
     inum = -1
     result_queue = multiprocessing.Queue()
 
-    procs = [multiprocessing.Process(name='Subprocess-'+str(i), target=procelem, args=(
-        lc_name, simu[t[i]:t[i+1]], fit, i, result_queue)) for i in range(nproc)]
+    procs = [multiprocessing.Process(name='Subprocess-'+str(i), target=procsimus, args=(
+        simu_name[t[i]:t[i+1]], fit, nproc_indiv,i, result_queue)) for i in range(nproc)]
 
     for p in procs:
         p.start()
@@ -160,7 +160,7 @@ def multiproc(simu_name, lc_name, fit, covmb=None, nproc=1):
         fit.dump(val, inum)
 
 
-def process(config, covmb=None):
+def process(config, files,nproc=1,covmb=None):
     """
     Method to process(fit) a set of LCs
 
@@ -186,79 +186,69 @@ def process(config, covmb=None):
 
     dirSimu = config['Simulations']['dirname']
     prodidSimu = config['Simulations']['prodid']
+    """
     simu_name = '{}/Simu_{}.hdf5'.format(dirSimu, prodidSimu)
     lc_name = '{}/LC_{}.hdf5'.format(dirSimu, prodidSimu)
-
+    """
+    
     # Fitting instance
 
     fit = Fitting(config, covmb=covmb)
     # Loop on the simu_file to grab and fit simulated LCs
-    multiproc(simu_name=simu_name, lc_name=lc_name, fit=fit,
-              covmb=covmb, nproc=config['Multiprocessing']['nproc'])
+    multiproc(simu_name=files, fit=fit,
+              covmb=covmb, nproc=nproc,nproc_indiv=config['Multiprocessing']['nproc'])
 
+# get all possible simulation parameters and put in a dict
+path = simu_fit.__path__
+confDict = make_dict_from_config(path[0],'config_simulation.txt')
 
 parser = argparse.ArgumentParser(
     description='Run a LC fitter on a set of LC curves.')
 
 parser = OptionParser()
+# parser for fit parameters : 'dynamical' generation
+for key, vals in confDict.items():
+    vv = vals[1]
+    if vals[0] != 'str':
+        vv = eval('{}({})'.format(vals[0],vals[1]))
+    parser.add_option('--{}'.format(key),help='{} [%default]'.format(vals[2]),default=vv,type=vals[0],metavar='')
 
-parser.add_option("--dirFiles", type="str", default='/sps/lsst/users/gris/Output_Simu_pipeline_0',
-                  help="location dir of the files[%default]")
-parser.add_option("--prodid", type="str", default='Test',
-                  help="db name [%default]")
-parser.add_option("--outDir", type="str", default='/sps/lsst/users/gris/Output_Fit_0',
-                  help="output dir [%default]")
-parser.add_option("--nproc", type="int", default=1,
-                  help="number of proc [%default]")
-parser.add_option("--mbcov", type="int", default=0,
-                  help="mbcol calc [%default]")
-parser.add_option("--display", type="int", default=0,
-                  help="to display fit in real-time[%default]")
-parser.add_option("--fitter", type="str", default='sn_cosmo',
-                  help="fitter to use [%default]")
-parser.add_option("--snrmin", type=float, default=5.,
-                  help="min SNR for LC points to be fitter[%default]")
-parser.add_option("--nbef", type=int, default=4,
-                  help="min number of LC points before max[%default]")
-parser.add_option("--naft", type=int, default=5,
-                  help="min number of LC points after max[%default]")
-
+#add nproc for 'global' multiprocessing
+parser.add_option('--nproc' ,help='nproc [%default]',default=1,type=int,metavar='')
+    
 opts, args = parser.parse_args()
 
-dirFiles = opts.dirFiles
-outDir = opts.outDir
-prodid = opts.prodid
-nproc = opts.nproc
-mbCalc = opts.mbcov
-display = opts.display
-fitter = opts.fitter
-snrmin = opts.snrmin
-nbef = opts.nbef
-naft = opts.naft
+print('Start processing...')
+
+#load the new values
+newDict = {}
+for key, vals in confDict.items():
+    newval = eval('opts.{}'.format(key))
+    newDict[key]=(vals[0],newval)
+
+# new dict with configuration params
+yaml_params = make_dict_from_optparse(newDict)
 
 covmb = None
+mbCalc = yaml_params['Fitter']['covmb']
+
 if mbCalc:
     salt2Dir = 'SALT2_Files'
     covmb = MbCov(salt2Dir, paramNames=dict(
         zip(['x0', 'x1', 'color'], ['x0', 'x1', 'c'])))
-search_path = '{}/Simu_{}*.hdf5'.format(dirFiles, prodid)
-files = glob.glob(search_path)
-
-# make and load config file
-config = makeYaml('input/fit_sn/param_fit_gen.yaml',
-                  dirFiles, prodid, outDir, nproc, fitter,
-                  snrmin,nbef,naft,mbCalc, display)
-
-print(config)
 
 # create outputdir if necessary
+outDir = yaml_params['Output']['directory']
 if not os.path.isdir(outDir):
     os.makedirs(outDir)
 
-yaml_name = '{}/{}.yaml'.format(outDir, prodid)
+prodid = yaml_params['ProductionID']
+yaml_name = '{}/Fit_{}.yaml'.format(outDir, prodid)
 with open(yaml_name, 'w') as f:
-    data = yaml.dump(config, f)
+    data = yaml.dump(yaml_params, f)
 
-for fi in files:
-    # now run
-    process(config, covmb=covmb)
+dirFiles = yaml_params['Simulations']['dirname']
+search_path = '{}/Simu_{}*.hdf5'.format(dirFiles, prodid)
+files = glob.glob(search_path)
+
+process(yaml_params, files,nproc=opts.nproc,covmb=covmb)
