@@ -14,189 +14,146 @@ import sn_fit_input as simu_fit
 from sn_tools.sn_io import make_dict_from_config,make_dict_from_optparse
 from sn_tools.sn_io import loopStack
 
-def procsimus(simu_names, fit, nproc=1,j=0, output_q=None):
+class Fit_Simu:
     """
-    Method to process (fit) a set of LC
-    elementary cell of the multiprocessing effort
-
+    class to fit simulated LC
+    
     Parameters
-    ---------------
-    lc_name: str
-      name of the file containing LCs
-    simul: 
-    fit: fit_xxx class
-      instance of the class used to fit LCs
-    j:  int,opt
-       internal parameter for multiprocessing (default: -1)
-    output_q: multiprocessing.queue, opt
-       queue for multiprocessing (default: None)
-
-    Returns
-    ----------
-    res: astropy table with fit results
+    --------------
+    config: dict
+      configuration parameters
+    covmb: ??
 
     """
-    res = Table()
-    time_ref = time.time()
-    for name in simu_names:
-        lc_name = name.replace('Simu_','LC_')
-        f = h5py.File(name, 'r')
-        print(f.keys())
-        # reading the simu file
-        simul = Table()
-        for i, key in enumerate(f.keys()):
-            simul = vstack([simul, Table.read(name, path=key)])
+    def __init__(self,config, covmb):
 
+        # Fit instance
+
+        self.fit = Fitting(config, covmb=covmb)
+
+        # get the simu files
+        dirSimu = config['Simulations']['dirname']
+        prodidSimu = config['Simulations']['prodid']
+    
+        search_path = '{}/Simu_{}*.hdf5'.format(dirSimu, prodidSimu)
+        self.simu_files = glob.glob(search_path)
+
+        # nproc (for multiprocessing)
+        self.nproc=config['Multiprocessing']['nproc']
+        # process here
+        self.fitSimu()
+
+    def fitSimu(self):
+        """
+        Method to perform the fit - loops on input files
+
+        Parameters
+        --------------
+        j: int,opt
+          tag for multiprocessing use (default: 0)
+        output_queue: multiprocessing queue
+          (default: None)
+
+        Returns
+        ----------
+        
+        
+        """
+        res = Table()
+        idump = -1
+        
+        for name in self.simu_files:
+            time_ref = time.time()
+            lc_name = name.replace('Simu_','LC_')
+            f = h5py.File(name, 'r')
+            # reading the simu file
+            simul = Table()
+            for i, key in enumerate(f.keys()):
+                simul = vstack([simul, Table.read(name, path=key)])
+
+            print('Number of LC to fit',len(simul))
+            #the idea here is to split this file before multiprocessing
+           
+
+            nn = 1
+            
+            """
+            n_per_batch = int(len(simul)/self.nproc)
+            if n_per_batch >= 300:
+                nn = int(n_per_batch/300)
+
+            t = np.linspace(0, len(simul), nn+1, dtype='int')
+            
+            print('hello here',t)
+            """
+            for kk in range(nn):
+            #for kk in [1]:
+                simul_h = simul[t[kk]:t[kk+1]]
+                res_simul = self.process_multiproc(simul_h,lc_name)
+                res = vstack([res, res_simul])
+                ## dumping in file
+                print('dumping results', len(res))
+                if len(res) > 0:
+                    idump += 1
+                    self.fit.dump(res, idump)
+                    res = Table()
+
+            if len(res) > 0:
+                idump += 1
+                self.fit.dump(res, idump)
+                res = Table()
+            print('done here', time.time()-time_ref)
+       
+    def process_multiproc(self,simul,lc_name):
+        
+        
+        print('Number of LC to fit',len(simul))
         result_queue = multiprocessing.Queue()
         nlc = len(simul)
-        t = np.linspace(0, nlc, nproc+1, dtype='int')
+        t = np.linspace(0, nlc, self.nproc+1, dtype='int')
         print(t)
-        
-        procs = [multiprocessing.Process(name='Subprocess-'+str(i), target=procelem, args=(
-            simul[t[i]:t[i+1]], lc_name,fit, i, result_queue)) for i in range(nproc)]
 
+        
+        procs = [multiprocessing.Process(name='Subprocess-'+str(i), target=self.process, args=(
+            simul[t[i]:t[i+1]], lc_name,i, result_queue)) for i in range(self.nproc)]
+        """
+        procs = [multiprocessing.Process(name='Subprocess-'+str(i), target=self.process, args=(
+            simul[t[i]:t[i+1]], lc_name,i, result_queue)) for i in [6]]
+        """
         for p in procs:
             p.start()
 
         resultdict = {}
-        for ja in range(nproc):
+        for ja in range(self.nproc):
             resultdict.update(result_queue.get())
 
         for p in multiprocessing.active_children():
             p.join()
 
-       
-        for ja in range(nproc):
+        res = Table()
+        for ja in range(self.nproc):
             res = vstack([res, resultdict[ja]])
             
-
-    print('done', j,time.time()-time_ref)
-    if output_q is not None:
-        return output_q.put({j: res})
-    else:
         return res
 
-def procelem(simul, lc_name,fit,j=0, output_q=None):
+    def process(self,simul, lc_name,j=0, output_q=None):
 
-    res = Table()
-    for ilc,simu in enumerate(simul):
-        #print('fitting',j,ilc)
-        lc = None
-        lc = Table.read(lc_name, path='lc_{}'.format(simu['index_hdf5']))
-        lc.convert_bytestring_to_unicode()
-        if simu['status'] == 1:
-            resfit = fit(lc)
-            res = vstack([res, resfit])
+        res = Table()
+        for ilc,simu in enumerate(simul):
+            #print('fitting',j,ilc)
+            lc = None
+            lc = Table.read(lc_name, path='lc_{}'.format(simu['index_hdf5']))
+            lc.convert_bytestring_to_unicode()
+            if simu['status'] == 1:
+                resfit = self.fit(lc)
+                res = vstack([res, resfit])
 
-    if output_q is not None:
-        return output_q.put({j: res})
-    else:
-        return res   
-            
-
-def multiproc(simu_name,fit, covmb=None, nproc=1,nproc_indiv=1):
-    """
-    Method to grab and fit LC using multiprocessing
-
-    Parameters
-    ---------------
-    simu_name: str
-      name of the file with SN parameters (astropy table)
-    lc_name: str
-       name of the file containing the light curves to fit
-    fit: Fitting instance
-       where the fit is performed
-    covmb: MbCov class, opt
-      MbCov class used to estimate Mb covariance data (default: None)
-    nproc: int, opt
-      number of procs for multiprocessing (default: 1)
-
-    Returns
-    -----------
-    astropy table with fitted parameters
-
-    """
-    
-    # getting the simu files
-    """
-    f = h5py.File(simu_name, 'r')
-    print(f.keys())
-    # reading the simu file
-    simu = Table()
-    for i, key in enumerate(f.keys()):
-        simu = vstack([simu, Table.read(simu_name, path=key)])
-    """
-    #simu = loopStack(files,'astropyTable')
-    # multiprocessing parameters
-    nlc = len(simu_name)
-    t = np.linspace(0, nlc, nproc+1, dtype='int')
-    print(t)
-
-    names = None
-    val = []
-    inum = -1
-    result_queue = multiprocessing.Queue()
-
-    procs = [multiprocessing.Process(name='Subprocess-'+str(i), target=procsimus, args=(
-        simu_name[t[i]:t[i+1]], fit, nproc_indiv,i, result_queue)) for i in range(nproc)]
-
-    for p in procs:
-        p.start()
-
-    resultdict = {}
-    for j in range(nproc):
-        resultdict.update(result_queue.get())
-
-    for p in multiprocessing.active_children():
-        p.join()
-
-    val = Table()
-    for j in range(nproc):
-        val = vstack([val, resultdict[j]])
-
-    print('dumping results', len(val.columns))
-    if len(val) > 0:
-        inum += 1
-        fit.dump(val, inum)
-
-
-def process(config, files,nproc=1,covmb=None):
-    """
-    Method to process(fit) a set of LCs
-
-    Parameters
-    --------------
-    config: dict
-      parameters used for the processing (fit)
-    covmb: MbCov class, opt
-      MbCov call used to estimated mb covariance data (default: None)
-
-    """
-
-    # this is for output
-    save_status = config['Output']['save']
-    outdir = config['Output']['directory']
-
-    # prodid parameter
-    prodid = config['ProductionID']
-
-    # input files:
-    # simu_file: astropy table with SN parameters
-    # lc file: astropy tables with light curves
-
-    dirSimu = config['Simulations']['dirname']
-    prodidSimu = config['Simulations']['prodid']
-    """
-    simu_name = '{}/Simu_{}.hdf5'.format(dirSimu, prodidSimu)
-    lc_name = '{}/LC_{}.hdf5'.format(dirSimu, prodidSimu)
-    """
-    
-    # Fitting instance
-
-    fit = Fitting(config, covmb=covmb)
-    # Loop on the simu_file to grab and fit simulated LCs
-    multiproc(simu_name=files, fit=fit,
-              covmb=covmb, nproc=nproc,nproc_indiv=config['Multiprocessing']['nproc'])
+        #print('done here',j)
+        if output_q is not None:
+            return output_q.put({j: res})
+        else:
+            return res
+        
 
 # get all possible simulation parameters and put in a dict
 path = simu_fit.__path__
@@ -212,9 +169,6 @@ for key, vals in confDict.items():
     if vals[0] != 'str':
         vv = eval('{}({})'.format(vals[0],vals[1]))
     parser.add_option('--{}'.format(key),help='{} [%default]'.format(vals[2]),default=vv,type=vals[0],metavar='')
-
-#add nproc for 'global' multiprocessing
-parser.add_option('--nproc' ,help='nproc [%default]',default=1,type=int,metavar='')
     
 opts, args = parser.parse_args()
 
@@ -247,8 +201,5 @@ yaml_name = '{}/Fit_{}.yaml'.format(outDir, prodid)
 with open(yaml_name, 'w') as f:
     data = yaml.dump(yaml_params, f)
 
-dirFiles = yaml_params['Simulations']['dirname']
-search_path = '{}/Simu_{}*.hdf5'.format(dirFiles, prodid)
-files = glob.glob(search_path)
-
-process(yaml_params, files,nproc=opts.nproc,covmb=covmb)
+# now fit all this
+Fit_Simu(yaml_params, covmb)
