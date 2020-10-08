@@ -12,7 +12,7 @@ import glob
 import os
 import sn_fit_input as simu_fit
 from sn_tools.sn_io import make_dict_from_config,make_dict_from_optparse
-from sn_tools.sn_io import loopStack
+from sn_tools.sn_io import loopStack,check_get_dir
 
 class Fit_Simu:
     """
@@ -64,7 +64,10 @@ class Fit_Simu:
         
         for name in self.simu_files:
             time_ref = time.time()
-            lc_name = name.replace('Simu_','LC_')
+            namespl = name.split('/')
+            last_name = namespl[-1]
+            prefix = '/'.join([nn for nn in namespl[:-1]])
+            lc_name = '{}/{}'.format(prefix,last_name.replace('Simu_','LC_'))
             f = h5py.File(name, 'r')
             # reading the simu file
             simul = Table()
@@ -77,15 +80,15 @@ class Fit_Simu:
 
             nn = 1
             
-            """
+            
             n_per_batch = int(len(simul)/self.nproc)
             if n_per_batch >= 300:
                 nn = int(n_per_batch/300)
-
-            t = np.linspace(0, len(simul), nn+1, dtype='int')
             
+            t = np.linspace(0, len(simul), nn+1, dtype='int')
+
             print('hello here',t)
-            """
+            
             for kk in range(nn):
             #for kk in [1]:
                 simul_h = simul[t[kk]:t[kk+1]]
@@ -184,10 +187,15 @@ for key, vals in confDict.items():
 yaml_params = make_dict_from_optparse(newDict)
 
 covmb = None
-mbCalc = yaml_params['Fitter']['covmb']
+mbCalc = yaml_params['mbcov']['estimate']
 
 if mbCalc:
-    salt2Dir = 'SALT2_Files'
+    #for this we need to have the SALT2 dir and files
+    # if it does not exist get it from the web
+    
+    salt2Dir = yaml_params['mbcov']['directory']
+    webPath = yaml_params['WebPath']
+    check_get_dir(webPath,salt2Dir, salt2Dir)
     covmb = MbCov(salt2Dir, paramNames=dict(
         zip(['x0', 'x1', 'color'], ['x0', 'x1', 'c'])))
 

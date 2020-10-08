@@ -123,13 +123,14 @@ os.system(cmd)
 # now fit these light curves - using sncosmo simulator
 
 cmd = 'python run_scripts/fit_sn/run_sn_fit.py'
-cmd += ' --dirFiles {}'.format(outDir_simu)
-cmd += ' --prodid {}_0'.format(prodid)
-cmd += ' --mbcov 0 --nproc 4'
-cmd += ' --outDir {}'.format(outDir_fit)
-cmd += ' --snrmin {}'.format(snrmin)
-cmd += ' --nbef {}'.format(nbef)
-cmd += ' --naft {}'.format(naft)
+cmd += ' --Simulations_dirname {}'.format(outDir_simu)
+cmd += ' --Simulations_prodid {}_0'.format(prodid)
+cmd += ' --mbcov_estimate 0 --Multiprocessing_nproc 4'
+cmd += ' --Output_directory {}'.format(outDir_fit)
+cmd += ' --LCSelection_snrmin {}'.format(snrmin)
+cmd += ' --LCSelection_nbef {}'.format(nbef)
+cmd += ' --LCSelection_naft {}'.format(naft)
+cmd += ' --ProductionID {}_sn_cosmo'.format(prodid)
 print(cmd)
 os.system(cmd)
 
@@ -138,13 +139,14 @@ os.system(cmd)
 
 if 'fast' in simulator:
     cmd = 'python run_scripts/fit_sn/run_sn_fit.py'
-    cmd += ' --dirFiles {}'.format(outDir_simu)
-    cmd += ' --prodid {}_0'.format(prodid)
-    cmd += ' --mbcov 0 --nproc 1'
-    cmd += ' --outDir {}'.format(outDir_fit)
-    cmd += ' --fitter sn_fast'
-    cmd += ' --snrmin {}'.format(snrmin)
-    cmd += ' --nbef {}'.format(nbef)
-    cmd += ' --naft {}'.format(naft)
+    cmd += ' --Simulations_dirname {}'.format(outDir_simu)
+    cmd += ' --Simulations_prodid {}_0'.format(prodid)
+    cmd += ' --mbcov_estimate 0 --Multiprocessing_nproc 1'
+    cmd += ' --Output_directory {}'.format(outDir_fit)
+    cmd += ' --LCSelection_snrmin {}'.format(snrmin)
+    cmd += ' --LCSelection_nbef {}'.format(nbef)
+    cmd += ' --LCSelection_naft {}'.format(naft)
+    cmd += ' --Fitter_name sn_fitter.fit_sn_fast'
+    cmd += ' --ProductionID {}_sn_fast'.format(prodid)
     print(cmd)
     os.system(cmd)
