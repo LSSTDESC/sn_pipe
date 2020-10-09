@@ -187,7 +187,6 @@ def SimuFakes(x1, color, z, ebvofMW, bluecutoff, redcutoff, error_model,outDir):
     cmd += ' --RAmin 0.'
     cmd += ' --RAmax 0.1'
     cmd += ' --npixels 1'
-    cmd += ' --pixelmap_dir \'\''
     os.system(cmd)
 
 
