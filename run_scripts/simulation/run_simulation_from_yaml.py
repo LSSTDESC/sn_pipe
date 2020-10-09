@@ -65,10 +65,9 @@ yaml_name = '{}/{}.yaml'.format(outDir, prodid)
 with open(yaml_name, 'w') as f:
     data = yaml.dump(config, f)
 
-
 # now perform the processing
 Process(dbDir, dbName, dbExtens,
-        fieldType, nside,
+        fieldType, 'all',nside,
         opts.RAmin, opts.RAmax,
         opts.Decmin, opts.Decmax,
         False, opts.remove_dithering,
