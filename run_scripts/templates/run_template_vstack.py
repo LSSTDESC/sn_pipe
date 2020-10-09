@@ -93,20 +93,27 @@ class LCStack:
         """
 
         f = h5py.File(fname, 'r')
-        keys = list(f.keys())
+        keys_f = list(f.keys())
 
-        prefix_key = '_'.join(keys[0].split('_')[:-1])
-        last_keys = []
+        corresp = {}
+        for kk in keys_f:
+            tt = kk.split('_')[-1]
+            corresp[int(tt)] = kk
+
         keys = [1, 10, 100, 1000]
         vals = ['daymax', 'color', 'x1', 'x0']
-        tab = Table.read(f, path='{}_0'.format(prefix_key))
+        
+        #tab = Table.read(f, path='{}_0'.format(prefix_key))
+        tab = Table.read(f, path='{}'.format(corresp[0]))
         table_new = Table(tab)
 
-        print('looking at',fname,prefix_key)
-
         for ii, kk in enumerate(keys):
+            tablea = Table.read(f, path='{}'.format(corresp[kk]))
+            tableb = Table.read(f, path='{}'.format(corresp[-kk]))
+            """
             tablea = Table.read(f, path='{}_{}'.format(prefix_key, kk))
             tableb = Table.read(f, path='{}_{}'.format(prefix_key, -kk))
+            """
             epsilona = tablea.meta['epsilon_'+vals[ii]]
             epsilonb = tableb.meta['epsilon_'+vals[ii]]
             assert((epsilona == -epsilonb))
