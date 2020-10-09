@@ -120,10 +120,10 @@ x1_colors = [(-2.0, -0.2), (-2.0, 0.0), (-2.0, 0.2),
 
 zmax = [1.1, 1.1, 0.8, 1.2, 1.2, 1.2, 1.2, 1.2, 1.2]
 x1_colors = [(-2.0, 0.2), (0.0, 0.0)]
-zmax = [0.8, 1.2]
+zmax = [0.9, 1.2]
 
 x1_colors = [(-2.0,0.2)]
-zmax = [0.8]
+zmax = [1.0]
 zmax_dict = dict(zip(x1_colors, zmax))
 
 outDirLC = '/sps/lsst/users/gris/fakes_for_templates'
