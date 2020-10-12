@@ -74,7 +74,7 @@ parser.add_option("--snrmin", type=float, default=1.,
                   help="SNR min for LC points (fit)[%default]")
 parser.add_option("--nbef", type=int, default=4,
                   help="min n LC points before max (fit)[%default]")
-parser.add_option("--naft", type=int, default=5,
+parser.add_option("--naft", type=int, default=10,
                   help="min n LC points after max (fit)[%default]")
 
 opts, args = parser.parse_args()
