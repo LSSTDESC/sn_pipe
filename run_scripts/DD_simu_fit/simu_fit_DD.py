@@ -14,7 +14,7 @@ def simuSN(dbDir, dbName, dbExtens,outputDir_simu,
     cmd += ' --dbName {}'.format(dbName)
     cmd += ' --dbExtens {}'.format(dbExtens)
     cmd += ' --Output_directory {}'.format(outputDir_simu)
-    cmd += '--Observations_fieldtype DD --nclusters {}'.format(nclusters)
+    cmd += ' --Observations_fieldtype DD --nclusters {}'.format(nclusters)
     cmd += ' --nproc {}'.format(nproc)
     for vv in ['x1','color','z']:
         for tt in ['type','min','max','step']:
@@ -25,6 +25,7 @@ def simuSN(dbDir, dbName, dbExtens,outputDir_simu,
     cmd += ' --Simulator_errorModel {}'.format(error_model)
             
     print(cmd)
+    os.system(cmd)
 
 
 def fitSN(dirFiles,prodid,outDir_fit,nbef,naft,snrmin,fitter,nproc):
@@ -39,7 +40,7 @@ def fitSN(dirFiles,prodid,outDir_fit,nbef,naft,snrmin,fitter,nproc):
     cmd += ' --Fitter_name {}'.format(fitter_name)
     cmd += ' --LCSelection_snrmin 5.'
     print(cmd)
-    
+    os.system(cmd)
 
 
 def fitLoop(dirFiles,prodid,outDir_fit,nbef,naft,snrmin,fitter,nproc):
@@ -84,9 +85,10 @@ parser.add_option("--naft", type=int, default=10,
 opts, args = parser.parse_args()
 
 # simulation of faint SN to get zlims
+outDir_simu = '{}/{}'.format(opts.outputDir_simu,opts.dbName)
 
 simuSN(dbDir=opts.dbDir, dbName=opts.dbName, dbExtens=opts.dbExtens,
-       outputDir_simu=opts.outputDir_simu,
+       outputDir_simu=outDir_simu,
        nclusters=opts.nclusters,fieldname=opts.fieldname,
            SN_x1_type='unique',SN_x1_min=-2.0,SN_x1_max=2.0,SN_x1_step=0.1,
            SN_color_type='unique',SN_color_min=0.2,SN_color_max=0.3,SN_color_step=0.01,
@@ -97,7 +99,7 @@ simuSN(dbDir=opts.dbDir, dbName=opts.dbName, dbExtens=opts.dbExtens,
 # simulation of random SN 
 
 simuSN(dbDir=opts.dbDir, dbName=opts.dbName, dbExtens=opts.dbExtens,
-       outputDir_simu=opts.outputDir_simu,
+       outputDir_simu=outDir_simu,
        nclusters=opts.nclusters,fieldname=opts.fieldname,
            SN_x1_type='random',SN_x1_min=-2.0,SN_x1_max=2.0,SN_x1_step=0.1,
            SN_color_type='random',SN_color_min=0.2,SN_color_max=0.3,SN_color_step=0.01,
@@ -106,6 +108,10 @@ simuSN(dbDir=opts.dbDir, dbName=opts.dbName, dbExtens=opts.dbExtens,
        error_model=1,nproc=opts.nproc)
 
 # fit those LC
-prodid = '{}_{}_faintSN'.format(opts.dbName,opts.fieldname)
-fitLoop(opts.outputDir_simu,prodid,opts.outputDir_fit,opts.nbef,opts.naft,opts.snrmin,'sn_cosmo',opts.nproc)
+outDir_fit = '{}/{}'.format(opts.outputDir_fit,opts.dbName)
 
+prodid = '{}_{}_faintSN'.format(opts.dbName,opts.fieldname)
+fitLoop(outDir_simu,prodid,opts.outDir_fit,opts.nbef,opts.naft,opts.snrmin,'sn_cosmo',opts.nproc)
+
+prodid = '{}_{}_allSN'.format(opts.dbName,opts.fieldname)
+fitLoop(outDir_simu,prodid,opts.outDir_fit,opts.nbef,opts.naft,opts.snrmin,'sn_cosmo',opts.nproc)
