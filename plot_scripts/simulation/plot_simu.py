@@ -29,7 +29,9 @@ print('Number of simulated supernovae', len(simupars))
 cols = simupars.columns
 
 print(cols)
-
+import matplotlib.pyplot as plt
+plt.plot(simupars['pixRA'],simupars['pixDec'],'ko')
+plt.show()
 print(splot.simuPars)
 
 # plotting SN parameters
