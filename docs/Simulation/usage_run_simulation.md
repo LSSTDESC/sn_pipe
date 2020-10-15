@@ -157,5 +157,11 @@ Options:
      <li>python run_scripts/simulation/run_simulation.py  --Multiprocessing_nproc 1 --Pixelisation_nside 64 --SN_x1_type random --SN_x1_min -2.0 --SN_x1_max -2.0 --SN_color_type random --SN_color_min 0.2 --SN_color_max 0.2 --SN_z_type random --SN_z_min 0.01 --SN_z_max 0.6 --SN_z_step 0.01 --SN_daymax_type random --SN_daymax_step 1. --npixels 1 --dbName descddf_v1.4_10yrs --dbDir ../../DB_Files --dbExtens db --Observations_fieldtype WFD --RAmin 36. --RAmax 40 --Decmin -41. --Decmax -37 --radius 4. </li>
      </ul>
      </li>
-
+After this processing, three files should be available in the output directory (--Output_directory option of the script; by default: Output_Simu):
+  <ul>
+     <li> prodid.yaml : yaml file with the parameters used for simulation
+     <li> LC_prodid_0.hdf5 : simulated light curves (astropy tables)
+     <li> Simu_prodid_0.hdf5 : SN simulation parameters (astropy tables) 
+     </ul>
+ prodid is a tag for the production: it can be chosen using the --ProductionID option in the above-mentioned script. The "_0" in LC_* and Simu_* files correspond to the proc number in the multiprocessing. 
 </li>

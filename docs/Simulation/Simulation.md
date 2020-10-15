@@ -4,7 +4,7 @@
 
 The simulation package of sn_pipe (sn_simulation) aims at generating supernovae light curves from a set of observations (coming for instance from Observing Strategies) and a set of parameters (type of simulator, cosmology, supernovae parameters, ...), both being chosen by the user. At the moment:
  - two simulators are avalaible: sn_cosmo and sn_fast
- - only type 1a supernovae can be generated
+ - all types of supernovae can be generated
 
 The parameters for the simulation are part of  yaml file (an example: input/simulation/param_simulation_gen.yaml) ingested by the scripts used for the simulation. The definition of the parameters is available [here](yaml_file.md).
  
