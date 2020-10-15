@@ -3,7 +3,9 @@ from sn_design_dd_survey.budget import DD_Budget
 from sn_design_dd_survey.snr import SNR, SNR_plot
 from sn_design_dd_survey.signal_bands import RestFrameBands
 from sn_design_dd_survey.showvisits import ShowVisits
+from sn_design_dd_survey.templateLC import templateLC
 from sn_design_dd_survey import plt
+
 #from sn_DD_opti.showvisits import GUI_Visits
 #from sn_DD_opti.budget import GUI_Budget
 
@@ -19,19 +21,37 @@ blue_cutoff = 380.
 red_cutoff = 800.
 x1 = -2.0
 color = 0.2
+simulator = 'sn_cosmo'
+ebv=0.
+error_model=1
 bands = 'grizy'
+fake_config = 'input/Fake_cadence/Fake_cadence.yaml'
+zmin=0.0
+zmax=0.9
+zstep=0.01
+outDir = 'input_dd'
+
 plot_input = False
 plot_snr = False
 plot_nvisits = False
 plot = False
 
+## simulation of template LC here
+theDir = 'input_dd'
+#templateLC(x1,color,simulator,ebv,blue_cutoff,red_cutoff,error_model,fake_config,zmin,zmax,zstep,outDir)
+
 theDir = 'input/sn_studies'
 fname = 'Fakes_NSNMetric_Fake_lc_nside_64_coadd_0_0.0_360.0_-1.0_-1.0_0.hdf5'
+#fname = 'LC_sn_fast_Fake_Fake_DESC_seas_-1_-2.0_0.2_error_model_ebvofMW_0.0_0.hdf5'
+cutoff = '{}_{}'.format(blue_cutoff,red_cutoff)
+if error_model:
+    cutoff='error_model'
+fname = 'LC_sn_fast_Fake_Fake_DESC_seas_-1_-2.0_0.2_{}_ebvofMW_0.0_0.hdf5'.format(cutoff)
 m5file = 'medValues.npy'
 m5file = 'medValues_flexddf_v1.4_10yrs_DD.npy'
 
 data = Data(theDir, fname, m5file, x1, color,
-            blue_cutoff, red_cutoff, bands=bands)
+            blue_cutoff, red_cutoff, error_model,bands=bands)
 
 if plot_input:
     # few plots related to data
@@ -65,17 +85,19 @@ if not os.path.isdir(SNRDir):
 
 
 # choose one SNR distribution
-SNR_par = dict(zip(['max', 'step', 'choice'], [80., 1., 'Nvisits']))
-
-snr_calc = SNR(SNRDir, data, SNR_par, save_SNR_combi=True, verbose=False)
+SNR_par = dict(zip(['max', 'step', 'choice'], [60., 1., 'Nvisits']))
+SNR_m5_file = 'SNR_m5_error_model_snrmin_1.npy'
+snr_calc = SNR(SNRDir, data, SNR_par,
+               SNR_m5_file=SNR_m5_file,
+               save_SNR_combi=True, verbose=False)
 
 # plot the results
 
 # load m5 reference values - here: med value per field per filter per season
 # m5_type = 'median_m5_field_filter_season'  # m5 values
-print(test)
+plot_snr=True
 if plot_snr:
-    snrplot = SNR_plot('SNR_files', -2.0, 0.2, 2.0, 380.,
+    snrplot = SNR_plot('SNR_files', -2.0, 0.2, 1.0, 380.,
                        800., 3., theDir, m5file, 'median_m5_filter')
     snrplot.plotSummary()
     snrplot.plotSummary_band()
