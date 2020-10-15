@@ -2,11 +2,12 @@
 
 The input yaml file contains all the settings to run the simulation. It is composed of a dictionnary with key/values given below.
 
-## Supernovae parameters (key: SN parameters)
+## Supernovae parameters (key: SN)
  
 | keya | keyb | value | definition |
 |---|---|---|---|
-| Id |   | 100 | Id of the first SN | 
+| Id |   | 100 | Id of the first SN |
+|type|SN_Ia| SN type to be simulated|
 | x1_color | | | stretch and color distribution |  
 | | rate | JLA | | type of distribution chosen |  
 | |dirFile | 'reference_files' | location dir of the files |  
@@ -29,27 +30,27 @@ The input yaml file contains all the settings to run the simulation. It is compo
 |daymax | | | max lumi day |
 | | type | unique | parameter choice: unique/random/uniform |
 || step | 1. | daymax step value [day] |
-|min_rf_phase ||  -20.  | obs min phase (rest frame)|
-|max_rf_phase ||  60.  |obs max phase (rest frame)
-|min_rf_phase_qual || -15. |obs min phase (rest frame) (qual cuts)|
-|max_rf_phase_qual || 45. |obs max phase (rest frame) (qual cuts)|
+|minRFphase ||  -20.  | obs min phase (rest frame)|
+|maxRFphase ||  60.  |obs max phase (rest frame)
+|minRFphase_qual || -15. |obs min phase (rest frame) (qual cuts)|
+|maxRFphase_qual || 45. |obs max phase (rest frame) (qual cuts)|
 |absmag ||  -19.0906|peak abs mag |
 |band || bessellB|band for absmag|
 |magsys || vega |magsys for absmag |
 |differential_flux|| 0 | to estimate differential flux (0/1)|
 |salt2Dir ||  SALT2_Files |dir where SALT2 files are located |
-|blue_cutoff || 380. | blue cutoff value [nm]|
-|red_cutoff ||  800. | red cutoff value [nm] |
+|blueCutoff || 380. | blue cutoff value [nm]|
+|redCutoff ||  800. | red cutoff value [nm] |
 |ebvofMW || -1.0 | E(B-V) for dust: if -1.0: taken from a dust map | 
-|NSN factor || 1 | scale factor for production |
+|NSNfactor || 1 | scale factor for production |
 
 ## Cosmology (key: Cosmology)
 
 |key | value | definition |
 |---|---|---|
 |Model | w0waCDM |Cosmological model |
-|Omega_m | 0.30 |Omega_m |
-| Omega_l | 0.70 |Omega_l|
+|Om | 0.30 |Omega_m |
+|Ol | 0.70 |Omega_l|
 | H0 | 72.0 | H0 |
 |w0|  -1.0 | w0 |
 |wa | 0.0  | wa |
@@ -59,8 +60,8 @@ The input yaml file contains all the settings to run the simulation. It is compo
 |key | value | definition |
 |---|---|---|
 |name | LSST |name of the telescope (internal) |
-|throughput_dir | LSST_THROUGHPUTS_BASELINE  |dir of throughput |
-|atmos_dir | THROUGHPUTS_DIR  | dir of atmos |
+|throughputDir | LSST_THROUGHPUTS_BASELINE  |dir of throughput |
+|atmosDir | THROUGHPUTS_DIR  | dir of atmos |
 |airmass | 1.2   | airmass value |
 |atmos | True  |atmos |
 |aerosol | False  |aerosol |
@@ -80,12 +81,12 @@ The input yaml file contains all the settings to run the simulation. It is compo
 |name || sn_simulator.sn_cosmo  |Simulator name: sn_cosmo,sn_fast
 |model | |salt2-extended  | spectra model |
 |version | |1.0 | version |
-|Template Dir || Template_LC |loc. dir of LC templates (sn_fast)|
-|Gamma Dir | |reference_files |loc. dir of gamma files ||
-|Gamma File | |gamma.hdf5 |gamma file name|
-|DustCorr Dir ||Template_Dust |loc. dir of dust templates (sn_fast)|
+|TemplateDir || Template_LC |loc. dir of LC templates (sn_fast)|
+|GammaDir | |reference_files |loc. dir of gamma files ||
+|GammaFile | |gamma.hdf5 |gamma file name|
+|DustCorrDir ||Template_Dust |loc. dir of dust templates (sn_fast)|
 |Host Parameters ||None  |Host parameters |
-|Display_LC  ||| display during LC simulations|
+|DisplayLC  ||| display during LC simulations|
 ||display | False | display (True) or not (False) |
 || time | 1 | display during time (sec) before closing|
 

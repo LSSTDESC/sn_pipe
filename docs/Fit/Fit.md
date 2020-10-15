@@ -5,6 +5,10 @@
 python pip_sn_pack.py --action install --package sn_fit_lc
 ```
 
+## Scripts to run the fit
+
+The scripts are located in the directory run_scripts/fit_sn
+
 ## Run the fit
 
 It may be done through:

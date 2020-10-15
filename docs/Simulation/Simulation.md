@@ -8,7 +8,9 @@ The simulation package of sn_pipe (sn_simulation) aims at generating supernovae 
 
 The parameters for the simulation are part of  yaml file (an example: input/simulation/param_simulation_gen.yaml) ingested by the scripts used for the simulation. The definition of the parameters is available [here](yaml_file.md).
  
+## Scripts to run the simulation
 
+The scripts are located in the directory run_scripts/simulation
 
 ## Installation of the simulation package
 
