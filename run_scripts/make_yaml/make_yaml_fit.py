@@ -1,12 +1,12 @@
 from optparse import OptionParser
 import yaml
 from importlib import import_module
-import sn_simu_input as simu
+import sn_fit_input as fit
 import re
 from sn_tools.sn_io import make_dict_from_config,make_dict_from_optparse
 from sn_tools.sn_io import decrypt_parser
 
-path = simu.__path__
+path = fit.__path__
 
 confDict = make_dict_from_config(path[0],'config_simulation.txt')
 
@@ -32,3 +32,4 @@ dd = make_dict_from_optparse(newDict)
 print('config',dd)
 with open(opts.fileName, 'w') as f:
     data = yaml.dump(dd, f)
+
