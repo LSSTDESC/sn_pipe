@@ -43,9 +43,9 @@ fileNames = glob.glob(search_name)
 print(fileNames)
 
 metricValues = loopStack(fileNames, 'astropyTable')
+metricValues.convert_bytestring_to_unicode()
 
-print(metricValues.dtype)
-#sn_plot.detecFracPlot(metricValues, nside, namesRef)
-sn_plot.detecFracHist(metricValues, namesRef)
+sn_plot.detecFracPlot(metricValues, nside, namesRef)
+#sn_plot.detecFracHist(metricValues, namesRef)
 
 plt.show()
