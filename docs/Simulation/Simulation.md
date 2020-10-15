@@ -20,7 +20,8 @@ python pip_sn_pack.py --action install --package=sn_simulation
 
 There are currently two ways to simulate light curves in sn_pipe:
    - using python scripts
-     - if the yaml file is defined: use [run_simulation_from_yaml.py](../Simulation/usage_run_simulation_yaml.md)
+     - a yaml file may be generated using the script run_scripts/make_yaml/make_yaml_simulation.py.
+       Use then  [run_simulation_from_yaml.py](../Simulation/usage_run_simulation_yaml.md)
      -  the yaml file est defined from a generic file: use  [run_simulation.py](../Simulation/usage_run_simulation.md) 
    - using a notebook
      - an example is available in notebooks/SNSimulation.ipynb

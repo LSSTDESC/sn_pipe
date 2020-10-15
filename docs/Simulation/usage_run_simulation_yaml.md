@@ -27,5 +27,11 @@ Options:
    </li>
      </ul>
      </li>
-
+After this processing, three files should be available in the output directory (see Output/directory keyword in the yaml file; by default: Output_Simu):
+  <ul>
+     <li> prodid.yaml : yaml file with the parameters used for simulation
+     <li> LC_prodid_0.hdf5 : simulated light curves (astropy tables)
+     <li> Simu_prodid_0.hdf5 : SN simulation parameters (astropy tables) 
+     </ul>
+ prodid is a tag for the production: it can be chosen by changing using the ProductionID keyword in the yaml file. The "_0" in LC_* and Simu_* files correspond to the proc number in the multiprocessing.
 </li>
