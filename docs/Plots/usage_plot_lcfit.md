@@ -4,15 +4,13 @@
 Options:
   -h, --help         show this help message and exit
   --prodids=PRODIDS  prodid [input/plots/podids_fit.csv]
-  --fileDir=FILEDIR  dir location of the results [Output_Fit]
-
 
 </pre>
 
 ### Examples ###
 <li>
 <ul>
-<li> Let us suppose that LC fit have been performed and the results are located in a directoryOutput_Fit:
+<li> Let us suppose that LC fit have been performed and the results are located in a directory Output_Fit:
 
 ls Output_Fit   
 Fit_sn_cosmo_Fake_Fake_DESC_seas_-1_-2.0_0.2_380_800_ebvofMW_0.0_sn_cosmo.hdf5 
@@ -27,9 +25,9 @@ Fit_sn_cosmo_Fake_Fake_DESC_seas_-1_-2.0_0.2_380_800_ebvofMW_0.25_sn_cosmo.hdf5
 
 cat prodids.cvs
 ```
-nickname,prodid  
-cosmo_cosmo_evb_0.0,sn_cosmo_Fake_Fake_DESC_seas_-1_-2.0_0.2_380_800_ebvofMW_0.0_sn_cosmo 
-cosmo_cosmo_evb_0.25,sn_cosmo_Fake_Fake_DESC_seas_-1_-2.0_0.2_380_800_ebvofMW_0.25_sn_cosmo 
+nickname,dirname,prodid  
+cosmo_cosmo_evb_0.0,Output_Fit,sn_cosmo_Fake_Fake_DESC_seas_-1_-2.0_0.2_380_800_ebvofMW_0.0_sn_cosmo 
+cosmo_cosmo_evb_0.25,Output_Fit,sn_cosmo_Fake_Fake_DESC_seas_-1_-2.0_0.2_380_800_ebvofMW_0.25_sn_cosmo 
 ```
 where the "nickname" is chosen by the user (it will be used as legend on the plot)
 
