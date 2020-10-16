@@ -30,7 +30,7 @@ class InstallCommand(install):
         """Post-process options."""
 
         if self.package:
-            if self.package not in self.packs['packname'].tolist():
+            if self.package not in self.packs['packname'].tolist() and self.package != 'sn_pipe':
                 print('{} impossible to install'.format(self.package))
         install.finalize_options(self)
 
@@ -60,15 +60,16 @@ class InstallCommand(install):
 
         install.run(self)
 
+
 # get the version here
-pkg_vars  = {}
+pkg_vars = {}
 
 with open("version.py") as fp:
     exec(fp.read(), pkg_vars)
-    
+
 setup(
     name='sn_pipe',
-    version= pkg_vars['__version__'],
+    version=pkg_vars['__version__'],
     description='A framework to run the Survey Strategy Support pipeline for supernovae',
     url='http://github.com/lsstdesc/sn_pipe',
     author='Philippe Gris',
