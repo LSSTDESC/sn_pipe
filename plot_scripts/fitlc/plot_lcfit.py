@@ -8,8 +8,6 @@ parser = OptionParser()
 
 parser.add_option("--prodids", type="str", default='input/plots/podids_fit.csv',
                   help="prodid [%default]")
-parser.add_option("--fileDir", type="str", default='',
-                  help="dir location of the results [%default]")
 
 
 opts, args = parser.parse_args()
