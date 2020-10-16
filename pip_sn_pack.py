@@ -72,7 +72,7 @@ parser.add_option("--package", type="str", default='sn_pipe',
 parser.add_option("--verbose", type=int, default=0,
                   help="verbose mode for pip installation [%default]")
 parser.add_option("--action", type="str", default='list',
-                  help="action to perform: list, install, uninstall [%default]")
+                  help="action to perform: list, install, uninstall,list_available [%default]")
 
 opts, args = parser.parse_args()
 
@@ -102,3 +102,6 @@ if action == 'uninstall':
         for pp in listpk:
             if pp != '':
                 os.system(cmd_uninstall(pp))
+
+if action == 'list_available':
+     print('The list of available packages is ',available_packs['packname'].tolist())
