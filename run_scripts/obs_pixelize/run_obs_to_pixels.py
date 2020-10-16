@@ -91,6 +91,7 @@ class procObsPixels:
         self.dbExtens = dbExtens
         self.nodither = nodither
         self.fieldType = fieldType
+        self.fieldName = 'Unknown'
         self.RAmin = RAmin
         self.RAmax = RAmax
         self.Decmin = Decmin
@@ -154,6 +155,7 @@ class procObsPixels:
             self.DecCol = 'Dec'
 
         observations, patches = patchObs(observations, self.fieldType,
+                                         self.fieldName,
                                          self.dbName,
                                          self.nside,
                                          self.RAmin, self.RAmax,
