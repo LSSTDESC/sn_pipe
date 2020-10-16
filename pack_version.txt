@@ -1,5 +1,5 @@
 # list of packages and tagged github version
-sn_metrics master
-sn_simulation master
-sn_fit_lc master
-sn_plotters master
+sn_metrics dev
+sn_simulation dev
+sn_fit_lc dev
+sn_plotters dev
