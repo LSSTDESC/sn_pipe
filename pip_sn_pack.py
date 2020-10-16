@@ -105,7 +105,6 @@ if action == 'uninstall':
             cmd_list(), shell=True, stdout=subprocess.PIPE).stdout.read()
         listpk = packgs.decode().split('\n')
         for pp in listpk:
-            print('here pp',pp.split(' ')[0])
             if pp != '':
                 os.system(cmd_uninstall(pp.split(' ')[0]))
 
