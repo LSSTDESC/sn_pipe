@@ -21,7 +21,7 @@ class InstallCommand(install):
         # Each user option must be listed here with their default value.
         install.initialize_options(self)
         self.package = ''
-        #self.available_packages = ''
+        # self.available_packages = ''
         # load available packages and versions
         self.packs = np.loadtxt('pack_version.txt', dtype={'names': (
             'packname', 'version'), 'formats': ('U15', 'U15')})
@@ -55,7 +55,7 @@ class InstallCommand(install):
                     packname = pack['packname']
                     version = pack['version']
                     cmd = 'pip install --user git+https://github.com/lsstdesc/{}.git@{}'.format(
-                        pack, version)
+                        packname, version)
                     os.system(cmd)
 
         install.run(self)
