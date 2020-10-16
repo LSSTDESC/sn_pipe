@@ -52,7 +52,7 @@ def cmd_install(package, verbose, available_packs):
       cmd to apply
     """
 
-    if package not in available_packs['packname'].tolist() and package != 'sn_pipe':
+    if package not in available_packs['packname'].tolist() and package != 'sn_pipe' and package != 'all':
         print('The package you are trying to install does not exist')
         print('The list of available packages is ',
               available_packs['packname'].tolist())
@@ -64,6 +64,8 @@ def cmd_install(package, verbose, available_packs):
     else:
         cmd = "pip install . --user --install-option=\"--package={}\"".format(
             pack)
+
+    print('install cmd', cmd)
     return cmd
 
 
