@@ -1,7 +1,7 @@
 import os
 import subprocess
 from optparse import OptionParser
-
+import numpy as np
 
 def cmd_uninstall(pack):
     """
@@ -34,7 +34,7 @@ def cmd_list():
     return cmd
 
 
-def cmd_install(package, verbose):
+def cmd_install(package, verbose,available_packs):
     """
     Function to generate the command to install a package using pip
 
@@ -50,6 +50,12 @@ def cmd_install(package, verbose):
     cmd: str
       cmd to apply
     """
+
+    if package not in available_packs['packname'].tolist():
+        print('The package you are trying to install does not exist')
+        print('The list of available packages is ',available_packs['packname'].tolist())
+        return None
+    
     if verbose:
         cmd = "pip -v install . --user --install-option=\"--package={}\"".format(
             pack)
@@ -74,9 +80,12 @@ opts, args = parser.parse_args()
 pack = opts.package
 verbose = opts.verbose
 action = opts.action
+available_packs = np.loadtxt('pack_version.txt', dtype={'names': ('packname', 'version'), 'formats': ('U15', 'U15')})
 
 if action == 'install':
-    os.system(cmd_install(pack, verbose))
+    cmd =cmd_install(pack, verbose,available_packs)
+    if cmd is not None:
+        os.system(cmd)
 
 if action == 'list':
     os.system(cmd_list())

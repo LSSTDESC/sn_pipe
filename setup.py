@@ -21,17 +21,16 @@ class InstallCommand(install):
         # Each user option must be listed here with their default value.
         install.initialize_options(self)
         self.package = ''
-        self.packgs = ['sn_metrics', 'sn_simulation',
-                       'sn_fit_lc', 'sn_plotters']
-        # load package versions
-        self.packvers = np.loadtxt('pack_version.txt', dtype={'names': (
+        #self.available_packages = ''
+        # load available packages and versions
+        self.packs = np.loadtxt('pack_version.txt', dtype={'names': (
             'packname', 'version'), 'formats': ('U15', 'U15')})
 
     def finalize_options(self):
         """Post-process options."""
 
         if self.package:
-            if self.package not in ['metrics', 'simulation']:
+            if self.package not in self.packs['packname'].tolist():
                 print('{} impossible to install'.format(self.package))
         install.finalize_options(self)
 
@@ -45,16 +44,16 @@ class InstallCommand(install):
             if self.package != 'all':
                 # now install the requested package
                 # get the version for this package
-                idx = self.packvers['packname'] == self.package
-                version = self.packvers[idx]['version'].item()
+                idx = self.packs['packname'] == self.package
+                version = self.packs[idx]['version'].item()
                 cmd = 'pip install -v --user git+https://github.com/lsstdesc/{}.git@{}'.format(
                     self.package, version)
                 os.system(cmd)
             else:
-                for pack in self.packgs:
+                for pack in self.packs:
                     # get the version for this package
-                    idx = self.packvers['packname'] == pack
-                    version = self.packvers[idx]['version'].item()
+                    packname = pack['packname']
+                    version = pack['version']
                     cmd = 'pip install --user git+https://github.com/lsstdesc/{}.git@{}'.format(
                         pack, version)
                     os.system(cmd)
