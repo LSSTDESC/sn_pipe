@@ -9,16 +9,11 @@ parser = OptionParser()
 parser.add_option("--prodids", type="str", default='input/plots/podids_fit.csv',
                   help="prodid [%default]")
 
-
 opts, args = parser.parse_args()
 
-theDir = opts.fileDir
 thelist = opts.prodids
 
 data = pd.read_csv(thelist, delimiter=',', comment='#')
-
-if theDir != '':
-    data['dirfile'] = theDir
 
 dictfiles = {}
 
