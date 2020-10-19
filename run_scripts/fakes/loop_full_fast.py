@@ -1,6 +1,8 @@
 import numpy as np
 import os
 from optparse import OptionParser
+from sn_tools.sn_io import make_dict_from_config,make_dict_from_optparse
+import yaml
 
 def run(x1,color,simus,ebv,bluecutoff,redcutoff,error_model,fake_config,snrmin,nbef,naft,zmax):
     """
@@ -53,7 +55,11 @@ def run(x1,color,simus,ebv,bluecutoff,redcutoff,error_model,fake_config,snrmin,n
             cmd = cmd_comm
             cmd += ' --simulator {}'.format(simu)
             os.system(cmd)
-    
+
+# this is to load option for fake cadence
+path = 'input/Fake_cadence'
+confDict = make_dict_from_config(path,'config_cadence.txt')
+
 parser = OptionParser()
 
 parser.add_option("--x1", type=float, default=-2.0,
@@ -77,10 +83,53 @@ parser.add_option("--nbef", type=int, default=4,
 parser.add_option("--naft", type=int, default=10,
                   help="min n LC points after max (fit)[%default]")
 
+#add option for Fake data here
+for key, vals in confDict.items():
+    vv = vals[1]
+    if vals[0] != 'str':
+        vv = eval('{}({})'.format(vals[0],vals[1]))
+    parser.add_option('--{}'.format(key),help='{} [%default]'.format(vals[2]),default=vv,type=vals[0],metavar='')
+
+parser.add_option('--fake_config',help='output file name [%default]',default='Fake_cadence.yaml',type='str')
+
 opts, args = parser.parse_args()
 
 
-fake_config = 'input/Fake_cadence/Fake_cadence.yaml'
+# make the fake config file here
+newDict = {}
+for key, vals in confDict.items():
+    newval = eval('opts.{}'.format(key))
+    newDict[key]=(vals[0],newval)
+
+dd = make_dict_from_optparse(newDict)
+# few changes to be made here: transform some of the input to list
+for vv in ['seasons','seasonLength']:
+    what = dd[vv]
+    if '-' not in what or what[0] == '-':
+        nn = list(map(int,what.split(',')))
+        print('ici',nn)
+    else:
+        nn = list(map(int,what.split('-')))
+        nn = range(np.min(nn),np.max(nn))
+    dd[vv] = nn
+
+for vv in ['MJDmin']:
+    what = dd[vv]
+    if '-' not in what or what[0] == '-':
+        nn = list(map(float,what.split(',')))
+    else:
+        nn = list(map(float,what.split('-')))
+        nn = range(np.min(nn),np.max(nn))
+    dd[vv] = nn
+
+
+#print('boo',yaml.safe_dump(dd))
+
+#print('config',dd)
+with open(opts.fake_config, 'w') as f:
+    data = yaml.safe_dump(dd, f)
+
+#fake_config = 'input/Fake_cadence/Fake_cadence.yaml'
 
 x1 = opts.x1
 color = opts.color
@@ -95,6 +144,6 @@ naft = opts.naft
 simus = list(map(str,opts.simus.split(',')))
 
 # case error_model=1
-run(x1,color,simus,ebv,bluecutoff,redcutoff,1,fake_config,snrmin,nbef,naft,zmax)
+run(x1,color,simus,ebv,bluecutoff,redcutoff,1,opts.fake_config,snrmin,nbef,naft,zmax)
 # case error_model=0
-run(x1,color,simus,ebv,bluecutoff,redcutoff,0,fake_config,snrmin,nbef,naft,zmax)
+#run(x1,color,simus,ebv,bluecutoff,redcutoff,0,opts.fake_config,snrmin,nbef,naft,zmax)
