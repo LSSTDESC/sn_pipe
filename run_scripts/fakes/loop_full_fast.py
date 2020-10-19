@@ -82,6 +82,8 @@ parser.add_option("--nbef", type=int, default=4,
                   help="min n LC points before max (fit)[%default]")
 parser.add_option("--naft", type=int, default=10,
                   help="min n LC points after max (fit)[%default]")
+parser.add_option("--error_model", type=str, default='1',
+                  help="error model to consider[%default]")
 
 #add option for Fake data here
 for key, vals in confDict.items():
@@ -143,7 +145,13 @@ naft = opts.naft
 
 simus = list(map(str,opts.simus.split(',')))
 
+error_models = list(map(int, opts.error_model.split(',')))
+
+for errmod in error_models:
+    run(x1,color,simus,ebv,bluecutoff,redcutoff,errmod,opts.fake_config,snrmin,nbef,naft,zmax)
+"""
 # case error_model=1
 run(x1,color,simus,ebv,bluecutoff,redcutoff,1,opts.fake_config,snrmin,nbef,naft,zmax)
 # case error_model=0
 #run(x1,color,simus,ebv,bluecutoff,redcutoff,0,opts.fake_config,snrmin,nbef,naft,zmax)
+"""
