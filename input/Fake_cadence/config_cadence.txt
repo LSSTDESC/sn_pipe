@@ -1,0 +1,77 @@
+## RA and Dec
+RA 0.0 float # RA
+Dec 0.0 float #Dec
+
+## seasons
+seasons 1 str # seasons
+seasonLength 180 str #season_length (days)
+MJDmin -40. str #MJD min for observations
+
+## bands to consider
+bands grizy str #bands to consider
+
+## cadence[day] per band
+cadence g  3. float # cadence g band
+cadence r 3. float # cadence r band
+cadence i  3. float # cadence i band
+cadence z  3. float # cadence z band
+cadence y 3. float # cadence y band
+
+## m5 per band
+m5 g 24.51 float #g 5-sigma depth values
+m5 r 24.06 float #r 5-sigma depth values
+m5 i 23.62 float #i 5-sigma depth values
+m5 z 23.00 float #z 5-sigma depth values
+m5 y 22.17 float #y 5-sigma depth values
+
+## number of visits per band
+Nvisits g 10 int #Nvisits g
+Nvisits r  20 int #Nvisits r
+Nvisits i 20  int #Nvisits i
+Nvisits z 26 int #Nvisits z
+Nvisits y 20 int #Nvisits y
+
+## Single visit exposure time
+ExposureTime g  30. float #single visit exp time g-band
+ExposureTime r  30. float #single visit exp time r-band
+ExposureTime i  30. float #single visit exp time i-band
+ExposureTime z  30. float #single visit exp time z-band
+ExposureTime y  30. float #single visit exp time y-band
+
+##shift between visits per band per day
+shiftDays 0.0069444 float #in days: 10./(24.*60.)
+
+##seeing
+seeingEff g 0.87 float # seeingEff g-band
+seeingEff r 0.83 float # seeingEff r-band
+seeingEff i 0.80  float # seeingEff i-band
+seeingEff z 0.78 float # seeingEff z-band
+seeingEff y 0.76 float # seeingEff y-band
+
+seeingGeom g 0.87 float # seeingGeom g-band
+seeingGeom r 0.83 float # seeingGeom r-band
+seeingGeom i 0.80  float # seeingGeom i-band
+seeingGeom z 0.78 float # seeingGeom z-band
+seeingGeom y 0.76 float # seeingGeom y-band
+
+##airmass
+airmass g 1.2 float #airmass g-band
+airmass r 1.2 float #airmass r-band
+airmass i 1.2 float #airmass i-band
+airmass z 1.2 float #airmass z-band
+airmass y 1.2 float #airmass y-band
+
+##sky
+sky g 1.2 float #sky g-band
+sky r 1.2 float #sky r-band
+sky i 1.2 float #sky i-band
+sky z 1.2 float #sky z-band
+sky y 1.2 float #sky y-band
+
+
+## moonPhase
+moonphase g 0.5 float #moonphase g-band
+moonphase r 0.5 float #moonphase r-band
+moonphase i 0.5 float #moonphase i-band
+moonphase z 0.5 float #moonphase z-band
+moonphase y 0.5 float #moonphase y-band
