@@ -26,7 +26,7 @@ def batch(dbDir, dbName,dbExtens, scriptref, outDir, nproc,
     log = dirLog + '/'+name_id+'.log'
 
    
-    qsub = 'qsub -P P_lsst -l sps=1,ct=5:00:00,h_vmem=16G -j y -o {} -pe multicores {} <<EOF'.format(
+    qsub = 'qsub -P P_lsst -l sps=1,ct=9:00:00,h_vmem=20G -j y -o {} -pe multicores {} <<EOF'.format(
         log, nproc)  
 
     scriptName = dirScript+'/'+name_id+'.sh'
