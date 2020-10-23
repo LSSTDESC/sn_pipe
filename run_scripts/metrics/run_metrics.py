@@ -146,7 +146,7 @@ print('seasons and metric', season_int,
 
 
 process = Process(opts.dbDir, opts.dbName, opts.dbExtens,
-                  opts.fieldType, opts.nside,
+                  opts.fieldType, 'unknown',opts.nside,
                   opts.RAmin, opts.RAmax,
                   opts.Decmin, opts.Decmax,
                   opts.saveData, opts.remove_dithering,
