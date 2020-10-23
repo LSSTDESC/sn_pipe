@@ -115,7 +115,9 @@ parser.add_option("--x1", type=float, default=-2.0,
 parser.add_option("--color", type=float, default=0.2,
                   help="SN color[%default]")
 parser.add_option("--zmax", type=float, default=1.01,
-                  help="SN redshift[%default]")
+                  help="SN max redshift[%default]")
+parser.add_option("--zmin", type=float, default=0.01,
+                  help="SN min redshift[%default]")
 parser.add_option("--bluecutoff", type=float, default=380.0,
                   help="blue cutoff[%default]")
 parser.add_option("--redcutoff", type=float, default=800.0,
@@ -143,7 +145,7 @@ outDirTemplates_ebv = '{}_{}_ebvofMW_{}'.format(outDirTemplates, cutoff,ebvofMW)
 
 # create requested output directories
 createDirs(outDirLC_ebv,outDirTemplates_ebv)
-process(opts.x1, opts.color, 
+process(opts.x1, opts.color,zmin=opts.zmin, 
         zmax=opts.zmax,ebvofMW=ebvofMW,
         bluecutoff=opts.bluecutoff,
         redcutoff=opts.redcutoff,
