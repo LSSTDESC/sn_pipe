@@ -44,7 +44,7 @@ SN:
   blueCutoff: bluecutoffval
   color:
     max: 1.0
-    min: 0.2
+    min: colorval
     step: 0.1
     type: unique
   daymax:
