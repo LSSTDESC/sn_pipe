@@ -21,37 +21,38 @@ blue_cutoff = 380.
 red_cutoff = 800.
 x1 = -2.0
 color = 0.2
-simulator = 'sn_cosmo'
+simulator = 'sn_fast'
 ebv=0.
 error_model=1
 bands = 'grizy'
-fake_config = 'input/Fake_cadence/Fake_cadence.yaml'
 zmin=0.0
 zmax=0.9
 zstep=0.01
-outDir = 'input_dd'
-
+bands = 'grizy'
+cadence=3.
+cadences = dict(zip(bands,[cadence]*len(bands)))
+cutoff = '{}_{}'.format(blue_cutoff,red_cutoff)
+if error_model:
+    cutoff = 'error_model'
+    
 plot_input = False
 plot_snr = False
 plot_nvisits = False
 plot = False
 
-## simulation of template LC here
-theDir = 'input_dd'
-#templateLC(x1,color,simulator,ebv,blue_cutoff,red_cutoff,error_model,fake_config,zmin,zmax,zstep,outDir)
-
 theDir = 'input/sn_studies'
-fname = 'Fakes_NSNMetric_Fake_lc_nside_64_coadd_0_0.0_360.0_-1.0_-1.0_0.hdf5'
-#fname = 'LC_sn_fast_Fake_Fake_DESC_seas_-1_-2.0_0.2_error_model_ebvofMW_0.0_0.hdf5'
-cutoff = '{}_{}'.format(blue_cutoff,red_cutoff)
-if error_model:
-    cutoff='error_model'
-fname = 'LC_sn_fast_Fake_Fake_DESC_seas_-1_-2.0_0.2_{}_ebvofMW_0.0_0.hdf5'.format(cutoff)
-m5file = 'medValues.npy'
+## simulation of template LC here
+prodid = '{}_{}_{}_ebv_{}_{}_cad_{}'.format(simulator, x1, color, ebv,cutoff,int(cadence))
+fname = 'LC_{}_0.hdf5'.format(prodid)
+if not os.path.isfile('{}/{}'.format(theDir,fname)):
+    templateLC(x1,color,simulator,ebv,blue_cutoff,red_cutoff,error_model,zmin,zmax,zstep,theDir,bands,cadences,prodid)
+
 m5file = 'medValues_flexddf_v1.4_10yrs_DD.npy'
 
 data = Data(theDir, fname, m5file, x1, color,
             blue_cutoff, red_cutoff, error_model,bands=bands)
+
+print(type(data))
 
 if plot_input:
     # few plots related to data
@@ -67,6 +68,10 @@ if plot_input:
     mybands.plot()
     plt.show()
 
+fracSignalBand = data.fracSignalBand.fracSignalBand
+
+print(fracSignalBand)
+#print(test)
 
 # Step 2: get the SNR requirements (minimal per band) with sigma_C<0.04
 # ----------------------------------------------------------------------
@@ -85,17 +90,21 @@ if not os.path.isdir(SNRDir):
 
 
 # choose one SNR distribution
-SNR_par = dict(zip(['max', 'step', 'choice'], [60., 1., 'Nvisits']))
+SNR_par = dict(zip(['max', 'step', 'choice'], [50., 1., 'Nvisits']))
 SNR_m5_file = 'SNR_m5_error_model_snrmin_1.npy'
+zref = np.round(np.arange(0.1,np.max(data.lc['z'])+0.1,0.05),2)
+zref = np.round(np.arange(0.1,np.max(data.lc['z'])+0.1,0.1),2)
+zref = np.round(np.array([0.6]),2)
+
 snr_calc = SNR(SNRDir, data, SNR_par,
-               SNR_m5_file=SNR_m5_file,
+               SNR_m5_file=SNR_m5_file,zref=zref,
                save_SNR_combi=True, verbose=False)
 
 # plot the results
 
 # load m5 reference values - here: med value per field per filter per season
 # m5_type = 'median_m5_field_filter_season'  # m5 values
-plot_snr=True
+plot_snr=False
 if plot_snr:
     snrplot = SNR_plot('SNR_files', -2.0, 0.2, 1.0, 380.,
                        800., 3., theDir, m5file, 'median_m5_filter')
