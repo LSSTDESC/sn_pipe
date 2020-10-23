@@ -110,54 +110,44 @@ parser.add_option("--action", type="str", default='simu',
                   help="what to do: simu or vstack[%default]")
 parser.add_option("--mode", type="str", default='batch',
                   help="how to run: batch or interactive [%default]")
+parser.add_option("--x1", type=float, default=-2.0,
+                  help="SN x1[%default]")
+parser.add_option("--color", type=float, default=0.2,
+                  help="SN color[%default]")
+parser.add_option("--zmax", type=float, default=1.01,
+                  help="SN redshift[%default]")
+parser.add_option("--bluecutoff", type=float, default=380.0,
+                  help="blue cutoff[%default]")
+parser.add_option("--redcutoff", type=float, default=800.0,
+                  help="red cutoff[%default]")
+parser.add_option("--ebv", type=float, default=0.0,
+                  help="E(B-V)[%default]")
+parser.add_option("--error_model", type=int, default=1,
+                  help="error model for SN LC estimation[%default]")
 
 
 opts, args = parser.parse_args()
 
-x1_colors = [(-2.0, -0.2), (-2.0, 0.0), (-2.0, 0.2),
-             (0.0, -0.2), (0.0, 0.0), (0.0, 0.2),
-             (2.0, -0.2), (2.0, 0.0), (2.0, 0.2)]
 
-zmax = [1.1, 1.1, 0.8, 1.2, 1.2, 1.2, 1.2, 1.2, 1.2]
-x1_colors = [(-2.0, 0.2), (0.0, 0.0)]
-zmax = [0.9, 1.2]
-
-x1_colors = [(-2.0,0.2)]
-zmax = [1.0]
-zmax_dict = dict(zip(x1_colors, zmax))
-
+ebvofMW = np.round(opts.ebv,2)
+ 
+cutoff = '{}_{}'.format(opts.bluecutoff, opts.redcutoff)
+if opts.error_model>0:
+    cutoff = 'error_model'
+ 
 outDirLC = '/sps/lsst/users/gris/fakes_for_templates'
 outDirTemplates = '/sps/lsst/users/gris/Template_LC'
-bluecutoff = 380.
-redcutoff = 800.
-#ebvs = np.arange(0.0, 0.40, 0.01)
-ebvs= [0.0]
-error_model = 1
-"""
-outDirLC = '{}_{}_{}'.format(
-    outDirLC, bluecutoff, redcutoff)
-outDirTemplates = '{}_{}_{}'.format(
-    outDirTemplates, bluecutoff, redcutoff)
-"""
-cutoff = '{}_{}'.format(bluecutoff, redcutoff)
-if error_model>0:
-    cutoff = 'error_model'
 
-for ebvofMW in ebvs:
-    ebvofMW = np.round(ebvofMW,2)
-    outDirLC_ebv = '{}_{}_ebvofMW_{}'.format(outDirLC, cutoff,ebvofMW)
-    outDirTemplates_ebv = '{}_{}_ebvofMW_{}'.format(outDirTemplates, cutoff,ebvofMW)
-    
-    # create requested output directories
-    createDirs(outDirLC_ebv,outDirTemplates_ebv)
-    for (x1, color) in x1_colors:
-    
-        process(x1, color, zmax=zmax_dict[(x1, color)],
-                ebvofMW=ebvofMW,
-                bluecutoff=bluecutoff,
-                redcutoff=redcutoff,
-                error_model=error_model,
-                outDirLC=outDirLC_ebv, 
-                outDirTemplates=outDirTemplates_ebv, 
-                what=opts.action,mode=opts.mode)
-        
+outDirLC_ebv = '{}_{}_ebvofMW_{}'.format(outDirLC, cutoff,ebvofMW)
+outDirTemplates_ebv = '{}_{}_ebvofMW_{}'.format(outDirTemplates, cutoff,ebvofMW)
+
+# create requested output directories
+createDirs(outDirLC_ebv,outDirTemplates_ebv)
+process(opts.x1, opts.color, 
+        zmax=opts.zmax,ebvofMW=ebvofMW,
+        bluecutoff=opts.bluecutoff,
+        redcutoff=opts.redcutoff,
+        error_model=opts.error_model,
+        outDirLC=outDirLC_ebv, 
+        outDirTemplates=outDirTemplates_ebv, 
+        what=opts.action,mode=opts.mode)
