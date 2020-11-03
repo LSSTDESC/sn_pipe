@@ -70,8 +70,9 @@ if plot_input:
 
 fracSignalBand = data.fracSignalBand.fracSignalBand
 
-print(fracSignalBand)
-#print(test)
+np.save('fracSignalBand.npy',fracSignalBand.to_records(index=False))
+
+print(test)
 
 # Step 2: get the SNR requirements (minimal per band) with sigma_C<0.04
 # ----------------------------------------------------------------------
@@ -94,7 +95,7 @@ SNR_par = dict(zip(['max', 'step', 'choice'], [50., 1., 'Nvisits']))
 SNR_m5_file = 'SNR_m5_error_model_snrmin_1.npy'
 zref = np.round(np.arange(0.1,np.max(data.lc['z'])+0.1,0.05),2)
 zref = np.round(np.arange(0.1,np.max(data.lc['z'])+0.1,0.1),2)
-zref = np.round(np.array([0.6]),2)
+zref = np.round(np.array([0.8]),2)
 
 snr_calc = SNR(SNRDir, data, SNR_par,
                SNR_m5_file=SNR_m5_file,zref=zref,
