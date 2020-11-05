@@ -466,7 +466,7 @@ def plotSummary(resdf, text=True, ref=False, ref_var='nsn'):
 
     """
 
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(14, 8))
 
     zlim_ref = -1
     nsn_ref = -1
@@ -686,13 +686,13 @@ metricTot_med = None
 
 # filter cadences here
 resdf = filter(
-    resdf, ['_noddf', 'footprint_stuck_rolling', 'weather', 'wfd_depth', 'rolling', 'roll'])
+    resdf, ['_noddf', 'footprint_stuck_rolling', 'weather', 'wfd_depth'])
 
 # summary plot
 plotSummary_interactive(resdf)
-# plotSummary_mpld3(resdf)
+# plotSummary(resdf)
 plt.show()
-print(test)
+# print(test)
 
 # 2D plots
 
