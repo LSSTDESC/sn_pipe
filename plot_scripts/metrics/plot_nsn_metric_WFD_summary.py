@@ -325,130 +325,6 @@ def rankCadences(resdf, ref_var='nsn'):
     return ressort
 
 
-def plotSummary_mpld3(resdf):
-    """
-    """
-    x = resdf['zlim'].to_list()
-    y = resdf['nsn'].to_list()
-    c = resdf['color'].to_list()
-    m = resdf['marker'].to_list()
-    fig, ax = plt.subplots()
-
-    sc = mscatter(x, y, c=c, m=m, s=200)
-    #sc = ax.plot(x, y, color=c)
-
-    ax.grid()
-    ax.set_xlabel(r'$z_{faint}$')
-    ax.set_ylabel(r'$N_{SN}(z\leq z_{faint})$')
-    patches = []
-    for col in np.unique(resdf['color']):
-        idx = resdf['color'] == col
-        tab = resdf[idx]
-        lab = '{}_{}'.format(
-            np.unique(tab['simuType']).item(), np.unique(tab['simuNum']).item())
-        patches.append(mpatches.Patch(color=col, label=lab))
-    plt.legend(handles=patches)
-    #labels = ['point {0}'.format(i + 1) for i in range(len(resdf))]
-    labels = []
-    for k, row in resdf.iterrows():
-        lab = '{} \n family: {}'.format(
-            row['dbName'], row['family'])
-        labels.append(lab)
-    tooltip = mpld3.plugins.PointLabelTooltip(sc, labels=labels)
-    mpld3.plugins.connect(fig, tooltip)
-
-    mpld3.show()
-
-
-class plotSummary_interactive:
-    """
-    class to plot result and have access to points interactively
-
-    Parameters
-    ---------------
-    resdf: pandas df
-      data to plot
-
-    """
-
-    def __init__(self, resdf):
-
-        self.resdf = resdf
-        x = resdf['zlim'].to_list()
-        y = resdf['nsn'].to_list()
-        c = resdf['color'].to_list()
-        m = resdf['marker'].to_list()
-        self.fig, self.ax = plt.subplots(figsize=(14, 8))
-
-        self.sc = mscatter(x, y, c=c, m=m, s=100)
-        #self.sc = self.ax.plot(x, y, color=c)
-        self.annot = self.ax.annotate("", xy=(0, 0), xytext=(20, 20), textcoords="offset points",
-                                      bbox=dict(boxstyle="round", fc="w"),
-                                      arrowprops=dict(arrowstyle="->"))
-        self.annot.set_visible(False)
-
-        self.ax.grid()
-        self.ax.set_xlabel('$z_{faint}$')
-        self.ax.set_ylabel('$N_{SN}(z\leq z_{faint})$')
-        patches = []
-        for col in np.unique(resdf['color']):
-            idx = resdf['color'] == col
-            tab = resdf[idx]
-            lab = '{}_{}'.format(
-                np.unique(tab['simuType']).item(), np.unique(tab['simuNum']).item())
-            patches.append(mpatches.Patch(color=col, label=lab))
-        plt.legend(handles=patches)
-
-        self.fig.canvas.mpl_connect("motion_notify_event", self.hover)
-
-        plt.show()
-
-    def update_annot(self, ind):
-        """
-        Method to update annotation on the plot
-
-        Parameters
-        ---------------
-        ind: dict
-           point infos
-
-        """
-        pos = self.sc.get_offsets()[ind["ind"][0]]
-        self.annot.xy = pos
-        idx = np.abs(self.resdf['zlim']-pos[0]) < 1.e-8
-        idx &= np.abs(self.resdf['nsn']-pos[1]) < 1.e-8
-        sel = resdf[idx]
-        color = sel['color'].values.item()
-        text = "{} \n family: {}".format(
-            sel['dbName'].values.item(), sel['family'].values.item())
-
-        self.annot.set_text(text)
-        # self.annot.get_bbox_patch().set_facecolor(cmap(norm(c[ind["ind"][0]])))
-        self.annot.get_bbox_patch().set_facecolor(color)
-        self.annot.get_bbox_patch().set_alpha(0.4)
-
-    def hover(self, event):
-        """
-        Method to plot annotation when pointer is on a point
-
-        Parameters
-        ---------------
-        event: matplotlib.backend_bases.MouseEvent
-          mouse pointer?
-        """
-        vis = self.annot.get_visible()
-        if event.inaxes == self.ax:
-            cont, ind = self.sc.contains(event)
-            if cont:
-                self.update_annot(ind)
-                self.annot.set_visible(True)
-                self.fig.canvas.draw_idle()
-            else:
-                if vis:
-                    self.annot.set_visible(False)
-                    self.fig.canvas.draw_idle()
-
-
 def plotSummary(resdf, text=True, ref=False, ref_var='nsn'):
     """
     Method to draw the summary plot nSN vs zlim
@@ -685,14 +561,18 @@ metricTot = None
 metricTot_med = None
 
 # filter cadences here
+"""
 resdf = filter(
     resdf, ['_noddf', 'footprint_stuck_rolling', 'weather', 'wfd_depth'])
+"""
 
 # summary plot
-plotSummary_interactive(resdf)
+nsn_plot.NSN_zlim_GUI(resdf)
+nsn_plot.PlotSummary_Annot(resdf)
+# plt.show()
 # plotSummary(resdf)
-plt.show()
-# print(test)
+# plt.show()
+print(test)
 
 # 2D plots
 
