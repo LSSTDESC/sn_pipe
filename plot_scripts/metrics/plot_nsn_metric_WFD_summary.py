@@ -12,7 +12,6 @@ import pandas as pd
 import os
 import multiprocessing
 from dataclasses import dataclass
-import mpld3
 
 
 @dataclass
@@ -201,7 +200,7 @@ def processMulti(toproc, outFile, nproc=1):
         idb = tabfi[j+1]
 
         p = multiprocessing.Process(name='Subprocess-'+str(j), target=processLoop, args=(
-            toproc[ida:idb], j, result_queue))
+            toproc[ida:idb], 'WFD',j, result_queue))
         p.start()
 
     # grabing the results
@@ -222,7 +221,7 @@ def processMulti(toproc, outFile, nproc=1):
     np.save(outFile, resdf.to_records(index=False))
 
 
-def processLoop(toproc, j=0, output_q=None):
+def processLoop(toproc, fieldType='WFD',j=0, output_q=None):
     """
     Function to analyze a set of metric result files
 
@@ -458,62 +457,6 @@ def filter(resdf, strfilt=['_noddf']):
     return resdf
 
 
-def clean(fam):
-    """
-    Method to clean a string
-
-    Parameters
-    ----------------
-    fam: str
-    the string to clean
-
-    Returns
-    -----------
-    the final string
-
-    """
-    if fam[-1] == '_':
-        return fam[:-1]
-
-    if fam[-1] == '.':
-        return fam[:-2]
-
-    return fam
-
-
-def family(dbName, rlist):
-    """
-    Method to get a family from a dbName
-
-    Parameters
-    --------------
-    dbName: str
-       the dbName to process
-
-    Returns
-    ----------
-    str: the name of the 'family'
-
-
-    """
-
-    ro = []
-    fam = dbName
-    for i in range(len(dbName)):
-        stre = dbName[:i+1]
-        num = 0
-        for kk in rlist:
-            if stre == kk[:i+1]:
-                num += 1
-        # print(stre, num)
-        ro.append(num)
-        if i > 5 and ro[-1]-ro[-2] < 0:
-            fam = dbName[:i]
-            break
-
-    return clean(fam)
-
-
 parser = OptionParser(
     description='Display NSN metric results for WFD fields')
 
@@ -545,16 +488,17 @@ for ip, vv in enumerate(simu_list):
 
     if not os.path.isfile(outFile):
         toprocess = Infos(vv).resdf
-        processMulti(toprocess, outFile, nproc=4)
+        processMulti(toprocess, outFile, nproc=8)
 
     resdf = pd.concat((resdf, pd.DataFrame(
         np.load(outFile, allow_pickle=True))))
 
+    """
     rfam = []
     for io, row in resdf.iterrows():
         rfam.append(family(row['dbName'], resdf['dbName'].to_list()))
     resdf['family'] = rfam
-
+    """
 # print(test)
 
 metricTot = None
@@ -568,7 +512,7 @@ resdf = filter(
 
 # summary plot
 nsn_plot.NSN_zlim_GUI(resdf)
-nsn_plot.PlotSummary_Annot(resdf)
+#nsn_plot.PlotSummary_Annot(resdf)
 # plt.show()
 # plotSummary(resdf)
 # plt.show()
