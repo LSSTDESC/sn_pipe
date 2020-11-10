@@ -90,7 +90,8 @@ class Fit_Simu:
             print('hello here',t)
             
             for kk in range(nn):
-            #for kk in [1]:
+            #for kk in [9]:
+                print('processing batch',kk,t[kk],t[kk+1])
                 simul_h = simul[t[kk]:t[kk+1]]
                 res_simul = self.process_multiproc(simul_h,lc_name)
                 res = vstack([res, res_simul])
@@ -121,8 +122,9 @@ class Fit_Simu:
             simul[t[i]:t[i+1]], lc_name,i, result_queue)) for i in range(self.nproc)]
         """
         procs = [multiprocessing.Process(name='Subprocess-'+str(i), target=self.process, args=(
-            simul[t[i]:t[i+1]], lc_name,i, result_queue)) for i in [6]]
+            simul[t[i]:t[i+1]], lc_name,i, result_queue)) for i in [0,1,2,3]]
         """
+        
         for p in procs:
             p.start()
 
@@ -142,22 +144,113 @@ class Fit_Simu:
     def process(self,simul, lc_name,j=0, output_q=None):
 
         res = Table()
+        time_ref = time.time()
         for ilc,simu in enumerate(simul):
             #print('fitting',j,ilc)
             lc = None
             lc = Table.read(lc_name, path='lc_{}'.format(simu['index_hdf5']))
             lc.convert_bytestring_to_unicode()
+            #print(type(lc))
+            #self.plotLC(lc,12)
             if simu['status'] == 1:
                 resfit = self.fit(lc)
                 res = vstack([res, resfit])
 
-        #print('done here',j)
+        print('done here',j,time.time()-time_ref)
         if output_q is not None:
             return output_q.put({j: res})
         else:
             return res
         
+    def plotLC(self, table, time_display):
+        """ Light curve plot using sncosmo methods
+        Parameters
+        ---------------
+        table: astropy table
+         table with LS informations (flux, ...)
+       time_display: float
+         duration of the window display
+        """
 
+        import matplotlib.pyplot as plt
+        import sncosmo
+        from sn_tools.sn_telescope import Telescope
+        import astropy.units as u
+        prefix = 'LSST::'
+        """
+        _photdata_aliases = odict([
+            ('time', set(['time', 'date', 'jd', 'mjd', 'mjdobs', 'mjd_obs'])),
+            ('band', set(['band', 'bandpass', 'filter', 'flt'])),
+            ('flux', set(['flux', 'f'])),
+            ('fluxerr', set(
+                ['fluxerr', 'fe', 'fluxerror', 'flux_error', 'flux_err'])),
+            ('zp', set(['zp', 'zpt', 'zeropoint', 'zero_point'])),
+            ('zpsys', set(['zpsys', 'zpmagsys', 'magsys']))
+        ])
+        """
+        
+        telescope = Telescope(airmass=1.2)
+        for band in 'grizy':
+            name_filter = prefix+band
+            bandpass = sncosmo.Bandpass(
+                telescope.atmosphere[band].wavelen,
+                telescope.atmosphere[band].sb,
+                    name=name_filter,
+                    wave_unit=u.nm)
+            sncosmo.registry.register(bandpass, force=True)
+        
+        z = table.meta['z']
+        if 'x1' in table.meta.keys():
+            x1 = table.meta['x1']
+            color = table.meta['color']
+            x0 = table.meta['x0']
+        else:
+            x1 = 0.
+            color = 0.
+            x0 = 0.
+        daymax = table.meta['daymax']
+
+        model = sncosmo.Model('salt2')
+        model.set(z=z,
+                  c=color,
+                  t0=daymax,
+                  #x0=x0,
+                  x1=x1)
+        """
+        print('tests',isinstance(table, np.ndarray),isinstance(table,Table),isinstance(table,dict))
+        array_tab = np.asarray(table)
+        print(array_tab.dtype)
+        colnames = array_tab.dtype.names
+        # Create mapping from lowercased column names to originals
+        lower_to_orig = dict([(colname.lower(), colname) for colname in colnames])
+        
+        # Set of lowercase column names
+        lower_colnames = set(lower_to_orig.keys())
+        orig_colnames_to_use = []
+        for aliases in _photdata_aliases.values():
+            i = lower_colnames & aliases
+            if len(i) != 1:
+                raise ValueError('Data must include exactly one column from {0} '
+                                 '(case independent)'.format(', '.join(aliases)))
+            orig_colnames_to_use.append(lower_to_orig[i.pop()])
+        
+        new_data = table[orig_colnames_to_use].copy()
+        print('bbbb',orig_colnames_to_use,_photdata_aliases.keys(),new_data.dtype.names)
+        new_data.dtype.names = _photdata_aliases.keys()
+        """
+        # display only 1 sigma LC points
+        table = table[table['flux']/table['fluxerr_photo']>=5.]
+        print('display',len(table))
+        """
+        if 'x1' in table.meta.keys():
+            sncosmo.plot_lc(data=table,model=model)
+        else:
+        """
+        sncosmo.plot_lc(data=table)
+
+        plt.draw()
+        plt.pause(time_display)
+        plt.close()
 # get all possible simulation parameters and put in a dict
 path = simu_fit.__path__
 confDict = make_dict_from_config(path[0],'config_simulation.txt')
