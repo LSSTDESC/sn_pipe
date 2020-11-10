@@ -10,7 +10,7 @@ def simulation(fieldName,dbName,dbDir,dbExtens,outDir):
     cmd += ' --dbExtens {}'.format(dbExtens)
     cmd += ' --outDir {}'.format(outDir)
     print(cmd)
-    #os.system(cmd)
+    os.system(cmd)
 
 def fit(fieldName,dbName,simuDir,outDir):
 
@@ -20,7 +20,7 @@ def fit(fieldName,dbName,simuDir,outDir):
     cmd += ' --simuDir {}'.format(simuDir)
     cmd += ' --outDir {}'.format(outDir)
     print(cmd)
-    #os.system(cmd)
+    os.system(cmd)
 
 parser = OptionParser()
 
