@@ -14,7 +14,7 @@ def simulation(fieldName,dbName,dbDir,dbExtens,outDir):
 
 def fit(fieldName,dbName,simuDir,outDir):
 
-    cmd = 'python batch_dd_fit.py'
+    cmd = 'python for_batch/scripts/batch_dd_fit.py'
     cmd += ' --fieldName {}'.format(fieldName)
     cmd += ' --dbName {}'.format(dbName)
     cmd += ' --simuDir {}'.format(simuDir)
@@ -39,7 +39,7 @@ dbExtens = opts.dbExtens
 simuDir = opts.simuDir
 fitDir = opts.fitDir
 
-DDF = ['COSMOS','CDFS','ELAIS','SPT','XMM-LSS','ADFS1','ADFS2']
+DDF = ['COSMOS','CDFS','ELAIS','XMM-LSS','ADFS1','ADFS2']
 
 for dd in DDF:
     if opts.action == 'simulation':

@@ -27,7 +27,7 @@ def batch(dbName,fieldName,prodid, simuDir, outDir,num,nproc=8):
 
     script.write("EOF" + "\n")
     script.close()
-    #os.system("sh "+scriptName)
+    os.system("sh "+scriptName)
     
 
 def prepareOut(dbName,fieldName,num):
