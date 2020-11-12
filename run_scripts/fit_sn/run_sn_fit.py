@@ -90,7 +90,7 @@ class Fit_Simu:
             print('hello here',t)
             
             for kk in range(nn):
-            #for kk in [9]:
+            #for kk in [3]:
                 print('processing batch',kk,t[kk],t[kk+1])
                 simul_h = simul[t[kk]:t[kk+1]]
                 res_simul = self.process_multiproc(simul_h,lc_name)
@@ -122,7 +122,7 @@ class Fit_Simu:
             simul[t[i]:t[i+1]], lc_name,i, result_queue)) for i in range(self.nproc)]
         """
         procs = [multiprocessing.Process(name='Subprocess-'+str(i), target=self.process, args=(
-            simul[t[i]:t[i+1]], lc_name,i, result_queue)) for i in [0,1,2,3]]
+            simul[t[i]:t[i+1]], lc_name,i, result_queue)) for i in [4]]
         """
         
         for p in procs:
@@ -151,11 +151,12 @@ class Fit_Simu:
             lc = Table.read(lc_name, path='lc_{}'.format(simu['index_hdf5']))
             lc.convert_bytestring_to_unicode()
             #print(type(lc))
-            #self.plotLC(lc,12)
+            #self.plotLC(lc,10)
             if simu['status'] == 1:
                 resfit = self.fit(lc)
-                res = vstack([res, resfit])
-
+                if resfit is not None:
+                    res = vstack([res, resfit])
+                    
         print('done here',j,time.time()-time_ref)
         if output_q is not None:
             return output_q.put({j: res})
@@ -239,7 +240,7 @@ class Fit_Simu:
         new_data.dtype.names = _photdata_aliases.keys()
         """
         # display only 1 sigma LC points
-        table = table[table['flux']/table['fluxerr_photo']>=5.]
+        table = table[table['flux']/table['fluxerr']>=1.]
         print('display',len(table))
         """
         if 'x1' in table.meta.keys():
