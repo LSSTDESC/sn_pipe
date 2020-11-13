@@ -38,7 +38,7 @@ def fitSN(dirFiles,prodid,outDir_fit,nbef,naft,snrmin,fitter,nproc):
     cmd += ' --LCSelection_naft {}'.format(naft)
     cmd += ' --Simulations_prodid {}'.format(prodid)
     cmd += ' --Fitter_name {}'.format(fitter_name)
-    cmd += ' --LCSelection_snrmin 5.'
+    cmd += ' --LCSelection_snrmin {}'.format(snrmin)
     print(cmd)
     os.system(cmd)
 
