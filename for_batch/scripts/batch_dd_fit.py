@@ -4,7 +4,15 @@ import os
 import glob
 
 
-def batch(dbName,fieldName,prodid, simuDir, outDir,num,nproc=8):
+def process(dbName,fieldName,prodid, simuDir, outDir,num,nproc=8,mode='batch',snrmin=5.):
+
+    if mode == 'batch':
+        batch(dbName,fieldName,prodid, simuDir, outDir,num,nproc,snrmin)
+    else:
+        cmd_ = cmd(dbName,prodid,simuDir,outDir,nproc,snrmin)
+        os.system(cmd_)
+
+def batch(dbName,fieldName,prodid, simuDir, outDir,num,nproc=8,snrmin=5.):
 
     dirScript, name_id, log, cwd = prepareOut(dbName,fieldName,num)
     # qsub command                                                                             
@@ -22,7 +30,7 @@ def batch(dbName,fieldName,prodid, simuDir, outDir,num,nproc=8):
     script.write("echo 'sourcing done' \n")
 
    
-    cmd_=cmd(dbName,prodid, simuDir, outDir,nproc)
+    cmd_=cmd(dbName,prodid, simuDir, outDir,nproc,snrmin)
     script.write(cmd_+" \n")
 
     script.write("EOF" + "\n")
@@ -56,14 +64,14 @@ def prepareOut(dbName,fieldName,num):
     return dirScript, name_id, log, cwd
 
 
-def cmd(dbName,prodid,simuDir,outDir,nproc):
+def cmd(dbName,prodid,simuDir,outDir,nproc,snrmin):
     cmd = 'python run_scripts/fit_sn/run_sn_fit.py'
     #cmd += ' --ProductionID {}_{}_allSN_{}_sn_cosmo'.format(dbName,fieldName,num) 
     #cmd += ' --Simulations_prodid {}_{}_allSN_{}'.format(dbName,fieldName,num)
     cmd += ' --ProductionID {}_sn_cosmo'.format(prodid) 
     cmd += ' --Simulations_prodid {}'.format(prodid)
     cmd += ' --Simulations_dirname {}'.format(simuDir)
-    cmd += ' --LCSelection_snrmin 5.' 
+    cmd += ' --LCSelection_snrmin {}'.format(snrmin) 
     cmd += ' --LCSelection_nbands 3' 
     cmd += ' --Output_directory {}/{}'.format(outDir,dbName) 
     cmd += ' --Multiprocessing_nproc {}'.format(nproc)
@@ -75,6 +83,9 @@ parser.add_option("--dbName", type="str", default='descddf_v1.4_10yrs',help="dbN
 parser.add_option("--simuDir", type="str", default='/sps/lsst/users/gris/DD/Simu',help="simu dir [%default]")
 parser.add_option("--fieldName", type="str", default='COSMOS',help="DD field to process [%default]")
 parser.add_option("--outDir", type="str", default='/sps/lsst/users/gris/DD/Fit',help="output directory [%default]")
+parser.add_option("--mode", type="str", default='batch',help="run mode batch/interactive[%default]")
+parser.add_option("--snrmin", type=float, default=1.,help="min snr for LC points fit[%default]")
+parser.add_option("--nproc", type=int, default=8,help="number of proc to use[%default]")
 
 opts, args = parser.parse_args()
 
@@ -91,7 +102,7 @@ simuDir='{}/{}'.format(opts.simuDir,opts.dbName)
 for i,fi in enumerate(simuFiles):
     prodid = fi.split('/')[-1].split('.hdf5')[0].split('Simu_')[-1]
     print(prodid)
-    batch(opts.dbName,opts.fieldName,prodid, simuDir, opts.outDir,i)
+    process(opts.dbName,opts.fieldName,prodid, simuDir, opts.outDir,i,opts.nproc,opts.mode,opts.snrmin)
 
 
 """

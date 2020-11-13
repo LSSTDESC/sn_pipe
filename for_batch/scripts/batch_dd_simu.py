@@ -2,8 +2,18 @@ from optparse import OptionParser
 import pandas as pd
 import os
 
-def batch(dbName,dbDir,dbExtens,fieldName,outDir,nproc=8):
+def process(dbName,dbDir,dbExtens,fieldName,outDir,nproc=8,mode='batch'):
+    
+    if mode == 'batch':
+        batch(dbName,dbDir,dbExtens,fieldName,outDir,nproc)
+    else:
+        config = get_config()
+        for key, val in config.items():
+            cmd_ = cmd(dbName,dbDir,dbExtens,fieldName,config,key,outDir,nproc):
+            os.system(_cmd)
 
+
+def batch(dbName,dbDir,dbExtens,fieldName,outDir,nproc=8):
     # get config for the run
     config = get_config()
 
@@ -115,9 +125,10 @@ parser.add_option("--dbDir", type="str", default='/sps/lsst/cadence/LSST_SN_PhG/
 parser.add_option("--dbExtens", type="str", default='npy',help="db extension [%default]")
 parser.add_option("--fieldName", type="str", default='COSMOS',help="DD field to process [%default]")
 parser.add_option("--outDir", type="str", default='/sps/lsst/users/gris/DD/Simu',help="output directory [%default]")
+parser.add_option("--mode", type="str", default='batch',help="running mode batch/interactive[%default]")
 
 opts, args = parser.parse_args()
 
 print('Start processing...')
 
-batch(opts.dbName,opts.dbDir,opts.dbExtens,opts.fieldName,opts.outDir)
+process(opts.dbName,opts.dbDir,opts.dbExtens,opts.fieldName,opts.outDir,opts.mode)
