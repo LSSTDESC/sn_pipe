@@ -52,7 +52,7 @@ def batch(dbDir, dbName, dbExtens, scriptref, outDir, nproc,
             script.write(cmd + " \n")
     script.write("EOF" + "\n")
     script.close()
-    # os.system("sh "+scriptName)
+    os.system("sh "+scriptName)
 
 
 def cmdb(dbDir, dbName, dbExtens, scriptref, outDir, nproc,
