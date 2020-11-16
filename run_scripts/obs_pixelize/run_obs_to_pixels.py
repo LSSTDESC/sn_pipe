@@ -50,7 +50,7 @@ def skyPatch(RAmin, RAmax, nRA, Decmin, Decmax, nDec, outName):
 class procObsPixels:
     def __init__(self, outDir, dbDir, dbName, dbExtens, nodither,
                  fieldType, RAmin, RAmax, Decmin, Decmax, nside,
-                 nprocs, saveData=False):
+                 nprocs, saveData=False, fieldName='unknown', nclusters=6):
         """
         Class to process obs <-> pixels on a patch of the sky
 
@@ -91,7 +91,7 @@ class procObsPixels:
         self.dbExtens = dbExtens
         self.nodither = nodither
         self.fieldType = fieldType
-        self.fieldName = 'Unknown'
+        self.fieldName = fieldName
         self.RAmin = RAmin
         self.RAmax = RAmax
         self.Decmin = Decmin
@@ -99,7 +99,7 @@ class procObsPixels:
         self.nside = nside
         self.nprocs = nprocs
         self.saveData = saveData
-
+        self.nclusters = nclusters
         # create output directory
         self.genDir(outDir)
 
@@ -161,10 +161,14 @@ class procObsPixels:
                                          self.RAmin, self.RAmax,
                                          self.Decmin, self.Decmax,
                                          self.RACol, self.DecCol,
-                                         display=False)
+                                         display=False, nclusters=self.nclusters)
 
         print('observations', len(observations), len(patches))
-
+        """
+        import matplotlib.pyplot as plt
+        plt.plot(observations['fieldRA'], observations['fieldDec'], 'ko')
+        plt.show()
+        """
         return observations, patches
 
     def multiprocess(self, patches, observations):
@@ -215,8 +219,11 @@ class procObsPixels:
 
         # now save
         if self.saveData:
-            outName = '{}/{}_{}_nside_{}_{}_{}_{}_{}.npy'.format(self.outDir,
-                                                                 self.dbName, self.fieldType, self.nside, self.RAmin, self.RAmax, self.Decmin, self.Decmax)
+            outName = '{}/{}_{}_nside_{}_{}_{}_{}_{}_{}.npy'.format(self.outDir,
+                                                                    self.dbName, self.fieldType, self.nside,
+                                                                    self.RAmin, self.RAmax,
+                                                                    self.Decmin, self.Decmax,
+                                                                    self.fieldName)
             np.save(outName, restot.to_records(index=False))
 
     def processPatch(self, pointings, observations, j=0, output_q=None):
@@ -249,6 +256,7 @@ class procObsPixels:
 
         datapixels = DataToPixels(
             self.nside, self.RACol, self.DecCol, self.outDir, self.dbName)
+
         pixelsTot = pd.DataFrame()
         for index, pointing in pointings.iterrows():
             ipoint += 1
@@ -257,21 +265,35 @@ class procObsPixels:
             # get the pixels
             pixels = datapixels(observations, pointing['RA'], pointing['Dec'],
                                 pointing['radius_RA'], pointing['radius_Dec'], self.nodither, display=False)
-
+            """
+            import matplotlib.pyplot as plt
+            print(pixels.columns)
+            plt.plot(
+                observations[self.RACol], observations[self.DecCol], color='k', marker='o', mfc=None, linestyle='None')
+            plt.plot(pixels['pixRA'], pixels['pixDec'], 'r*')
+            """
+            # print(test)
+            sel = pixels
             if pixels is not None:
-                # select pixels that are inside the original area
 
-                idx = (pixels['pixRA']-pointing['RA']) >= - \
-                    pointing['radius_RA']/2.
-                idx &= (pixels['pixRA']-pointing['RA']
-                        ) < pointing['radius_RA']/2.
-                idx &= (pixels['pixDec']-pointing['Dec']) >= - \
-                    pointing['radius_Dec']/2.
-                idx &= (pixels['pixDec']-pointing['Dec']
-                        ) < pointing['radius_Dec']/2.
+                if self.fieldType == 'WFD':
+                    # select pixels that are inside the original area
 
-                pixelsTot = pd.concat((pixelsTot, pixels[idx]), sort=False)
+                    idx = (pixels['pixRA']-pointing['RA']) >= - \
+                        pointing['radius_RA']/2.
+                    idx &= (pixels['pixRA']-pointing['RA']
+                            ) < pointing['radius_RA']/2.
+                    idx &= (pixels['pixDec']-pointing['Dec']
+                            ) >= - pointing['radius_Dec']/2.
+                    idx &= (pixels['pixDec']-pointing['Dec']
+                            ) < pointing['radius_Dec']/2.
+                    sel = pixels[idx]
 
+                # print(sel.columns)
+                #sel['fieldName'] = self.fieldName
+                pixelsTot = pd.concat((pixelsTot, sel), sort=False)
+                #plt.plot(sel['pixRA'], sel['pixDec'], 'b<')
+                # plt.show()
             # datapixels.plot(pixels)
         print('end of processing for', j, time.time()-time_ref)
 
@@ -317,6 +339,11 @@ parser.add_option("--nDec", type=int, default=1,
                   help="number of Dec patches - [%default]")
 parser.add_option("--verbose", type=int, default=0,
                   help="verbose mode for the metric[%default]")
+parser.add_option("--fieldName", type='str', default='WFD',
+                  help="fieldName [%default]")
+parser.add_option("--nclusters", type=int, default=6,
+                  help="number of clusters - for DD only[%default]")
+
 
 opts, args = parser.parse_args()
 
@@ -328,12 +355,17 @@ if not os.path.isdir(opts.outDir):
 skymapName = '{}/skypatch_{}_{}_{}_{}_{}_{}.npy'.format(opts.outDir,
                                                         opts.RAmin, opts.RAmax, opts.nRA, opts.Decmin, opts.Decmax, opts.nDec)
 
-if not os.path.isfile(skymapName):
-    skyPatch(opts.RAmin, opts.RAmax, opts.nRA,
-             opts.Decmin, opts.Decmax, opts.nDec,
-             skymapName)
+if opts.fieldType == 'WFD':
+    if not os.path.isfile(skymapName):
+        skyPatch(opts.RAmin, opts.RAmax, opts.nRA,
+                 opts.Decmin, opts.Decmax, opts.nDec,
+                 skymapName)
 
-patches = np.load(skymapName)
+    patches = np.load(skymapName)
+else:
+    r = [(opts.RAmin, opts.RAmax, opts.Decmin, opts.Decmax)]
+    patches = np.rec.fromrecords(
+        r, names=['RAmin', 'RAmax', 'Decmin', 'Decmax'])
 
 
 for patch in patches:
@@ -342,5 +374,7 @@ for patch in patches:
                          opts.remove_dithering, opts.fieldType,
                          patch['RAmin'], patch['RAmax'],
                          patch['Decmin'], patch['Decmax'], opts.nside,
-                         opts.nprocs, saveData=opts.saveData)
+                         opts.nprocs, saveData=opts.saveData,
+                         fieldName=opts.fieldName,
+                         nclusters=opts.nclusters)
     # break
