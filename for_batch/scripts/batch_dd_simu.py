@@ -2,18 +2,18 @@ from optparse import OptionParser
 import pandas as pd
 import os
 
-def process(dbName,dbDir,dbExtens,fieldName,outDir,nproc=8,mode='batch'):
+def process(dbName,dbDir,dbExtens,fieldName,outDir,pixelmap_dir,nproc=8,mode='batch'):
     
     if mode == 'batch':
-        batch(dbName,dbDir,dbExtens,fieldName,outDir,nproc)
+        batch(dbName,dbDir,dbExtens,fieldName,outDir,pixelmap_dir,nproc)
     else:
         config = get_config()
         for key, val in config.items():
-            cmd_ = cmd(dbName,dbDir,dbExtens,fieldName,config,key,outDir,nproc):
-            os.system(_cmd)
+            cmd_ = cmd(dbName,dbDir,dbExtens,fieldName,config,key,outDir,pixelmap_dir,nproc)
+            os.system(cmd_)
 
 
-def batch(dbName,dbDir,dbExtens,fieldName,outDir,nproc=8):
+def batch(dbName,dbDir,dbExtens,fieldName,outDir,pixelmap_dir,nproc=8):
     # get config for the run
     config = get_config()
 
@@ -33,7 +33,7 @@ def batch(dbName,dbDir,dbExtens,fieldName,outDir,nproc=8):
     script.write("echo 'sourcing done' \n")
 
     for key, val in config.items():
-        cmd_=cmd(dbName,dbDir,dbExtens,fieldName,config,key,outDir,nproc)
+        cmd_=cmd(dbName,dbDir,dbExtens,fieldName,config,key,outDir,pixelmap_dir,nproc)
         script.write(cmd_+" \n")
 
     script.write("EOF" + "\n")
@@ -93,7 +93,7 @@ def get_config():
 
     return config
 
-def cmd(dbName,dbDir,dbExtens,fieldName,configa,key,outDir,nproc):
+def cmd(dbName,dbDir,dbExtens,fieldName,configa,key,outDir,pixelmap_dir,nproc):
 
     config = configa[key]
     cmd = 'python run_scripts/simulation/run_simulation.py'
@@ -109,7 +109,7 @@ def cmd(dbName,dbDir,dbExtens,fieldName,configa,key,outDir,nproc):
                 cmd += ' --SN_{}_min {}'.format(vv,config[vv]['min'])
      
     cmd += ' --SN_z_min {} --SN_z_max {}'.format(config['z']['min'], config['z']['max'])
-    cmd += ' --pixelmap_dir \'\'' 
+    cmd += ' --pixelmap_dir {}'.format(pixelmap_dir)
     cmd += ' --SN_NSNfactor 10'
     cmd += ' --Observations_fieldname {}'.format(fieldName)
     cmd += ' --ProductionID DD_{}_{}_error_model_{}'.format(dbName,fieldName,key)
@@ -126,9 +126,11 @@ parser.add_option("--dbExtens", type="str", default='npy',help="db extension [%d
 parser.add_option("--fieldName", type="str", default='COSMOS',help="DD field to process [%default]")
 parser.add_option("--outDir", type="str", default='/sps/lsst/users/gris/DD/Simu',help="output directory [%default]")
 parser.add_option("--mode", type="str", default='batch',help="running mode batch/interactive[%default]")
+parser.add_option("--pixelmap_dir", type="str", default='/sps/lsst/users/gris/ObsPixelized',help="pixelmap directory [%default]")
+parser.add_option("--nproc", type=int, default=8,help="number of proc [%default]")
 
 opts, args = parser.parse_args()
 
 print('Start processing...')
 
-process(opts.dbName,opts.dbDir,opts.dbExtens,opts.fieldName,opts.outDir,opts.mode)
+process(opts.dbName,opts.dbDir,opts.dbExtens,opts.fieldName,opts.outDir,opts.pixelmap_dir,opts.nproc,opts.mode)
