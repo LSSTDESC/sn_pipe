@@ -4,10 +4,10 @@ from optparse import OptionParser
 import glob
 import pandas as pd
 import sn_simu_input as simu_input
-from sn_tools.sn_io import make_dict_from_config,make_dict_from_optparse
+from sn_tools.sn_io import make_dict_from_config, make_dict_from_optparse
 
 
-def go_for_batch(toproc,dbDir,dbExtens,run_script,opts):
+def go_for_batch(toproc, dbDir, dbExtens, run_script, opts):
     """
     Function to prepare and start batches
 
@@ -31,8 +31,8 @@ def go_for_batch(toproc,dbDir,dbExtens,run_script,opts):
     pixelmap_dir = opts.pixelmap_dir
     splitSky = opts.splitSky
     dbName = toproc['dbName']
-    Decmin = -1.
-    Decmax = -1.
+    Dec_min = -1.
+    Dec_max = -1.
 
     if pixelmap_dir == '':
 
@@ -45,7 +45,8 @@ def go_for_batch(toproc,dbDir,dbExtens,run_script,opts):
         for ira in range(len(RAs)-1):
             RA_min = RAs[ira]
             RA_max = RAs[ira+1]
-            batchclass(toproc, dbDir, dbExtens,run_script,RA_min,RA_max,Dec_min,Dec_max,opts)
+            batchclass(toproc, dbDir, dbExtens, run_script,
+                       RA_min, RA_max, Dec_min, Dec_max, opts, npixels_tot=opts.npixels)
     else:
         # second case: there are pixelmaps available -> run on them
         # first: get the skymap
@@ -62,7 +63,7 @@ def go_for_batch(toproc,dbDir,dbExtens,run_script,opts):
         if opts.npixels > 0:
             for val in skyMap:
                 search_path = '{}/{}/{}_{}_nside_{}_{}_{}_{}_{}.npy'.format(
-                    pixelmap_dir, dbName, dbName,opts.Observations_fieldtype, opts.Pixelisation_nside, val['RAmin'], val['RAmax'], val['Decmin'], val['Decmax'])
+                    pixelmap_dir, dbName, dbName, opts.Observations_fieldtype, opts.Pixelisation_nside, val['RAmin'], val['RAmax'], val['Decmin'], val['Decmax'])
                 ffi = glob.glob(search_path)
                 tab = np.load(ffi[0])
                 # print(len(np.unique(tab['healpixID'])))
@@ -74,21 +75,23 @@ def go_for_batch(toproc,dbDir,dbExtens,run_script,opts):
         for val in skyMap:
             # get the number of pixels for this map
             search_path = '{}/{}/{}_{}_nside_{}_{}_{}_{}_{}.npy'.format(
-                pixelmap_dir, dbName, dbName, opts.Observations_fieldtype, opts.Pixelisation_nside,val['RAmin'], val['RAmax'], val['Decmin'], val['Decmax'])
+                pixelmap_dir, dbName, dbName, opts.Observations_fieldtype, opts.Pixelisation_nside, val['RAmin'], val['RAmax'], val['Decmin'], val['Decmax'])
             ffi = glob.glob(search_path)
-            tab = np.load(ffi[0],allow_pickle=True)
+            tab = np.load(ffi[0], allow_pickle=True)
             npixels_map = len(np.unique(tab['healpixID']))
 
-            print('pixel_map',val['RAmin'],val['RAmax'],npixels_map)
+            print('pixel_map', val['RAmin'], val['RAmax'], npixels_map)
             npixel_proc = opts.npixels
             if opts.npixels > 0:
                 num = float(npixels*npixels_map)/float(npixels_tot)
                 npixel_proc = int(round(num))
                 # print('hoio',npixel_proc,num)
-            batchclass(toproc, dbDir, dbExtens, run_script,val['RAmin'], val['RAmax'], val['Decmin'], val['Decmax'],opts,npixels_tot=opts.npixels)
-            
+            batchclass(toproc, dbDir, dbExtens, run_script,
+                       val['RAmin'], val['RAmax'], val['Decmin'], val['Decmax'], opts, npixels_tot=opts.npixels)
+
+
 class batchclass:
-    def __init__(self, toproc,dbDir,dbExtens,run_script,RAmin,RAmax,Decmin,Decmax,opts,npixels_tot):
+    def __init__(self, toproc, dbDir, dbExtens, run_script, RAmin, RAmax, Decmin, Decmax, opts, npixels_tot):
         """
         class to prepare and launch batches
 
@@ -98,7 +101,7 @@ class batchclass:
           list of parameters to consider
 
         """
-    
+
         self.dbName = toproc['dbName']
         self.dbDir = dbDir
         self.dbExtens = dbExtens
@@ -108,7 +111,6 @@ class batchclass:
         self.Decmax = Decmax
         self.npixels_tot = npixels_tot
         self.nproccomp = toproc['nproc']
-        
 
         self.opts = opts
         self.scriptref = run_script
@@ -135,17 +137,17 @@ class batchclass:
             os.makedirs(dirLog)
 
         dbName = self.dbName
-        
+
         nside = self.opts.Pixelisation_nside
-        fieldType = self.opts.Observations_fieldtype 
+        fieldType = self.opts.Observations_fieldtype
         nodither = self.opts.nodither
-        
 
         id = '{}_{}_{}_{}_{}_{}_{}_{}_{}'.format(
             dbName, nside, fieldType, 'simulation',
             nodither, self.RAmin, self.RAmax, self.Decmin, self.Decmax)
         if self.opts.pixelmap_dir != '':
-            id += '_frompixels_{}_{}'.format(self.opts.npixels, self.npixels_tot)
+            id += '_frompixels_{}_{}'.format(self.opts.npixels,
+                                             self.npixels_tot)
 
         name_id = 'simulation_{}'.format(id)
         log = dirLog + '/'+name_id+'.log'
@@ -183,14 +185,14 @@ class batchclass:
         script.write(" source setup_release.sh Linux\n")
         script.write("echo 'sourcing done' \n")
 
-        cmd_ = self.batch_cmd(proc,name_id)
+        cmd_ = self.batch_cmd(proc, name_id)
         script.write(cmd_+" \n")
 
         script.write("EOF" + "\n")
         script.close()
-        os.system("sh "+scriptName)
+        #os.system("sh "+scriptName)
 
-    def batch_cmd(self, proc,name_id):
+    def batch_cmd(self, proc, name_id):
         """
         Method for the batch command
 
@@ -205,9 +207,9 @@ class batchclass:
             self.scriptref, self.dbDir, self.dbName, self.dbExtens)
 
         for opt, value in self.opts.__dict__.items():
-            if opt not in ['dbList','splitSky','ProductionID','Pixelisation_nside',
-                           'Observations_fieldtype','Output_directory','Observations_filename']:
-                cmd += ' --{} {}'.format(opt,value)
+            if opt not in ['dbList', 'splitSky', 'ProductionID', 'Pixelisation_nside',
+                           'Observations_fieldtype', 'Output_directory', 'Observations_filename']:
+                cmd += ' --{} {}'.format(opt, value)
 
         cmd += ' --ProductionID {}'.format(name_id)
         cmd += ' --RAmin {}'.format(self.RAmin)
@@ -216,18 +218,19 @@ class batchclass:
         cmd += ' --Decmax {}'.format(self.Decmax)
         cmd += ' --nproc {}'.format(proc['nproc'].values[0])
         cmd += ' --Pixelisation_nside {}'.format(proc['nside'].values[0])
-        cmd += ' --Observations_fieldtype {}'.format(proc['fieldtype'].values[0])
-        cmd += ' --Observations_filename {}/{}.{}'.format(self.dbDir,self.dbName,self.dbExtens)
-        cmd += ' --Output_directory {}/{}'.format(opts.Output_directory,self.dbName)
-        
+        cmd += ' --Observations_fieldtype {}'.format(
+            proc['fieldtype'].values[0])
+        cmd += ' --Observations_filename {}/{}.{}'.format(
+            self.dbDir, self.dbName, self.dbExtens)
+        cmd += ' --Output_directory {}/{}'.format(
+            opts.Output_directory, self.dbName)
 
         return cmd
 
 
-
 # get all possible simulation parameters and put in a dict
 path = simu_input.__path__
-confDict = make_dict_from_config(path[0],'config_simulation.txt')
+confDict = make_dict_from_config(path[0], 'config_simulation.txt')
 
 parser = OptionParser()
 
@@ -250,8 +253,9 @@ parser.add_option("--nodither", type="int", default=0,
 for key, vals in confDict.items():
     vv = vals[1]
     if vals[0] != 'str':
-        vv = eval('{}({})'.format(vals[0],vals[1]))
-    parser.add_option('--{}'.format(key),help='{} [%default]'.format(vals[2]),default=vv,type=vals[0],metavar='')
+        vv = eval('{}({})'.format(vals[0], vals[1]))
+    parser.add_option('--{}'.format(key), help='{} [%default]'.format(
+        vals[2]), default=vv, type=vals[0], metavar='')
 
 
 opts, args = parser.parse_args()
@@ -303,6 +307,6 @@ toprocess = pd.read_csv(opts.dbList, comment='#')
 print('there', toprocess, type(toprocess), toprocess.size)
 
 for index, proc in toprocess.iterrows():
-    print('go here',proc['dbName'])
-    myproc = go_for_batch(proc,opts.dbDir,opts.dbExtens,
-                          'run_scripts/simulation/run_simulation',opts)
+    print('go here', proc['dbName'])
+    myproc = go_for_batch(proc, opts.dbDir, opts.dbExtens,
+                          'run_scripts/simulation/run_simulation', opts)
