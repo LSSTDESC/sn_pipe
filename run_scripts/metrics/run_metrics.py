@@ -94,6 +94,8 @@ parser.add_option("--radius", type=float, default=4.,
                   help="radius around clusters (DD and Fakes)[%default]")
 parser.add_option("--ebvofMW", type=float, default=-1.0,
                   help="E(B-V) of MW for dust corrections[%default]")
+parser.add_option("--fieldName", type=str, default='COSMOS',
+                  help="fieldName - for DD only[%default]")
 
 opts, args = parser.parse_args()
 
@@ -146,7 +148,7 @@ print('seasons and metric', season_int,
 
 
 process = Process(opts.dbDir, opts.dbName, opts.dbExtens,
-                  opts.fieldType, 'unknown',opts.nside,
+                  opts.fieldType, opts.fieldName,opts.nside,
                   opts.RAmin, opts.RAmax,
                   opts.Decmin, opts.Decmax,
                   opts.saveData, opts.remove_dithering,
