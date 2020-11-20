@@ -163,7 +163,7 @@ class NSNMetricWrapper(MetricWrapper):
                  nside=64, RAmin=0., RAmax=360.,
                  Decmin=-1.0, Decmax=-1.0,
                  npixels=0,
-                 metadata={}, outDir='', ebvofMW=-1.0, bluecutoff=380.0, redcutoff=800.0):
+                 metadata={}, outDir='', ebvofMW=-1.0, bluecutoff=380.0, redcutoff=800.0,error_model=1):
         super(NSNMetricWrapper, self).__init__(
             name=name, season=season, coadd=coadd, fieldType=fieldType,
             nside=nside, RAmin=RAmin, RAmax=RAmax,
@@ -212,12 +212,15 @@ class NSNMetricWrapper(MetricWrapper):
         print('Loading reference files')
         result_queue = multiprocessing.Queue()
 
+        wave_cutoff = 'error_model'
+        if not error_model:
+            wave_cutoff = '{}_{}'.format(bluecutoff, redcutoff)
         for j in range(len(x1_colors)):
             x1 = x1_colors[j][0]
             color = x1_colors[j][1]
 
-            fname = 'LC_{}_{}_{}_{}_ebvofMW_0.0_vstack.hdf5'.format(
-                x1, color, bluecutoff, redcutoff)
+            fname = 'LC_{}_{}_{}_ebvofMW_0.0_vstack.hdf5'.format(
+                x1, color, wave_cutoff)
             if np.abs(ebvofMW) > 0.:
                 dustFile = 'Dust_{}_{}_{}_{}.hdf5'.format(
                     x1, color, bluecutoff, redcutoff)
@@ -247,9 +250,9 @@ class NSNMetricWrapper(MetricWrapper):
         if fieldType == 'DD':
             n_bef = 4
             n_aft = 10
-            snr_min = 5.
-            n_phase_min = 1
-            n_phase_max = 1
+            snr_min = 1.
+            n_phase_min = 0
+            n_phase_max = 0
             zlim_coeff = 0.95
 
         if fieldType == 'WFD':

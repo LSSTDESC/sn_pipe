@@ -114,7 +114,14 @@ def cmd(dbName,dbDir,dbExtens,fieldName,configa,key,outDir,pixelmap_dir,nproc):
     cmd += ' --Observations_fieldname {}'.format(fieldName)
     cmd += ' --ProductionID DD_{}_{}_error_model_{}'.format(dbName,fieldName,key)
     cmd += ' --Simulator_errorModel 1'
-    cmd += ' --Output_directory {}/{}'.format(outDir,dbName)
+    outputDir = '{}/{}'.format(outDir,dbName)
+    cmd += ' --Output_directory {}'.format(outputDir)
+
+    #create outputDir here
+    if not os.path.isdir(outputDir):
+        os.makedirs(outputDir)
+
+
     print(cmd)
     return cmd
 

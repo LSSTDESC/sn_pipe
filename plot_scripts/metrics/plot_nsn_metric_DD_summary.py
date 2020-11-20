@@ -160,7 +160,12 @@ class Summary:
             # plt.show()
             metricValues = loopStack(fileNames, 'astropyTable').to_pandas()
             metricValues = metricValues.round({'pixRA': 3, 'pixDec': 3})
-            newdf = {}
+            metricValues['cadence'] = dbName
+            print(metricValues.columns)
+            return metricValues
+        """
+        newdf = {}
+            
             for key, vals in self.corr.items():
                 idx = np.abs(key[0]-metricValues['x1']) < 1.e-5
                 idx &= np.abs(key[1]-metricValues['color']) < 1.e-5
@@ -168,17 +173,18 @@ class Summary:
                 sel.loc[:, 'zlim_{}'.format(vals)] = sel['zlim']
                 sel.loc[:, 'nsn_z{}'.format(vals)] = sel['nsn']
                 sel.loc[:, 'nsn_med_z{}'.format(vals)] = sel['nsn_med']
-
-                newdf[vals] = sel.drop(
-                    columns=['x1', 'color', 'zlim', 'nsn', 'nsn_med'])
+           
+            
+            newdf[vals] = sel.drop(
+                columns=['x1', 'color', 'zlim', 'nsn', 'nsn_med'])
 
             finaldf = newdf['faint'].merge(
                 newdf['medium'], left_on=vars, right_on=vars)
 
         finaldf['cadence'] = dbName
-
+        
         return finaldf
-
+        """
 
 parser = OptionParser(
     description='Display (NSN,zlim) metric results for DD fields')
