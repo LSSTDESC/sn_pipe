@@ -200,7 +200,7 @@ def processMulti(toproc, outFile, nproc=1):
         idb = tabfi[j+1]
 
         p = multiprocessing.Process(name='Subprocess-'+str(j), target=processLoop, args=(
-            toproc[ida:idb], 'WFD',j, result_queue))
+            toproc[ida:idb], 'WFD', j, result_queue))
         p.start()
 
     # grabing the results
@@ -221,7 +221,7 @@ def processMulti(toproc, outFile, nproc=1):
     np.save(outFile, resdf.to_records(index=False))
 
 
-def processLoop(toproc, fieldType='WFD',j=0, output_q=None):
+def processLoop(toproc, fieldType='WFD', j=0, output_q=None):
     """
     Function to analyze a set of metric result files
 
@@ -488,7 +488,7 @@ for ip, vv in enumerate(simu_list):
 
     if not os.path.isfile(outFile):
         toprocess = Infos(vv).resdf
-        processMulti(toprocess, outFile, nproc=8)
+        processMulti(toprocess, outFile, nproc=3)
 
     resdf = pd.concat((resdf, pd.DataFrame(
         np.load(outFile, allow_pickle=True))))
@@ -512,7 +512,7 @@ resdf = filter(
 
 # summary plot
 nsn_plot.NSN_zlim_GUI(resdf)
-#nsn_plot.PlotSummary_Annot(resdf)
+# nsn_plot.PlotSummary_Annot(resdf)
 # plt.show()
 # plotSummary(resdf)
 # plt.show()
