@@ -1,6 +1,8 @@
 from optparse import OptionParser
 import pandas as pd
 import os
+import numpy as np
+import itertools
 
 def process(dbName,dbDir,dbExtens,fieldName,outDir,pixelmap_dir,nproc=8,mode='batch'):
     
@@ -8,16 +10,29 @@ def process(dbName,dbDir,dbExtens,fieldName,outDir,pixelmap_dir,nproc=8,mode='ba
         batch(dbName,dbDir,dbExtens,fieldName,outDir,pixelmap_dir,nproc)
     else:
         config = get_config()
-        for key, val in config.items():
-            cmd_ = cmd(dbName,dbDir,dbExtens,fieldName,config,key,outDir,pixelmap_dir,nproc)
-            os.system(cmd_)
+        for key, vala in config.items():
+            for keyb, valb in vals.items():
+                cmd_ = cmd(dbName,dbDir,dbExtens,fieldName,vals,keyb,outDir,pixelmap_dir,nproc)
+                os.system(cmd_)
 
 
 def batch(dbName,dbDir,dbExtens,fieldName,outDir,pixelmap_dir,nproc=8):
     # get config for the run
-    config = get_config()
+    config = config_rec()
 
-    dirScript, name_id, log, cwd = prepareOut(dbName,fieldName)
+    
+    confNames = ['faintSN','allSN']
+    for cf in confNames:
+        idx = config['confName'] == cf
+        sel = config[idx]
+        spl = np.array_split(sel,5)
+        for ibatch,vv in enumerate(spl):
+            batch_indiv(dbName,dbDir,dbExtens,fieldName,outDir,pixelmap_dir,cf,vv,ibatch,nproc)
+
+
+def batch_indiv(dbName,dbDir,dbExtens,fieldName,outDir,pixelmap_dir,confname,config,ibatch,nproc=8):
+
+    dirScript, name_id, log, cwd = prepareOut(dbName,fieldName,confname,ibatch)
     # qsub command                                                                             
     qsub = 'qsub -P P_lsst -l sps=1,ct=3:00:00,h_vmem=16G -j y -o {} -pe multicores {} <<EOF'.format(log, nproc)
 
@@ -32,15 +47,15 @@ def batch(dbName,dbDir,dbExtens,fieldName,outDir,pixelmap_dir,nproc=8):
     script.write(" source setup_release.sh Linux\n")
     script.write("echo 'sourcing done' \n")
 
-    for key, val in config.items():
-        cmd_=cmd(dbName,dbDir,dbExtens,fieldName,config,key,outDir,pixelmap_dir,nproc)
+    for val in config:
+        cmd_=cmd(dbName,dbDir,dbExtens,fieldName,val,outDir,pixelmap_dir,nproc)
         script.write(cmd_+" \n")
 
     script.write("EOF" + "\n")
     script.close()
     os.system("sh "+scriptName)
 
-def prepareOut(dbName,fieldName):
+def prepareOut(dbName,fieldName,confname,ibatch):
     """                                                                                        
     Function to prepare for the batch                                                            
     
@@ -58,44 +73,87 @@ def prepareOut(dbName,fieldName):
     if not os.path.isdir(dirLog):
         os.makedirs(dirLog)
 
-    id = '{}_{}'.format(dbName, fieldName)
+    id = '{}_{}_{}_{}'.format(dbName, fieldName,confname,ibatch)
 
     name_id = 'simulation_{}'.format(id)
     log = dirLog + '/'+name_id+'.log'
 
     return dirScript, name_id, log, cwd
 
+def config_rec():
+
+    zmin = 0.0
+    zmax = 1.2
+    zstep = 0.05
+
+    r = []
+    for z in np.arange(zmin,zmax,zstep):
+        zval = np.round(z,2)
+        x1_type = 'unique'
+        x1_min = -2.0
+        x1_max = 2.0
+        color_type = 'unique'
+        color_min = 0.2
+        color_max = 0.4
+        z_type = 'random'
+        z_min = zval
+        z_max = zval+np.round(zstep,2)
+
+        r.append((x1_type,x1_min,x1_max,color_type,color_min,color_max,z_type,z_min,z_max,'faintSN'))
+
+        x1_type = 'random'
+        color_type = 'random'
+        r.append((x1_type,x1_min,x1_max,color_type,color_min,color_max,z_type,z_min,z_max,'allSN'))
+
+    res = np.rec.fromrecords(r, names=['x1_type','x1_min','x1_max',
+                                       'color_type','color_min','color_max',
+                                       'z_type','z_min','z_max',
+                                       'confName'])
+
+    return res
 
 def get_config():    
     config = {}
 
     config['faintSN'] = {}
     config['allSN'] = {}
-    for vv in ['x1','color','z']:
-        config['allSN'][vv] = {}
-        config['allSN'][vv]['type'] = 'random'
-        config['allSN'][vv]['min'] = 0.01
-        config['allSN'][vv]['max'] = 1.2
 
-    for vv in ['x1','color','z']:
-        config['faintSN'][vv] = {}
-        if vv != 'z':
-            config['faintSN'][vv]['type'] = 'unique'
-            if vv == 'x1':
-                config['faintSN'][vv]['min'] = -2.0
-            if vv == 'color':
-                config['faintSN'][vv]['min'] = 0.2    
+    zmin = 0.0
+    zmax =1.2
+    zstep =0.05
+
+    for z in np.arange(zmin,zmax,zstep):
+        zval = np.round(z,2)
+        config['allSN'][zval] = {}
+        config['faintSN'][zval] = {}
+                    
+        for vv in ['x1','color','z']:
+            config['allSN'][zval][vv] = {}
+            config['allSN'][zval][vv]['type'] = 'random'
+            config['allSN'][zval][vv]['min'] = zval
+            config['allSN'][zval][vv]['max'] = zval+zstep
+
+
+        for vv in ['x1','color','z']:
+            config['faintSN'][zval][vv] = {}
+    
+            if vv != 'z':
+                config['faintSN'][zval][vv]['type'] = 'unique'
+                if vv == 'x1':
+                    config['faintSN'][zval][vv]['min'] = -2.0
+                if vv == 'color':
+                    config['faintSN'][zval][vv]['min'] = 0.2
             
-        else:
-            config['faintSN'][vv]['type'] = 'random'
-            config['faintSN'][vv]['min'] = 0.01
-            config['faintSN'][vv]['max'] = 0.8
+            else:
+                config['faintSN'][zval][vv]['type'] = 'random'
+                config['faintSN'][zval][vv]['min'] = zval
+                config['faintSN'][zval][vv]['max'] = zval+zstep
+
 
     return config
 
-def cmd(dbName,dbDir,dbExtens,fieldName,configa,key,outDir,pixelmap_dir,nproc):
+def cmd(dbName,dbDir,dbExtens,fieldName,config,outDir,pixelmap_dir,nproc):
 
-    config = configa[key]
     cmd = 'python run_scripts/simulation/run_simulation.py'
     cmd += ' --dbName {}'.format(dbName)
     cmd += '  --dbExtens {}'.format(dbExtens) 
@@ -103,16 +161,16 @@ def cmd(dbName,dbDir,dbExtens,fieldName,configa,key,outDir,pixelmap_dir,nproc):
     cmd += ' --Observations_fieldtype DD' 
     cmd += ' --nclusters 6 --nproc {}'.format(int(nproc))
     for vv in ['x1','color','z']:
-        cmd += ' --SN_{}_type {}' .format(vv,config[vv]['type'])
+        cmd += ' --SN_{}_type {}' .format(vv,config['{}_type'.format(vv)])
     for vv in ['x1','color']:
-            if config[vv]['type'] == 'unique':
-                cmd += ' --SN_{}_min {}'.format(vv,config[vv]['min'])
+            if config['{}_type'.format(vv)] == 'unique':
+                cmd += ' --SN_{}_min {}'.format(vv,config['{}_min'.format(vv)])
      
-    cmd += ' --SN_z_min {} --SN_z_max {}'.format(config['z']['min'], config['z']['max'])
+    cmd += ' --SN_z_min {} --SN_z_max {}'.format(config['z_min'], config['z_max'])
     cmd += ' --pixelmap_dir {}'.format(pixelmap_dir)
-    cmd += ' --SN_NSNfactor 10'
+    cmd += ' --SN_NSNfactor 100'
     cmd += ' --Observations_fieldname {}'.format(fieldName)
-    cmd += ' --ProductionID DD_{}_{}_error_model_{}'.format(dbName,fieldName,key)
+    cmd += ' --ProductionID DD_{}_{}_error_model_{}'.format(dbName,fieldName,config['confName'])
     cmd += ' --Simulator_errorModel 1'
     outputDir = '{}/{}'.format(outDir,dbName)
     cmd += ' --Output_directory {}'.format(outputDir)
