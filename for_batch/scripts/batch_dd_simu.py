@@ -9,11 +9,16 @@ def process(dbName,dbDir,dbExtens,fieldName,outDir,pixelmap_dir,nproc=8,mode='ba
     if mode == 'batch':
         batch(dbName,dbDir,dbExtens,fieldName,outDir,pixelmap_dir,nproc)
     else:
-        config = get_config()
-        for key, vala in config.items():
-            for keyb, valb in vals.items():
-                cmd_ = cmd(dbName,dbDir,dbExtens,fieldName,vals,keyb,outDir,pixelmap_dir,nproc)
-                os.system(cmd_)
+         config = config_rec()
+         confNames = ['faintSN','allSN']
+         for cf in confNames:
+             idx = config['confName'] == cf
+             sel = config[idx]
+             spl = np.array_split(sel,5)
+             for ibatch,vv in enumerate(spl):
+                 for val in vv:
+                     cmd_=cmd(dbName,dbDir,dbExtens,fieldName,val,outDir,pixelmap_dir,nproc)
+                     print(cmd_)
 
 
 def batch(dbName,dbDir,dbExtens,fieldName,outDir,pixelmap_dir,nproc=8):
