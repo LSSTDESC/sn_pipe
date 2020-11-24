@@ -46,6 +46,8 @@ parser.add_option("--nbef", type=int, default=4,
                   help="min number of LC points before max[%default]")
 parser.add_option("--naft", type=int, default=5,
                   help="min number of LC points after max[%default]")
+parser.add_option("--nbands", type=int, default=0,
+                  help="min number of bands with at least 2 points with SNR>=5 [%default]")
 
 opts, args = parser.parse_args()
 
@@ -72,6 +74,7 @@ error_model = opts.error_model
 snrmin = opts.snrmin
 nbef = opts.nbef
 naft = opts.naft
+nbands = opts.nbands
 
 cutoff = '{}_{}'.format(bluecutoff,redcutoff)
 if error_model:
@@ -130,6 +133,7 @@ cmd += ' --Output_directory {}'.format(outDir_fit)
 cmd += ' --LCSelection_snrmin {}'.format(snrmin)
 cmd += ' --LCSelection_nbef {}'.format(nbef)
 cmd += ' --LCSelection_naft {}'.format(naft)
+cmd += ' --LCSelection_nbands {}'.format(nbands)
 cmd += ' --ProductionID {}_sn_cosmo'.format(prodid)
 print(cmd)
 os.system(cmd)
@@ -146,6 +150,7 @@ if 'fast' in simulator:
     cmd += ' --LCSelection_snrmin {}'.format(snrmin)
     cmd += ' --LCSelection_nbef {}'.format(nbef)
     cmd += ' --LCSelection_naft {}'.format(naft)
+    cmd += ' --LCSelection_nbands {}'.format(nbands)
     cmd += ' --Fitter_name sn_fitter.fit_sn_fast'
     cmd += ' --ProductionID {}_sn_fast'.format(prodid)
     print(cmd)

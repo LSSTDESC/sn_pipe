@@ -4,7 +4,7 @@ from optparse import OptionParser
 from sn_tools.sn_io import make_dict_from_config,make_dict_from_optparse
 import yaml
 
-def run(x1,color,simus,ebv,bluecutoff,redcutoff,error_model,fake_config,snrmin,nbef,naft,zmax):
+def run(x1,color,simus,ebv,bluecutoff,redcutoff,error_model,fake_config,snrmin,nbef,naft,nbands,zmax):
     """
     Method used to perform a set of runs (simulation+fit)
 
@@ -32,6 +32,8 @@ def run(x1,color,simus,ebv,bluecutoff,redcutoff,error_model,fake_config,snrmin,n
       min number of points before max for LC points to be fitted
     naft: int
       min number of points after max for LC points to be fitted
+    nbands: int
+      min number of bands with at least two points with SNR>5
     zmax: float
       max redshift value for fake generation
 
@@ -48,7 +50,7 @@ def run(x1,color,simus,ebv,bluecutoff,redcutoff,error_model,fake_config,snrmin,n
     cmd_comm += ' --outDir_simu {} --outDir_fit {}'.format(outDir_simu,outDir_fit)
     cmd_comm += ' --bluecutoff {} --redcutoff {}'.format(bluecutoff,redcutoff) 
     cmd_comm += ' --fake_config {} --x1 {} --color {} --error_model {}'.format(fake_config, x1, color,error_model)
-    cmd_comm += ' --snrmin {} --nbef {} --naft {}'.format(snrmin,nbef,naft)
+    cmd_comm += ' --snrmin {} --nbef {} --naft {} --nbands {}'.format(snrmin,nbef,naft,nbands)
     cmd_comm += ' --zmax {}'.format(zmax)
 
     for simu in simus:
@@ -82,6 +84,8 @@ parser.add_option("--nbef", type=int, default=4,
                   help="min n LC points before max (fit)[%default]")
 parser.add_option("--naft", type=int, default=10,
                   help="min n LC points after max (fit)[%default]")
+parser.add_option("--nbands", type=int, default=0,
+                  help="min number of bands with at least 2 points with SNR>5[%default]")
 parser.add_option("--error_model", type=str, default='1',
                   help="error model to consider[%default]")
 
@@ -142,13 +146,14 @@ ebv = opts.ebv
 snrmin = opts.snrmin
 nbef = opts.nbef
 naft = opts.naft
+nbands = opts.nbands
 
 simus = list(map(str,opts.simus.split(',')))
 
 error_models = list(map(int, opts.error_model.split(',')))
 
 for errmod in error_models:
-    run(x1,color,simus,ebv,bluecutoff,redcutoff,errmod,opts.fake_config,snrmin,nbef,naft,zmax)
+    run(x1,color,simus,ebv,bluecutoff,redcutoff,errmod,opts.fake_config,snrmin,nbef,naft,nbands,zmax)
 """
 # case error_model=1
 run(x1,color,simus,ebv,bluecutoff,redcutoff,1,opts.fake_config,snrmin,nbef,naft,zmax)
