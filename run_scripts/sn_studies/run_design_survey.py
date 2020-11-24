@@ -26,7 +26,7 @@ ebv = 0.
 error_model = 1
 bands = 'grizy'
 zmin = 0.0
-zmax = 0.9
+zmax = 1.0
 zstep = 0.01
 bands = 'grizy'
 cadence = 3.
@@ -99,15 +99,15 @@ if not os.path.isdir(SNRDir):
 
 
 # choose one SNR distribution
-SNR_par = dict(zip(['max', 'step', 'choice'], [50., 1., 'Nvisits']))
+SNR_par = dict(zip(['max', 'step', 'choice'], [70., 1., 'Nvisits']))
 
 zref = np.round(np.arange(0.1, np.max(data.lc['z'])+0.1, 0.05), 2)
-zref = np.round(np.arange(0.1, np.max(data.lc['z'])+0.1, 0.1), 2)
-zref = np.round(np.array([0.8]), 2)
+#zref = np.round(np.arange(0.1, np.max(data.lc['z'])+0.1, 0.1), 2)
+#zref = np.round(np.array([0.55]), 2)
 
 snr_calc = SNR(SNRDir, data, SNR_par,
                SNR_m5_file=SNR_m5_file, zref=zref,
-               save_SNR_combi=True, verbose=False, nproc=3)
+               save_SNR_combi=True, verbose=False, nproc=7)
 
 # plot the results
 
