@@ -52,8 +52,8 @@ def batch_indiv(dbName,dbDir,dbExtens,fieldName,outDir,pixelmap_dir,confname,con
     script.write(" source setup_release.sh Linux\n")
     script.write("echo 'sourcing done' \n")
 
-    for val in config:
-        cmd_=cmd(dbName,dbDir,dbExtens,fieldName,val,outDir,pixelmap_dir,nproc)
+    for iconf,val in enumerate(config):
+        cmd_=cmd(dbName,dbDir,dbExtens,fieldName,val,outDir,pixelmap_dir,ibatch,iconf,nproc)
         script.write(cmd_+" \n")
 
     script.write("EOF" + "\n")
@@ -117,7 +117,7 @@ def config_rec():
 
     return res
 
-def get_config():    
+def get_config_deprecated():    
     config = {}
 
     config['faintSN'] = {}
@@ -157,7 +157,7 @@ def get_config():
 
     return config
 
-def cmd(dbName,dbDir,dbExtens,fieldName,config,outDir,pixelmap_dir,nproc):
+def cmd(dbName,dbDir,dbExtens,fieldName,config,outDir,pixelmap_dir,ibatch,iconfig,nproc):
 
     cmd = 'python run_scripts/simulation/run_simulation.py'
     cmd += ' --dbName {}'.format(dbName)
@@ -175,7 +175,7 @@ def cmd(dbName,dbDir,dbExtens,fieldName,config,outDir,pixelmap_dir,nproc):
     cmd += ' --pixelmap_dir {}'.format(pixelmap_dir)
     cmd += ' --SN_NSNfactor 100'
     cmd += ' --Observations_fieldname {}'.format(fieldName)
-    cmd += ' --ProductionID DD_{}_{}_error_model_{}'.format(dbName,fieldName,config['confName'])
+    cmd += ' --ProductionID DD_{}_{}_error_model_{}_{}_{}'.format(dbName,fieldName,config['confName'],ibatch,iconfig)
     cmd += ' --Simulator_errorModel 1'
     outputDir = '{}/{}'.format(outDir,dbName)
     cmd += ' --Output_directory {}'.format(outputDir)

@@ -79,7 +79,7 @@ def go_for_batch(toproc, splitSky,
         npixels_tot = 0
         if npixels > 0:
             for val in skyMap:
-                search_path = '{}/{}/{}_{}_nside_{}_{}_{}_{}_{}.npy'.format(
+                search_path = '{}/{}/{}_{}_nside_{}_{}_{}_{}_{}_WFD.npy'.format(
                     pixelmap_dir, dbName, dbName, fieldType, nside, val['RAmin'], val['RAmax'], val['Decmin'], val['Decmax'])
                 ffi = glob.glob(search_path)
                 if len(ffi) == 0:
@@ -93,12 +93,11 @@ def go_for_batch(toproc, splitSky,
         # now redo the loop and run batches
         for val in skyMap:
             # get the number of pixels for this map
-            search_path = '{}/{}/{}_{}_nside_{}_{}_{}_{}_{}.npy'.format(
+            search_path = '{}/{}/{}_{}_nside_{}_{}_{}_{}_{}_WFD.npy'.format(
                 pixelmap_dir, dbName, dbName, fieldType, nside, val['RAmin'], val['RAmax'], val['Decmin'], val['Decmax'])
             ffi = glob.glob(search_path)
             if len(ffi) == 0:
                 print('potential problem here', search_path)
-
             tab = np.load(ffi[0],allow_pickle=True)
             npixels_map = len(np.unique(tab['healpixID']))
 
