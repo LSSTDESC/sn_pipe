@@ -2,7 +2,8 @@ from optparse import OptionParser
 import pandas as pd
 import os
 import glob
-
+from sn_tools.sn_io import loopStack
+import numpy as np
 
 def process(dbName,fieldName,prodid, simuDir, outDir,num,nproc=8,mode='batch',snrmin=5.):
 
@@ -12,7 +13,7 @@ def process(dbName,fieldName,prodid, simuDir, outDir,num,nproc=8,mode='batch',sn
         cmd_ = cmd(dbName,prodid,simuDir,outDir,nproc,snrmin)
         os.system(cmd_)
 
-def batch(dbName,fieldName,prodid, simuDir, outDir,num,nproc=8,snrmin=5.):
+def batch(dbName,fieldName,prodids, simuDir, outDir,num,nproc=8,snrmin=5.):
 
     dirScript, name_id, log, cwd = prepareOut(dbName,fieldName,num)
     # qsub command                                                                             
@@ -30,8 +31,9 @@ def batch(dbName,fieldName,prodid, simuDir, outDir,num,nproc=8,snrmin=5.):
     script.write("echo 'sourcing done' \n")
 
    
-    cmd_=cmd(dbName,prodid, simuDir, outDir,nproc,snrmin)
-    script.write(cmd_+" \n")
+    for prodid in prodids:
+        cmd_=cmd(dbName,prodid, simuDir, outDir,nproc,snrmin)
+        script.write(cmd_+" \n")
 
     script.write("EOF" + "\n")
     script.close()
@@ -77,6 +79,55 @@ def cmd(dbName,prodid,simuDir,outDir,nproc,snrmin):
     cmd += ' --Multiprocessing_nproc {}'.format(nproc)
     return cmd
 
+def nlc(simuFile):
+    """
+    Method estimating the number of LC
+
+    Parameters
+    ----------
+    simuFile: str
+      name of the simuFile
+
+    Returns
+    -------
+    number of LCs
+
+    """
+    res = loopStack(simuFile,objtype='astropyTable')
+
+    return len(res)
+
+def family(dbName,rlist):
+    """
+    Method to get a family from a dbName
+    
+    Parameters
+    ----------
+    dbName: str
+    the dbName to process
+        
+    Returns
+    ----------
+    str: the name of the 'family'
+    
+    """
+
+    ro = []
+    fam = dbName
+    for i in range(len(dbName)):
+        stre = dbName[:i+1]
+        num = 0
+        for kk in rlist:
+            if stre == kk[:i+1]:
+                num += 1
+        # print(stre, num)                                                                                                 
+        ro.append(num)
+        if i > 5 and ro[-1]-ro[-2] < 0:
+            fam = dbName[:i]
+            break
+
+    return fam
+
 parser = OptionParser()
 
 parser.add_option("--dbName", type="str", default='descddf_v1.4_10yrs',help="dbName to process  [%default]")
@@ -94,15 +145,45 @@ print('Start processing...')
 
 #get the simufile here
 
-simuFiles = glob.glob('{}/{}/Simu*{}*.hdf5'.format(opts.simuDir,opts.dbName,opts.fieldName))
+simuDir='{}/{}'.format(opts.simuDir,opts.dbName)
+simuFiles = glob.glob('{}/Simu*{}*.hdf5'.format(simuDir,opts.fieldName))
 
 print('hh',simuFiles,len(simuFiles))
 
-simuDir='{}/{}'.format(opts.simuDir,opts.dbName)
-for i,fi in enumerate(simuFiles):
-    prodid = fi.split('/')[-1].split('.hdf5')[0].split('Simu_')[-1]
-    print(prodid)
-    process(opts.dbName,opts.fieldName,prodid, simuDir, opts.outDir,i,opts.nproc,opts.mode,opts.snrmin)
+simudf = pd.DataFrame(simuFiles,columns=['simuFile'])
+
+simudf['prodid'] = simudf['simuFile'].apply(lambda x : x.split('/')[-1].split('.hdf5')[0].split('Simu_')[-1])
+
+simudf = simudf.groupby(['prodid']).apply(lambda x: pd.DataFrame({'nlc': [nlc(x['simuFile'])]})).reset_index()
+
+print(simudf)
+
+ic = -1
+nlc_ref = 10000
+for i in range(8):
+    for bb in ['faintSN','allSN']:                                                                                            
+        idx = simudf['prodid'].str.contains('{}_{}'.format(bb,i))
+        sel = simudf[idx].to_records()
+        if len(sel) >0:
+            nlc = np.sum(sel['nlc'])
+            print('oo',bb,i,ic,nlc)
+            if nlc/nlc_ref >=1.1:
+               nn = int(nlc/nlc_ref)
+               bbatch = np.linspace(0, len(sel), nn+1, dtype='int')
+               print(bbatch,len(sel))
+               kk = 0
+               for ibb in range(len(bbatch)-1):
+                   ic += 1
+                   ia = bbatch[ibb]
+                   ib = bbatch[ibb+1]
+                   #print('bb',ia,ib,sel[ia:ib]['nlc'].sum(),sel[ia:ib]['prodid'])
+                   kk += sel[ia:ib]['nlc'].sum()
+                   process(opts.dbName,opts.fieldName,sel[ia:ib]['prodid'], simuDir, opts.outDir,ic,opts.nproc,opts.mode,opts.snrmin)
+               print('finally',kk)
+               
+            else:
+                ic +=1
+                process(opts.dbName,opts.fieldName,sel['prodid'].tolist(), simuDir, opts.outDir,ic,opts.nproc,opts.mode,opts.snrmin)
 
 
 """
