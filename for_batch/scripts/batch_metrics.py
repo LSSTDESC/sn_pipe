@@ -46,6 +46,7 @@ def go_for_batch(toproc, splitSky,
     # get the observing strategy name
     #dbName = toproc['dbName'].decode()
     dbName = toproc['dbName']
+   
 
     if pixelmap_dir == '':
 
@@ -56,13 +57,14 @@ def go_for_batch(toproc, splitSky,
             RAs = np.linspace(0., 360., 11)
 
         for ira in range(len(RAs)-1):
-            RA_min = RAs[ira]
-            RA_max = RAs[ira+1]
+            RAmin = RAs[ira]
+            RAmax = RAs[ira+1] 
+            r = [(RAmin,RAmax,-1.0,-1.0)]
+            RADec = np.rec.fromrecords(r, names=['RAmin','RAmax','Decmin','Decmax'])
             batchclass(dbName, dbDir, dbExtens, 'run_scripts/metrics/run_metrics',
                        outDir, 8, 1, metricName, toproc,
-                       nodither, nside, fieldType, RA_min, RA_max,
-                       -1.0, -1.0, band,
-                       pixelmap_dir, npixels, proxy_level, npixels)
+                       nodither, nside, fieldType, RADec, band,
+                       pixelmap_dir, npixels,npixels,ira,proxy_level)
 
     else:
         # second case: there are pixelmaps available -> run on them
@@ -91,7 +93,8 @@ def go_for_batch(toproc, splitSky,
         # print(npixels_tot)
 
         # now redo the loop and run batches
-        for val in skyMap:
+        RADec_sky = None
+        for io,val in enumerate(skyMap):
             # get the number of pixels for this map
             search_path = '{}/{}/{}_{}_nside_{}_{}_{}_{}_{}_WFD.npy'.format(
                 pixelmap_dir, dbName, dbName, fieldType, nside, val['RAmin'], val['RAmax'], val['Decmin'], val['Decmax'])
@@ -107,22 +110,35 @@ def go_for_batch(toproc, splitSky,
                 num = float(npixels*npixels_map)/float(npixels_tot)
                 npixel_proc = int(round(num))
                 # print('hoio',npixel_proc,num)
+            r = [(val['RAmin'], val['RAmax'],val['Decmin'], val['Decmax'])]
+            RADec = np.rec.fromrecords(r, names=['RAmin','RAmax','Decmin','Decmax'])
+
+            if RADec_sky is None:
+                RADec_sky = RADec
+            else:
+                RADec_sky = np.concatenate((RADec_sky, RADec))
+            if 'SNR' not in metricName and 'SL' not in metricName:
+                batchclass(dbName, dbDir, dbExtens, 'run_scripts/metrics/run_metrics',
+                           outDir, 8, 1, metricName, toproc,
+                           nodither, nside, fieldType,RADec, band=band,
+                           pixelmap_dir=pixelmap_dir, npixels=npixel_proc,
+                           proxy_level=proxy_level, npixels_tot=npixels, ibatch=io)
+        if 'SNR' in metricName or 'SL' in metricName:
             batchclass(dbName, dbDir, dbExtens, 'run_scripts/metrics/run_metrics',
                        outDir, 8, 1, metricName, toproc,
-                       nodither, nside, fieldType, val['RAmin'], val['RAmax'],
-                       val['Decmin'], val['Decmax'], band=band,
+                       nodither, nside, fieldType,RADec_sky, band=band,
                        pixelmap_dir=pixelmap_dir, npixels=npixel_proc,
-                       proxy_level=proxy_level, npixels_tot=npixels)
+                       proxy_level=proxy_level, npixels_tot=npixels, ibatch=0)
 
 
 class batchclass:
     def __init__(self, dbName, dbDir, dbExtens, scriptref, outDir, nproccomp,
                  saveData, metric, toprocess, nodither, nside,
                  fieldType='WFD',
-                 RA_min=0.0, RA_max=360.0,
-                 Dec_min=-1.0, Dec_max=-1.0, band='',
-                 pixelmap_dir='', npixels=0, npixels_tot=0,
-                 proxy_level=-1):
+                 RADec=None, band='',
+                 pixelmap_dir='', 
+                 npixels=0, npixels_tot=0,
+                 ibatch=0,proxy_level=-1):
         """
         class to prepare and launch batches
 
@@ -152,14 +168,8 @@ class batchclass:
           healpix nside parameter
         fieldType: str, opt
           type of field to process - DD, WFD, Fakes (default: WFD)
-        RA_min: float, opt
-          min RA of the area to process (default:0.0)
-        RA_max: float, opt
-          max RA of the area to process (default: =360.0) 
-        Dec_min: float, opt
-          min Dec of the area to process (default: -1.0)
-        Dec_max: float, opt
-          max Dec of the area to process (default: -1.0)
+        RADec: numpy array
+          with RAmin, RAmax, Decmin, Decmax as columns
         band: str, opt
           band to process (default: '')
         pixelmap_dir: str, opt
@@ -183,10 +193,7 @@ class batchclass:
         self.metric = metric
         self.toprocess = toprocess
         self.nodither = nodither
-        self.RA_min = RA_min
-        self.RA_max = RA_max
-        self.Dec_min = Dec_min
-        self.Dec_max = Dec_max
+        self.RADec = RADec
         self.band = band
         self.nside = nside
         self.fieldType = fieldType
@@ -195,11 +202,11 @@ class batchclass:
         self.npixels_tot = npixels_tot
         self.proxy_level = proxy_level
 
-        dirScript, name_id, log = self.prepareOut()
+        dirScript, name_id, log = self.prepareOut(ibatch)
 
         self.script(dirScript, name_id, log, toprocess)
 
-    def prepareOut(self):
+    def prepareOut(self,ibatch):
         """
         Method to prepare for the batch
 
@@ -217,9 +224,9 @@ class batchclass:
         if not os.path.isdir(dirLog):
             os.makedirs(dirLog)
 
-        id = '{}_{}_{}_{}{}_{}_{}_{}_{}'.format(
+        id = '{}_{}_{}_{}{}_{}'.format(
             self.dbName, self.nside, self.fieldType, self.metric,
-            self.nodither, self.RA_min, self.RA_max, self.Dec_min, self.Dec_max)
+            self.nodither,ibatch)
         if self.proxy_level > -1:
             id += '_proxy_level_{}'.format(self.proxy_level)
         if self.pixelmap_dir != '':
@@ -261,14 +268,15 @@ class batchclass:
         script.write(" source setup_release.sh Linux\n")
         script.write("echo 'sourcing done' \n")
 
-        cmd_ = self.batch_cmd(proc)
-        script.write(cmd_+" \n")
+        for vv in self.RADec:
+            cmd_ = self.batch_cmd(proc,vv['RAmin'],vv['RAmax'],vv['Decmin'],vv['Decmax'])
+            script.write(cmd_+" \n")
 
         script.write("EOF" + "\n")
         script.close()
         os.system("sh "+scriptName)
 
-    def batch_cmd(self, proc):
+    def batch_cmd(self, proc, RAmin, RAmax, Decmin, Decmax):
         """
         Method for the batch command
 
@@ -291,10 +299,10 @@ class batchclass:
         if self.nodither != '':
             cmd += ' --nodither {}'.format(self.nodither)
 
-        cmd += ' --RAmin {}'.format(self.RA_min)
-        cmd += ' --RAmax {}'.format(self.RA_max)
-        cmd += ' --Decmin {}'.format(self.Dec_min)
-        cmd += ' --Decmax {}'.format(self.Dec_max)
+        cmd += ' --RAmin {}'.format(RAmin)
+        cmd += ' --RAmax {}'.format(RAmax)
+        cmd += ' --Decmin {}'.format(Decmin)
+        cmd += ' --Decmax {}'.format(Decmax)
         if self.band != '':
             cmd += ' --band {}'.format(self.band)
 
