@@ -117,13 +117,13 @@ def go_for_batch(toproc, splitSky,
                 RADec_sky = RADec
             else:
                 RADec_sky = np.concatenate((RADec_sky, RADec))
-            if 'SNR' not in metricName:
+            if 'SNR' not in metricName and 'SL' not in metricName:
                 batchclass(dbName, dbDir, dbExtens, 'run_scripts/metrics/run_metrics',
                            outDir, 8, 1, metricName, toproc,
                            nodither, nside, fieldType,RADec, band=band,
                            pixelmap_dir=pixelmap_dir, npixels=npixel_proc,
                            proxy_level=proxy_level, npixels_tot=npixels, ibatch=io)
-        if 'SNR' in metricName:
+        if 'SNR' in metricName or 'SL' in metricName:
             batchclass(dbName, dbDir, dbExtens, 'run_scripts/metrics/run_metrics',
                        outDir, 8, 1, metricName, toproc,
                        nodither, nside, fieldType,RADec_sky, band=band,

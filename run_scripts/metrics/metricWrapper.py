@@ -349,13 +349,13 @@ class SLMetricWrapper(MetricWrapper):
                  RAmin=0., RAmax=360.,
                  Decmin=-1.0, Decmax=-1.0,
                  npixels=0,
-                 metadata={}, outDir=''):
+                 metadata={}, outDir='', ebvofMW=-1.0):
         super(SLMetricWrapper, self).__init__(
             name=name, season=season, coadd=coadd, fieldType=fieldType,
             nside=nside, RAmin=RAmin, RAmax=RAmax,
             Decmin=Decmin, Decmax=Decmax,
             npixels=npixels,
-            metadata=metadata, outDir=outDir)
+            metadata=metadata, outDir=outDir, ebvofMW=ebvofMW)
 
         self.metric = SLSNMetric(
             season=season, nside=nside, coadd=coadd, verbose=metadata.verbose)
