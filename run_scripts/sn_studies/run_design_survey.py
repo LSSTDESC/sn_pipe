@@ -103,28 +103,28 @@ SNR_par = dict(zip(['max', 'step', 'choice'], [70., 1., 'Nvisits']))
 
 zref = np.round(np.arange(0.1, np.max(data.lc['z'])+0.1, 0.05), 2)
 #zref = np.round(np.arange(0.1, np.max(data.lc['z'])+0.1, 0.1), 2)
-#zref = np.round(np.array([0.55]), 2)
+#zref = np.round(np.array([0.75,0.9]), 2)
 
 snr_calc = SNR(SNRDir, data, SNR_par,
                SNR_m5_file=SNR_m5_file, zref=zref,
-               save_SNR_combi=True, verbose=False, nproc=7)
+               save_SNR_combi=False, verbose=False, nproc=8)
 
 # plot the results
 
 # load m5 reference values - here: med value per field per filter per season
 # m5_type = 'median_m5_field_filter_season'  # m5 values
-plot_snr = False
+plot_snr = True
 if plot_snr:
-    snrplot = SNR_plot('SNR_files', -2.0, 0.2, 1.0, 380.,
-                       800., 3., theDir, m5file, 'median_m5_filter')
+    snrplot = SNR_plot('SNR_files', -2.0, 0.2, 1.0, cutoff, 3., theDir, m5file, 'median_m5_filter')
     snrplot.plotSummary()
-    snrplot.plotSummary_band()
+    #snrplot.plotSummary_band()
     # for combi in ['fracflux_rizy', 'Nvisits_rizy', 'Nvisits_y_rizy']:
-    for combi in ['Nvisits_rizy', 'Nvisits_y_rizy']:
+    """
+    for combi in ['Nvisits_grizy']:
         snrplot.plotIndiv(combi)
         snrplot.plotIndiv(combi, legy='Filter allocation')
-
-        plt.show()
+    """
+    plt.show()
 
 
 # snr_calc.plot()
