@@ -9,10 +9,10 @@ import multiprocessing
 
 
 class ProcessCadence:
-    def __init__(self,dirFile, fieldtype, nside,band,Li_files, mag_to_flux_files,SNR,namesRef,mag_range,dt_range,var,web_path):
+    def __init__(self, dirFile, fieldtype, nside, band, Li_files, mag_to_flux_files, SNR, namesRef, mag_range, dt_range, var, web_path):
 
         self.dirFile = dirFile
-        self.fieldtype = fieldtype 
+        self.fieldtype = fieldtype
         self.nside = nside
         self.band = band
         self.Li_files = Li_files
@@ -22,22 +22,22 @@ class ProcessCadence:
         self.mag_range = mag_range
         self.dt_range = dt_range
         self.var = var
-        self.web_path=web_path
+        self.web_path = web_path
 
-    def __call__(self,toprocess):
-        
+    def __call__(self, toprocess):
+
         nproc = 8
         nz = len(toprocess)
-        t = np.linspace(0, nz,nproc+1, dtype='int')
+        t = np.linspace(0, nz, nproc+1, dtype='int')
         result_queue = multiprocessing.Queue()
 
-        procs = [multiprocessing.Process(name='Subprocess-'+str(j), target=processLoop,
-                                 args=(toprocess[t[j]:t[j+1]]['dbName'], dirFile, fieldtype, nside,band,Li_files, mag_to_flux_files,SNR[band],namesRef,mag_range,dt_range,'zlim_SNCosmo',j, result_queue))
+        procs = [multiprocessing.Process(name='Subprocess-'+str(j), target=self.processLoop,
+                                         args=(toprocess[t[j]:t[j+1]]['dbName'], dirFile, fieldtype, nside, band, Li_files, mag_to_flux_files, SNR[band], namesRef, mag_range, dt_range, 'zlim_SNCosmo', j, result_queue))
                  for j in range(nproc)]
 
         for p in procs:
             p.start()
-    
+
         resultdict = {}
         # get the results in a dict
 
@@ -56,22 +56,21 @@ class ProcessCadence:
         print('done here')
 
         print(df)
-        metricName='Cadence'
-        df.to_csv('Metric_{}.cvs'.format(metricName),index=False)
+        metricName = 'Cadence'
+        df.to_csv('Metric_{}.cvs'.format(metricName), index=False)
 
-    def processLoop(self,dbNames,j=0, output_q=None):
+    def processLoop(self, dbNames, j=0, output_q=None):
 
         res = pd.DataFrame()
 
         for dbName in dbNames:
-            resu = process(dbName)
-            res = pd.concat((res,resu))
-  
+            resu = self.process(dbName)
+            res = pd.concat((res, resu))
+
         if output_q is not None:
             return output_q.put({j: res})
         else:
-            return res    
-
+            return res
 
     def load(self):
 
@@ -85,9 +84,10 @@ class ProcessCadence:
 
         return metricValues[idx]
 
-    def process(self,dbName):
+    def process(self, dbName):
 
-        metricValues = load(self.dirFile, self.dbName, self.fieldtype, self.nside,self.band)
+        metricValues = load(self.dirFile, self.dbName,
+                            self.fieldtype, self.nside, self.band)
         res = sn_plot.plotCadence(self.band, self.Li_files, self.mag_to_flux_files,
                                   self.SNR[self.band],
                                   metricValues,
@@ -98,51 +98,53 @@ class ProcessCadence:
 
         return pd.DataFrame({var: [np.median(res[self.var])]})
 
-def processLoop(dbNames,dirFile, fieldtype, nside,band,Li_files, mag_to_flux_files,SNR,names_Ref,mag_range,dt_range,var,j=0, output_q=None):
+
+def processLoop(dbNames, dirFile, fieldtype, nside, band, Li_files, mag_to_flux_files, SNR, names_Ref, mag_range, dt_range, var, j=0, output_q=None):
 
     res = pd.DataFrame()
 
     for dbName in dbNames:
-        resu = process(dbName,dirFile, fieldtype, nside,band,Li_files, mag_to_flux_files,SNR,names_Ref,mag_range,dt_range,var)
-        res = pd.concat((res,resu))
-  
+        resu = process(dbName, dirFile, fieldtype, nside, band, Li_files,
+                       mag_to_flux_files, SNR, names_Ref, mag_range, dt_range, var)
+        res = pd.concat((res, resu))
+
     if output_q is not None:
         return output_q.put({j: res})
     else:
         return res
-    
 
-def process(dbName,dirFile, fieldtype, nside,band,Li_files, mag_to_flux_files,SNR,names_Ref,mag_range,dt_range,var):
 
-    metricValues = load(dirFile, dbName, fieldtype, nside,band)
+def process(dbName, dirFile, fieldtype, nside, band, Li_files, mag_to_flux_files, SNR, names_Ref, mag_range, dt_range, var):
+
+    metricValues = load(dirFile, dbName, fieldtype, nside, band)
     res = sn_plot.plotCadence(band, Li_files, mag_to_flux_files,
-                    SNR,
-                    metricValues,
-                    namesRef,
-                    mag_range=mag_range, dt_range=dt_range,
-                    dbName=dbName,
-                    saveFig=False, m5_str='m5_median', web_path=opts.web_path)
+                              SNR,
+                              metricValues,
+                              namesRef,
+                              mag_range=mag_range, dt_range=dt_range,
+                              dbName=dbName,
+                              saveFig=False, m5_str='m5_median', web_path=opts.web_path)
 
     return pd.DataFrame({var: [np.median(res[var])],
-                         'dbName':[dbName]})
+                         'dbName': [dbName]})
 
 
-def processdf(grp,dirFile, fieldtype, nside,band,Li_files, mag_to_flux_files,SNR,names_Ref,mag_range,dt_range,var):
+def processdf(grp, dirFile, fieldtype, nside, band, Li_files, mag_to_flux_files, SNR, names_Ref, mag_range, dt_range, var):
 
     dbName = grp.name
-    metricValues = load(dirFile, dbName, fieldtype, nside,band)
+    metricValues = load(dirFile, dbName, fieldtype, nside, band)
     res = sn_plot.plotCadence(band, Li_files, mag_to_flux_files,
-                    SNR,
-                    metricValues,
-                    namesRef,
-                    mag_range=mag_range, dt_range=dt_range,
-                    dbName=dbName,
-                    saveFig=False, m5_str='m5_median', web_path=opts.web_path)
+                              SNR,
+                              metricValues,
+                              namesRef,
+                              mag_range=mag_range, dt_range=dt_range,
+                              dbName=dbName,
+                              saveFig=False, m5_str='m5_median', web_path=opts.web_path)
 
     return pd.DataFrame({var: [np.median(res[var])]})
 
-    
-def load(dirFile, dbName, fieldtype, nside,band):
+
+def load(dirFile, dbName, fieldtype, nside, band):
     search_file = '{}/{}/Cadence/*CadenceMetric_{}_nside_{}*.hdf5'.format(
         dirFile, dbName, fieldtype, nside)
     print('searching for', search_file)
@@ -152,7 +154,8 @@ def load(dirFile, dbName, fieldtype, nside,band):
     idx = metricValues['filter'] == band
 
     return metricValues[idx]
-    
+
+
 parser = OptionParser(description='Estimate Cadence metric summary results ')
 parser.add_option("--dbList", type="str",
                   default='cadenceCustomize_fbs14.csv', help="db list [%default]")
@@ -172,7 +175,7 @@ parser.add_option("--web_path", type=str, default='https://me.lsst.eu/gris/DESC_
 opts, args = parser.parse_args()
 
 dirFile = opts.dirFile
-dbList= opts.dbList
+dbList = opts.dbList
 #metricName = opts.metricName
 fieldtype = opts.fieldtype
 nside = opts.nside
@@ -203,13 +206,11 @@ for name in namesRef:
 
 
 toprocess = pd.read_csv(dbList, comment='#')
-print('processing',len(toprocess))
+print('processing', len(toprocess))
 #df = toprocess.groupby(['dbName']).apply(lambda x: process(x,dirFile, fieldtype, nside,band,Li_files, mag_to_flux_files,SNR[band],namesRef,mag_range,dt_range,'zlim_SNCosmo')).reset_index()
 
 var = 'zlim_SNCosmo'
-processCadence = ProcessCadence(dirFile, fieldtype, nside,band,Li_files, mag_to_flux_files,SNR,namesRef,mag_range,dt_range,var,opts.web_path)
+processCadence = ProcessCadence(dirFile, fieldtype, nside, band, Li_files,
+                                mag_to_flux_files, SNR, namesRef, mag_range, dt_range, var, opts.web_path)
 
 processCadence(toprocess)
-
-
-
