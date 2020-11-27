@@ -32,7 +32,7 @@ class ProcessCadence:
         result_queue = multiprocessing.Queue()
 
         procs = [multiprocessing.Process(name='Subprocess-'+str(j), target=self.processLoop,
-                                         args=(toprocess[t[j]:t[j+1]]['dbName'], dirFile, fieldtype, nside, band, Li_files, mag_to_flux_files, SNR[band], namesRef, mag_range, dt_range, 'zlim_SNCosmo', j, result_queue))
+                                         args=(toprocess[t[j]:t[j+1]]['dbName'],j, result_queue))
                  for j in range(nproc)]
 
         for p in procs:
@@ -72,10 +72,10 @@ class ProcessCadence:
         else:
             return res
 
-    def load(self):
+    def load(self,dbName):
 
         search_file = '{}/{}/Cadence/*CadenceMetric_{}_nside_{}*.hdf5'.format(
-            self.dirFile, self.dbName, self.fieldtype, self.nside)
+            self.dirFile, dbName, self.fieldtype, self.nside)
         print('searching for', search_file)
         fileNames = glob.glob(search_file)
 
@@ -86,8 +86,7 @@ class ProcessCadence:
 
     def process(self, dbName):
 
-        metricValues = load(self.dirFile, self.dbName,
-                            self.fieldtype, self.nside, self.band)
+        metricValues = self.load(dbName)
         res = sn_plot.plotCadence(self.band, self.Li_files, self.mag_to_flux_files,
                                   self.SNR[self.band],
                                   metricValues,
@@ -96,64 +95,8 @@ class ProcessCadence:
                                   dbName=dbName,
                                   saveFig=False, m5_str='m5_median', web_path=self.web_path)
 
-        return pd.DataFrame({var: [np.median(res[self.var])]})
-
-
-def processLoop(dbNames, dirFile, fieldtype, nside, band, Li_files, mag_to_flux_files, SNR, names_Ref, mag_range, dt_range, var, j=0, output_q=None):
-
-    res = pd.DataFrame()
-
-    for dbName in dbNames:
-        resu = process(dbName, dirFile, fieldtype, nside, band, Li_files,
-                       mag_to_flux_files, SNR, names_Ref, mag_range, dt_range, var)
-        res = pd.concat((res, resu))
-
-    if output_q is not None:
-        return output_q.put({j: res})
-    else:
-        return res
-
-
-def process(dbName, dirFile, fieldtype, nside, band, Li_files, mag_to_flux_files, SNR, names_Ref, mag_range, dt_range, var):
-
-    metricValues = load(dirFile, dbName, fieldtype, nside, band)
-    res = sn_plot.plotCadence(band, Li_files, mag_to_flux_files,
-                              SNR,
-                              metricValues,
-                              namesRef,
-                              mag_range=mag_range, dt_range=dt_range,
-                              dbName=dbName,
-                              saveFig=False, m5_str='m5_median', web_path=opts.web_path)
-
-    return pd.DataFrame({var: [np.median(res[var])],
-                         'dbName': [dbName]})
-
-
-def processdf(grp, dirFile, fieldtype, nside, band, Li_files, mag_to_flux_files, SNR, names_Ref, mag_range, dt_range, var):
-
-    dbName = grp.name
-    metricValues = load(dirFile, dbName, fieldtype, nside, band)
-    res = sn_plot.plotCadence(band, Li_files, mag_to_flux_files,
-                              SNR,
-                              metricValues,
-                              namesRef,
-                              mag_range=mag_range, dt_range=dt_range,
-                              dbName=dbName,
-                              saveFig=False, m5_str='m5_median', web_path=opts.web_path)
-
-    return pd.DataFrame({var: [np.median(res[var])]})
-
-
-def load(dirFile, dbName, fieldtype, nside, band):
-    search_file = '{}/{}/Cadence/*CadenceMetric_{}_nside_{}*.hdf5'.format(
-        dirFile, dbName, fieldtype, nside)
-    print('searching for', search_file)
-    fileNames = glob.glob(search_file)
-
-    metricValues = loopStack(fileNames, 'astropyTable')
-    idx = metricValues['filter'] == band
-
-    return metricValues[idx]
+        return pd.DataFrame({var: [np.median(res[self.var])],
+                             'dbName': [dbName]})
 
 
 parser = OptionParser(description='Estimate Cadence metric summary results ')
@@ -205,7 +148,7 @@ for name in namesRef:
     mag_to_flux_files = ['{}/Mag_to_Flux_{}.npy'.format(refDir, name)]
 
 
-toprocess = pd.read_csv(dbList, comment='#')
+toprocess = pd.read_csv(dbList, comment='#')[:16]
 print('processing', len(toprocess))
 #df = toprocess.groupby(['dbName']).apply(lambda x: process(x,dirFile, fieldtype, nside,band,Li_files, mag_to_flux_files,SNR[band],namesRef,mag_range,dt_range,'zlim_SNCosmo')).reset_index()
 
