@@ -53,8 +53,6 @@ class TransformSL:
         t = np.linspace(0, nz, self.nproc+1, dtype='int')
         result_queue = multiprocessing.Queue()
 
-        for j in range(self.nproc):
-            print('boo', toprocess[t[j]:t[j+1]]['dbName'].tolist())
         procs = [multiprocessing.Process(name='Subprocess-'+str(j), target=self.processLoop,
                                          args=(toprocess[t[j]:t[j+1]]['dbName'].tolist(),))
                  for j in range(self.nproc)]
@@ -73,7 +71,7 @@ class TransformSL:
 
         """
         for dbName in dbNames:
-            search_path = '{}/{}/{}*{}Metric*.hdf5'.format(self.dirFile,
+            search_path = '{}/{}/{}/{}*{}Metric*.hdf5'.format(self.dirFile,dbName,
                                                            self.metricName, dbName, self.metricName)
             print(search_path)
             fis = glob.glob(search_path)
@@ -102,6 +100,8 @@ parser.add_option("--outDir", type="str", default='MetricOutput',
                   help="output directory [%default]")
 parser.add_option("--metric", type="str", default='SL',
                   help="metric name [%default]")
+parser.add_option("--nproc", type="int", default=8,
+                  help="number of procs [%default]")
 
 opts, args = parser.parse_args()
 
@@ -110,13 +110,11 @@ opts, args = parser.parse_args()
 if not os.path.isdir(opts.outDir):
     os.makedirs(opts.outDir)
 
-thedir = '../../MetricOutput'
-dbName = 'baseline_nexp1_v1.6_10yrs'
 
 
 toprocess = pd.read_csv(opts.dbList)
-trans = TransformSL(opts.metric, thedir,
-                    opts.fieldtype, 64, opts.outDir, 1)
+trans = TransformSL(opts.metric, opts.dirFile,
+                    opts.fieldtype, 64, opts.outDir,opts.nproc)
 
 trans(toprocess)
 
