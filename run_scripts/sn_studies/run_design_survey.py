@@ -217,7 +217,11 @@ class DD_Design_Survey:
 
         zref = np.round(np.arange(zmin, zmax+zstep,zstep), 2)
 
-        SNR_m5_file = '{}/{}'.format(self.dirSNR_m5,data.lcName.replace('LC','SNR_m5').replace('.hdf5','.npy'))
+        SNR_name = (data.lcName
+                    .replace('LC','SNR_m5')
+                    .replace('.hdf5','.npy')
+                    )
+        SNR_m5_file = '{}/{}'.format(self.dirSNR_m5,SNR_name)
         
         snr_calc = SNR(self.dirSNR_combi,data, SNR_par,
                        SNR_m5_file=SNR_m5_file, zref=zref,
