@@ -1,14 +1,15 @@
 from sn_design_dd_survey.wrapper import Data, Nvisits_cadence, Mod_z
 from sn_design_dd_survey.budget import DD_Budget
-from sn_design_dd_survey.snr import SNR, SNR_plot
+from sn_design_dd_survey.snr import SNR, Nvisits_z_plot
 from sn_design_dd_survey.signal_bands import RestFrameBands
 from sn_design_dd_survey.showvisits import ShowVisits
 from sn_design_dd_survey.templateLC import templateLC
 from sn_design_dd_survey import plt
 from sn_design_dd_survey.snr_m5 import SNR_m5
+from sn_design_dd_survey.ana_combi import CombiChoice, Visits_Cadence
 
-#from sn_DD_opti.showvisits import GUI_Visits
-#from sn_DD_opti.budget import GUI_Budget
+# from sn_DD_opti.showvisits import GUI_Visits
+# from sn_DD_opti.budget import GUI_Budget
 
 import os
 import multiprocessing
@@ -31,23 +32,25 @@ class DD_Design_Survey:
       bands to be considered (default: grizy)
 
     """
-    def __init__(self, x1=-2.,color=0.2,bands='grizy',dirStudy='dd_design'):
+
+    def __init__(self, x1=-2., color=0.2, bands='grizy', dirStudy='dd_design'):
 
         self.x1 = x1
         self.color = color
         self.bands = bands
-        
+
         self.ch_cr(dirStudy)
         self.dirTemplates = '{}/Templates'.format(dirStudy)
         self.dirSNR_m5 = '{}/SNR_m5'.format(dirStudy)
         self.dirm5 = '{}/m5_files'.format(dirStudy)
-        self.dirSNR_combi =  '{}/SNR_combi'.format(dirStudy)
+        self.dirSNR_combi = '{}/SNR_combi'.format(dirStudy)
+        self.dirOpti = '{}/SNR_opti'.format(dirStudy)
 
         self.ch_cr(self.dirTemplates)
         self.ch_cr(self.dirSNR_m5)
         self.ch_cr(self.dirSNR_combi)
+        self.ch_cr(self.dirOpti)
 
-        
     def ch_cr(self, dirname):
         """
         Method to create a dir if does not exist
@@ -59,7 +62,7 @@ class DD_Design_Survey:
         """
         if not os.path.exists(dirname):
             os.makedirs(dirname)
-        
+
     def templates(self,
                   zmin=0,
                   zmax=1.1,
@@ -69,8 +72,7 @@ class DD_Design_Survey:
                   redcutoff=800.,
                   ebvofMW=0.,
                   simulator='sn_fast',
-                  cadence = 3.):
-
+                  cadence=3.):
         """
         Method to generate templates with a defined regular cadence
 
@@ -96,24 +98,24 @@ class DD_Design_Survey:
           cadence of observation (the same filter for each filter) (default: 3.)
         """
 
-        cutof = self.cutoff(error_model,blue_cutoff, red_cutoff)
-        
-        templid = '{}_{}_{}_ebv_{}_{}_cad_{}'.format(simulator, self.x1, self.color, ebv, cutof, int(cadence))
+        cutof = self.cutoff(error_model, blue_cutoff, red_cutoff)
+
+        templid = '{}_{}_{}_ebv_{}_{}_cad_{}'.format(
+            simulator, self.x1, self.color, ebv, cutof, int(cadence))
         fname = 'LC_{}_0.hdf5'.format(templid)
-        cadences = dict(zip(self.bands,[cadence]*len(self.bands)))
-        #generate template here
+        cadences = dict(zip(self.bands, [cadence]*len(self.bands)))
+        # generate template here
         templateLC(self.x1, self.color, simulator, ebv, bluecutoff, redcutoff,
                    error_model, zmin, zmax, zstep, self.dirTemplates, self.bands, cadences, templid)
 
-    def cutoff(self, error_model,bluecutoff,redcutoff):
+    def cutoff(self, error_model, bluecutoff, redcutoff):
 
         cuto = '{}_{}'.format(blue_cutoff, red_cutoff)
         if error_model:
             cuto = 'error_model'
-            
+
         return cuto
-        
-            
+
     def snr_m5(self, snrmin=1.):
         """
         Method to produce SNR vs m5 files
@@ -128,18 +130,19 @@ class DD_Design_Survey:
         template_list = glob.glob('{}/LC*.hdf5'.format(self.dirTemplates))
         for lc in template_list:
             lcName = lc.split('/')[-1]
-            outName = '{}/{}'.format(self.dirSNR_m5,lcName.split('.hdf5')[0].replace('LC','SNR_m5'))
-            SNR_m5(self.dirTemplates, lcName,'{}.npy'.format(outName),snrmin)
+            outName = '{}/{}'.format(self.dirSNR_m5,
+                                     lcName.split('.hdf5')[0].replace('LC', 'SNR_m5'))
+            SNR_m5(self.dirTemplates, lcName, '{}.npy'.format(outName), snrmin)
 
     def data(self, cadence,
              error_model=1,
-             bluecutoff=380.,redcutoff=800.,
+             bluecutoff=380., redcutoff=800.,
              ebvofMW=0.,
              sn_simulator='sn_fast',
              m5_file='medValues_flexddf_v1.4_10yrs_DD.npy'):
         """
         Method to grab Data corresponding to a given cadence
-        
+
         Parameters
         --------------
         cadence: int, opt
@@ -158,13 +161,14 @@ class DD_Design_Survey:
           m5 file (default: 'medValues_flexddf_v1.4_10yrs_DD.npy')
 
         """
-    
-        cutof = self.cutoff(error_model,blue_cutoff, red_cutoff)
-        lcName = 'LC_{}_{}_{}_ebv_{}_{}_cad_{}_0.hdf5'.format(simulator,self.x1,self.color,ebvofMW,cutof,int(cadence))
-        m5Name = '{}/{}'.format(self.dirm5,m5_file)
-        return Data(self.dirTemplates, lcName, m5Name, self.x1, self.color,bluecutoff, redcutoff, error_model, bands=self.bands)
 
-    def plot_data(self, data,bluecutoff=380.,redcutoff=800.):
+        cutof = self.cutoff(error_model, blue_cutoff, red_cutoff)
+        lcName = 'LC_{}_{}_{}_ebv_{}_{}_cad_{}_0.hdf5'.format(
+            simulator, self.x1, self.color, ebvofMW, cutof, int(cadence))
+        m5Name = '{}/{}'.format(self.dirm5, m5_file)
+        return Data(self.dirTemplates, lcName, m5Name, self.x1, self.color, bluecutoff, redcutoff, error_model, bands=self.bands)
+
+    def plot_data(self, data, bluecutoff=380., redcutoff=800.):
         """
         Method to display useful plots related to data
 
@@ -176,8 +180,7 @@ class DD_Design_Survey:
           red cutoff if error_model=0 (default: 800.)
 
         """
-        
-        
+
         data.plotzlim()
         data.plotFracFlux()
         data.plot_medm5()
@@ -188,20 +191,20 @@ class DD_Design_Survey:
         mybands.plot()
         plt.show()
 
-
-    def SNR_combi(self,data,
-                  SNR_par = dict(zip(['max', 'step', 'choice'], [70., 1., 'Nvisits'])),
+    def SNR_combi(self, data,
+                  SNR_par=dict(
+                      zip(['max', 'step', 'choice'], [70., 1., 'Nvisits'])),
                   zmin=0.1,
                   zmax=1.1,
-                  zstep=0.05):
-
+                  zstep=0.05,
+                  nproc=8):
         """
         Method to estimate SNR combinations
 
         Parameters
         --------------
         data: Data
-          data to use for processing 
+          data to use for processing
         SNR_par: dict, opt
           parameters for SNR combi estimation
         zmin: float, opt
@@ -215,21 +218,98 @@ class DD_Design_Survey:
 
         """
 
-        zref = np.round(np.arange(zmin, zmax+zstep,zstep), 2)
+        zref = np.round(np.arange(zmin, zmax+zstep, zstep), 2)
 
         SNR_name = (data.lcName
-                    .replace('LC','SNR_m5')
-                    .replace('.hdf5','.npy')
+                    .replace('LC', 'SNR_m5')
+                    .replace('.hdf5', '.npy')
                     )
-        SNR_m5_file = '{}/{}'.format(self.dirSNR_m5,SNR_name)
-        
-        snr_calc = SNR(self.dirSNR_combi,data, SNR_par,
+        SNR_m5_file = '{}/{}'.format(self.dirSNR_m5, SNR_name)
+
+        snr_calc = SNR(self.dirSNR_combi, data, SNR_par,
                        SNR_m5_file=SNR_m5_file, zref=zref,
-                       save_SNR_combi=True, verbose=False, nproc=8)
+                       save_SNR_combi=True, verbose=False, nproc=nproc)
+
+    def optiCombi(self, fracSignalBand, snr_opti_file='opti_combi.npy'):
+        """
+        Method to select optimal (wrt a certain criteria) SNR combinations
+
+        Parameters
+        ---------------
+        fracSignalBands: numpy array
+          fraction of signal per band
+        snr_opti_file: str, opt
+          name of the output file containing optimal combinations
+        """
+        combi = CombiChoice(fracSignalBand, self.dirSNR_combi)
+
+        resdf = pd.DataFrame()
+        snr_dirs = glob.glob('{}/*'.format(self.dirSNR_combi))
+
+        for fi in snr_dirs:
+            z = (
+                fi.split('/')[-1]
+                .split('_')[-1]
+            )
+            z = np.round(float(z), 2)
+            res = combi(z)
+            if res is not None:
+                resdf = pd.concat((resdf, res))
+
+        np.save('{}/opti_combi.npy'.format(self.dirOpti),
+                resdf.to_records(index=False))
+
+    def nvisits_cadence(self, m5_single, snr_opti_file):
+        """
+        Method to estimate the number of visits
+        as a function of the cadence.
+        The idea is that the SNR optimized for a given cadence
+        is the same for other cadences
+
+        Three ingredients needed:
+        - m5 single visit (file used to make SNR combis)
+        - SNR_m5 vs cadence
+        - SNR_opti file
+
+        Parameters
+        ---------------
+        m5_single: numpy array
+          m5 single band (median per filter over seasons)
+        snr_opti: str
+          file name corresponding to SNR opti
+        """
+
+        # load SNR_opti file
+        snr_opti_df = pd.DataFrame(
+            np.load('{}/{}'.format(self.dirOpti, snr_opti_file), allow_pickle=True))
+
+        cadvis = Visits_Cadence(snr_opti_df, m5_single)
+        bands = np.unique(m5_single['filter'])
+        bb = []
+        for b in bands:
+            bb.append('Nvisits_{}'.format(b))
+        # load SNR_m5 files for various cadences
+        fis = glob.glob('{}/*'.format(self.dirSNR_m5))
+
+        res = pd.DataFrame()
+        for fi in fis:
+            fib = (
+                fi.split('/')[-1]
+                .split('_')
+            )
+            idx = fib.index('cad')
+            cadence = int(fib[idx+1])
+            # load m5 single file
+            m5_cad = pd.DataFrame(np.load(fi, allow_pickle=True))
+            nv_cad = cadvis(m5_cad)
+            nv_cad['cadence'] = cadence
+            res = pd.concat((res, nv_cad))
+
+        np.save('Nvisits_z_med.npy', res.to_records(index=False))
+
 
 # Step 1: Load the data needed for analysis
 # ----------------------------------------
-
 blue_cutoff = 380.
 red_cutoff = 800.
 x1 = -2.0
@@ -254,30 +334,39 @@ process = DD_Design_Survey()
 # create template LC for cadence = 1 to 4 days
 
 """
-for cadence in range(1,5):
+for cadence in range(1, 5):
     process.templates(cadence=cadence)
 """
-                                  
-#process.snr_m5()
+
+# estimate SNR vs m5 for the above generated templates
+# process.snr_m5()
 
 # get data corresponding to cadence = 3
-
-data = process.data(cadence=3)
+m5_file = 'medValues_flexddf_v1.4_10yrs_DD.npy'
+data = process.data(cadence=3, m5_file=m5_file)
 
 # usefull cross-check plots
-#process.plot_data(data)
+# process.plot_data(data)
 
 # estimate SNR combinations
-process.SNR_combi(data)
+# process.SNR_combi(data, nproc=4)
 
 
+# analyze SNR combinations - get the optimal ones
+#fracSignalBand = data.fracSignalBand.fracSignalBand
+#process.optiCombi(fracSignalBand, snr_opti_file='opti_combi.npy')
 
+# propagate optimisation to all cadences
+
+#process.nvisits_cadence(data.m5_Band, snr_opti_file='opti_combi.npy')
+
+Nvisits_z_plot('Nvisits_z_med.npy')
 # create snr_m5 files for above-generated templates
 
 
 print(test)
 
-    
+
 plot_input = False
 plot_snr = False
 plot_nvisits = False
@@ -345,8 +434,8 @@ if not os.path.isdir(SNRDir):
 SNR_par = dict(zip(['max', 'step', 'choice'], [70., 1., 'Nvisits']))
 
 zref = np.round(np.arange(0.1, np.max(data.lc['z'])+0.1, 0.05), 2)
-#zref = np.round(np.arange(0.1, np.max(data.lc['z'])+0.1, 0.1), 2)
-#zref = np.round(np.array([0.75,0.9]), 2)
+# zref = np.round(np.arange(0.1, np.max(data.lc['z'])+0.1, 0.1), 2)
+# zref = np.round(np.array([0.75,0.9]), 2)
 
 snr_calc = SNR(SNRDir, data, SNR_par,
                SNR_m5_file=SNR_m5_file, zref=zref,
@@ -358,9 +447,10 @@ snr_calc = SNR(SNRDir, data, SNR_par,
 # m5_type = 'median_m5_field_filter_season'  # m5 values
 plot_snr = True
 if plot_snr:
-    snrplot = SNR_plot('SNR_files', -2.0, 0.2, 1.0, cutoff, 3., theDir, m5file, 'median_m5_filter')
+    snrplot = SNR_plot('SNR_files', -2.0, 0.2, 1.0, cutoff,
+                       3., theDir, m5file, 'median_m5_filter')
     snrplot.plotSummary()
-    #snrplot.plotSummary_band()
+    # snrplot.plotSummary_band()
     # for combi in ['fracflux_rizy', 'Nvisits_rizy', 'Nvisits_y_rizy']:
     """
     for combi in ['Nvisits_grizy']:
@@ -406,7 +496,7 @@ dir_config = 'sn_DD_Opti/input'
 dir_config = '.'
 
 # this is to display the number of visits vs z for a given cadence
-#GUI_Visits(nvisits_cadence, cadence=3, dir_config=dir_config)
+# GUI_Visits(nvisits_cadence, cadence=3, dir_config=dir_config)
 
 # this is to display budget vs zlim (and filter allocation)
 """
