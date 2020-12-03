@@ -7,6 +7,8 @@ from sn_design_dd_survey.templateLC import templateLC
 from sn_design_dd_survey import plt
 from sn_design_dd_survey.snr_m5 import SNR_m5
 from sn_design_dd_survey.ana_combi import CombiChoice, Visits_Cadence
+from sn_design_dd_survey.zlim_visits import RedshiftLimit
+
 
 # from sn_DD_opti.showvisits import GUI_Visits
 # from sn_DD_opti.budget import GUI_Budget
@@ -307,6 +309,29 @@ class DD_Design_Survey:
 
         np.save('Nvisits_z_med.npy', res.to_records(index=False))
 
+    def nvisits_cadence_field(self, error_model=1,
+                              bluecutoff=380., redcutoff=800.,
+                              ebvofMW=0.,
+                              sn_simulator='sn_fast'):
+
+        nvisits_ref = np.load('Nvisits_z_med.npy', allow_pickle=True)
+
+        cadence = 3
+        min_par = 'visits'
+        red = RedshiftLimit(self.x1, self.color,
+                            cadence=cadence,
+                            error_model=error_model,
+                            bluecutoff=bluecutoff, redcutoff=redcutoff,
+                            ebvofMW=ebvofMW,
+                            sn_simulator=sn_simulator,
+                            lcDir=self.dirTemplates)
+
+        idx = np.abs(nvisits_ref['cadence']-cadence) < 1.e-5
+        idx &= nvisits_ref['min_par'] == min_par
+        sel_visits = nvisits_ref[idx]
+
+        red(sel_visits)
+
 
 # Step 1: Load the data needed for analysis
 # ----------------------------------------
@@ -342,8 +367,8 @@ for cadence in range(1, 5):
 # process.snr_m5()
 
 # get data corresponding to cadence = 3
-m5_file = 'medValues_flexddf_v1.4_10yrs_DD.npy'
-data = process.data(cadence=3, m5_file=m5_file)
+#m5_file = 'medValues_flexddf_v1.4_10yrs_DD.npy'
+#data = process.data(cadence=3, m5_file=m5_file)
 
 # usefull cross-check plots
 # process.plot_data(data)
@@ -353,14 +378,16 @@ data = process.data(cadence=3, m5_file=m5_file)
 
 
 # analyze SNR combinations - get the optimal ones
-#fracSignalBand = data.fracSignalBand.fracSignalBand
-#process.optiCombi(fracSignalBand, snr_opti_file='opti_combi.npy')
+# fracSignalBand = data.fracSignalBand.fracSignalBand
+# process.optiCombi(fracSignalBand, snr_opti_file='opti_combi.npy')
 
 # propagate optimisation to all cadences
 
-#process.nvisits_cadence(data.m5_Band, snr_opti_file='opti_combi.npy')
+# process.nvisits_cadence(data.m5_Band, snr_opti_file='opti_combi.npy')
+# Nvisits_z_plot('Nvisits_z_med.npy')
 
-Nvisits_z_plot('Nvisits_z_med.npy')
+# get the number of visits per field
+process.nvisits_cadence_field()
 # create snr_m5 files for above-generated templates
 
 
