@@ -316,21 +316,26 @@ class DD_Design_Survey:
 
         nvisits_ref = np.load('Nvisits_z_med.npy', allow_pickle=True)
 
-        cadence = 3
+        resdf = pd.DataFrame()
+
         min_par = 'visits'
-        red = RedshiftLimit(self.x1, self.color,
-                            cadence=cadence,
-                            error_model=error_model,
-                            bluecutoff=bluecutoff, redcutoff=redcutoff,
-                            ebvofMW=ebvofMW,
-                            sn_simulator=sn_simulator,
-                            lcDir=self.dirTemplates)
+        for cadence in range(2, 5):
 
-        idx = np.abs(nvisits_ref['cadence']-cadence) < 1.e-5
-        idx &= nvisits_ref['min_par'] == min_par
-        sel_visits = nvisits_ref[idx]
+            red = RedshiftLimit(self.x1, self.color,
+                                cadence=cadence,
+                                error_model=error_model,
+                                bluecutoff=bluecutoff, redcutoff=redcutoff,
+                                ebvofMW=ebvofMW,
+                                sn_simulator=sn_simulator,
+                                lcDir=self.dirTemplates)
 
-        red(sel_visits)
+            idx = np.abs(nvisits_ref['cadence']-cadence) < 1.e-5
+            idx &= nvisits_ref['min_par'] == min_par
+            sel_visits = nvisits_ref[idx]
+
+            resdf = pd.concat((resdf, red(sel_visits)))
+
+        print(resdf)
 
 
 # Step 1: Load the data needed for analysis
