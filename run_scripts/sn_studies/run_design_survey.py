@@ -9,7 +9,7 @@ from sn_design_dd_survey.snr_m5 import SNR_m5
 from sn_design_dd_survey.ana_combi import CombiChoice, Visits_Cadence
 from sn_design_dd_survey.zlim_visits import RedshiftLimit
 
-
+from sn_design_dd_survey.sequence import TemplateData
 # from sn_DD_opti.showvisits import GUI_Visits
 # from sn_DD_opti.budget import GUI_Budget
 
@@ -19,6 +19,7 @@ import pandas as pd
 import numpy as np
 import glob
 import time
+from optparse import OptionParser
 
 
 def chk_cr(dirname):
@@ -32,295 +33,6 @@ def chk_cr(dirname):
     """
     if not os.path.exists(dirname):
         os.makedirs(dirname)
-
-
-class TemplateData:
-    """
-    class to generate usefull data: template LC, snr_m5, ...
-
-    Parameters
-    ---------------
-    x1: float, opt
-      SN x1 (default=-2.0)
-    color: float, opt
-       SN color (default: 0.2)
-    bands: str, opt
-      bands to consider (default: grizy)
-    dirStudy: str, opt
-      main directory where files will be produced (default: dd_design)
-    dirTemplates: str, opt
-      sub dir where template LC will be placed
-    dirSNR_m5: str, opt
-      sub dir where SNR<->m5 files will be placed
-
-    """
-
-    def __init__(self, x1=-2., color=0.2,
-                 bands='grizy',
-                 dirStudy='dd_design',
-                 dirTemplates='Templates',
-                 dirSNR_m5='SNR_m5'):
-
-        self.x1 = x1
-        self.color = color
-        self.bands = bands
-
-        self.dirTemplates = '{}/{}'.format(dirStudy, dirTemplates)
-        self.dirSNR_m5 = '{}/{}'.format(dirStudy, dirSNR_m5)
-
-    def templates(self,
-                  zmin=0,
-                  zmax=1.1,
-                  zstep=0.01,
-                  error_model=1,
-                  bluecutoff=380.,
-                  redcutoff=800.,
-                  ebvofMW=0.,
-                  simulator='sn_fast',
-                  cadence=3.):
-        """
-        Method to generate templates with a defined regular cadence
-
-        Parameters
-        --------------
-        zmin :  float,opt
-          min redshift value (default: 0)
-        zmax: float,opt
-          max redshift value (default: 1.1)
-        zstep: float, opt
-          step redshift value (default:0.01)
-        error_model: int, opt
-           error model for the simulation (default:1)
-        bluecutoff: float, opt
-          blue cutoff if error_model=0 (default:380)
-        redcutoff: float, opt
-          red cutoff if error_model=0 (default: 800.)
-        ebvofMW: float, opt
-          ebv of MW (default:0)
-        simulator: str, opt
-          simulator to use to produce LCs (default: 'sn_fast')
-        cadences: float, opt
-          cadence of observation (the same filter for each filter) (default: 3.)
-        """
-
-        cutof = self.cutoff(error_model, bluecutoff, redcutoff)
-
-        templid = '{}_{}_{}_ebv_{}_{}_cad_{}'.format(
-            simulator, self.x1, self.color, ebv, cutof, int(cadence))
-        fname = 'LC_{}_0.hdf5'.format(templid)
-        cadences = dict(zip(self.bands, [cadence]*len(self.bands)))
-        # generate template here
-        templateLC(self.x1, self.color, simulator, ebv, bluecutoff, redcutoff,
-                   error_model, zmin, zmax, zstep, self.dirTemplates, self.bands, cadences, templid)
-
-    def cutoff(self, error_model, bluecutoff, redcutoff):
-
-        cuto = '{}_{}'.format(bluecutoff, redcutoff)
-        if error_model:
-            cuto = 'error_model'
-
-        return cuto
-
-    def snr_m5(self, snrmin=1.):
-        """
-        Method to produce SNR vs m5 files
-
-        Parameters
-        --------------
-        snrmin: float, opt
-          SNR min selection
-
-        """
-
-        template_list = glob.glob('{}/LC*.hdf5'.format(self.dirTemplates))
-        for lc in template_list:
-            lcName = lc.split('/')[-1]
-            outName = '{}/{}'.format(self.dirSNR_m5,
-                                     lcName.split('.hdf5')[0].replace('LC', 'SNR_m5'))
-            SNR_m5(self.dirTemplates, lcName, '{}.npy'.format(outName), snrmin)
-
-
-class DD_SNR:
-
-    def __init__(self, x1=-2., color=0.2, bands='grizy',
-                 dirStudy='dd_design',
-                 dirTemplates='Templates',
-                 dirSNR_m5='SNR_m5',
-                 dirm5='m5_files',
-                 dirSNR_combi='SNR_combi',
-                 dirSNR_opti='SNR_opti',
-                 cadence=3,
-                 error_model=1,
-                 bluecutoff=380., redcutoff=800.,
-                 ebvofMW=0.,
-                 sn_simulator='sn_fast',
-                 m5_file='medValues_flexddf_v1.4_10yrs_DD.npy'):
-
-        self.x1 = x1
-        self.color = color
-        self.bands = bands
-
-        self.dirTemplates = '{}/{}'.format(dirStudy, dirTemplates)
-        self.dirSNR_m5 = '{}/{}'.format(dirStudy, dirSNR_m5)
-        self.dirm5 = '{}/{}'.format(dirStudy, dirm5)
-        self.dirSNR_combi = '{}/{}'.format(dirStudy, dirSNR_combi)
-        self.dirSNR_opti = '{}/{}'.format(dirStudy, dirSNR_opti)
-
-        # get data
-        self.data = self.grab_data(cadence,
-                                   error_model,
-                                   bluecutoff, redcutoff,
-                                   ebvofMW,
-                                   sn_simulator,
-                                   m5_file)
-
-    def grab_data(self, cadence,
-                  error_model,
-                  bluecutoff, redcutoff,
-                  ebvofMW,
-                  sn_simulator,
-                  m5_file):
-        """
-        Method to grab Data corresponding to a given cadence
-
-        Parameters
-        --------------
-        cadence: int, opt
-          cadence of the data to get (
-        error_model: int, opt
-           error model for the simulation (default:1)
-        bluecutoff: float, opt
-          blue cutoff if error_model=0 (default:380)
-        redcutoff: float, opt
-          red cutoff if error_model=0 (default: 800.)
-        ebvofMW: float, opt
-          ebv of MW (default:0)
-        simulator: str, opt
-          simulator to use to produce LCs (default: 'sn_fast')
-        m5_file: str,opt
-          m5 file (default: 'medValues_flexddf_v1.4_10yrs_DD.npy')
-
-        """
-
-        cutof = self.cutoff(error_model, bluecutoff, redcutoff)
-        lcName = 'LC_{}_{}_{}_ebv_{}_{}_cad_{}_0.hdf5'.format(
-            simulator, self.x1, self.color, ebvofMW, cutof, int(cadence))
-        m5Name = '{}/{}'.format(self.dirm5, m5_file)
-        return Data(self.dirTemplates, lcName, m5Name, self.x1, self.color, bluecutoff, redcutoff, error_model, bands=self.bands)
-
-    def cutoff(self, error_model, bluecutoff, redcutoff):
-
-        cuto = '{}_{}'.format(bluecutoff, redcutoff)
-        if error_model:
-            cuto = 'error_model'
-
-        return cuto
-
-    def plot_data(self, bluecutoff=380., redcutoff=800.):
-        """
-        Method to display useful plots related to data
-
-        Parameters
-        --------------
-        bluecutoff: float, opt
-          blue cutoff if error_model=0 (default:380)
-        redcutoff: float, opt
-          red cutoff if error_model=0 (default: 800.)
-
-        """
-
-        self.data.plotzlim()
-        self.data.plotFracFlux()
-        self.data.plot_medm5()
-
-        # this is to plot restframebands cutoff
-        mybands = RestFrameBands(blue_cutoff=bluecutoff,
-                                 red_cutoff=redcutoff)
-        mybands.plot()
-        plt.show()
-
-    def SNR_combi(self,
-                  SNR_par=dict(
-                      zip(['max', 'step', 'choice'], [70., 1., 'Nvisits'])),
-                  zmin=0.1,
-                  zmax=1.1,
-                  zstep=0.05,
-                  nproc=8):
-        """
-        Method to estimate SNR combinations
-
-        Parameters
-        --------------
-        SNR_par: dict, opt
-          parameters for SNR combi estimation
-        zmin: float, opt
-          min redshift (default: 0.1)
-        zmax: float, opt
-          max redshift (default: 1.1)
-        zstep: float, opt
-         step for redshift (default: 0.05)
-        nproc: int, opt
-          number of procs for multiprocessing
-
-        """
-
-        zref = np.round(np.arange(zmin, zmax+zstep, zstep), 2)
-
-        SNR_name = (self.data.lcName
-                    .replace('LC', 'SNR_m5')
-                    .replace('.hdf5', '.npy')
-                    )
-        SNR_m5_file = '{}/{}'.format(self.dirSNR_m5, SNR_name)
-
-        snr_calc = SNR(self.dirSNR_combi, self.data, SNR_par,
-                       SNR_m5_file=SNR_m5_file, zref=zref,
-                       save_SNR_combi=True, verbose=False, nproc=nproc)
-
-
-class OptiCombi:
-    """
-    class to choose the optimal SNR combination
-
-    """
-
-    def __init__(self, fracSignalBand, dirStudy='dd_design',
-                 dirSNR_combi='SNR_combi',
-                 dirSNR_opti='SNR_opti',
-                 snr_opti_file='opti_combi.npy'):
-        """
-        Method to select optimal (wrt a certain criteria) SNR combinations
-
-        Parameters
-        ---------------
-        fracSignalBands: numpy array
-          fraction of signal per band
-        dirStudy: str, opt
-          main dir for the study (default: dd_design)
-        dirSNR_combi: str, opt
-           SNR combi dir (default: SNR_combi)
-        dirSNR_opti: str, opt
-          location dir of the opti combi output file
-        snr_opti_file: str, opt
-          name of the output file containing optimal combinations
-        """
-
-        combi = CombiChoice(fracSignalBand, dirSNR_combi)
-
-        resdf = pd.DataFrame()
-        snr_dirs = glob.glob('{}/*'.format(dirSNR_combi))
-
-        for fi in snr_dirs:
-            z = (
-                fi.split('/')[-1]
-                .split('_')[-1]
-            )
-            z = np.round(float(z), 2)
-            res = combi(z)
-            if res is not None:
-                resdf = pd.concat((resdf, res))
-
-        np.save('{}/{}'.format(dirSNR_opti, snr_opti_file),
-                resdf.to_records(index=False))
 
 
 class DD_Design_Survey:
@@ -573,7 +285,7 @@ class DD_Design_Survey:
 
         Three ingredients needed:
         - m5 single visit (file used to make SNR combis)
-        - SNR_m5 vs cadence
+
         - SNR_opti file
 
         Parameters
@@ -616,187 +328,128 @@ class DD_Design_Survey:
         TransformData(res, 'Nvisits_z_med', grlist=['z', 'cadence'])
 
 
-class Nvisits_Cadence_Fields:
+parser = OptionParser()
 
-    def __init__(self, x1=-2.0, color=0.2,
-                 error_model=1,
-                 bluecutoff=380., redcutoff=800.,
-                 ebvofMW=0.,
-                 sn_simulator='sn_fast',
-                 dirTemplates='dd_design/Templates'):
-        """
-        class  to estimate the number of visits for DD fields depending on cadence
-        from a number of visits defined with median m5 values
+parser.add_option('--x1', type=float, default=-2.0,
+                  help='SN x1 [%default]')
+parser.add_option('--color', type=float, default=0.2,
+                  help='SN color [%default]')
+parser.add_option('--error_model', type=int, default=1,
+                  help='error model [%default]')
+parser.add_option('--bluecutoff', type=float, default=380.,
+                  help='blue cutoff if error_model=0 [%default]')
+parser.add_option('--redcutoff', type=float, default=800.,
+                  help='red cutoff if error_model=0 [%default]')
+parser.add_option('--ebvofMW', type=float, default=0.,
+                  help='E(B-V) [%default]')
+parser.add_option('--sn_simulator', type=str, default='sn_fast',
+                  help='simulator for templates SN [%default]')
+parser.add_option('--bands', type=str, default='grizy',
+                  help='bands to consider for this study [%default]')
+parser.add_option('--zmin', type=float, default=0.1,
+                  help='min redshift [%default]')
+parser.add_option('--zmax', type=float, default=0.9,
+                  help='max redshift [%default]')
+parser.add_option('--zstep', type=float, default=0.05,
+                  help='redshift step[%default]')
+parser.add_option('--dirStudy', type=str, default='dd_design_test',
+                  help='main dir output for the study [%default]')
+# define subdir here
+for ddir in ['Templates', 'SNR_m5', 'SNR_combi', 'SNR_opti', 'Nvisits_z']:
+    parser.add_option('--dir{}'.format(ddir), type=str, default=ddir,
+                      help='subdirectory {}[%default]'.format(ddir))
+parser.add_option('--dirm5', type=str, default='m5_files',
+                  help='sub dir with m5 single exp ref values [%default]')
+parser.add_option('--m5File', type=str, default='medValues_flexddf_v1.4_10yrs_DD.npy',
+                  help='m5 single exp. reference file[%default]')
+parser.add_option('--web_server', type=str, default='https://me.lsst.eu/gris/DESC_SN_pipeline/m5_single_exposure',
+                  help='web server where m5 reference file may be loaded from[%default]')
+parser.add_option('--action', type=str, default='all',
+                  help='what to do: all, Templates, SNR_combi, [%default]')
+parser.add_option('--cadence_for_opti', type=float, default=3,
+                  help='cadence used for optimisation [%default]')
 
-        Parameters
-        ---------------
-        x1 : float, opt
-          SN x1 (default: -2.0)
-        color: float, opt
-          SN color (default : 0.2)
-        error_model: int, opt
-          error model for LC (default: 1)
-        bluecutoff: float,opt
-          blue cutoff (if error_model=0) (default: 380.)
-        redcutoff: float, opt
-          red cutoff (if error_model=0) (default: 800.)
-        ebvofMW: float, opt
-         ebv of MW (default: 0.)
-        sn_simulator: str, opt
-         simulator to generate the template (default: sn_fast)
-        dirTemplates: str, opt
-          location dir of the templates (default: dd_design/Templates)
+opts, args = parser.parse_args()
 
-        """
-        self.x1 = x1
-        self.color = color
-        self.error_model = error_model
-        self.bluecutoff = bluecutoff
-        self.redcutoff = redcutoff
-        self.ebvofMW = ebvofMW
-        self.sn_simulator = sn_simulator
-        self.dirTemplates = dirTemplates
+# create output Directories here
 
-        # load nvisits_ref
-        self.nvisits_ref = np.load('Nvisits_z_med.npy', allow_pickle=True)
+chk_cr('{}/{}'.format(opts.dirStudy, opts.dirTemplates))
+chk_cr('{}/{}'.format(opts.dirStudy, opts.dirSNR_m5))
+chk_cr('{}/{}'.format(opts.dirStudy, opts.dirm5))
+chk_cr('{}/{}'.format(opts.dirStudy, opts.dirSNR_combi))
+chk_cr('{}/{}'.format(opts.dirStudy, opts.dirSNR_opti))
+chk_cr('{}/{}'.format(opts.dirStudy, opts.dirNvisits_z))
 
-        restot = self.multiproc()
+# download m5 single exposure reference file if necessary
 
-        # restot = pd.DataFrame(
-        #    np.load('Nvisits_z_fields.npy', allow_pickle=True))
+m5_web_name = '{}/{}'.format(opts.web_server, opts.m5File)
+dir_disk_m5 = '{}/{}'.format(opts.dirStudy, opts.dirm5)
+m5_disk_name = '{}/{}'.format(dir_disk_m5, opts.m5File)
+if not os.path.isfile(m5_disk_name):
+    cmd = 'wget --no-clobber --no-verbose {} --directory-prefix {}'.format(
+        m5_web_name, dir_disk_m5)
+    os.system(cmd)
 
-        TransformData(restot, 'Nvisits_z_fields', grlist=[
-            'z', 'cadence', 'fieldname', 'season'])
+all_actions = ['Templates', 'SNR_combi', 'SNR_opti', 'Nvisits_z']
 
-    def multiproc(self):
+actions = opts.action.split(',')
+print(actions)
+if 'all' in actions:
+    actions = all_actions
 
-        resdf = pd.DataFrame()
+if 'Templates' in actions:
+    # class instance
+    templ = TemplateData(x1=opts.x1, color=opts.color,
+                         bands=opts.bands,
+                         dirStudy=opts.dirStudy,
+                         dirTemplates=opts.dirTemplates,
+                         dirSNR_m5=opts.dirSNR_m5)
+    # create template LC for cadence = 2 to 4 days
+    for cadence in range(2, 5):
+        templ.templates(zmin=opts.zmin,
+                        zmax=opts.zmax,
+                        zstep=0.01,
+                        error_model=opts.error_model,
+                        bluecutoff=opts.bluecutoff,
+                        redcutoff=opts.redcutoff,
+                        ebvofMW=opts.ebvofMW,
+                        simulator=opts.sn_simulator,
+                        cadence=cadence)
+    # estimate SNR vs m5 for the above generated templates
+    templ.snr_m5()
 
-        time_ref = time.time()
-        result_queue = multiprocessing.Queue()
+if 'SNR_combi' in actions:
+    dd_snr = DD_SNR(x1=opts.x1, color=opts.color,
+                    bands=opts.bands,
+                    dirStudy=opts.dirStudy,
+                    dirTemplates=opts.dirTemplates,
+                    dirSNR_m5=opts.dirSNR_m5,
+                    dirm5=opts.dirm5,
+                    dirSNR_combi=opts.dirSNR_combi,
+                    cadence=opts.cadence_for_opti,
+                    error_model=opts.error_model,
+                    bluecutoff=opts.bluecutoff,
+                    redcutoff=opts.redcutoff,
+                    ebvofMW=opts.ebvofMW,
+                    sn_simulator=opts.sn_simulator,
+                    m5_file=opts.m5File)
 
-        cadences = range(2, 5)
-        nproc = len(cadences)
-        for j, cadence in enumerate(cadences):
-            p = multiprocessing.Process(name='Subprocess-'+str(j), target=self.nvisits_single_cadence,
-                                        args=(cadence, j, result_queue))
-            p.start()
+    dd_snr.plot_data()
 
-        resultdict = {}
-        # get the results in a dict
+    # estimate combis
+    # dd_snr.SNR_combi()
 
-        for i in range(nproc):
-            resultdict.update(result_queue.get())
-
-        for p in multiprocessing.active_children():
-            p.join()
-
-        restot = pd.DataFrame()
-
-        # gather the results
-        for key, vals in resultdict.items():
-            restot = pd.concat((restot, vals), sort=False)
-
-        # transformation to get the apprriate format for GUI
-
-        #np.save('Nvisits_z_fields.npy', restot.to_records(index=False))
-
-        print('end of processing', time.time()-time_ref)
-
-        return restot
-
-    def nvisits_single_cadence(self, cadence,
-                               j=0, output_q=None):
-
-        resdf = pd.DataFrame()
-        red = RedshiftLimit(self.x1, self.color,
-                            cadence=cadence,
-                            error_model=self.error_model,
-                            bluecutoff=self.bluecutoff, redcutoff=self.redcutoff,
-                            ebvofMW=self.ebvofMW,
-                            sn_simulator=self.sn_simulator,
-                            lcDir=self.dirTemplates)
-
-        idx = np.abs(self.nvisits_ref['cadence']-cadence) < 1.e-5
-        sela = self.nvisits_ref[idx]
-        for min_par in np.unique(sela['min_par']):
-            idb = sela['min_par'] == min_par
-            sel_visits = sela[idb]
-            respar = red(sel_visits)
-            respar = respar.reset_index(drop=True)
-            resdf = pd.concat((resdf, respar))
-
-        if output_q is not None:
-            return output_q.put({j: resdf})
-        else:
-            return resdf
+print(test)
+x1 = opts.x1
 
 
-class TransformData:
-    """
-    class to transform a set of rows to a unique one
-
-    Parameters
-    ---------------
-    df: pandas df 
-     data to transform
-    fi: str
-      npy file to transform
-    grlist: list(str)
-      used for the groupby df
-    """
-
-    def __init__(self, df=None, outName='', grlist=['z', 'cadence']):
-
-        print(df.columns)
-        for min_par in np.unique(df['min_par']):
-            idx = df['min_par'] == min_par
-            gr = df[idx].groupby(grlist).apply(
-                lambda x: self.transform(x)).reset_index()
-
-            if 'season' not in gr.columns:
-                gr['season'] = 0
-            if 'fieldname' not in gr.columns:
-                gr['fieldname'] = 'all'
-
-            if 'zlim' in gr.columns:
-                gr['z'] = gr['zlim']
-                gr = gr.drop(columns=['zlim'])
-
-            np.save('{}_{}.npy'.format(outName, min_par),
-                    gr.to_records(index=False))
-
-    def transform(self, grp):
-        """
-        Method to transform a set of rows to a unique one
-
-        Parameters
-        ---------------
-        grp: pandas df group
-         data to modify
-
-        Returns
-        ----------
-        pandas df of the data transformed
-
-        """
-        r = []
-        names = []
-
-        for b in np.unique(grp['band']):
-            idx = grp['band'] == b
-            r.append(grp[idx]['Nvisits'].values.item())
-            names.append('Nvisits_{}'.format(b))
-
-        r.append(grp['Nvisits'].sum())
-        names.append('Nvisits')
-
-        if 'zlim' in grp.columns:
-            r.append(grp['zlim'].median())
-            names.append('zlim')
-
-        return pd.DataFrame(np.rec.fromrecords([r], names=names))
-
+dirStudy = 'dd_design_new'
+dirTemplates = 'Templates'
+dirSNR_m5 = 'SNR_m5'
+dirm5 = 'm5_files'
+dirSNR_combi = 'SNR_combi'
+dirSNR_opti = 'SNR_opti'
+dirNvisits = 'Nvisits_z'
 
 # Step 1: Load the data needed for analysis
 # ----------------------------------------
@@ -826,13 +479,14 @@ dirSNR_m5 = 'SNR_m5'
 dirm5 = 'm5_files'
 dirSNR_combi = 'SNR_combi'
 dirSNR_opti = 'SNR_opti'
-
+dirNvisits = 'Nvisits_z'
 
 chk_cr('{}/{}'.format(dirStudy, dirTemplates))
 chk_cr('{}/{}'.format(dirStudy, dirSNR_m5))
 chk_cr('{}/{}'.format(dirStudy, dirm5))
 chk_cr('{}/{}'.format(dirStudy, dirSNR_combi))
 chk_cr('{}/{}'.format(dirStudy, dirSNR_opti))
+chk_cr('{}/{}'.format(dirStudy, dirNvisits))
 
 # generate template data (LC+SNR_m5) here
 
@@ -870,7 +524,45 @@ dd_snr = DD_SNR(x1=x1, color=color,
 
 # dd_snr.plot_data()
 
-dd_snr.SNR_combi()
+# estimate combis
+# dd_snr.SNR_combi()
+
+# choose combinations
+opti_fileName = 'opti_{}_{}_{}_ebvofMW_{}_cad_{}.npy'.format(
+    x1, color, dd_snr.cutoff, ebv, cadence_for_opti)
+"""
+OptiCombi(dd_snr.fracSignalBand,
+          dirStudy=dirStudy,
+          dirSNR_combi=dirSNR_combi,
+          dirSNR_opti=dirSNR_opti,
+          snr_opti_file=opti_fileName)
+"""
+# with this optimal combination:
+# estimate results for cadences != cadence_for_opti
+file_Nvisits_z_med = 'Nvisits_z_{}_{}_{}_ebvofMW_{}.npy'.format(
+    x1, color, dd_snr.cutoff, ebv)
+"""
+Nvisits_Cadence_z(dd_snr.data.m5_Band, opti_fileName,
+                  dirStudy=dirStudy,
+                  dirSNR_m5=dirSNR_m5,
+                  dirSNR_opti=dirSNR_opti,
+                  dirNvisits=dirNvisits,
+                  outName=file_Nvisits_z_med)
+"""
+# get the number of visits per field
+file_Nvisits_z_fields = 'Nvisits_z_fields_{}_{}_{}_ebvofMW_{}.npy'.format(
+    x1, color, dd_snr.cutoff, ebv)
+Nvisits_Cadence_Fields(x1=x1, color=color,
+                       error_model=error_model,
+                       bluecutoff=bluecutoff, redcutoff=redcutoff,
+                       ebvofMW=ebv,
+                       sn_simulator=simulator,
+                       dirStudy=dirStudy,
+                       dirTemplates=dirTemplates,
+                       dirNvisits=dirNvisits,
+                       Nvisits_z_med=file_Nvisits_z_med,
+                       outName=file_Nvisits_z_fields)
+
 print(test)
 process = DD_Design_Survey()
 
