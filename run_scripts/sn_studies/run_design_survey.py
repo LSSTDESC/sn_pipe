@@ -9,7 +9,8 @@ from sn_design_dd_survey.snr_m5 import SNR_m5
 from sn_design_dd_survey.ana_combi import CombiChoice, Visits_Cadence
 from sn_design_dd_survey.zlim_visits import RedshiftLimit
 
-from sn_design_dd_survey.sequence import TemplateData
+from sn_design_dd_survey.sequence import TemplateData,DD_SNR,OptiCombi
+from sn_design_dd_survey.sequence import Nvisits_Cadence_z,Nvisits_Cadence_Fields
 # from sn_DD_opti.showvisits import GUI_Visits
 # from sn_DD_opti.budget import GUI_Budget
 
@@ -368,6 +369,8 @@ parser.add_option('--action', type=str, default='all',
                   help='what to do: all, Templates, SNR_combi, [%default]')
 parser.add_option('--cadence_for_opti', type=float, default=3,
                   help='cadence used for optimisation [%default]')
+parser.add_option('--nproc', type=int, default=8,
+                  help='number of procs when multiprocessing is to be used. [%default]')
 
 opts, args = parser.parse_args()
 
@@ -418,7 +421,7 @@ if 'Templates' in actions:
     # estimate SNR vs m5 for the above generated templates
     templ.snr_m5()
 
-if 'SNR_combi' in actions:
+if 'SNR_combi' or 'SNR_opti' or 'Nvisits_z' in actions:
     dd_snr = DD_SNR(x1=opts.x1, color=opts.color,
                     bands=opts.bands,
                     dirStudy=opts.dirStudy,
@@ -434,10 +437,48 @@ if 'SNR_combi' in actions:
                     sn_simulator=opts.sn_simulator,
                     m5_file=opts.m5File)
 
-    dd_snr.plot_data()
-
+    #dd_snr.plot_data()
+    
+if 'SNR_combi' in actions:
     # estimate combis
-    # dd_snr.SNR_combi()
+    dd_snr.SNR_combi(zmin=0.3)
+
+opti_fileName = 'opti_{}_{}_{}_ebvofMW_{}_cad_{}.npy'.format(
+    opts.x1, opts.color, dd_snr.cutoff, opts.ebvofMW, opts.cadence_for_opti)
+if 'SNR_opti' in actions:
+    #get 'best' combination
+
+    OptiCombi(dd_snr.fracSignalBand,
+              dirStudy=opts.dirStudy,
+              dirSNR_combi=opts.dirSNR_combi,
+              dirSNR_opti=opts.dirSNR_opti,
+              snr_opti_file=opti_fileName,
+              nproc=opts.nproc)
+
+if 'Nvisits_z' in actions:
+    file_Nvisits_z_med = 'Nvisits_z_{}_{}_{}_ebvofMW_{}.npy'.format(
+        opts.x1, opts.color, dd_snr.cutoff, opts.ebvofMW)
+
+    Nvisits_Cadence_z(dd_snr.data.m5_Band, opti_fileName,
+                  dirStudy=opts.dirStudy,
+                  dirSNR_m5=opts.dirSNR_m5,
+                  dirSNR_opti=opts.dirSNR_opti,
+                  dirNvisits=opts.dirNvisits_z,
+                  outName=file_Nvisits_z_med)
+
+    # get the number of visits per field
+    file_Nvisits_z_fields = 'Nvisits_z_fields_{}_{}_{}_ebvofMW_{}.npy'.format(
+        opts.x1, opts.color, dd_snr.cutoff, opts.ebvofMW)
+    Nvisits_Cadence_Fields(x1=opts.x1, color=opts.color,
+                           error_model=opts.error_model,
+                           bluecutoff=opts.bluecutoff, redcutoff=opts.redcutoff,
+                           ebvofMW=opts.ebvofMW,
+                           sn_simulator=opts.sn_simulator,
+                           dirStudy=opts.dirStudy,
+                           dirTemplates=opts.dirTemplates,
+                           dirNvisits=opts.dirNvisits_z,
+                           Nvisits_z_med=file_Nvisits_z_med,
+                           outName=file_Nvisits_z_fields)
 
 print(test)
 x1 = opts.x1
