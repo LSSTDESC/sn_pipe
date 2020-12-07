@@ -30,7 +30,12 @@ def batch(dbName,fieldName,prodids, simuDir, outDir,num,nproc=8,snrmin=5.):
     script.write(" source setup_release.sh Linux\n")
     script.write("echo 'sourcing done' \n")
 
-   
+    #need this to limit the number of multithread
+    script.write(" export MKL_NUM_THREADS=1 \n")
+    script.write(" export NUMEXPR_NUM_THREADS=1 \n")
+    script.write(" export OMP_NUM_THREADS=1 \n")
+    script.write(" export OPENBLAS_NUM_THREADS=1 \n")
+
     for prodid in prodids:
         cmd_=cmd(dbName,prodid, simuDir, outDir,nproc,snrmin)
         script.write(cmd_+" \n")

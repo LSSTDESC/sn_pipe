@@ -33,6 +33,12 @@ def batch(scriptref, inputDir, prodids, outDir, nproc):
     script.write(" echo 'sourcing setups' \n")
     script.write(" source setup_release.sh Linux\n")
     script.write("echo 'sourcing done' \n")
+    #need this to limit the number of multithread
+    script.write(" export MKL_NUM_THREADS=1 \n")
+    script.write(" export NUMEXPR_NUM_THREADS=1 \n")
+    script.write(" export OMP_NUM_THREADS=1 \n")
+    script.write(" export OPENBLAS_NUM_THREADS=1 \n")
+
     for prodid in prodids:
         cmd = 'python {} --dirFiles {} --prodid {} --outDir {} --nproc {}'.format(
             scriptref, inputDir, prodid , outDir, nproc)
