@@ -3,6 +3,10 @@ import os
 from optparse import OptionParser
 from sn_tools.sn_io import make_dict_from_config,make_dict_from_optparse
 import yaml
+from astropy.table import Table,vstack
+from sn_fit.mbcov import MbCov
+from sn_tools.sn_io import loopStack,check_get_dir
+import glob
 
 class SimFit:
     """
@@ -28,8 +32,18 @@ class SimFit:
       red cutoff to apply(if error_model=0)(default: 800.)
     simulator: str, opt
       simulator to use(default: sn_fast)
-    fitter: str, opt
-      fitter to use(defaulf: sn_fast)
+    fitters: list(str), opt
+      list of fitters to use(defaulf: ['sn_fast','sn_cosmo'])          
+    outDir_simu: str, opt
+       location dir of simus (default: zlim_simu)
+    outDir_fit: str, opt
+       location dir of fitted values (default: zlim_fit)
+    outDir_obs: str, opt
+       location dir of obs (default: zlim_obs)
+    snrmin: float, opt
+       SNR min for LC point fits (default : 1.0)
+    sigma_mu: bool, opt
+       to estimate sigma_mu (default: False)
     tag: str, opt
       tag for the production(default: test)
 
@@ -45,11 +59,13 @@ class SimFit:
                  outDir_fit = 'zlim_fit',
                  outDir_obs = 'zlim_obs',
                  snrmin=1.0,
+                 sigma_mu=False,
                  tag='test'):
 
         self.x1 = x1
         self.color = color
         self.tag = tag
+        self.sigma_mu = sigma_mu
 
         # simulation parameters
         self.error_model = error_model
@@ -88,6 +104,16 @@ class SimFit:
             self.outDir_obs, tag)
         self.fake_data = '{}/{}'.format(self.outDir_obs, self.fake_name)
 
+        # prepare for sigma_mu calc
+        self.covmb = None
+        if self.sigma_mu:
+            salt2Dir = 'SALT2_Files'
+            webPath = 'https://me.lsst.eu/gris/DESC_SN_pipeline'
+            check_get_dir(webPath,salt2Dir, salt2Dir)
+
+            self.covmb = MbCov(salt2Dir, paramNames=dict(
+                zip(['x0', 'x1', 'color'], ['x0', 'x1', 'c'])))
+        
     def check_create(self, dirname):
         """
         Method to create a dir if it does not exist
@@ -122,6 +148,8 @@ class SimFit:
         # fit (fast) these LCs
         for fitter in self.fitters:
             self.fit_lc(fitter)
+            if self.sigma_mu:
+                self.calc_sigma_mu(fitter)
 
     def generate_obs(self, Nvisits, m5, cadence):
         """
@@ -197,6 +225,88 @@ class SimFit:
         cmd += ' --ProductionID {}_{}'.format(self.tag, fitter)
         os.system(cmd)
 
+    def calc_sigma_mu(self, fitter):
+
+        tag = '{}_{}'.format(self.tag, fitter)
+        inputName = glob.glob('{}/Fit_{}*.hdf5'.format(self.outDir_fit,tag))[0]
+
+        sn = loopStack([inputName], 'astropyTable')
+
+        fires = Table()
+        for resu in sn:
+            resfit = Table(resu)
+            #print(resfit.columns)
+            if  resfit['fitstatus'] == 'fitok':
+                covDict = self.mbcovCalc(self.covmb,resfit)
+                #print(covDict)
+                for key in covDict.keys():
+                    resfit[key] = [covDict[key]]
+            else:
+                pp = ['Cov_x0mb', 'Cov_x1mb', 'Cov_colormb',
+              'Cov_mbmb', 'mb_recalc', 'sigma_mu']
+                for key in pp:
+                    resfit[key] = [-1.]
+            fires = vstack([fires,resfit])         
+
+        print(type(fires),fires.columns)
+        print(fires.info)
+        outName = inputName.replace('.hdf5','_sigma_mu.hdf5')
+        fires.write(outName, 'lc_fit_sigma_mu', compression=True)
+            
+
+    def mbcovCalc(self,covmb,vals,alpha=0.14, beta=3.1):
+        """
+        Method to estimate mb covariance data
+
+        Parameters
+        ---------------
+        alpha: float, opt
+          alpha param (default: 0.14)
+        beta: float, opt
+          beta param (default: 3.1, opt)
+        covmb: Mbcov class
+          class to estimate mb covariance data
+        vals: astropy table
+          fitted parameters
+
+        Returns
+        ----------
+        dict with the following keys:
+        Cov_x0mb,Cov_x1mb,Cov_colormb,Cov_mbmb,mb_recalc,sigma_mu
+
+        """
+        import numpy as np
+
+        cov = np.ndarray(shape=(3, 3), dtype=float, order='F')
+        cov[0, 0] = vals['Cov_x0x0'].data
+        cov[1, 1] = vals['Cov_x1x1'].data
+        cov[2, 2] = vals['Cov_colorcolor'].data
+        cov[0, 1] = vals['Cov_x0x1'].data
+        cov[0, 2] = vals['Cov_x0color'].data
+        cov[1, 2] = vals['Cov_x1color'].data
+        cov[2, 1] = cov[1, 2]
+        cov[1, 0] = cov[0, 1]
+        cov[2, 0] = cov[0, 2]
+
+        params = dict(zip(['x0', 'x1', 'c'], [vals['x0_fit'].data,
+                                              vals['x1_fit'].data, vals['color_fit'].data]))
+
+        resu = self.covmb.mbCovar(params, cov, ['x0', 'x1', 'c'])
+        sigmu_sq = resu['Cov_mbmb']
+        sigmu_sq += alpha**2 * vals['Cov_x1x1'].data + \
+            beta**2 * vals['Cov_colorcolor'].data
+        sigmu_sq += 2.*alpha*resu['Cov_x1mb']
+        sigmu_sq += -2.*alpha*beta*vals['Cov_x1color'].data
+        sigmu_sq += -2.*beta*resu['Cov_colormb']
+        sigmu = np.array([0.])
+        if sigmu_sq >= 0.:
+            sigmu = np.sqrt(sigmu_sq)
+
+        resu['sigma_mu'] = sigmu.item()
+
+        return resu
+
+        
     def getSN(self):
         """
         Method to load SN from file
@@ -361,6 +471,9 @@ parser.add_option("--nbands", type=int, default=0,
                   help="min number of bands with at least 2 points with SNR>5[%default]")
 parser.add_option("--error_model", type=str, default='0,1',
                   help="error model to consider[%default]")
+parser.add_option("--sigma_mu", type=int, default=0,
+                  help="to estimate sigma mu[%default]")
+
 
 #add option for Fake data here
 for key, vals in confDict.items():
@@ -437,15 +550,16 @@ for simu in simus:
         outDir_obs =  'Output_obs_{}_ebvofMW_{}_snrmin_{}'.format(cutoff,ebv,int(snrmin))
         tag = '{}_Fake_{}_{}_{}_ebvofMW_{}'.format(simu,x1,color,cutoff,ebv)
         sim_fit = SimFit(x1=x1, color=color,
-                 error_model=errormod,
-                 bluecutoff=bluecutoff,
-                 redcutoff=redcutoff,
-                 simulator=simu,
-                 fitters=fitters[simu],
-                 outDir_simu = outDir_simu,
-                 outDir_fit = outDir_fit,
-                 outDir_obs = outDir_obs,
+                         error_model=errormod,
+                         bluecutoff=bluecutoff,
+                         redcutoff=redcutoff,
+                         simulator=simu,
+                         fitters=fitters[simu],
+                         outDir_simu = outDir_simu,
+                         outDir_fit = outDir_fit,
+                         outDir_obs = outDir_obs,
                          snrmin=snrmin,
+                         sigma_mu=opts.sigma_mu,
                          tag=tag)
 
         sim_fit.process()
