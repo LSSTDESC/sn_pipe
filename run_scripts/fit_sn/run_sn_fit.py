@@ -256,7 +256,7 @@ class Fit_Simu:
 
 # get all possible simulation parameters and put in a dict
 path = simu_fit.__path__
-confDict = make_dict_from_config(path[0],'config_simulation.txt')
+confDict = make_dict_from_config(path[0],'config_fit.txt')
 
 parser = argparse.ArgumentParser(
     description='Run a LC fitter on a set of LC curves.')
