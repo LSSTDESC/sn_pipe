@@ -14,11 +14,13 @@ def process(dbName,dbDir,dbExtens,fieldName,outDir,pixelmap_dir,nproc=8,mode='ba
          for cf in confNames:
              idx = config['confName'] == cf
              sel = config[idx]
+             print('alors',sel)
              spl = np.array_split(sel,5)
              for ibatch,vv in enumerate(spl):
                  for val in vv:
-                     cmd_=cmd(dbName,dbDir,dbExtens,fieldName,val,outDir,pixelmap_dir,nproc)
+                     cmd_=cmd(dbName,dbDir,dbExtens,fieldName,val,outDir,pixelmap_dir,0,0,nproc)
                      print(cmd_)
+                     os.system(cmd_)
 
 
 def batch(dbName,dbDir,dbExtens,fieldName,outDir,pixelmap_dir,nproc=8):
@@ -30,7 +32,7 @@ def batch(dbName,dbDir,dbExtens,fieldName,outDir,pixelmap_dir,nproc=8):
     for cf in confNames:
         idx = config['confName'] == cf
         sel = config[idx]
-        spl = np.array_split(sel,5)
+        spl = np.array_split(sel,np.min([5,len(sel)]))
         for ibatch,vv in enumerate(spl):
             batch_indiv(dbName,dbDir,dbExtens,fieldName,outDir,pixelmap_dir,cf,vv,ibatch,nproc)
 
@@ -92,6 +94,27 @@ def config_rec():
     zstep = 0.05
 
     r = []
+    
+    x1_type = 'unique'
+    x1_min = -2.0
+    x1_max = 2.0
+    color_type = 'unique'
+    color_min = 0.2
+    color_max = 0.4
+    z_type = 'uniform'
+    daymax_type = 'uniform'
+    daymax_step = 2
+    nsn_factor =1
+
+    # this is for faintSN
+    z_step = 0.5
+    for z in np.arange(zmin,1.0,z_step):
+        z = np.round(z,2)
+        z_min = z
+        z_max = z+np.round(z_step,2)
+        r.append((x1_type,x1_min,x1_max,color_type,color_min,color_max,z_type,z_min,z_max,zstep,daymax_type, daymax_step,nsn_factor,'faintSN'))
+
+
     for z in np.arange(zmin,zmax,zstep):
         zval = np.round(z,2)
         x1_type = 'unique'
@@ -100,19 +123,25 @@ def config_rec():
         color_type = 'unique'
         color_min = 0.2
         color_max = 0.4
-        z_type = 'random'
+        z_type = 'uniform'
         z_min = zval
         z_max = zval+np.round(zstep,2)
+        z_step = np.round(zstep,2)
 
-        r.append((x1_type,x1_min,x1_max,color_type,color_min,color_max,z_type,z_min,z_max,'faintSN'))
+        #r.append((x1_type,x1_min,x1_max,color_type,color_min,color_max,z_type,z_min,z_max,z_step,'faintSN'))
 
+        z_type = 'random'
         x1_type = 'random'
         color_type = 'random'
-        r.append((x1_type,x1_min,x1_max,color_type,color_min,color_max,z_type,z_min,z_max,'allSN'))
+        daymax_type = 'random'
+        nsn_factor = 100
+        
+        r.append((x1_type,x1_min,x1_max,color_type,color_min,color_max,z_type,z_min,z_max,z_step,daymax_type,daymax_step,nsn_factor,'allSN'))
 
     res = np.rec.fromrecords(r, names=['x1_type','x1_min','x1_max',
                                        'color_type','color_min','color_max',
-                                       'z_type','z_min','z_max',
+                                       'z_type','z_min','z_max','z_step',
+                                       'daymax_type','daymax_step','nsn_factor',
                                        'confName'])
 
     return res
@@ -171,9 +200,10 @@ def cmd(dbName,dbDir,dbExtens,fieldName,config,outDir,pixelmap_dir,ibatch,iconfi
             if config['{}_type'.format(vv)] == 'unique':
                 cmd += ' --SN_{}_min {}'.format(vv,config['{}_min'.format(vv)])
      
-    cmd += ' --SN_z_min {} --SN_z_max {}'.format(config['z_min'], config['z_max'])
+    cmd += ' --SN_z_min {} --SN_z_max {} --SN_z_step {}'.format(config['z_min'], config['z_max'],config['z_step'])
+    cmd += ' --SN_daymax_type {} --SN_daymax_step {}'.format(config['daymax_type'],config['daymax_step'])
     cmd += ' --pixelmap_dir {}'.format(pixelmap_dir)
-    cmd += ' --SN_NSNfactor 100'
+    cmd += ' --SN_NSNfactor {}'.format(config['nsn_factor'])
     cmd += ' --Observations_fieldname {}'.format(fieldName)
     cmd += ' --ProductionID DD_{}_{}_error_model_{}_{}_{}'.format(dbName,fieldName,config['confName'],ibatch,iconfig)
     cmd += ' --Simulator_errorModel 1'
