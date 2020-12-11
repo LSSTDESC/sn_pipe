@@ -10,8 +10,11 @@ def process(dbName,fieldName,prodid, simuDir, outDir,num,nproc=8,mode='batch',sn
     if mode == 'batch':
         batch(dbName,fieldName,prodid, simuDir, outDir,num,nproc,snrmin)
     else:
-        cmd_ = cmd(dbName,prodid,simuDir,outDir,nproc,snrmin)
-        os.system(cmd_)
+        if prodid:
+            cmd_ = cmd(dbName,prodid.item(),simuDir,outDir,nproc,snrmin)
+            #os.system(cmd_)
+            print('will execute',prodid.item())
+            os.system(cmd_)
 
 def batch(dbName,fieldName,prodids, simuDir, outDir,num,nproc=8,snrmin=5.):
 
@@ -165,8 +168,9 @@ print(simudf)
 
 ic = -1
 nlc_ref = 10000
+snType = ['faintSN']
 for i in range(8):
-    for bb in ['faintSN','allSN']:                                                                                            
+    for bb in snType:                                                                                            
         idx = simudf['prodid'].str.contains('{}_{}'.format(bb,i))
         sel = simudf[idx].to_records()
         if len(sel) >0:
