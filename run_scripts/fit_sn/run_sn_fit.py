@@ -5,6 +5,7 @@ import h5py
 from astropy.table import Table, vstack
 import numpy as np
 import multiprocessing
+import queue
 from optparse import OptionParser
 from sn_fit.process_fit import Fitting
 from sn_fit.mbcov import MbCov
@@ -90,7 +91,7 @@ class Fit_Simu:
             print('hello here',t)
             
             for kk in range(nn):
-            #for kk in [3]:
+            #for kk in [7]:
                 print('processing batch',kk,t[kk],t[kk+1])
                 simul_h = simul[t[kk]:t[kk+1]]
                 res_simul = self.process_multiproc(simul_h,lc_name)
@@ -128,16 +129,57 @@ class Fit_Simu:
         for p in procs:
             p.start()
 
-        resultdict = {}
+        #start = time.time()
+        TIMEOUT = 200.
+        #bool_list = [True]*self.nproc
+        resultdict={}
+        """
+        while time.time() - start <= TIMEOUT:
+            
+
+            for i in range(self.nproc):
+                bool_list[i] = procs[i].is_alive()
+
+            print(bool_list)
+
+            if np.any(bool_list):  
+                time.sleep(10.)  
+            else:
+                break
+        else:
+            
+            print(result_queue.get())
+            index = bool_list.index(False)
+            print("timed out, killing all processes",index)
+            for io,p in enumerate(procs):
+                if io == index:
+                    p.terminate()
+            nproc = self.nproc-index
+            print(result_queue.get())
+            
+            for ja in range(self.nproc):
+                try:
+                    print('updating',ja)
+                    resultdict.update(result_queue.get(timeout=10))
+                except(queue.Empty):
+                    print('no data here',ja)
+                    resultdict[ja] = Table()
+        """
         for ja in range(self.nproc):
-            resultdict.update(result_queue.get())
+            try:
+                resultdict.update(result_queue.get(timeout=TIMEOUT))
+            except(queue.Empty):
+                print('Warning: The process',ja,'has crashed. No data here.')
+                resultdict[ja] = Table()
+
 
         for p in multiprocessing.active_children():
             p.join()
 
         res = Table()
         for ja in range(self.nproc):
-            res = vstack([res, resultdict[ja]])
+            if resultdict[ja]:
+                res = vstack([res, resultdict[ja]])
             
         return res
 
