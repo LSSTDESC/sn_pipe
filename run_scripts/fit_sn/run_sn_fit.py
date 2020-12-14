@@ -130,7 +130,7 @@ class Fit_Simu:
             p.start()
 
         #start = time.time()
-        TIMEOUT = 200.
+        TIMEOUT = 400.
         #bool_list = [True]*self.nproc
         resultdict={}
         """
@@ -170,16 +170,16 @@ class Fit_Simu:
                 resultdict.update(result_queue.get(timeout=TIMEOUT))
             except(queue.Empty):
                 print('Warning: The process',ja,'has crashed. No data here.')
-                resultdict[ja] = Table()
 
 
         for p in multiprocessing.active_children():
             p.join()
 
         res = Table()
-        for ja in range(self.nproc):
-            if resultdict[ja]:
-                res = vstack([res, resultdict[ja]])
+        #for ja in range(self.nproc):
+        #    if resultdict[ja]:
+        for kk in resultdict.keys():
+            res = vstack([res, resultdict[kk]])
             
         return res
 
