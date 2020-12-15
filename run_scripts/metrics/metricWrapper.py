@@ -98,11 +98,11 @@ class SNRMetricWrapper(MetricWrapper):
             Li_name = 'Li_{}_{}_{}.npy'.format(name, x1, color)
             mag_name = 'Mag_to_Flux_{}.npy'.format(name)
             Li_files.append(
-                '{}/{}'.format(metadata.dirRefs,Li_name))
+                '{}/{}'.format(metadata.dirRefs, Li_name))
             mag_to_flux_files.append(
                 '{}/{}'.format(metadata.dirRefs, mag_name))
-            check_get_file(web_path,metadata.dirRefs ,Li_name)
-            check_get_file(web_path,metadata.dirRefs ,mag_name)
+            check_get_file(web_path, metadata.dirRefs, Li_name)
+            check_get_file(web_path, metadata.dirRefs, mag_name)
 
         lim_sn = ReferenceData(
             Li_files, mag_to_flux_files, metadata.band, metadata.z)
@@ -163,7 +163,7 @@ class NSNMetricWrapper(MetricWrapper):
                  nside=64, RAmin=0., RAmax=360.,
                  Decmin=-1.0, Decmax=-1.0,
                  npixels=0,
-                 metadata={}, outDir='', ebvofMW=-1.0, bluecutoff=380.0, redcutoff=800.0,error_model=1):
+                 metadata={}, outDir='', ebvofMW=-1.0, bluecutoff=380.0, redcutoff=800.0, error_model=1):
         super(NSNMetricWrapper, self).__init__(
             name=name, season=season, coadd=coadd, fieldType=fieldType,
             nside=nside, RAmin=RAmin, RAmax=RAmax,
@@ -251,8 +251,8 @@ class NSNMetricWrapper(MetricWrapper):
             n_bef = 4
             n_aft = 10
             snr_min = 1.
-            n_phase_min = 0
-            n_phase_max = 0
+            n_phase_min = 1
+            n_phase_max = 1
             zlim_coeff = 0.95
 
         if fieldType == 'WFD':
@@ -273,7 +273,7 @@ class NSNMetricWrapper(MetricWrapper):
 
         # load x1_color_dist
 
-        fName = 'Dist_X1_Color_JLA_high_z.txt'
+        fName = 'Dist_x1_color_JLA_high_z.txt'
         fDir = 'reference_files'
         check_get_file(web_path, fDir, fName)
         x1_color_dist = np.genfromtxt('{}/{}'.format(fDir, fName), dtype=None,
