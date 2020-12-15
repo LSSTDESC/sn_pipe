@@ -62,10 +62,10 @@ def go_for_batch(toproc, dbDir, dbExtens, run_script, opts):
         npixels_tot = 0
         if opts.npixels > 0:
             for val in skyMap:
-                search_path = '{}/{}/{}_{}_nside_{}_{}_{}_{}_{}.npy'.format(
-                    pixelmap_dir, dbName, dbName, opts.Observations_fieldtype, opts.Pixelisation_nside, val['RAmin'], val['RAmax'], val['Decmin'], val['Decmax'])
+                search_path = '{}/{}/{}_{}_nside_{}_{}_{}_{}_{}_{}.npy'.format(
+                    pixelmap_dir, dbName, dbName, opts.Observations_fieldtype, opts.Pixelisation_nside, val['RAmin'], val['RAmax'], val['Decmin'], val['Decmax'],opts.Observations_fieldtype)
                 ffi = glob.glob(search_path)
-                tab = np.load(ffi[0])
+                tab = np.load(ffi[0],allow_pickle=True)
                 # print(len(np.unique(tab['healpixID'])))
                 npixels_tot += len(np.unique(tab['healpixID']))
 
@@ -74,20 +74,21 @@ def go_for_batch(toproc, dbDir, dbExtens, run_script, opts):
         # now redo the loop and run batches
         for val in skyMap:
             # get the number of pixels for this map
-            search_path = '{}/{}/{}_{}_nside_{}_{}_{}_{}_{}.npy'.format(
-                pixelmap_dir, dbName, dbName, opts.Observations_fieldtype, opts.Pixelisation_nside, val['RAmin'], val['RAmax'], val['Decmin'], val['Decmax'])
+            search_path = '{}/{}/{}_{}_nside_{}_{}_{}_{}_{}_{}.npy'.format(
+                pixelmap_dir, dbName, dbName, opts.Observations_fieldtype, opts.Pixelisation_nside, val['RAmin'], val['RAmax'], val['Decmin'], val['Decmax'],opts.Observations_fieldtype)
             ffi = glob.glob(search_path)
+            print('there',ffi,search_path)
             tab = np.load(ffi[0], allow_pickle=True)
             npixels_map = len(np.unique(tab['healpixID']))
 
             print('pixel_map', val['RAmin'], val['RAmax'], npixels_map)
             npixel_proc = opts.npixels
             if opts.npixels > 0:
-                num = float(npixels*npixels_map)/float(npixels_tot)
+                num = float(opts.npixels*npixels_map)/float(npixels_tot)
                 npixel_proc = int(round(num))
                 # print('hoio',npixel_proc,num)
             batchclass(toproc, dbDir, dbExtens, run_script,
-                       val['RAmin'], val['RAmax'], val['Decmin'], val['Decmax'], opts, npixels_tot=opts.npixels)
+                       val['RAmin'], val['RAmax'], val['Decmin'], val['Decmax'], opts, npixels_tot=npixel_proc)
 
 
 class batchclass:
