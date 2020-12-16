@@ -77,7 +77,7 @@ def go_for_batch(toproc, dbDir, dbExtens, run_script, opts):
             search_path = '{}/{}/{}_{}_nside_{}_{}_{}_{}_{}_{}.npy'.format(
                 pixelmap_dir, dbName, dbName, opts.Observations_fieldtype, opts.Pixelisation_nside, val['RAmin'], val['RAmax'], val['Decmin'], val['Decmax'],opts.Observations_fieldtype)
             ffi = glob.glob(search_path)
-            print('there',ffi,search_path)
+            #print('there',ffi,search_path)
             tab = np.load(ffi[0], allow_pickle=True)
             npixels_map = len(np.unique(tab['healpixID']))
 
@@ -142,8 +142,9 @@ class batchclass:
         nside = self.opts.Pixelisation_nside
         fieldType = self.opts.Observations_fieldtype
         nodither = self.opts.nodither
+        sntype = self.opts.SN_type
 
-        id = '{}_{}_{}_{}_{}_{}_{}_{}_{}'.format(
+        id = '{}_{}_{}_{}_{}_{}_{}_{}_{}_{}'.format(sntype,
             dbName, nside, fieldType, 'simulation',
             nodither, self.RAmin, self.RAmax, self.Decmin, self.Decmax)
         if self.opts.pixelmap_dir != '':
@@ -209,7 +210,7 @@ class batchclass:
 
         for opt, value in self.opts.__dict__.items():
             if opt not in ['dbList', 'splitSky', 'ProductionID', 'Pixelisation_nside',
-                           'Observations_fieldtype', 'Output_directory', 'Observations_filename']:
+                           'Observations_fieldtype', 'Output_directory', 'Observations_filename','npixels']:
                 cmd += ' --{} {}'.format(opt, value)
 
         cmd += ' --ProductionID {}'.format(name_id)
@@ -225,6 +226,7 @@ class batchclass:
             self.dbDir, self.dbName, self.dbExtens)
         cmd += ' --Output_directory {}/{}'.format(
             opts.Output_directory, self.dbName)
+        cmd += ' --npixels {}'.format(self.npixels_tot)
 
         return cmd
 
@@ -305,7 +307,7 @@ if toprocess.size == 1:
     toprocess = np.array([toprocess])
 """
 toprocess = pd.read_csv(opts.dbList, comment='#')
-print('there', toprocess, type(toprocess), toprocess.size)
+#print('there', toprocess, type(toprocess), toprocess.size)
 
 for index, proc in toprocess.iterrows():
     print('go here', proc['dbName'])
