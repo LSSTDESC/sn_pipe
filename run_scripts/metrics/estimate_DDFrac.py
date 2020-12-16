@@ -10,14 +10,18 @@ import pandas as pd
 from sn_tools.sn_utils import MultiProc
 
 
-def func(proc, params):
+def func(proc,params):
 
+    print('there man',proc)
     n_cluster = proc['nproc']
-    dbName = proc['dbName'].decode()
+    #dbName = proc['dbName'].decode()
+    dbName = proc['dbName']
     dbDir = params['dbDir']
     dbExtens = params['dbExtens']
     fields = DDFields()
 
+    print('dbDir',dbDir)
+    print('dbName',dbName)
     print('go', dbDir, dbName, dbExtens, n_cluster)
     ana = AnaOS(dbDir, dbName, dbExtens, n_cluster, fields).stat
 
@@ -144,19 +148,25 @@ dbExtens = opts.dbExtens
 
 outName = 'Nvisits.npy'
 
-if not os.path.isfile(outName):
-    toprocess = np.genfromtxt(dbList, dtype=None, names=[
-        'dbName', 'simuType', 'nside', 'coadd', 'fieldType', 'nproc'])
-    """
-    if len(toprocess.shape) == 1:
-        toprocess = np.array([toprocess])
-    """
-    params = {}
-    params['dbDir'] = dbDir
-    params['dbExtens'] = dbExtens
-    print('toprocess', params)
-    data = MultiProc(toprocess, params, func, nproc=1).data
-    np.save(outName, data.to_records(index=False))
+#if not os.path.isfile(outName):
+"""
+toprocess = np.genfromtxt(dbList, dtype=None, names=[
+'dbName', 'simuType', 'nside', 'coadd', 'fieldType', 'nproc'])
+if len(toprocess.shape) == 1:
+toprocess = np.array([toprocess])
+"""
+toprocess = pd.read_csv(dbList, comment='#')
+params = {}
+params['dbDir'] = dbDir
+params['dbExtens'] = dbExtens
+print('toprocess', params,toprocess)
+#data = MultiProc(toprocess, params, func, nproc=1).data
+res = pd.DataFrame()
+for i,vv in toprocess.iterrows():
+    data = func(vv,params)
+    res = pd.concat((res,data))
+
+np.save(outName, res.to_records(index=False))
 
 
 tab = pd.DataFrame(np.load(outName, allow_pickle=True))
