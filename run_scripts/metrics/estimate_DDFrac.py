@@ -16,8 +16,8 @@ def func(proc,params):
     n_cluster = proc['nproc']
     #dbName = proc['dbName'].decode()
     dbName = proc['dbName']
-    dbDir = params['dbDir']
-    dbExtens = params['dbExtens']
+    dbDir = proc['dbDir']
+    dbExtens = proc['dbExtens']
     fields = DDFields()
 
     print('dbDir',dbDir)
