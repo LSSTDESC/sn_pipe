@@ -4,7 +4,26 @@ import glob
 from optparse import OptionParser
 import pandas as pd
 
-def batch(scriptref, inputDir, prodids, outDir, nproc):
+def launch_batches(fis,dirSimu,dirOut,n_per_job,mbcov=0):
+        
+    
+    nz = len(fis)
+    nbatch = int(nz/n_per_job)
+    t = np.linspace(0, nz,nbatch+1, dtype='int')
+
+    for j in range(nbatch):
+        
+        fib = fis[t[j]:t[j+1]]
+        prodids = []
+        for fi in fib:
+            prodid=fi.split('/')[-1].split('.hdf5')[0]
+            prodid='_'.join(prodid.split('_')[1:])
+            print(prodid)
+            prodids.append(prodid)
+        batch('run_scripts/fit_sn/run_sn_fit.py', dirSimu,prodids,dirOut, 8,mbcov)  
+
+
+def batch(scriptref, inputDir, prodids, dirOut, nproc,mbcov=0):
 
 
     cwd = os.getcwd()
@@ -17,7 +36,7 @@ def batch(scriptref, inputDir, prodids, outDir, nproc):
     if not os.path.isdir(dirLog):
         os.makedirs(dirLog)
 
-    name_id = 'fit_{}'.format(prodids[0])
+    name_id = 'fit_{}_{}'.format(prodids[0],mbcov)
     log = dirLog + '/'+name_id+'.log'
 
     qsub = 'qsub -P P_lsst -l sps=1,ct=10:00:00,h_vmem=16G -j y -o {} -pe multicores {} <<EOF'.format(
@@ -40,8 +59,20 @@ def batch(scriptref, inputDir, prodids, outDir, nproc):
     script.write(" export OPENBLAS_NUM_THREADS=1 \n")
 
     for prodid in prodids:
-        cmd = 'python {} --dirFiles {} --prodid {} --outDir {} --nproc {}'.format(
-            scriptref, inputDir, prodid , outDir, nproc)
+        cmd = 'python {}'.format(scriptref)
+        cmd += ' --Simulations_dirname {}'.format(inputDir) 
+        cmd += ' --Simulations_prodid {}'.format(prodid) 
+        cmd += ' --Output_directory {}'.format(dirOut)
+        cmd += ' --Multiprocessing_nproc {}'.format(nproc)
+        cmd += ' --ProductionID {}_{}'.format(prodid,mbcov)
+        cmd += ' --mbcov_estimate {}'.format(mbcov)
+        cmd += ' --LCSelection_naft 5'
+        cmd += ' --LCSelection_nbands 0'
+        cmd += ' --LCSelection_phasemin -5.0'
+        cmd += ' --LCSelection_phasemax 20.0'
+        cmd += ' --LCSelection_nphasemin 1'
+        cmd += ' --LCSelection_nphasemax 1'
+
         script.write(cmd+" \n")
     script.write("EOF" + "\n")
     script.close()
@@ -52,10 +83,10 @@ parser = OptionParser()
 parser.add_option("--dbList", type="str", default='WFD.csv',
                   help="dbList to process  [%default]")
 
-parser.add_option("--dbDir", type="str", default='/sps/lsst/users/gris/Simulation_fbs15_circular_dust',
+parser.add_option("--dirSimu", type="str", default='/sps/lsst/users/gris/Simulation_fbs15_circular_dust',
                   help="db dir [%default]")
 
-parser.add_option("--outDir", type="str", default='/sps/lsst/users/gris/Fit_fbs15_circular_dust',
+parser.add_option("--dirOut", type="str", default='/sps/lsst/users/gris/Fit_fbs15_circular_dust',
                   help="output directory [%default]")
 
 opts, args = parser.parse_args()
@@ -63,19 +94,26 @@ opts, args = parser.parse_args()
 print('Start processing...')
 
 toproc=pd.read_csv(opts.dbList)
+n_per_job = 3
+
+
 
 for index, row in toproc.iterrows():
     #name = fi.split('/')[-1].split('.')[0]
     #prodid = '_'.join(name.split('_')[1:])
     # get the number of files
-    fis = glob.glob('{}/Simu*{}*.hdf5'.format(opts.dbDir,row['dbName']))
+    dbName = row['dbName']
+    search_path = '{}/{}/Simu*SN_Ia*{}*.hdf5'.format(opts.dirSimu,dbName,dbName)
+    print('search path',search_path)
+    fis = glob.glob(search_path)
     if len(fis)>0:
-        print(row['dbName'],len(fis))
-        for fi in fis:
-            prodid=fi.split('/')[-1].split('.hdf5')[0]
-            prodid='_'.join(prodid.split('_')[1:])
-            print(prodid)
-            batch('run_scripts/fit_sn/run_sn_fit.py', opts.dbDir,[prodid], opts.outDir, 8)             
+        print(dbName,len(fis))
+        dirSimu = '{}/{}'.format(opts.dirSimu,dbName)
+        dirOut = '{}/{}'.format(opts.dirOut,dbName)
+        launch_batches(fis,dirSimu,dirOut,n_per_job,mbcov=1)
+
+
+           
                    
 
     """
