@@ -82,7 +82,7 @@ def cmd(dbName,prodid,simuDir,outDir,nproc,snrmin):
     cmd += ' --Simulations_prodid {}'.format(prodid)
     cmd += ' --Simulations_dirname {}'.format(simuDir)
     cmd += ' --LCSelection_snrmin {}'.format(snrmin) 
-    cmd += ' --LCSelection_nbands 3' 
+    cmd += ' --LCSelection_nbands 0' 
     cmd += ' --Output_directory {}/{}'.format(outDir,dbName) 
     cmd += ' --Multiprocessing_nproc {}'.format(nproc)
     return cmd
@@ -167,8 +167,10 @@ simudf = simudf.groupby(['prodid']).apply(lambda x: pd.DataFrame({'nlc': [nlc(x[
 print(simudf)
 
 ic = -1
-nlc_ref = 10000
+nlc_ref = 20000
 snType = ['faintSN']
+snType = ['faintSN','allSN']
+#snType = ['mediumSN']
 for i in range(8):
     for bb in snType:                                                                                            
         idx = simudf['prodid'].str.contains('{}_{}'.format(bb,i))

@@ -29,6 +29,7 @@ def batch(dbName,dbDir,dbExtens,fieldName,outDir,pixelmap_dir,nproc=8):
 
     
     confNames = ['faintSN','allSN']
+    #confNames = ['mediumSN']
     for cf in confNames:
         idx = config['confName'] == cf
         sel = config[idx]
@@ -118,23 +119,25 @@ def config_rec():
     for z in np.arange(zmin,zmax,zstep):
         zval = np.round(z,2)
         x1_type = 'unique'
-        x1_min = -2.0
+        x1_min = 0.0
         x1_max = 2.0
         color_type = 'unique'
-        color_min = 0.2
+        color_min = 0.0
         color_max = 0.4
-        z_type = 'uniform'
+        z_type = 'random'
+        day_max = 'random'
         z_min = zval
         z_max = zval+np.round(zstep,2)
         z_step = np.round(zstep,2)
+        nsn_factor = 105
 
-        #r.append((x1_type,x1_min,x1_max,color_type,color_min,color_max,z_type,z_min,z_max,z_step,'faintSN'))
+        r.append((x1_type,x1_min,x1_max,color_type,color_min,color_max,z_type,z_min,z_max,z_step,daymax_type,daymax_step,nsn_factor,'mediumSN'))
 
         z_type = 'random'
         x1_type = 'random'
         color_type = 'random'
         daymax_type = 'random'
-        nsn_factor = 100
+       
         
         r.append((x1_type,x1_min,x1_max,color_type,color_min,color_max,z_type,z_min,z_max,z_step,daymax_type,daymax_step,nsn_factor,'allSN'))
 
@@ -209,6 +212,7 @@ def cmd(dbName,dbDir,dbExtens,fieldName,config,outDir,pixelmap_dir,ibatch,iconfi
     cmd += ' --Simulator_errorModel 1'
     outputDir = '{}/{}'.format(outDir,dbName)
     cmd += ' --Output_directory {}'.format(outputDir)
+    cmd += ' --SN_maxRFphaseQual 30.'
 
     #create outputDir here
     if not os.path.isdir(outputDir):

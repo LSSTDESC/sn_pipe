@@ -16,7 +16,7 @@ def simulation(fieldName,dbName,dbDir,dbExtens,outDir,mode,pixelmap_dir,nproc):
     print(cmd)
     os.system(cmd)
 
-def fit(fieldName,dbName,simuDir,outDir,mode,snrmin):
+def fit(fieldName,dbName,simuDir,outDir,mode,snrmin,nbands=0):
 
     cmd = 'python for_batch/scripts/batch_dd_fit.py'
     cmd += ' --fieldName {}'.format(fieldName)
@@ -54,7 +54,8 @@ pixelmap_dir = opts.pixelmap_dir
 nproc = opts.nproc
 
 DDF = ['COSMOS','CDFS','ELAIS','XMM-LSS','ADFS1','ADFS2']
-#DDF = ['ELAIS']
+#DDF = ['COSMOS']
+#DDF = ['CDFS','ELAIS','XMM-LSS','ADFS1','ADFS2']
 
 for dd in DDF:
     if opts.action == 'simulation':
