@@ -31,6 +31,7 @@ class Fit_Simu:
         # Fit instance
 
         self.fit = Fitting(config, covmb=covmb)
+        self.covmb = covmb
 
         # get the simu files
         dirSimu = config['Simulations']['dirname']
@@ -131,6 +132,8 @@ class Fit_Simu:
 
         #start = time.time()
         TIMEOUT = 400.
+        if self.covmb:
+            TIMEOUT = 2000.
         #bool_list = [True]*self.nproc
         resultdict={}
         """
