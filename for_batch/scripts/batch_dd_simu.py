@@ -4,10 +4,10 @@ import os
 import numpy as np
 import itertools
 
-def process(dbName,dbDir,dbExtens,fieldName,outDir,pixelmap_dir,nproc=8,mode='batch'):
+def process(dbName,dbDir,dbExtens,fieldName,outDir,pixelmap_dir,ebvofMW=-1.,nproc=8,mode='batch'):
     
     if mode == 'batch':
-        batch(dbName,dbDir,dbExtens,fieldName,outDir,pixelmap_dir,nproc)
+        batch(dbName,dbDir,dbExtens,fieldName,outDir,pixelmap_dir,ebvofMW,nproc)
     else:
          config = config_rec()
          confNames = ['faintSN','allSN']
@@ -23,7 +23,7 @@ def process(dbName,dbDir,dbExtens,fieldName,outDir,pixelmap_dir,nproc=8,mode='ba
                      os.system(cmd_)
 
 
-def batch(dbName,dbDir,dbExtens,fieldName,outDir,pixelmap_dir,nproc=8):
+def batch(dbName,dbDir,dbExtens,fieldName,outDir,pixelmap_dir,ebvofMW,nproc=8):
     # get config for the run
     config = config_rec()
 
@@ -35,10 +35,10 @@ def batch(dbName,dbDir,dbExtens,fieldName,outDir,pixelmap_dir,nproc=8):
         sel = config[idx]
         spl = np.array_split(sel,np.min([5,len(sel)]))
         for ibatch,vv in enumerate(spl):
-            batch_indiv(dbName,dbDir,dbExtens,fieldName,outDir,pixelmap_dir,cf,vv,ibatch,nproc)
+            batch_indiv(dbName,dbDir,dbExtens,fieldName,outDir,pixelmap_dir,ebvofMW,cf,vv,ibatch,nproc)
 
 
-def batch_indiv(dbName,dbDir,dbExtens,fieldName,outDir,pixelmap_dir,confname,config,ibatch,nproc=8):
+def batch_indiv(dbName,dbDir,dbExtens,fieldName,outDir,pixelmap_dir,ebvofMW,confname,config,ibatch,nproc=8):
 
     dirScript, name_id, log, cwd = prepareOut(dbName,fieldName,confname,ibatch)
     # qsub command                                                                             
@@ -56,7 +56,7 @@ def batch_indiv(dbName,dbDir,dbExtens,fieldName,outDir,pixelmap_dir,confname,con
     script.write("echo 'sourcing done' \n")
 
     for iconf,val in enumerate(config):
-        cmd_=cmd(dbName,dbDir,dbExtens,fieldName,val,outDir,pixelmap_dir,ibatch,iconf,nproc)
+        cmd_=cmd(dbName,dbDir,dbExtens,fieldName,val,outDir,pixelmap_dir,ebvofMW,ibatch,iconf,nproc)
         script.write(cmd_+" \n")
 
     script.write("EOF" + "\n")
@@ -189,7 +189,7 @@ def get_config_deprecated():
 
     return config
 
-def cmd(dbName,dbDir,dbExtens,fieldName,config,outDir,pixelmap_dir,ibatch,iconfig,nproc):
+def cmd(dbName,dbDir,dbExtens,fieldName,config,outDir,pixelmap_dir,ebvofMW,ibatch,iconfig,nproc):
 
     cmd = 'python run_scripts/simulation/run_simulation.py'
     cmd += ' --dbName {}'.format(dbName)
@@ -212,7 +212,9 @@ def cmd(dbName,dbDir,dbExtens,fieldName,config,outDir,pixelmap_dir,ibatch,iconfi
     cmd += ' --Simulator_errorModel 1'
     outputDir = '{}/{}'.format(outDir,dbName)
     cmd += ' --Output_directory {}'.format(outputDir)
+    cmd += ' --SN_minRFphaseQual -15.'
     cmd += ' --SN_maxRFphaseQual 30.'
+    cmd += ' --SN_ebvofMW {}'.format(ebvofMW)
 
     #create outputDir here
     if not os.path.isdir(outputDir):
@@ -224,17 +226,18 @@ def cmd(dbName,dbDir,dbExtens,fieldName,config,outDir,pixelmap_dir,ibatch,iconfi
 
 parser = OptionParser()
 
-parser.add_option("--dbName", type="str", default='descddf_v1.4_10yrs',help="dbName to process  [%default]")
-parser.add_option("--dbDir", type="str", default='/sps/lsst/cadence/LSST_SN_PhG/cadence_db/fbs_1.4/npy',help="db dir [%default]")
-parser.add_option("--dbExtens", type="str", default='npy',help="db extension [%default]")
-parser.add_option("--fieldName", type="str", default='COSMOS',help="DD field to process [%default]")
-parser.add_option("--outDir", type="str", default='/sps/lsst/users/gris/DD/Simu',help="output directory [%default]")
-parser.add_option("--mode", type="str", default='batch',help="running mode batch/interactive[%default]")
-parser.add_option("--pixelmap_dir", type="str", default='/sps/lsst/users/gris/ObsPixelized',help="pixelmap directory [%default]")
-parser.add_option("--nproc", type=int, default=8,help="number of proc [%default]")
+parser.add_option('--dbName', type='str', default='descddf_v1.4_10yrs',help='dbName to process  [%default]')
+parser.add_option('--dbDir', type='str', default='/sps/lsst/cadence/LSST_SN_PhG/cadence_db/fbs_1.4/npy',help='db dir [%default]')
+parser.add_option('--dbExtens', type='str', default='npy',help='db extension [%default]')
+parser.add_option('--fieldName', type='str', default='COSMOS',help='DD field to process [%default]')
+parser.add_option('--outDir', type='str', default='/sps/lsst/users/gris/DD/Simu',help='output directory [%default]')
+parser.add_option('--mode', type='str', default='batch',help='running mode batch/interactive[%default]')
+parser.add_option('--pixelmap_dir', type='str', default='/sps/lsst/users/gris/ObsPixelized',help='pixelmap directory [%default]')
+parser.add_option('--nproc', type=int, default=8,help='number of proc [%default]')
+parser.add_option('--ebvofMW', type=float, default=-1.0,help='E(B-V) [%default]')
 
 opts, args = parser.parse_args()
 
 print('Start processing...')
 
-process(opts.dbName,opts.dbDir,opts.dbExtens,opts.fieldName,opts.outDir,opts.pixelmap_dir,opts.nproc,opts.mode)
+process(opts.dbName,opts.dbDir,opts.dbExtens,opts.fieldName,opts.outDir,opts.pixelmap_dir,opts.ebvofMW,opts.nproc,opts.mode)
