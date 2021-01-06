@@ -260,24 +260,24 @@ class MultiSimuFakes:
 
 
 parser = OptionParser()
-parser.add_option("--x1", type="float", default=0.0, help="filter [%default]")
-parser.add_option("--color", type="float", default=0.0,
-                  help="filter [%default]")
-parser.add_option("--nproc", type="int", default=1, help="filter [%default]")
-parser.add_option("--zmin", type="float", default=0.01, help="zmin [%default]")
-parser.add_option("--zmax", type="float", default=1.0, help="zmax [%default]")
-parser.add_option("--zstep", type="float",
-                  default=0.01, help="zstep [%default]")
-parser.add_option("--outDir", type="str",
-                  default='Test_fakes', help=" output directory [%default]")
-parser.add_option("--ebvofMW", type=float,
-                  default=0, help="ebvofMW to apply [%default]")
-parser.add_option("--bluecutoff", type=float,
-                  default=380, help="blue cutoff for SN[%default]")
-parser.add_option("--redcutoff", type=float,
-                  default=800, help="blue cutoff for SN[%default]")
-parser.add_option("--error_model", type=int,
-                  default=0, help="error model for SN[%default]")
+parser.add_option('--x1', type='float', default=0.0, help='SN x1 [%default]')
+parser.add_option('--color', type='float', default=0.0,
+                  help='SN color [%default]')
+parser.add_option('--nproc', type='int', default=1, help='number of procs [%default]')
+parser.add_option('--zmin', type='float', default=0.01, help='zmin [%default]')
+parser.add_option('--zmax', type='float', default=1.0, help='zmax [%default]')
+parser.add_option('--zstep', type='float',
+                  default=0.01, help='zstep [%default]')
+parser.add_option('--outDir', type='str',
+                  default='Test_fakes', help=' output directory [%default]')
+parser.add_option('--ebvofMW', type=float,
+                  default=0, help='ebvofMW to apply [%default]')
+parser.add_option('--bluecutoff', type=float,
+                  default=380, help='blue cutoff for SN[%default]')
+parser.add_option('--redcutoff', type=float,
+                  default=800, help='blue cutoff for SN[%default]')
+parser.add_option('--error_model', type=int,
+                  default=0, help='error model for SN[%default]')
 
 
 opts, args = parser.parse_args()

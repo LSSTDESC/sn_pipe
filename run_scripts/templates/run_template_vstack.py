@@ -95,13 +95,22 @@ class LCStack:
         f = h5py.File(fname, 'r')
         keys_f = list(f.keys())
 
-        corresp = {}
-        for kk in keys_f:
-            tt = kk.split('_')[-1]
-            corresp[int(tt)] = kk
 
         keys = [1, 10, 100, 1000]
         vals = ['daymax', 'color', 'x1', 'x0']
+
+        corresp = {}
+        for kk in keys_f:
+            tab = Table.read(f, path=kk)
+            iepsilon = False
+            for ip,vv in enumerate(vals):
+                epsilon_val = tab.meta['epsilon_{}'.format(vv)]
+                if np.abs(epsilon_val)>0.0:
+                    iepsilon = True
+                    corresp[np.sign(epsilon_val)*keys[ip]]=kk
+            if not iepsilon:
+                corresp[0] = kk
+                    
         
         #tab = Table.read(f, path='{}_0'.format(prefix_key))
         tab = Table.read(f, path='{}'.format(corresp[0]))
