@@ -28,17 +28,23 @@ class DustEffects_Templates:
       redshift values to consider
     """
 
-    def __init__(self, x1, color, bluecutoff, redcutoff, dirFile, zrange):
+    def __init__(self, x1, color, bluecutoff, redcutoff, error_model, dirFile, zrange):
 
         self.x1 = x1
         self.color = color
         self.bluecutoff = bluecutoff
         self.redcutoff = redcutoff
+        error_model = error_model
 
-        prefix = 'LC_{}_{}_{}_{}_ebvofMW'.format(
-            x1, color, bluecutoff, redcutoff)
+        cutoff = 'error_model'
+        if error_model < 1:
+            cutoff = '{}_{}'.format(bluecutoff, redcutoff)
 
-        self.process(dirFile, prefix, zrange)
+
+        prefix = 'LC_{}_{}_{}_ebvofMW'.format(
+            x1, color, cutoff)
+
+        self.process(dirFile, cutoff,prefix, zrange)
 
     def loadData(self, ff, zrange=None):
         """
@@ -59,7 +65,8 @@ class DustEffects_Templates:
         keys = list(lcFile.keys())
         df = pd.read_hdf(ff, key=keys[0], mode='r')
 
-        ebvofMW = ff.split('ebvofMW_')[1]
+        print('hello',ff)
+        ebvofMW = ff.split('/')[-1].split('ebvofMW_')[1]
         ebvofMW = float(ebvofMW.split('_vstack')[0])
 
         df['ebvofMW'] = ebvofMW
@@ -102,7 +109,7 @@ class DustEffects_Templates:
         resdf = resdf.rename(columns={'ratio_flux_e_sec': 'ratio_flux'})
         return resdf
 
-    def process(self, thedir, prefix, zRange=None):
+    def process(self, thedir, cutoff, prefix, zRange=None):
         """
         Method to process the data
         The idea is to loop on input files and estimate 
@@ -113,22 +120,26 @@ class DustEffects_Templates:
         ---------------
         thedir: str
           location directory of the files
+        cutoff: str
+          cutoff value (ie error_model or bluecutoff_redcutoff)
         prefix: str
           a tag for the files to process
         zrange: array, opt
           redshift values to consider (default: None = all values considered)
 
         """
+        dirTemplates = '{}/Template_LC_{}_ebvofMW*'.format(thedir,cutoff)
 
         # get the reference table
-        reffile = glob.glob('{}/{}_0.0_vstack.hdf5'.format(thedir, prefix))
+        reffile = glob.glob('{}/{}_0.0_vstack.hdf5'.format(dirTemplates, prefix))
 
         print(reffile)
         dataref = self.loadData(reffile[0], zrange)
 
         # get the list of files to process
-        fis = glob.glob('{}/{}_*_vstack.hdf5'.format(thedir, prefix))
+        fis = glob.glob('{}/{}_*_vstack.hdf5'.format(dirTemplates, prefix))
 
+        print(fis)
         # phases array: common to all process
         phases = np.around(np.arange(-20., 55., 0.1), 2)
 
@@ -148,14 +159,19 @@ class DustEffects_Templates:
             res = dfmerge.groupby(['band', 'z']).apply(
                 lambda x: self.getVals(x, phases)).reset_index()
 
+            """
             print(res)
-
+            
+            import matplotlib.pyplot as plt
+            plt.plot(res['z'],res['ratio_flux'],'ko')
+            plt.show()
+            """
             # stack the results
             dftot = pd.concat((dftot, res))
 
         # save result as an astropy Table
-        outName = 'Dust_{}_{}_{}_{}.hdf5'.format(
-            self.x1, self.color, self.bluecutoff, self.redcutoff)
+        outName = 'Dust_{}_{}_{}.hdf5'.format(
+            self.x1, self.color, cutoff)
         Table.from_pandas(dftot).write(outName, 'dust',
                                        compression=True, append=True)
 
@@ -180,7 +196,8 @@ parser.add_option("--redcutoff", type=float, default=800.0,
                   help="red cutoff value [%default]")
 parser.add_option("--dirFiles", type=str, default='../Templates',
                   help="location dir of the files to process [%default]")
-
+parser.add_option("--error_model", type=int, default=1,
+                  help="error model bool [%default]")
 
 opts, args = parser.parse_args()
 
@@ -191,4 +208,4 @@ if opts.zfiltering:
     zrange[0] = 0.01
 
 DustEffects_Templates(opts.x1, opts.color, opts.bluecutoff,
-                      opts.redcutoff, opts.dirFiles, zrange)
+                      opts.redcutoff, opts.error_model,opts.dirFiles, zrange)
