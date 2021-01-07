@@ -100,7 +100,7 @@ class DustEffects_Templates:
         resdf = pd.DataFrame(phases, columns=['phase'])
         resdf['ebvofMW'] = np.mean(grp['ebvofMW_y'])
 
-        for vv in ['flux_e_sec', 'dx0', 'dcolor', 'dx1', 'ddaymax']:
+        for vv in ['flux_e_sec', 'dx0', 'dcolor', 'dx1', 'ddaymax','fluxerr_model']:
             interpo = interp1d(grp['phase'], grp['{}_y'.format(vv)] /
                                grp['{}_x'.format(vv)], bounds_error=False, fill_value=0.)
             resdf['ratio_{}'.format(vv)] = interpo(phases)
