@@ -30,6 +30,8 @@ class SimFit:
       blue cutoff to apply(if error_model=0)(default: 380.)
     redcutoff: float, opt
       red cutoff to apply(if error_model=0)(default: 800.)
+    ebvofMW: float,opt
+      E(B-V) (default:0.)
     simulator: str, opt
       simulator to use(default: sn_fast)
     fitters: list(str), opt
@@ -53,6 +55,7 @@ class SimFit:
                  error_model=1,
                  bluecutoff=380.,
                  redcutoff=800.,
+                 ebvofMW=0.,
                  simulator='sn_fast',
                  fitters=['sn_fast','sn_cosmo'],
                  outDir_simu = 'zlim_simu',
@@ -75,7 +78,7 @@ class SimFit:
             self.cutoff = 'error_model'
         else:
             self.cutoff = '{}_{}'.format(self.bluecutoff, self.redcutoff)
-        self.ebvofMW = 0.
+        self.ebvofMW = ebvofMW
         self.simulator = simulator
         self.zmin = 0.01
         self.zmax = 1.0
@@ -553,6 +556,7 @@ for simu in simus:
                          error_model=errormod,
                          bluecutoff=bluecutoff,
                          redcutoff=redcutoff,
+                         ebvofMW=ebv,
                          simulator=simu,
                          fitters=fitters[simu],
                          outDir_simu = outDir_simu,
