@@ -221,9 +221,9 @@ class NSNMetricWrapper(MetricWrapper):
 
             fname = 'LC_{}_{}_{}_ebvofMW_0.0_vstack.hdf5'.format(
                 x1, color, wave_cutoff)
-            if np.abs(ebvofMW) > 0.:
-                dustFile = 'Dust_{}_{}_{}_{}.hdf5'.format(
-                    x1, color, bluecutoff, redcutoff)
+            if ebvofMW < 0.:
+                dustFile = 'Dust_{}_{}_{}.hdf5'.format(
+                    x1, color, wave_cutoff)
                 dustcorr[x1_colors[j]] = LoadDust(
                     dustDir, dustFile, web_path).dustcorr
             else:
