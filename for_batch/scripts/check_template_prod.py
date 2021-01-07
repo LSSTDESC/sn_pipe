@@ -26,7 +26,13 @@ opts, args = parser.parse_args()
 x1 = opts.x1
 color = opts.color
 
-nvals = int((opts.zmax-opts.zmin)/opts.zstep)
+zmin = np.round(opts.zmin,2)
+zmax = np.round(opts.zmax,2)
+zstep = np.round(opts.zstep,2)
+
+
+nvals = int((zmax-zmin)/zstep)+1
+
 ebvs = np.arange(0.0,0.30,0.01)
 
 cutoff = '{}_{}'.format(opts.bluecutoff, opts.redcutoff)
@@ -42,7 +48,7 @@ for ebv in ebvs:
     ebv = np.round(ebv,2)
     fis = glob.glob('{}{}/fake_simu_data/{}_{}/LC_Fake_{}_{}*.hdf5'.format(prefix,ebv,x1,color,x1,color))
     if len(fis) != nvals:
-        print('problem here',ebv,len(fis))
+        print('problem here',ebv,len(fis),nvals)
         rh = []
         for ff in fis:
             z = ff.split('/')[-1]
