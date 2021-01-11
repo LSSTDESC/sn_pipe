@@ -208,6 +208,7 @@ class SimFit:
         cmd += ' --npixels -1'
         cmd += ' --Simulator_errorModel {}'.format(self.error_model)
 
+        print('LC simulation',cmd)
         os.system(cmd)
 
     def fit_lc(self, fitter):
@@ -226,6 +227,8 @@ class SimFit:
         cmd += ' --LCSelection_nbands {}'.format(self.nbands)
         cmd += ' --Fitter_name sn_fitter.fit_{}'.format(fitter)
         cmd += ' --ProductionID {}_{}'.format(self.tag, fitter)
+
+        print('LC fit',cmd)
         os.system(cmd)
 
     def calc_sigma_mu(self, fitter):
