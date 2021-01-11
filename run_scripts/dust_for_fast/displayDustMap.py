@@ -4,6 +4,7 @@ import healpy as hp
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
+from optparse import OptionParser
 
 plt.rcParams['xtick.labelsize'] = 12
 plt.rcParams['ytick.labelsize'] = 12
@@ -113,10 +114,19 @@ def plotDustHist(dustmap, ebvofMW_cut=0.25):
     ax.set_xlabel('E(B-V)')
     ax.set_ylabel('Number of Entries')
 
+parser = OptionParser()
+parser.add_option("--nside", type=int, default=64,
+                  help="nside healpix parameter[%default]")
+parser.add_option("--healpixID", type=int, default=27238,
+                  help="healpixel ID to get info from [%default]")
 
-nside = 128
+opts, args = parser.parse_args()
 
-dustmap = getDustMap(nside=nside)
+dustmap = getDustMap(nside=opts.nside)
+
+idx = dustmap['healpixID'] == opts.healpixID
+
+print(dustmap[idx])
 
 plotDustMap(dustmap)
 plotDustHist(dustmap)
