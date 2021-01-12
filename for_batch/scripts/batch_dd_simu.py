@@ -28,8 +28,9 @@ def batch(dbName,dbDir,dbExtens,fieldName,outDir,pixelmap_dir,ebvofMW,nproc=8):
     config = config_rec()
 
     
-    confNames = ['faintSN','allSN']
+    #confNames = ['faintSN','allSN']
     #confNames = ['mediumSN']
+    confNames = ['allSN']
     for cf in confNames:
         idx = config['confName'] == cf
         sel = config[idx]
