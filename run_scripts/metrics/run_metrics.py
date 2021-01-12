@@ -108,6 +108,10 @@ if opts.remove_dithering:
     nodither = '_nodither'
 outputDir = '{}/{}{}/{}'.format(opts.outDir,
                                 opts.dbName, nodither, opts.metric)
+
+if opts.fieldType == 'DD':
+    outputDir += '_{}'.format(opts.fieldName)
+
 if not os.path.isdir(outputDir):
     os.makedirs(outputDir)
 
