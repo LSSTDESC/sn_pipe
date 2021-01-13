@@ -49,7 +49,8 @@ class Summary:
 
         fields_DD = DDFields()
         if not os.path.isfile(outName):
-
+            # get pixelArea
+            self.pixArea = hp.nside2pixarea(nside, degrees=True)
             x1_colors = [(-2.0, 0.2), (0.0, 0.0)]
             self.corr = dict(zip(x1_colors, ['faint', 'medium']))
             self.data= self.process_loop(dirFile, metricName, fieldType,fieldNames,
@@ -177,7 +178,8 @@ class Summary:
             metricValues = metricValues.round({'pixRA': 3, 'pixDec': 3})
             metricValues['cadence'] = dbName
             metricValues['fieldname'] = fieldName
-            
+            metricValues['pixArea'] = self.pixArea
+            metricValues['filter'] = 'grizy'
             print(metricValues.columns)
             return metricValues
         """
@@ -254,8 +256,7 @@ adjl = np.max(lengths)
 metricTot = None
 metricTot_med = None
 """
-# get pixelArea
-pixArea = hp.nside2pixarea(nside, degrees=True)
+
 
 # Summary: to reproduce the plots faster
 
@@ -305,17 +306,18 @@ figleg = 'nside = {}'.format(nside)
 
 
 df = pd.DataFrame(metricTot)
-
-sums = df.groupby(['cadence', 'nside', 'season'])['pixArea'].sum().reset_index()
-#sums = df.groupby(['fieldname', 'cadence', 'nside', 'season'])[
-#    'pixArea'].sum().reset_index()
+dbNames = np.unique(df['cadence'])
+"""
+print(df.columns)
+#sums = df.groupby(['cadence','season'])['pixArea'].sum().reset_index()
+sums = df.groupby(['fieldname', 'cadence', 'season'])['pixArea'].sum().reset_index()
 
 idx = sums['pixArea'] > 1.
 sn_plot.plotDDLoop(nside, dbNames, sums[idx], 'pixArea', 'area [deg2]',
                    mmarkers, colors_cadb, mfc_cad, adjl, fields_DD, figleg)
 
-
-plt.show()
+"""
+#plt.show()
 
 
 """
@@ -329,14 +331,22 @@ filtercolors = 'cgyrm'
 filtermarkers = ['o', '*', 's', 'v', '^']
 mfiltc = ['None']*len(filtercolors)
 
+"""
 vars = ['visitExposureTime', 'cadence_mean', 'gap_max', 'gap_5']
 legends = ['Exposure Time [sec]/night', 'cadence [days]',
            'max gap [days]', 'frac gap > 5 days']
+"""
+vars = ['N_total', 'cadence', 'gap_max', 'gap_med']
+legends = ['Number of visits', 'cadence [days]',
+           'max gap [days]', 'med gap [day]']
+
+print(df.columns)
+
 
 todraw = dict(zip(vars, legends))
 for dbName in dbNames:
     for key, vals in todraw.items():
-        sn_plot.plotDDCadence(metricTot, dbName, key, vals, adjl, fields_DD)
+        sn_plot.plotDDCadence_new(df, dbName, key, vals)
 
 
 """
