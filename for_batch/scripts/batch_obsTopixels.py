@@ -52,7 +52,7 @@ def batch(dbDir, dbName, dbExtens, scriptref, outDir, nproc,
             script.write(cmd + " \n")
     script.write("EOF" + "\n")
     script.close()
-    os.system("sh "+scriptName)
+    #os.system("sh "+scriptName)
 
 
 def cmdb(dbDir, dbName, dbExtens, scriptref, outDir, nproc,
@@ -78,16 +78,10 @@ def cmdb(dbDir, dbName, dbExtens, scriptref, outDir, nproc,
 
 parser = OptionParser()
 
-parser.add_option("--dbList", type="str", default='WFD.txt',
+parser.add_option("--dbList", type="str", default='input/obsTopixels/List_Db_DD.csv',
                   help="dbList to process  [%default]")
-parser.add_option("--dbDir", type="str",
-                  default='/sps/lsst/cadence/LSST_SN_PhG/cadence_db/fbs_1.4/db', help="db dir [%default]")
-parser.add_option("--dbExtens", type="str", default='db',
-                  help="db extension [%default]")
 parser.add_option("--nodither", type="str", default='',
                   help="to remove dithering [%default]")
-parser.add_option("--nside", type="int", default=64,
-                  help="healpix nside[%default]")
 parser.add_option("--outDir", type="str",
                   default='/sps/lsst/users/gris/ObsPixelized',
                   help="output directory[%default]")
@@ -101,8 +95,6 @@ opts, args = parser.parse_args()
 print('Start processing...', opts)
 
 dbList = opts.dbList
-dbDir = opts.dbDir
-dbExtens = opts.dbExtens
 outDir = opts.outDir
 
 """
@@ -116,7 +108,7 @@ scriptref = 'run_scripts/obs_pixelize/run_obs_to_pixels.py'
 fieldNames = []
 fieldDD = ['COSMOS', 'CDFS', 'ELAIS', 'XMM-LSS', 'ADFS1', 'ADFS2']
 for io, val in toprocess.iterrows():
-    if val['fieldtype'] == 'DD':
+    if val['fieldType'] == 'DD':
         fieldNames = fieldDD
-    batch(dbDir, val['dbName'], dbExtens, scriptref, outDir, val['nproc'],
-          1, val['fieldtype'], val['simuType'], opts.nside, fieldNames, opts.nclusters)
+    batch(val['dbDir'], val['dbName'], val['dbExtens'], scriptref, outDir, val['nproc'],
+          1, val['fieldType'], val['simuType'], val['nside'], fieldNames, opts.nclusters)
