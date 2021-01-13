@@ -1,0 +1,10 @@
+dbDir,dbExtens,dbName,simuType,nside,coadd,fieldType,nproc
+/sps/lsst/cadence/LSST_SN_PhG/cadence_db/fbs_1.5/npy,npy,baseline_v1.5_10yrs,DD,128,1,DD,6
+/sps/lsst/cadence/LSST_SN_PhG/cadence_db/fbs_1.5/npy,npy,descddf_v1.5_10yrs,DD,128,1,DD,6
+/sps/lsst/cadence/LSST_SN_PhG/cadence_db/fbs_1.5/npy,npy,agnddf_v1.5_10yrs,DD,128,1,DD,6
+/sps/lsst/cadence/LSST_SN_PhG/cadence_db/fbs_1.5/npy,npy,daily_ddf_v1.5_10yrs,DD,128,1,DD,6
+/sps/lsst/cadence/LSST_SN_PhG/cadence_db/fbs_1.6/npy,npy,dm_heavy_nexp2_v1.6_10yrs,DD,128,1,DD,6
+/sps/lsst/cadence/LSST_SN_PhG/cadence_db/fbs_1.6/npy,npy,dm_heavy_v1.6_10yrs,DD,128,1,DD,6
+/sps/lsst/cadence/LSST_SN_PhG/cadence_db/fbs_1.6/npy,npy,ddf_heavy_nexp2_v1.6_10yrs,DD,128,1,DD,6
+/sps/lsst/cadence/LSST_SN_PhG/cadence_db/fbs_1.6/npy,npy,ddf_heavy_v1.6_10yrs,DD,128,1,DD,6
+
