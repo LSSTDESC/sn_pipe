@@ -18,7 +18,7 @@ import pandas as pd
 
 class Summary:
     def __init__(self, dirFile, metricName='NSN',
-                 fieldType='DD', nside=128, forPlot=pd.DataFrame(), outName=''):
+                 fieldType='DD', fieldNames=['COSMOS'],nside=128, forPlot=pd.DataFrame(), outName=''):
         """
         Class to transform input data and match to DD fields
 
@@ -30,6 +30,8 @@ class Summary:
           name of the metric to consider (default: NSN)
         fieldType: str,opt
           field type to consider (default: DD)
+        fieldNames: list(str), opt
+          fieldNames to process (default: ['COSMOS'])
         nside: int, opt
           nside healpix parameter (default: 128)
         forPlot: pandas df, opt
@@ -50,17 +52,19 @@ class Summary:
 
             x1_colors = [(-2.0, 0.2), (0.0, 0.0)]
             self.corr = dict(zip(x1_colors, ['faint', 'medium']))
-            df = self.process_loop(dirFile, metricName, fieldType,
-                                   nside, forPlot)
+            self.data= self.process_loop(dirFile, metricName, fieldType,fieldNames,
+                                   nside, forPlot).to_records()
 
+            """
             self.data = Match_DD(fields_DD, df).to_records()
+            """
 
             np.save(outName, self.data)
 
         else:
             self.data = np.load(outName, allow_pickle=True)
 
-    def process_loop(self, dirFile, metricName, fieldType, nside, forPlot):
+    def process_loop(self, dirFile, metricName, fieldType, fieldNames,nside, forPlot):
         """
         Method to loop on all the files and process the data
 
@@ -103,12 +107,23 @@ class Summary:
         for dbName in forPlot['dbName']:
             io += 1
             dfi = self.process(dirFile, dbName, metricName,
-                               fieldType, nside)
+                               fieldType, fieldNames,nside)
             df = pd.concat([df, dfi], sort=False)
 
         return df
 
-    def process(self, dirFile, dbName, metricName, fieldType, nside):
+    def process(self, dirFile, dbName, metricName, fieldType, fieldNames,nside): 
+
+        restot = pd.DataFrame()
+        for fieldName in fieldNames:
+            res = self.process_field(dirFile, dbName, metricName, fieldType, fieldName,nside)
+            restot = pd.concat((restot,res))
+
+        return restot
+
+
+
+    def process_field(self, dirFile, dbName, metricName, fieldType, fieldName,nside):
         """
         Single file processing
         This method load the files corresponding to dbName and transform it
@@ -147,8 +162,8 @@ class Summary:
 
         """
 
-        search_path = '{}/{}/{}/*{}Metric_{}*_nside_{}_*.hdf5'.format(
-            dirFile, dbName, metricName, metricName, fieldType, nside)
+        search_path = '{}/{}/{}_{}/*{}Metric_{}*_nside_{}_*.hdf5'.format(
+            dirFile, dbName, metricName,  fieldName,metricName,fieldType, nside)
         print('looking for', search_path)
         vars = ['pixRA', 'pixDec', 'healpixID', 'season', 'status']
         # vars = ['healpixID', 'season']
@@ -161,6 +176,8 @@ class Summary:
             metricValues = loopStack(fileNames, 'astropyTable').to_pandas()
             metricValues = metricValues.round({'pixRA': 3, 'pixDec': 3})
             metricValues['cadence'] = dbName
+            metricValues['fieldname'] = fieldName
+            
             print(metricValues.columns)
             return metricValues
         """
@@ -191,7 +208,7 @@ parser = OptionParser(
 parser.add_option("--dirFile", type="str",
                   default='/sps/lsst/users/gris/MetricOutput',
                   help="file directory [%default]")
-parser.add_option("--nside", type="int", default=128,
+parser.add_option("--nside", type="int", default=64,
                   help="nside for healpixels [%default]")
 parser.add_option("--fieldType", type="str", default='DD',
                   help="field type - DD, WFD, Fake [%default]")
@@ -201,6 +218,8 @@ parser.add_option("--snType", type="str", default='faint',
                   help="SN type: faint or medium[%default]")
 parser.add_option("--outName", type="str", default='Summary_DD_fbs14.npy',
                   help="output name for the summary[%default]")
+parser.add_option("--fieldNames", type="str", default='COSMOS,CDFS,XMM-LSS,ELAIS,ADFS1,ADFS2',
+                  help="fields to process [%default]")
 
 
 opts, args = parser.parse_args()
@@ -212,6 +231,7 @@ fieldType = opts.fieldType
 metricName = 'NSN'
 snType = opts.snType
 outName = opts.outName
+fieldNames = opts.fieldNames.split(',')
 
 # Loading input file with the list of cadences to take into account and siaplay features
 filename = opts.dbList
@@ -240,7 +260,7 @@ pixArea = hp.nside2pixarea(nside, degrees=True)
 # Summary: to reproduce the plots faster
 
 metricTot = Summary(dirFile, 'NSN',
-                    'DD', nside, forPlot, outName).data
+                    'DD', fieldNames,nside, forPlot, outName).data
 
 print('oo', metricTot.dtype, type(metricTot))
 nsn_plot.plot_DDSummary(metricTot, forPlot, sntype=snType)
@@ -286,8 +306,9 @@ figleg = 'nside = {}'.format(nside)
 
 df = pd.DataFrame(metricTot)
 
-sums = df.groupby(['fieldnum', 'fieldname', 'cadence', 'nside', 'season'])[
-    'pixArea'].sum().reset_index()
+sums = df.groupby(['cadence', 'nside', 'season'])['pixArea'].sum().reset_index()
+#sums = df.groupby(['fieldname', 'cadence', 'nside', 'season'])[
+#    'pixArea'].sum().reset_index()
 
 idx = sums['pixArea'] > 1.
 sn_plot.plotDDLoop(nside, dbNames, sums[idx], 'pixArea', 'area [deg2]',
