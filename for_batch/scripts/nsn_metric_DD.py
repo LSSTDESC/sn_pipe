@@ -2,7 +2,7 @@ import os
 from optparse import OptionParser
 
 class Process:
-    def __init__(self, dbDir, dbName,dbExtens,outDir,pixelmap_dir, nclusters):
+    def __init__(self, dbDir, dbName,dbExtens,outDir,pixelmap_dir, nclusters, nside):
         
         self.dbDir =dbDir
         self.dbName = dbName
@@ -10,6 +10,7 @@ class Process:
         self.outDir = outDir
         self.pixelmap_dir = pixelmap_dir
         self.nclusters = nclusters
+        self.nside = opts.nside
 
     def __call__(self, nproc, fieldNames, ebvofMW,mode):
 
@@ -39,6 +40,7 @@ class Process:
         cmd_ += ' --saveData 1'
         cmd_ += ' --pixelmap_dir {}'.format(self.pixelmap_dir)
         cmd_ += ' --outDir {}'.format(self.outDir)
+        cmd_ += ' --nside {}'.format(self.nside)
 
         return cmd_
 
@@ -100,18 +102,19 @@ parser = OptionParser()
 parser.add_option('--dbName', type='str', default='descddf_v1.5_10yrs',help='dbName to process  [%default]')
 parser.add_option('--dbExtens', type='str', default='npy',help='dbDir extens [%default]')
 parser.add_option('--dbDir', type='str', default='/sps/lsst/cadence/LSST_SN_PhG/cadence_db/fbs_1.5/npy',help='dbDir to process  [%default]')
-parser.add_option('--outDir', type='str', default='MetricOutput_DD',help='output Dir to  [%default]')
+parser.add_option('--outDir', type='str', default='/sps/lsst/users/gris/MetricOutput_DD_new_128',help='output Dir to  [%default]')
 parser.add_option('--mode', type='str', default='batch',help='running mode batch/interactive [%default]')
 parser.add_option('--snrmin', type=float, default=1.,help='min snr for LC point fit[%default]')
-parser.add_option('--pixelmap_dir', type='str', default='/sps/lsst/users/gris/ObsPixelized',help='pixelmap directory [%default]')
+parser.add_option('--pixelmap_dir', type='str', default='/sps/lsst/users/gris/ObsPixelized_128',help='pixelmap directory [%default]')
 parser.add_option('--nproc', type=int, default=8,help='number of proc [%default]')
 parser.add_option('--ebvofMW', type=float, default=-1.0,help='E(B-V) [%default]')
 parser.add_option('--fieldNames', type=str, default='COSMOS,CDFS,ELAIS,XMM-LSS,ADFS1,ADFS2',help='DD fields to process [%default]')
 parser.add_option('--nclusters', type=int, default=6,help='total number of DD in this OS [%default]')
+parser.add_option('--nside', type=int, default=128,help='healpix nside parameter [%default]')
 
 opts, args = parser.parse_args()
 
-proc = Process(opts.dbDir, opts.dbName,opts.dbExtens,opts.outDir,opts.pixelmap_dir, opts.nclusters)
+proc = Process(opts.dbDir, opts.dbName,opts.dbExtens,opts.outDir,opts.pixelmap_dir, opts.nclusters,opts.nside)
 
 fieldNames = opts.fieldNames.split(',')
 
