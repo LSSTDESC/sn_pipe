@@ -48,22 +48,22 @@ class Summary:
         #fname = 'Summary_{}_{}.npy'.format(fieldType, simuVersion)
 
         fields_DD = DDFields()
-        if not os.path.isfile(outName):
-            # get pixelArea
-            self.pixArea = hp.nside2pixarea(nside, degrees=True)
-            x1_colors = [(-2.0, 0.2), (0.0, 0.0)]
-            self.corr = dict(zip(x1_colors, ['faint', 'medium']))
-            self.data= self.process_loop(dirFile, metricName, fieldType,fieldNames,
+        #if not os.path.isfile(outName):
+        # get pixelArea
+        self.pixArea = hp.nside2pixarea(nside, degrees=True)
+        x1_colors = [(-2.0, 0.2), (0.0, 0.0)]
+        self.corr = dict(zip(x1_colors, ['faint', 'medium']))
+        self.data= self.process_loop(dirFile, metricName, fieldType,fieldNames,
                                    nside, forPlot).to_records()
 
-            """
-            self.data = Match_DD(fields_DD, df).to_records()
-            """
+        """
+        self.data = Match_DD(fields_DD, df).to_records()
+        """
 
-            np.save(outName, self.data)
+        #np.save(outName, self.data)
 
-        else:
-            self.data = np.load(outName, allow_pickle=True)
+        #else:
+        #    self.data = np.load(outName, allow_pickle=True)
 
     def process_loop(self, dirFile, metricName, fieldType, fieldNames,nside, forPlot):
         """
@@ -239,7 +239,7 @@ fieldNames = opts.fieldNames.split(',')
 filename = opts.dbList
 
 # forPlot = pd.read_csv(filename).to_records()
-forPlot = pd.read_csv(filename)
+forPlot = pd.read_csv(filename,comment='#')
 
 print(forPlot)
 
@@ -263,7 +263,11 @@ metricTot_med = None
 metricTot = Summary(dirFile, 'NSN',
                     'DD', fieldNames,nside, forPlot, outName).data
 
-print('oo', metricTot.dtype, type(metricTot))
+print(metricTot.dtype)
+print('oo', np.unique(metricTot[['cadence','fieldname']]), type(metricTot))
+
+nsn_plot.plot_DDArea(metricTot, forPlot, sntype='faint')
+
 nsn_plot.plot_DDSummary(metricTot, forPlot, sntype=snType)
 plt.show()
 
