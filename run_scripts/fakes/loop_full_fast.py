@@ -479,7 +479,12 @@ parser.add_option("--error_model", type=str, default='0,1',
                   help="error model to consider[%default]")
 parser.add_option("--sigma_mu", type=int, default=0,
                   help="to estimate sigma mu[%default]")
-
+parser.add_option("--sn_cosmo_simu_fitter", type='str', default='sn_cosmo',
+                  help="fitter for sn_cosmo simulations[%default]")
+parser.add_option("--sn_fast_simu_fitter", type='str', default='sn_cosmo,sn_fast',
+                  help="fitter for sn_fast simulations[%default]")
+parser.add_option("--tagprod", type=str, default='',
+                  help="tag for output [%default]")
 
 #add option for Fake data here
 for key, vals in confDict.items():
@@ -544,7 +549,16 @@ simus = list(map(str,opts.simus.split(',')))
 
 error_models = list(map(int, opts.error_model.split(',')))
 
-fitters = dict(zip(['sn_cosmo','sn_fast'],[['sn_cosmo'],['sn_cosmo','sn_fast']]))
+fitters = dict(zip(['sn_cosmo','sn_fast'],[opts.sn_cosmo_simu_fitter.split(','),opts.sn_fast_simu_fitter.split(',')]))
+
+Nvisits = {}
+m5 = {}
+cadence = {}
+
+for b in opts.bands:
+    Nvisits[b] = eval('opts.Nvisits_{}'.format(b))
+    m5[b] = eval('opts.m5_{}'.format(b))
+    cadence[b] = eval('opts.cadence_{}'.format(b))
 
 for simu in simus:
     for errormod in error_models:
@@ -555,6 +569,8 @@ for simu in simus:
         outDir_fit = 'Output_Fit_{}_ebvofMW_{}_snrmin_{}'.format(cutoff,ebv,int(snrmin))
         outDir_obs =  'Output_obs_{}_ebvofMW_{}_snrmin_{}'.format(cutoff,ebv,int(snrmin))
         tag = '{}_Fake_{}_{}_{}_ebvofMW_{}'.format(simu,x1,color,cutoff,ebv)
+        if opts.tagprod != '':
+            tag += '_{}'.format(opts.tagprod)
         sim_fit = SimFit(x1=x1, color=color,
                          error_model=errormod,
                          bluecutoff=bluecutoff,
@@ -568,8 +584,8 @@ for simu in simus:
                          snrmin=snrmin,
                          sigma_mu=opts.sigma_mu,
                          tag=tag)
-
-        sim_fit.process()
+        
+        sim_fit.process(Nvisits=Nvisits,m5=m5,cadence=cadence)
 
 """
 for errmod in error_models:
