@@ -272,14 +272,15 @@ def process(config, bands, j=0, output_q=None):
             m5[b] = conf['m5_{}'.format(b)]
             cadence[b] = conf['cadence_{}'.format(b)]
 
-        cmd = simufit_cmd(conf['tagprod'], conf['x1'], conf['color'], conf['ebvofMW'],
+        tagprod = '{}_{}'.format(conf['tagprod'], conf['season'])
+        cmd = simufit_cmd(tagprod, conf['x1'], conf['color'], conf['ebvofMW'],
                           conf['simulator'], conf['fitter'], conf['snrmin'],
                           conf['error_model'], conf['bluecutoff'], conf['redcutoff'],
                           Nvisits, m5, cadence, bands)
         print(cmd)
         os.system(cmd)
 
-        zlim = ana_zlim(conf['tagprod'],
+        zlim = ana_zlim(tagprod,
                         simulator=conf['simulator'],
                         fitter=conf['fitter'],
                         x1=conf['x1'],
