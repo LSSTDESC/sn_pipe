@@ -16,6 +16,7 @@ parser.add_option("--seqs", type="int", default='0',
 opts, args = parser.parse_args()
 
 configName = opts.config
+
 outputName = opts.output
 seqs = opts.seqs
 

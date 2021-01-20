@@ -1,12 +1,13 @@
 import numpy as np
 import os
 from optparse import OptionParser
-from sn_tools.sn_io import make_dict_from_config,make_dict_from_optparse
+from sn_tools.sn_io import make_dict_from_config, make_dict_from_optparse
 import yaml
-from astropy.table import Table,vstack
+from astropy.table import Table, vstack
 from sn_fit.mbcov import MbCov
-from sn_tools.sn_io import loopStack,check_get_dir
+from sn_tools.sn_io import loopStack, check_get_dir
 import glob
+
 
 class SimFit:
     """
@@ -57,10 +58,10 @@ class SimFit:
                  redcutoff=800.,
                  ebvofMW=0.,
                  simulator='sn_fast',
-                 fitters=['sn_fast','sn_cosmo'],
-                 outDir_simu = 'zlim_simu',
-                 outDir_fit = 'zlim_fit',
-                 outDir_obs = 'zlim_obs',
+                 fitters=['sn_fast', 'sn_cosmo'],
+                 outDir_simu='zlim_simu',
+                 outDir_fit='zlim_fit',
+                 outDir_obs='zlim_obs',
                  snrmin=1.0,
                  sigma_mu=False,
                  tag='test'):
@@ -112,11 +113,11 @@ class SimFit:
         if self.sigma_mu:
             salt2Dir = 'SALT2_Files'
             webPath = 'https://me.lsst.eu/gris/DESC_SN_pipeline'
-            check_get_dir(webPath,salt2Dir, salt2Dir)
+            check_get_dir(webPath, salt2Dir, salt2Dir)
 
             self.covmb = MbCov(salt2Dir, paramNames=dict(
                 zip(['x0', 'x1', 'color'], ['x0', 'x1', 'c'])))
-        
+
     def check_create(self, dirname):
         """
         Method to create a dir if it does not exist
@@ -171,8 +172,10 @@ class SimFit:
         os.system(cmd)
 
         # create fake data from yaml configuration file
-        cmd = 'python run_scripts/fakes/make_fake.py --config {} --output {}'.format(
+        cmd = 'python run_scripts/fakes/make_fake.py'
+        cmd += ' --config {} --output {}'.format(
             self.fake_config, self.fake_data)
+
         os.system(cmd)
 
     def simulate_lc(self, zmin, zmax, zstep):
@@ -180,7 +183,7 @@ class SimFit:
         Method to simulate LC
 
         """
-        cmd = 'python run_scripts/simulation/run_simulation.py --dbDir .'
+        cmd = 'python run_scripts/simulation/run_simulation.py'
         cmd += ' --dbDir {}'.format(self.outDir_obs)
         cmd += ' --dbName {}'.format(self.fake_name)
         cmd += ' --dbExtens npy'
@@ -208,7 +211,7 @@ class SimFit:
         cmd += ' --npixels -1'
         cmd += ' --Simulator_errorModel {}'.format(self.error_model)
 
-        print('LC simulation',cmd)
+        print('LC simulation', cmd)
         os.system(cmd)
 
     def fit_lc(self, fitter):
@@ -228,39 +231,39 @@ class SimFit:
         cmd += ' --Fitter_name sn_fitter.fit_{}'.format(fitter)
         cmd += ' --ProductionID {}_{}'.format(self.tag, fitter)
 
-        print('LC fit',cmd)
+        print('LC fit', cmd)
         os.system(cmd)
 
     def calc_sigma_mu(self, fitter):
 
         tag = '{}_{}'.format(self.tag, fitter)
-        inputName = glob.glob('{}/Fit_{}*.hdf5'.format(self.outDir_fit,tag))[0]
+        inputName = glob.glob(
+            '{}/Fit_{}*.hdf5'.format(self.outDir_fit, tag))[0]
 
         sn = loopStack([inputName], 'astropyTable')
 
         fires = Table()
         for resu in sn:
             resfit = Table(resu)
-            #print(resfit.columns)
-            if  resfit['fitstatus'] == 'fitok':
-                covDict = self.mbcovCalc(self.covmb,resfit)
-                #print(covDict)
+            # print(resfit.columns)
+            if resfit['fitstatus'] == 'fitok':
+                covDict = self.mbcovCalc(self.covmb, resfit)
+                # print(covDict)
                 for key in covDict.keys():
                     resfit[key] = [covDict[key]]
             else:
                 pp = ['Cov_x0mb', 'Cov_x1mb', 'Cov_colormb',
-              'Cov_mbmb', 'mb_recalc', 'sigma_mu']
+                      'Cov_mbmb', 'mb_recalc', 'sigma_mu']
                 for key in pp:
                     resfit[key] = [-1.]
-            fires = vstack([fires,resfit])         
+            fires = vstack([fires, resfit])
 
-        print(type(fires),fires.columns)
+        print(type(fires), fires.columns)
         print(fires.info)
-        outName = inputName.replace('.hdf5','_sigma_mu.hdf5')
+        outName = inputName.replace('.hdf5', '_sigma_mu.hdf5')
         fires.write(outName, 'lc_fit_sigma_mu', compression=True)
-            
 
-    def mbcovCalc(self,covmb,vals,alpha=0.14, beta=3.1):
+    def mbcovCalc(self, covmb, vals, alpha=0.14, beta=3.1):
         """
         Method to estimate mb covariance data
 
@@ -312,7 +315,6 @@ class SimFit:
 
         return resu
 
-        
     def getSN(self):
         """
         Method to load SN from file
@@ -447,9 +449,10 @@ def plot_sigmaC_z(sn, zlim, color_cut=0.04):
     ax.legend(loc='upper left')
     plt.show()
 
+
 # this is to load option for fake cadence
 path = 'input/Fake_cadence'
-confDict = make_dict_from_config(path,'config_cadence.txt')
+confDict = make_dict_from_config(path, 'config_cadence.txt')
 
 parser = OptionParser()
 
@@ -486,14 +489,16 @@ parser.add_option("--sn_fast_simu_fitter", type='str', default='sn_cosmo,sn_fast
 parser.add_option("--tagprod", type=str, default='',
                   help="tag for output [%default]")
 
-#add option for Fake data here
+# add option for Fake data here
 for key, vals in confDict.items():
     vv = vals[1]
     if vals[0] != 'str':
-        vv = eval('{}({})'.format(vals[0],vals[1]))
-    parser.add_option('--{}'.format(key),help='{} [%default]'.format(vals[2]),default=vv,type=vals[0],metavar='')
+        vv = eval('{}({})'.format(vals[0], vals[1]))
+    parser.add_option('--{}'.format(key), help='{} [%default]'.format(
+        vals[2]), default=vv, type=vals[0], metavar='')
 
-parser.add_option('--fake_config',help='output file name [%default]',default='Fake_cadence.yaml',type='str')
+parser.add_option(
+    '--fake_config', help='output file name [%default]', default='Fake_cadence.yaml', type='str')
 
 opts, args = parser.parse_args()
 
@@ -502,33 +507,33 @@ opts, args = parser.parse_args()
 newDict = {}
 for key, vals in confDict.items():
     newval = eval('opts.{}'.format(key))
-    newDict[key]=(vals[0],newval)
+    newDict[key] = (vals[0], newval)
 
 dd = make_dict_from_optparse(newDict)
 # few changes to be made here: transform some of the input to list
-for vv in ['seasons','seasonLength']:
+for vv in ['seasons', 'seasonLength']:
     what = dd[vv]
     if '-' not in what or what[0] == '-':
-        nn = list(map(int,what.split(',')))
-        print('ici',nn)
+        nn = list(map(int, what.split(',')))
+        print('ici', nn)
     else:
-        nn = list(map(int,what.split('-')))
-        nn = range(np.min(nn),np.max(nn))
+        nn = list(map(int, what.split('-')))
+        nn = range(np.min(nn), np.max(nn))
     dd[vv] = nn
 
 for vv in ['MJDmin']:
     what = dd[vv]
     if '-' not in what or what[0] == '-':
-        nn = list(map(float,what.split(',')))
+        nn = list(map(float, what.split(',')))
     else:
-        nn = list(map(float,what.split('-')))
-        nn = range(np.min(nn),np.max(nn))
+        nn = list(map(float, what.split('-')))
+        nn = range(np.min(nn), np.max(nn))
     dd[vv] = nn
 
 
-#print('boo',yaml.safe_dump(dd))
+# print('boo',yaml.safe_dump(dd))
 
-#print('config',dd)
+# print('config',dd)
 with open(opts.fake_config, 'w') as f:
     data = yaml.safe_dump(dd, f)
 
@@ -545,11 +550,12 @@ nbef = opts.nbef
 naft = opts.naft
 nbands = opts.nbands
 
-simus = list(map(str,opts.simus.split(',')))
+simus = list(map(str, opts.simus.split(',')))
 
 error_models = list(map(int, opts.error_model.split(',')))
 
-fitters = dict(zip(['sn_cosmo','sn_fast'],[opts.sn_cosmo_simu_fitter.split(','),opts.sn_fast_simu_fitter.split(',')]))
+fitters = dict(zip(['sn_cosmo', 'sn_fast'], [
+               opts.sn_cosmo_simu_fitter.split(','), opts.sn_fast_simu_fitter.split(',')]))
 
 Nvisits = {}
 m5 = {}
@@ -562,13 +568,17 @@ for b in opts.bands:
 
 for simu in simus:
     for errormod in error_models:
-        cutoff = '{}_{}'.format(bluecutoff,redcutoff)
+        cutoff = '{}_{}'.format(bluecutoff, redcutoff)
         if errormod:
             cutoff = 'error_model'
-        outDir_simu = 'Output_Simu_{}_ebvofMW_{}'.format(cutoff,ebv)
-        outDir_fit = 'Output_Fit_{}_ebvofMW_{}_snrmin_{}'.format(cutoff,ebv,int(snrmin))
-        outDir_obs =  'Output_obs_{}_ebvofMW_{}_snrmin_{}'.format(cutoff,ebv,int(snrmin))
-        tag = '{}_Fake_{}_{}_{}_ebvofMW_{}'.format(simu,x1,color,cutoff,ebv)
+        outDir_simu = 'Output_Simu_{}_ebvofMW_{}'.format(
+            cutoff, ebv)
+        outDir_fit = 'Output_Fit_{}_ebvofMW_{}_snrmin_{}'.format(
+            cutoff, ebv, int(snrmin))
+        outDir_obs = 'Output_obs_{}_ebvofMW_{}'.format(
+            cutoff, ebv)
+        tag = '{}_Fake_{}_{}_{}_ebvofMW_{}'.format(
+            simu, x1, color, cutoff, ebv)
         if opts.tagprod != '':
             tag += '_{}'.format(opts.tagprod)
         sim_fit = SimFit(x1=x1, color=color,
@@ -578,14 +588,14 @@ for simu in simus:
                          ebvofMW=ebv,
                          simulator=simu,
                          fitters=fitters[simu],
-                         outDir_simu = outDir_simu,
-                         outDir_fit = outDir_fit,
-                         outDir_obs = outDir_obs,
+                         outDir_simu=outDir_simu,
+                         outDir_fit=outDir_fit,
+                         outDir_obs=outDir_obs,
                          snrmin=snrmin,
                          sigma_mu=opts.sigma_mu,
                          tag=tag)
-        
-        sim_fit.process(Nvisits=Nvisits,m5=m5,cadence=cadence)
+
+        sim_fit.process(Nvisits=Nvisits, m5=m5, cadence=cadence)
 
 """
 for errmod in error_models:
