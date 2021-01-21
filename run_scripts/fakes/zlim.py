@@ -54,6 +54,7 @@ def plot(tab, covcc_col='Cov_colorcolor', z_col='z', sigmaC=0.04):
 
     fig, ax = plt.subplots()
 
+    tab.sort(z_col)
     ax.plot(tab[z_col], np.sqrt(tab[covcc_col]))
 
     ax.plot(ax.get_xlim(), [sigmaC]*2, color='r')
@@ -63,7 +64,7 @@ def plot(tab, covcc_col='Cov_colorcolor', z_col='z', sigmaC=0.04):
     plt.show()
 
 
-def ana_zlim(tagprod, simulator='sn_fast', fitter='sn_fast', x1=-2.0, color=0.2, ebvofMW=0.0, snrmin=1., error_model=1, bluecutoff=380., redcutoff=800.):
+def ana_zlim(tagprod, simulator='sn_fast', fitter='sn_fast', x1=-2.0, color=0.2, ebvofMW=0.0, snrmin=1., error_model=1, bluecutoff=380., redcutoff=800., multiDaymax=0):
     """
     Function to analyze the output of the fit.
     The idea is to estimate the redshift limit
@@ -121,7 +122,18 @@ def ana_zlim(tagprod, simulator='sn_fast', fitter='sn_fast', x1=-2.0, color=0.2,
     # print(sel.columns,zlim(sel))
     # plot(sel)
 
-    return zlimit(sel)
+    rz = []
+
+    if multiDaymax:
+        for daymax in np.unique(sel['daymax']):
+            ido = np.abs(sel['daymax']-daymax)<1.e-5
+            #plot(sel[ido])
+            rz.append(zlimit(sel[ido]))
+    else:
+        rz.append(zlimit(sel))
+
+            
+    return np.mean(rz),np.std(rz)
 
 
 def simufit_cmd(tagprod, x1=-2.0, color=0.2,
@@ -133,7 +145,7 @@ def simufit_cmd(tagprod, x1=-2.0, color=0.2,
                 redcutoff=800.,
                 Nvisits=dict(zip('grizy', [10, 20, 20, 26, 20])),
                 m5=dict(zip('grizy', [24.51, 24.06, 23.62, 23.0, 22.17])),
-                cadence=3, bands='grizy'):
+                cadence=3, bands='grizy',multiDaymax=0,m5File=None,healpixID=-1):
     """
     Function to simulate and fit SN light curves
 
@@ -167,6 +179,12 @@ def simufit_cmd(tagprod, x1=-2.0, color=0.2,
       cadence of observations (default: 3)
     bands: str, opt
       bands to consider (default: grizy)
+    multiDaymax: bool, opt
+      to simulate/fit multi daymax SN
+    m5File: str, opt
+      m5 file name
+    healpixID: int,opt
+      healpixID to get m5 values (default: -1)
     """
     cmd = 'python run_scripts/fakes/loop_full_fast.py'
     cmd += ' --x1 {}'.format(x1)
@@ -179,6 +197,10 @@ def simufit_cmd(tagprod, x1=-2.0, color=0.2,
     cmd += ' --redcutoff {}'.format(redcutoff)
     cmd += ' --tagprod {}'.format(tagprod)
     cmd += ' --snrmin {}'.format(snrmin)
+    cmd += ' --m5File {}'.format(m5File)
+    cmd += ' --multiDaymax {}'.format(multiDaymax)
+    cmd += ' --healpixID {}'.format(healpixID)
+
     for b in bands:
         cmd += ' --Nvisits_{} {}'.format(b, Nvisits[b])
         cmd += ' --m5_{} {}'.format(b, m5[b])
@@ -187,7 +209,7 @@ def simufit_cmd(tagprod, x1=-2.0, color=0.2,
     return cmd
 
 
-def multiproc(conf, bands, nproc=8):
+def multiproc(conf, bands, multiDaymax=False,m5File='NoData',healpixID_m5=False,nproc=8):
     """
     Function to process data using multiprocessing
 
@@ -197,6 +219,12 @@ def multiproc(conf, bands, nproc=8):
       configuration file
     bands: str
       list of the filters to consider
+    multiDaymax: bool, opt
+     to simulate/fit multi daymax SN (default: False)
+    m5File: str,opt
+      m5 file to get values from (default: 'NoData')
+    healpixID_m5: bool, opt
+      healpixID to get m5 values (default: False)
     nproc: int, opt
       number of procs for multiprocessing (default: 8)
 
@@ -210,7 +238,7 @@ def multiproc(conf, bands, nproc=8):
     result_queue = multiprocessing.Queue()
 
     procs = [multiprocessing.Process(name='Subprocess-'+str(j), target=process,
-                                     args=(conf[t[j]:t[j+1]], bands, j, result_queue))
+                                     args=(conf[t[j]:t[j+1]], bands, multiDaymax,m5File,healpixID_m5,j, result_queue))
              for j in range(nproc)]
 
     for p in procs:
@@ -239,7 +267,7 @@ def multiproc(conf, bands, nproc=8):
     return restot
 
 
-def process(config, bands, j=0, output_q=None):
+def process(config, bands, multiDaymax,m5File,healpixID_m5,j=0, output_q=None):
     """
     Function to process data
 
@@ -249,9 +277,16 @@ def process(config, bands, j=0, output_q=None):
       configuration file
     bands: str
       list of the filters to consider
+    multiDaymax: bool
+      to have multiple daymax for simulation/fit
+    m5File: str
+      m5 file (from simulation usually)  
+    healpixID_m5: bool
+      healpixID to get m5 values 
     j: int, opt
       multiprocessing number(default: 0)
     output_q: multiprocessing queue (default: None)
+
 
     Returns
     -----------
@@ -260,6 +295,7 @@ def process(config, bands, j=0, output_q=None):
     """
 
     rz = []
+    rstd = []
     confres = pd.DataFrame(config)
     for index, conf in config.iterrows():
         # first step: simulate and fit
@@ -273,14 +309,17 @@ def process(config, bands, j=0, output_q=None):
             cadence[b] = conf['cadence_{}'.format(b)]
 
         tagprod = '{}_{}'.format(conf['tagprod'], conf['season'])
+        healpixID = -1
+        if healpixID_m5:
+            healpixID=conf['tagprod']
         cmd = simufit_cmd(tagprod, conf['x1'], conf['color'], conf['ebvofMW'],
                           conf['simulator'], conf['fitter'], conf['snrmin'],
                           conf['error_model'], conf['bluecutoff'], conf['redcutoff'],
-                          Nvisits, m5, cadence, bands)
+                          Nvisits, m5, cadence, bands,multiDaymax,m5File,healpixID)
         print(cmd)
         os.system(cmd)
 
-        zlim = ana_zlim(tagprod,
+        zlim_mean, zlim_std = ana_zlim(tagprod,
                         simulator=conf['simulator'],
                         fitter=conf['fitter'],
                         x1=conf['x1'],
@@ -289,12 +328,15 @@ def process(config, bands, j=0, output_q=None):
                         snrmin=conf['snrmin'],
                         error_model=conf['error_model'],
                         bluecutoff=conf['bluecutoff'],
-                        redcutoff=conf['redcutoff'])
-        print(zlim)
-        rz.append(zlim)
+                        redcutoff=conf['redcutoff'],
+                        multiDaymax=multiDaymax)
+        print(zlim_mean)
+        rz.append(np.round(zlim_mean,2))
+        rstd.append(np.round(zlim_std,2))
 
-    confres['zlim'] = rz
-
+    confres['zlim_mean'] = rz
+    confres['zlim_std'] = rstd
+    
     if output_q is not None:
         return output_q.put({j: confres})
     else:
@@ -307,12 +349,17 @@ parser.add_option("--config", type='str', default='run_scripts/fakes/config.csv'
                   help="config file to use[%default]")
 parser.add_option("--outName", type='str', default='config_out.csv',
                   help="output file name [%default]")
-
+parser.add_option("--m5File", type=str, default='NoData',
+                  help="m5 file [%default]")
+parser.add_option("--multiDaymax", type=int, default=0,
+                  help="to have multi T0 simulated/fitted")
+parser.add_option("--healpixID_m5", type=int, default=0,
+                  help="to get m5 from a healpixel")
 
 opts, args = parser.parse_args()
 
 config = pd.read_csv(opts.config, comment='#')
 
 bands = 'grizy'
-res = multiproc(config, bands, nproc=3)
+res = multiproc(config, bands, opts.multiDaymax,opts.m5File,opts.healpixID_m5,nproc=1)
 res.to_csv(opts.outName, index=False)

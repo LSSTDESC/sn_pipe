@@ -75,3 +75,7 @@ moonphase r 0.5 float #moonphase r-band
 moonphase i 0.5 float #moonphase i-band
 moonphase z 0.5 float #moonphase z-band
 moonphase y 0.5 float #moonphase y-band
+
+## m5file from realistic simus
+m5File NoData str #m5 file from realistic simus
+healpixID -1 int #healpixID for m5 values

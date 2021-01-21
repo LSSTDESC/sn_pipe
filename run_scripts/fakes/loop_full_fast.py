@@ -45,6 +45,12 @@ class SimFit:
        location dir of obs (default: zlim_obs)
     snrmin: float, opt
        SNR min for LC point fits (default : 1.0)
+    multiDaymax: bool,opt
+      to simulate/fit multi daymax sn (default: 0)
+    m5File: str, opt
+      m5 values from file (default: NoData) 
+    healpixID: int, opt
+      healpixID to grab m5 values from (default: -1)
     sigma_mu: bool, opt
        to estimate sigma_mu (default: False)
     tag: str, opt
@@ -63,6 +69,9 @@ class SimFit:
                  outDir_fit='zlim_fit',
                  outDir_obs='zlim_obs',
                  snrmin=1.0,
+                 multiDaymax=0,
+                 m5File='NoData',
+                 healpixID=-1,
                  sigma_mu=False,
                  tag='test'):
 
@@ -70,11 +79,14 @@ class SimFit:
         self.color = color
         self.tag = tag
         self.sigma_mu = sigma_mu
-
+        self.m5File = m5File
         # simulation parameters
         self.error_model = error_model
         self.bluecutoff = bluecutoff
         self.redcutoff = redcutoff
+        self.multiDaymax = multiDaymax
+        self.healpixID = healpixID
+        
         if self.error_model:
             self.cutoff = 'error_model'
         else:
@@ -169,6 +181,9 @@ class SimFit:
             cmd += ' --m5_{} {}'.format(b, m5[b])
             cmd += ' --Nvisits_{} {}'.format(b, int(np.round(Nvisits[b], 0)))
         cmd += ' --fileName {}'.format(self.fake_config)
+        if self.m5File != 'NoData':
+            cmd += ' --m5File {}'.format(self.m5File)
+        cmd += ' --healpixID {}'.format(self.healpixID)
         os.system(cmd)
 
         # create fake data from yaml configuration file
@@ -211,6 +226,11 @@ class SimFit:
         cmd += ' --npixels -1'
         cmd += ' --Simulator_errorModel {}'.format(self.error_model)
 
+        if self.multiDaymax:
+            cmd += ' --SN_daymax_type uniform'
+            cmd += ' --SN_daymax_step 3.'
+            cmd += ' --SN_minRFphaseQual 0.'
+            cmd += ' --SN_maxRFphaseQual 0.'
         print('LC simulation', cmd)
         os.system(cmd)
 
@@ -222,7 +242,7 @@ class SimFit:
         cmd = 'python run_scripts/fit_sn/run_sn_fit.py'
         cmd += ' --Simulations_dirname {}'.format(self.outDir_simu)
         cmd += ' --Simulations_prodid {}_0'.format(self.tag)
-        cmd += ' --mbcov_estimate 0 --Multiprocessing_nproc 1'
+        cmd += ' --mbcov_estimate 0 --Multiprocessing_nproc 4'
         cmd += ' --Output_directory {}'.format(self.outDir_fit)
         cmd += ' --LCSelection_snrmin {}'.format(self.snrmin)
         cmd += ' --LCSelection_nbef {}'.format(self.nbef)
@@ -499,6 +519,8 @@ for key, vals in confDict.items():
 
 parser.add_option(
     '--fake_config', help='output file name [%default]', default='Fake_cadence.yaml', type='str')
+parser.add_option(
+    '--multiDaymax', help='to simu/fit multi daymax SN [%default]', default=0, type=int)
 
 opts, args = parser.parse_args()
 
@@ -592,6 +614,9 @@ for simu in simus:
                          outDir_fit=outDir_fit,
                          outDir_obs=outDir_obs,
                          snrmin=snrmin,
+                         multiDaymax = opts.multiDaymax,
+                         m5File=opts.m5File,
+                         healpixID=opts.healpixID,
                          sigma_mu=opts.sigma_mu,
                          tag=tag)
 
