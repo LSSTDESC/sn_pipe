@@ -51,6 +51,8 @@ class SimFit:
       m5 values from file (default: NoData) 
     healpixID: int, opt
       healpixID to grab m5 values from (default: -1)
+    season: int, opt
+      season to consider (default: -1)
     sigma_mu: bool, opt
        to estimate sigma_mu (default: False)
     tag: str, opt
@@ -72,6 +74,7 @@ class SimFit:
                  multiDaymax=0,
                  m5File='NoData',
                  healpixID=-1,
+                 seasons=-1,
                  sigma_mu=False,
                  tag='test'):
 
@@ -86,6 +89,7 @@ class SimFit:
         self.redcutoff = redcutoff
         self.multiDaymax = multiDaymax
         self.healpixID = healpixID
+        self.seasons = seasons
         
         if self.error_model:
             self.cutoff = 'error_model'
@@ -184,6 +188,8 @@ class SimFit:
         if self.m5File != 'NoData':
             cmd += ' --m5File {}'.format(self.m5File)
         cmd += ' --healpixID {}'.format(self.healpixID)
+        cmd += ' --seasons {}'.format(self.seasons)
+
         os.system(cmd)
 
         # create fake data from yaml configuration file
@@ -228,7 +234,7 @@ class SimFit:
 
         if self.multiDaymax:
             cmd += ' --SN_daymax_type uniform'
-            cmd += ' --SN_daymax_step 3.'
+            cmd += ' --SN_daymax_step 1.'
             cmd += ' --SN_minRFphaseQual 0.'
             cmd += ' --SN_maxRFphaseQual 0.'
         print('LC simulation', cmd)
@@ -242,7 +248,7 @@ class SimFit:
         cmd = 'python run_scripts/fit_sn/run_sn_fit.py'
         cmd += ' --Simulations_dirname {}'.format(self.outDir_simu)
         cmd += ' --Simulations_prodid {}_0'.format(self.tag)
-        cmd += ' --mbcov_estimate 0 --Multiprocessing_nproc 4'
+        cmd += ' --mbcov_estimate 0 --Multiprocessing_nproc 8'
         cmd += ' --Output_directory {}'.format(self.outDir_fit)
         cmd += ' --LCSelection_snrmin {}'.format(self.snrmin)
         cmd += ' --LCSelection_nbef {}'.format(self.nbef)
@@ -617,6 +623,7 @@ for simu in simus:
                          multiDaymax = opts.multiDaymax,
                          m5File=opts.m5File,
                          healpixID=opts.healpixID,
+                         seasons=opts.seasons,
                          sigma_mu=opts.sigma_mu,
                          tag=tag)
 
