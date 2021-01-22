@@ -562,9 +562,10 @@ for vv in ['MJDmin']:
 # print('boo',yaml.safe_dump(dd))
 
 # print('config',dd)
+"""
 with open(opts.fake_config, 'w') as f:
     data = yaml.safe_dump(dd, f)
-
+"""
 #fake_config = 'input/Fake_cadence/Fake_cadence.yaml'
 
 x1 = opts.x1
