@@ -199,7 +199,7 @@ def ana_zlim(tagprod, simulator='sn_fast', fitter='sn_fast', x1=-2.0, color=0.2,
                 zzlim = zlimit(sel[ido])
                 rz.append(zzlim)
                 ro.append((daymax,zzlim))
-        #plot(sel,multiDaymax=multiDaymax,stat=np.rec.fromrecords(ro, names=['daymax','zlim']))
+        plot(sel,multiDaymax=multiDaymax,stat=np.rec.fromrecords(ro, names=['daymax','zlim']))
     else:
         rz.append(zlimit(sel))
 
