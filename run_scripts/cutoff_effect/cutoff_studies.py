@@ -12,6 +12,7 @@ from sn_tools.sn_io import check_get_dir,check_get_file
 from sn_tools.sn_utils import LoadGamma
 from sn_tools.sn_calcFast import srand
 from astropy.table import Table, Column
+from optparse import OptionParser
 
 """
 def SALT2Templates(SALT2Dir='SALT2.Guy10_UV2IR', blue_cutoff=3800.):
@@ -31,7 +32,7 @@ def SALT2Templates(SALT2Dir='SALT2.Guy10_UV2IR', blue_cutoff=3800.):
 class Cutoffs:
 
     def __init__(self, x1=-2.0, color=0.2, daymax=0.0,
-                 blue_cutoff=380., redcutoff=800.,
+                 blue_cutoff=380., red_cutoff=800.,
                  mjdCol='observationStartMJD', filterCol='filter',
                  exptimeCol='visitExposureTime', nexpCol='numExposures',
                  m5Col='fiveSigmaDepth',SALT2Dir='',
@@ -369,6 +370,8 @@ class Cutoffs:
 
         ax.set_ylim([0., None])
         axa.set_ylim([0., None])
+        axa.plot([3800.*(1+z)]*2,axa.get_ylim(),color='k',ls='dashed')
+        #axa.plot([8000.*(1+z)]*2,axa.get_ylim(),color='k',ls='dashed')
         ax.set_xlabel('wavelength [nm]')
         ax.set_ylabel('sb (0-1)')
         axa.set_ylabel('Flux [ergs / s / cm$^2$ / Angstrom]')
@@ -382,6 +385,15 @@ class Cutoffs:
         plt.rcParams['legend.fontsize'] = 12
         plt.rcParams['font.size'] = 12
 
+parser = OptionParser()
+
+parser.add_option('--x1', type=float, default=-2.0,
+                  help='SN x1 [%default]')
+parser.add_option('--color', type=float, default=0.2,
+                  help='SN color [%default]')
+parser.add_option('--blue_cutoff', type=float, default=0.0,
+                  help='blue cutoff to apply [%default]')
+opts, args = parser.parse_args()
 
 fake_data = 'Fake_DESC.npy'
 
@@ -405,13 +417,13 @@ blue_cutoff = 3600.
 # make the SALT2 model with this cutoff
 SALT2Templates(SALT2Dir=SALT2Dir, blue_cutoff=blue_cutoff)
 """
-blue_cutoff = 380.
+blue_cutoff = opts.blue_cutoff
 SALT2Dir = 'SALT2.Guy10_UV2IR'
-mysimu = Cutoffs(SALT2Dir=SALT2Dir,blue_cutoff=blue_cutoff)
+mysimu = Cutoffs(x1=opts.x1,color=opts.color,SALT2Dir=SALT2Dir,blue_cutoff=blue_cutoff,red_cutoff=0.)
 
 obs = np.load('Fake_DESC.npy')
 
-mysimu.plot(obs, z=0.85)
+mysimu.plot(obs, z=0.8)
 
 plt.show()
 """
