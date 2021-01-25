@@ -38,7 +38,7 @@ parser.add_option('--bands', type=str, default='grizy',
                   help='bands to consider for this study [%default]')
 parser.add_option('--zmin', type=float, default=0.1,
                   help='min redshift [%default]')
-parser.add_option('--zmax', type=float, default=0.9,
+parser.add_option('--zmax', type=float, default=1.05,
                   help='max redshift [%default]')
 parser.add_option('--zstep', type=float, default=0.05,
                   help='redshift step[%default]')
@@ -112,7 +112,9 @@ if 'Templates' in actions:
                         simulator=opts.sn_simulator,
                         cadence=cadence)
     # estimate SNR vs m5 for the above generated templates
-    templ.snr_m5()
+    templ.snr_m5(error_model=opts.error_model,
+                 bluecutoff=opts.bluecutoff,
+                 redcutoff=opts.redcutoff,)
 
 if 'SNR_combi' or 'SNR_opti' or 'Nvisits_z' in actions:
     dd_snr = DD_SNR(x1=opts.x1, color=opts.color,
