@@ -55,7 +55,7 @@ parser.add_option('--m5File', type=str, default='medValues_flexddf_v1.4_10yrs_DD
 parser.add_option('--web_server', type=str, default='https://me.lsst.eu/gris/DESC_SN_pipeline/m5_single_exposure',
                   help='web server where m5 reference file may be loaded from[%default]')
 parser.add_option('--action', type=str, default='all',
-                  help='what to do: all, Templates, SNR_combi, [%default]')
+                  help='what to do: all, Templates, SNR_combi, SNR_opti,Nvisits_z [%default]')
 parser.add_option('--cadence_for_opti', type=int, default=3,
                   help='cadence used for optimisation [%default]')
 parser.add_option('--cadence_min', type=int, default=2,
