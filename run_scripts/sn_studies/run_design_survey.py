@@ -136,7 +136,7 @@ if 'SNR_combi' or 'SNR_opti' or 'Nvisits_z' in actions:
 
 if 'SNR_combi' in actions:
     # estimate combis
-    dd_snr.SNR_combi(zmin=0.3)
+    dd_snr.SNR_combi( SNR_par=dict(zip(['max', 'step', 'choice'], [70., 1., 'Nvisits'])),zmin=0.3)
 
 opti_fileName = 'opti_{}_{}_{}_ebvofMW_{}_cad_{}.npy'.format(
     opts.x1, opts.color, dd_snr.cutoff, opts.ebvofMW, opts.cadence_for_opti)
