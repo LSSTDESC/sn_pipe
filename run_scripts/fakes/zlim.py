@@ -6,7 +6,8 @@ from optparse import OptionParser
 import os
 import multiprocessing
 from astropy.table import Table, vstack
-
+import matplotlib.pyplot as plt
+ 
 def zlimit(tab, covcc_col='Cov_colorcolor', z_col='z', sigmaC=0.04):
     """
     Function to estimate zlim for sigmaC value
@@ -32,6 +33,28 @@ def zlimit(tab, covcc_col='Cov_colorcolor', z_col='z', sigmaC=0.04):
 
     return np.round(interp(sigmaC), 2)
 
+def SNR(tab, band, z):
+    """
+    Function to estimate the SNR for band and z
+
+    Parameters
+    ---------------
+    tab: astropy table
+      with SNR_b values
+    band: str
+      the band to consider
+    z: float
+      the redshift value to estimate SNR
+
+    Returns
+    ----------
+    SNR(z) for the band
+
+    """
+    
+    interp = interp1d(tab['z'], tab['SNR_{}'.format(band)],bounds_error=False, fill_value=0.)
+
+    return np.round(interp(z), 1)
 
 def plot(tab, covcc_col='Cov_colorcolor', z_col='z', multiDaymax=False,stat=None,sigmaC=0.04):
     """
@@ -91,7 +114,7 @@ def plot(tab, covcc_col='Cov_colorcolor', z_col='z', multiDaymax=False,stat=None
             plot_indiv(ax,tab[ido])
         """
     else:
-        plot_indiv(ax,tab)
+        plot_indiv(ax,tab,mean_zlim=mean_zlim)
     ax.set_ylim(ylims)
     ax.set_xlim(xlims)
     ax.plot(ax.get_xlim(), [sigmaC]*2, color='r')
@@ -101,7 +124,7 @@ def plot(tab, covcc_col='Cov_colorcolor', z_col='z', multiDaymax=False,stat=None
     ax.tick_params(axis='x',labelsize=12)
     ax.tick_params(axis='y', labelsize=12)
 
-    plt.show()
+    
 
 def plot_indiv(ax,tab,covcc_col='Cov_colorcolor', z_col='z',fill=False,mean_zlim=-1,std_zlim=-1.):
     """
@@ -124,10 +147,45 @@ def plot_indiv(ax,tab,covcc_col='Cov_colorcolor', z_col='z',fill=False,mean_zlim
         print('eeee',mean_zlim)
         if mean_zlim > 0.:
             zlimtxt = 'z$_{lim}$'
-            txt = '{} = {} $\pm$ {}'.format(zlimtxt,mean_zlim,std_zlim)
+            txt = '{} = {} '.format(zlimtxt,mean_zlim)
+            if std_zlim >= 0.:
+                txt  += '$\pm$ {}'.format(std_zlim)
             ax.text(0.3,0.06,txt,fontsize=12,color='k')
     else:
         ax.fill_between(tab[z_col], np.sqrt(tab[covcc_col]),color='yellow')
+
+def plot_SNR(sel, zlim):
+    """
+    Function to plot SNR vs z
+
+    Parameters
+    --------------
+    sel: astropy table
+       data to plot
+
+    """
+   
+    fig, ax = plt.subplots()
+
+    bands = 'grizy'
+    colors = dict(zip('ugrizy', ['b', 'c', 'g', 'y', 'r', 'm']))
+    
+    for i,b in enumerate(bands):
+        ax.plot(sel['z'],sel['SNR_{}'.format(b)],color=colors[b])
+        print('SNR',SNR(sel,b,zlim))
+        SNR_b = SNR(sel,b,zlim)
+        ax.text(zlim+0.05,60.-i*5,'SNR - {} band = {}'.format(b,SNR_b),color=colors[b],fontsize=12)
+
+    ax.set_ylim(0.0,)
+    if zlim >0 :
+        ax.plot([zlim]*2,ax.get_ylim(),color='k',ls='dashed')
+    ax.grid()
+    ax.set_xlabel('z',fontsize=12)
+    ax.set_ylabel('SNR',fontsize=12)
+    ax.tick_params(axis='x',labelsize=12)
+    ax.tick_params(axis='y', labelsize=12)
+    
+
     
 def ana_zlim(tagprod, simulator='sn_fast', fitter='sn_fast', x1=-2.0, color=0.2, ebvofMW=0.0, snrmin=1., error_model=1, bluecutoff=380., redcutoff=800., multiDaymax=0):
     """
@@ -185,8 +243,7 @@ def ana_zlim(tagprod, simulator='sn_fast', fitter='sn_fast', x1=-2.0, color=0.2,
     sel = tab[idx]
 
     # print(sel.columns,zlim(sel))
-    # plot(sel)
-
+   
     rz = []
 
     
@@ -200,10 +257,14 @@ def ana_zlim(tagprod, simulator='sn_fast', fitter='sn_fast', x1=-2.0, color=0.2,
                 rz.append(zzlim)
                 ro.append((daymax,zzlim))
         plot(sel,multiDaymax=multiDaymax,stat=np.rec.fromrecords(ro, names=['daymax','zlim']))
+        plt.show()
     else:
-        rz.append(zlimit(sel))
-
-    
+        zzlim = zlimit(sel)
+        rz.append(zzlim)
+        ro.append((np.mean(sel['daymax']),zzlim))
+        plot(sel,stat=np.rec.fromrecords(ro, names=['daymax','zlim']))
+        plot_SNR(sel,zzlim)
+        plt.show()
     return np.mean(rz),np.std(rz)
 
 
