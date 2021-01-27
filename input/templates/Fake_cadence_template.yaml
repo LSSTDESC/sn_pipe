@@ -27,12 +27,14 @@ cadence:
   r: cadvalue
   y: cadvalue
   z: cadvalue
+healpixID: -1
 m5:
   g: 24.51
   i: 23.62
   r: 24.06
   y: 22.17
   z: 23.0
+m5File: NoData
 moonphase:
   g: 0.5
   i: 0.5

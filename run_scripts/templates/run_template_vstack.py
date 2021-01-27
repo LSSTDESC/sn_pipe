@@ -29,7 +29,7 @@ class LCStack:
       error model for SN
     """
 
-    def __init__(self, x1, color, lcDir, outDir, bluecutoff, redcutoff, ebvofMW, error_model):
+    def __init__(self, x1, color, sn_type,sn_model, diff_flux,lcDir, outDir, bluecutoff, redcutoff, ebvofMW, error_model):
 
          # create output directory
         if not os.path.isdir(outDir):
@@ -39,8 +39,12 @@ class LCStack:
         if error_model:
             cutoff='error_model'
 
-        lc_name = 'LC_{}_{}_{}_ebvofMW_{}'.format(
-            x1, color, cutoff, ebvofMW)
+        fname = '{}_{}'.format(sn_type,sn_model)
+        if 'salt2' in sn_model:
+            fname = '{}_{}'.format(x1,color)
+
+        lc_name = 'LC_{}_{}_ebvofMW_{}'.format(
+            fname, cutoff, ebvofMW)
         lc_out = '{}/{}.hdf5'.format(outDir, lc_name)
         if os.path.exists(lc_out):
             os.remove(lc_out)
@@ -49,13 +53,17 @@ class LCStack:
         if os.path.exists(lc_out_v):
             os.remove(lc_out_v)
 
-        lc_dir = '{}/{}_{}/LC*'.format(
+        lc_dir = '{}/LC*'.format(
             lcDir, x1, color)
+
         files = glob.glob(lc_dir)
 
         print('files ',files)
         for ilc, fi in enumerate(files):
-            self.transform_LC(fi, lc_out, 200+ilc, x1, color)
+            if diff_flux:
+                self.transform_LC_diff(fi, lc_out, 200+ilc, x1, color)
+            else:
+               self.transform_LC(fi, lc_out, 200+ilc, sn_type,sn_model) 
 
         # now stack the file produced
         tab_tot = Table()
@@ -72,8 +80,52 @@ class LCStack:
         newFile = lc_out.replace('.hdf5', '_vstack.hdf5')
         r = tab_tot.to_pandas().values.tolist()
         tab_tot.to_pandas().to_hdf(newFile, key='s')
+    
+    def transform_LC(self, fname, lc_out, ilc, sn_type,sn_model):
+        """
+        Method to generate a new LC file from existing ones
 
-    def transform_LC(self, fname, lc_out, ilc, x1, color):
+        Parameters
+        ----------------
+        fname: str
+          LC file name (hdf5)
+        lc_out: str
+           output file name
+        ilc: int
+          index used as a key in lc_out
+        x1: float
+          SN x1
+        color: float
+          SN color
+
+        """
+        keys = [1, 10, 100, 1000]
+        vals = ['daymax', 'color', 'x1', 'x0']
+
+        f = h5py.File(fname, 'r')
+        keys_f = list(f.keys())
+
+        tab = Table.read(f, path=keys_f[0])
+        table_new = Table(tab)
+        col = [-1.0]
+        for ii, kk in enumerate(keys):
+            table_new.add_column(Column(col, name='d'+vals[ii]))
+
+        bands = [b[-1] for b in table_new['band']]
+        table_new.remove_column('band')
+        table_new.add_column(
+            Column(bands, name='band', dtype=h5py.special_dtype(vlen=str)))
+        #phases = (table_new['time']-table_new['DayMax'])/(1.+table_new['z'])
+        #table_new.add_column(Column(phases, name='phase'))
+        table_new['sn_type'] = sn_type
+        table_new['sn_model'] = sn_model
+        table_new['z'] = table_new.meta['z']
+        table_new['daymax'] = table_new.meta['daymax']
+
+        table_new.write(lc_out, path='lc_'+str(ilc),
+                        append=True, compression=True)
+
+    def transform_LC_diff(self, fname, lc_out, ilc, x1, color):
         """
         Method to generate a new LC file from existing ones
 
@@ -222,8 +274,15 @@ parser.add_option("--redcutoff", type=float,
                   default=800, help="blue cutoff for SN[%default]")
 parser.add_option("--error_model", type=int,
                   default=0, help="error model for SN[%default]")
+parser.add_option("--sn_type", type=str, default='SN_Ia',
+                  help="SN type [%default]")
+parser.add_option("--sn_model", type=str, default='salt2-extended',
+                  help="SN model [%default]")
+parser.add_option("--diff_flux", type=int, default=1,
+                  help="to make simulations with simulator param variation [%default]")
 
 opts, args = parser.parse_args()
 
-LCStack(opts.x1, opts.color, opts.lcDir, opts.outDir,
-        opts.bluecutoff, opts.redcutoff, opts.ebvofMW,opts.error_model)
+LCStack(opts.x1, opts.color, 
+        opts.sn_type,opts.sn_model,opts.diff_flux,
+        opts.lcDir, opts.outDir,opts.bluecutoff, opts.redcutoff, opts.ebvofMW,opts.error_model)

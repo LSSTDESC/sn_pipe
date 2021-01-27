@@ -26,7 +26,7 @@ Observations:
   filename: datatoprocess
   season: -1
 Output:
-  directory: outdirname/x1val_colorval
+  directory: outdirname
   save: 1
 Pixelisation:
   nside: 64
@@ -50,7 +50,7 @@ SN:
   daymax:
     step: 1.0
     type: unique
-  differentialFlux: 1
+  differentialFlux: diff_flux_val
   ebvofMW: ebvofMWval
   magsys: vega
   maxRFphase: 60.0
@@ -63,7 +63,7 @@ SN:
     rate: JLA
   redCutoff: redcutoffval
   salt2Dir: SALT2_Files
-  type: SN_Ia
+  type: sn_type_val
   x1:
     max: 0.2
     min: x1val
@@ -77,7 +77,7 @@ SN:
     type: unique
 Simulator:
   errorModel: error_val
-  model: salt2-extended
+  model: sn_model_val
   name: sn_simulator.sn_cosmo
   version: 1.0
 WebPath: https://me.lsst.eu/gris/DESC_SN_pipeline
