@@ -6,8 +6,8 @@ import pandas as pd
 
 
 def go_for_batch(toproc, splitSky,
-                 dbDir, dbExtens, outDir, metricName,
-                 nodither, nside, fieldType, band,
+                 outDir, metricName,
+                 nodither, nside, band,
                  pixelmap_dir, npixels, proxy_level):
     """
     Function to prepare and start batches
@@ -46,7 +46,9 @@ def go_for_batch(toproc, splitSky,
     # get the observing strategy name
     #dbName = toproc['dbName'].decode()
     dbName = toproc['dbName']
-   
+    dbDir = toproc['dbDir']
+    dbExtens = toproc['dbExtens']
+    fieldType = toproc['fieldType']
 
     if pixelmap_dir == '':
 
@@ -317,24 +319,28 @@ class batchclass:
 
 parser = OptionParser()
 
-parser.add_option("--dbList", type="str", default='WFD.txt',
+parser.add_option("--dbList", type="str", default='WFD_fbs_17.csv',
                   help="dbList to process  [%default]")
 parser.add_option("--metricName", type="str", default='SNR',
                   help="metric to process  [%default]")
+"""
 parser.add_option("--dbDir", type="str", default='/sps/lsst/cadence/LSST_SN_PhG/cadence_db/fbs_1.4/db',
                   help="db dir [%default]")
 parser.add_option("--dbExtens", type="str", default='npy',
                   help="db extension [%default]")
+"""
 parser.add_option("--nodither", type="str", default='',
                   help="db extension [%default]")
 parser.add_option("--splitSky", type="int", default=0,
                   help="db extension [%default]")
 parser.add_option("--band", type="str", default='',
-                  help="db extension [%default]")
+                  help="band to process [%default]")
 parser.add_option("--nside", type="int", default=64,
                   help="nside healpix parameter[%default]")
+"""
 parser.add_option("--fieldType", type=str, default='WFD',
                   help="field type[%default]")
+"""
 parser.add_option("--pixelmap_dir", type=str, default='',
                   help="dir where to find pixel maps[%default]")
 parser.add_option("--npixels", type=int, default=0,
@@ -350,15 +356,15 @@ print('Start processing...')
 
 dbList = opts.dbList
 metricName = opts.metricName
-dbDir = opts.dbDir
+#dbDir = opts.dbDir
 band = opts.band
-dbExtens = opts.dbExtens
+#dbExtens = opts.dbExtens
 
 outDir = opts.outDir
 nodither = opts.nodither
 splitSky = opts.splitSky
 nside = opts.nside
-fieldType = opts.fieldType
+#fieldType = opts.fieldType
 pixelmap_dir = opts.pixelmap_dir
 npixels = opts.npixels
 proxy_level = opts.proxy_level
@@ -381,7 +387,6 @@ proc  = batchclass(dbDir, dbExtens, scriptref, outDir, nproccomp,
 
 for index, proc in toprocess.iterrows():
     myproc = go_for_batch(proc, splitSky,
-                          dbDir, dbExtens, outDir,
-                          metricName, nodither, nside, fieldType,
+                          outDir,metricName, nodither, nside,
                           band, pixelmap_dir, npixels, proxy_level)
     # break
