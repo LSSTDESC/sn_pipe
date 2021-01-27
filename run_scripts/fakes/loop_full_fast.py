@@ -17,8 +17,12 @@ class SimFit:
     ---------------
     x1: float, opt
       SN strech(default: -2.0)
-    color: float
+    color: float,opt
       SN color(default: 0.2)
+    sn_type: str, opt
+      SN type (default: SN_Ia)
+    sn_model: str, opt
+      SN model (default: salt2-extended)
     Nvisits: dict, opt
       number of visits for each band(default: 'grizy', [10, 20, 20, 26, 20])
     m5: dict, opt
@@ -61,6 +65,8 @@ class SimFit:
     """
 
     def __init__(self, x1=-2.0, color=0.2,
+                 sn_type='SN_Ia',
+                 sn_model='salt2_extended',
                  error_model=1,
                  bluecutoff=380.,
                  redcutoff=800.,
@@ -80,6 +86,8 @@ class SimFit:
 
         self.x1 = x1
         self.color = color
+        self.sn_type = sn_type
+        self.sn_model = sn_model
         self.tag = tag
         self.sigma_mu = sigma_mu
         self.m5File = m5File
@@ -231,6 +239,8 @@ class SimFit:
         cmd += ' --SN_ebvofMW {}'.format(self.ebvofMW)
         cmd += ' --npixels -1'
         cmd += ' --Simulator_errorModel {}'.format(self.error_model)
+        cmd += ' --SN_type {}'.format(self.sn_type)
+        cmd += ' --Simulator_model {}'.format(self.sn_model)
 
         if self.multiDaymax:
             cmd += ' --SN_daymax_type uniform'
@@ -486,6 +496,10 @@ parser.add_option("--x1", type=float, default=-2.0,
                   help="SN x1 [%default]")
 parser.add_option("--color", type=float, default=0.2,
                   help="SN color [%default]")
+parser.add_option("--sn_type", type=str, default='SN_Ia',
+                  help="SN type [%default]")
+parser.add_option("--sn_model", type=str, default='salt2-extended',
+                  help="SN model [%default]")
 parser.add_option("--zmax", type=float, default=0.8,
                   help="max redshift for simulated data [%default]")
 parser.add_option("--ebv", type=float, default=0.0,
@@ -570,6 +584,8 @@ with open(opts.fake_config, 'w') as f:
 
 x1 = opts.x1
 color = opts.color
+sn_type = opts.sn_type
+sn_model = opts.sn_model
 zmax = opts.zmax
 bluecutoff = opts.bluecutoff
 redcutoff = opts.redcutoff
@@ -596,6 +612,9 @@ for b in opts.bands:
     cadence[b] = eval('opts.cadence_{}'.format(b))
 
 for simu in simus:
+    fname = '{}_{}'.format(sn_type,sn_model)
+    if 'salt2' in sn_model:
+        fname = '{}_{}'.format(x1,color)
     for errormod in error_models:
         cutoff = '{}_{}'.format(bluecutoff, redcutoff)
         if errormod:
@@ -606,11 +625,13 @@ for simu in simus:
             cutoff, ebv, int(snrmin))
         outDir_obs = 'Output_obs_{}_ebvofMW_{}'.format(
             cutoff, ebv)
-        tag = '{}_Fake_{}_{}_{}_ebvofMW_{}'.format(
-            simu, x1, color, cutoff, ebv)
+        tag = '{}_Fake_{}_{}_ebvofMW_{}'.format(
+            simu, fname, cutoff, ebv)
         if opts.tagprod != '':
             tag += '_{}'.format(opts.tagprod)
         sim_fit = SimFit(x1=x1, color=color,
+                         sn_type=sn_type,
+                         sn_model=sn_model,
                          error_model=errormod,
                          bluecutoff=bluecutoff,
                          redcutoff=redcutoff,
