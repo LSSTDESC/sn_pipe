@@ -23,6 +23,8 @@ class SimFit:
       SN type (default: SN_Ia)
     sn_model: str, opt
       SN model (default: salt2-extended)
+    sn_version: float, opt
+      SN version of the chosen model (default: 1.0)
     Nvisits: dict, opt
       number of visits for each band(default: 'grizy', [10, 20, 20, 26, 20])
     m5: dict, opt
@@ -67,6 +69,7 @@ class SimFit:
     def __init__(self, x1=-2.0, color=0.2,
                  sn_type='SN_Ia',
                  sn_model='salt2_extended',
+                 sn_version = 1.0,
                  error_model=1,
                  bluecutoff=380.,
                  redcutoff=800.,
@@ -88,6 +91,7 @@ class SimFit:
         self.color = color
         self.sn_type = sn_type
         self.sn_model = sn_model
+        self.sn_version = sn_version
         self.tag = tag
         self.sigma_mu = sigma_mu
         self.m5File = m5File
@@ -241,6 +245,7 @@ class SimFit:
         cmd += ' --Simulator_errorModel {}'.format(self.error_model)
         cmd += ' --SN_type {}'.format(self.sn_type)
         cmd += ' --Simulator_model {}'.format(self.sn_model)
+        cmd += ' --Simulator_version {}'.format(self.sn_version)
 
         if self.multiDaymax:
             cmd += ' --SN_daymax_type uniform'
@@ -500,6 +505,8 @@ parser.add_option("--sn_type", type=str, default='SN_Ia',
                   help="SN type [%default]")
 parser.add_option("--sn_model", type=str, default='salt2-extended',
                   help="SN model [%default]")
+parser.add_option("--sn_version", type=float, default=1.0,
+                  help="SN version og the chosen model [%default]")
 parser.add_option("--zmax", type=float, default=0.8,
                   help="max redshift for simulated data [%default]")
 parser.add_option("--ebv", type=float, default=0.0,
@@ -586,6 +593,7 @@ x1 = opts.x1
 color = opts.color
 sn_type = opts.sn_type
 sn_model = opts.sn_model
+sn_version = opts.sn_version
 zmax = opts.zmax
 bluecutoff = opts.bluecutoff
 redcutoff = opts.redcutoff
@@ -632,6 +640,7 @@ for simu in simus:
         sim_fit = SimFit(x1=x1, color=color,
                          sn_type=sn_type,
                          sn_model=sn_model,
+                         sn_version=sn_version,
                          error_model=errormod,
                          bluecutoff=bluecutoff,
                          redcutoff=redcutoff,
