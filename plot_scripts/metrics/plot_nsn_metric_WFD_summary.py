@@ -460,17 +460,21 @@ def filter(resdf, strfilt=['_noddf']):
 parser = OptionParser(
     description='Display NSN metric results for WFD fields')
 
-parser.add_option("--configFile", type="str", default='plot_scripts/input/config_NSN_WFD.csv',
+parser.add_option("--configFile", type=str, default='plot_scripts/input/config_NSN_WFD.csv',
                   help="config file [%default]")
-parser.add_option("--nside", type="int", default=64,
+parser.add_option("--nside", type=int, default=64,
                   help="nside for healpixels [%default]")
-parser.add_option("--tagbest", type="str", default='snpipe_a',
+parser.add_option("--tagbest", type=str, default='snpipe_a',
                   help="tag for the best OS [%default]")
+parser.add_option("--nproc", type=int, default=3,
+                  help="number of proc when multiprocessing used [%default]")
 
 opts, args = parser.parse_args()
 
 # Load parameters
 nside = opts.nside
+nproc = opts.nproc
+
 metricName = 'NSN'
 
 list_to_process = pd.read_csv(opts.configFile, comment='#')
@@ -488,7 +492,7 @@ for ip, vv in enumerate(simu_list):
 
     if not os.path.isfile(outFile):
         toprocess = Infos(vv).resdf
-        processMulti(toprocess, outFile, nproc=3)
+        processMulti(toprocess, outFile, nproc=nproc)
 
     resdf = pd.concat((resdf, pd.DataFrame(
         np.load(outFile, allow_pickle=True))))
