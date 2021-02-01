@@ -33,8 +33,6 @@ class SimFit:
       cadence of observation(per band)(default='grizy', [3., 3., 3., 3.3.])
     error_model: int, opt
       to use error model or not (default: 1)
-    errmodrel: float, opt
-      max error relative model for LC points to be used in fit (default: -1.0)
     bluecutoff: float, opt
       blue cutoff to apply(if error_model=0)(default: 380.)
     redcutoff: float, opt
@@ -531,6 +529,8 @@ parser.add_option("--nbands", type=int, default=0,
                   help="min number of bands with at least 2 points with SNR>5[%default]")
 parser.add_option("--error_model", type=str, default='0,1',
                   help="error model to consider[%default]")
+parser.add_option("--errmodrel", type=float, default=0.1,
+                  help="error model relative max [%default]")
 parser.add_option("--sigma_mu", type=int, default=0,
                   help="to estimate sigma mu[%default]")
 parser.add_option("--sn_cosmo_simu_fitter", type='str', default='sn_cosmo',
@@ -632,7 +632,7 @@ for simu in simus:
         cutoff = '{}_{}'.format(bluecutoff, redcutoff)
         if errormod:
             cutoff = 'error_model'
-            errmodrel = 0.1
+            errmodrel = opts.errmodrel
         outDir_simu = 'Output_Simu_{}_ebvofMW_{}'.format(
             cutoff, ebv)
         outDir_fit = 'Output_Fit_{}_ebvofMW_{}_snrmin_{}'.format(
