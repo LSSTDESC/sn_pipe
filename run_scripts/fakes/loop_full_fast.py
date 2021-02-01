@@ -33,6 +33,8 @@ class SimFit:
       cadence of observation(per band)(default='grizy', [3., 3., 3., 3.3.])
     error_model: int, opt
       to use error model or not (default: 1)
+    errmodrel: float, opt
+      max error relative model for LC points to be used in fit (default: -1.0)
     bluecutoff: float, opt
       blue cutoff to apply(if error_model=0)(default: 380.)
     redcutoff: float, opt
@@ -69,8 +71,9 @@ class SimFit:
     def __init__(self, x1=-2.0, color=0.2,
                  sn_type='SN_Ia',
                  sn_model='salt2_extended',
-                 sn_version = 1.0,
+                 sn_version=1.0,
                  error_model=1,
+                 errmodrel=-1.0,
                  bluecutoff=380.,
                  redcutoff=800.,
                  ebvofMW=0.,
@@ -102,7 +105,7 @@ class SimFit:
         self.multiDaymax = multiDaymax
         self.healpixID = healpixID
         self.seasons = seasons
-        
+
         if self.error_model:
             self.cutoff = 'error_model'
         else:
@@ -119,7 +122,7 @@ class SimFit:
         self.naft = 10
         self.nbands = 0
         self.fitters = fitters
-
+        self.errmodrel = errmodrel
         # define some directory for the production of LC+Simu
 
         self.outDir_simu = outDir_simu
@@ -269,6 +272,7 @@ class SimFit:
         cmd += ' --LCSelection_nbef {}'.format(self.nbef)
         cmd += ' --LCSelection_naft {}'.format(self.naft)
         cmd += ' --LCSelection_nbands {}'.format(self.nbands)
+        cmd += ' --LCSelection_errmodrel {}'.format(self.errmodrel)
         cmd += ' --Fitter_name sn_fitter.fit_{}'.format(fitter)
         cmd += ' --ProductionID {}_{}'.format(self.tag, fitter)
 
@@ -620,17 +624,21 @@ for b in opts.bands:
     cadence[b] = eval('opts.cadence_{}'.format(b))
 
 for simu in simus:
-    fname = '{}_{}'.format(sn_type,sn_model)
+    fname = '{}_{}'.format(sn_type, sn_model)
     if 'salt2' in sn_model:
-        fname = '{}_{}'.format(x1,color)
+        fname = '{}_{}'.format(x1, color)
     for errormod in error_models:
+        errmodrel = -1.
         cutoff = '{}_{}'.format(bluecutoff, redcutoff)
         if errormod:
             cutoff = 'error_model'
+            errmodrel = 0.1
         outDir_simu = 'Output_Simu_{}_ebvofMW_{}'.format(
             cutoff, ebv)
         outDir_fit = 'Output_Fit_{}_ebvofMW_{}_snrmin_{}'.format(
             cutoff, ebv, int(snrmin))
+        if errormod:
+            outDir_fit += '_errmodrel_{}'.format(np.round(errmodrel, 2))
         outDir_obs = 'Output_obs_{}_ebvofMW_{}'.format(
             cutoff, ebv)
         tag = '{}_Fake_{}_{}_ebvofMW_{}'.format(
@@ -642,6 +650,7 @@ for simu in simus:
                          sn_model=sn_model,
                          sn_version=sn_version,
                          error_model=errormod,
+                         errmodrel=errmodrel,
                          bluecutoff=bluecutoff,
                          redcutoff=redcutoff,
                          ebvofMW=ebv,
@@ -651,7 +660,7 @@ for simu in simus:
                          outDir_fit=outDir_fit,
                          outDir_obs=outDir_obs,
                          snrmin=snrmin,
-                         multiDaymax = opts.multiDaymax,
+                         multiDaymax=opts.multiDaymax,
                          m5File=opts.m5File,
                          healpixID=opts.healpixID,
                          seasons=opts.seasons,
