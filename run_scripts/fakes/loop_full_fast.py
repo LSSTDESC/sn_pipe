@@ -113,14 +113,15 @@ class SimFit:
         self.zmin = 0.01
         self.zmax = 1.0
         self.zstep = 0.05
-
+        self.errmodrel = errmodrel
+        
         # fit parameters
         self.snrmin = snrmin
         self.nbef = 4
         self.naft = 10
         self.nbands = 0
         self.fitters = fitters
-        self.errmodrel = errmodrel
+        
         # define some directory for the production of LC+Simu
 
         self.outDir_simu = outDir_simu
@@ -247,6 +248,7 @@ class SimFit:
         cmd += ' --SN_type {}'.format(self.sn_type)
         cmd += ' --Simulator_model {}'.format(self.sn_model)
         cmd += ' --Simulator_version {}'.format(self.sn_version)
+        cmd += ' --Simulator_errorModelCut {}'.format(self.errmodrel)
 
         if self.multiDaymax:
             cmd += ' --SN_daymax_type uniform'
@@ -270,7 +272,7 @@ class SimFit:
         cmd += ' --LCSelection_nbef {}'.format(self.nbef)
         cmd += ' --LCSelection_naft {}'.format(self.naft)
         cmd += ' --LCSelection_nbands {}'.format(self.nbands)
-        cmd += ' --LCSelection_errmodrel {}'.format(self.errmodrel)
+        #cmd += ' --LCSelection_errmodrel {}'.format(self.errmodrel)
         cmd += ' --Fitter_name sn_fitter.fit_{}'.format(fitter)
         cmd += ' --ProductionID {}_{}'.format(self.tag, fitter)
 
@@ -635,6 +637,8 @@ for simu in simus:
             errmodrel = opts.errmodrel
         outDir_simu = 'Output_Simu_{}_ebvofMW_{}'.format(
             cutoff, ebv)
+        if errormod:
+            outDir_simu += '_errmodrel_{}'.format(np.round(errmodrel, 2))
         outDir_fit = 'Output_Fit_{}_ebvofMW_{}_snrmin_{}'.format(
             cutoff, ebv, int(snrmin))
         if errormod:
