@@ -26,6 +26,8 @@ parser.add_option('--color', type=float, default=0.2,
                   help='SN color [%default]')
 parser.add_option('--error_model', type=int, default=1,
                   help='error model [%default]')
+parser.add_option('--error_model_cut', type=float, default=0.1,
+                  help='error model flux max values (rel.)[%default]')
 parser.add_option('--bluecutoff', type=float, default=380.,
                   help='blue cutoff if error_model=0 [%default]')
 parser.add_option('--redcutoff', type=float, default=800.,
@@ -106,6 +108,7 @@ if 'Templates' in actions:
                         zmax=opts.zmax,
                         zstep=0.01,
                         error_model=opts.error_model,
+                        error_model_cut=opts.error_model_cut,
                         bluecutoff=opts.bluecutoff,
                         redcutoff=opts.redcutoff,
                         ebvofMW=opts.ebvofMW,
