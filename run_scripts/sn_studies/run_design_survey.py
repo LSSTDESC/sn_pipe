@@ -1,7 +1,9 @@
 import os
 from optparse import OptionParser
+import glob
 
-from sn_design_dd_survey.sequence import TemplateData, DD_SNR, OptiCombi
+from sn_design_dd_survey.sequence import TemplateData, Select_errormodel
+from sn_design_dd_survey.sequence import DD_SNR, OptiCombi
 from sn_design_dd_survey.sequence import Nvisits_Cadence_z, Nvisits_Cadence_Fields
 
 
@@ -102,24 +104,30 @@ if 'Templates' in actions:
                          dirStudy=opts.dirStudy,
                          dirTemplates=opts.dirTemplates,
                          dirSNR_m5=opts.dirSNR_m5)
-    # create template LC for cadence = 2 to 4 days
+    # create template LC for cadence = 2 to 4 days - no errormodel cut
     for cadence in range(opts.cadence_min, opts.cadence_max+1):
         templ.templates(zmin=opts.zmin,
                         zmax=opts.zmax,
                         zstep=0.01,
                         error_model=opts.error_model,
-                        error_model_cut=opts.error_model_cut,
                         bluecutoff=opts.bluecutoff,
                         redcutoff=opts.redcutoff,
                         ebvofMW=opts.ebvofMW,
                         simulator=opts.sn_simulator,
                         cadence=cadence)
+    #Select templates according to error model values
+    simus = glob.glob('{}/{}/Simu*.hdf5'.format(opts.dirStudy,opts.dirTemplates))
+    for simu in simus:
+        theDir = '{}/{}'.format(opts.dirStudy,opts.dirTemplates)
+        sim = simu.split('/')[-1]
+        Select_errormodel(theDir,sim,opts.error_model_cut)
     # estimate SNR vs m5 for the above generated templates
     templ.snr_m5(error_model=opts.error_model,
+                 error_model_cut = opts.error_model_cut,
                  bluecutoff=opts.bluecutoff,
                  redcutoff=opts.redcutoff,)
 
-if 'SNR_combi' or 'SNR_opti' or 'Nvisits_z' in actions:
+if 'SNR_combi' or 'SNR_opti' or 'Nvisits_z' or 'plot_inputs' in actions:
     dd_snr = DD_SNR(x1=opts.x1, color=opts.color,
                     bands=opts.bands,
                     dirStudy=opts.dirStudy,
@@ -129,13 +137,15 @@ if 'SNR_combi' or 'SNR_opti' or 'Nvisits_z' in actions:
                     dirSNR_combi=opts.dirSNR_combi,
                     cadence=opts.cadence_for_opti,
                     error_model=opts.error_model,
+                    error_model_cut=opts.error_model_cut,
                     bluecutoff=opts.bluecutoff,
                     redcutoff=opts.redcutoff,
                     ebvofMW=opts.ebvofMW,
                     sn_simulator=opts.sn_simulator,
                     m5_file=opts.m5File)
 
-    # dd_snr.plot_data()
+if 'plot_inputs' in actions:
+    dd_snr.plot_data()
 
 if 'SNR_combi' in actions:
     # estimate combis
