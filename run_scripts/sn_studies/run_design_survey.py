@@ -115,15 +115,16 @@ if 'Templates' in actions:
                         ebvofMW=opts.ebvofMW,
                         simulator=opts.sn_simulator,
                         cadence=cadence)
-    #Select templates according to error model values
-    simus = glob.glob('{}/{}/Simu*.hdf5'.format(opts.dirStudy,opts.dirTemplates))
+    # Select templates according to error model values
+    simus = glob.glob(
+        '{}/{}/Simu*.hdf5'.format(opts.dirStudy, opts.dirTemplates))
     for simu in simus:
-        theDir = '{}/{}'.format(opts.dirStudy,opts.dirTemplates)
+        theDir = '{}/{}'.format(opts.dirStudy, opts.dirTemplates)
         sim = simu.split('/')[-1]
-        Select_errormodel(theDir,sim,opts.error_model_cut)
+        Select_errormodel(theDir, sim, opts.error_model_cut)
     # estimate SNR vs m5 for the above generated templates
     templ.snr_m5(error_model=opts.error_model,
-                 error_model_cut = opts.error_model_cut,
+                 error_model_cut=opts.error_model_cut,
                  bluecutoff=opts.bluecutoff,
                  redcutoff=opts.redcutoff,)
 
@@ -149,7 +150,8 @@ if 'plot_inputs' in actions:
 
 if 'SNR_combi' in actions:
     # estimate combis
-    dd_snr.SNR_combi( SNR_par=dict(zip(['max', 'step', 'choice'], [70., 1., 'Nvisits'])),zmin=0.3)
+    dd_snr.SNR_combi(SNR_par=dict(
+        zip(['max', 'step', 'choice'], [90., 1., 'Nvisits'])), zmin=0.3)
 
 opti_fileName = 'opti_{}_{}_{}_ebvofMW_{}_cad_{}.npy'.format(
     opts.x1, opts.color, dd_snr.cutoff, opts.ebvofMW, opts.cadence_for_opti)
@@ -185,5 +187,6 @@ if 'Nvisits_z' in actions:
                            dirStudy=opts.dirStudy,
                            dirTemplates=opts.dirTemplates,
                            dirNvisits=opts.dirNvisits_z,
+                           dirm5=opts.dirm5,
                            Nvisits_z_med=file_Nvisits_z_med,
                            outName=file_Nvisits_z_fields)
