@@ -549,5 +549,5 @@ plotBarh(resdf, 'N_{}{}'.format(b,bb))
 #    'nsn', '#number of supernovae'))
 
 # plotBarh(resdf, 'N_total')
-#print_best(resdf, num=20, name=tagbest)
+# print_best(resdf, num=20, name=tagbest)
 plt.show()
