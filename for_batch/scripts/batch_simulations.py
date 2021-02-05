@@ -7,7 +7,7 @@ import sn_simu_input as simu_input
 from sn_tools.sn_io import make_dict_from_config, make_dict_from_optparse
 
 
-def go_for_batch(toproc, dbDir, dbExtens, run_script, opts):
+def go_for_batch(toproc,run_script, opts):
     """
     Function to prepare and start batches
 
@@ -31,6 +31,8 @@ def go_for_batch(toproc, dbDir, dbExtens, run_script, opts):
     pixelmap_dir = opts.pixelmap_dir
     splitSky = opts.splitSky
     dbName = toproc['dbName']
+    dbDir = toproc['dbDir']
+    dbExtens = toproc['dbExtens']
     Dec_min = -1.
     Dec_max = -1.
 
@@ -192,7 +194,7 @@ class batchclass:
 
         script.write("EOF" + "\n")
         script.close()
-        os.system("sh "+scriptName)
+        #os.system("sh "+scriptName)
 
     def batch_cmd(self, proc, name_id):
         """
@@ -221,7 +223,7 @@ class batchclass:
         cmd += ' --nproc {}'.format(proc['nproc'].values[0])
         cmd += ' --Pixelisation_nside {}'.format(proc['nside'].values[0])
         cmd += ' --Observations_fieldtype {}'.format(
-            proc['fieldtype'].values[0])
+            proc['fieldType'].values[0])
         cmd += ' --Observations_filename {}/{}.{}'.format(
             self.dbDir, self.dbName, self.dbExtens)
         cmd += ' --Output_directory {}/{}'.format(
@@ -239,10 +241,12 @@ parser = OptionParser()
 
 parser.add_option("--dbList", type="str", default='WFD.txt',
                   help="dbList to process  [%default]")
+"""
 parser.add_option("--dbDir", type="str", default='/sps/lsst/cadence/LSST_SN_PhG/cadence_db/fbs_1.4/db',
                   help="db dir [%default]")
 parser.add_option("--dbExtens", type="str", default='npy',
                   help="db extension [%default]")
+"""
 parser.add_option("--splitSky", type="int", default=0,
                   help="db extension [%default]")
 parser.add_option("--npixels", type=int, default=0,
@@ -311,5 +315,4 @@ toprocess = pd.read_csv(opts.dbList, comment='#')
 
 for index, proc in toprocess.iterrows():
     print('go here', proc['dbName'])
-    myproc = go_for_batch(proc, opts.dbDir, opts.dbExtens,
-                          'run_scripts/simulation/run_simulation', opts)
+    myproc = go_for_batch(proc,'run_scripts/simulation/run_simulation', opts)
