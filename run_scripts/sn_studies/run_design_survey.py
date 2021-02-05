@@ -73,12 +73,13 @@ opts, args = parser.parse_args()
 # create output Directories here
 
 dirSNR_combi = '{}_{}'.format(opts.dirSNR_combi, int(opts.cadence_for_opti))
+dirNvisits_z = '{}_{}'.format(opts.dirNvisits_z, int(opts.cadence_for_opti))
 chk_cr('{}/{}'.format(opts.dirStudy, opts.dirTemplates))
 chk_cr('{}/{}'.format(opts.dirStudy, opts.dirSNR_m5))
 chk_cr('{}/{}'.format(opts.dirStudy, opts.dirm5))
 chk_cr('{}/{}'.format(opts.dirStudy, dirSNR_combi))
 chk_cr('{}/{}'.format(opts.dirStudy, opts.dirSNR_opti))
-chk_cr('{}/{}'.format(opts.dirStudy, opts.dirNvisits_z))
+chk_cr('{}/{}'.format(opts.dirStudy, dirNvisits_z))
 
 # download m5 single exposure reference file if necessary
 
@@ -159,7 +160,7 @@ if 'plot_inputs' in actions:
 if 'SNR_combi' in actions:
     # estimate combis
     dd_snr.SNR_combi(SNR_par=dict(
-        zip(['Nvisits_max_night', 'max', 'step', 'choice'], [200, 90., 1., 'Nvisits'])), zmin=0.3)
+        zip(['Nvisits_max_night', 'max', 'step', 'choice'], [300, 50., 1., 'Nvisits'])), zmin=0.4)
 
 opti_fileName = 'opti_{}_{}_{}_ebvofMW_{}_cad_{}.npy'.format(
     opts.x1, opts.color, dd_snr.cutoff, opts.ebvofMW, opts.cadence_for_opti)
@@ -181,10 +182,11 @@ if 'Nvisits_z' in actions:
                       dirStudy=opts.dirStudy,
                       dirSNR_m5=opts.dirSNR_m5,
                       dirSNR_opti=opts.dirSNR_opti,
-                      dirNvisits=opts.dirNvisits_z,
+                      dirNvisits=dirNvisits_z,
                       outName=file_Nvisits_z_med)
 
     # get the number of visits per field
+    """
     file_Nvisits_z_fields = 'Nvisits_z_fields_{}_{}_{}_ebvofMW_{}.npy'.format(
         opts.x1, opts.color, dd_snr.cutoff, opts.ebvofMW)
     Nvisits_Cadence_Fields(x1=opts.x1, color=opts.color,
@@ -198,3 +200,4 @@ if 'Nvisits_z' in actions:
                            dirm5=opts.dirm5,
                            Nvisits_z_med=file_Nvisits_z_med,
                            outName=file_Nvisits_z_fields)
+    """
