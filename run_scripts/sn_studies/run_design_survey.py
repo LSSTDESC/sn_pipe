@@ -60,7 +60,7 @@ parser.add_option('--m5File', type=str, default='medValues_flexddf_v1.4_10yrs_DD
 parser.add_option('--web_server', type=str, default='https://me.lsst.eu/gris/DESC_SN_pipeline/m5_single_exposure',
                   help='web server where m5 reference file may be loaded from[%default]')
 parser.add_option('--action', type=str, default='all',
-                  help='what to do: all, Templates, SNR_combi, SNR_opti,Nvisits_z [%default]')
+                  help='what to do: all, Templates, SNR_combi, SNR_opti,Nvisits_z,Nvisits_z_fields [%default]')
 parser.add_option('--cadence_for_opti', type=int, default=3,
                   help='cadence used for optimisation [%default]')
 parser.add_option('--cadences', type=str, default='1-4',
@@ -99,7 +99,7 @@ if '-' in opts.cadences:
 else:
     cadences = list(map(int, opts.cadences.split(',')))
 
-all_actions = ['Templates', 'SNR_combi', 'SNR_opti', 'Nvisits_z']
+all_actions = ['Templates', 'SNR_combi', 'SNR_opti', 'Nvisits_z', 'Nvisits_z_fields']
 
 actions = opts.action.split(',')
 print(actions)
@@ -137,7 +137,7 @@ if 'Templates' in actions:
                  bluecutoff=opts.bluecutoff,
                  redcutoff=opts.redcutoff,)
 
-if 'SNR_combi' or 'SNR_opti' or 'Nvisits_z' or 'plot_inputs' in actions:
+if 'SNR_combi' or 'SNR_opti' or 'Nvisits_z' or 'Nvisits_z_fields' or 'plot_inputs' in actions:
     dd_snr = DD_SNR(x1=opts.x1, color=opts.color,
                     bands=opts.bands,
                     dirStudy=opts.dirStudy,
@@ -164,6 +164,7 @@ if 'SNR_combi' in actions:
 
 opti_fileName = 'opti_{}_{}_{}_ebvofMW_{}_cad_{}.npy'.format(
     opts.x1, opts.color, dd_snr.cutoff, opts.ebvofMW, opts.cadence_for_opti)
+
 if 'SNR_opti' in actions:
     # get 'best' combination
 
@@ -186,7 +187,9 @@ if 'Nvisits_z' in actions:
                       outName=file_Nvisits_z_med)
 
     # get the number of visits per field
-    """
+if 'Nvisits_z_fields' in actions:
+    file_Nvisits_z_med = 'Nvisits_z_{}_{}_{}_ebvofMW_{}.npy'.format(
+        opts.x1, opts.color, dd_snr.cutoff, opts.ebvofMW)
     file_Nvisits_z_fields = 'Nvisits_z_fields_{}_{}_{}_ebvofMW_{}.npy'.format(
         opts.x1, opts.color, dd_snr.cutoff, opts.ebvofMW)
     Nvisits_Cadence_Fields(x1=opts.x1, color=opts.color,
@@ -196,8 +199,8 @@ if 'Nvisits_z' in actions:
                            sn_simulator=opts.sn_simulator,
                            dirStudy=opts.dirStudy,
                            dirTemplates=opts.dirTemplates,
-                           dirNvisits=opts.dirNvisits_z,
+                           dirNvisits=dirNvisits_z,
                            dirm5=opts.dirm5,
                            Nvisits_z_med=file_Nvisits_z_med,
                            outName=file_Nvisits_z_fields)
-    """
+    
