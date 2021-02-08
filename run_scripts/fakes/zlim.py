@@ -32,7 +32,14 @@ def zlimit(tab, covcc_col='Cov_colorcolor', z_col='z', sigmaC=0.04):
     interp = interp1d(np.sqrt(tab[covcc_col]),
                       tab[z_col], bounds_error=False, fill_value=0.)
 
-    return np.round(interp(sigmaC), 2)
+    interpv = interp1d(tab[z_col], np.sqrt(tab[covcc_col]), bounds_error=False, fill_value=0.)
+
+    zvals = np.arange(0.4,1.0,0.005)
+
+    colors = interpv(zvals)
+    ii = np.argmin(np.abs(colors-sigmaC))
+     
+    return np.round(zvals[ii],3)
 
 
 def SNR(tab, band, z):
@@ -83,7 +90,7 @@ def plot(tab, covcc_col='Cov_colorcolor', z_col='z', multiDaymax=False, stat=Non
 
     tab.sort(z_col)
 
-    xlims = [0.1, 0.8]
+    xlims = [0.1, 0.91]
     ylims = [0.01, 0.08]
 
     mean_zlim = -1.
@@ -191,7 +198,7 @@ def plot_SNR(sel, zlim):
     ax.tick_params(axis='y', labelsize=12)
 
 
-def ana_zlim(tagprod, simulator='sn_fast', fitter='sn_fast', x1=-2.0, color=0.2, ebvofMW=0.0, snrmin=1., error_model=1, errmodrel=-1., bluecutoff=380., redcutoff=800., multiDaymax=0):
+def ana_zlim(tagprod, simulator='sn_fast', fitter='sn_fast', x1=-2.0, color=0.2, ebvofMW=0.0, snrmin=1., error_model=1, errmodrel=-1., bluecutoff=380., redcutoff=800., multiDaymax=0,sigmaC=0.04):
     """
     Function to analyze the output of the fit.
     The idea is to estimate the redshift limit
@@ -220,6 +227,8 @@ def ana_zlim(tagprod, simulator='sn_fast', fitter='sn_fast', x1=-2.0, color=0.2,
       bluecutoff if error_model=0 (default: 380.)
     redcutoff: float, opt
      red cutoff if error_model=0 (default: 800.)
+    sigmaC: float, opt
+      sigmaC value to estimate zlim (default: 0.04)
 
     Returns
     -----------
@@ -258,14 +267,14 @@ def ana_zlim(tagprod, simulator='sn_fast', fitter='sn_fast', x1=-2.0, color=0.2,
         for daymax in np.unique(sel['daymax']):
             ido = np.abs(sel['daymax']-daymax) < 1.e-5
             if len(sel[ido]) >= 2:
-                zzlim = zlimit(sel[ido])
+                zzlim = zlimit(sel[ido],sigmaC=sigmaC)
                 rz.append(zzlim)
                 ro.append((daymax, zzlim))
         plot(sel, multiDaymax=multiDaymax,
              stat=np.rec.fromrecords(ro, names=['daymax', 'zlim']))
         plt.show()
     else:
-        zzlim = zlimit(sel)
+        zzlim = zlimit(sel,sigmaC=sigmaC)
         rz.append(zzlim)
         ro.append((np.mean(sel['daymax']), zzlim))
         plot(sel, stat=np.rec.fromrecords(ro, names=['daymax', 'zlim']))
@@ -352,7 +361,7 @@ def simufit_cmd(tagprod, x1=-2.0, color=0.2,
     return cmd
 
 
-def multiproc(conf, bands, multiDaymax=False, m5File='NoData', healpixID_m5=False, action='all', nproc=8):
+def multiproc(conf, bands, multiDaymax=False, m5File='NoData', healpixID_m5=False, sigmaC=0.04,action='all', nproc=8):
     """
     Function to process data using multiprocessing
 
@@ -370,6 +379,8 @@ def multiproc(conf, bands, multiDaymax=False, m5File='NoData', healpixID_m5=Fals
       healpixID to get m5 values (default: False)
     nproc: int, opt
       number of procs for multiprocessing (default: 8)
+    sigmaC: float, opt
+      error on the color to estimate zlim (default: 0.04)
     action: str, opt
       what you have to do (all/simufit/zlim) (default: all)
 
@@ -383,7 +394,7 @@ def multiproc(conf, bands, multiDaymax=False, m5File='NoData', healpixID_m5=Fals
     result_queue = multiprocessing.Queue()
 
     procs = [multiprocessing.Process(name='Subprocess-'+str(j), target=process,
-                                     args=(conf[t[j]:t[j+1]], bands, multiDaymax, m5File, healpixID_m5, action, j, result_queue))
+                                     args=(conf[t[j]:t[j+1]], bands, multiDaymax, m5File, healpixID_m5, sigmaC,action, j, result_queue))
              for j in range(nproc)]
 
     for p in procs:
@@ -412,7 +423,7 @@ def multiproc(conf, bands, multiDaymax=False, m5File='NoData', healpixID_m5=Fals
     return restot
 
 
-def process(config, bands, multiDaymax, m5File, healpixID_m5, action, j=0, output_q=None):
+def process(config, bands, multiDaymax, m5File, healpixID_m5, sigmaC, action, j=0, output_q=None):
     """
     Function to process data
 
@@ -428,6 +439,10 @@ def process(config, bands, multiDaymax, m5File, healpixID_m5, action, j=0, outpu
       m5 file (from simulation usually)  
     healpixID_m5: bool
       healpixID to get m5 values 
+    sigmaC: float
+      color error requested to estimate zlim
+    action: str
+      what to do
     j: int, opt
       multiprocessing number(default: 0)
     output_q: multiprocessing queue (default: None)
@@ -448,7 +463,7 @@ def process(config, bands, multiDaymax, m5File, healpixID_m5, action, j=0, outpu
         if action == 'all' or action == 'simufit':
             simufit(conf, bands, multiDaymax, m5File, healpixID_m5, tagprod)
         if action == 'all' or action == 'zlim':
-            rzo, rstdo = zlim_estimate(conf, tagprod, multiDaymax)
+            rzo, rstdo = zlim_estimate(conf, tagprod, multiDaymax,sigmaC)
             rz += rzo
             rstd += rstdo
 
@@ -484,10 +499,11 @@ def simufit(conf, bands, multiDaymax, m5File, healpixID_m5, tagprod):
     os.system(cmd)
 
 
-def zlim_estimate(conf, tagprod, multiDaymax):
+def zlim_estimate(conf, tagprod, multiDaymax,sigmaC):
 
     rz = []
     rstd = []
+    print('alllll',sigmaC)
     zlim_mean, zlim_std = ana_zlim(tagprod,
                                    simulator=conf['simulator'],
                                    fitter=conf['fitter'],
@@ -499,7 +515,8 @@ def zlim_estimate(conf, tagprod, multiDaymax):
                                    errmodrel=conf['errmodrel'],
                                    bluecutoff=conf['bluecutoff'],
                                    redcutoff=conf['redcutoff'],
-                                   multiDaymax=multiDaymax)
+                                   multiDaymax=multiDaymax,
+                                   sigmaC=sigmaC)
     print(zlim_mean)
     rz.append(np.round(zlim_mean, 2))
     rstd.append(np.round(zlim_std, 2))
@@ -519,6 +536,8 @@ parser.add_option('--multiDaymax', type=int, default=0,
                   help='to have multi T0 simulated/fitted [%default]')
 parser.add_option('--healpixID_m5', type=int, default=0,
                   help='to get m5 from a healpixel [%default]')
+parser.add_option('--sigmaC', type=float, default=0.04,
+                  help='sigma color to estimate zlim [%default]')
 parser.add_option('--action', type=str, default='all',
                   help='what to do: all, simu_fit, zlim [%default]')
 
@@ -528,5 +547,5 @@ config = pd.read_csv(opts.config, comment='#')
 
 bands = 'grizy'
 res = multiproc(config, bands, opts.multiDaymax, opts.m5File,
-                opts.healpixID_m5, opts.action, nproc=1)
+                opts.healpixID_m5, opts.sigmaC,opts.action, nproc=1)
 res.to_csv(opts.outName, index=False)
