@@ -248,7 +248,6 @@ class SimFit:
         cmd += ' --SN_type {}'.format(self.sn_type)
         cmd += ' --Simulator_model {}'.format(self.sn_model)
         cmd += ' --Simulator_version {}'.format(self.sn_version)
-        cmd += ' --Simulator_errorModelCut {}'.format(self.errmodrel)
 
         if self.multiDaymax:
             cmd += ' --SN_daymax_type uniform'
@@ -275,6 +274,7 @@ class SimFit:
         #cmd += ' --LCSelection_errmodrel {}'.format(self.errmodrel)
         cmd += ' --Fitter_name sn_fitter.fit_{}'.format(fitter)
         cmd += ' --ProductionID {}_{}'.format(self.tag, fitter)
+        cmd += ' --LCSelection_errmodrel {}'.format(self.errmodrel)
 
         print('LC fit', cmd)
         os.system(cmd)
