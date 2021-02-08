@@ -1,3 +1,3 @@
-tagprod,x1,color,ebvofMW,snrmin,error_model,bluecutoff,redcutoff,simulator,fitter,Ng,Nr,Ni,Nz,Ny,m5_g,m5_r,m5_i,m5_z,m5_y,cadence_g,cadence_r,cadence_i,cadence_z,cadence_y,season
-12372,-2.0,0.2,0.0,1.,1,380.,800.,sn_fast,sn_fast,1,1,2,2,2,24.51,24.06,23.62,23.0,22.17,2,2,2,2,2,1
-12373,-2.0,0.2,0.0,1.,1,380.,800.,sn_fast,sn_fast,2,4,8,25,4,24.51,24.06,23.62,23.0,22.17,3,3,3,3,3,1
+tagprod,x1,color,ebvofMW,snrmin,error_model,errmodrel,bluecutoff,redcutoff,simulator,fitter,Ng,Nr,Ni,Nz,Ny,m5_g,m5_r,m5_i,m5_z,m5_y,cadence_g,cadence_r,cadence_i,cadence_z,cadence_y,season
+12372,-2.0,0.2,0.0,1.,1,-1.,380.,800.,sn_fast,sn_fast,1,1,2,2,2,24.51,24.06,23.62,23.0,22.17,2,2,2,2,2,1
+12373,-2.0,0.2,0.0,1.,1,-1.,380.,800.,sn_fast,sn_fast,2,4,8,25,4,24.51,24.06,23.62,23.0,22.17,3,3,3,3,3,1

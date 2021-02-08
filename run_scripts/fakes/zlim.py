@@ -488,7 +488,6 @@ def zlim_estimate(conf, tagprod, multiDaymax):
 
     rz = []
     rstd = []
-    print('hhhhh', multiDaymax)
     zlim_mean, zlim_std = ana_zlim(tagprod,
                                    simulator=conf['simulator'],
                                    fitter=conf['fitter'],
