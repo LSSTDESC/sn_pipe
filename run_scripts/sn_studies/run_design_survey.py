@@ -192,15 +192,21 @@ if 'Nvisits_z_fields' in actions:
         opts.x1, opts.color, dd_snr.cutoff, opts.ebvofMW)
     file_Nvisits_z_fields = 'Nvisits_z_fields_{}_{}_{}_ebvofMW_{}.npy'.format(
         opts.x1, opts.color, dd_snr.cutoff, opts.ebvofMW)
+
+    min_par=['nvisits','nvisits_sel','nvisits_selb']
     Nvisits_Cadence_Fields(x1=opts.x1, color=opts.color,
                            error_model=opts.error_model,
+                           errmodrel = opts.error_model_cut,
                            bluecutoff=opts.bluecutoff, redcutoff=opts.redcutoff,
                            ebvofMW=opts.ebvofMW,
                            sn_simulator=opts.sn_simulator,
                            dirStudy=opts.dirStudy,
                            dirTemplates=opts.dirTemplates,
-                           dirNvisits=dirNvisits_z,
+                           dirNvisits=opts.dirNvisits_z,
                            dirm5=opts.dirm5,
                            Nvisits_z_med=file_Nvisits_z_med,
-                           outName=file_Nvisits_z_fields)
+                           outName=file_Nvisits_z_fields,
+                           #cadences=opts.cadences,
+                           cadences = [1],
+                           min_par=min_par)
     
