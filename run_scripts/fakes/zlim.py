@@ -34,11 +34,11 @@ def zlimit(tab, covcc_col='Cov_colorcolor', z_col='z', sigmaC=0.04):
 
     interpv = interp1d(tab[z_col], np.sqrt(tab[covcc_col]), bounds_error=False, fill_value=0.)
 
-    zvals = np.arange(0.4,1.0,0.005)
+    zvals = np.arange(0.2,1.0,0.005)
 
     colors = interpv(zvals)
     ii = np.argmin(np.abs(colors-sigmaC))
-     
+    print(colors)
     return np.round(zvals[ii],3)
 
 
