@@ -72,6 +72,7 @@ def batch(scriptref, inputDir, prodids, dirOut, nproc,mbcov=0):
         cmd += ' --LCSelection_phasemax 20.0'
         cmd += ' --LCSelection_nphasemin 1'
         cmd += ' --LCSelection_nphasemax 1'
+        cmd += ' --LCSelection_errmodrel 0.1'
 
         script.write(cmd+" \n")
     script.write("EOF" + "\n")
@@ -93,7 +94,7 @@ opts, args = parser.parse_args()
 
 print('Start processing...')
 
-toproc=pd.read_csv(opts.dbList)
+toproc=pd.read_csv(opts.dbList,comment='#')
 n_per_job = 3
 
 
