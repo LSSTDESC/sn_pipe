@@ -99,7 +99,8 @@ if '-' in opts.cadences:
 else:
     cadences = list(map(int, opts.cadences.split(',')))
 
-all_actions = ['Templates', 'SNR_combi', 'SNR_opti', 'Nvisits_z', 'Nvisits_z_fields']
+all_actions = ['Templates', 'SNR_combi',
+               'SNR_opti', 'Nvisits_z', 'Nvisits_z_fields']
 
 actions = opts.action.split(',')
 print(actions)
@@ -193,10 +194,11 @@ if 'Nvisits_z_fields' in actions:
     file_Nvisits_z_fields = 'Nvisits_z_fields_{}_{}_{}_ebvofMW_{}.npy'.format(
         opts.x1, opts.color, dd_snr.cutoff, opts.ebvofMW)
 
-    min_par=['nvisits','nvisits_sel','nvisits_selb']
+    # min_par=['nvisits','nvisits_sel','nvisits_selb']
+    min_par = ['nvisits_selb']
     Nvisits_Cadence_Fields(x1=opts.x1, color=opts.color,
                            error_model=opts.error_model,
-                           errmodrel = opts.error_model_cut,
+                           errmodrel=opts.error_model_cut,
                            bluecutoff=opts.bluecutoff, redcutoff=opts.redcutoff,
                            ebvofMW=opts.ebvofMW,
                            sn_simulator=opts.sn_simulator,
@@ -206,7 +208,7 @@ if 'Nvisits_z_fields' in actions:
                            dirm5=opts.dirm5,
                            Nvisits_z_med=file_Nvisits_z_med,
                            outName=file_Nvisits_z_fields,
-                           #cadences=opts.cadences,
-                           cadences = [1],
+                           # cadences=opts.cadences,
+                           cadences=cadences,
+                           cadence_for_opti=opts.cadence_for_opti,
                            min_par=min_par)
-    
