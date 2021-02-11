@@ -148,7 +148,7 @@ if 'Templates' in actions:
                  bluecutoff=opts.bluecutoff,
                  redcutoff=opts.redcutoff,)
 
-pp = set(['SNR_combi', 'SNR_opti', 'plot_inputs','Nvisits_z_med'])
+pp = set(['SNR_combi', 'SNR_opti', 'plot_inputs', 'Nvisits_z_med'])
 intersect = pp.intersection(set(actions))
 
 if len(intersect) > 0:
@@ -174,14 +174,14 @@ if 'plot_inputs' in actions:
 if 'SNR_combi' in actions:
     # estimate combis
     dd_snr.SNR_combi(SNR_par=dict(
-        zip(['Nvisits_max_night', 'max', 'step', 'choice'], [400, 50., 1., 'Nvisits'])), zmin=opts.zmin,zmax=opts.zmax,zstep=opts.zstep)
+        zip(['Nvisits_max_night', 'max', 'step', 'choice'], [400, 50., 1., 'Nvisits'])), zmin=opts.zmin, zmax=opts.zmax, zstep=opts.zstep)
 
 opti_fileName = 'opti_{}_{}_{}_ebvofMW_{}_cad_{}.npy'.format(
-        opts.x1, opts.color, cutoff, opts.ebvofMW, opts.cadence_for_opti)
+    opts.x1, opts.color, cutoff, opts.ebvofMW, opts.cadence_for_opti)
 
 if 'SNR_opti' in actions:
     # get 'best' combination
-   
+
     OptiCombi(dd_snr.fracSignalBand,
               dirStudy=opts.dirStudy,
               dirSNR_combi=dirSNR_combi,
@@ -224,4 +224,5 @@ if 'Nvisits_z_fields' in actions:
                            # cadences=opts.cadences,
                            cadences=cadences,
                            cadence_for_opti=opts.cadence_for_opti,
-                           min_par=min_par)
+                           min_par=min_par,
+                           nproc=opts.nproc)
