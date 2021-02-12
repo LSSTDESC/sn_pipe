@@ -30,6 +30,7 @@ def go_for_batch(toproc,run_script, opts):
     #dbName = toproc['dbName']
     pixelmap_dir = opts.pixelmap_dir
     splitSky = opts.splitSky
+    skyfrac = opts.skyfrac
     dbName = toproc['dbName']
     dbDir = toproc['dbDir']
     dbExtens = toproc['dbExtens']
@@ -62,7 +63,7 @@ def go_for_batch(toproc,run_script, opts):
         # npixels=-1 means processing all pixels
 
         npixels_tot = 0
-        if opts.npixels > 0:
+        if opts.npixels > 0 or opts.skyfrac>0.:
             for val in skyMap:
                 search_path = '{}/{}/{}_{}_nside_{}_{}_{}_{}_{}_{}.npy'.format(
                     pixelmap_dir, dbName, dbName, opts.Observations_fieldtype, opts.Pixelisation_nside, val['RAmin'], val['RAmax'], val['Decmin'], val['Decmax'],opts.Observations_fieldtype)
@@ -87,7 +88,9 @@ def go_for_batch(toproc,run_script, opts):
             npixel_proc = opts.npixels
             if opts.npixels > 0:
                 num = float(opts.npixels*npixels_map)/float(npixels_tot)
-                npixel_proc = int(round(num))
+            if opts.skyfrac >0.:
+                num = opts.skyfrac*npixels_map
+            npixel_proc = int(round(num))
                 # print('hoio',npixel_proc,num)
             batchclass(toproc, dbDir, dbExtens, run_script,
                        val['RAmin'], val['RAmax'], val['Decmin'], val['Decmax'], opts, npixels_tot=npixel_proc)
@@ -194,7 +197,7 @@ class batchclass:
 
         script.write("EOF" + "\n")
         script.close()
-        #os.system("sh "+scriptName)
+        os.system("sh "+scriptName)
 
     def batch_cmd(self, proc, name_id):
         """
@@ -255,6 +258,8 @@ parser.add_option("--pixelmap_dir", type=str, default='',
                   help="dir where to find pixel maps[%default]")
 parser.add_option("--nodither", type="int", default=0,
                   help="to remove dithering [%default]")
+parser.add_option("--skyfrac", type="float", default=0.,
+                  help="sky fraction to process [%default]")
 
 # parser for simulation parameters : 'dynamical' generation
 for key, vals in confDict.items():
