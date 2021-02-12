@@ -30,7 +30,6 @@ def go_for_batch(toproc,run_script, opts):
     #dbName = toproc['dbName']
     pixelmap_dir = opts.pixelmap_dir
     splitSky = opts.splitSky
-    skyfrac = opts.skyfrac
     dbName = toproc['dbName']
     dbDir = toproc['dbDir']
     dbExtens = toproc['dbExtens']
@@ -215,7 +214,8 @@ class batchclass:
 
         for opt, value in self.opts.__dict__.items():
             if opt not in ['dbList', 'splitSky', 'ProductionID', 'Pixelisation_nside',
-                           'Observations_fieldtype', 'Output_directory', 'Observations_filename','npixels']:
+                           'Observations_fieldtype', 'Output_directory', 
+                           'Observations_filename','npixels','skyfrac']:
                 cmd += ' --{} {}'.format(opt, value)
 
         cmd += ' --ProductionID {}'.format(name_id)
