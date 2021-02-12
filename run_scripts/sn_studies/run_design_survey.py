@@ -182,15 +182,15 @@ opti_fileName = 'opti_{}_{}_{}_ebvofMW_{}_cad_{}.npy'.format(
 if 'SNR_opti' in actions:
     # get 'best' combination
 
+    zvals = list(np.arange(0.4, 1.0, 0.05))
+    zvals += list(np.arange(0.97, 1.01, 0.01))
     OptiCombi(dd_snr.fracSignalBand,
               dirStudy=opts.dirStudy,
               dirSNR_combi=dirSNR_combi,
               dirSNR_opti=opts.dirSNR_opti,
               snr_opti_file=opti_fileName,
               nproc=opts.nproc,
-              zmin=opts.zmin,
-              zmax=opts.zmax,
-              zstep=opts.zstep)
+              zvals=zvals)
 
 if 'Nvisits_z_med' in actions:
     file_Nvisits_z_med = 'Nvisits_z_{}_{}_{}_ebvofMW_{}.npy'.format(
