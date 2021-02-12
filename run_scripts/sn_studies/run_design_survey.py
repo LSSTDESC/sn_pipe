@@ -187,7 +187,10 @@ if 'SNR_opti' in actions:
               dirSNR_combi=dirSNR_combi,
               dirSNR_opti=opts.dirSNR_opti,
               snr_opti_file=opti_fileName,
-              nproc=opts.nproc)
+              nproc=opts.nproc,
+              zmin=opts.zmin,
+              zmax=opts.zmax,
+              zstep=opts.zstep)
 
 if 'Nvisits_z_med' in actions:
     file_Nvisits_z_med = 'Nvisits_z_{}_{}_{}_ebvofMW_{}.npy'.format(
