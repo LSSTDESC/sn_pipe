@@ -68,6 +68,9 @@ def cmdb(dbDir, dbName, dbExtens, scriptref, outDir, nproc,
     cmd += ' --saveData {}'.format(saveData)
     cmd += ' --outDir {}'.format(outDir)
     cmd += ' --fieldType {}'.format(fieldType)
+    cmd += ' --Decmin -80.'
+    cmd += ' --Decmax 20.'
+    cmd += ' --nDec 4'
 
     if fieldName != '':
         cmd += ' --fieldName {}'.format(fieldName)
