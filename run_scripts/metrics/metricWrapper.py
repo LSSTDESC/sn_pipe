@@ -213,6 +213,10 @@ class NSNMetricWrapper(MetricWrapper):
         result_queue = multiprocessing.Queue()
 
         wave_cutoff = 'error_model'
+        errmodrel = -1.
+        if error_model:
+            errmodrel = 0.1
+
         if not error_model:
             wave_cutoff = '{}_{}'.format(bluecutoff, redcutoff)
         for j in range(len(x1_colors)):
@@ -314,6 +318,7 @@ class NSNMetricWrapper(MetricWrapper):
             snr_min=snr_min,
             n_phase_min=n_phase_min,
             n_phase_max=n_phase_max,
+            errmodrel=errmodrel,
             outputType=metadata.outputType,
             proxy_level=metadata.proxy_level,
             x1_color_dist=x1_color_dist,
@@ -326,10 +331,12 @@ class NSNMetricWrapper(MetricWrapper):
         self.metadata['n_phase_min'] = n_phase_min
         self.metadata['n_phase_max'] = n_phase_max
         self.metadata['zlim_coeff'] = zlim_coeff
+        self.metadata['error_model'] = error_model
+        self.metadata['errmodrel'] = errmodrel
 
         self.metaout += ['ploteffi', 'outputType',
                          'proxy_level', 'lightOutput', 'T0s',
-                         'n_bef', 'n_aft', 'snr_min', 'n_phase_min', 'n_phase_max', 'zlim_coeff']
+                         'n_bef', 'n_aft', 'snr_min', 'n_phase_min', 'n_phase_max', 'error_model', 'errmodrel', 'zlim_coeff']
         self.saveConfig()
 
     def load(self, templateDir, fname, gammaDir, gammaName, web_path, j=-1, output_q=None):
