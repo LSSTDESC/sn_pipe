@@ -5,7 +5,8 @@ import pandas as pd
 
 
 def batch(dbDir, dbName, dbExtens, scriptref, outDir, nproc,
-          saveData, fieldType, simuType, nside, fieldNames, nclusters):
+          saveData, fieldType, simuType, nside, fieldNames, nclusters,
+          RAmin,RAmax,nRA,Decmin,Decmax,nDec):
 
     cwd = os.getcwd()
     dirScript = cwd + "/scripts"
@@ -43,12 +44,14 @@ def batch(dbDir, dbName, dbExtens, scriptref, outDir, nproc,
 
     if fieldType == 'WFD':
         cmd = cmdb(dbDir, dbName, dbExtens, scriptref, outDir, nproc,
-                   saveData, fieldType, simuType, nside)
+                   saveData, fieldType, simuType, nside,
+                   RAmin,RAmax,nRA,Decmin,Decmax,nDec)
         script.write(cmd + " \n")
     if fieldType == 'DD':
         for fieldName in fieldNames:
             cmd = cmdb(dbDir, dbName, dbExtens, scriptref, outDir, nproc,
-                       saveData, fieldType, simuType, nside, fieldName, nclusters)
+                       saveData, fieldType, simuType, nside, fieldName, nclusters,
+            RAmin,RAmax,nRA,Decmin,Decmax,nDec)
             script.write(cmd + " \n")
     script.write("EOF" + "\n")
     script.close()
@@ -56,7 +59,8 @@ def batch(dbDir, dbName, dbExtens, scriptref, outDir, nproc,
 
 
 def cmdb(dbDir, dbName, dbExtens, scriptref, outDir, nproc,
-         saveData, fieldType, simuType, nside, fieldName='', nclusters=0):
+         saveData, fieldType, simuType, nside, fieldName='', nclusters=0,
+         RAmin=0.,RAmax=360.,nRA=10,Decmin=-80.,Decmax=20.,nDec=4):
 
     cmd = 'python {}'.format(scriptref)
     cmd += ' --dbDir {}'.format(dbDir)
@@ -67,10 +71,13 @@ def cmdb(dbDir, dbName, dbExtens, scriptref, outDir, nproc,
     #cmd += ' --simuType {}'.format(simuType)
     cmd += ' --saveData {}'.format(saveData)
     cmd += ' --outDir {}'.format(outDir)
-    cmd += ' --fieldType {}'.format(fieldType)
-    cmd += ' --Decmin -80.'
-    cmd += ' --Decmax 20.'
-    cmd += ' --nDec 4'
+    cmd += ' --fieldType {}'.format(fieldType) 
+    cmd += ' --RAmin {}'.format(RAmin)
+    cmd += ' --RAmax {}'.format(RAmax)
+    cmd += ' --nRA {}'.format(nRA)
+    cmd += ' --Decmin {}'.format(Decmin)
+    cmd += ' --Decmax {}'.format(Decmax)
+    cmd += ' --nDec {}'.format(nDec)
 
     if fieldName != '':
         cmd += ' --fieldName {}'.format(fieldName)
@@ -91,7 +98,18 @@ parser.add_option("--outDir", type="str",
 parser.add_option("--nclusters", type=int,
                   default=6,
                   help="number of clusters - for DD only[%default]")
-
+parser.add_option("--RAmin", type=float, default=0.,
+                  help="RA min for obs area - [%default]")
+parser.add_option("--RAmax", type=float, default=360.,
+                  help="RA max for obs area - [%default]")
+parser.add_option("--nRA", type=int, default=10,
+                  help="number of RA patches - [%default]")
+parser.add_option("--Decmin", type=float, default=-80.,
+                  help="Dec min for obs area - [%default]")
+parser.add_option("--Decmax", type=float, default=20.,
+                  help="Dec max for obs area - [%default]")
+parser.add_option("--nDec", type=int, default=4,
+                  help="number of Dec patches - [%default]")
 
 opts, args = parser.parse_args()
 
@@ -99,6 +117,12 @@ print('Start processing...', opts)
 
 dbList = opts.dbList
 outDir = opts.outDir
+RAmin = opts.RAmin
+RAmax = opts.RAmax
+Decmin = opts.Decmin
+Decmax = opts.Decmax
+nRA = opts.nRA
+nDec = opts.nDec
 
 """
 toprocess = np.genfromtxt(dbList, dtype=None, names=[
@@ -114,4 +138,5 @@ for io, val in toprocess.iterrows():
     if val['fieldType'] == 'DD':
         fieldNames = fieldDD
     batch(val['dbDir'], val['dbName'], val['dbExtens'], scriptref, outDir, val['nproc'],
-          1, val['fieldType'], val['simuType'], val['nside'], fieldNames, opts.nclusters)
+          1, val['fieldType'], val['simuType'], val['nside'], fieldNames, opts.nclusters,
+          RAmin,RAmax,nRA,Decmin,Decmax,nDec)
