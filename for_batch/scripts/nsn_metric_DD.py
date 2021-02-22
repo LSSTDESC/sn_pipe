@@ -1,5 +1,6 @@
 import os
 from optparse import OptionParser
+import pandas as pd
 
 class Process:
     def __init__(self, dbDir, dbName,dbExtens,outDir,pixelmap_dir, nclusters, nside):
@@ -99,9 +100,7 @@ class Process:
     
 parser = OptionParser()
 
-parser.add_option('--dbName', type='str', default='descddf_v1.5_10yrs',help='dbName to process  [%default]')
-parser.add_option('--dbExtens', type='str', default='npy',help='dbDir extens [%default]')
-parser.add_option('--dbDir', type='str', default='/sps/lsst/cadence/LSST_SN_PhG/cadence_db/fbs_1.5/npy',help='dbDir to process  [%default]')
+parser.add_option('--dbList', type='str', default='for_batch/input/List_Db_DD.csv',help='list of dbNames to process  [%default]')
 parser.add_option('--outDir', type='str', default='/sps/lsst/users/gris/MetricOutput_DD_new_128',help='output Dir to  [%default]')
 parser.add_option('--mode', type='str', default='batch',help='running mode batch/interactive [%default]')
 parser.add_option('--snrmin', type=float, default=1.,help='min snr for LC point fit[%default]')
@@ -114,8 +113,12 @@ parser.add_option('--nside', type=int, default=128,help='healpix nside parameter
 
 opts, args = parser.parse_args()
 
-proc = Process(opts.dbDir, opts.dbName,opts.dbExtens,opts.outDir,opts.pixelmap_dir, opts.nclusters,opts.nside)
+toprocess = pd.read_csv(opts.dbList, comment='#')
 
 fieldNames = opts.fieldNames.split(',')
 
-proc(opts.nproc,fieldNames, opts.ebvofMW,opts.mode)
+for i,row in toprocess.iterrows():
+
+    proc = Process(row['dbDir'], row['dbName'],row['dbExtens'],opts.outDir,opts.pixelmap_dir, opts.nclusters,opts.nside)
+
+    proc(opts.nproc,fieldNames, opts.ebvofMW,opts.mode)
