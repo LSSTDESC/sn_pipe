@@ -90,13 +90,20 @@ parser.add_option("--dirSimu", type="str", default='/sps/lsst/users/gris/Simulat
 parser.add_option("--dirOut", type="str", default='/sps/lsst/users/gris/Fit_fbs15_circular_dust',
                   help="output directory [%default]")
 
+parser.add_option("--mbcov_estimate", type=int, default=0,
+                  help="to activate mbcov estimate[%default]")
+
+parser.add_option("--n_per_job", type=int, default=2,
+                  help="nfiles per job [%default]")
+
+
 opts, args = parser.parse_args()
 
 print('Start processing...')
 
 toproc=pd.read_csv(opts.dbList,comment='#')
-n_per_job = 3
-
+n_per_job = opts.n_per_job
+mbcov = opts.mbcov_estimate
 
 
 for index, row in toproc.iterrows():
@@ -111,7 +118,7 @@ for index, row in toproc.iterrows():
         print(dbName,len(fis))
         dirSimu = '{}/{}'.format(opts.dirSimu,dbName)
         dirOut = '{}/{}'.format(opts.dirOut,dbName)
-        launch_batches(fis,dirSimu,dirOut,n_per_job,mbcov=1)
+        launch_batches(fis,dirSimu,dirOut,n_per_job,mbcov=mbcov)
 
 
            
