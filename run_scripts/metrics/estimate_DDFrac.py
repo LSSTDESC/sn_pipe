@@ -10,9 +10,9 @@ import pandas as pd
 from sn_tools.sn_utils import MultiProc
 
 
-def func(proc,params):
+def func(proc):
 
-    print('there man',proc)
+    print('there man', proc)
     n_cluster = proc['nproc']
     #dbName = proc['dbName'].decode()
     dbName = proc['dbName']
@@ -20,8 +20,8 @@ def func(proc,params):
     dbExtens = proc['dbExtens']
     fields = DDFields()
 
-    print('dbDir',dbDir)
-    print('dbName',dbName)
+    print('dbDir', dbDir)
+    print('dbName', dbName)
     print('go', dbDir, dbName, dbExtens, n_cluster)
     ana = AnaOS(dbDir, dbName, dbExtens, n_cluster, fields).stat
 
@@ -131,12 +131,8 @@ def plotDD(df, what, leg):
 
 
 parser = OptionParser()
-parser.add_option("--dbList", type="str", default='List.txt',
+parser.add_option("--dbList", type="str", default='List.csv',
                   help="db name [%default]")
-parser.add_option("--dbExtens", type="str", default='npy',
-                  help="db extension [%default]")
-parser.add_option("--dbDir", type="str", default='/sps/lsst/cadence/LSST_SN_CADENCE/cadence_db',
-                  help="db dir [%default]")
 
 opts, args = parser.parse_args()
 
@@ -148,7 +144,7 @@ dbExtens = opts.dbExtens
 
 outName = 'Nvisits.npy'
 
-#if not os.path.isfile(outName):
+# if not os.path.isfile(outName):
 """
 toprocess = np.genfromtxt(dbList, dtype=None, names=[
 'dbName', 'simuType', 'nside', 'coadd', 'fieldType', 'nproc'])
@@ -156,15 +152,13 @@ if len(toprocess.shape) == 1:
 toprocess = np.array([toprocess])
 """
 toprocess = pd.read_csv(dbList, comment='#')
-params = {}
-params['dbDir'] = dbDir
-params['dbExtens'] = dbExtens
-print('toprocess', params,toprocess)
+
+print('toprocess', toprocess)
 #data = MultiProc(toprocess, params, func, nproc=1).data
 res = pd.DataFrame()
-for i,vv in toprocess.iterrows():
-    data = func(vv,params)
-    res = pd.concat((res,data))
+for i, vv in toprocess.iterrows():
+    data = func(vv)
+    res = pd.concat((res, data))
 
 np.save(outName, res.to_records(index=False))
 
