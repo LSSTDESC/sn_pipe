@@ -18,7 +18,7 @@ import pandas as pd
 
 class Summary:
     def __init__(self, dirFile, metricName='NSN',
-                 fieldType='DD', fieldNames=['COSMOS'],nside=128, forPlot=pd.DataFrame(), outName=''):
+                 fieldType='DD', fieldNames=['COSMOS'], nside=128, forPlot=pd.DataFrame(), outName=''):
         """
         Class to transform input data and match to DD fields
 
@@ -48,13 +48,13 @@ class Summary:
         #fname = 'Summary_{}_{}.npy'.format(fieldType, simuVersion)
 
         fields_DD = DDFields()
-        #if not os.path.isfile(outName):
+        # if not os.path.isfile(outName):
         # get pixelArea
         self.pixArea = hp.nside2pixarea(nside, degrees=True)
         x1_colors = [(-2.0, 0.2), (0.0, 0.0)]
         self.corr = dict(zip(x1_colors, ['faint', 'medium']))
-        self.data= self.process_loop(dirFile, metricName, fieldType,fieldNames,
-                                   nside, forPlot).to_records()
+        self.data = self.process_loop(dirFile, metricName, fieldType, fieldNames,
+                                      nside, forPlot).to_records()
 
         """
         self.data = Match_DD(fields_DD, df).to_records()
@@ -62,10 +62,10 @@ class Summary:
 
         #np.save(outName, self.data)
 
-        #else:
+        # else:
         #    self.data = np.load(outName, allow_pickle=True)
 
-    def process_loop(self, dirFile, metricName, fieldType, fieldNames,nside, forPlot):
+    def process_loop(self, dirFile, metricName, fieldType, fieldNames, nside, forPlot):
         """
         Method to loop on all the files and process the data
 
@@ -108,23 +108,22 @@ class Summary:
         for dbName in forPlot['dbName']:
             io += 1
             dfi = self.process(dirFile, dbName, metricName,
-                               fieldType, fieldNames,nside)
+                               fieldType, fieldNames, nside)
             df = pd.concat([df, dfi], sort=False)
 
         return df
 
-    def process(self, dirFile, dbName, metricName, fieldType, fieldNames,nside): 
+    def process(self, dirFile, dbName, metricName, fieldType, fieldNames, nside):
 
         restot = pd.DataFrame()
         for fieldName in fieldNames:
-            res = self.process_field(dirFile, dbName, metricName, fieldType, fieldName,nside)
-            restot = pd.concat((restot,res))
+            res = self.process_field(
+                dirFile, dbName, metricName, fieldType, fieldName, nside)
+            restot = pd.concat((restot, res))
 
         return restot
 
-
-
-    def process_field(self, dirFile, dbName, metricName, fieldType, fieldName,nside):
+    def process_field(self, dirFile, dbName, metricName, fieldType, fieldName, nside):
         """
         Single file processing
         This method load the files corresponding to dbName and transform it
@@ -164,7 +163,7 @@ class Summary:
         """
 
         search_path = '{}/{}/{}_{}/*{}Metric_{}*_nside_{}_*.hdf5'.format(
-            dirFile, dbName, metricName,  fieldName,metricName,fieldType, nside)
+            dirFile, dbName, metricName,  fieldName, metricName, fieldType, nside)
         print('looking for', search_path)
         vars = ['pixRA', 'pixDec', 'healpixID', 'season', 'status']
         # vars = ['healpixID', 'season']
@@ -205,6 +204,7 @@ class Summary:
         return finaldf
         """
 
+
 parser = OptionParser(
     description='Display (NSN,zlim) metric results for DD fields')
 parser.add_option("--dirFile", type="str",
@@ -239,7 +239,7 @@ fieldNames = opts.fieldNames.split(',')
 filename = opts.dbList
 
 # forPlot = pd.read_csv(filename).to_records()
-forPlot = pd.read_csv(filename,comment='#')
+forPlot = pd.read_csv(filename, comment='#')
 
 print(forPlot)
 
@@ -261,16 +261,19 @@ metricTot_med = None
 # Summary: to reproduce the plots faster
 
 metricTot = Summary(dirFile, 'NSN',
-                    'DD', fieldNames,nside, forPlot, outName).data
+                    'DD', fieldNames, nside, forPlot, outName).data
 
 print(metricTot.dtype)
-print('oo', np.unique(metricTot[['cadence','fieldname']]), type(metricTot))
+print('oo', np.unique(metricTot[['cadence', 'fieldname']]), type(metricTot))
 
-nsn_plot.plot_DDArea(metricTot, forPlot, sntype='faint')
+#nsn_plot.plot_DDArea(metricTot, forPlot, sntype='faint')
 
-nsn_plot.plot_DDSummary(metricTot, forPlot, sntype=snType)
+#nsn_plot.plot_DDSummary(metricTot, forPlot, sntype=snType)
+#nsn_plot.plot_DD_Moll(metricTot, 'ddf_dither0.00_v1.7_10yrs', 1, 128)
+nsn_plot.plot_DD_Moll(metricTot, 'descddf_v1.5_10yrs', 1, 128)
 plt.show()
 
+print(test)
 fontsize = 15
 fields_DD = DDFields()
 # print(metricTot[['cadence','filter']])
@@ -321,7 +324,7 @@ sn_plot.plotDDLoop(nside, dbNames, sums[idx], 'pixArea', 'area [deg2]',
                    mmarkers, colors_cadb, mfc_cad, adjl, fields_DD, figleg)
 
 """
-#plt.show()
+# plt.show()
 
 
 """
