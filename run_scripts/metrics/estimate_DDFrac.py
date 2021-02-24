@@ -138,9 +138,7 @@ opts, args = parser.parse_args()
 
 print('Start processing...')
 
-dbDir = opts.dbDir
 dbList = opts.dbList
-dbExtens = opts.dbExtens
 
 outName = 'Nvisits.npy'
 
