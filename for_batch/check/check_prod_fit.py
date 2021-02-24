@@ -86,9 +86,10 @@ def check_count(simus,j=0,output_q=None):
         print(sim.split('/')[-1],len(sims),len(fits),nfits/nsims)
         nsims_tot += nsims
         nfits_tot += nfits
-    #break
+        #break
+        
 
-    res = pd.DataFrame({'nsims':[nsims_tot],'nfit':[nfit_tot]})
+    res = pd.DataFrame({'nsims':[nsims_tot],'nfits':[nfits_tot]})
 
     if output_q is not None:
         return output_q.put({j: res})
@@ -121,7 +122,7 @@ simus = glob.glob(search_path_simu)
 print(simus)
 
 res = analysis(simus,nproc)
-
-res = res['nsims','nfits'].sum()
+#print(res)
+res = res[['nsims','nfits']].sum()
 
 print('summary',res['nsims'],res['nfits'],res['nfits']/res['nsims'])
