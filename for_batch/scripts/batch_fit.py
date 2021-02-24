@@ -39,7 +39,7 @@ def batch(scriptref, inputDir, prodids, dirOut, nproc,mbcov=0):
     name_id = 'fit_{}_{}'.format(prodids[0],mbcov)
     log = dirLog + '/'+name_id+'.log'
 
-    qsub = 'qsub -P P_lsst -l sps=1,ct=10:00:00,h_vmem=16G -j y -o {} -pe multicores {} <<EOF'.format(
+    qsub = 'qsub -P P_lsst -l sps=1,ct=20:00:00,h_vmem=16G -j y -o {} -pe multicores {} <<EOF'.format(
         log, nproc)
     #qsub = "qsub -P P_lsst -l sps=1,ct=05:00:00,h_vmem=16G -j y -o "+ log + " <<EOF"
     scriptName = dirScript+'/'+name_id+'.sh'
