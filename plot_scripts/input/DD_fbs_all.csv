@@ -1,0 +1,16 @@
+dbName,newName,group,plotName,color,marker
+agnddf_v1.5_10yrs,agnddf,agnddf,agnddf,b,o
+baseline_v1.5_10yrs,baseline,baseline,baseline,k,*
+daily_ddf_v1.5_10yrs,daily,daily,daily,b,s
+ddf_heavy_v1.6_10yrs, ddf_heavy,ddf_heavy,ddf_heavy,m,<
+descddf_v1.5_10yrs,descddf,descddf,descddf,r,*
+dm_heavy_v1.6_10yrs,dm_heavy,dm_heavy,dm_heavy,g,s
+#cadence_drive_gl200_gcbv1.6.1_10yrs,cadence_drive,cadence_drive,cadence_drive,g,*
+ddf_dither0.00_v1.7_10yrs,dither0.0,dither0.0,dither0.00,m,o
+ddf_dither0.05_v1.7_10yrs,dither0.05,dither0.05,dither0.05,m,*
+ddf_dither0.10_v1.7_10yrs,dither0.10,dither0.10,dither0.10,m,s
+ddf_dither0.30_v1.7_10yrs,dither0.30,dither0.30,dither0.30,m,<
+ddf_dither0.70_v1.7_10yrs,dither0.70,dither0.70,dither0.70,m,>
+ddf_dither1.00_v1.7_10yrs,dither1.00,dither1.00,dither1.00,m,8
+ddf_dither1.50_v1.7_10yrs,dither1.5,dither1.5,dither1.50,m,p
+ddf_dither2.00_v1.7_10yrs,dither2.0,dither2.0,dither2.0,m,P
