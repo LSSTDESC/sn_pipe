@@ -83,7 +83,8 @@ def check_count(simus,j=0,output_q=None):
         fitList = glob.glob(fitName)
         fits = loopStack(fitList,'astropyTable')
         nfits = len(fits)
-        print(sim.split('/')[-1],len(sims),len(fits),nfits/nsims)
+        if nfits/nsims<0.9:
+            print(sim.split('/')[-1],len(sims),len(fits),nfits/nsims)
         nsims_tot += nsims
         nfits_tot += nfits
         #break
