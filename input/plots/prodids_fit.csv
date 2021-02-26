@@ -1,0 +1,21 @@
+nickname,dirfile,prodid
+## error_model, snrmin=1., ebv=0.0,errormodel_rel=-1.0
+cosmo_cosmo_errmod_snr1_0.0_-1.0,Output_Fit_error_model_ebvofMW_0.0_snrmin_1_errmodrel_-1.0,sn_cosmo_Fake_-2.0_0.2_error_model_ebvofMW_0.0_sn_cosmo
+fast_fast_errmod_snr1_0.0_-1.0,Output_Fit_error_model_ebvofMW_0.0_snrmin_1_errmodrel_-1.0,sn_fast_Fake_-2.0_0.2_error_model_ebvofMW_0.0_sn_fast
+fast_cosmo_errmod_snr1_0.0_-1.0,Output_Fit_error_model_ebvofMW_0.0_snrmin_1_errmodrel_-1.0,sn_fast_Fake_-2.0_0.2_error_model_ebvofMW_0.0_sn_cosmo
+## error_model, snrmin=1., ebv=0.0,errormodel_rel=0.1
+cosmo_cosmo_errmod_snr1_0.0_0.1,Output_Fit_error_model_ebvofMW_0.0_snrmin_1_errmodrel_0.1,sn_cosmo_Fake_-2.0_0.2_error_model_ebvofMW_0.0_sn_cosmo
+#fast_fast_errmod_snr1_0.0_0.1,Output_Fit_error_model_ebvofMW_0.0_snrmin_1_errmodrel_0.1,sn_fast_Fake_-2.0_0.2_error_model_ebvofMW_0.0_sn_fast
+fast_cosmo_errmod_snr1_0.0_0.1,Output_Fit_error_model_ebvofMW_0.0_snrmin_1_errmodrel_0.1,sn_fast_Fake_-2.0_0.2_error_model_ebvofMW_0.0_sn_cosmo
+##no error_model, snrmin=1., ebv=0.0
+cosmo_cosmo_bluecutoff_snr1_0.0,Output_Fit_380.0_800.0_ebvofMW_0.0_snrmin_1,sn_cosmo_Fake_-2.0_0.2_380.0_800.0_ebvofMW_0.0_sn_cosmo
+fast_fast_bluecutoff_snr1_0.0,Output_Fit_380.0_800.0_ebvofMW_0.0_snrmin_1,sn_fast_Fake_-2.0_0.2_380.0_800.0_ebvofMW_0.0_sn_fast
+fast_cosmo_bluecutoff_snr1_0.0,Output_Fit_380.0_800.0_ebvofMW_0.0_snrmin_1,sn_fast_Fake_-2.0_0.2_380.0_800.0_ebvofMW_0.0_sn_cosmo
+## error_model, snrmin=1., ebv=0.06
+#cosmo_cosmo_errmod_snr1_0.06,Output_Fit_error_model_ebvofMW_0.06_snrmin_1,sn_cosmo_Fake_-2.0_0.2_error_model_ebvofMW_0.06_sn_cosmo
+#fast_fast_errmod_snr1_0.06,Output_Fit_error_model_ebvofMW_0.06_snrmin_1,sn_fast_Fake_-2.0_0.2_error_model_ebvofMW_0.06_sn_fast
+#fast_cosmo_errmod_snr1_0.06,Output_Fit_error_model_ebvofMW_0.06_snrmin_1,sn_fast_Fake_-2.0_0.2_error_model_ebvofMW_0.06_sn_cosmo
+##no error_model, snrmin=1., ebv=0.06
+#cosmo_cosmo_bluecutoff_snr1_0.06,Output_Fit_380.0_800.0_ebvofMW_0.06_snrmin_1,sn_cosmo_Fake_-2.0_0.2_380.0_800.0_ebvofMW_0.06_sn_cosmo
+#fast_fast_bluecutoff_snr1_0.06,Output_Fit_380.0_800.0_ebvofMW_0.06_snrmin_1,sn_fast_Fake_-2.0_0.2_380.0_800.0_ebvofMW_0.06_sn_fast
+#fast_cosmo_bluecutoff_snr1_0.06,Output_Fit_380.0_800.0_ebvofMW_0.06_snrmin_1,sn_fast_Fake_-2.0_0.2_380.0_800.0_ebvofMW_0.06_sn_cosmo
