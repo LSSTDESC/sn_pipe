@@ -307,7 +307,7 @@ metricTot = Summary(dirFile, 'NSN',
 print(metricTot.dtype)
 print('oo', np.unique(metricTot[['cadence', 'fieldname']]), type(metricTot))
 fieldNames = ['COSMOS', 'CDFS', 'XMM-LSS', 'ELAIS', 'ADFS1', 'ADFS2']
-
+fieldNames = ['COSMOS']
 #nsn_plot.plot_DDArea(metricTot, forPlot, sntype='faint')
 
 nsn_plot.plot_DDSummary(metricTot, forPlot, sntype=snType,
