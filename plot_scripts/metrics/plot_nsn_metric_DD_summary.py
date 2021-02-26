@@ -16,6 +16,7 @@ import csv
 import pandas as pd
 import multiprocessing
 
+
 class Summary:
     def __init__(self, dirFile, metricName='NSN',
                  fieldType='DD', fieldNames=['COSMOS'], nside=128, forPlot=pd.DataFrame(), outName=''):
@@ -65,7 +66,7 @@ class Summary:
         # else:
         #    self.data = np.load(outName, allow_pickle=True)
 
-    def process_loop(self, dirFile, metricName, fieldType, fieldNames, nside, forPlot,nproc=8):
+    def process_loop(self, dirFile, metricName, fieldType, fieldNames, nside, forPlot, nproc=8):
         """
         Method to loop on all the files and process the data
 
@@ -109,8 +110,8 @@ class Summary:
                                fieldType, fieldNames, nside)
         """
         procs = [multiprocessing.Process(name='Subprocess-'+str(j), target=self.process,
-                                         args=(dirFile,forPlot['dbName'][t[j]:t[j+1]], metricName,
-                               fieldType, fieldNames, nside, j, result_queue))
+                                         args=(dirFile, forPlot['dbName'][t[j]:t[j+1]], metricName,
+                                               fieldType, fieldNames, nside, j, result_queue))
                  for j in range(nproc)]
 
         for p in procs:
@@ -130,7 +131,7 @@ class Summary:
         # gather the results
         for key, vals in resultdict.items():
             restot = pd.concat((restot, vals), sort=False)
-     
+
         return restot
         """
         metricTot = None
@@ -144,6 +145,7 @@ class Summary:
 
         return df
         """
+
     def process(self, dirFile, dbNames, metricName, fieldType, fieldNames, nside, j=0, output_q=None):
 
         restot = pd.DataFrame()
@@ -157,7 +159,7 @@ class Summary:
             return output_q.put({j: restot})
         else:
             return restot
-        
+
     def process_field(self, dirFile, dbName, metricName, fieldType, fieldName, nside):
         """
         Single file processing
@@ -216,8 +218,8 @@ class Summary:
             metricValues['filter'] = 'grizy'
             dbName_split = dbName.split('_')
             n = len(dbName_split)
-            metricValues['dbName_plot'] =  '_'.join(dbName_split[0:n-2])
-           
+            metricValues['dbName_plot'] = '_'.join(dbName_split[0:n-2])
+
             print(metricValues.columns)
             return metricValues
         """
@@ -304,11 +306,12 @@ metricTot = Summary(dirFile, 'NSN',
 
 print(metricTot.dtype)
 print('oo', np.unique(metricTot[['cadence', 'fieldname']]), type(metricTot))
-fieldNames = ['COSMOS','CDFS','XMM-LSS','ELAIS','ADFS1','ADFS2']
+fieldNames = ['COSMOS', 'CDFS', 'XMM-LSS', 'ELAIS', 'ADFS1', 'ADFS2']
 
 #nsn_plot.plot_DDArea(metricTot, forPlot, sntype='faint')
 
-nsn_plot.plot_DDSummary(metricTot, forPlot, sntype=snType, fieldNames=fieldNames,nside=nside)
+nsn_plot.plot_DDSummary(metricTot, forPlot, sntype=snType,
+                        fieldNames=fieldNames, nside=nside)
 #nsn_plot.plot_DD_Moll(metricTot, 'ddf_dither0.00_v1.7_10yrs', 1, 128)
 #nsn_plot.plot_DD_Moll(metricTot, 'descddf_v1.5_10yrs', 1, 128)
 plt.show()
