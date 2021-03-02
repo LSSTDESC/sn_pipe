@@ -5,6 +5,7 @@ import h5py
 import pandas as pd
 import multiprocessing
 import numpy as np
+import os
 
 def loadFile(filename):
     """
@@ -32,7 +33,8 @@ def loadFile(filename):
     for kk in keys:
         # loop on the keys and concat objects
         tab  = Table.read(filename, path=kk)
-        res = vstack([res, tab], metadata_conflicts='silent')
+        if len(tab)>0:
+            res = vstack([res, tab], metadata_conflicts='silent')
             
 
     return res
@@ -75,7 +77,7 @@ def getpatch(fi,dbName,dict_patches):
 
     return dict_patches,prefix
 
-def concat(prefix,dbName,key, files,nproc=8):
+def concat(prefix,dbName,key, files,outDir,nproc=8):
     """
     Function to concatenate astropytables
 
@@ -123,10 +125,12 @@ def concat(prefix,dbName,key, files,nproc=8):
         restot = pd.concat((restot, vals), sort=False)
 
     #write this output file
+    restot = restot[restot.columns.drop(list(restot.filter(regex='mask')))]
     print(restot.columns,key,dbName,prefix)
-    outName = '{}{}_{}.hdf5'.format(prefix,dbName,'_'.join(kk for kk in key))
+    outName = '{}/{}{}_{}.hdf5'.format(outDir,prefix,dbName,'_'.join(kk for kk in key))
     print(outName)
-   
+
+    print(restot.dtypes)
     Table.from_pandas(restot).write(outName,'summary')
     
 
@@ -152,12 +156,20 @@ parser.add_option("--dirFile", type="str",
 parser.add_option("--dbName", type="str",
                   default='baseline_v1.5_10yrs',
                   help="OS name to process [%default]")
-
+parser.add_option("--outDir", type="str",
+                  default='/sps/lsst/users/gris/web/PV_ABRH/files',
+                  help="Ouput dir [%default]")
 
 opts, args = parser.parse_args()
 
 dirFile = opts.dirFile
 dbName = opts.dbName
+outDir = opts.outDir
+
+#create outDir if does not exist
+if not os.path.isdir(outDir):
+    os.makedirs(outDir)
+
 
 fullName= '{}/{}/Fit*.hdf5'.format(dirFile,dbName)
 
@@ -173,5 +185,6 @@ print(len(dict_patches.keys()))
 
 for key, vals in dict_patches.items():
     print(key,len(vals))
-    concat(prefix,dbName,key,vals)
-    break
+    #if key[0]=='144.0':
+    concat(prefix,dbName,key,vals,outDir)
+    #break
