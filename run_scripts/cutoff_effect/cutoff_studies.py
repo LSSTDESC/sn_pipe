@@ -8,7 +8,7 @@ from sn_tools.sn_telescope import Telescope
 from lsst.sims.photUtils import Bandpass, Sed
 from astropy import units as u
 import pandas as pd
-from sn_tools.sn_io import check_get_dir,check_get_file
+from sn_tools.sn_io import check_get_dir, check_get_file
 from sn_tools.sn_utils import LoadGamma
 from sn_tools.sn_calcFast import srand
 from astropy.table import Table, Column
@@ -29,23 +29,24 @@ def SALT2Templates(SALT2Dir='SALT2.Guy10_UV2IR', blue_cutoff=3800.):
                    data, fmt=['%1.2f', '%4d', '%.7e', ])
 """
 
+
 class Cutoffs:
 
     def __init__(self, x1=-2.0, color=0.2, daymax=0.0,
                  blue_cutoff=380., red_cutoff=800.,
                  mjdCol='observationStartMJD', filterCol='filter',
                  exptimeCol='visitExposureTime', nexpCol='numExposures',
-                 m5Col='fiveSigmaDepth',SALT2Dir='',
+                 m5Col='fiveSigmaDepth', SALT2Dir='',
                  url_index='https://me.lsst.eu/gris/DESC_SN_pipeline'):
 
         model = 'salt2-extended'
         version = '1.0'
         self.url_index = url_index
-        
+
         source = sncosmo.get_source(model, version=version)
 
         if SALT2Dir != '':
-            check_get_dir(url_index,SALT2Dir,SALT2Dir)
+            check_get_dir(url_index, SALT2Dir, SALT2Dir)
             self.SALT2Templates(SALT2Dir=SALT2Dir, blue_cutoff=10.*blue_cutoff)
             source = sncosmo.SALT2Source(modeldir=SALT2Dir)
 
@@ -55,10 +56,10 @@ class Cutoffs:
 
         self.mjdCol = mjdCol
         self.filterCol = filterCol
-        self.exptimeCol=exptimeCol
-        self.nexpCol =nexpCol
-        self.m5Col =m5Col
-        
+        self.exptimeCol = exptimeCol
+        self.nexpCol = nexpCol
+        self.m5Col = m5Col
+
         self.x1 = x1
         self.color = color
         self.daymax = daymax
@@ -108,28 +109,27 @@ class Cutoffs:
                 throughput.wavelen, throughput.sb, name='LSST::'+band, wave_unit=u.nm)
             sncosmo.registry.register(bandcosmo, force=True)
 
-
-        #load gammas - necessary to estimate flux errors (photometry)
+        # load gammas - necessary to estimate flux errors (photometry)
 
         gammaDir = 'reference_files'
         gammaName = 'gamma.hdf5'
-        gammas = LoadGamma('grizy', gammaDir, gammaName, url_index, self.telescope)
+        gammas = LoadGamma('grizy', gammaDir, gammaName,
+                           url_index, self.telescope)
         self.gamma = gammas.gamma
 
-    def SALT2Templates(self,SALT2Dir='SALT2.Guy10_UV2IR', blue_cutoff=3800.):
+    def SALT2Templates(self, SALT2Dir='SALT2.Guy10_UV2IR', blue_cutoff=3800.):
 
         for vv in ['salt2_template_0', 'salt2_template_1']:
             fName = '{}/{}_orig.dat'.format(SALT2Dir, vv)
             data = np.loadtxt(fName, dtype={'names': ('phase', 'wavelength', 'flux'),
-                                        'formats': ('f8', 'i4', 'f8')})
+                                            'formats': ('f8', 'i4', 'f8')})
             print(data)
             data['flux'][data['wavelength'] <= blue_cutoff] = 0.0
 
             print(data)
             np.savetxt('{}/{}.dat'.format(SALT2Dir, vv),
                        data, fmt=['%1.2f', '%4d', '%.7e', ])
-            
-            
+
     def x0(self, absMag):
         """
         Method to load x0 data
@@ -171,46 +171,48 @@ class Cutoffs:
         x0 *= np.power(10., 0.4*(alpha * self.x1 - beta * self.color))
         self.SN.set(x0=x0)
 
-    def __call__(self,obs,zrange=np.arange(0.01,1.2,0.01),selphase=False):
+    def __call__(self, obs, zrange=np.arange(0.01, 1.2, 0.01), selphase=False):
 
-        prodid='Test'
+        prodid = 'Test'
         lc_out = 'LC_{}.hdf5'.format(prodid)
         simu_out = 'Simu_{}.hdf5'.format(prodid)
 
-        metadata ={}
-        meta_names = ['x1','color','daymax','z','index_hdf5']
+        metadata = {}
+        meta_names = ['x1', 'color', 'daymax', 'z', 'index_hdf5']
         rmeta = []
         for z in zrange:
 
-            lcdf = self.lc(obs, z,selphase=selphase)
+            lcdf = self.lc(obs, z, selphase=selphase)
             table_lc = Table.from_pandas(lcdf)
-            index_hdf5 = '{}_{}_{}_{}'.format(self.x1,self.color,self.daymax,np.round(z,2))
-            meta_vals = [self.x1,self.color,self.daymax,np.round(z,2),index_hdf5,]
-        
-            
-            table_lc.meta = dict(zip(meta_names,meta_vals))
-            rmeta+=[table_lc.meta]
-            table_lc.write(lc_out, 'LC_{}'.format(index_hdf5), append=True, compression=True)
-      
-        Table(rmeta,names=meta_names).write(
-            simu_out, 'summary', append=True, compression=True)
-                
-    def update_meta(self,metadata,metadict):
+            index_hdf5 = '{}_{}_{}_{}'.format(
+                self.x1, self.color, self.daymax, np.round(z, 2))
+            meta_vals = [self.x1, self.color,
+                         self.daymax, np.round(z, 2), index_hdf5, ]
 
-        print('hhhh',metadata,metadict.keys())
+            table_lc.meta = dict(zip(meta_names, meta_vals))
+            rmeta += [table_lc.meta]
+            table_lc.write(lc_out, 'LC_{}'.format(index_hdf5),
+                           append=True, compression=True)
+
+        Table(rmeta, names=meta_names).write(
+            simu_out, 'summary', append=True, compression=True)
+
+    def update_meta(self, metadata, metadict):
+
+        print('hhhh', metadata, metadict.keys())
         metc = dict(metadata)
         if not metc:
             metc = metadict
         else:
             #self.sn_meta[iproc]= self.sn_meta[iproc].update(metadict)
             for key in metadict.keys():
-                print('kkey',key,metadict[key])
+                print('kkey', key, metadict[key])
                 metc[key] += metadict[key]
 
-        print('alllo',metc)
+        print('alllo', metc)
         return metc
-    
-    def lc(self, obs, z,selphase=False):
+
+    def lc(self, obs, z, selphase=False):
 
         # no dust
         ebvofMW = 0.0
@@ -235,7 +237,7 @@ class Cutoffs:
 
         if selphase:
             obs = self.selectObsPhase(obs, z)
-            
+
         # Get the fluxes (vs wavelength) for each obs
 
         lcdf = pd.DataFrame(obs)
@@ -244,7 +246,7 @@ class Cutoffs:
         lcdf['color'] = self.color
         lcdf['daymax'] = self.daymax
         lcdf = lcdf.round({'daymax': 2})
-        
+
         fluxes_cosmo = self.SN.bandflux(
             lcdf[self.filterCol], lcdf[self.mjdCol], zpsys='ab', zp=2.5*np.log10(3631))
         fluxcov_cosmo = self.SN.bandfluxcov(
@@ -255,15 +257,15 @@ class Cutoffs:
         lcdf['flux'] = fluxes_cosmo
         lcdf['mag'] = -2.5*np.log10(fluxes_cosmo/3631.)
         lcdf['variance_model'] = np.diag(fluxcov_cosmo[1])
-        lcdf['z']=z
+        lcdf['z'] = z
 
-        #estimate gammas
-        
+        # estimate gammas
+
         lcdf = lcdf.groupby([self.filterCol]).apply(
             lambda x: self.interp_gamma_flux(x)).reset_index()
 
-        lcdf['snr_m5'] = 1./srand(lcdf['gamma'],lcdf['mag'],lcdf[self.m5Col])
-        
+        lcdf['snr_m5'] = 1./srand(lcdf['gamma'], lcdf['mag'], lcdf[self.m5Col])
+
         # complete the LC
         lcdf['magerr'] = (2.5/np.log(10.))/lcdf['snr_m5']  # mag error
         lcdf['fluxerr'] = lcdf['flux']/lcdf['snr_m5']  # flux error
@@ -276,7 +278,7 @@ class Cutoffs:
         lcdf = lcdf.rename(
             columns={self.mjdCol: 'time', self.filterCol: 'band', self.m5Col: 'm5', self.exptimeCol: 'exptime'})
         lcdf = lcdf.round({'z': 2})
-        
+
         return lcdf
 
     def interp_gamma_flux(self, grp, gammaName='gamma'):
@@ -301,7 +303,7 @@ class Cutoffs:
             (grp[self.m5Col].values, single_exptime, grp[self.nexpCol]))
 
         return grp
-        
+
     def estimateFluxes(self, wavelength, fluxes, obs, throughput):
 
         wavelength = np.repeat(wavelength[np.newaxis, :], len(fluxes), 0)
@@ -345,7 +347,7 @@ class Cutoffs:
 
         obsdf = pd.DataFrame(obs)
         obsdf[self.filterCol] = 'LSST::'+obsdf[self.filterCol]
-        
+
         throughput = self.telescope.atmosphere
 
         # z val
@@ -355,7 +357,6 @@ class Cutoffs:
         fluxes = 10.*self.SN.flux(obsdf[self.mjdCol], self.wave)
         self.estimateFluxes(self.wave/10., fluxes, obs, throughput)
 
-        
         fig, ax = plt.subplots()
         fig.suptitle('z = {}'.format(z))
         for bb in 'grizy':
@@ -370,8 +371,11 @@ class Cutoffs:
 
         ax.set_ylim([0., None])
         axa.set_ylim([0., None])
-        axa.plot([3800.*(1+z)]*2,axa.get_ylim(),color='k',ls='dashed')
-        #axa.plot([8000.*(1+z)]*2,axa.get_ylim(),color='k',ls='dashed')
+        axa.plot([3800.*(1+z)]*2, axa.get_ylim(), color='k', ls='dashed')
+        axa.plot([3609.*(1+z)]*2, axa.get_ylim(), color='b')
+        axa.plot([5509.*(1+z)]*2, axa.get_ylim(), color='b')
+
+        # axa.plot([8000.*(1+z)]*2,axa.get_ylim(),color='k',ls='dashed')
         ax.set_xlabel('wavelength [nm]')
         ax.set_ylabel('sb (0-1)')
         axa.set_ylabel('Flux [ergs / s / cm$^2$ / Angstrom]')
@@ -384,6 +388,7 @@ class Cutoffs:
         plt.rcParams['axes.labelsize'] = 12
         plt.rcParams['legend.fontsize'] = 12
         plt.rcParams['font.size'] = 12
+
 
 parser = OptionParser()
 
@@ -419,11 +424,12 @@ SALT2Templates(SALT2Dir=SALT2Dir, blue_cutoff=blue_cutoff)
 """
 blue_cutoff = opts.blue_cutoff
 SALT2Dir = 'SALT2.Guy10_UV2IR'
-mysimu = Cutoffs(x1=opts.x1,color=opts.color,SALT2Dir=SALT2Dir,blue_cutoff=blue_cutoff,red_cutoff=0.)
+mysimu = Cutoffs(x1=opts.x1, color=opts.color, SALT2Dir=SALT2Dir,
+                 blue_cutoff=blue_cutoff, red_cutoff=0.)
 
 obs = np.load('Fake_DESC.npy')
 
-mysimu.plot(obs, z=0.8)
+mysimu.plot(obs, z=1.0)
 
 plt.show()
 """
@@ -432,13 +438,10 @@ for zval in np.arange(0.01,1.2,0.01):
     fluxdf = pd.concat((fluxdf,mysimu(obs, zval,selphase=False)))
 print(fluxdf)
 """
-#save data as two astropy tables: Simu*, LC*
+# save data as two astropy tables: Simu*, LC*
 
 
-lctable = mysimu(obs,selphase=False)
-    
-    
-
+lctable = mysimu(obs, selphase=False)
 
 
 """
@@ -456,6 +459,6 @@ for b in 'grizy':
     
 ax.legend()
 """
-    
+
 
 plt.show()
