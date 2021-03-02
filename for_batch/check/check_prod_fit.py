@@ -5,7 +5,7 @@ import multiprocessing
 import numpy as np
 import pandas as pd
 
-def analysis(simus,nproc):
+def analysis(simus,verbose,nproc):
     """
     Function to analyze simu/fit files using multiprocessing
 
@@ -13,6 +13,8 @@ def analysis(simus,nproc):
     ----------
     simus: list(str)
       list of files to process
+    verbose: bool
+      to set the verbose mode
     nproc: int
      number of procs to use
     
@@ -29,7 +31,7 @@ def analysis(simus,nproc):
     result_queue = multiprocessing.Queue()
 
     procs = [multiprocessing.Process(name='Subprocess-'+str(j), target=check_count,
-                                     args=(simus[t[j]:t[j+1]], j, result_queue))
+                                     args=(simus[t[j]:t[j+1]],verbose, j, result_queue))
                  for j in range(nproc)]
 
     for p in procs:
@@ -45,16 +47,17 @@ def analysis(simus,nproc):
         p.join()
 
     restot = pd.DataFrame()
+    resbad = pd.DataFrame()
 
     # gather the results
     for key, vals in resultdict.items():
-        restot = pd.concat((restot, vals), sort=False)
-        
-    return restot
+        restot = pd.concat((restot, vals[0]), sort=False)
+        resbad = pd.concat((resbad, vals[1]), sort=False)
+    return restot,resbad
 
 
 
-def check_count(simus,j=0,output_q=None):
+def check_count(simus,verbose=False,j=0,output_q=None):
     """
     Function to analyse simu and associated fitted files
 
@@ -62,6 +65,8 @@ def check_count(simus,j=0,output_q=None):
     ----------
     simus: list(str)
       list of simu files to process
+    verbose: bool, opt
+      to set the verbose mode or not
 
     Returns
     -------
@@ -72,6 +77,7 @@ def check_count(simus,j=0,output_q=None):
 
     nsims_tot = 0
     nfits_tot = 0
+    r =[]
     for sim in simus:
         sims = loopStack([sim],objtype='astropyTable')
         nsims = len(sims)
@@ -83,19 +89,22 @@ def check_count(simus,j=0,output_q=None):
         fitList = glob.glob(fitName)
         fits = loopStack(fitList,'astropyTable')
         nfits = len(fits)
+        if verbose:
+            print(sim.split('/')[-1],len(sims),len(fits),nfits/nsims)
         if nfits/nsims<0.9:
             print(sim.split('/')[-1],len(sims),len(fits),nfits/nsims)
+            r.append(sim.split('/')[-1])
         nsims_tot += nsims
         nfits_tot += nfits
         #break
         
-
+    rbad = pd.DataFrame({'file':r})
     res = pd.DataFrame({'nsims':[nsims_tot],'nfits':[nfits_tot]})
 
     if output_q is not None:
-        return output_q.put({j: res})
+        return output_q.put({j: (res,rbad)})
     else:
-        return res
+        return (res,rbad)
 
 parser = OptionParser()
 
@@ -107,6 +116,8 @@ parser.add_option("--dbName", type="str", default='descddf_v1.5_10yrs',
                   help="db name [%default]")
 parser.add_option("--nproc", type=int, default=8,
                   help="nproc for multiprocessing [%default]")
+parser.add_option("--verbose", type=int, default=0,
+                  help="to activate the verbose mode [%default]")
 
 opts, args = parser.parse_args()
 
@@ -114,6 +125,7 @@ simDir = opts.simDir
 fitDir = opts.fitDir
 dbName = opts.dbName
 nproc = opts.nproc
+verbose = opts.verbose
 
 #search_path_simu = '{}/{}/Simu*COSMOS*allSN*.hdf5'.format(simDir,dbName)                                                                                   
 search_path_simu = '{}/{}/Simu*.hdf5'.format(simDir,dbName)
@@ -122,8 +134,10 @@ simus = glob.glob(search_path_simu)
 
 print(simus)
 
-res = analysis(simus,nproc)
+res,resbad = analysis(simus,verbose,nproc)
 #print(res)
 res = res[['nsims','nfits']].sum()
 
 print('summary',res['nsims'],res['nfits'],res['nfits']/res['nsims'])
+print('To reprocess',resbad)
+resbad.to_csv('bad_fits.csv',index=False)
