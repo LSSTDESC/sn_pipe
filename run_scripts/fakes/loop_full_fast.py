@@ -254,7 +254,7 @@ class SimFit:
             cmd += ' --SN_daymax_step 1.'
             cmd += ' --SN_minRFphaseQual 0.'
             cmd += ' --SN_maxRFphaseQual 0.'
-        print('LC simulation', cmd)
+        #print('LC simulation', cmd)
         os.system(cmd)
 
     def fit_lc(self, fitter):
@@ -276,7 +276,7 @@ class SimFit:
         cmd += ' --ProductionID {}_{}'.format(self.tag, fitter)
         cmd += ' --LCSelection_errmodrel {}'.format(self.errmodrel)
 
-        print('LC fit', cmd)
+        #print('LC fit', cmd)
         os.system(cmd)
 
     def calc_sigma_mu(self, fitter):
@@ -303,8 +303,8 @@ class SimFit:
                     resfit[key] = [-1.]
             fires = vstack([fires, resfit])
 
-        print(type(fires), fires.columns)
-        print(fires.info)
+        #print(type(fires), fires.columns)
+        #print(fires.info)
         outName = inputName.replace('.hdf5', '_sigma_mu.hdf5')
         fires.write(outName, 'lc_fit_sigma_mu', compression=True)
 
@@ -554,6 +554,8 @@ parser.add_option(
     '--fake_config', help='output file name [%default]', default='Fake_cadence.yaml', type='str')
 parser.add_option(
     '--multiDaymax', help='to simu/fit multi daymax SN [%default]', default=0, type=int)
+parser.add_option(
+    '--outputDir', help='main output directory [%default]', default='/sps/lsst/users/gris/config_zlim', type=str)
 
 opts, args = parser.parse_args()
 
@@ -570,7 +572,7 @@ for vv in ['seasons', 'seasonLength']:
     what = dd[vv]
     if '-' not in what or what[0] == '-':
         nn = list(map(int, what.split(',')))
-        print('ici', nn)
+        #print('ici', nn)
     else:
         nn = list(map(int, what.split('-')))
         nn = range(np.min(nn), np.max(nn))
@@ -608,6 +610,10 @@ snrmin = opts.snrmin
 nbef = opts.nbef
 naft = opts.naft
 nbands = opts.nbands
+outputDir =opts.outputDir
+
+if not os.path.exists(outputDir):
+    os.mkdir(outputDir)
 
 simus = list(map(str, opts.simus.split(',')))
 
@@ -635,15 +641,15 @@ for simu in simus:
         if errormod:
             cutoff = 'error_model'
             errmodrel = opts.errmodrel
-        outDir_simu = 'Output_Simu_{}_ebvofMW_{}'.format(
+        outDir_simu = '{}/Output_Simu_{}_ebvofMW_{}'.format(outputDir,
             cutoff, ebv)
         if errormod:
             outDir_simu += '_errmodrel_{}'.format(np.round(errmodrel, 2))
-        outDir_fit = 'Output_Fit_{}_ebvofMW_{}_snrmin_{}'.format(
+        outDir_fit = '{}/Output_Fit_{}_ebvofMW_{}_snrmin_{}'.format(outputDir,
             cutoff, ebv, int(snrmin))
         if errormod:
             outDir_fit += '_errmodrel_{}'.format(np.round(errmodrel, 2))
-        outDir_obs = 'Output_obs_{}_ebvofMW_{}'.format(
+        outDir_obs = '{}/Output_obs_{}_ebvofMW_{}'.format(outputDir,
             cutoff, ebv)
         tag = '{}_Fake_{}_{}_ebvofMW_{}'.format(
             simu, fname, cutoff, ebv)
