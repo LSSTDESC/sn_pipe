@@ -7,7 +7,7 @@ import os
 import multiprocessing
 from astropy.table import Table, vstack
 import matplotlib.pyplot as plt
-
+import time
 
 def zlimit(tab, covcc_col='Cov_colorcolor', z_col='z', sigmaC=0.04):
     """
@@ -39,7 +39,7 @@ def zlimit(tab, covcc_col='Cov_colorcolor', z_col='z', sigmaC=0.04):
 
     colors = interpv(zvals)
     ii = np.argmin(np.abs(colors-sigmaC))
-    print(colors)
+    #print(colors)
     return np.round(zvals[ii], 3)
 
 
@@ -155,7 +155,6 @@ def plot_indiv(ax, tab, covcc_col='Cov_colorcolor', z_col='z', fill=False, mean_
     """
     if not fill:
         ax.plot(tab[z_col], np.sqrt(tab[covcc_col]), color='k')
-        print('eeee', mean_zlim)
         if mean_zlim > 0.:
             zlimtxt = 'z$_{lim}$'
             txt = '{} = {} '.format(zlimtxt, mean_zlim)
@@ -184,7 +183,7 @@ def plot_SNR(sel, zlim):
 
     for i, b in enumerate(bands):
         ax.plot(sel['z'], sel['SNR_{}'.format(b)], color=colors[b])
-        print('SNR', SNR(sel, b, zlim))
+        #print('SNR', SNR(sel, b, zlim))
         SNR_b = SNR(sel, b, zlim)
         ax.text(zlim+0.05, 60.-i*5, 'SNR - {} band = {}'.format(b,
                                                                 SNR_b), color=colors[b], fontsize=12)
@@ -199,7 +198,7 @@ def plot_SNR(sel, zlim):
     ax.tick_params(axis='y', labelsize=12)
 
 
-def ana_zlim(tagprod, simulator='sn_fast', fitter='sn_fast', x1=-2.0, color=0.2, ebvofMW=0.0, snrmin=1., error_model=1, errmodrel=-1., bluecutoff=380., redcutoff=800., multiDaymax=0, sigmaC=0.04, plot_this=0):
+def ana_zlim(tagprod, simulator='sn_fast', fitter='sn_fast', x1=-2.0, color=0.2, ebvofMW=0.0, snrmin=1., error_model=1, errmodrel=-1., bluecutoff=380., redcutoff=800., multiDaymax=0, sigmaC=0.04, plot_this=0,outputDir='.'):
     """
     Function to analyze the output of the fit.
     The idea is to estimate the redshift limit
@@ -232,6 +231,8 @@ def ana_zlim(tagprod, simulator='sn_fast', fitter='sn_fast', x1=-2.0, color=0.2,
       sigmaC value to estimate zlim (default: 0.04)
     plot_this: int, opt
       to plot the results (default: 0)
+    outputDir: str, opt
+      the main output directory (default: .)
 
     Returns
     -----------
@@ -243,7 +244,7 @@ def ana_zlim(tagprod, simulator='sn_fast', fitter='sn_fast', x1=-2.0, color=0.2,
     if error_model < 1:
         cutoff = '{}_{}'.format(bluecutoff, redcutoff)
 
-    dirFile = 'Output_Fit_{}_ebvofMW_{}_snrmin_{}_errmodrel_{}'.format(
+    dirFile = '{}/Output_Fit_{}_ebvofMW_{}_snrmin_{}_errmodrel_{}'.format(outputDir,
         cutoff, ebvofMW, int(snrmin), np.round(errmodrel, 2))
 
     fName = 'Fit_{}_Fake_{}_{}_{}_ebvofMW_{}_{}_{}.hdf5'.format(
@@ -298,7 +299,7 @@ def simufit_cmd(tagprod, x1=-2.0, color=0.2,
                 redcutoff=800.,
                 Nvisits=dict(zip('grizy', [10, 20, 20, 26, 20])),
                 m5=dict(zip('grizy', [24.51, 24.06, 23.62, 23.0, 22.17])),
-                cadence=3, bands='grizy', multiDaymax=0, m5File=None, healpixID=-1, season=1):
+                cadence=3, bands='grizy', multiDaymax=0, m5File=None, healpixID=-1, season=1,outputDir='.'):
     """
     Function to simulate and fit SN light curves
 
@@ -340,6 +341,8 @@ def simufit_cmd(tagprod, x1=-2.0, color=0.2,
       m5 file name
     healpixID: int,opt
       healpixID to get m5 values (default: -1)
+    outputDir: str, opt
+      main output directory (default: .)
     """
     cmd = 'python run_scripts/fakes/loop_full_fast.py'
     cmd += ' --x1 {}'.format(x1)
@@ -357,6 +360,7 @@ def simufit_cmd(tagprod, x1=-2.0, color=0.2,
     cmd += ' --healpixID {}'.format(healpixID)
     cmd += ' --seasons {}'.format(season)
     cmd += ' --errmodrel {}'.format(errmodrel)
+    cmd += ' --outputDir {}'.format(outputDir)
 
     for b in bands:
         cmd += ' --Nvisits_{} {}'.format(b, Nvisits[b])
@@ -366,7 +370,7 @@ def simufit_cmd(tagprod, x1=-2.0, color=0.2,
     return cmd
 
 
-def multiproc(conf, bands, multiDaymax=False, m5File='NoData', healpixID_m5=False, sigmaC=0.04, action='all', plot=0, nproc=8):
+def multiproc(conf, bands, multiDaymax=False, m5File='NoData', healpixID_m5=False, sigmaC=0.04, action='all', plot=0,outputDir='.', nproc=8):
     """
     Function to process data using multiprocessing
 
@@ -390,6 +394,8 @@ def multiproc(conf, bands, multiDaymax=False, m5File='NoData', healpixID_m5=Fals
       what you have to do (all/simufit/zlim) (default: all)
     plot: bool, opt
       to plots the results (default: 0)
+    outputDir: str, opt
+      main output directory (default: .)
 
     Returns
     -----------
@@ -401,7 +407,7 @@ def multiproc(conf, bands, multiDaymax=False, m5File='NoData', healpixID_m5=Fals
     result_queue = multiprocessing.Queue()
 
     procs = [multiprocessing.Process(name='Subprocess-'+str(j), target=process,
-                                     args=(conf[t[j]:t[j+1]], bands, multiDaymax, m5File, healpixID_m5, sigmaC, action, plot, j, result_queue))
+                                     args=(conf[t[j]:t[j+1]], bands, multiDaymax, m5File, healpixID_m5, sigmaC, action, plot,outputDir, j, result_queue))
              for j in range(nproc)]
 
     for p in procs:
@@ -430,7 +436,7 @@ def multiproc(conf, bands, multiDaymax=False, m5File='NoData', healpixID_m5=Fals
     return restot
 
 
-def process(config, bands, multiDaymax, m5File, healpixID_m5, sigmaC, action, plot=0, j=0, output_q=None):
+def process(config, bands, multiDaymax, m5File, healpixID_m5, sigmaC, action,plot=0,outputDir='.', j=0, output_q=None):
     """
     Function to process data
 
@@ -452,6 +458,8 @@ def process(config, bands, multiDaymax, m5File, healpixID_m5, sigmaC, action, pl
       what to do
     plot: int, opt
       to display the results (default: 0)
+    outputDir: str
+      main output directory (default: .)
     j: int, opt
       multiprocessing number(default: 0)
     output_q: multiprocessing queue (default: None)
@@ -470,10 +478,10 @@ def process(config, bands, multiDaymax, m5File, healpixID_m5, sigmaC, action, pl
         # first step: simulate and fit
         tagprod = '{}_{}'.format(conf['tagprod'], conf['season'])
         if action == 'all' or action == 'simufit':
-            simufit(conf, bands, multiDaymax, m5File, healpixID_m5, tagprod)
+            simufit(conf, bands, multiDaymax, m5File, healpixID_m5, tagprod,outputDir)
         if action == 'all' or action == 'zlim':
             rzo, rstdo = zlim_estimate(
-                conf, tagprod, multiDaymax, sigmaC, plot)
+                conf, tagprod, multiDaymax, sigmaC, plot,outputDir)
             rz += rzo
             rstd += rstdo
 
@@ -487,7 +495,7 @@ def process(config, bands, multiDaymax, m5File, healpixID_m5, sigmaC, action, pl
         return confres
 
 
-def simufit(conf, bands, multiDaymax, m5File, healpixID_m5, tagprod):
+def simufit(conf, bands, multiDaymax, m5File, healpixID_m5, tagprod,outputDir):
 
     Nvisits = {}
     m5 = {}
@@ -504,16 +512,15 @@ def simufit(conf, bands, multiDaymax, m5File, healpixID_m5, tagprod):
     cmd = simufit_cmd(tagprod, conf['x1'], conf['color'], conf['ebvofMW'],
                       conf['simulator'], conf['fitter'], conf['snrmin'],
                       conf['error_model'], conf['errmodrel'], conf['bluecutoff'], conf['redcutoff'],
-                      Nvisits, m5, cadence, bands, multiDaymax, m5File, healpixID, conf['season'])
-    print(cmd)
+                      Nvisits, m5, cadence, bands, multiDaymax, m5File, healpixID, conf['season'],outputDir)
+    #print(cmd)
     os.system(cmd)
 
 
-def zlim_estimate(conf, tagprod, multiDaymax, sigmaC, plot):
+def zlim_estimate(conf, tagprod, multiDaymax, sigmaC, plot, outputDir):
 
     rz = []
     rstd = []
-    print('alllll', sigmaC)
     zlim_mean, zlim_std = ana_zlim(tagprod,
                                    simulator=conf['simulator'],
                                    fitter=conf['fitter'],
@@ -527,8 +534,9 @@ def zlim_estimate(conf, tagprod, multiDaymax, sigmaC, plot):
                                    redcutoff=conf['redcutoff'],
                                    multiDaymax=multiDaymax,
                                    sigmaC=sigmaC,
-                                   plot_this=plot)
-    print(zlim_mean)
+                                   plot_this=plot,
+                                   outputDir=outputDir)
+    #print(zlim_mean,outputDir)
     rz.append(np.round(zlim_mean, 2))
     rstd.append(np.round(zlim_std, 2))
 
@@ -553,13 +561,19 @@ parser.add_option('--action', type=str, default='all',
                   help='what to do: all, simu_fit, zlim [%default]')
 parser.add_option('--plot', type=int, default=0,
                   help='to make plots of the results [%default]')
+parser.add_option('--outputDir', type=str, default='/sps/lsst/users/gris/zlims_studies',
+                  help='main output directory [%default]')
+
 
 
 opts, args = parser.parse_args()
 
+time_ref =time.time()
 config = pd.read_csv(opts.config, comment='#')
 
 bands = 'grizy'
 res = multiproc(config, bands, opts.multiDaymax, opts.m5File,
-                opts.healpixID_m5, opts.sigmaC, opts.action, opts.plot, nproc=1)
+                opts.healpixID_m5, opts.sigmaC, opts.action, opts.plot, opts.outputDir, nproc=1)
 res.to_csv(opts.outName, index=False)
+
+print('elapsed time',time.time()-time_ref)
