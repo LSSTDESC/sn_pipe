@@ -1,8 +1,65 @@
 from optparse import OptionParser
 from sn_tools.sn_io import make_dict_from_config, make_dict_from_optparse
 from sn_tools.sn_cadence_tools import GenerateFakeObservations
-import numpy.lib.recfunctions as rf
+from sn_tools.sn_io import check_get_dir
+from sn_fit.mbcov import MbCov
 
+import numpy.lib.recfunctions as rf
+import sn_simu_input as simu_input
+import sn_fit_input as fit_input
+from sn_simu_wrapper.sn_wrapper_for_simu import SimuWrapper
+from sn_fit.process_fit import Fitting
+import time
+from astropy.table import Table, vstack
+import numpy as np
+import multiprocessing
+import pandas as pd
+
+def add_option(parser, confDict):
+    """
+    Function to add options to a parser from dict
+
+    Parameters
+    --------------
+    parser: parser
+      parser of interest
+    confDict: dict
+      dict of values to add to parser
+
+    """
+    for key, vals in confDict.items():
+        vv = vals[1]
+        if vals[0] != 'str':
+            vv = eval('{}({})'.format(vals[0], vals[1]))
+        parser.add_option('--{}'.format(key), help='{} [%default]'.format(
+            vals[2]), default=vv, type=vals[0], metavar='')
+
+def config(confDict,opts):
+    """
+    Method to update a dict from opts parser values
+
+    Parameters
+    ---------------
+    confDict: dict
+       initial dict
+    opts: opts.parser
+      parser values
+
+    Returns
+    ----------
+    updated dict
+
+    """
+    # make the fake config file here
+    newDict = {}
+    for key, vals in confDict.items():
+        newval = eval('opts.{}'.format(key))
+        newDict [key] = (vals[0], newval)
+
+    dd = make_dict_from_optparse(newDict)
+
+    return dd
+    
 
 class FakeObservations:
     """
@@ -37,7 +94,6 @@ class FakeObservations:
             what = self.dd[vv]
             if '-' not in what or what[0] == '-':
                 nn = list(map(int, what.split(',')))
-                print('ici', nn)
             else:
                 nn = list(map(int, what.split('-')))
                 nn = range(np.min(nn), np.max(nn))
@@ -66,43 +122,196 @@ class FakeObservations:
         # add a night column
 
         mygen = rf.append_fields(mygen, 'night', list(range(1, len(mygen)+1)))
+        # add pixRA, pixDex, healpixID columns
+        for vv in ['pixRA','pixDec','healpixID']:
+            mygen = rf.append_fields(mygen,vv , [0.]*len(mygen))
 
-        # add Ra, dec columns
+        
+        # add Ra, Dec,
         mygen = rf.append_fields(mygen, 'Ra', mygen['fieldRA'])
         mygen = rf.append_fields(mygen, 'RA', mygen['fieldRA'])
         mygen = rf.append_fields(mygen, 'Dec', mygen['fieldRA'])
+    
         # print(mygen.dtype)
         return mygen
 
+class GenSimFit:
+    def __init__(self,config_simu,config_fit,config_fake):
+
+        # simulator instance
+        self.simu = SimuWrapper(config_simu)
+
+        # fitter instance
+        covmb = None
+        mbCalc = config_fit['mbcov']['estimate']
+
+        if mbCalc:
+            #for this we need to have the SALT2 dir and files
+            # if it does not exist get it from the web
+    
+            salt2Dir = config_fit['mbcov']['directory']
+            webPath = config_fit['WebPathFit']
+            check_get_dir(webPath,salt2Dir, salt2Dir)
+            covmb = MbCov(salt2Dir, paramNames=dict(
+                zip(['x0', 'x1', 'color'], ['x0', 'x1', 'c'])))
+            
+        self.fit = Fitting(config_fit,covmb)
+
+        #nproc for multiproc
+        self.nproc = config_fit['MultiprocessingFit']['nproc']
+
+        self.config_fake = config_fake
+        
+    def __call__(self,params):
+
+        restot = Table()
+        for i, row in params[:100].iterrows():
+            config_fake = self.getconfig(row)
+            print(config_fake)
+            restot  =vstack([restot,self.runSequence(config_fake)])
+
+        print(len(restot))
+              
+    def runSequence(self, config_fake):
+        
+        # generate fake obs
+        fakeData = FakeObservations(config_fake).obs
+
+        # simulate LCs
+        list_lc = self.simu.run(fakeData)
+
+        # fit LCs
+        res = self.fit_loop(list_lc)
+
+        return res
+
+    def fit_loop(self, list_lc):
+
+        # multiprocessing parameters
+        nz = len(list_lc)
+        t = np.linspace(0, nz, self.nproc+1, dtype='int')
+        #print('multi', nz, t)
+        result_queue = multiprocessing.Queue()
+
+        procs = [multiprocessing.Process(name='Subprocess-'+str(j), target=self.fit_lc,
+                                         args=(list_lc[t[j]:t[j+1]],j, result_queue))
+                 for j in range(self.nproc)]
+
+        for p in procs:
+            p.start()
+
+        resultdict = {}
+        # get the results in a dict
+
+        for i in range(self.nproc):
+            resultdict.update(result_queue.get())
+
+        for p in multiprocessing.active_children():
+            p.join()
+
+        restot = Table()
+
+        # gather the results
+        for key, vals in resultdict.items():
+            restot = vstack([restot,vals])
+            """
+            if restot is None:
+                restot = vals
+            else:
+                restot = np.concatenate((restot, vals))
+            """
+        return restot
+                
+    def fit_lc(self, list_lc, j=0, output_q=None):
+
+        tabfit = Table()
+        for lc in list_lc:
+            resfit = self.fit(lc)
+            tabfit = vstack([tabfit,resfit])
+
+        if output_q is not None:
+            return output_q.put({j: tabfit})
+        else:
+            return tabfit
+
+    def getconfig(self, row):
+
+        config = self.config_fake.copy()
+
+        
+        for band in 'grizy':
+            config['cadence'][band] = row['cadence_{}'.format(band)]
+            config['m5'][band] = row['m5_{}'.format(band)]
+            config['Nvisits'][band] = row['N{}'.format(band)]
+        return config
 
 # this is to load option for fake cadence
 path = 'input/Fake_cadence'
-confDict = make_dict_from_config(path, 'config_cadence.txt')
+confDict_fake = make_dict_from_config(path, 'config_cadence.txt')
+# get all possible simulation parameters and put in a dict
+path = simu_input.__path__
+confDict_simu = make_dict_from_config(path[0],'config_simulation.txt')
+# get all possible simulation parameters and put in a dict
+path = fit_input.__path__
+confDict_fit = make_dict_from_config(path[0],'config_fit.txt')
+
 
 parser = OptionParser()
 
 # add option for Fake data here
-for key, vals in confDict.items():
-    vv = vals[1]
-    if vals[0] != 'str':
-        vv = eval('{}({})'.format(vals[0], vals[1]))
-    parser.add_option('--{}'.format(key), help='{} [%default]'.format(
-        vals[2]), default=vv, type=vals[0], metavar='')
+add_option(parser,confDict_fake)
+add_option(parser,confDict_simu)
+add_option(parser,confDict_fit)
 
 parser.add_option(
     '--outputDir', help='main output directory [%default]', default='/sps/lsst/users/gris/config_zlim', type=str)
+parser.add_option(
+    '--config', help='config file of parameters [%default]', default='config_z_0.8.csv', type=str)
 
 opts, args = parser.parse_args()
 
+time_ref = time.time()
+# make the config files here
+config_fake = config(confDict_fake,opts)
+config_simu = config(confDict_simu,opts)
+config_fit = config(confDict_fit,opts)
 
-# make the fake config file here
-newDict = {}
+# instance process here
+process = GenSimFit(config_simu, config_fit,config_fake)
+
+# run
+params = pd.read_csv(opts.config)
+process(params)
+
+"""
+
+fakeData = FakeObservations(newDict_fake).obs
+print(fakeData)
+
+# instance for simulation
+simu = SimuWrapper(newDict_simu)
+
+# simulate here
+
+list_lc = simu.run(fakeData)
+
+#fit instance here
+fit = Fitting(newDict_fit)
+
+for lc in list_lc:
+    print(lc.meta)
+    resfit = fit(lc)
+    print(resfit)
+"""
+print('Elapsed time',time.time()-time_ref)
+
+
+"""
 for key, vals in confDict.items():
     newval = eval('opts.{}'.format(key))
-    newDict[key] = (vals[0], newval)
+    newDict[key]=(vals[0],newval)
 
-dd = make_dict_from_optparse(newDict)
+# new dict with configuration params
+yaml_params = make_dict_from_optparse(newDict)
+"""
 
-fakeData = FakeObservations(dd).obs
-
-print(fakeData)
