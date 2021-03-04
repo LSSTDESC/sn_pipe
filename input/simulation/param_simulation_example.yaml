@@ -10,14 +10,14 @@ Display:
     display: 0
     time: 5.0
 Host: 0
-Instrument:
+InstrumentSimu:
   aerosol: 0
   airmass: 1.2
   atmos: 1
   atmosDir: THROUGHPUTS_DIR
   name: LSST
   throughputDir: LSST_THROUGHPUTS_BASELINE
-Multiprocessing:
+MultiprocessingSimu:
   nproc: 1
 Observations:
   coadd: 1
@@ -25,12 +25,12 @@ Observations:
   fieldtype: WFD
   filename: ../DB_Files/descddf_v1.4_10yrs.npy
   season: -1
-Output:
+OutputSimu:
   directory: Output_Simu
   save: 1
 Pixelisation:
   nside: 64
-ProductionID: prodid
+ProductionIDSimu: prodid
 ReferenceFiles:
   DustCorrDir: Template_Dust
   GammaDir: reference_files
@@ -80,4 +80,4 @@ Simulator:
   model: salt2-extended
   name: sn_simulator.sn_cosmo
   version: 1.0
-WebPath: https://me.lsst.eu/gris/DESC_SN_pipeline
+WebPathSimu: https://me.lsst.eu/gris/DESC_SN_pipeline

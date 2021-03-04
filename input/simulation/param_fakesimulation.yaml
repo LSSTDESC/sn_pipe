@@ -1,4 +1,4 @@
-ProductionID: Fake_Observation_0.0_0.0
+ProductionIDSimu: Fake_Observation_0.0_0.0
 SN parameters:
    Id : 100                   # Id of the first SN
    x1_color:                    # stretch and color
@@ -28,7 +28,7 @@ Cosmology:
    H0 : 72.0                  # H0
    w0 : -1.0                  # w0
    wa : 0.0                   # wa
-Instrument:
+InstrumentSimu:
    name : LSST       #name of the telescope (internal)
    throughput_dir : LSST_THROUGHPUTS_BASELINE #dir of throughput
    atmos_dir : THROUGHPUTS_DIR   #dir of atmos
@@ -48,10 +48,10 @@ Host Parameters: None         # Host parameters
 Display_LC : #display during LC simulations
    display: True
    time: 5 #display during time (sec) before closing
-Output:
+OutputSimu:
     directory: Output_Simu
     save: True
-Multiprocessing:
+MultiprocessingSimu:
     nproc: 1
 Metric: sn_mafsim.sn_maf_fakesimulation
 Param_file: input/Fake_cadence.yaml
