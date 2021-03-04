@@ -178,10 +178,16 @@ class SimuWrapper:
 
     def __init__(self, yaml_config):
 
-        # load config file
-        with open(yaml_config) as file:
-            config = yaml.full_load(file)
+        print('hh',type(yaml_config))
+        fileName, fileExtension = os.path.splitext(yaml_config)
+        if fileExtension == 'yaml':
+            # load config file
+            with open(yaml_config) as file:
+                config = yaml.full_load(file)
+        else:
+            config = yaml_config
 
+        print('oooooo',config)
         self.name = 'simulation'
 
         # get X0 for SNIa normalization

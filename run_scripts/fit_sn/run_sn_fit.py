@@ -41,7 +41,7 @@ class Fit_Simu:
         self.simu_files = glob.glob(search_path)
 
         # nproc (for multiprocessing)
-        self.nproc=config['Multiprocessing']['nproc']
+        self.nproc=config['MultiprocessingFit']['nproc']
         # process here
         self.fitSimu()
 
@@ -335,7 +335,7 @@ if mbCalc:
     # if it does not exist get it from the web
     
     salt2Dir = yaml_params['mbcov']['directory']
-    webPath = yaml_params['WebPath']
+    webPath = yaml_params['WebPathFit']
     check_get_dir(webPath,salt2Dir, salt2Dir)
     covmb = MbCov(salt2Dir, paramNames=dict(
         zip(['x0', 'x1', 'color'], ['x0', 'x1', 'c'])))
