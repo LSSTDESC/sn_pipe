@@ -7,6 +7,7 @@ from astropy.table import Table, vstack
 from sn_fit.mbcov import MbCov
 from sn_tools.sn_io import loopStack, check_get_dir
 import glob
+import pandas as pd
 
 
 class SimFit:
@@ -42,7 +43,7 @@ class SimFit:
     simulator: str, opt
       simulator to use(default: sn_fast)
     fitters: list(str), opt
-      list of fitters to use(defaulf: ['sn_fast','sn_cosmo'])          
+      list of fitters to use(defaulf: ['sn_fast','sn_cosmo'])
     outDir_simu: str, opt
        location dir of simus (default: zlim_simu)
     outDir_fit: str, opt
@@ -54,7 +55,7 @@ class SimFit:
     multiDaymax: bool,opt
       to simulate/fit multi daymax sn (default: 0)
     m5File: str, opt
-      m5 values from file (default: NoData) 
+      m5 values from file (default: NoData)
     healpixID: int, opt
       healpixID to grab m5 values from (default: -1)
     season: int, opt
@@ -114,14 +115,14 @@ class SimFit:
         self.zmax = 1.0
         self.zstep = 0.05
         self.errmodrel = errmodrel
-        
+
         # fit parameters
         self.snrmin = snrmin
         self.nbef = 4
         self.naft = 10
         self.nbands = 0
         self.fitters = fitters
-        
+
         # define some directory for the production of LC+Simu
 
         self.outDir_simu = outDir_simu
@@ -234,12 +235,12 @@ class SimFit:
         cmd += ' --Observations_fieldtype Fake'
         cmd += ' --Observations_coadd 0'
         cmd += ' --radius 0.01'
-        cmd += ' --Output_directory {}'.format(self.outDir_simu)
+        cmd += ' --OutputSimu_directory {}'.format(self.outDir_simu)
         cmd += ' --Simulator_name sn_simulator.{}'.format(self.simulator)
-        cmd += ' --Multiprocessing_nproc 1'
+        cmd += ' --MultiprocessingSimu_nproc 1'
         cmd += ' --RAmin 0.0'
         cmd += ' --RAmax 0.1'
-        cmd += '  --ProductionID {}'.format(self.tag)
+        cmd += '  --ProductionIDSimu {}'.format(self.tag)
         cmd += ' --SN_blueCutoff {}'.format(self.bluecutoff)
         cmd += ' --SN_redCutoff {}'.format(self.redcutoff)
         cmd += ' --SN_ebvofMW {}'.format(self.ebvofMW)
@@ -254,7 +255,7 @@ class SimFit:
             cmd += ' --SN_daymax_step 1.'
             cmd += ' --SN_minRFphaseQual 0.'
             cmd += ' --SN_maxRFphaseQual 0.'
-        #print('LC simulation', cmd)
+        # print('LC simulation', cmd)
         os.system(cmd)
 
     def fit_lc(self, fitter):
@@ -265,18 +266,18 @@ class SimFit:
         cmd = 'python run_scripts/fit_sn/run_sn_fit.py'
         cmd += ' --Simulations_dirname {}'.format(self.outDir_simu)
         cmd += ' --Simulations_prodid {}_0'.format(self.tag)
-        cmd += ' --mbcov_estimate 0 --Multiprocessing_nproc 8'
-        cmd += ' --Output_directory {}'.format(self.outDir_fit)
+        cmd += ' --mbcov_estimate 0 --MultiprocessingFit_nproc 8'
+        cmd += ' --OutputFit_directory {}'.format(self.outDir_fit)
         cmd += ' --LCSelection_snrmin {}'.format(self.snrmin)
         cmd += ' --LCSelection_nbef {}'.format(self.nbef)
         cmd += ' --LCSelection_naft {}'.format(self.naft)
         cmd += ' --LCSelection_nbands {}'.format(self.nbands)
-        #cmd += ' --LCSelection_errmodrel {}'.format(self.errmodrel)
+        # cmd += ' --LCSelection_errmodrel {}'.format(self.errmodrel)
         cmd += ' --Fitter_name sn_fitter.fit_{}'.format(fitter)
-        cmd += ' --ProductionID {}_{}'.format(self.tag, fitter)
+        cmd += ' --ProductionIDFit {}_{}'.format(self.tag, fitter)
         cmd += ' --LCSelection_errmodrel {}'.format(self.errmodrel)
 
-        #print('LC fit', cmd)
+        # print('LC fit', cmd)
         os.system(cmd)
 
     def calc_sigma_mu(self, fitter):
@@ -303,8 +304,8 @@ class SimFit:
                     resfit[key] = [-1.]
             fires = vstack([fires, resfit])
 
-        #print(type(fires), fires.columns)
-        #print(fires.info)
+        # print(type(fires), fires.columns)
+        # print(fires.info)
         outName = inputName.replace('.hdf5', '_sigma_mu.hdf5')
         fires.write(outName, 'lc_fit_sigma_mu', compression=True)
 
@@ -539,8 +540,10 @@ parser.add_option("--sn_cosmo_simu_fitter", type='str', default='sn_cosmo',
                   help="fitter for sn_cosmo simulations[%default]")
 parser.add_option("--sn_fast_simu_fitter", type='str', default='sn_cosmo,sn_fast',
                   help="fitter for sn_fast simulations[%default]")
-parser.add_option("--tagprod", type=str, default='',
+parser.add_option("--tagprod", type=int, default=0,
                   help="tag for output [%default]")
+parser.add_option("--nproc", type=int, default=4,
+                  help="nproc for fit multiprocessing [%default]")
 
 # add option for Fake data here
 for key, vals in confDict.items():
@@ -555,7 +558,7 @@ parser.add_option(
 parser.add_option(
     '--multiDaymax', help='to simu/fit multi daymax SN [%default]', default=0, type=int)
 parser.add_option(
-    '--outputDir', help='main output directory [%default]', default='/sps/lsst/users/gris/config_zlim', type=str)
+    '--outputDir', help='main output directory [%default]', default='zlim', type=str)
 
 opts, args = parser.parse_args()
 
@@ -572,7 +575,7 @@ for vv in ['seasons', 'seasonLength']:
     what = dd[vv]
     if '-' not in what or what[0] == '-':
         nn = list(map(int, what.split(',')))
-        #print('ici', nn)
+        # print('ici', nn)
     else:
         nn = list(map(int, what.split('-')))
         nn = range(np.min(nn), np.max(nn))
@@ -595,7 +598,7 @@ for vv in ['MJDmin']:
 with open(opts.fake_config, 'w') as f:
     data = yaml.safe_dump(dd, f)
 """
-#fake_config = 'input/Fake_cadence/Fake_cadence.yaml'
+# fake_config = 'input/Fake_cadence/Fake_cadence.yaml'
 
 x1 = opts.x1
 color = opts.color
@@ -610,15 +613,15 @@ snrmin = opts.snrmin
 nbef = opts.nbef
 naft = opts.naft
 nbands = opts.nbands
-outputDir =opts.outputDir
-
+outputDir = opts.outputDir
+nproc = opts.nproc
 if not os.path.exists(outputDir):
     os.mkdir(outputDir)
 
 simus = list(map(str, opts.simus.split(',')))
 
 error_models = list(map(int, opts.error_model.split(',')))
-
+errmodrel = opts.errmodrel
 fitters = dict(zip(['sn_cosmo', 'sn_fast'], [
                opts.sn_cosmo_simu_fitter.split(','), opts.sn_fast_simu_fitter.split(',')]))
 
@@ -631,6 +634,52 @@ for b in opts.bands:
     m5[b] = eval('opts.m5_{}'.format(b))
     cadence[b] = eval('opts.cadence_{}'.format(b))
 
+cols = ['tagprod', 'x1', 'color', 'ebvofMW', 'snrmin', 'error_model', 'errmodrel', 'bluecutoff', 'redcutoff', 'simulator', 'fitter', 'Ng',
+        'Nr', 'Ni', 'Nz', 'Ny', 'm5_g', 'm5_r', 'm5_i', 'm5_z', 'm5_y', 'cadence_g', 'cadence_r', 'cadence_i', 'cadence_z', 'cadence_y', 'season']
+print(simus, fitters, error_models)
+
+for simu in simus:
+    for fitter in fitters[simu]:
+        for error_model in error_models:
+            r = [0, x1, color, ebv, snrmin, error_model,
+                 errmodrel, bluecutoff, redcutoff, simu, fitter]
+            for b in opts.bands:
+                r.append(Nvisits[b])
+            for b in opts.bands:
+                r.append(m5[b])
+            for b in opts.bands:
+                r.append(int(cadence[b]))
+            r.append(1)
+            df = pd.DataFrame([r], columns=cols)
+            print(df)
+            df.to_csv('config_loop.csv', index=False)
+            scriptName = 'run_scripts/fakes/simu_fit.py'
+            script_cmd = 'python {}'.format(scriptName)
+            script_cmd += ' --SN_x1_min {}'.format(x1)
+            script_cmd += ' --SN_x1_type unique'
+            script_cmd += ' --SN_color_min {}'.format(color)
+            script_cmd += ' --SN_color_type unique'
+            script_cmd += ' --SN_ebvofMW {}'.format(ebv)
+            script_cmd += ' --SN_blueCutoff {}'.format(bluecutoff)
+            script_cmd += ' --SN_redCutoff {}'.format(redcutoff)
+            script_cmd += ' --Simulator_errorModel {}'.format(error_model)
+            script_cmd += ' --LCSelection_errmodrel {}'.format(errmodrel)
+            script_cmd += ' --Simulator_name sn_simulator.{}'.format(simu)
+            script_cmd += ' --Fitter_name sn_fitter.fit_{}'.format(fitter)
+            script_cmd += ' --OutputSimu_save 0'
+            script_cmd += ' --MultiprocessingFit_nproc {}'.format(nproc)
+            script_cmd += ' --outputDir {}'.format(outputDir)
+            script_cmd += ' --config config_loop.csv'
+            script_cmd += ' --SN_z_min 0.01'
+            script_cmd += ' --SN_z_max 1.'
+            script_cmd += ' --SN_z_type uniform'
+            script_cmd += ' --SN_z_step 0.05'
+            script_cmd += ' --Observations_coadd 0'
+            print(script_cmd)
+            os.system(script_cmd)
+            # break
+"""
+
 for simu in simus:
     fname = '{}_{}'.format(sn_type, sn_model)
     if 'salt2' in sn_model:
@@ -642,15 +691,15 @@ for simu in simus:
             cutoff = 'error_model'
             errmodrel = opts.errmodrel
         outDir_simu = '{}/Output_Simu_{}_ebvofMW_{}'.format(outputDir,
-            cutoff, ebv)
+                                                            cutoff, ebv)
         if errormod:
             outDir_simu += '_errmodrel_{}'.format(np.round(errmodrel, 2))
         outDir_fit = '{}/Output_Fit_{}_ebvofMW_{}_snrmin_{}'.format(outputDir,
-            cutoff, ebv, int(snrmin))
+                                                                    cutoff, ebv, int(snrmin))
         if errormod:
             outDir_fit += '_errmodrel_{}'.format(np.round(errmodrel, 2))
         outDir_obs = '{}/Output_obs_{}_ebvofMW_{}'.format(outputDir,
-            cutoff, ebv)
+                                                          cutoff, ebv)
         tag = '{}_Fake_{}_{}_ebvofMW_{}'.format(
             simu, fname, cutoff, ebv)
         if opts.tagprod != '':
@@ -678,7 +727,7 @@ for simu in simus:
                          tag=tag)
 
         sim_fit.process(Nvisits=Nvisits, m5=m5, cadence=cadence)
-
+"""
 """
 for errmod in error_models:
     run(x1,color,simus,ebv,bluecutoff,redcutoff,errmod,opts.fake_config,snrmin,nbef,naft,nbands,zmax)
@@ -687,5 +736,5 @@ for errmod in error_models:
 # case error_model=1
 run(x1,color,simus,ebv,bluecutoff,redcutoff,1,opts.fake_config,snrmin,nbef,naft,zmax)
 # case error_model=0
-#run(x1,color,simus,ebv,bluecutoff,redcutoff,0,opts.fake_config,snrmin,nbef,naft,zmax)
+# run(x1,color,simus,ebv,bluecutoff,redcutoff,0,opts.fake_config,snrmin,nbef,naft,zmax)
 """
