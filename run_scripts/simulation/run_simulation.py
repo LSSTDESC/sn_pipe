@@ -1,6 +1,6 @@
-from simuWrapper import SimuWrapper, MakeYaml
+from sn_simu_wrapper.sn_wrapper_for_simu import SimuWrapper, MakeYaml
 import sn_simu_input as simu_input
-from sn_tools.sn_io import make_dict_from_config,make_dict_from_optparse
+from sn_tools.sn_io import make_dict_from_config, make_dict_from_optparse
 from sn_tools.sn_process import Process
 from optparse import OptionParser
 import numpy as np
@@ -10,7 +10,7 @@ import yaml
 
 # get all possible simulation parameters and put in a dict
 path = simu_input.__path__
-confDict = make_dict_from_config(path[0],'config_simulation.txt')
+confDict = make_dict_from_config(path[0], 'config_simulation.txt')
 
 
 parser = OptionParser()
@@ -48,24 +48,26 @@ parser.add_option("--nproc", type=int, default=1,
 for key, vals in confDict.items():
     vv = vals[1]
     if vals[0] != 'str':
-        vv = eval('{}({})'.format(vals[0],vals[1]))
-    parser.add_option('--{}'.format(key),help='{} [%default]'.format(vals[2]),default=vv,type=vals[0],metavar='')
+        vv = eval('{}({})'.format(vals[0], vals[1]))
+    parser.add_option('--{}'.format(key), help='{} [%default]'.format(
+        vals[2]), default=vv, type=vals[0], metavar='')
 
 opts, args = parser.parse_args()
 
 print('Start processing...')
 
-#load the new values
+# load the new values
 newDict = {}
 for key, vals in confDict.items():
     newval = eval('opts.{}'.format(key))
-    newDict[key]=(vals[0],newval)
+    newDict[key] = (vals[0], newval)
 
 # new dict with configuration params
 yaml_params = make_dict_from_optparse(newDict)
 
 # one modif: full dbName
-yaml_params['Observations']['filename']='{}/{}.{}'.format(opts.dbDir, opts.dbName, opts.dbExtens)
+yaml_params['Observations']['filename'] = '{}/{}.{}'.format(
+    opts.dbDir, opts.dbName, opts.dbExtens)
 
 """
 # Generate the yaml file
@@ -89,8 +91,8 @@ print(yaml_params)
 # save on disk
 
 # create outputdir if does not exist
-outDir = yaml_params['Output']['directory']
-prodid = yaml_params['ProductionID']
+outDir = yaml_params['OutputSimu']['directory']
+prodid = yaml_params['ProductionIDSimu']
 
 if not os.path.isdir(outDir):
     os.makedirs(outDir)
@@ -106,11 +108,11 @@ fieldType = yaml_params['Observations']['fieldtype']
 fieldName = yaml_params['Observations']['fieldname']
 nside = yaml_params['Pixelisation']['nside']
 saveData = 0
-outDir = yaml_params['Output']['directory']
+outDir = yaml_params['OutputSimu']['directory']
 # now perform the processing
 
 Process(opts.dbDir, opts.dbName, opts.dbExtens,
-        fieldType, fieldName,nside,
+        fieldType, fieldName, nside,
         opts.RAmin, opts.RAmax,
         opts.Decmin, opts.Decmax,
         saveData, opts.remove_dithering,
