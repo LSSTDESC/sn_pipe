@@ -38,7 +38,7 @@ fi
 echo $myshell
 
 # get distribs
-array=($(ls -dtr $dir_rel/lsst_sims/*))
+array=($(ls -dtr $dir_rel/lsst_sims/* | grep -v dev))
 
 # print possible distribs
 
