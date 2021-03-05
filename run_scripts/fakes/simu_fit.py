@@ -14,6 +14,7 @@ from astropy.table import Table, vstack
 import numpy as np
 import multiprocessing
 import pandas as pd
+import os
 
 
 def add_option(parser, confDict):
@@ -133,7 +134,7 @@ class FakeObservations:
         mygen = rf.append_fields(mygen, 'RA', mygen['fieldRA'])
         mygen = rf.append_fields(mygen, 'Dec', mygen['fieldRA'])
 
-        # print(mygen.dtype)
+        # print(mygen)
         return mygen
 
 
@@ -149,13 +150,27 @@ class GenSimFit:
       configuration dict for simulation
     config_fit: dict
       configuration dict for fit
-
+    outputDir: str
+      main output directory
+    tagprod: int, opt
+      tag for production (default: 0)
     """
 
-    def __init__(self, config_fake, config_simu, config_fit, outputDir):
+    def __init__(self, config_fake, config_simu, config_fit, outputDir, tagprod=0):
+
+        # grab config
+        self.config_simu = config_simu
+        self.config_fit = config_fit
+        self.tagprod = tagprod
+        self.outputDir = outputDir
+
+        # prepare for output
+        self.save_simu = config_simu['OutputSimu']['save']
+        self.save_fit = config_fit['OutputFit']['save']
+        self.prepare_for_save()
 
         # simulator instance
-        self.simu = SimuWrapper(config_simu)
+        self.simu = SimuWrapper(self.config_simu)
 
         # fitter instance
         covmb = None
@@ -171,17 +186,17 @@ class GenSimFit:
             covmb = MbCov(salt2Dir, paramNames=dict(
                 zip(['x0', 'x1', 'color'], ['x0', 'x1', 'c'])))
 
-        self.fit = Fitting(config_fit, covmb)
+        self.fit = Fitting(self.config_fit, covmb)
 
         # nproc for multiproc
         self.nproc = config_fit['MultiprocessingFit']['nproc']
 
         self.config_fake = config_fake
 
-        self.prepare_for_save(config_simu, config_fit, outputDir)
-
+        """
         print(config_simu)
         print(config_fit)
+        """
 
     def __call__(self, params):
         """
@@ -202,6 +217,11 @@ class GenSimFit:
         for i, row in params[:2].iterrows():
             config_fake = self.getconfig(row)
             restot = vstack([restot, self.runSequence(config_fake)])
+
+        if self.save_fit:
+            outName = '{}/{}.hdf5'.format(
+                self.config_fit['OutputFit']['directory'], self.config_fit['ProductionIDFit'])
+            restot.write(outName, 'fitlc', compression=True)
 
         return restot
 
@@ -326,41 +346,63 @@ class GenSimFit:
         config['tagprod'] = row['tagprod']
         return config
 
-    def prepare_for_save(self, config_simu, config_fit, outputDir):
+    def prepare_for_save(self):
         """
         Method defining a set of infos to save data: output names for dir and files
 
-        Parameters
-        ---------------
-        config_simu: dict
-           configuration dict for simulation
-        config_fit: dict
-          configuration dict for fit
-        outputDir: str
-          main output directory
-
         """
-        errormod = config_simu['Simulator']['errorModel']
+        errormod = self.config_simu['Simulator']['errorModel']
         cutoff = '{}_{}'.format(
-            config_simu['SN']['blueCutoff'], config_simu['SN']['redCutoff'])
-        ebv = config_simu['SN']['ebvofMW']
+            self.config_simu['SN']['blueCutoff'], self.config_simu['SN']['redCutoff'])
+        ebv = self.config_simu['SN']['ebvofMW']
 
         if errormod:
             cutoff = 'error_model'
 
-        outDir_simu = '{}/Output_Simu_{}_ebvofMW_{}'.format(outputDir,
+        outDir_simu = '{}/Output_Simu_{}_ebvofMW_{}'.format(self.outputDir,
                                                             cutoff, ebv)
 
-        config_simu['OutputSimu_directory'] = outDir_simu
+        self.config_simu['OutputSimu']['directory'] = outDir_simu
 
-        snrmin = config_fit['LCSelection']['snrmin']
-        outDir_fit = '{}/Output_Fit_{}_ebvofMW_{}_snrmin_{}'.format(outputDir,
+        snrmin = self.config_fit['LCSelection']['snrmin']
+        outDir_fit = '{}/Output_Fit_{}_ebvofMW_{}_snrmin_{}'.format(self.outputDir,
                                                                     cutoff, ebv, int(snrmin))
         if errormod:
-            errmodrel = config_fit['LCSelection']['errmodrel']
+            errmodrel = self.config_fit['LCSelection']['errmodrel']
             outDir_fit += '_errmodrel_{}'.format(np.round(errmodrel, 2))
 
-        config_fit['OutputFit']['directory'] = outDir_fit
+        self.config_fit['OutputFit']['directory'] = outDir_fit
+
+        sn_model = self.config_simu['Simulator']['model']
+        simu = self.config_simu['Simulator']['name'].split('.')[-1]
+        fitter = self.config_fit['Fitter']['name'].split('.')[-1].split('_')
+        fitter = '_'.join([vv for vv in fitter[1:]])
+        sn_type = self.config_simu['SN']['type']
+        x1 = self.config_simu['SN']['x1']['min']
+        color = self.config_simu['SN']['color']['min']
+
+        fname = '{}_{}'.format(sn_type, sn_model)
+        if 'salt2' in sn_model:
+            fname = '{}_{}'.format(x1, color)
+        tag = '{}_Fake_{}_{}_ebvofMW_{}'.format(
+            simu, fname, cutoff, ebv)
+        if self.tagprod != '':
+            tag += '_{}'.fotmat(self.tagprod)
+
+        self.config_simu['ProductionIDSimu'] = tag
+        self.config_fit['ProductionIDFit'] = 'Fit_{}_{}'.format(tag, fitter)
+
+        # create dirs if necessary
+        if self.save_simu or self.save_fit:
+            if not os.path.exists(self.outputDir):
+                os.mkdir(self.outputDir)
+        if self.save_simu:
+            if not os.path.exists(outDir_simu):
+                os.mkdir(outDir_simu)
+
+        if self.save_fit:
+            if not os.path.exists(outDir_fit):
+                os.mkdir(outDir_fit)
 
 
 # this is to load option for fake cadence
@@ -395,13 +437,14 @@ config_simu = config(confDict_simu, opts)
 config_fit = config(confDict_fit, opts)
 
 # instance process here
-process = GenSimFit(config_fake, config_simu, config_fit, opts.outputDir)
+process = GenSimFit(config_fake, config_simu, config_fit,
+                    opts.outputDir, tagprod='')
 
 # run
 params = pd.read_csv(opts.config)
 res = process(params)
 
-print(res.columns)
+# print(res.columns)
 """
 
 fakeData = FakeObservations(newDict_fake).obs
