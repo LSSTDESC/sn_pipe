@@ -15,6 +15,7 @@ import numpy as np
 import multiprocessing
 import pandas as pd
 
+
 def add_option(parser, confDict):
     """
     Function to add options to a parser from dict
@@ -34,7 +35,8 @@ def add_option(parser, confDict):
         parser.add_option('--{}'.format(key), help='{} [%default]'.format(
             vals[2]), default=vv, type=vals[0], metavar='')
 
-def config(confDict,opts):
+
+def config(confDict, opts):
     """
     Method to update a dict from opts parser values
 
@@ -54,12 +56,12 @@ def config(confDict,opts):
     newDict = {}
     for key, vals in confDict.items():
         newval = eval('opts.{}'.format(key))
-        newDict [key] = (vals[0], newval)
+        newDict[key] = (vals[0], newval)
 
     dd = make_dict_from_optparse(newDict)
 
     return dd
-    
+
 
 class FakeObservations:
     """
@@ -123,20 +125,34 @@ class FakeObservations:
 
         mygen = rf.append_fields(mygen, 'night', list(range(1, len(mygen)+1)))
         # add pixRA, pixDex, healpixID columns
-        for vv in ['pixRA','pixDec','healpixID']:
-            mygen = rf.append_fields(mygen,vv , [0.]*len(mygen))
+        for vv in ['pixRA', 'pixDec', 'healpixID']:
+            mygen = rf.append_fields(mygen, vv, [0.]*len(mygen))
 
-        
         # add Ra, Dec,
         mygen = rf.append_fields(mygen, 'Ra', mygen['fieldRA'])
         mygen = rf.append_fields(mygen, 'RA', mygen['fieldRA'])
         mygen = rf.append_fields(mygen, 'Dec', mygen['fieldRA'])
-    
+
         # print(mygen.dtype)
         return mygen
 
+
 class GenSimFit:
-    def __init__(self,config_simu,config_fit,config_fake):
+    """
+    class to generate observations, simulate and fit fake observations
+
+    Parameters
+    ---------------
+    config_fake: dict
+      configuration dict to generate fakes
+    config_simu: dict
+      configuration dict for simulation
+    config_fit: dict
+      configuration dict for fit
+
+    """
+
+    def __init__(self, config_fake, config_simu, config_fit, outputDir):
 
         # simulator instance
         self.simu = SimuWrapper(config_simu)
@@ -146,39 +162,71 @@ class GenSimFit:
         mbCalc = config_fit['mbcov']['estimate']
 
         if mbCalc:
-            #for this we need to have the SALT2 dir and files
+            # for this we need to have the SALT2 dir and files
             # if it does not exist get it from the web
-    
+
             salt2Dir = config_fit['mbcov']['directory']
             webPath = config_fit['WebPathFit']
-            check_get_dir(webPath,salt2Dir, salt2Dir)
+            check_get_dir(webPath, salt2Dir, salt2Dir)
             covmb = MbCov(salt2Dir, paramNames=dict(
                 zip(['x0', 'x1', 'color'], ['x0', 'x1', 'c'])))
-            
-        self.fit = Fitting(config_fit,covmb)
 
-        #nproc for multiproc
+        self.fit = Fitting(config_fit, covmb)
+
+        # nproc for multiproc
         self.nproc = config_fit['MultiprocessingFit']['nproc']
 
         self.config_fake = config_fake
-        
-    def __call__(self,params):
 
+        self.prepare_for_save(config_simu, config_fit, outputDir)
+
+        print(config_simu)
+        print(config_fit)
+
+    def __call__(self, params):
+        """
+        call function.
+        The output is a list of fitted SN that can be copied on disk.
+
+        Parameters
+        ---------------
+        params: dict
+          configuration dict for fake obs
+
+        Returns
+        -----------
+        astropy table with a list of fitted SN
+
+        """
         restot = Table()
-        for i, row in params[:100].iterrows():
+        for i, row in params[:2].iterrows():
             config_fake = self.getconfig(row)
-            print(config_fake)
-            restot  =vstack([restot,self.runSequence(config_fake)])
+            restot = vstack([restot, self.runSequence(config_fake)])
 
-        print(len(restot))
-              
+        return restot
+
     def runSequence(self, config_fake):
-        
+        """
+        Method to perform the complete sequence: observation generation, simulation and fit
+
+        Parameters
+        ---------------
+        config_fake: dict
+          configuration dict for fake obs.
+
+        Returns
+        -----------
+        fitted LC (astropy table)
+        """
         # generate fake obs
         fakeData = FakeObservations(config_fake).obs
 
         # simulate LCs
         list_lc = self.simu.run(fakeData)
+
+        # add the tag prod to lc metadata
+        for lc in list_lc:
+            lc.meta['tagprod'] = config_fake['tagprod']
 
         # fit LCs
         res = self.fit_loop(list_lc)
@@ -186,15 +234,28 @@ class GenSimFit:
         return res
 
     def fit_loop(self, list_lc):
+        """
+        Method to fit a list of light curves.
+        This method uses multiprocessing.
+
+        Parameters
+        ---------------
+        list_lc: list
+          list of light curves (astropy tables)
+
+        Returns
+        ----------
+        astropy table: each row corresponds to a fitted LC (hence a supernova)
+        """
 
         # multiprocessing parameters
         nz = len(list_lc)
         t = np.linspace(0, nz, self.nproc+1, dtype='int')
-        #print('multi', nz, t)
+        # print('multi', nz, t)
         result_queue = multiprocessing.Queue()
 
         procs = [multiprocessing.Process(name='Subprocess-'+str(j), target=self.fit_lc,
-                                         args=(list_lc[t[j]:t[j+1]],j, result_queue))
+                                         args=(list_lc[t[j]:t[j+1]], j, result_queue))
                  for j in range(self.nproc)]
 
         for p in procs:
@@ -213,21 +274,28 @@ class GenSimFit:
 
         # gather the results
         for key, vals in resultdict.items():
-            restot = vstack([restot,vals])
-            """
-            if restot is None:
-                restot = vals
-            else:
-                restot = np.concatenate((restot, vals))
-            """
+            restot = vstack([restot, vals])
         return restot
-                
+
     def fit_lc(self, list_lc, j=0, output_q=None):
+        """
+        Method to fit a list of light curves.
+        This method is used by the multiprocessing (fit_loop).
+
+        Parameters
+        ---------------
+        list_lc: list
+          list of light curves (astropy tables)
+
+        Returns
+        ----------
+        astropy table: each row corresponds to a fitted LC (hence a supernova)
+        """
 
         tabfit = Table()
         for lc in list_lc:
             resfit = self.fit(lc)
-            tabfit = vstack([tabfit,resfit])
+            tabfit = vstack([tabfit, resfit])
 
         if output_q is not None:
             return output_q.put({j: tabfit})
@@ -235,33 +303,83 @@ class GenSimFit:
             return tabfit
 
     def getconfig(self, row):
+        """
+        Method to make a config dict for fake obs.
 
+        Parameters
+        ---------------
+        row: df row
+          set of parameters to build the dict from
+
+        Returns
+        -----------
+        the configuration dict.
+
+        """
         config = self.config_fake.copy()
 
-        
         for band in 'grizy':
             config['cadence'][band] = row['cadence_{}'.format(band)]
             config['m5'][band] = row['m5_{}'.format(band)]
             config['Nvisits'][band] = row['N{}'.format(band)]
+
+        config['tagprod'] = row['tagprod']
         return config
+
+    def prepare_for_save(self, config_simu, config_fit, outputDir):
+        """
+        Method defining a set of infos to save data: output names for dir and files
+
+        Parameters
+        ---------------
+        config_simu: dict
+           configuration dict for simulation
+        config_fit: dict
+          configuration dict for fit
+        outputDir: str
+          main output directory
+
+        """
+        errormod = config_simu['Simulator']['errorModel']
+        cutoff = '{}_{}'.format(
+            config_simu['SN']['blueCutoff'], config_simu['SN']['redCutoff'])
+        ebv = config_simu['SN']['ebvofMW']
+
+        if errormod:
+            cutoff = 'error_model'
+
+        outDir_simu = '{}/Output_Simu_{}_ebvofMW_{}'.format(outputDir,
+                                                            cutoff, ebv)
+
+        config_simu['OutputSimu_directory'] = outDir_simu
+
+        snrmin = config_fit['LCSelection']['snrmin']
+        outDir_fit = '{}/Output_Fit_{}_ebvofMW_{}_snrmin_{}'.format(outputDir,
+                                                                    cutoff, ebv, int(snrmin))
+        if errormod:
+            errmodrel = config_fit['LCSelection']['errmodrel']
+            outDir_fit += '_errmodrel_{}'.format(np.round(errmodrel, 2))
+
+        config_fit['OutputFit']['directory'] = outDir_fit
+
 
 # this is to load option for fake cadence
 path = 'input/Fake_cadence'
 confDict_fake = make_dict_from_config(path, 'config_cadence.txt')
 # get all possible simulation parameters and put in a dict
 path = simu_input.__path__
-confDict_simu = make_dict_from_config(path[0],'config_simulation.txt')
+confDict_simu = make_dict_from_config(path[0], 'config_simulation.txt')
 # get all possible simulation parameters and put in a dict
 path = fit_input.__path__
-confDict_fit = make_dict_from_config(path[0],'config_fit.txt')
+confDict_fit = make_dict_from_config(path[0], 'config_fit.txt')
 
 
 parser = OptionParser()
 
 # add option for Fake data here
-add_option(parser,confDict_fake)
-add_option(parser,confDict_simu)
-add_option(parser,confDict_fit)
+add_option(parser, confDict_fake)
+add_option(parser, confDict_simu)
+add_option(parser, confDict_fit)
 
 parser.add_option(
     '--outputDir', help='main output directory [%default]', default='/sps/lsst/users/gris/config_zlim', type=str)
@@ -272,17 +390,18 @@ opts, args = parser.parse_args()
 
 time_ref = time.time()
 # make the config files here
-config_fake = config(confDict_fake,opts)
-config_simu = config(confDict_simu,opts)
-config_fit = config(confDict_fit,opts)
+config_fake = config(confDict_fake, opts)
+config_simu = config(confDict_simu, opts)
+config_fit = config(confDict_fit, opts)
 
 # instance process here
-process = GenSimFit(config_simu, config_fit,config_fake)
+process = GenSimFit(config_fake, config_simu, config_fit, opts.outputDir)
 
 # run
 params = pd.read_csv(opts.config)
-process(params)
+res = process(params)
 
+print(res.columns)
 """
 
 fakeData = FakeObservations(newDict_fake).obs
@@ -295,7 +414,7 @@ simu = SimuWrapper(newDict_simu)
 
 list_lc = simu.run(fakeData)
 
-#fit instance here
+# fit instance here
 fit = Fitting(newDict_fit)
 
 for lc in list_lc:
@@ -303,7 +422,7 @@ for lc in list_lc:
     resfit = fit(lc)
     print(resfit)
 """
-print('Elapsed time',time.time()-time_ref)
+print('Elapsed time', time.time()-time_ref)
 
 
 """
@@ -314,4 +433,3 @@ for key, vals in confDict.items():
 # new dict with configuration params
 yaml_params = make_dict_from_optparse(newDict)
 """
-
