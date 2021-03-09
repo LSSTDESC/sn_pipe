@@ -8,6 +8,8 @@ def batch(dbDir, dbName, dbExtens, scriptref, outDir, nproc,
           saveData, fieldType, simuType, nside, fieldNames, nclusters,
           RAmin,RAmax,nRA,Decmin,Decmax,nDec):
 
+    print('boa',RAmin,RAmax,nRA,Decmin,Decmax,nDec)
+
     cwd = os.getcwd()
     dirScript = cwd + "/scripts"
 
@@ -44,7 +46,7 @@ def batch(dbDir, dbName, dbExtens, scriptref, outDir, nproc,
 
     if fieldType == 'WFD':
         cmd = cmdb(dbDir, dbName, dbExtens, scriptref, outDir, nproc,
-                   saveData, fieldType, simuType, nside,
+                   saveData, fieldType, simuType, nside,'',0,
                    RAmin,RAmax,nRA,Decmin,Decmax,nDec)
         script.write(cmd + " \n")
     if fieldType == 'DD':
@@ -55,7 +57,7 @@ def batch(dbDir, dbName, dbExtens, scriptref, outDir, nproc,
             script.write(cmd + " \n")
     script.write("EOF" + "\n")
     script.close()
-    os.system("sh "+scriptName)
+    #os.system("sh "+scriptName)
 
 
 def cmdb(dbDir, dbName, dbExtens, scriptref, outDir, nproc,
