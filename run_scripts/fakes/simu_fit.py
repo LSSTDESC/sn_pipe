@@ -290,7 +290,7 @@ class GenSimFit:
     zlim_calc: bool
       to estimate zlim from fitted values
     tagprod: int, opt
-      tag for production (default: 0)
+      tag for production (default: -1: no tag)
     """
 
     def __init__(self, config_fake, config_simu, config_fit, outputDir, zlim_calc=False, tagprod=0):
@@ -542,7 +542,7 @@ class GenSimFit:
             fname = '{}_{}'.format(x1, color)
         tag = '{}_Fake_{}_{}_ebvofMW_{}'.format(
             simu, fname, cutoff, ebv)
-        if self.tagprod != '':
+        if self.tagprod >= 0:
             tag += '_{}'.format(self.tagprod)
 
         self.config_simu['ProductionIDSimu'] = tag
@@ -602,6 +602,9 @@ parser.add_option(
     '--config', help='config file of parameters [%default]', default='config_z_0.8.csv', type=str)
 parser.add_option("--zlim_calc", type=int, default=0,
                   help="to estimate zlim or not [%default]")
+parser.add_option("--tagprod", type=int, default=-1,
+                  help="tag for outputfile [%default]")
+
 
 opts, args = parser.parse_args()
 
@@ -611,10 +614,11 @@ config_fake = config(confDict_fake, opts)
 config_simu = config(confDict_simu, opts)
 config_fit = config(confDict_fit, opts)
 zlim_calc = opts.zlim_calc
+tagprod = opts.tagprod
 
 # instance process here
 process = GenSimFit(config_fake, config_simu, config_fit,
-                    opts.outputDir, tagprod='', zlim_calc=zlim_calc)
+                    opts.outputDir, tagprod=tagprod, zlim_calc=zlim_calc)
 
 # run
 params = pd.read_csv(opts.config)

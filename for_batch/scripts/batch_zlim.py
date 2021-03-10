@@ -3,19 +3,19 @@ from optparse import OptionParser
 import os
 import numpy as np
 
+
 class batch:
     def __init__(self, outputDir, config, ibatch, nproc):
-    
+
         self.nproccomp = nproc
         dirScript, name_id, log = self.prepareOut(ibatch)
-        
-        self.script(dirScript, name_id, log, config, outputDir)
 
+        self.script(dirScript, name_id, log, config, outputDir, ibatch)
 
-    def prepareOut(self,ibatch):
+    def prepareOut(self, ibatch):
         """
         Method to prepare for the batch
-    
+
         directories for scripts and log files are defined here.
 
         """
@@ -35,7 +35,7 @@ class batch:
 
         return dirScript, name_id, log
 
-    def script(self, dirScript, name_id, log, config, outputDir):
+    def script(self, dirScript, name_id, log, config, outputDir, ibatch):
         """
         Method to generate and run the script to be executed
 
@@ -72,12 +72,11 @@ class batch:
         cmd += ' --mbcov_estimate 1'
         cmd += ' --outputDir {}'.format(outputDir)
         cmd += ' --config {}'.format(config)
-
+        cmd += ' --tagprod {}'.format(ibatch)
         script.write(cmd + '\n')
         script.write("EOF" + "\n")
         script.close()
         #os.system("sh "+scriptName)
-
 
 
 parser = OptionParser()
@@ -103,7 +102,7 @@ dirConfig = opts.dirConfig
 outputDir = opts.outputDir
 nproc = opts.nproc
 
-#create config dir if necessary
+# create config dir if necessary
 if not os.path.exists(dirConfig):
     os.mkdir(dirConfig)
 
@@ -116,9 +115,9 @@ nz = len(df)
 nproc = int(nz/n_per_file)
 t = np.linspace(0, nz, nproc+1, dtype='int')
 for j in range(nproc):
-    print(t[j],t[j+1])
-    outName = fileName.replace('.csv','_{}.csv'.format(j))
-    newName = '{}/{}'.format(dirConfig,outName)
+    print(t[j], t[j+1])
+    outName = fileName.replace('.csv', '_{}.csv'.format(j))
+    newName = '{}/{}'.format(dirConfig, outName)
     df[t[j]:t[j+1]].to_csv(newName, index=False)
-    batch(outputDir,newName,j,nproc)
+    batch(outputDir, newName, j, nproc)
     break
