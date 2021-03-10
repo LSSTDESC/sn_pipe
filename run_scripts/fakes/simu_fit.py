@@ -16,6 +16,140 @@ import multiprocessing
 import pandas as pd
 import os
 import yaml
+from scipy.interpolate import interp1d
+
+
+def plot(tab, covcc_col='Cov_colorcolor', z_col='z', multiDaymax=False, stat=None, sigmaC=0.04):
+    """
+    Function to plot covcc vs z. A line corresponding to sigmaC is also drawn.
+
+    Parameters
+    ---------------
+    tab: astropy table
+      data to process: columns covcc_col and z_col should be in this tab
+    covcc_col: str, opt
+        name of the column corresponding to the cov_colorcolor value (default: Cov_colorcolor)
+    z_col: str, opt
+       name of the column corresponding to the redshift value (default: z)
+    sigmaC: float, opt
+      sigma_color value to estimate zlimit from (default: 0.04)
+
+    """
+
+    import matplotlib.pyplot as plt
+
+    fig, ax = plt.subplots()
+
+    tab.sort(z_col)
+
+    xlims = [0.1, 0.91]
+    ylims = [0.01, 0.08]
+
+    mean_zlim = -1.
+    std_zlim = -1.
+    daymax_mean = -1.
+
+    if stat is not None:
+        idx = stat['zlim'] > 0.
+        selstat = np.copy(stat[idx])
+        mean_zlim = np.round(np.mean(selstat['zlim']), 2)
+        std_zlim = np.round(np.std(selstat['zlim']), 2)
+        idx = (np.abs(selstat['zlim'] - mean_zlim)).argmin()
+        daymax_mean = selstat[idx]['daymax']
+
+        selstat.sort(order=['zlim', 'daymax'])
+
+    if multiDaymax:
+        tab_bet = Table()
+        idx = np.abs(tab['daymax']-selstat[0]['daymax']) < 1.e-5
+        # plot_indiv(ax,tab[idx])
+        tab_bet = vstack([tab_bet, tab[idx]])
+        idx = np.abs(tab['daymax']-selstat[-1]['daymax']) < 1.e-5
+        sol = tab[idx]
+        sol.sort('z', reverse=True)
+        tab_bet = vstack([tab_bet, sol])
+        plot_indiv(ax, tab_bet, fill=True)
+        idx = np.abs(tab['daymax'] - daymax_mean) < 0.01
+        plot_indiv(ax, tab[idx], mean_zlim=mean_zlim, std_zlim=std_zlim)
+        """
+        for daymax in np.unique(tab['daymax']):
+            ido = np.abs(tab['daymax']-daymax)<1.e-5
+            plot_indiv(ax,tab[ido])
+        """
+    else:
+        plot_indiv(ax, tab, mean_zlim=mean_zlim)
+    ax.set_ylim(ylims)
+    ax.set_xlim(xlims)
+    ax.plot(ax.get_xlim(), [sigmaC]*2, color='r')
+    ax.grid()
+    ax.set_xlabel('z', fontsize=12)
+    ax.set_ylabel('$\sigma_{C}$', fontsize=12)
+    ax.tick_params(axis='x', labelsize=12)
+    ax.tick_params(axis='y', labelsize=12)
+
+    plt.show()
+
+
+def plot_indiv(ax, tab, covcc_col='Cov_colorcolor', z_col='z', fill=False, mean_zlim=-1, std_zlim=-1.):
+    """
+    Function to plot on ax
+
+    Parameters
+    --------------
+    ax: matplotlib axis
+      axes where to plot
+    tab: pandas df
+      data to plot
+    covcc_col: str, opt
+        name of the column corresponding to the cov_colorcolor value (default: Cov_colorcolor)
+    z_col: str, opt
+       name of the column corresponding to the redshift value (default: z)
+
+    """
+    if not fill:
+        ax.plot(tab[z_col], np.sqrt(tab[covcc_col]), color='k')
+        if mean_zlim > 0.:
+            zlimtxt = 'z$_{lim}$'
+            txt = '{} = {} '.format(zlimtxt, mean_zlim)
+            if std_zlim >= 0.:
+                txt += '$\pm$ {}'.format(std_zlim)
+            ax.text(0.3, 0.06, txt, fontsize=12, color='k')
+    else:
+        ax.fill_between(tab[z_col], np.sqrt(tab[covcc_col]), color='yellow')
+
+
+def zlimit(tab, covcc_col='Cov_colorcolor', z_col='z', sigmaC=0.04):
+    """
+    Function to estimate zlim for sigmaC value
+
+    Parameters
+    ---------------
+    tab: astropy table
+      data to process: columns covcc_col and z_col should be in this tab
+    covcc_col: str, opt
+        name of the column corresponding to the cov_colorcolor value (default: Cov_colorcolor)
+    z_col: str, opt
+       name of the column corresponding to the redshift value (default: z)
+    sigmaC: float, opt
+      sigma_color value to estimate zlimit from (default: 0.04)
+
+    Returns
+    ----------
+    The zlimit value corresponding to sigmaC
+
+    """
+    interp = interp1d(np.sqrt(tab[covcc_col]),
+                      tab[z_col], bounds_error=False, fill_value=0.)
+
+    interpv = interp1d(tab[z_col], np.sqrt(tab[covcc_col]),
+                       bounds_error=False, fill_value=0.)
+
+    zvals = np.arange(0.2, 1.0, 0.005)
+
+    colors = interpv(zvals)
+    ii = np.argmin(np.abs(colors-sigmaC))
+    # print(colors)
+    return np.round(zvals[ii], 3)
 
 
 def add_option(parser, confDict):
@@ -153,17 +287,20 @@ class GenSimFit:
       configuration dict for fit
     outputDir: str
       main output directory
+    zlim_calc: bool
+      to estimate zlim from fitted values
     tagprod: int, opt
       tag for production (default: 0)
     """
 
-    def __init__(self, config_fake, config_simu, config_fit, outputDir, tagprod=0):
+    def __init__(self, config_fake, config_simu, config_fit, outputDir, zlim_calc=False, tagprod=0):
 
         # grab config
         self.config_simu = config_simu
         self.config_fit = config_fit
         self.tagprod = tagprod
         self.outputDir = outputDir
+        self.zlim_calc = zlim_calc
 
         # prepare for output
         self.save_simu = config_simu['OutputSimu']['save']
@@ -237,6 +374,11 @@ class GenSimFit:
                 self.config_fit['OutputFit']['directory'], self.config_fit['ProductionIDFit'])
             restot.write(outName, 'fitlc', compression=True)
 
+        if self.zlim_calc:
+            print(restot.columns)
+            for tagprod in np.unique(restot['tagprod']):
+                idx = restot['tagprod'] == tagprod
+                print(zlimit(restot[idx]))
         return restot
 
     def runSequence(self, config_fake):
@@ -458,6 +600,8 @@ parser.add_option(
     '--outputDir', help='main output directory [%default]', default='/sps/lsst/users/gris/config_zlim', type=str)
 parser.add_option(
     '--config', help='config file of parameters [%default]', default='config_z_0.8.csv', type=str)
+parser.add_option("--zlim_calc", type=int, default=0,
+                  help="to estimate zlim or not [%default]")
 
 opts, args = parser.parse_args()
 
@@ -466,10 +610,11 @@ time_ref = time.time()
 config_fake = config(confDict_fake, opts)
 config_simu = config(confDict_simu, opts)
 config_fit = config(confDict_fit, opts)
+zlim_calc = opts.zlim_calc
 
 # instance process here
 process = GenSimFit(config_fake, config_simu, config_fit,
-                    opts.outputDir, tagprod='')
+                    opts.outputDir, tagprod='', zlim_calc=zlim_calc)
 
 # run
 params = pd.read_csv(opts.config)
