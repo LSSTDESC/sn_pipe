@@ -68,7 +68,7 @@ class batch:
         script.write(" source setup_release.sh Linux\n")
         script.write("echo 'sourcing done' \n")
 
-        cmd = 'python run_script/fakes/gensimufit'
+        cmd = 'python run_scripts/fakes/gensimufit.py'
         cmd += ' --mbcov_estimate 1'
         cmd += ' --outputDir {}'.format(outputDir)
         cmd += ' --config {}'.format(config)
@@ -76,7 +76,7 @@ class batch:
         script.write(cmd + '\n')
         script.write("EOF" + "\n")
         script.close()
-        #os.system("sh "+scriptName)
+        os.system("sh "+scriptName)
 
 
 parser = OptionParser()
