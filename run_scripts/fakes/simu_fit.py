@@ -15,6 +15,7 @@ import numpy as np
 import multiprocessing
 import pandas as pd
 import os
+import yaml
 
 
 def add_option(parser, confDict):
@@ -171,6 +172,19 @@ class GenSimFit:
 
         # simulator instance
         self.simu = SimuWrapper(self.config_simu)
+
+        if self.save_simu:
+            # save simu config file
+            self.dump_dict_to_yaml(
+                self.config_simu['OutputSimu']['directory'], self.config_simu['ProductionIDSimu'], self.config_simu)
+        if self.save_fit:
+            # save fit configuration file
+            self.dump_dict_to_yaml(
+                self.config_fit['OutputFit']['directory'], self.config_fit['ProductionIDFit'], self.config_fit)
+            if not self.save_simu:
+                # save simu config file
+                self.dump_dict_to_yaml(
+                    self.config_fit['OutputFit']['directory'], self.config_simu['ProductionIDSimu'], self.config_simu)
 
         # fitter instance
         covmb = None
@@ -403,6 +417,23 @@ class GenSimFit:
         if self.save_fit:
             if not os.path.exists(outDir_fit):
                 os.mkdir(outDir_fit)
+
+    def dump_dict_to_yaml(self, theDir, theName, theDict):
+        """
+        Method to dump a dict to a yaml file
+
+        Parameters
+        ---------------
+        theDir: str
+           output directory
+        theName: str
+           output file name
+        theDict: dict
+          dict to dump 
+        """
+        outputyaml = '{}/{}.yaml'.format(theDir, theName)
+        with open(outputyaml, 'w') as file:
+            documents = yaml.dump(theDict, file)
 
 
 # this is to load option for fake cadence
