@@ -543,7 +543,7 @@ class GenSimFit:
         tag = '{}_Fake_{}_{}_ebvofMW_{}'.format(
             simu, fname, cutoff, ebv)
         if self.tagprod != '':
-            tag += '_{}'.fotmat(self.tagprod)
+            tag += '_{}'.format(self.tagprod)
 
         self.config_simu['ProductionIDSimu'] = tag
         self.config_fit['ProductionIDFit'] = 'Fit_{}_{}'.format(tag, fitter)
