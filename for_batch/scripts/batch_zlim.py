@@ -120,4 +120,4 @@ for j in range(nproc):
     newName = '{}/{}'.format(dirConfig, outName)
     df[t[j]:t[j+1]].to_csv(newName, index=False)
     batch(outputDir, newName, j, nproc)
-    break
+    #break

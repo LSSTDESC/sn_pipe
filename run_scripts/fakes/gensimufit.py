@@ -48,11 +48,15 @@ parser.add_option(
     '--zlim_calc', help='to estimate zlim or not [%default]', default=0, type=int)
 parser.add_option(
     '--mbcov_estimate', help='to estimate mb after fit [%default]', default=0, type=int)
+parser.add_option(
+    '--nproc', help='nproc for multiproc [%default]', default=8, type=int)
+
 
 opts, args = parser.parse_args()
 
 cmd_ = cmd(zlim_calc=opts.zlim_calc,
            mbcov_estimate=opts.mbcov_estimate,
+           nproc=opts.nproc,
            outputDir=opts.outputDir,
            configFile=opts.config,
            tagprod=opts.tagprod)
