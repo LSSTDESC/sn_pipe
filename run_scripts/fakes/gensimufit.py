@@ -3,7 +3,7 @@ from optparse import OptionParser
 import os
 
 
-def cmd(x1=-2.0, color=0.2, ebv=0.0, bluecutoff=380., redcutoff=800., error_model=1, errmodrel=0.1, simu='sn_cosmo', fitter='sn_cosmo', nproc=4, outputDir='.', configFile='test.csv'):
+def cmd(x1=-2.0, color=0.2, ebv=0.0, bluecutoff=380., redcutoff=800., error_model=1, errmodrel=0.1, simu='sn_cosmo', fitter='sn_cosmo', zlim_calc=0,mbcov_estimate=0,nproc=4, outputDir='.', configFile='test.csv'):
 
     scriptName = 'run_scripts/fakes/simu_fit.py'
     script_cmd = 'python {}'.format(scriptName)
@@ -29,7 +29,8 @@ def cmd(x1=-2.0, color=0.2, ebv=0.0, bluecutoff=380., redcutoff=800., error_mode
     script_cmd += ' --Observations_coadd 0'
     script_cmd += ' --Observations_fieldtype Fake'
     script_cmd += ' --LCSelection_nbands 0'
-    script_cmd += ' --zlim_calc 1'
+    script_cmd += ' --zlim_calc {}'.format(zlim_calc)
+    script_cmd += ' --mbcov_estimate {}'.format(mbcov_estimate)
 
     return script_cmd
 
@@ -40,9 +41,16 @@ parser.add_option(
     '--outputDir', help='main output directory [%default]', default='/sps/lsst/users/gris/config_zlim', type=str)
 parser.add_option(
     '--config', help='config file of parameters [%default]', default='config_z_test.csv', type=str)
+parser.add_option(
+    '--zlim_calc', help='to estimate zlim or not [%default]', default=0, type=int)
+parser.add_option(
+    '--mbcov_estimate', help='to estimate mb after fit [%default]', default=0, type=int)
 
 opts, args = parser.parse_args()
 
-cmd_ = cmd(outputDir=opts.outputDir, configFile=opts.config)
+cmd_ = cmd(zlim_calc=opts.zlim_calc,
+           mbcov_estimate=opts.mbcov_estimate,
+           outputDir=opts.outputDir, 
+           configFile=opts.config)
 
 os.system(cmd_)
