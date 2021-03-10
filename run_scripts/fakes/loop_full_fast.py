@@ -10,6 +10,7 @@ import glob
 import pandas as pd
 import time
 
+
 class SimFit:
     """
     class to simulate and fit type Ia supernovae
@@ -495,7 +496,8 @@ def plot_sigmaC_z(sn, zlim, color_cut=0.04):
     ax.legend(loc='upper left')
     plt.show()
 
-def run_fast(simus, fitters, error_models,errmodrel,x1, color, ebv, snrmin,bluecutoff, redcutoff,nproc,outputDir):
+
+def run_fast(simus, fitters, error_models, errmodrel, x1, color, ebv, snrmin, bluecutoff, redcutoff, nproc, outputDir):
     for simu in simus:
         for fitter in fitters[simu]:
             for error_model in error_models:
@@ -533,14 +535,18 @@ def run_fast(simus, fitters, error_models,errmodrel,x1, color, ebv, snrmin,bluec
                 script_cmd += ' --SN_z_type uniform'
                 script_cmd += ' --SN_z_step 0.05'
                 script_cmd += ' --Observations_coadd 0'
-                print(script_cmd)
+                script_cmd += ' --Observations_fieldtype Fake'
+                script_cmd += ' --LCSelection_nbands 0'
+
+                # print(script_cmd)
                 os.system(script_cmd)
 
-def run_slow(simus, fitters, error_models,errmodrel,x1, color, ebv,
-             snrmin,bluecutoff, redcutoff,nproc,outputDir,
-             sn_type,sn_model,sn_version,tagprod,
-             multiDaymax,m5File,healpixID, sigma_mu,seasons):
-    
+
+def run_slow(simus, fitters, error_models, errmodrel, x1, color, ebv,
+             snrmin, bluecutoff, redcutoff, nproc, outputDir,
+             sn_type, sn_model, sn_version, tagprod,
+             multiDaymax, m5File, healpixID, sigma_mu, seasons):
+
     for simu in simus:
         fname = '{}_{}'.format(sn_type, sn_model)
         if 'salt2' in sn_model:
@@ -552,15 +558,15 @@ def run_slow(simus, fitters, error_models,errmodrel,x1, color, ebv,
                 cutoff = 'error_model'
                 errmodrel = opts.errmodrel
             outDir_simu = '{}/Output_Simu_{}_ebvofMW_{}'.format(outputDir,
-                                                            cutoff, ebv)
+                                                                cutoff, ebv)
             if errormod:
                 outDir_simu += '_errmodrel_{}'.format(np.round(errmodrel, 2))
             outDir_fit = '{}/Output_Fit_{}_ebvofMW_{}_snrmin_{}'.format(outputDir,
-                                                                    cutoff, ebv, int(snrmin))
+                                                                        cutoff, ebv, int(snrmin))
             if errormod:
                 outDir_fit += '_errmodrel_{}'.format(np.round(errmodrel, 2))
             outDir_obs = '{}/Output_obs_{}_ebvofMW_{}'.format(outputDir,
-                                                          cutoff, ebv)
+                                                              cutoff, ebv)
             tag = '{}_Fake_{}_{}_ebvofMW_{}'.format(
                 simu, fname, cutoff, ebv)
             if tagprod != '':
@@ -588,7 +594,8 @@ def run_slow(simus, fitters, error_models,errmodrel,x1, color, ebv,
                              tag=tag)
 
             sim_fit.process(Nvisits=Nvisits, m5=m5, cadence=cadence)
-  
+
+
 # this is to load option for fake cadence
 path = 'input/Fake_cadence'
 confDict = make_dict_from_config(path, 'config_cadence.txt')
@@ -735,17 +742,18 @@ cols = ['tagprod', 'x1', 'color', 'ebvofMW', 'snrmin', 'error_model', 'errmodrel
 
 time_ref = time.time()
 if running_mode == 'fast':
-    run_fast(simus, fitters, error_models,errmodrel,x1, color, ebv, snrmin, bluecutoff, redcutoff,nproc,outputDir)
-    print('End of process',time.time()-time_ref)
-    
+    run_fast(simus, fitters, error_models, errmodrel, x1, color,
+             ebv, snrmin, bluecutoff, redcutoff, nproc, outputDir)
+    print('End of process', time.time()-time_ref)
+
 if running_mode == 'slow':
-    run_slow(simus, fitters, error_models,errmodrel,x1, color, ebv,
-             snrmin, bluecutoff, redcutoff,nproc,outputDir,
-             sn_type,sn_model,sn_version,tagprod=opts.tagprod,
-             multiDaymax=opts.multiDaymax,m5File=opts.m5File,
+    run_slow(simus, fitters, error_models, errmodrel, x1, color, ebv,
+             snrmin, bluecutoff, redcutoff, nproc, outputDir,
+             sn_type, sn_model, sn_version, tagprod=opts.tagprod,
+             multiDaymax=opts.multiDaymax, m5File=opts.m5File,
              healpixID=opts.healpixID, sigma_mu=opts.sigma_mu,
              seasons=opts.seasons)
-    print('End of process',time.time()-time_ref)
+    print('End of process', time.time()-time_ref)
 
 """
 for errmod in error_models:
