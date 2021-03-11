@@ -214,7 +214,7 @@ class batchclass:
 
         for opt, value in self.opts.__dict__.items():
             if opt not in ['dbList', 'splitSky', 'ProductionID', 'Pixelisation_nside',
-                           'Observations_fieldtype', 'Output_directory', 
+                           'Observations_fieldtype', 'OutputSimu_directory', 
                            'Observations_filename','npixels','skyfrac']:
                 cmd += ' --{} {}'.format(opt, value)
 
@@ -229,8 +229,8 @@ class batchclass:
             proc['fieldType'].values[0])
         cmd += ' --Observations_filename {}/{}.{}'.format(
             self.dbDir, self.dbName, self.dbExtens)
-        cmd += ' --Output_directory {}/{}'.format(
-            opts.Output_directory, self.dbName)
+        cmd += ' --OutputSimu_directory {}/{}'.format(
+            opts.OutputSimu_directory, self.dbName)
         cmd += ' --npixels {}'.format(self.npixels_tot)
 
         return cmd
