@@ -54,7 +54,7 @@ class batch:
 
         """
         # qsub command
-        qsub = 'qsub -P P_lsst -l sps=1,ct=03:00:00,h_vmem=16G -j y -o {} -pe multicores {} <<EOF'.format(
+        qsub = 'qsub -P P_lsst -l sps=1,ct=10:00:00,h_vmem=16G -j y -o {} -pe multicores {} <<EOF'.format(
             log, self.nproccomp)
 
         scriptName = dirScript+'/'+name_id+'.sh'
