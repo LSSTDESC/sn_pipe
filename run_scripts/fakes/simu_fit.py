@@ -365,7 +365,7 @@ class GenSimFit:
 
         """
         restot = Table()
-        for i, row in params[:2].iterrows():
+        for i, row in params.iterrows():
             config_fake = self.getconfig(row)
             restot = vstack([restot, self.runSequence(config_fake)])
 
