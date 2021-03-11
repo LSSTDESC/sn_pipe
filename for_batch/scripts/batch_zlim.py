@@ -112,9 +112,9 @@ if not os.path.exists(outputDir):
 df = pd.read_csv(fileName)
 
 nz = len(df)
-nproc = int(nz/n_per_file)
-t = np.linspace(0, nz, nproc+1, dtype='int')
-for j in range(nproc):
+nnproc = int(nz/n_per_file)
+t = np.linspace(0, nz, nnproc+1, dtype='int')
+for j in range(nnproc):
     print(t[j], t[j+1])
     outName = fileName.replace('.csv', '_{}.csv'.format(j))
     newName = '{}/{}'.format(dirConfig, outName)
