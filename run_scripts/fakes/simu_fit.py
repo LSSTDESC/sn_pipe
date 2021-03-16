@@ -376,9 +376,11 @@ class GenSimFit:
 
         if self.zlim_calc:
             print(restot.columns)
+            restot.sort('z')
+            print(restot[['z','sigma_mu']], np.sqrt(restot['Cov_mbmb']),np.sqrt(restot['Cov_colorcolor']))
             for tagprod in np.unique(restot['tagprod']):
                 idx = restot['tagprod'] == tagprod
-                print(zlimit(restot[idx]))
+                print('zlimit',zlimit(restot[idx]))
         return restot
 
     def runSequence(self, config_fake):
