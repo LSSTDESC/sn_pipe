@@ -211,7 +211,7 @@ if 'Nvisits_z_fields' in actions:
         opts.x1, opts.color, cutoff, opts.ebvofMW)
 
     # min_par=['nvisits','nvisits_sel','nvisits_selb']
-    min_par = ['nvisits_selb']
+    min_par = ['nvisits_y_sel']
     Nvisits_Cadence_Fields(x1=opts.x1, color=opts.color,
                            error_model=opts.error_model,
                            errmodrel=opts.error_model_cut,
