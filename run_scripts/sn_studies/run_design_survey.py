@@ -52,7 +52,7 @@ parser.add_option('--bands', type=str, default='grizy',
                   help='bands to consider for this study [%default]')
 parser.add_option('--zmin', type=float, default=0.1,
                   help='min redshift [%default]')
-parser.add_option('--zmax', type=float, default=1.05,
+parser.add_option('--zmax', type=float, default=1.1,
                   help='max redshift [%default]')
 parser.add_option('--zstep', type=float, default=0.05,
                   help='redshift step[%default]')
@@ -70,9 +70,9 @@ parser.add_option('--web_server', type=str, default='https://me.lsst.eu/gris/DES
                   help='web server where m5 reference file may be loaded from[%default]')
 parser.add_option('--action', type=str, default='all',
                   help='what to do: all, Templates, SNR_combi, SNR_opti,Nvisits_z_med,Nvisits_z_fields [%default]')
-parser.add_option('--cadence_for_opti', type=int, default=3,
+parser.add_option('--cadence_for_opti', type=int, default=1,
                   help='cadence used for optimisation [%default]')
-parser.add_option('--cadences', type=str, default='1-4',
+parser.add_option('--cadences', type=str, default='1-3',
                   help='cadences to consider in this study  [%default]')
 parser.add_option('--minpar_visits_fields', type=str, default='nvisits_sela',
                   help='min parameters to estimate nvisits vs z for fields [%default]')
