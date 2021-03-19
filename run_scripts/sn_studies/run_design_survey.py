@@ -74,6 +74,8 @@ parser.add_option('--cadence_for_opti', type=int, default=3,
                   help='cadence used for optimisation [%default]')
 parser.add_option('--cadences', type=str, default='1-4',
                   help='cadences to consider in this study  [%default]')
+parser.add_option('--minpar_visits_fields', type=str, default='nvisits_sela',
+                  help='min parameters to estimate nvisits vs z for fields [%default]')
 parser.add_option('--nproc', type=int, default=8,
                   help='number of procs when multiprocessing is to be used. [%default]')
 
@@ -174,7 +176,7 @@ if 'plot_inputs' in actions:
 if 'SNR_combi' in actions:
     # estimate combis
     dd_snr.SNR_combi(SNR_par=dict(
-        zip(['Nvisits_max_night', 'max', 'step', 'choice'], [400, 50., 1., 'Nvisits'])), zmin=opts.zmin, zmax=opts.zmax, zstep=opts.zstep)
+        zip(['Nvisits_max_night', 'max', 'step', 'choice'], [400, 100., 1., 'Nvisits'])), zmin=opts.zmin, zmax=opts.zmax, zstep=opts.zstep)
 
 opti_fileName = 'opti_{}_{}_{}_ebvofMW_{}_cad_{}.npy'.format(
     opts.x1, opts.color, cutoff, opts.ebvofMW, opts.cadence_for_opti)
@@ -182,7 +184,7 @@ opti_fileName = 'opti_{}_{}_{}_ebvofMW_{}_cad_{}.npy'.format(
 if 'SNR_opti' in actions:
     # get 'best' combination
 
-    zvals = list(np.arange(0.4, 1.0, 0.05))
+    zvals = list(np.arange(0.3, 1.0, 0.05))
     zvals += list(np.arange(0.97, 1.01, 0.01))
     OptiCombi(dd_snr.fracSignalBand,
               dirStudy=opts.dirStudy,
@@ -211,7 +213,8 @@ if 'Nvisits_z_fields' in actions:
         opts.x1, opts.color, cutoff, opts.ebvofMW)
 
     # min_par=['nvisits','nvisits_sel','nvisits_selb']
-    min_par = ['nvisits_y_sel']
+    #min_par = ['nvisits_y_sel']
+    min_par = opts.minpar_visits_fields.split(',')
     Nvisits_Cadence_Fields(x1=opts.x1, color=opts.color,
                            error_model=opts.error_model,
                            errmodrel=opts.error_model_cut,
