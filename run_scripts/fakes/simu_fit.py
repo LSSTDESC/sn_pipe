@@ -19,6 +19,7 @@ import yaml
 from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
 
+
 def plot(tab, covcc_col='Cov_colorcolor', z_col='z', multiDaymax=False, stat=None, sigmaC=0.04):
     """
     Function to plot covcc vs z. A line corresponding to sigmaC is also drawn.
@@ -117,6 +118,7 @@ def plot_indiv(ax, tab, covcc_col='Cov_colorcolor', z_col='z', fill=False, mean_
     else:
         ax.fill_between(tab[z_col], np.sqrt(tab[covcc_col]), color='yellow')
 
+
 def SNR(tab, band, z):
     """
     Function to estimate the SNR for band and z
@@ -140,6 +142,7 @@ def SNR(tab, band, z):
                       bounds_error=False, fill_value=0.)
 
     return np.round(interp(z), 1)
+
 
 def plot_SNR(sel, zlim):
     """
@@ -172,7 +175,8 @@ def plot_SNR(sel, zlim):
     ax.set_ylabel('SNR', fontsize=12)
     ax.tick_params(axis='x', labelsize=12)
     ax.tick_params(axis='y', labelsize=12)
-    
+
+
 def zlimit(tab, covcc_col='Cov_colorcolor', z_col='z', sigmaC=0.04):
     """
     Function to estimate zlim for sigmaC value
@@ -202,8 +206,15 @@ def zlimit(tab, covcc_col='Cov_colorcolor', z_col='z', sigmaC=0.04):
     zvals = np.arange(0.2, 1.0, 0.005)
 
     colors = interpv(zvals)
+
+    io = colors > 0.01
+    colors = colors[io]
+    zvals = zvals[io]
+    print(colors)
+    print(zvals)
     ii = np.argmin(np.abs(colors-sigmaC))
     # print(colors)
+
     return np.round(zvals[ii], 3)
 
 
@@ -438,10 +449,11 @@ class GenSimFit:
             for tagprod in np.unique(restot['tagprod']):
                 idx = restot['tagprod'] == tagprod
                 zlimit_val = zlimit(restot[idx])
-                print('zlimit', zlimit_val)
-                plot_SNR(restot[idx],zlimit_val)
+                print('zlimit here', zlimit_val)
+                #plot_SNR(restot[idx], zlimit_val)
+                plot(restot[idx])
                 plt.show()
-                
+
         return restot
 
     def runSequence(self, config_fake):
@@ -533,7 +545,7 @@ class GenSimFit:
 
         tabfit = Table()
         for lc in list_lc:
-            print('fitting lc',len(lc))
+            print('fitting lc', len(lc))
             resfit = self.fit(lc)
             tabfit = vstack([tabfit, resfit])
 
@@ -672,7 +684,7 @@ parser.add_option("--tagprod", type=int, default=-1,
 
 opts, args = parser.parse_args()
 
-print('hello',opts.outputDir,opts.config)
+print('hello', opts.outputDir, opts.config)
 time_ref = time.time()
 # make the config files here
 config_fake = config(confDict_fake, opts)
