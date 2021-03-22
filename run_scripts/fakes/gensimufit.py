@@ -3,7 +3,7 @@ from optparse import OptionParser
 import os
 
 
-def cmd(x1=-2.0, color=0.2, ebv=0.0, bluecutoff=380., redcutoff=800., error_model=1, errmodrel=0.1, simu='sn_cosmo', fitter='sn_cosmo', zlim_calc=0, mbcov_estimate=0, nproc=4, outputDir='.', configFile='test.csv', tagprod=-1):
+def cmd(x1=-2.0, color=0.2, ebv=0.0, bluecutoff=380., redcutoff=800., error_model=1, errmodrel=0.1, simu='sn_cosmo', fitter='sn_cosmo', zlim_calc=0, mbcov_estimate=0, nproc=4, outputDir='.', configFile='test.csv', tagprod=-1, zmin=0.1, zmax=1.0, zstep=0.05):
 
     scriptName = 'run_scripts/fakes/simu_fit.py'
     script_cmd = 'python {}'.format(scriptName)
@@ -16,16 +16,17 @@ def cmd(x1=-2.0, color=0.2, ebv=0.0, bluecutoff=380., redcutoff=800., error_mode
     script_cmd += ' --SN_redCutoff {}'.format(redcutoff)
     script_cmd += ' --Simulator_errorModel {}'.format(error_model)
     script_cmd += ' --LCSelection_errmodrel {}'.format(errmodrel)
+    script_cmd += ' --LCSelection_errmodinlcerr 0'
     script_cmd += ' --Simulator_name sn_simulator.{}'.format(simu)
     script_cmd += ' --Fitter_name sn_fitter.fit_{}'.format(fitter)
     script_cmd += ' --OutputSimu_save 0'
     script_cmd += ' --MultiprocessingFit_nproc {}'.format(nproc)
     script_cmd += ' --outputDir {}'.format(outputDir)
     script_cmd += ' --config {}'.format(configFile)
-    script_cmd += ' --SN_z_min 0.01'
-    script_cmd += ' --SN_z_max 1.'
+    script_cmd += ' --SN_z_min {}'.format(zmin)
+    script_cmd += ' --SN_z_max {}'.format(zmax)
     script_cmd += ' --SN_z_type uniform'
-    script_cmd += ' --SN_z_step 0.05'
+    script_cmd += ' --SN_z_step {}'.format(zstep)
     script_cmd += ' --Observations_coadd 0'
     script_cmd += ' --Observations_fieldtype Fake'
     script_cmd += ' --LCSelection_nbands 0'
@@ -47,6 +48,12 @@ parser.add_option(
 parser.add_option(
     '--zlim_calc', help='to estimate zlim or not [%default]', default=0, type=int)
 parser.add_option(
+    '--zmin', help='min redshift value  [%default]', default=0.5, type=float)
+parser.add_option(
+    '--zmax', help='max redshift value [%default]', default=1.0, type=float)
+parser.add_option(
+    '--zstep', help='redshift step value [%default]', default=0.05, type=int)
+parser.add_option(
     '--mbcov_estimate', help='to estimate mb after fit [%default]', default=0, type=int)
 parser.add_option(
     '--nproc', help='nproc for multiproc [%default]', default=8, type=int)
@@ -59,6 +66,9 @@ cmd_ = cmd(zlim_calc=opts.zlim_calc,
            nproc=opts.nproc,
            outputDir=opts.outputDir,
            configFile=opts.config,
-           tagprod=opts.tagprod)
+           tagprod=opts.tagprod,
+           zmin=opts.zmin,
+           zmax=opts.zmax,
+           zstep=opts.zstep)
 
 os.system(cmd_)
