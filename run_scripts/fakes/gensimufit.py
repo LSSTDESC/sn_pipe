@@ -42,7 +42,6 @@ def cmd(x1=-2.0, color=0.2, ebv=0.0, bluecutoff=380., redcutoff=800., error_mode
     script_cmd += ' --mbcov_estimate {}'.format(mbcov_estimate)
     script_cmd += ' --tagprod {}'.format(tagprod)
 
-    print('hhh', script_cmd)
     return script_cmd
 
 

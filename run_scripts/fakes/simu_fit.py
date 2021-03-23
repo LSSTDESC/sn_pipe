@@ -367,6 +367,8 @@ class GenSimFit:
         self.tagprod = tagprod
         self.outputDir = outputDir
         self.zlim_calc = zlim_calc
+        self.simu_name = config_simu['Simulator']['name'].split('.')[-1]
+        self.fitter_name = config_fit['Fitter']['name'].split('.')[-1]
 
         # prepare for output
         self.save_simu = config_simu['OutputSimu']['save']
@@ -441,7 +443,6 @@ class GenSimFit:
             restot.write(outName, 'fitlc', compression=True)
 
         if self.zlim_calc:
-            print(restot.columns)
             restot.sort('z')
             if 'sigma_mu' in restot.columns:
                 print(restot[['z', 'sigma_mu']], np.sqrt(
@@ -449,7 +450,7 @@ class GenSimFit:
             for tagprod in np.unique(restot['tagprod']):
                 idx = restot['tagprod'] == tagprod
                 zlimit_val = zlimit(restot[idx])
-                print('zlimit here', zlimit_val)
+                print('zlimit', self.simu_name,self.fitter_name,zlimit_val)
                 #plot_SNR(restot[idx], zlimit_val)
                 # plot(restot[idx])
                 # plt.show()
@@ -545,7 +546,6 @@ class GenSimFit:
 
         tabfit = Table()
         for lc in list_lc:
-            print('fitting lc', len(lc))
             resfit = self.fit(lc)
             tabfit = vstack([tabfit, resfit])
 
@@ -684,7 +684,6 @@ parser.add_option("--tagprod", type=int, default=-1,
 
 opts, args = parser.parse_args()
 
-print('hello', opts.outputDir, opts.config)
 time_ref = time.time()
 # make the config files here
 config_fake = config(confDict_fake, opts)
