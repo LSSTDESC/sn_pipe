@@ -7,16 +7,10 @@ import csv
 
 def cmd(x1=-2.0, color=0.2, ebv=0.0, bluecutoff=380., redcutoff=800., error_model=1, errmodrel=0.1, simu='sn_cosmo', fitter='sn_cosmo', zlim_calc=0, mbcov_estimate=0, nproc=4, outputDir='.', config=pd.DataFrame(), tagprod=-1, zmin=0.1, zmax=1.0, zstep=0.05):
 
-    # confp = pd.read_csv(configFile, comment='#')
-    configName = 'config_z_test_{}'.format(tagprod)
+    configName = 'config_z_test_{}.csv'.format(tagprod)
     my_dict = dict(config.to_dict())
-    #config.to_csv(configName, index=False)
-    print(my_dict.keys())
-
-    with open(configName, 'wb') as f:
-        w = csv.writer(f)
-        w.writerow(my_dict.keys())
-        w.writerow(my_dict.values())
+    config.to_csv(configName, index=False)
+  
     scriptName = 'run_scripts/fakes/simu_fit.py'
     script_cmd = 'python {}'.format(scriptName)
     script_cmd += ' --SN_x1_min {}'.format(x1)
@@ -30,9 +24,9 @@ def cmd(x1=-2.0, color=0.2, ebv=0.0, bluecutoff=380., redcutoff=800., error_mode
     script_cmd += ' --LCSelection_errmodrel {}'.format(errmodrel)
     script_cmd += ' --LCSelection_errmodinlcerr 0'
     script_cmd += ' --Simulator_name sn_simulator.{}'.format(
-        config['simulator'])
+        np.unique(config['simulator']).item())
     script_cmd += ' --Fitter_name sn_fitter.fit_{}'.format(
-        config['fitter'])
+        np.unique(config['fitter']).item())
     script_cmd += ' --OutputSimu_save 0'
     script_cmd += ' --MultiprocessingFit_nproc {}'.format(nproc)
     script_cmd += ' --outputDir {}'.format(outputDir)
@@ -77,16 +71,21 @@ parser.add_option(
 opts, args = parser.parse_args()
 
 confp = pd.read_csv(opts.config, comment='#')
+io = -1
+for simu in confp['simulator'].unique():
+    idx = confp['simulator']==simu
+    sel = confp[idx]
+    for fitter in sel['fitter'].unique():
+        ida = sel['fitter']==fitter
+        io += 1
+        cmd_ = cmd(zlim_calc=opts.zlim_calc,
+                   mbcov_estimate=opts.mbcov_estimate,
+                   nproc=opts.nproc,
+                   outputDir=opts.outputDir,
+                   config=sel[ida],
+                   tagprod=io,
+                   zmin=opts.zmin,
+                   zmax=opts.zmax,
+                   zstep=opts.zstep)
 
-for io, confg in confp.iterrows():
-    cmd_ = cmd(zlim_calc=opts.zlim_calc,
-               mbcov_estimate=opts.mbcov_estimate,
-               nproc=opts.nproc,
-               outputDir=opts.outputDir,
-               config=confg,
-               tagprod=io,
-               zmin=opts.zmin,
-               zmax=opts.zmax,
-               zstep=opts.zstep)
-
-    os.system(cmd_)
+        os.system(cmd_)
