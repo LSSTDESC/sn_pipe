@@ -186,6 +186,7 @@ if 'SNR_opti' in actions:
 
     zvals = list(np.arange(0.3, 1.0, 0.05))
     zvals += list(np.arange(0.97, 1.01, 0.01))
+    #zvals = list(np.arange(0.9, 0.91, 0.01))
     OptiCombi(dd_snr.fracSignalBand,
               dirStudy=opts.dirStudy,
               dirSNR_combi=dirSNR_combi,
