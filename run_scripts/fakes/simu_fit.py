@@ -200,18 +200,18 @@ def zlimit(tab, covcc_col='Cov_colorcolor', z_col='z', sigmaC=0.04):
     interp = interp1d(np.sqrt(tab[covcc_col]),
                       tab[z_col], bounds_error=False, fill_value=0.)
 
+    idx = tab[covcc_col] > 0.
+    tab = tab[idx]
     interpv = interp1d(tab[z_col], np.sqrt(tab[covcc_col]),
                        bounds_error=False, fill_value=0.)
 
-    zvals = np.arange(0.2, 1.0, 0.005)
+    zmin = np.min(tab[z_col])
+    zmax = np.max(tab[z_col])
+
+    zvals = np.arange(zmin, zmax, 0.005)
 
     colors = interpv(zvals)
 
-    io = colors > 0.01
-    colors = colors[io]
-    zvals = zvals[io]
-    print(colors)
-    print(zvals)
     ii = np.argmin(np.abs(colors-sigmaC))
     # print(colors)
 
@@ -451,8 +451,8 @@ class GenSimFit:
                 zlimit_val = zlimit(restot[idx])
                 print('zlimit here', zlimit_val)
                 #plot_SNR(restot[idx], zlimit_val)
-                plot(restot[idx])
-                plt.show()
+                # plot(restot[idx])
+                # plt.show()
 
         return restot
 
