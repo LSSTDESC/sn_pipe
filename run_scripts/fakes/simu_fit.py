@@ -451,8 +451,8 @@ class GenSimFit:
                 idx = restot['tagprod'] == tagprod
                 zlimit_val = zlimit(restot[idx])
                 print('zlimit', self.simu_name,self.fitter_name,zlimit_val)
-                #plot_SNR(restot[idx], zlimit_val)
-                # plot(restot[idx])
+                plot_SNR(restot[idx], zlimit_val)
+                plot(restot[idx])
                 # plt.show()
 
         return restot
