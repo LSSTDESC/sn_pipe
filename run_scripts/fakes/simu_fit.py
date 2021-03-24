@@ -20,12 +20,14 @@ from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
 
 
-def plot(tab, covcc_col='Cov_colorcolor', z_col='z', multiDaymax=False, stat=None, sigmaC=0.04):
+def plot(fig, ax, tab, covcc_col='Cov_colorcolor', z_col='z', multiDaymax=False, stat=None, sigmaC=0.04):
     """
     Function to plot covcc vs z. A line corresponding to sigmaC is also drawn.
 
     Parameters
     ---------------
+    fig: matplotlib figure
+    ax: matplotlib axis
     tab: astropy table
       data to process: columns covcc_col and z_col should be in this tab
     covcc_col: str, opt
@@ -36,10 +38,6 @@ def plot(tab, covcc_col='Cov_colorcolor', z_col='z', multiDaymax=False, stat=Non
       sigma_color value to estimate zlimit from (default: 0.04)
 
     """
-
-    import matplotlib.pyplot as plt
-
-    fig, ax = plt.subplots()
 
     tab.sort(z_col)
 
@@ -88,7 +86,7 @@ def plot(tab, covcc_col='Cov_colorcolor', z_col='z', multiDaymax=False, stat=Non
     ax.tick_params(axis='x', labelsize=12)
     ax.tick_params(axis='y', labelsize=12)
 
-    plt.show()
+    # plt.show()
 
 
 def plot_indiv(ax, tab, covcc_col='Cov_colorcolor', z_col='z', fill=False, mean_zlim=-1, std_zlim=-1.):
@@ -144,18 +142,18 @@ def SNR(tab, band, z):
     return np.round(interp(z), 1)
 
 
-def plot_SNR(sel, zlim):
+def plot_SNR(fig, ax, sel, zlim):
     """
     Function to plot SNR vs z
 
     Parameters
     --------------
+    fig: matplotlib figure
+    ax: matplotlib axis
     sel: astropy table
        data to plot
 
     """
-
-    fig, ax = plt.subplots()
 
     bands = 'grizy'
     colors = dict(zip('ugrizy', ['b', 'c', 'g', 'y', 'r', 'm']))
@@ -359,7 +357,7 @@ class GenSimFit:
       tag for production (default: -1: no tag)
     """
 
-    def __init__(self, config_fake, config_simu, config_fit, outputDir, zlim_calc=False, tagprod=0):
+    def __init__(self, config_fake, config_simu, config_fit, outputDir, zlim_calc=False, display=False, tagprod=0):
 
         # grab config
         self.config_simu = config_simu
@@ -369,6 +367,7 @@ class GenSimFit:
         self.zlim_calc = zlim_calc
         self.simu_name = config_simu['Simulator']['name'].split('.')[-1]
         self.fitter_name = config_fit['Fitter']['name'].split('.')[-1]
+        self.display = display
 
         # prepare for output
         self.save_simu = config_simu['OutputSimu']['save']
@@ -450,11 +449,17 @@ class GenSimFit:
             for tagprod in np.unique(restot['tagprod']):
                 idx = restot['tagprod'] == tagprod
                 zlimit_val = zlimit(restot[idx])
-                print('zlimit', self.simu_name,self.fitter_name,zlimit_val)
-                plot_SNR(restot[idx], zlimit_val)
-                plot(restot[idx])
-                # plt.show()
+                print('zlimit', self.simu_name, self.fitter_name, zlimit_val)
+                if self.display:
+                    import matplotlib.pyplot as plt
 
+                    fig, ax = plt.subplots()
+                    plot(fig, ax, restot[idx])
+                    print(restot.dtype.names)
+                    if 'SNR_i' in restot.dtype.names:
+                        fig, ax = plt.subplots()
+                        plot_SNR(fig, ax, restot[idx], zlimit_val)
+                    plt.show()
         return restot
 
     def runSequence(self, config_fake):
@@ -680,6 +685,8 @@ parser.add_option("--zlim_calc", type=int, default=0,
                   help="to estimate zlim or not [%default]")
 parser.add_option("--tagprod", type=int, default=-1,
                   help="tag for outputfile [%default]")
+parser.add_option("--plot", type=int, default=0,
+                  help="to display some results [%default]")
 
 
 opts, args = parser.parse_args()
@@ -691,10 +698,12 @@ config_simu = config(confDict_simu, opts)
 config_fit = config(confDict_fit, opts)
 zlim_calc = opts.zlim_calc
 tagprod = opts.tagprod
+display = opts.plot
 
 # instance process here
 process = GenSimFit(config_fake, config_simu, config_fit,
-                    opts.outputDir, tagprod=tagprod, zlim_calc=zlim_calc)
+                    opts.outputDir, tagprod=tagprod,
+                    zlim_calc=zlim_calc, display=plot)
 
 # run
 params = pd.read_csv(opts.config, comment='#')
