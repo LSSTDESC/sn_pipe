@@ -50,13 +50,13 @@ parser.add_option('--sn_simulator', type=str, default='sn_fast',
                   help='simulator for templates SN [%default]')
 parser.add_option('--bands', type=str, default='grizy',
                   help='bands to consider for this study [%default]')
-parser.add_option('--zmin', type=float, default=0.1,
+parser.add_option('--zmin', type=float, default=0.3,
                   help='min redshift [%default]')
 parser.add_option('--zmax', type=float, default=1.1,
                   help='max redshift [%default]')
-parser.add_option('--zstep', type=float, default=0.05,
+parser.add_option('--zstep', type=float, default=0.01,
                   help='redshift step[%default]')
-parser.add_option('--dirStudy', type=str, default='dd_design_test',
+parser.add_option('--dirStudy', type=str, default='dd_design',
                   help='main dir output for the study [%default]')
 # define subdir here
 for ddir in ['Templates', 'SNR_m5', 'SNR_combi', 'SNR_opti', 'Nvisits_z']:
