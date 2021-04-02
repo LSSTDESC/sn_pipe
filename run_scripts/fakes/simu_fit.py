@@ -703,7 +703,7 @@ display = opts.plot
 # instance process here
 process = GenSimFit(config_fake, config_simu, config_fit,
                     opts.outputDir, tagprod=tagprod,
-                    zlim_calc=zlim_calc, display=plot)
+                    zlim_calc=zlim_calc, display=display)
 
 # run
 params = pd.read_csv(opts.config, comment='#')
