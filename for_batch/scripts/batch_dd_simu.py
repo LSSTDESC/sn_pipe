@@ -29,8 +29,8 @@ def batch(dbName,dbDir,dbExtens,fieldName,outDir,pixelmap_dir,ebvofMW,nproc=8):
 
     
     #confNames = ['faintSN','allSN']
-    #confNames = ['mediumSN']
-    confNames = ['allSN']
+    confNames = ['faintSN']
+    #confNames = ['allSN']
     for cf in confNames:
         idx = config['confName'] == cf
         sel = config[idx]
@@ -227,13 +227,13 @@ def cmd(dbName,dbDir,dbExtens,fieldName,config,outDir,pixelmap_dir,ebvofMW,ibatc
 
 parser = OptionParser()
 
-parser.add_option('--dbName', type='str', default='descddf_v1.4_10yrs',help='dbName to process  [%default]')
-parser.add_option('--dbDir', type='str', default='/sps/lsst/cadence/LSST_SN_PhG/cadence_db/fbs_1.4/npy',help='db dir [%default]')
+parser.add_option('--dbName', type='str', default='descddf_v1.5_10yrs',help='dbName to process  [%default]')
+parser.add_option('--dbDir', type='str', default='/sps/lsst/cadence/LSST_SN_PhG/cadence_db/fbs_1.5/npy',help='db dir [%default]')
 parser.add_option('--dbExtens', type='str', default='npy',help='db extension [%default]')
 parser.add_option('--fieldName', type='str', default='COSMOS',help='DD field to process [%default]')
 parser.add_option('--outDir', type='str', default='/sps/lsst/users/gris/DD/Simu',help='output directory [%default]')
 parser.add_option('--mode', type='str', default='batch',help='running mode batch/interactive[%default]')
-parser.add_option('--pixelmap_dir', type='str', default='/sps/lsst/users/gris/ObsPixelized',help='pixelmap directory [%default]')
+parser.add_option('--pixelmap_dir', type='str', default='/sps/lsst/users/gris/ObsPixelized_128',help='pixelmap directory [%default]')
 parser.add_option('--nproc', type=int, default=8,help='number of proc [%default]')
 parser.add_option('--ebvofMW', type=float, default=-1.0,help='E(B-V) [%default]')
 
