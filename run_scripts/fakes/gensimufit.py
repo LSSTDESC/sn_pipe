@@ -71,6 +71,11 @@ parser.add_option("--plot", type=int, default=0,
 
 opts, args = parser.parse_args()
 
+# clean outputdir if already exist
+if os.path.exists(opts.outputDir):
+    cmd_d = 'rm -rf {}/*'.format(opts.outputDir)
+    os.system(cmd_d)
+
 confp = pd.read_csv(opts.config, comment='#')
 io = -1
 for simu in confp['simulator'].unique():
