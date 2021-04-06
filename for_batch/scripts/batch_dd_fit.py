@@ -78,13 +78,13 @@ def cmd(dbName,prodid,simuDir,outDir,nproc,snrmin):
     cmd = 'python run_scripts/fit_sn/run_sn_fit.py'
     #cmd += ' --ProductionID {}_{}_allSN_{}_sn_cosmo'.format(dbName,fieldName,num) 
     #cmd += ' --Simulations_prodid {}_{}_allSN_{}'.format(dbName,fieldName,num)
-    cmd += ' --ProductionID {}_sn_cosmo'.format(prodid) 
+    cmd += ' --ProductionIDFit {}_sn_cosmo'.format(prodid) 
     cmd += ' --Simulations_prodid {}'.format(prodid)
     cmd += ' --Simulations_dirname {}'.format(simuDir)
     cmd += ' --LCSelection_snrmin {}'.format(snrmin) 
     cmd += ' --LCSelection_nbands 0' 
-    cmd += ' --Output_directory {}/{}'.format(outDir,dbName) 
-    cmd += ' --Multiprocessing_nproc {}'.format(nproc)
+    cmd += ' --OutputFit_directory {}/{}'.format(outDir,dbName) 
+    cmd += ' --MultiprocessingFit_nproc {}'.format(nproc)
     return cmd
 
 def nlc(simuFile):
