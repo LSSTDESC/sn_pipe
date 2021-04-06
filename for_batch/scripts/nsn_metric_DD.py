@@ -49,7 +49,7 @@ class Process:
 
         dirScript, name_id, log, cwd = self.prepareOut()
         # qsub command                                                                             
-        qsub = 'qsub -P P_lsst -l sps=1,ct=3:00:00,h_vmem=16G -j y -o {} -pe multicores {} <<EOF'.format(log, nproc)
+        qsub = 'qsub -P P_lsst -l sps=1,ct=6:00:00,h_vmem=16G -j y -o {} -pe multicores {} <<EOF'.format(log, nproc)
 
         scriptName = dirScript+'/'+name_id+'.sh'
 
