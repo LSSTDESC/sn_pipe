@@ -106,10 +106,10 @@ def config_rec():
     z_type = 'uniform'
     daymax_type = 'uniform'
     daymax_step = 2
-    nsn_factor =1
+    nsn_factor = 10
 
     # this is for faintSN
-    z_step = 0.5
+    z_step = 0.1
     for z in np.arange(zmin,1.0,z_step):
         z = np.round(z,2)
         z_min = z
@@ -209,13 +209,14 @@ def cmd(dbName,dbDir,dbExtens,fieldName,config,outDir,pixelmap_dir,ebvofMW,ibatc
     cmd += ' --pixelmap_dir {}'.format(pixelmap_dir)
     cmd += ' --SN_NSNfactor {}'.format(config['nsn_factor'])
     cmd += ' --Observations_fieldname {}'.format(fieldName)
-    cmd += ' --ProductionID DD_{}_{}_error_model_{}_{}_{}'.format(dbName,fieldName,config['confName'],ibatch,iconfig)
+    cmd += ' --ProductionIDSimu DD_{}_{}_error_model_{}_{}_{}'.format(dbName,fieldName,config['confName'],ibatch,iconfig)
     cmd += ' --Simulator_errorModel 1'
     outputDir = '{}/{}'.format(outDir,dbName)
-    cmd += ' --Output_directory {}'.format(outputDir)
+    cmd += ' --OutputSimu_directory {}'.format(outputDir)
     cmd += ' --SN_minRFphaseQual -15.'
     cmd += ' --SN_maxRFphaseQual 30.'
     cmd += ' --SN_ebvofMW {}'.format(ebvofMW)
+    cmd += ' --Pixelisation_nside 128'
 
     #create outputDir here
     if not os.path.isdir(outputDir):
