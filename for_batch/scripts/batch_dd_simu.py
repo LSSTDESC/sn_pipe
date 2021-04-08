@@ -29,8 +29,8 @@ def batch(dbName,dbDir,dbExtens,fieldName,outDir,pixelmap_dir,ebvofMW,nproc=8):
 
     
     #confNames = ['faintSN','allSN']
-    confNames = ['faintSN']
-    #confNames = ['allSN']
+    #confNames = ['faintSN']
+    confNames = ['allSN']
     for cf in confNames:
         idx = config['confName'] == cf
         sel = config[idx]
@@ -103,10 +103,12 @@ def config_rec():
     color_type = 'unique'
     color_min = 0.2
     color_max = 0.4
-    z_type = 'uniform'
-    daymax_type = 'uniform'
+    #z_type = 'uniform'
+    #daymax_type = 'uniform'
+    z_type ='random'
+    daymax_type = 'random'
     daymax_step = 2
-    nsn_factor = 10
+    nsn_factor = 50
 
     # this is for faintSN
     z_step = 0.1
