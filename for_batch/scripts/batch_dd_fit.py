@@ -101,6 +101,7 @@ def nlc(simuFile):
     number of LCs
 
     """
+
     res = loopStack(simuFile,objtype='astropyTable')
 
     return len(res)
@@ -136,9 +137,27 @@ def family(dbName,rlist):
 
     return fam
 
+#get the simufile here                                                                                      
+
+def getSimu(simuDir, dbName, fieldName, snType):
+    fullsimuDir='{}/{}'.format(simuDir,dbName)
+    simuFiles = glob.glob('{}/Simu*{}*{}*.hdf5'.format(fullsimuDir,fieldName,snType))
+
+    #print('hh',simuFiles,len(simuFiles))
+
+    simudf = pd.DataFrame(simuFiles,columns=['simuFile'])
+
+    simudf['prodid'] = simudf['simuFile'].apply(lambda x : x.split('/')[-1].split('.hdf5')[0].split('Simu_')[-1])
+
+    #print('ggg',simudf['simuFile'].unique())
+    simudf = simudf.groupby(['prodid']).apply(lambda x: pd.DataFrame({'nlc': [nlc(x['simuFile'])]})).reset_index()
+
+    #print('rrr',simudf)
+    return simudf
+
 parser = OptionParser()
 
-parser.add_option("--dbName", type="str", default='descddf_v1.4_10yrs',help="dbName to process  [%default]")
+parser.add_option("--dbName", type="str", default='descddf_v1.5_10yrs',help="dbName to process  [%default]")
 parser.add_option("--simuDir", type="str", default='/sps/lsst/users/gris/DD/Simu',help="simu dir [%default]")
 parser.add_option("--fieldName", type="str", default='COSMOS',help="DD field to process [%default]")
 parser.add_option("--outDir", type="str", default='/sps/lsst/users/gris/DD/Fit',help="output directory [%default]")
@@ -151,28 +170,27 @@ opts, args = parser.parse_args()
 print('Start processing...')
 
 
-#get the simufile here
-
-simuDir='{}/{}'.format(opts.simuDir,opts.dbName)
-simuFiles = glob.glob('{}/Simu*{}*.hdf5'.format(simuDir,opts.fieldName))
-
-print('hh',simuFiles,len(simuFiles))
-
-simudf = pd.DataFrame(simuFiles,columns=['simuFile'])
-
-simudf['prodid'] = simudf['simuFile'].apply(lambda x : x.split('/')[-1].split('.hdf5')[0].split('Simu_')[-1])
-
-simudf = simudf.groupby(['prodid']).apply(lambda x: pd.DataFrame({'nlc': [nlc(x['simuFile'])]})).reset_index()
-
-print(simudf)
 
 ic = -1
 nlc_ref = 20000
 snType = ['faintSN']
-snType = ['faintSN','allSN']
+snType = ['allSN']
+#snType = ['faintSN','allSN']
 #snType = ['mediumSN']
+simuDir = '{}/{}'.format(opts.simuDir, opts.dbName)
+for bb in snType:
+    simudf = getSimu(opts.simuDir,opts.dbName,opts.fieldName, bb)
+    print(simudf[['prodid','nlc']])
+
+    for ic, row in simudf.iterrows():
+        process(opts.dbName,opts.fieldName,[row['prodid']], simuDir, opts.outDir,ic,opts.nproc,opts.mode,opts.snrmin)
+
+
+print(test)
+
 for i in range(8):
     for bb in snType:                                                                                            
+        simudf = getSimu(opts.simuDir,opts.dbName,opts.fieldName, bb)
         idx = simudf['prodid'].str.contains('{}_{}'.format(bb,i))
         sel = simudf[idx].to_records()
         if len(sel) >0:
@@ -189,12 +207,12 @@ for i in range(8):
                    ib = bbatch[ibb+1]
                    #print('bb',ia,ib,sel[ia:ib]['nlc'].sum(),sel[ia:ib]['prodid'])
                    kk += sel[ia:ib]['nlc'].sum()
-                   process(opts.dbName,opts.fieldName,sel[ia:ib]['prodid'], simuDir, opts.outDir,ic,opts.nproc,opts.mode,opts.snrmin)
+                   process(opts.dbName,opts.fieldName,sel[ia:ib]['prodid'], opts.simuDir, opts.outDir,ic,opts.nproc,opts.mode,opts.snrmin)
                print('finally',kk)
                
             else:
                 ic +=1
-                process(opts.dbName,opts.fieldName,sel['prodid'].tolist(), simuDir, opts.outDir,ic,opts.nproc,opts.mode,opts.snrmin)
+                process(opts.dbName,opts.fieldName,sel['prodid'].tolist(), opts.simuDir, opts.outDir,ic,opts.nproc,opts.mode,opts.snrmin)
 
 
 """
