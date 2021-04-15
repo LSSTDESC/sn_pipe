@@ -1,6 +1,7 @@
 #!/bin/bash
 
 OS=$1
+version=${2:--4}
 
 if [ $OS != 'Linux' ] && [ $OS != 'Mac' ]
 then
@@ -50,9 +51,11 @@ echo "$i: ${array[$i]}"
 let i++
 done
 
-# choose the latest-1 release installed
+# choose the latest-version release installed
 
-release=${array[$len-2]}
+versnum=$(($len+$version))
+
+release=${array[$versnum]}
 
 #Fill a file with the release chosen
 
