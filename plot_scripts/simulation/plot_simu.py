@@ -7,8 +7,8 @@ from sn_plotter_simu.simuPlot import SimuPlot
 
 parser = OptionParser()
 
-parser.add_option("--prodid", type="str", default='alt_sched',
-                  help="prodid [%default]")
+parser.add_option("--dbName", type="str", default='alt_sched',
+                  help="OS name [%default]")
 parser.add_option("--fileDir", type="str", default='Output_Simu',
                   help="dir location of the results [%default]")
 
