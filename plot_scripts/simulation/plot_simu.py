@@ -16,7 +16,7 @@ opts, args = parser.parse_args()
 
 print('Start processing...', opts)
 
-splot = SimuPlot(opts.fileDir, opts.prodid)
+splot = SimuPlot(opts.fileDir, opts.dbName)
 
 # get the simulation parameters
 simupars = splot.simuPars
