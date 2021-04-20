@@ -212,7 +212,7 @@ class Summary:
             # plt.show()
             metricValues = loopStack(fileNames, 'astropyTable').to_pandas()
             metricValues = metricValues.round({'pixRA': 3, 'pixDec': 3})
-            metricValues['cadence'] = dbName
+            metricValues['dbName'] = dbName
             metricValues['fieldname'] = fieldName
             metricValues['pixArea'] = self.pixArea
             metricValues['filter'] = 'grizy'
@@ -305,7 +305,9 @@ metricTot = Summary(dirFile, 'NSN',
                     'DD', fieldNames, nside, forPlot, outName).data
 
 print(metricTot.dtype)
-print('oo', np.unique(metricTot[['cadence', 'fieldname']]), type(metricTot))
+print('oo', np.unique(metricTot[['dbName', 'fieldname']]), type(metricTot))
+print('hhh', metricTot['m5_med'])
+print(testons)
 #fieldNames = ['COSMOS', 'CDFS', 'XMM-LSS', 'ELAIS', 'ADFS1', 'ADFS2']
 #fieldNames = ['COSMOS']
 #nsn_plot.plot_DDArea(metricTot, forPlot, sntype='faint')
