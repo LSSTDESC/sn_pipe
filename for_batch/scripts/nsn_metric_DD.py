@@ -77,7 +77,7 @@ class Process:
 
         script.write("EOF" + "\n")
         script.close()
-        #os.system("sh "+scriptName)
+        os.system("sh "+scriptName)
         
     
     def prepareOut(self):
