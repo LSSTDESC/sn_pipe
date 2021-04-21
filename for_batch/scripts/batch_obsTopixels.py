@@ -112,6 +112,8 @@ parser.add_option("--Decmax", type=float, default=20.,
                   help="Dec max for obs area - [%default]")
 parser.add_option("--nDec", type=int, default=4,
                   help="number of Dec patches - [%default]")
+parser.add_option("--DDFs", type=str, default='COSMOS,XMM-LSS,ELAIS,CDFS,ADFS1',
+                  help="list of DDF ro consider - [%default]")
 
 opts, args = parser.parse_args()
 
@@ -135,7 +137,8 @@ toprocess = pd.read_csv(dbList, comment='#')
 # print('there', toprocess)
 scriptref = 'run_scripts/obs_pixelize/run_obs_to_pixels.py'
 fieldNames = []
-fieldDD = ['COSMOS', 'CDFS', 'ELAIS', 'XMM-LSS', 'ADFS1', 'ADFS2']
+#fieldDD = ['COSMOS', 'CDFS', 'ELAIS', 'XMM-LSS', 'ADFS1', 'ADFS2']
+fieldDD = opts.DDFs.split(',')
 for io, val in toprocess.iterrows():
     if val['fieldType'] == 'DD':
         fieldNames = fieldDD
