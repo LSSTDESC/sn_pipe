@@ -50,7 +50,8 @@ def skyPatch(RAmin, RAmax, nRA, Decmin, Decmax, nDec, outName):
 class procObsPixels:
     def __init__(self, outDir, dbDir, dbName, dbExtens, nodither,
                  fieldType, RAmin, RAmax, Decmin, Decmax, nside,
-                 nprocs, saveData=False, fieldName='unknown', nclusters=6):
+                 nprocs, saveData=False, fieldName='unknown', 
+                 nclusters=6,radius=4):
         """
         Class to process obs <-> pixels on a patch of the sky
 
@@ -82,6 +83,8 @@ class procObsPixels:
            number of procs when processing
         saveData: bool, opt
            to save the data (default:False)
+        radius: float, opt
+         radius around DD center to grab pixels
 
         """
 
@@ -100,6 +103,8 @@ class procObsPixels:
         self.nprocs = nprocs
         self.saveData = saveData
         self.nclusters = nclusters
+        self.radius = radius
+
         # create output directory
         self.genDir(outDir)
 
@@ -161,7 +166,8 @@ class procObsPixels:
                                          self.RAmin, self.RAmax,
                                          self.Decmin, self.Decmax,
                                          self.RACol, self.DecCol,
-                                         display=False, nclusters=self.nclusters)
+                                         display=False, nclusters=self.nclusters,
+                                         radius=self.radius)
 
         print('observations', len(observations), len(patches))
         """
@@ -343,7 +349,8 @@ parser.add_option("--fieldName", type='str', default='WFD',
                   help="fieldName [%default]")
 parser.add_option("--nclusters", type=int, default=6,
                   help="number of clusters - for DD only[%default]")
-
+parser.add_option("--radius", type=float, default=4.,
+                  help="radius around center - for DD only[%default]")
 
 opts, args = parser.parse_args()
 
@@ -376,5 +383,6 @@ for patch in patches:
                          patch['Decmin'], patch['Decmax'], opts.nside,
                          opts.nprocs, saveData=opts.saveData,
                          fieldName=opts.fieldName,
-                         nclusters=opts.nclusters)
+                         nclusters=opts.nclusters,
+                         radius = opts.radius)
     # break

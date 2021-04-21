@@ -4,11 +4,11 @@ from optparse import OptionParser
 import pandas as pd
 
 
-def batch(dbDir, dbName, dbExtens, scriptref, outDir, nproc,
+def process(dbDir, dbName, dbExtens, scriptref, outDir, nproc,
           saveData, fieldType, simuType, nside, fieldNames, nclusters,
-          RAmin,RAmax,nRA,Decmin,Decmax,nDec):
+            RAmin,RAmax,nRA,Decmin,Decmax,nDec,radius,mode='batch'):
 
-    print('boa',RAmin,RAmax,nRA,Decmin,Decmax,nDec)
+    print('boa',RAmin,RAmax,nRA,Decmin,Decmax,nDec,radius)
 
     cwd = os.getcwd()
     dirScript = cwd + "/scripts"
@@ -49,20 +49,25 @@ def batch(dbDir, dbName, dbExtens, scriptref, outDir, nproc,
                    saveData, fieldType, simuType, nside,'',0,
                    RAmin,RAmax,nRA,Decmin,Decmax,nDec)
         script.write(cmd + " \n")
+        if mode == 'interactive':
+            os.system(cmd)
     if fieldType == 'DD':
         for fieldName in fieldNames:
             cmd = cmdb(dbDir, dbName, dbExtens, scriptref, outDir, nproc,
                        saveData, fieldType, simuType, nside, fieldName, nclusters,
-            RAmin,RAmax,nRA,Decmin,Decmax,nDec)
+                       RAmin,RAmax,nRA,Decmin,Decmax,nDec,radius)
             script.write(cmd + " \n")
+            if mode == 'interactive':
+                os.system(cmd)
     script.write("EOF" + "\n")
     script.close()
-    os.system("sh "+scriptName)
+    if mode == 'batch':
+        os.system("sh "+scriptName)
 
 
 def cmdb(dbDir, dbName, dbExtens, scriptref, outDir, nproc,
          saveData, fieldType, simuType, nside, fieldName='', nclusters=0,
-         RAmin=0.,RAmax=360.,nRA=10,Decmin=-80.,Decmax=20.,nDec=4):
+         RAmin=0.,RAmax=360.,nRA=10,Decmin=-80.,Decmax=20.,nDec=4,radius=4.):
 
     cmd = 'python {}'.format(scriptref)
     cmd += ' --dbDir {}'.format(dbDir)
@@ -80,6 +85,7 @@ def cmdb(dbDir, dbName, dbExtens, scriptref, outDir, nproc,
     cmd += ' --Decmin {}'.format(Decmin)
     cmd += ' --Decmax {}'.format(Decmax)
     cmd += ' --nDec {}'.format(nDec)
+    cmd += ' --radius {}'.format(radius)
 
     if fieldName != '':
         cmd += ' --fieldName {}'.format(fieldName)
@@ -112,8 +118,12 @@ parser.add_option("--Decmax", type=float, default=20.,
                   help="Dec max for obs area - [%default]")
 parser.add_option("--nDec", type=int, default=4,
                   help="number of Dec patches - [%default]")
+parser.add_option("--radius", type=float, default=4.,
+                  help="radius for pixel arounf center [DD only] - [%default]")
 parser.add_option("--DDFs", type=str, default='COSMOS,XMM-LSS,ELAIS,CDFS,ADFS1',
                   help="list of DDF ro consider - [%default]")
+parser.add_option("--mode", type=str, default='batch',
+                  help="mode to run (batch/interactive) - [%default]")
 
 opts, args = parser.parse_args()
 
@@ -127,7 +137,8 @@ Decmin = opts.Decmin
 Decmax = opts.Decmax
 nRA = opts.nRA
 nDec = opts.nDec
-
+radius = opts.radius
+mode = opts.mode
 """
 toprocess = np.genfromtxt(dbList, dtype=None, names=[
                           'dbName', 'simuType', 'nside', 'coadd', 'fieldType', 'nproc'])
@@ -142,6 +153,6 @@ fieldDD = opts.DDFs.split(',')
 for io, val in toprocess.iterrows():
     if val['fieldType'] == 'DD':
         fieldNames = fieldDD
-    batch(val['dbDir'], val['dbName'], val['dbExtens'], scriptref, outDir, val['nproc'],
-          1, val['fieldType'], val['simuType'], val['nside'], fieldNames, opts.nclusters,
-          RAmin,RAmax,nRA,Decmin,Decmax,nDec)
+    process(val['dbDir'], val['dbName'], val['dbExtens'], scriptref, outDir, val['nproc'],
+              1, val['fieldType'], val['simuType'], val['nside'], fieldNames, opts.nclusters,
+              RAmin,RAmax,nRA,Decmin,Decmax,nDec,radius,mode)
