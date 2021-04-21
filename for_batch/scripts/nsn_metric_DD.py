@@ -3,7 +3,7 @@ from optparse import OptionParser
 import pandas as pd
 
 class Process:
-    def __init__(self, dbDir, dbName,dbExtens,outDir,pixelmap_dir, nclusters, nside):
+    def __init__(self, dbDir, dbName,dbExtens,outDir,pixelmap_dir, nclusters, nside, RAmin,RAmax,Decmin,Decmax):
         
         self.dbDir =dbDir
         self.dbName = dbName
@@ -12,6 +12,10 @@ class Process:
         self.pixelmap_dir = pixelmap_dir
         self.nclusters = nclusters
         self.nside = opts.nside
+        self.RAmin = RAmin
+        self.RAmax = RAmax
+        self.Decmin = Decmin
+        self.Decmax = Decmax
 
     def __call__(self, nproc, fieldNames, ebvofMW,mode):
 
@@ -42,6 +46,10 @@ class Process:
         cmd_ += ' --pixelmap_dir {}'.format(self.pixelmap_dir)
         cmd_ += ' --outDir {}'.format(self.outDir)
         cmd_ += ' --nside {}'.format(self.nside)
+        cmd_ += ' --RAmin {}'.format(self.RAmin)
+        cmd_ += ' --RAmax {}'.format(self.RAmax)
+        cmd_ += ' --Decmin {}'.format(self.Decmin)
+        cmd_ += ' --Decmax {}'.format(self.Decmax)
 
         return cmd_
 
@@ -69,7 +77,7 @@ class Process:
 
         script.write("EOF" + "\n")
         script.close()
-        os.system("sh "+scriptName)
+        #os.system("sh "+scriptName)
         
     
     def prepareOut(self):
@@ -110,6 +118,15 @@ parser.add_option('--ebvofMW', type=float, default=-1.0,help='E(B-V) [%default]'
 parser.add_option('--fieldNames', type=str, default='COSMOS,CDFS,ELAIS,XMM-LSS,ADFS1,ADFS2',help='DD fields to process [%default]')
 parser.add_option('--nclusters', type=int, default=6,help='total number of DD in this OS [%default]')
 parser.add_option('--nside', type=int, default=128,help='healpix nside parameter [%default]')
+parser.add_option("--RAmin", type=float, default=0.,
+                  help="RA min for obs area - for WDF only[%default]")
+parser.add_option("--RAmax", type=float, default=360.,
+                  help="RA max for obs area - for WDF only[%default]")
+parser.add_option("--Decmin", type=float, default=-1.,
+                  help="Dec min for obs area - for WDF only[%default]")
+parser.add_option("--Decmax", type=float, default=-1.,
+                  help="Dec max for obs area - for WDF only[%default]")
+
 
 opts, args = parser.parse_args()
 
@@ -119,6 +136,6 @@ fieldNames = opts.fieldNames.split(',')
 
 for i,row in toprocess.iterrows():
 
-    proc = Process(row['dbDir'], row['dbName'],row['dbExtens'],opts.outDir,opts.pixelmap_dir, opts.nclusters,opts.nside)
+    proc = Process(row['dbDir'], row['dbName'],row['dbExtens'],opts.outDir,opts.pixelmap_dir, opts.nclusters,opts.nside,opts.RAmin,opts.RAmax,opts.Decmin,opts.Decmax)
 
     proc(opts.nproc,fieldNames, opts.ebvofMW,opts.mode)
