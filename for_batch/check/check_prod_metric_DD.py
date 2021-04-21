@@ -25,6 +25,8 @@ for i, row in tocheck.iterrows():
         list_processed = glob.glob(search_path)
         if len(list_processed) != 8:
             print(dbName,field,len(list_processed))
+        else:
+            print(dbName,field,'ok')
     """    
     df_processed = pd.DataFrame(list_processed, columns=['dbName'])
     df_processed['dbName'] = df.dbName.str.split('/',-1)
