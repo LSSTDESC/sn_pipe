@@ -306,8 +306,7 @@ metricTot = Summary(dirFile, 'NSN',
 
 print(metricTot.dtype)
 print('oo', np.unique(metricTot[['dbName', 'fieldname']]), type(metricTot))
-print('hhh', metricTot['m5_med'])
-print(testons)
+
 #fieldNames = ['COSMOS', 'CDFS', 'XMM-LSS', 'ELAIS', 'ADFS1', 'ADFS2']
 #fieldNames = ['COSMOS']
 #nsn_plot.plot_DDArea(metricTot, forPlot, sntype='faint')
