@@ -23,7 +23,7 @@ class Process:
             for fieldName in fieldNames:
                 cmd_proc = self.cmd(nproc,fieldName,ebvofMW)
                 print(cmd_proc)
-        
+                os.system(cmd_proc)
         if opts.mode == 'batch':
             self.batch(nproc,fieldNames,ebvofMW)
 
