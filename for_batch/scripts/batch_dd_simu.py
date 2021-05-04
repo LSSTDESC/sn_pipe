@@ -4,13 +4,13 @@ import os
 import numpy as np
 import itertools
 
-def process(dbName,dbDir,dbExtens,fieldName,outDir,pixelmap_dir,ebvofMW=-1.,nproc=8,mode='batch'):
+def process(dbName,dbDir,dbExtens,fieldName,outDir,pixelmap_dir,ebvofMW=-1.,nproc=8,mode='batch',snTypes=['faintSN','allSN']):
     
     if mode == 'batch':
-        batch(dbName,dbDir,dbExtens,fieldName,outDir,pixelmap_dir,ebvofMW,nproc)
+        batch(dbName,dbDir,dbExtens,fieldName,outDir,pixelmap_dir,ebvofMW,snTypes,nproc)
     else:
          config = config_rec()
-         confNames = ['faintSN','allSN']
+         confNames = snTypes
          for cf in confNames:
              idx = config['confName'] == cf
              sel = config[idx]
@@ -23,14 +23,14 @@ def process(dbName,dbDir,dbExtens,fieldName,outDir,pixelmap_dir,ebvofMW=-1.,npro
                      os.system(cmd_)
 
 
-def batch(dbName,dbDir,dbExtens,fieldName,outDir,pixelmap_dir,ebvofMW,nproc=8):
+def batch(dbName,dbDir,dbExtens,fieldName,outDir,pixelmap_dir,ebvofMW,snTypes,nproc=8):
     # get config for the run
     config = config_rec()
 
     
     #confNames = ['faintSN','allSN']
     #confNames = ['faintSN']
-    confNames = ['allSN']
+    confNames = snTypes
     for cf in confNames:
         idx = config['confName'] == cf
         sel = config[idx]
@@ -132,7 +132,7 @@ def config_rec():
         z_min = zval
         z_max = zval+np.round(zstep,2)
         z_step = np.round(zstep,2)
-        nsn_factor = 105
+        nsn_factor = 50
 
         r.append((x1_type,x1_min,x1_max,color_type,color_min,color_max,z_type,z_min,z_max,z_step,daymax_type,daymax_step,nsn_factor,'mediumSN'))
 
@@ -233,15 +233,20 @@ parser = OptionParser()
 parser.add_option('--dbName', type='str', default='descddf_v1.5_10yrs',help='dbName to process  [%default]')
 parser.add_option('--dbDir', type='str', default='/sps/lsst/cadence/LSST_SN_PhG/cadence_db/fbs_1.5/npy',help='db dir [%default]')
 parser.add_option('--dbExtens', type='str', default='npy',help='db extension [%default]')
-parser.add_option('--fieldName', type='str', default='COSMOS',help='DD field to process [%default]')
+parser.add_option('--fieldNames', type='str', default='COSMOS',help='DD field to process [%default]')
 parser.add_option('--outDir', type='str', default='/sps/lsst/users/gris/DD/Simu',help='output directory [%default]')
 parser.add_option('--mode', type='str', default='batch',help='running mode batch/interactive[%default]')
 parser.add_option('--pixelmap_dir', type='str', default='/sps/lsst/users/gris/ObsPixelized_128',help='pixelmap directory [%default]')
 parser.add_option('--nproc', type=int, default=8,help='number of proc [%default]')
 parser.add_option('--ebvofMW', type=float, default=-1.0,help='E(B-V) [%default]')
+parser.add_option('--snTypes', type=str, default='faintSN,allSN',help='SN types to process')
 
 opts, args = parser.parse_args()
 
 print('Start processing...')
 
-process(opts.dbName,opts.dbDir,opts.dbExtens,opts.fieldName,opts.outDir,opts.pixelmap_dir,opts.ebvofMW,opts.nproc,opts.mode)
+fieldNames = opts.fieldNames.split(',')
+snTypes = opts.snTypes.split(',')
+
+for fieldName in fieldNames:
+    process(opts.dbName,opts.dbDir,opts.dbExtens,fieldName,opts.outDir,opts.pixelmap_dir,opts.ebvofMW,opts.nproc,opts.mode,snTypes)

@@ -118,6 +118,8 @@ parser.add_option("--nproc", type=int, default=8,
                   help="nproc for multiprocessing [%default]")
 parser.add_option("--verbose", type=int, default=0,
                   help="to activate the verbose mode [%default]")
+parser.add_option("--tagprod", type='str', default='faintSN,allSN',
+                  help="production to check [%default]")
 
 opts, args = parser.parse_args()
 
@@ -126,18 +128,20 @@ fitDir = opts.fitDir
 dbName = opts.dbName
 nproc = opts.nproc
 verbose = opts.verbose
+tagprod = opts.tagprod.split(',')
 
-#search_path_simu = '{}/{}/Simu*COSMOS*allSN*.hdf5'.format(simDir,dbName)                                                                                   
-search_path_simu = '{}/{}/Simu*.hdf5'.format(simDir,dbName)
-print('looking for',search_path_simu)
-simus = glob.glob(search_path_simu)
+#search_path_simu = '{}/{}/Simu*allSN*.hdf5'.format(simDir,dbName)                                           
+for tag in tagprod:                                        
+    search_path_simu = '{}/{}/Simu*{}*.hdf5'.format(simDir,dbName,tag)
+    print('looking for',search_path_simu)
+    simus = glob.glob(search_path_simu)
 
-print(simus)
+    print(simus)
 
-res,resbad = analysis(simus,verbose,nproc)
-#print(res)
-res = res[['nsims','nfits']].sum()
+    res,resbad = analysis(simus,verbose,nproc)
+    #print(res)
+    res = res[['nsims','nfits']].sum()
 
-print('summary',res['nsims'],res['nfits'],res['nfits']/res['nsims'])
-print('To reprocess',resbad)
-resbad.to_csv('bad_fits.csv',index=False)
+    print('summary',res['nsims'],res['nfits'],res['nfits']/res['nsims'])
+    print('To reprocess',resbad)
+    resbad.to_csv('bad_fits.csv',index=False)
