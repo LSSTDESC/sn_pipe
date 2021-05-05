@@ -4,11 +4,12 @@ import os
 import glob
 from sn_tools.sn_io import loopStack
 import numpy as np
+import multiprocessing
 
-def process(dbName,fieldName,prodid, simuDir, outDir,num,nproc=8,mode='batch',snrmin=5.):
+def process(dbName,fieldName,prodid, simuDir, outDir,num,nproc=8,mode='batch',snrmin=5.,tag='gg'):
 
     if mode == 'batch':
-        batch(dbName,fieldName,prodid, simuDir, outDir,num,nproc,snrmin)
+        batch(dbName,fieldName,prodid, simuDir, outDir,num,nproc,snrmin,tag)
     else:
         if prodid:
             cmd_ = cmd(dbName,prodid.item(),simuDir,outDir,nproc,snrmin)
@@ -16,9 +17,9 @@ def process(dbName,fieldName,prodid, simuDir, outDir,num,nproc=8,mode='batch',sn
             print('will execute',prodid.item())
             os.system(cmd_)
 
-def batch(dbName,fieldName,prodids, simuDir, outDir,num,nproc=8,snrmin=5.):
+def batch(dbName,fieldName,prodids, simuDir, outDir,num,nproc=8,snrmin=5.,tag='gg'):
 
-    dirScript, name_id, log, cwd = prepareOut(dbName,fieldName,num)
+    dirScript, name_id, log, cwd = prepareOut(dbName,fieldName,num,tag)
     # qsub command                                                                             
     qsub = 'qsub -P P_lsst -l sps=1,ct=3:00:00,h_vmem=16G -j y -o {} -pe multicores {} <<EOF'.format(log, nproc)
 
@@ -48,7 +49,7 @@ def batch(dbName,fieldName,prodids, simuDir, outDir,num,nproc=8,snrmin=5.):
     os.system("sh "+scriptName)
     
 
-def prepareOut(dbName,fieldName,num):
+def prepareOut(dbName,fieldName,num,tag):
     """                                                                                        
     Function to prepare for the batch                                                            
     
@@ -66,7 +67,7 @@ def prepareOut(dbName,fieldName,num):
     if not os.path.isdir(dirLog):
         os.makedirs(dirLog)
 
-    id = '{}_{}_{}'.format(dbName, fieldName,num)
+    id = '{}_{}_{}_{}'.format(dbName, fieldName,num,tag)
 
     name_id = 'fit_{}'.format(id)
     log = dirLog + '/'+name_id+'.log'
@@ -139,9 +140,43 @@ def family(dbName,rlist):
 
 #get the simufile here                                                                                      
 
-def getSimu(simuDir, dbName, fieldName, snType):
+def getSimu_multi(simuDir, dbName, fieldName, snType, nproc):
+
     fullsimuDir='{}/{}'.format(simuDir,dbName)
     simuFiles = glob.glob('{}/Simu*{}*{}*.hdf5'.format(fullsimuDir,fieldName,snType))
+
+    nz = len(simuFiles)
+    nproc = min([nz, nproc])
+    print('nproc')
+    # multiprocessing parameters
+    t = np.linspace(0, nz, nproc+1, dtype='int')
+    # print('multi', nz, t)
+    result_queue = multiprocessing.Queue()
+
+    procs = [multiprocessing.Process(name='Subprocess-'+str(j), target=getSimu,
+                                     args=(simuFiles[t[j]:t[j+1]], j, result_queue))
+             for j in range(nproc)]
+
+    for p in procs:
+        p.start()
+
+    resultdict = {}
+    # get the results in a dict
+
+    for i in range(nproc):
+        resultdict.update(result_queue.get())
+
+    for p in multiprocessing.active_children():
+        p.join()
+
+    restot = pd.DataFrame()
+    for key, vals in resultdict.items():
+        restot = pd.concat((restot, vals))
+
+    return restot
+
+
+def getSimu(simuFiles,j=0, output_q=None):
 
     #print('hh',simuFiles,len(simuFiles))
 
@@ -149,11 +184,14 @@ def getSimu(simuDir, dbName, fieldName, snType):
 
     simudf['prodid'] = simudf['simuFile'].apply(lambda x : x.split('/')[-1].split('.hdf5')[0].split('Simu_')[-1])
 
-    #print('ggg',simudf['simuFile'].unique())
+    #print('ggg',j,simudf['simuFile'].unique())
     simudf = simudf.groupby(['prodid']).apply(lambda x: pd.DataFrame({'nlc': [nlc(x['simuFile'])]})).reset_index()
 
     #print('rrr',simudf)
-    return simudf
+    if output_q is not None:
+        return output_q.put({j: simudf})
+    else:
+        return simudf
 
 parser = OptionParser()
 
@@ -164,6 +202,7 @@ parser.add_option("--outDir", type="str", default='/sps/lsst/users/gris/DD/Fit',
 parser.add_option("--mode", type="str", default='batch',help="run mode batch/interactive[%default]")
 parser.add_option("--snrmin", type=float, default=1.,help="min snr for LC points fit[%default]")
 parser.add_option("--nproc", type=int, default=8,help="number of proc to use[%default]")
+parser.add_option("--snTypes", type='str', default='faintSN,allSN',help="tag for production [%default]")
 
 opts, args = parser.parse_args()
 
@@ -171,21 +210,33 @@ print('Start processing...')
 
 
 
-ic = -1
-nlc_ref = 20000
-snType = ['faintSN']
-snType = ['allSN']
+nlc_ref = 10000
+snTypes = opts.snTypes.split(',')
+
 #snType = ['faintSN','allSN']
 #snType = ['mediumSN']
 simuDir = '{}/{}'.format(opts.simuDir, opts.dbName)
-for bb in snType:
-    simudf = getSimu(opts.simuDir,opts.dbName,opts.fieldName, bb)
+for bb in snTypes:
+    print('tag',bb)
+    simudf = getSimu_multi(opts.simuDir,opts.dbName,opts.fieldName, bb, opts.nproc)
     print(simudf[['prodid','nlc']])
 
+    list_proc = []
+    nlc_sim = 0
+    iproc = 0
     for ic, row in simudf.iterrows():
-        process(opts.dbName,opts.fieldName,[row['prodid']], simuDir, opts.outDir,ic,opts.nproc,opts.mode,opts.snrmin)
+        #process(opts.dbName,opts.fieldName,[row['prodid']], simuDir, opts.outDir,ic,opts.nproc,opts.mode,opts.snrmin,bb)
+        nlc_sim += row['nlc']
+        list_proc += [row['prodid']]
+        
+        if nlc_sim >= nlc_ref:
+            iproc += 1
+            print('processing',iproc,list_proc,nlc_sim)
+            process(opts.dbName,opts.fieldName,list_proc, simuDir, opts.outDir,iproc,opts.nproc,opts.mode,opts.snrmin,bb)
+            list_proc = []
+            nlc_sim =0
 
-
+"""
 print(test)
 
 for i in range(8):
@@ -214,7 +265,7 @@ for i in range(8):
                 ic +=1
                 process(opts.dbName,opts.fieldName,sel['prodid'].tolist(), opts.simuDir, opts.outDir,ic,opts.nproc,opts.mode,opts.snrmin)
 
-
+"""
 """
 dbName = 'descddf_v1.4_10yrs'
 fieldName = 'COSMOS'

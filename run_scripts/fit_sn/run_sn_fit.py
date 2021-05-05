@@ -84,9 +84,11 @@ class Fit_Simu:
             nn = 1
 
             n_per_batch = int(len(simul)/self.nproc)
-            if n_per_batch >= 300:
+            if n_per_batch >= 200:
                 nn = int(n_per_batch/300)
-
+                if nn == 1:
+                    nn += 1
+            print('batches for multiproc',n_per_batch,nn,n_per_batch)
             t = np.linspace(0, len(simul), nn+1, dtype='int')
 
             print('hello here', t)
