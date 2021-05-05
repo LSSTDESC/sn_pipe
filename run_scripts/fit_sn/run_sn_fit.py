@@ -85,7 +85,7 @@ class Fit_Simu:
 
             n_per_batch = int(len(simul)/self.nproc)
             if n_per_batch >= 200:
-                nn = int(n_per_batch/300)
+                nn = int(n_per_batch/200)
                 if nn == 1:
                     nn += 1
             print('batches for multiproc',n_per_batch,nn,n_per_batch)
