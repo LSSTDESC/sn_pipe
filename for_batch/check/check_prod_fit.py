@@ -91,7 +91,7 @@ def check_count(simus,verbose=False,j=0,output_q=None):
         nfits = len(fits)
         if verbose:
             print(sim.split('/')[-1],len(sims),len(fits),nfits/nsims)
-        if nfits/nsims<0.9:
+        if nfits/nsims<0.95:
             print(sim.split('/')[-1],len(sims),len(fits),nfits/nsims)
             r.append(sim.split('/')[-1])
         nsims_tot += nsims
