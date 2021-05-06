@@ -305,8 +305,10 @@ metricTot = Summary(dirFile, 'NSN',
                     'DD', fieldNames, nside, forPlot, outName).data
 
 print(metricTot.dtype)
-print('oo', np.unique(metricTot[['dbName', 'fieldname']]), type(metricTot))
-
+"""
+print('oo', np.unique(
+    metricTot[['dbName', 'fieldname', 'zlim_faint']]), type(metricTot))
+"""
 #fieldNames = ['COSMOS', 'CDFS', 'XMM-LSS', 'ELAIS', 'ADFS1', 'ADFS2']
 #fieldNames = ['COSMOS']
 #nsn_plot.plot_DDArea(metricTot, forPlot, sntype='faint')
