@@ -134,9 +134,9 @@ class Fit_Simu:
             p.start()
 
         #start = time.time()
-        TIMEOUT = 200.
+        TIMEOUT = 500.
         if self.covmb:
-            TIMEOUT = 250.
+            TIMEOUT = 800.
         #bool_list = [True]*self.nproc
         resultdict = {}
         """
