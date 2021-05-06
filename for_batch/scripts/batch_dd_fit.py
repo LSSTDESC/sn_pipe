@@ -6,10 +6,10 @@ from sn_tools.sn_io import loopStack
 import numpy as np
 import multiprocessing
 
-def process(dbName,fieldName,prodid, simuDir, outDir,num,nproc=8,mode='batch',snrmin=5.,tag='gg'):
+def process(dbName,fieldName,prodid, simuDir, outDir,num,nproc=8,mode='batch',snrmin=5.,tag='gg',mbcov=0):
 
     if mode == 'batch':
-        batch(dbName,fieldName,prodid, simuDir, outDir,num,nproc,snrmin,tag)
+        batch(dbName,fieldName,prodid, simuDir, outDir,num,nproc,snrmin,tag,mbcov)
     else:
         if prodid:
             cmd_ = cmd(dbName,prodid.item(),simuDir,outDir,nproc,snrmin)
@@ -17,7 +17,7 @@ def process(dbName,fieldName,prodid, simuDir, outDir,num,nproc=8,mode='batch',sn
             print('will execute',prodid.item())
             os.system(cmd_)
 
-def batch(dbName,fieldName,prodids, simuDir, outDir,num,nproc=8,snrmin=5.,tag='gg'):
+def batch(dbName,fieldName,prodids, simuDir, outDir,num,nproc=8,snrmin=5.,tag='gg',mbcov=0):
 
     dirScript, name_id, log, cwd = prepareOut(dbName,fieldName,num,tag)
     # qsub command                                                                             
@@ -41,7 +41,7 @@ def batch(dbName,fieldName,prodids, simuDir, outDir,num,nproc=8,snrmin=5.,tag='g
     script.write(" export OPENBLAS_NUM_THREADS=1 \n")
 
     for prodid in prodids:
-        cmd_=cmd(dbName,prodid, simuDir, outDir,nproc,snrmin)
+        cmd_=cmd(dbName,prodid, simuDir, outDir,nproc,snrmin,mbcov)
         script.write(cmd_+" \n")
 
     script.write("EOF" + "\n")
@@ -75,7 +75,7 @@ def prepareOut(dbName,fieldName,num,tag):
     return dirScript, name_id, log, cwd
 
 
-def cmd(dbName,prodid,simuDir,outDir,nproc,snrmin):
+def cmd(dbName,prodid,simuDir,outDir,nproc,snrmin,mbcov):
     cmd = 'python run_scripts/fit_sn/run_sn_fit.py'
     #cmd += ' --ProductionID {}_{}_allSN_{}_sn_cosmo'.format(dbName,fieldName,num) 
     #cmd += ' --Simulations_prodid {}_{}_allSN_{}'.format(dbName,fieldName,num)
@@ -86,6 +86,7 @@ def cmd(dbName,prodid,simuDir,outDir,nproc,snrmin):
     cmd += ' --LCSelection_nbands 0' 
     cmd += ' --OutputFit_directory {}/{}'.format(outDir,dbName) 
     cmd += ' --MultiprocessingFit_nproc {}'.format(nproc)
+    cmd += ' --mbcov_estimate {}'.format(mbcov)
     return cmd
 
 def nlc(simuFile):
@@ -203,6 +204,7 @@ parser.add_option("--mode", type="str", default='batch',help="run mode batch/int
 parser.add_option("--snrmin", type=float, default=1.,help="min snr for LC points fit[%default]")
 parser.add_option("--nproc", type=int, default=8,help="number of proc to use[%default]")
 parser.add_option("--snTypes", type='str', default='faintSN,allSN',help="tag for production [%default]")
+parser.add_option("--mbcov_estimate", type=int, default=0,help="to estimate covmb[%default]")
 
 opts, args = parser.parse_args()
 
@@ -210,7 +212,7 @@ print('Start processing...')
 
 
 
-nlc_ref = 10000
+nlc_ref = 5000
 snTypes = opts.snTypes.split(',')
 
 #snType = ['faintSN','allSN']
@@ -218,7 +220,7 @@ snTypes = opts.snTypes.split(',')
 simuDir = '{}/{}'.format(opts.simuDir, opts.dbName)
 for bb in snTypes:
     print('tag',bb)
-    simudf = getSimu_multi(opts.simuDir,opts.dbName,opts.fieldName, bb, opts.nproc)
+    simudf = getSimu_multi(opts.simuDir,opts.dbName,opts.fieldName, bb,opts.nproc)
     print(simudf[['prodid','nlc']])
 
     list_proc = []
@@ -232,7 +234,7 @@ for bb in snTypes:
         if nlc_sim >= nlc_ref:
             iproc += 1
             print('processing',iproc,list_proc,nlc_sim)
-            process(opts.dbName,opts.fieldName,list_proc, simuDir, opts.outDir,iproc,opts.nproc,opts.mode,opts.snrmin,bb)
+            process(opts.dbName,opts.fieldName,list_proc, simuDir, opts.outDir,iproc,opts.nproc,opts.mode,opts.snrmin,bb,opts.mbcov_estimate)
             list_proc = []
             nlc_sim =0
 
