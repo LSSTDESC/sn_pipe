@@ -122,7 +122,6 @@ def generate_script(pidfit,pidsimu,scriptname,scriptname_ref):
 def reprocess(llist, tag, fieldName,scriptDir='scripts',scriptname_ref='reprocess.sh'):
 
     # load reproc_cmd
-    print(llist)
     for inum,ll in enumerate(llist):
         simuname = ll.split('.hdf5')[0]
         pidsimu = '_'.join(simuname.split('_')[1:])
@@ -175,7 +174,7 @@ for fieldName in fieldNames:
         print('looking for',search_path_simu)
         simus = glob.glob(search_path_simu)
 
-        print(simus)
+        #print(simus)
 
         res,resbad = analysis(simus,verbose,nproc)
         #print(res)
