@@ -30,13 +30,15 @@ class Fit_Simu:
 
     """
 
-    def __init__(self, config, covmb, nmax_batch=100):
+    def __init__(self, config, covmb):
 
         # Fit instance
 
         self.fit = Fitting(config, covmb=covmb)
         self.covmb = covmb
-        self.nmax_batch = nmax_batch
+        self.nmax_batch = config['MultiprocessingFit']['nmaxBatch']
+        self.timeout = config['MultiprocessingFit']['timeout']
+
 
         # get the simu files
         dirSimu = config['Simulations']['dirname']
@@ -134,9 +136,6 @@ class Fit_Simu:
             p.start()
 
         #start = time.time()
-        TIMEOUT = 500.
-        if self.covmb:
-            TIMEOUT = 800.
         #bool_list = [True]*self.nproc
         resultdict = {}
         """
@@ -173,7 +172,7 @@ class Fit_Simu:
         """
         for ja in range(self.nproc):
             try:
-                resultdict.update(result_queue.get(timeout=TIMEOUT))
+                resultdict.update(result_queue.get(timeout=self.timeout))
             except(queue.Empty):
                 print('Warning: The process', ja, 'has crashed. No data here.')
 
