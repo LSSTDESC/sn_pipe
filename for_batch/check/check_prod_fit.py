@@ -113,7 +113,7 @@ def generate_script(pidfit,pidsimu,scriptname,scriptname_ref):
         filedata = file.read()
     filedata = filedata.replace('pidfit', pidfit)
     filedata = filedata.replace('pidsimu', pidsimu)
-    filedata = filedata.replace('scriptnamelog', scriptname.replace('.sh','.log'))
+    filedata = filedata.replace('scriptnamelog', scriptname.split('/')[1].replace('.sh','.log'))
     
     with open(scriptname, 'w') as file:
         file.write(filedata)
