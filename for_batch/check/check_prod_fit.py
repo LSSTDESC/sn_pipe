@@ -4,6 +4,7 @@ from optparse import OptionParser
 import multiprocessing
 import numpy as np
 import pandas as pd
+import os
 
 def analysis(simus,verbose,nproc):
     """
@@ -106,6 +107,31 @@ def check_count(simus,verbose=False,j=0,output_q=None):
     else:
         return (res,rbad)
 
+def generate_script(pidfit,pidsimu,scriptname,scriptname_ref):
+
+    with open(scriptname_ref, 'r') as file:
+        filedata = file.read()
+    filedata = filedata.replace('pidfit', pidfit)
+    filedata = filedata.replace('pidsimu', pidsimu)
+    filedata = filedata.replace('scriptnamelog', scriptname.replace('.sh','.log'))
+    
+    with open(scriptname, 'w') as file:
+        file.write(filedata)
+
+
+def reprocess(llist, tag, fieldName,scriptDir='scripts',scriptname_ref='reprocess.sh'):
+
+    # load reproc_cmd
+    print(llist)
+    for inum,ll in enumerate(llist):
+        simuname = ll.split('.hdf5')[0]
+        pidsimu = '_'.join(simuname.split('_')[1:])
+        pidfit = '{}_{}'.format(pidsimu,'sn_cosmo')
+        scriptname = '{}/fit_reprocess_{}_{}_{}.sh'.format(scriptDir,fieldName,tag,inum)
+        generate_script(pidfit,pidsimu,scriptname,scriptname_ref)
+        os.system('sh {}'.format(scriptname))                  
+        
+
 parser = OptionParser()
 
 parser.add_option("--simDir", type="str", default='/sps/lsst/users/gris/DD/Simu',
@@ -120,6 +146,12 @@ parser.add_option("--verbose", type=int, default=0,
                   help="to activate the verbose mode [%default]")
 parser.add_option("--tagprod", type='str', default='faintSN,allSN',
                   help="production to check [%default]")
+parser.add_option("--fieldType", type=str, default='DD',
+                  help="type of field [%default]")
+parser.add_option("--fieldNames", type=str, default='COSMOS',
+                  help="field names - for fieldType=DD only [%default]")
+parser.add_option("--go_reprocess", type=int, default=0,
+                  help="tag for reprocessing [%default]")
 
 opts, args = parser.parse_args()
 
@@ -129,19 +161,28 @@ dbName = opts.dbName
 nproc = opts.nproc
 verbose = opts.verbose
 tagprod = opts.tagprod.split(',')
+fieldType = opts.fieldType
+fieldNames = opts.fieldNames.split(',')
+launch_reprocess = opts.go_reprocess
 
-#search_path_simu = '{}/{}/Simu*allSN*.hdf5'.format(simDir,dbName)                                           
-for tag in tagprod:                                        
-    search_path_simu = '{}/{}/Simu*{}*.hdf5'.format(simDir,dbName,tag)
-    print('looking for',search_path_simu)
-    simus = glob.glob(search_path_simu)
+if fieldType == 'WFD':
+    fieldNames= ['*']
 
-    print(simus)
+#search_path_simu = '{}/{}/Simu*allSN*.hdf5'.format(simDir,dbName)
+for fieldName in fieldNames:                                           
+    for tag in tagprod:                                        
+        search_path_simu = '{}/{}/Simu*{}*{}*.hdf5'.format(simDir,dbName,fieldName,tag)
+        print('looking for',search_path_simu)
+        simus = glob.glob(search_path_simu)
 
-    res,resbad = analysis(simus,verbose,nproc)
-    #print(res)
-    res = res[['nsims','nfits']].sum()
+        print(simus)
 
-    print('summary',res['nsims'],res['nfits'],res['nfits']/res['nsims'])
-    print('To reprocess',resbad)
-    resbad.to_csv('bad_fits.csv',index=False)
+        res,resbad = analysis(simus,verbose,nproc)
+        #print(res)
+        res = res[['nsims','nfits']].sum()
+
+        print('summary',res['nsims'],res['nfits'],res['nfits']/res['nsims'])
+        #print('To reprocess',resbad)
+        if launch_reprocess:
+            reprocess(resbad['file'].to_list(),fieldName,tag)
+        #resbad.to_csv('bad_fits.csv',index=False)
