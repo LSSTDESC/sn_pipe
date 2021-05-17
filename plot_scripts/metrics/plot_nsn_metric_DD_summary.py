@@ -15,6 +15,102 @@ import os
 import csv
 import pandas as pd
 import multiprocessing
+import scipy.stats
+
+
+def dumpcsv(metricTot):
+
+    metricTot = pd.DataFrame(metricTot)
+    idx = metricTot['nsn_med_faint'] >= 0
+    sel = metricTot[idx]
+    r = pd.DataFrame()
+
+    for fieldName in np.unique(sel['fieldname']):
+        ij = sel['fieldname'] == fieldName
+        selb = sel[ij]
+        for cad in range(1, 9, 1):
+            r = pd.concat(
+                (r, fill(selb, tagprod=fieldName, cadence=dict(zip('grizy', [cad]*5)))))
+
+    print(r)
+    r.to_csv('config_DD_obs.csv', index=False)
+
+
+def fill(selb, tagprod='', x1=-2.0, color=0.2, ebvofMW=0.0, snrmin=1.0, error_model=1, errmodrel=0.1, bluecutoff=380., redcutoff=800., simulator='sn_fast', fitter='sn_fast', Nvisits=dict(zip('grizy', [1, 1, 2, 2, 2])), cadence=dict(zip('grizy', [1, 1, 1, 1, 1]))):
+
+    fmed = []
+    r = pd.DataFrame()
+    for b in 'grizy':
+        fmed.append('m5_med_{}'.format(b))
+
+        ro = selb.groupby(['season'])[fmed].median().reset_index()
+
+    ro['tagprod'] = tagprod
+    ro['x1'] = x1
+    ro['color'] = color
+    ro['ebvofMW'] = ebvofMW
+    ro['snrmin'] = snrmin
+    ro['error_model'] = errmodrel
+    ro['bluecutoff'] = bluecutoff
+    ro['redcutoff'] = redcutoff
+    ro['simulator'] = simulator
+    ro['fitter'] = fitter
+    for b in Nvisits.keys():
+        ro['N{}'.format(b)] = Nvisits[b]
+        ro['cadence_{}'.format(b)] = cadence[b]
+
+    for b in Nvisits.keys():
+        nn = 'm5_{}'.format(b)
+        ro = ro.rename(columns={'m5_med_{}'.format(b): nn})
+        ro = ro.round({nn: 2})
+
+    ro['season'] = ro['season'].astype(int)
+    ro['tagprod'] = ro['tagprod'] + '_'+ro['season'].astype(str)
+    return ro
+
+
+def plotAllBinned(metricTot, xp='cadence', yp='nsn_med_faint', legx='cadence [day]', legy='$N_{SN} ^ {z < z_{complete}}$'):
+
+    metricTot = pd.DataFrame(metricTot)
+    idx = metricTot['nsn_med_faint'] >= 0
+    sel = metricTot[idx]
+    # plt.plot(sel['cadence'], sel['nsn_med_faint'], 'ko')
+    print(sel[['cadence', 'nsn_med_faint']])
+    fig, ax = plt.subplots()
+    zlim_theo = pd.read_csv('config_z_0.csv', comment="#")
+    zlim_theo['fieldName'] = zlim_theo['tagprod'].str.split(
+        '_').str.get(0)
+    for fieldName in np.unique(sel['fieldname']):
+        fig, ax = plt.subplots()
+        ij = sel['fieldname'] == fieldName
+        selb = sel[ij]
+        plotBinned(ax, selb, xp=xp, yp=yp, label=fieldName)
+        idx = zlim_theo['fieldName'] == fieldName
+        selz = zlim_theo[idx]
+        ax.plot(selz['cadence_z'], selz['zlim'], 'ko')
+        ax.grid()
+
+        ax.set_xlabel(legx, fontweight='bold')
+        ax.set_ylabel(legy, fontweight='bold')
+    # ax.legend()
+
+    plt.show()
+
+
+def plotBinned(ax, metricTot, xp='cadence', yp='nsn_med_faint', label=''):
+
+    x = metricTot[xp]
+    y = metricTot[yp]
+
+    means_result = scipy.stats.binned_statistic(
+        x, [y, y**2], bins=8, range=(0.5, 8.5), statistic='mean')
+    means, means2 = means_result.statistic
+    standard_deviations = np.sqrt(means2 - means**2)
+    bin_edges = means_result.bin_edges
+    bin_centers = (bin_edges[:-1] + bin_edges[1:])/2.
+
+    ax.errorbar(x=bin_centers, y=means, yerr=standard_deviations,
+                marker='.', label=label)
 
 
 class Summary:
@@ -46,7 +142,7 @@ class Summary:
 
         """
 
-        #fname = 'Summary_{}_{}.npy'.format(fieldType, simuVersion)
+        # fname = 'Summary_{}_{}.npy'.format(fieldType, simuVersion)
 
         fields_DD = DDFields()
         # if not os.path.isfile(outName):
@@ -61,7 +157,7 @@ class Summary:
         self.data = Match_DD(fields_DD, df).to_records()
         """
 
-        #np.save(outName, self.data)
+        # np.save(outName, self.data)
 
         # else:
         #    self.data = np.load(outName, allow_pickle=True)
@@ -103,7 +199,7 @@ class Summary:
 
         nz = len(forPlot['dbName'])
         t = np.linspace(0, nz, nproc+1, dtype='int')
-        #print('multi', nz, t)
+        # print('multi', nz, t)
         result_queue = multiprocessing.Queue()
         """
         self.process(dirFile, dbName, metricName,
@@ -224,16 +320,16 @@ class Summary:
             return metricValues
         """
         newdf = {}
-            
+
             for key, vals in self.corr.items():
                 idx = np.abs(key[0]-metricValues['x1']) < 1.e-5
                 idx &= np.abs(key[1]-metricValues['color']) < 1.e-5
                 sel = metricValues[idx]
                 sel.loc[:, 'zlim_{}'.format(vals)] = sel['zlim']
-                sel.loc[:, 'nsn_z{}'.format(vals)] = sel['nsn']
+                sel.loc[:, 'n_z{}'.format(vals)] = sel['nsn']
                 sel.loc[:, 'nsn_med_z{}'.format(vals)] = sel['nsn_med']
-           
-            
+
+
             newdf[vals] = sel.drop(
                 columns=['x1', 'color', 'zlim', 'nsn', 'nsn_med'])
 
@@ -241,7 +337,7 @@ class Summary:
                 newdf['medium'], left_on=vars, right_on=vars)
 
         finaldf['cadence'] = dbName
-        
+
         return finaldf
         """
 
@@ -305,18 +401,23 @@ metricTot = Summary(dirFile, 'NSN',
                     'DD', fieldNames, nside, forPlot, outName).data
 
 print(metricTot.dtype)
+# plotAllBinned(metricTot)
+plotAllBinned(metricTot, yp='zlim_faint', legy='$z_{complete}^{0.95}$')
+dumpcsv(metricTot)
+plt.show()
+print(test)
 """
 print('oo', np.unique(
     metricTot[['dbName', 'fieldname', 'zlim_faint']]), type(metricTot))
 """
-#fieldNames = ['COSMOS', 'CDFS', 'XMM-LSS', 'ELAIS', 'ADFS1', 'ADFS2']
-#fieldNames = ['COSMOS']
-#nsn_plot.plot_DDArea(metricTot, forPlot, sntype='faint')
+# fieldNames = ['COSMOS', 'CDFS', 'XMM-LSS', 'ELAIS', 'ADFS1', 'ADFS2']
+# fieldNames = ['COSMOS']
+# nsn_plot.plot_DDArea(metricTot, forPlot, sntype='faint')
 
 nsn_plot.plot_DDSummary(metricTot, forPlot, sntype=snType,
                         fieldNames=fieldNames, nside=nside)
-#nsn_plot.plot_DD_Moll(metricTot, 'ddf_dither0.00_v1.7_10yrs', 1, 128)
-#nsn_plot.plot_DD_Moll(metricTot, 'descddf_v1.5_10yrs', 1, 128)
+# nsn_plot.plot_DD_Moll(metricTot, 'ddf_dither0.00_v1.7_10yrs', 1, 128)
+# nsn_plot.plot_DD_Moll(metricTot, 'descddf_v1.5_10yrs', 1, 128)
 plt.show()
 
 print(test)
@@ -362,8 +463,9 @@ df = pd.DataFrame(metricTot)
 dbNames = np.unique(df['cadence'])
 """
 print(df.columns)
-#sums = df.groupby(['cadence','season'])['pixArea'].sum().reset_index()
-sums = df.groupby(['fieldname', 'cadence', 'season'])['pixArea'].sum().reset_index()
+# sums = df.groupby(['cadence','season'])['pixArea'].sum().reset_index()
+sums = df.groupby(['fieldname', 'cadence', 'season'])[
+                  'pixArea'].sum().reset_index()
 
 idx = sums['pixArea'] > 1.
 sn_plot.plotDDLoop(nside, dbNames, sums[idx], 'pixArea', 'area [deg2]',
@@ -378,7 +480,8 @@ for band in 'grizy':
     idx = metricTot['filter']==band
     sel = metricTot[idx]
     figlegb = '{} - {} band'.format(figleg,band)
-    sn_plot.plotDDLoop(nside,dbNames,sel,'visitExposureTime','Exposure Time [s]',markers,colors,mfc,adjl,fields_DD,figlegb)
+    sn_plot.plotDDLoop(nside,dbNames,sel,'visitExposureTime',
+                       'Exposure Time [s]',markers,colors,mfc,adjl,fields_DD,figlegb)
 """
 filtercolors = 'cgyrm'
 filtermarkers = ['o', '*', 's', 'v', '^']
@@ -407,7 +510,8 @@ for dbName in dbNames:
 for season in np.unique(sel['season']):
     idf = (sel['season'] == season)&(sel['season_length']>10.)
     selb = sel[idf]
-    plt.plot(selb['fieldnum'],selb['season_length'],marker='.',lineStyle='None',label='season {}'.format(season))
+    plt.plot(selb['fieldnum'],selb['season_length'],marker='.',
+             lineStyle='None',label='season {}'.format(season))
 
 plt.legend()
 plt.xticks(fields_DD['fieldnum'], fields_DD['fieldname'], fontsize=fontsize)
