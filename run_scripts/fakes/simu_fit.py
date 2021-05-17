@@ -441,15 +441,21 @@ class GenSimFit:
                 self.config_fit['OutputFit']['directory'], self.config_fit['ProductionIDFit'])
             restot.write(outName, 'fitlc', compression=True)
 
-        if self.zlim_calc:
+        r = []
+        if self.zlim_calc & len(restot) >= 1:
+            print('ici', restot)
             restot.sort('z')
             if 'sigma_mu' in restot.columns:
                 print(restot[['z', 'sigma_mu']], np.sqrt(
                     restot['Cov_mbmb']), np.sqrt(restot['Cov_colorcolor']))
             for tagprod in np.unique(restot['tagprod']):
                 idx = restot['tagprod'] == tagprod
+                print('hhh', np.sqrt(restot[idx]['Cov_colorcolor']),
+                      restot[idx]['z', 'daymax'], restot.columns)
                 zlimit_val = zlimit(restot[idx])
-                print('zlimit', self.simu_name, self.fitter_name, zlimit_val)
+                print('zlimit', tagprod, self.simu_name,
+                      self.fitter_name, zlimit_val)
+                r.append((tagprod, zlimit_val))
                 if self.display:
                     import matplotlib.pyplot as plt
 
@@ -460,7 +466,9 @@ class GenSimFit:
                         fig, ax = plt.subplots()
                         plot_SNR(fig, ax, restot[idx], zlimit_val)
                     plt.show()
-        return restot
+
+        zlimdf = pd.DataFrame(r, columns=['tagprod', 'zlim'])
+        return restot, zlimdf
 
     def runSequence(self, config_fake):
         """
@@ -482,8 +490,10 @@ class GenSimFit:
         list_lc = self.simu.run(fakeData)
 
         # add the tag prod to lc metadata
+
         for lc in list_lc:
             lc.meta['tagprod'] = config_fake['tagprod']
+            lc.meta['cadence_z'] = config_fake['cadence']['z']
 
         # fit LCs
         res = self.fit_loop(list_lc)
@@ -707,8 +717,13 @@ process = GenSimFit(config_fake, config_simu, config_fit,
 
 # run
 params = pd.read_csv(opts.config, comment='#')
-res = process(params)
+res, zlimdf = process(params)
 
+params = params.merge(zlimdf, left_on=['tagprod', 'cadence_z'], right_on=[
+                      'tagprod', 'cadence_z'])
+
+params.to_csv(opts.config, index=False)
+print(params)
 # print(res.columns)
 """
 

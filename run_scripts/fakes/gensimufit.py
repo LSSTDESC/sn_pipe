@@ -7,7 +7,8 @@ import csv
 
 def cmd(x1=-2.0, color=0.2, ebv=0.0, bluecutoff=380., redcutoff=800., error_model=1, errmodrel=0.1, simu='sn_cosmo', fitter='sn_cosmo', zlim_calc=0, mbcov_estimate=0, nproc=4, outputDir='.', config=pd.DataFrame(), tagprod=-1, zmin=0.1, zmax=1.0, zstep=0.05, plot=0):
 
-    configName = 'config_z_test_{}.csv'.format(tagprod)
+    configName = 'config_z_{}.csv'.format(tagprod)
+    print('bllllll', configName)
     my_dict = dict(config.to_dict())
     config.to_csv(configName, index=False)
 
