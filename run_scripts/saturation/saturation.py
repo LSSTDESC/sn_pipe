@@ -205,14 +205,14 @@ for psf_type in ['single_gauss']:
 time_ref = time.time()
 psf_type = 'single_gauss'
 
-PixelPSFSeeing(psf_type)
+# PixelPSFSeeing(psf_type)
 
 print('done', time.time()-time_ref)
 
 # PlotMaxFrac()
 # PlotMaxFrac(psf_type=psf_type, title='Single gaussian profile')
 
-PlotPixel(1.1, 'single_gauss', 'xpixel', 0., 'ypixel', 0., 'xc',
+PlotPixel(0.7, 'single_gauss', 'xpixel', 0., 'ypixel', 0., 'xc',
           'yc', 'Single Gaussian profile', type_plot='contour')
 
 
@@ -239,9 +239,10 @@ for psf_type in psf_types:
                 res_sat = np.concatenate((res_sat, res))
 
 
-PlotMagSat('gri', res_sat)*
+PlotMagSat('gri', res_sat)
 """
 plt.show()
+print(tt)
 
 # Fake Observations
 
