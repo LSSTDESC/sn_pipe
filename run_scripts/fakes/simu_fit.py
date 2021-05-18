@@ -160,7 +160,7 @@ def plot_SNR(fig, ax, sel, zlim):
 
     for i, b in enumerate(bands):
         ax.plot(sel['z'], sel['SNR_{}'.format(b)], color=colors[b])
-        #print('SNR', SNR(sel, b, zlim))
+        # print('SNR', SNR(sel, b, zlim))
         SNR_b = SNR(sel, b, zlim)
         ax.text(zlim+0.05, 60.-i*5, 'SNR - {} band = {}'.format(b,
                                                                 SNR_b), color=colors[b], fontsize=12)
@@ -442,20 +442,23 @@ class GenSimFit:
             restot.write(outName, 'fitlc', compression=True)
 
         r = []
-        if self.zlim_calc & len(restot) >= 1:
-            print('ici', restot)
+        # print('res', len(restot), self.zlim_calc)
+        if self.zlim_calc and len(restot) >= 1:
+            # print('ici', restot)
             restot.sort('z')
             if 'sigma_mu' in restot.columns:
                 print(restot[['z', 'sigma_mu']], np.sqrt(
                     restot['Cov_mbmb']), np.sqrt(restot['Cov_colorcolor']))
             for tagprod in np.unique(restot['tagprod']):
                 idx = restot['tagprod'] == tagprod
-                print('hhh', np.sqrt(restot[idx]['Cov_colorcolor']),
-                      restot[idx]['z', 'daymax'], restot.columns)
+                # print('hhh', np.sqrt(restot[idx]['Cov_colorcolor']),
+                #      restot[idx]['z', 'daymax'], restot.columns)
                 zlimit_val = zlimit(restot[idx])
+                cad_z = int(np.mean(restot[idx]['cadence_z']))
                 print('zlimit', tagprod, self.simu_name,
-                      self.fitter_name, zlimit_val)
-                r.append((tagprod, zlimit_val))
+                      self.fitter_name, zlimit_val, cad_z)
+                r.append(
+                    (tagprod, zlimit_val, cad_z))
                 if self.display:
                     import matplotlib.pyplot as plt
 
@@ -467,7 +470,8 @@ class GenSimFit:
                         plot_SNR(fig, ax, restot[idx], zlimit_val)
                     plt.show()
 
-        zlimdf = pd.DataFrame(r, columns=['tagprod', 'zlim'])
+        zlimdf = pd.DataFrame(r, columns=['tagprod', 'zlim', 'cadence_z'])
+
         return restot, zlimdf
 
     def runSequence(self, config_fake):
@@ -662,7 +666,7 @@ class GenSimFit:
         theName: str
            output file name
         theDict: dict
-          dict to dump 
+          dict to dump
         """
         outputyaml = '{}/{}.yaml'.format(theDir, theName)
         with open(outputyaml, 'w') as file:
@@ -720,7 +724,7 @@ params = pd.read_csv(opts.config, comment='#')
 res, zlimdf = process(params)
 
 params = params.merge(zlimdf, left_on=['tagprod', 'cadence_z'], right_on=[
-                      'tagprod', 'cadence_z'])
+    'tagprod', 'cadence_z'])
 
 params.to_csv(opts.config, index=False)
 print(params)
