@@ -77,22 +77,38 @@ def plotAllBinned(metricTot, xp='cadence', yp='nsn_med_faint', legx='cadence [da
     sel = metricTot[idx]
     # plt.plot(sel['cadence'], sel['nsn_med_faint'], 'ko')
     print(sel[['cadence', 'nsn_med_faint']])
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(ncols=2,nrows=6,sharex=True)
+    fig.subplots_adjust(hspace=0)
     zlim_theo = pd.read_csv('config_z_0.csv', comment="#")
     zlim_theo['fieldName'] = zlim_theo['tagprod'].str.split(
         '_').str.get(0)
+    ff = ['COSMOS','XMM-LSS','ELAIS','CDFS','ADFS1','ADFS2']
+    ipos = [0,1,2,3,4,5,6]
+    iposi = dict(zip(ff, ipos))
     for fieldName in np.unique(sel['fieldname']):
-        fig, ax = plt.subplots()
+        #fig, ax = plt.subplots()
+        ipp = iposi[fieldName]
         ij = sel['fieldname'] == fieldName
         selb = sel[ij]
-        plotBinned(ax, selb, xp=xp, yp=yp, label=fieldName)
+        plotBinned(ax[ipp,0], selb, xp=xp, yp=yp, label=fieldName)
+        plotBinned(ax[ipp,1], selb, xp=xp, yp='nsn_med_faint', label=fieldName)
+        #ax[ipp,0].plot(selb['cadence'],selb['zlim_faint'],'k.')
         idx = zlim_theo['fieldName'] == fieldName
         selz = zlim_theo[idx]
-        ax.plot(selz['cadence_z'], selz['zlim'], 'ko')
-        ax.grid()
+        mink = selz.groupby(['cadence_z']).min().reset_index()
+        maxk = selz.groupby(['cadence_z']).max().reset_index()
+        #mink = mink.sort_values(by=['cadence_z'],ascending=False)
+        print(mink)
+        print(maxk)
+        #maxk = pd.concat((maxk,mink))
+        print(maxk)
+        #ax.plot(selz['cadence_z'], selz['zlim'], 'ko')
+        ax[ipp,0].fill_between(mink['cadence_z'], mink['zlim'],maxk['zlim'], color='yellow')
+        ax[ipp,0].grid()
+        #break
 
-        ax.set_xlabel(legx, fontweight='bold')
-        ax.set_ylabel(legy, fontweight='bold')
+        #ax.set_xlabel(legx, fontweight='bold')
+        #ax.set_ylabel(legy, fontweight='bold')
     # ax.legend()
 
     plt.show()
