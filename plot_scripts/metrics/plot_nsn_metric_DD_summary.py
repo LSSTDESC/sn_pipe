@@ -65,7 +65,8 @@ def fill(selb, tagprod='', x1=-2.0, color=0.2, ebvofMW=0.0, snrmin=1.0, error_mo
         ro = ro.round({nn: 2})
 
     ro['season'] = ro['season'].astype(int)
-    ro['tagprod'] = ro['tagprod'] + '_'+ro['season'].astype(str)
+    ro['tagprod'] = ro['tagprod'] + '_' + \
+        ro['season'].astype(str)+'_'+ro['cadence_z'].astype(str)
     return ro
 
 
@@ -402,8 +403,9 @@ metricTot = Summary(dirFile, 'NSN',
 
 print(metricTot.dtype)
 # plotAllBinned(metricTot)
-plotAllBinned(metricTot, yp='zlim_faint', legy='$z_{complete}^{0.95}$')
 dumpcsv(metricTot)
+plotAllBinned(metricTot, yp='zlim_faint', legy='$z_{complete}^{0.95}$')
+
 plt.show()
 print(test)
 """
