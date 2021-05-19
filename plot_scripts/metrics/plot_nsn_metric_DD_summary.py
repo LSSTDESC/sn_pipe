@@ -18,7 +18,7 @@ import multiprocessing
 import scipy.stats
 
 
-def dumpcsv(metricTot):
+def dumpcsv_medcad(metricTot):
 
     metricTot = pd.DataFrame(metricTot)
     idx = metricTot['nsn_med_faint'] >= 0
@@ -30,10 +30,64 @@ def dumpcsv(metricTot):
         selb = sel[ij]
         for cad in range(1, 9, 1):
             r = pd.concat(
-                (r, fill(selb, tagprod=fieldName, cadence=dict(zip('grizy', [cad]*5)))))
+                (r, fill(selb, tagprod=fieldName,
+                         cadence=dict(zip('grizy', [cad]*5)))))
 
     print(r)
-    r.to_csv('config_DD_obs.csv', index=False)
+    r.to_csv('config_DD_obs_medcad.csv', index=False)
+
+
+def dumpcsv_pixels(metricTot, x1=-2.0, color=0.2, ebvofMW=0.0, snrmin=1.0, error_model=1, errmodrel=0.1, bluecutoff=380., redcutoff=800., simulator='sn_fast', fitter='sn_fast', Nvisits=dict(zip('grizy', [1, 1, 2, 2, 2]))):
+
+    metricTot = pd.DataFrame(metricTot)
+    idx = metricTot['nsn_med_faint'] >= 0
+    ro = metricTot[idx]
+    ro['healpixID'] = ro['healpixID'].astype(int)
+    ro['season'] = ro['season'].astype(int)
+    ro['tagprod'] = ro['healpixID'].astype(str) + '_' + \
+        ro['season'].astype(str)
+    ro['x1'] = x1
+    ro['color'] = color
+    ro['ebvofMW'] = ebvofMW
+    ro['snrmin'] = snrmin
+    ro['error_model'] = error_model
+    ro['errmodrel'] = errmodrel
+    ro['bluecutoff'] = bluecutoff
+    ro['redcutoff'] = redcutoff
+    ro['simulator'] = simulator
+    ro['fitter'] = fitter
+    for b in Nvisits.keys():
+        ro['N{}'.format(b)] = Nvisits[b]
+        cadname = 'cadence_{}'.format(b)
+        ro[cadname] = ro['cadence']
+        #ro[cadname] = ro[cadname].astype(int)
+    for b in Nvisits.keys():
+        nn = 'm5_{}'.format(b)
+        ro = ro.rename(columns={'m5_med_{}'.format(b): nn})
+        ro = ro.round({nn: 2})
+
+    for b in 'grizy':
+        ro = ro.round({'cadence_{}'.format(b): 2})
+
+    print(ro.columns)
+    tocsv_vars = ['tagprod', 'x1', 'color', 'ebvofMW', 'snrmin', 'error_model',
+                  'errmodrel', 'bluecutoff', 'redcutoff', 'simulator', 'fitter',
+                  'Ng', 'Nr', 'Ni', 'Nz', 'Ny', 'm5_g', 'm5_r', 'm5_i', 'm5_z', 'm5_y',
+                  'cadence_g', 'cadence_r', 'cadence_i', 'cadence_z', 'cadence_y',
+                  'season', 'healpixID', 'season_length']
+
+    max_rows = 500
+    dataframes = []
+    df = ro[tocsv_vars]
+    while len(df) > max_rows:
+        top = df[:max_rows]
+        dataframes.append(top)
+        df = df[max_rows:]
+    else:
+        dataframes.append(df)
+
+    for i, dd in enumerate(dataframes):
+        dd.to_csv('config_DD_obs_pixels_{}.csv'.format(i), index=False)
 
 
 def fill(selb, tagprod='', x1=-2.0, color=0.2, ebvofMW=0.0, snrmin=1.0, error_model=1, errmodrel=0.1, bluecutoff=380., redcutoff=800., simulator='sn_fast', fitter='sn_fast', Nvisits=dict(zip('grizy', [1, 1, 2, 2, 2])), cadence=dict(zip('grizy', [1, 1, 1, 1, 1]))):
@@ -43,14 +97,15 @@ def fill(selb, tagprod='', x1=-2.0, color=0.2, ebvofMW=0.0, snrmin=1.0, error_mo
     for b in 'grizy':
         fmed.append('m5_med_{}'.format(b))
 
-        ro = selb.groupby(['season'])[fmed].median().reset_index()
+    ro = selb.groupby(['season'])[fmed].median().reset_index()
 
     ro['tagprod'] = tagprod
     ro['x1'] = x1
     ro['color'] = color
     ro['ebvofMW'] = ebvofMW
     ro['snrmin'] = snrmin
-    ro['error_model'] = errmodrel
+    ro['error_model'] = error_model
+    ro['errmodrel'] = errmodrel
     ro['bluecutoff'] = bluecutoff
     ro['redcutoff'] = redcutoff
     ro['simulator'] = simulator
@@ -67,6 +122,7 @@ def fill(selb, tagprod='', x1=-2.0, color=0.2, ebvofMW=0.0, snrmin=1.0, error_mo
     ro['season'] = ro['season'].astype(int)
     ro['tagprod'] = ro['tagprod'] + '_' + \
         ro['season'].astype(str)+'_'+ro['cadence_z'].astype(str)
+
     return ro
 
 
@@ -77,38 +133,40 @@ def plotAllBinned(metricTot, xp='cadence', yp='nsn_med_faint', legx='cadence [da
     sel = metricTot[idx]
     # plt.plot(sel['cadence'], sel['nsn_med_faint'], 'ko')
     print(sel[['cadence', 'nsn_med_faint']])
-    fig, ax = plt.subplots(ncols=2,nrows=6,sharex=True)
+    fig, ax = plt.subplots(ncols=2, nrows=6, sharex=True)
     fig.subplots_adjust(hspace=0)
     zlim_theo = pd.read_csv('config_z_0.csv', comment="#")
     zlim_theo['fieldName'] = zlim_theo['tagprod'].str.split(
         '_').str.get(0)
-    ff = ['COSMOS','XMM-LSS','ELAIS','CDFS','ADFS1','ADFS2']
-    ipos = [0,1,2,3,4,5,6]
+    ff = ['COSMOS', 'XMM-LSS', 'ELAIS', 'CDFS', 'ADFS1', 'ADFS2']
+    ipos = [0, 1, 2, 3, 4, 5, 6]
     iposi = dict(zip(ff, ipos))
     for fieldName in np.unique(sel['fieldname']):
-        #fig, ax = plt.subplots()
+        # fig, ax = plt.subplots()
         ipp = iposi[fieldName]
         ij = sel['fieldname'] == fieldName
         selb = sel[ij]
-        plotBinned(ax[ipp,0], selb, xp=xp, yp=yp, label=fieldName)
-        plotBinned(ax[ipp,1], selb, xp=xp, yp='nsn_med_faint', label=fieldName)
-        #ax[ipp,0].plot(selb['cadence'],selb['zlim_faint'],'k.')
+        plotBinned(ax[ipp, 0], selb, xp=xp, yp=yp, label=fieldName)
+        plotBinned(ax[ipp, 1], selb, xp=xp,
+                   yp='nsn_med_faint', label=fieldName)
+        # ax[ipp,0].plot(selb['cadence'],selb['zlim_faint'],'k.')
         idx = zlim_theo['fieldName'] == fieldName
         selz = zlim_theo[idx]
         mink = selz.groupby(['cadence_z']).min().reset_index()
         maxk = selz.groupby(['cadence_z']).max().reset_index()
-        #mink = mink.sort_values(by=['cadence_z'],ascending=False)
+        # mink = mink.sort_values(by=['cadence_z'],ascending=False)
         print(mink)
         print(maxk)
-        #maxk = pd.concat((maxk,mink))
+        # maxk = pd.concat((maxk,mink))
         print(maxk)
-        #ax.plot(selz['cadence_z'], selz['zlim'], 'ko')
-        ax[ipp,0].fill_between(mink['cadence_z'], mink['zlim'],maxk['zlim'], color='yellow')
-        ax[ipp,0].grid()
-        #break
+        # ax.plot(selz['cadence_z'], selz['zlim'], 'ko')
+        ax[ipp, 0].fill_between(
+            mink['cadence_z'], mink['zlim'], maxk['zlim'], color='yellow')
+        ax[ipp, 0].grid()
+        # break
 
-        #ax.set_xlabel(legx, fontweight='bold')
-        #ax.set_ylabel(legy, fontweight='bold')
+        # ax.set_xlabel(legx, fontweight='bold')
+        # ax.set_ylabel(legy, fontweight='bold')
     # ax.legend()
 
     plt.show()
@@ -419,8 +477,8 @@ metricTot = Summary(dirFile, 'NSN',
 
 print(metricTot.dtype)
 # plotAllBinned(metricTot)
-dumpcsv(metricTot)
-plotAllBinned(metricTot, yp='zlim_faint', legy='$z_{complete}^{0.95}$')
+dumpcsv_pixels(metricTot)
+#plotAllBinned(metricTot, yp='zlim_faint', legy='$z_{complete}^{0.95}$')
 
 plt.show()
 print(test)
