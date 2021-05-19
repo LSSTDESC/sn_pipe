@@ -431,6 +431,7 @@ class GenSimFit:
         astropy table with a list of fitted SN
 
         """
+        self.simu.metric.season = -1
         restot = Table()
         for i, row in params.iterrows():
             config_fake = self.getconfig(row)
@@ -453,24 +454,29 @@ class GenSimFit:
                 idx = restot['tagprod'] == tagprod
                 # print('hhh', np.sqrt(restot[idx]['Cov_colorcolor']),
                 #      restot[idx]['z', 'daymax'], restot.columns)
-                zlimit_val = zlimit(restot[idx])
-                cad_z = int(np.mean(restot[idx]['cadence_z']))
+
+                vv = restot[idx]
+                zlimit_val = zlimit(vv)
+
+                #cad_z = int(np.mean(vv['cadence_z']))
+                #season = np.mean(vv['season'])
+
                 print('zlimit', tagprod, self.simu_name,
-                      self.fitter_name, zlimit_val, cad_z)
+                      self.fitter_name, zlimit_val)
                 r.append(
-                    (tagprod, zlimit_val, cad_z))
+                    (tagprod, zlimit_val))
                 if self.display:
                     import matplotlib.pyplot as plt
 
                     fig, ax = plt.subplots()
-                    plot(fig, ax, restot[idx])
+                    plot(fig, ax, vv)
                     print(restot.dtype.names)
                     if 'SNR_i' in restot.dtype.names:
                         fig, ax = plt.subplots()
-                        plot_SNR(fig, ax, restot[idx], zlimit_val)
+                        plot_SNR(fig, ax, vv, zlimit_val)
                     plt.show()
 
-        zlimdf = pd.DataFrame(r, columns=['tagprod', 'zlim', 'cadence_z'])
+        zlimdf = pd.DataFrame(r, columns=['tagprod', 'zlim'])
 
         return restot, zlimdf
 
@@ -595,6 +601,7 @@ class GenSimFit:
             config['Nvisits'][band] = row['N{}'.format(band)]
 
         config['tagprod'] = row['tagprod']
+        config['seasons'] = str(row['season'])
         return config
 
     def prepare_for_save(self):
@@ -723,8 +730,8 @@ process = GenSimFit(config_fake, config_simu, config_fit,
 params = pd.read_csv(opts.config, comment='#')
 res, zlimdf = process(params)
 
-params = params.merge(zlimdf, left_on=['tagprod', 'cadence_z'], right_on=[
-    'tagprod', 'cadence_z'])
+params = params.merge(zlimdf, left_on=['tagprod'], right_on=[
+    'tagprod'])
 
 params.to_csv(opts.config, index=False)
 print(params)

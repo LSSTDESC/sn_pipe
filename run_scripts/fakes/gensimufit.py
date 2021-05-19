@@ -5,10 +5,10 @@ import pandas as pd
 import csv
 
 
-def cmd(x1=-2.0, color=0.2, ebv=0.0, bluecutoff=380., redcutoff=800., error_model=1, errmodrel=0.1, simu='sn_cosmo', fitter='sn_cosmo', zlim_calc=0, mbcov_estimate=0, nproc=4, outputDir='.', config=pd.DataFrame(), tagprod=-1, zmin=0.1, zmax=1.0, zstep=0.05, plot=0):
+def cmd(x1=-2.0, color=0.2, ebv=0.0, bluecutoff=380., redcutoff=800., error_model=1, errmodrel=0.1, simu='sn_cosmo', fitter='sn_cosmo', zlim_calc=0, mbcov_estimate=0, nproc=4, outputDir='.', config=pd.DataFrame(), confName='', tagprod=-1, zmin=0.1, zmax=1.0, zstep=0.05, plot=0):
 
-    configName = 'config_z_{}.csv'.format(tagprod)
-    print('bllllll', configName)
+    #configName = 'config_z_{}.csv'.format(tagprod)
+    configName = confName.replace('.csv', '_zlim.csv')
     my_dict = dict(config.to_dict())
     config.to_csv(configName, index=False)
 
@@ -78,6 +78,7 @@ if os.path.exists(opts.outputDir):
     os.system(cmd_d)
 
 confp = pd.read_csv(opts.config, comment='#')
+confp['season'] = confp['season'].astype(str)
 io = -1
 for simu in confp['simulator'].unique():
     idx = confp['simulator'] == simu
@@ -90,6 +91,7 @@ for simu in confp['simulator'].unique():
                    nproc=opts.nproc,
                    outputDir=opts.outputDir,
                    config=sel[ida],
+                   confName=opts.config,
                    tagprod=io,
                    zmin=opts.zmin,
                    zmax=opts.zmax,
