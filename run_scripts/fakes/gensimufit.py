@@ -5,7 +5,7 @@ import pandas as pd
 import csv
 
 
-def cmd(x1=-2.0, color=0.2, ebv=0.0, bluecutoff=380., redcutoff=800., error_model=1, errmodrel=0.1, simu='sn_cosmo', fitter='sn_cosmo', zlim_calc=0, mbcov_estimate=0, nproc=4, outputDir='.', config=pd.DataFrame(), confName='', tagprod=-1, zmin=0.1, zmax=1.0, zstep=0.05, plot=0):
+def cmd(x1=-2.0, color=0.2, ebv=0.0, bluecutoff=380., redcutoff=800., error_model=1, errmodrel=0.1, simu='sn_cosmo', fitter='sn_cosmo', zlim_calc=0, nsn_calc=0, survey_area=0.21, mbcov_estimate=0, nproc=4, outputDir='.', config=pd.DataFrame(), confName='', tagprod=-1, zmin=0.1, zmax=1.0, zstep=0.05, plot=0):
 
     #configName = 'config_z_{}.csv'.format(tagprod)
     configName = confName.replace('.csv', '_zlim.csv')
@@ -40,6 +40,8 @@ def cmd(x1=-2.0, color=0.2, ebv=0.0, bluecutoff=380., redcutoff=800., error_mode
     script_cmd += ' --Observations_fieldtype Fake'
     script_cmd += ' --LCSelection_nbands 0'
     script_cmd += ' --zlim_calc {}'.format(zlim_calc)
+    script_cmd += ' --nsn_calc {}'.format(nsn_calc)
+    script_cmd += ' --survey_area {}'.format(survey_area)
     script_cmd += ' --mbcov_estimate {}'.format(mbcov_estimate)
     script_cmd += ' --tagprod {}'.format(tagprod)
     script_cmd += ' --plot {}'.format(plot)
@@ -58,6 +60,10 @@ parser.add_option(
 parser.add_option(
     '--zlim_calc', help='to estimate zlim or not [%default]', default=0, type=int)
 parser.add_option(
+    '--nsn_calc', help='to estimate nsn or not [%default]', default=0, type=int)
+parser.add_option(
+    '--survey_area', help='area for nsn estimation in deg2 [%default]', default=0.21, type=float)
+parser.add_option(
     '--zmin', help='min redshift value  [%default]', default=0.5, type=float)
 parser.add_option(
     '--zmax', help='max redshift value [%default]', default=1.0, type=float)
@@ -67,8 +73,8 @@ parser.add_option(
     '--mbcov_estimate', help='to estimate mb after fit [%default]', default=0, type=int)
 parser.add_option(
     '--nproc', help='nproc for multiproc [%default]', default=8, type=int)
-parser.add_option("--plot", type=int, default=0,
-                  help="to display some results [%default]")
+parser.add_option('--plot', type=int, default=0,
+                  help='to display some results [%default]')
 
 opts, args = parser.parse_args()
 
@@ -87,6 +93,8 @@ for simu in confp['simulator'].unique():
         ida = sel['fitter'] == fitter
         io += 1
         cmd_ = cmd(zlim_calc=opts.zlim_calc,
+                   nsn_calc=opts.nsn_calc,
+                   survey_area=opts.survey_area,
                    mbcov_estimate=opts.mbcov_estimate,
                    nproc=opts.nproc,
                    outputDir=opts.outputDir,

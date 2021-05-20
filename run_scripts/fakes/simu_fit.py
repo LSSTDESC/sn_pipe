@@ -357,7 +357,7 @@ class GenSimFit:
       tag for production (default: -1: no tag)
     """
 
-    def __init__(self, config_fake, config_simu, config_fit, outputDir, zlim_calc=False, display=False, tagprod=0):
+    def __init__(self, config_fake, config_simu, config_fit, outputDir, zlim_calc=False, nsn_calc=False, survey_area=0., display=False, tagprod=0):
 
         # grab config
         self.config_simu = config_simu
@@ -365,6 +365,8 @@ class GenSimFit:
         self.tagprod = tagprod
         self.outputDir = outputDir
         self.zlim_calc = zlim_calc
+        self.nsn_calc = nsn_calc
+        self.survey_area = survey_area
         self.simu_name = config_simu['Simulator']['name'].split('.')[-1]
         self.fitter_name = config_fit['Fitter']['name'].split('.')[-1]
         self.display = display
@@ -411,6 +413,12 @@ class GenSimFit:
 
         self.config_fake = config_fake
 
+        # this is to estimate nsn
+        self.nsn_eval = None
+        if self.nsn_calc:
+            from sn_tools.sn_rate import NSN
+            self.nsn_eval = NSN()
+
         """
         print(config_simu)
         print(config_fit)
@@ -435,7 +443,8 @@ class GenSimFit:
         restot = Table()
         for i, row in params.iterrows():
             config_fake = self.getconfig(row)
-            restot = vstack([restot, self.runSequence(config_fake)])
+            restot = vstack([restot, self.runSequence(
+                config_fake, row['season_length'])])
 
         if self.save_fit:
             outName = '{}/{}.hdf5'.format(
@@ -463,8 +472,13 @@ class GenSimFit:
 
                 print('zlimit', tagprod, self.simu_name,
                       self.fitter_name, zlimit_val)
+                numSN = -1
+                if self.nsn_calc:
+                    season_length = np.mean(vv['season_length'])
+                    numSN = self.nsn_eval(
+                        0.01, zlimit_val, 0.01, season_length, self.survey_area)
                 r.append(
-                    (tagprod, zlimit_val))
+                    (tagprod, zlimit_val, numSN))
                 if self.display:
                     import matplotlib.pyplot as plt
 
@@ -476,11 +490,11 @@ class GenSimFit:
                         plot_SNR(fig, ax, vv, zlimit_val)
                     plt.show()
 
-        zlimdf = pd.DataFrame(r, columns=['tagprod', 'zlim'])
+        zlimdf = pd.DataFrame(r, columns=['tagprod', 'zlim', 'nsn_exp'])
 
         return restot, zlimdf
 
-    def runSequence(self, config_fake):
+    def runSequence(self, config_fake, season_length):
         """
         Method to perform the complete sequence: observation generation, simulation and fit
 
@@ -503,7 +517,7 @@ class GenSimFit:
 
         for lc in list_lc:
             lc.meta['tagprod'] = config_fake['tagprod']
-            lc.meta['cadence_z'] = config_fake['cadence']['z']
+            lc.meta['season_length'] = season_length
 
         # fit LCs
         res = self.fit_loop(list_lc)
@@ -702,12 +716,16 @@ parser.add_option(
     '--outputDir', help='main output directory [%default]', default='/sps/lsst/users/gris/config_zlim', type=str)
 parser.add_option(
     '--config', help='config file of parameters [%default]', default='config_z_0.8.csv', type=str)
-parser.add_option("--zlim_calc", type=int, default=0,
-                  help="to estimate zlim or not [%default]")
-parser.add_option("--tagprod", type=int, default=-1,
-                  help="tag for outputfile [%default]")
-parser.add_option("--plot", type=int, default=0,
-                  help="to display some results [%default]")
+parser.add_option('--zlim_calc', type=int, default=0,
+                  help='to estimate zlim or not [%default]')
+parser.add_option(
+    '--nsn_calc', help='to estimate nsn or not [%default]', default=0, type=int)
+parser.add_option(
+    '--survey_area', help='area for nsn estimation in deg2 [%default]', default=0.21, type=float)
+parser.add_option('--tagprod', type=int, default=-1,
+                  help='tag for outputfile [%default]')
+parser.add_option('--plot', type=int, default=0,
+                  help='to display some results [%default]')
 
 
 opts, args = parser.parse_args()
@@ -718,13 +736,16 @@ config_fake = config(confDict_fake, opts)
 config_simu = config(confDict_simu, opts)
 config_fit = config(confDict_fit, opts)
 zlim_calc = opts.zlim_calc
+nsn_calc = opts.nsn_calc
+survey_area = opts.survey_area
 tagprod = opts.tagprod
 display = opts.plot
 
 # instance process here
 process = GenSimFit(config_fake, config_simu, config_fit,
                     opts.outputDir, tagprod=tagprod,
-                    zlim_calc=zlim_calc, display=display)
+                    zlim_calc=zlim_calc, nsn_calc=nsn_calc,
+                    survey_area=survey_area, display=display)
 
 # run
 params = pd.read_csv(opts.config, comment='#')
