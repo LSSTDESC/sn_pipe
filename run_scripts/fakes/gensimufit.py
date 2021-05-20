@@ -92,18 +92,23 @@ for simu in confp['simulator'].unique():
     for fitter in sel['fitter'].unique():
         ida = sel['fitter'] == fitter
         io += 1
-        cmd_ = cmd(zlim_calc=opts.zlim_calc,
-                   nsn_calc=opts.nsn_calc,
-                   survey_area=opts.survey_area,
-                   mbcov_estimate=opts.mbcov_estimate,
-                   nproc=opts.nproc,
-                   outputDir=opts.outputDir,
-                   config=sel[ida],
-                   confName=opts.config,
-                   tagprod=io,
-                   zmin=opts.zmin,
-                   zmax=opts.zmax,
-                   zstep=opts.zstep,
-                   plot=opts.plot)
+        selb = sel[ida]
+        x1_color = selb[['x1', 'color', 'error_model']].to_records(index=False)
+        for (x1, color, error_model) in np.unique(x1_color[['x1', 'color', 'error_model']]):
+            cmd_ = cmd(x1=x1, color=color,
+                       error_model=error_model,
+                       zlim_calc=opts.zlim_calc,
+                       nsn_calc=opts.nsn_calc,
+                       survey_area=opts.survey_area,
+                       mbcov_estimate=opts.mbcov_estimate,
+                       nproc=opts.nproc,
+                       outputDir=opts.outputDir,
+                       config=sel[ida],
+                       confName=opts.config,
+                       tagprod=io,
+                       zmin=opts.zmin,
+                       zmax=opts.zmax,
+                       zstep=opts.zstep,
+                       plot=opts.plot)
 
-        os.system(cmd_)
+            os.system(cmd_)
