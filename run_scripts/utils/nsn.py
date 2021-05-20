@@ -1,4 +1,4 @@
-from sn_tools.sn_rate import SN_Rate
+from sn_tools.sn_rate import NSN
 from optparse import OptionParser
 import numpy as np
 
@@ -39,14 +39,7 @@ dz = opts.dz
 survey_area = opts.survey_area
 scale_factor = opts.scale_factor
 
+nsn_proc = NSN(H0, Om0, min_rf_phase, max_rf_phase)
+nsn_tot = nsn_proc(zmin, zmax, dz, season_length, survey_area, scale_factor)
 
-rateSN = SN_Rate(H0=H0, Om0=Om0,
-                 min_rf_phase=min_rf_phase, max_rf_phase=max_rf_phase)
-zz, rate, err_rate, nsn, err_nsn = rateSN(zmin=zmin,
-                                          zmax=zmax,
-                                          dz=dz,
-                                          duration=season_length,
-                                          survey_area=survey_area,
-                                          account_for_edges=True)
-
-print('Number of supernovae', scale_factor*np.cumsum(nsn)[-1])
+print('Number of supernovae', nsn_tot)
