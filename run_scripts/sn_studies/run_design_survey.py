@@ -38,7 +38,7 @@ parser.add_option('--color', type=float, default=0.2,
                   help='SN color [%default]')
 parser.add_option('--error_model', type=int, default=1,
                   help='error model [%default]')
-parser.add_option('--error_model_cut', type=float, default=0.1,
+parser.add_option('--error_model_cut', type=float, default=0.05,
                   help='error model flux max values (rel.)[%default]')
 parser.add_option('--bluecutoff', type=float, default=380.,
                   help='blue cutoff if error_model=0 [%default]')
@@ -50,7 +50,7 @@ parser.add_option('--sn_simulator', type=str, default='sn_fast',
                   help='simulator for templates SN [%default]')
 parser.add_option('--bands', type=str, default='grizy',
                   help='bands to consider for this study [%default]')
-parser.add_option('--zmin', type=float, default=0.3,
+parser.add_option('--zmin', type=float, default=0.1,
                   help='min redshift [%default]')
 parser.add_option('--zmax', type=float, default=1.1,
                   help='max redshift [%default]')
