@@ -93,10 +93,12 @@ for simu in confp['simulator'].unique():
         ida = sel['fitter'] == fitter
         io += 1
         selb = sel[ida]
-        x1_color = selb[['x1', 'color', 'error_model']].to_records(index=False)
-        for (x1, color, error_model) in np.unique(x1_color[['x1', 'color', 'error_model']]):
+        x1_color = selb[['x1', 'color', 'error_model',
+                         'errmodrel']].to_records(index=False)
+        for (x1, color, error_model, errmodrel) in np.unique(x1_color[['x1', 'color', 'error_model', 'errmodrel']]):
             cmd_ = cmd(x1=x1, color=color,
                        error_model=error_model,
+                       errmodrel=errmodrel,
                        zlim_calc=opts.zlim_calc,
                        nsn_calc=opts.nsn_calc,
                        survey_area=opts.survey_area,
