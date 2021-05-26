@@ -184,8 +184,9 @@ opti_fileName = 'opti_{}_{}_{}_ebvofMW_{}_cad_{}.npy'.format(
 if 'SNR_opti' in actions:
     # get 'best' combination
 
-    zvals = list(np.arange(0.3, 1.0, 0.05))
+    zvals = list(np.arange(0.4, 1.0, 0.05))
     zvals += list(np.arange(0.97, 1.01, 0.01))
+    #zvals = [0.6]
     #zvals = list(np.arange(0.9, 0.91, 0.01))
     OptiCombi(dd_snr.fracSignalBand,
               dirStudy=opts.dirStudy,
