@@ -60,7 +60,7 @@ def dumpcsv_pixels(metricTot, x1=-2.0, color=0.2, ebvofMW=0.0, snrmin=1.0, error
         ro['N{}'.format(b)] = Nvisits[b]
         cadname = 'cadence_{}'.format(b)
         ro[cadname] = ro['cadence']
-        #ro[cadname] = ro[cadname].astype(int)
+        # ro[cadname] = ro[cadname].astype(int)
     for b in Nvisits.keys():
         nn = 'm5_{}'.format(b)
         ro = ro.rename(columns={'m5_med_{}'.format(b): nn})
@@ -126,7 +126,40 @@ def fill(selb, tagprod='', x1=-2.0, color=0.2, ebvofMW=0.0, snrmin=1.0, error_mo
     return ro
 
 
-def plotAllBinned(metricTot, xp='cadence', yp='nsn_med_faint', legx='cadence [day]', legy='$N_{SN} ^ {z < z_{complete}}$'):
+def plotAllBinned(metricTot, forPlot=pd.DataFrame(), xp='cadence', yp='nsn_med_faint', legx='cadence [day]', legy='$N_{SN} ^ {z < z_{complete}}$', bins=10, therange=(0.5, 10.5), yerrplot=False):
+
+    print(forPlot)
+    metricTot = pd.DataFrame(metricTot)
+    idx = metricTot['nsn_med_faint'] >= 0
+    sel = metricTot[idx]
+    # plt.plot(sel['cadence'], sel['nsn_med_faint'], 'ko')
+    print(sel[['cadence', 'nsn_med_faint']])
+    fig, ax = plt.subplots(figsize=(10, 6))
+
+    for dbName in np.unique(sel['dbName']):
+        ij = sel['dbName'] == dbName
+        selb = sel[ij]
+        ic = forPlot['dbName'] == dbName
+        color = forPlot[ic]['color'].tolist()[0]
+        name = '_'.join(dbName.split('_')[:2])
+
+        if name.split('_')[0] in ['descddf', 'baseline', 'daily', 'agnddf']:
+            name = name.split('_')[0]
+
+        if name == 'ddf_dither0.00':
+            name = name.split('_')[1]
+        plotBinned(ax, selb, xp=xp, yp=yp,
+                   label=name, color=color, yerrplot=yerrplot, bins=bins, therange=therange)
+
+    ax.grid()
+    ax.set_xlabel(legx, weight='bold')
+    ax.set_ylabel(legy, weight='bold')
+    ax.legend(frameon=False)
+    ax.legend(loc='upper center', bbox_to_anchor=(
+        0.5, 1.15), ncol=4, frameon=False, fontsize=14)
+
+
+def plotAllBinned_old(metricTot, xp='cadence', yp='nsn_med_faint', legx='cadence [day]', legy='$N_{SN} ^ {z < z_{complete}}$'):
 
     metricTot = pd.DataFrame(metricTot)
     idx = metricTot['nsn_med_faint'] >= 0
@@ -135,9 +168,8 @@ def plotAllBinned(metricTot, xp='cadence', yp='nsn_med_faint', legx='cadence [da
     print(sel[['cadence', 'nsn_med_faint']])
     fig, ax = plt.subplots(ncols=2, nrows=6, sharex=True)
     fig.subplots_adjust(hspace=0)
-    zlim_theo = pd.read_csv('config_z_0.csv', comment="#")
-    zlim_theo['fieldName'] = zlim_theo['tagprod'].str.split(
-        '_').str.get(0)
+    # zlim_theo = pd.read_csv('config_z_0.csv', comment="#")
+    # zlim_theo['fieldName'] = zlim_theo['tagprod'].str.split('_').str.get(0)
     ff = ['COSMOS', 'XMM-LSS', 'ELAIS', 'CDFS', 'ADFS1', 'ADFS2']
     ipos = [0, 1, 2, 3, 4, 5, 6]
     iposi = dict(zip(ff, ipos))
@@ -150,6 +182,7 @@ def plotAllBinned(metricTot, xp='cadence', yp='nsn_med_faint', legx='cadence [da
         plotBinned(ax[ipp, 1], selb, xp=xp,
                    yp='nsn_med_faint', label=fieldName)
         # ax[ipp,0].plot(selb['cadence'],selb['zlim_faint'],'k.')
+        """
         idx = zlim_theo['fieldName'] == fieldName
         selz = zlim_theo[idx]
         mink = selz.groupby(['cadence_z']).min().reset_index()
@@ -164,7 +197,7 @@ def plotAllBinned(metricTot, xp='cadence', yp='nsn_med_faint', legx='cadence [da
             mink['cadence_z'], mink['zlim'], maxk['zlim'], color='yellow')
         ax[ipp, 0].grid()
         # break
-
+        """
         # ax.set_xlabel(legx, fontweight='bold')
         # ax.set_ylabel(legy, fontweight='bold')
     # ax.legend()
@@ -172,20 +205,96 @@ def plotAllBinned(metricTot, xp='cadence', yp='nsn_med_faint', legx='cadence [da
     plt.show()
 
 
-def plotBinned(ax, metricTot, xp='cadence', yp='nsn_med_faint', label=''):
+def plotBinned(ax, metricTot, xp='cadence', yp='nsn_med_faint', label='', color='k', yerrplot=True, bins=8, therange=(0.5, 8.5)):
 
     x = metricTot[xp]
     y = metricTot[yp]
 
     means_result = scipy.stats.binned_statistic(
-        x, [y, y**2], bins=8, range=(0.5, 8.5), statistic='mean')
+        x, [y, y**2], bins=bins, range=therange, statistic='mean')
     means, means2 = means_result.statistic
     standard_deviations = np.sqrt(means2 - means**2)
     bin_edges = means_result.bin_edges
     bin_centers = (bin_edges[:-1] + bin_edges[1:])/2.
 
-    ax.errorbar(x=bin_centers, y=means, yerr=standard_deviations,
-                marker='.', label=label)
+    yerr = standard_deviations
+    if not yerrplot:
+        yerr = None
+    ax.errorbar(x=bin_centers, y=means, yerr=yerr,
+                marker='.', label=label, color=color, ls='-')
+
+
+def cadenceTable(metricTot):
+
+    cadences = [1., 2., 3., 4., 5.]
+    ncads = len(cadences)
+    metricTot = pd.DataFrame(metricTot)
+    idx = metricTot['nsn_med_faint'] >= 0
+    sel = metricTot[idx]
+    r = []
+    for dbName in np.unique(sel['dbName']):
+        ij = sel['dbName'] == dbName
+        selb = sel[ij]
+        name = '_'.join(dbName.split('_')[:2])
+        if name.split('_')[0] in ['descddf', 'baseline', 'daily', 'agnddf']:
+            name = name.split('_')[0]
+        if name == 'ddf_dither0.00':
+            name = name.split('_')[1]
+
+        nevts = len(selb)
+
+        for il in range(ncads):
+            ido = selb['cadence'] >= cadences[il]
+            if il < ncads-1:
+                ido &= selb['cadence'] < cadences[il+1]
+
+            nn = len(selb[ido])
+            print(name, cadences[il], nn/nevts)
+            r.append((name, cadences[il], 100.*nn/nevts))
+
+    print(r)
+    df = pd.DataFrame(r, columns=['dbName', 'cadence', 'frac'])
+    df['cadence'] = df['cadence'].astype(int)
+    df = df.round({'frac': 1})
+
+    lig = []
+    lig.append('\\begin{table}[!htbp]')
+    lig.append(
+        '\\caption{Cadence distribution for a set of strategies studied in this paper.}\\label{tab:cadencesum}')
+    lig.append('\\begin{center}')
+    lig.append('\\begin{tabular}{c|c|c|c|c|c}')
+    lig.append('\\hline')
+    lig.append('\\hline')
+    lig.append(
+        '\\diagbox[innerwidth=3.cm,innerleftsep=-1.cm,height=3\line]{Strategy}{cadence \\n [day]} & 1 & 2 & 3 & 4 & $\geq$ 5\\\\')
+    lig.append('\\hline')
+
+    for dbName in df['dbName'].unique():
+        idx = df['dbName'] == dbName
+        sel = df[idx]
+        lbg = dbName.replace('_', '\\_') + ' & '
+        for cad in range(1, 6):
+            ib = sel['cadence'] == cad
+            selb = sel[ib]
+            lbg += '{}\\%'.format(str(selb['frac'].tolist()[0]))
+            if cad < 5:
+                lbg += ' & '
+            else:
+                lbg += ' \\\\ '
+        print(lbg)
+        lig.append(lbg)
+
+    # lig.append('\\hline')
+    lig.append('\\end{tabular}')
+    lig.append('\\end{center}')
+    lig.append('\\end{table}')
+
+    fia = open('cadenceTable.tex', 'w')
+    for vv in lig:
+        print(vv)
+        fia.write(vv+' \n')
+
+    fia.close()
 
 
 class Summary:
@@ -472,15 +581,21 @@ metricTot_med = None
 
 # Summary: to reproduce the plots faster
 
+
 metricTot = Summary(dirFile, 'NSN',
                     'DD', fieldNames, nside, forPlot, outName).data
 
-print(metricTot.dtype)
-# plotAllBinned(metricTot)
-dumpcsv_pixels(metricTot)
-#plotAllBinned(metricTot, yp='zlim_faint', legy='$z_{complete}^{0.95}$')
+
+plotAllBinned(metricTot, forPlot)
+plotAllBinned(metricTot, forPlot, xp='gap_max', yp='cadence',
+              legx='max gap [day]', legy='cadence [day]', bins=10, therange=(0.5, 60.5))
+# dumpcsv_pixels(metricTot)
+# plotAllBinned(metricTot, yp='zlim_faint', legy='$z_{complete}^{0.95}$')
 
 plt.show()
+"""
+cadenceTable(metricTot)
+"""
 print(test)
 """
 print('oo', np.unique(
