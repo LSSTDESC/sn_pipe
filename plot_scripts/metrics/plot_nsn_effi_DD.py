@@ -3,6 +3,7 @@ from sn_plotter_metrics.effiPlot import plotEffi
 import numpy as np
 from sn_plotter_metrics import plt
 
+
 def plotEffiRate(data, healpixID):
     """
     Method to plot effi vs z and SN rate vs z
@@ -15,32 +16,35 @@ def plotEffiRate(data, healpixID):
       healpix id
 
     """
-    
+
     idx = data['healpixID'] == healpixID
 
     sel = data[idx]
 
-    fig, ax = plt.subplots(figsize=(12,6))
+    fig, ax = plt.subplots(figsize=(12, 6))
 
     seasons = np.unique(sel['season'])
-    idx = seasons <=10
+    idx = seasons <= 10
     for season in seasons[idx]:
-    
-        pp.plotEffi_indiv(sel, ax,healpixID,season,'effi', 'effi_err','Observing Efficiencies', ls='-',label='season {}'.format(season))
+
+        pp.plotEffi_indiv(sel, ax, healpixID, season, 'effi', 'effi_err',
+                          'Observing Efficiencies', ls='-', label='season {}'.format(season))
 
     ax.set_xlabel('z', weight='bold')
     ax.set_ylabel('Observing Efficiency', weight='bold')
-    ax.set_xlim([0.01,0.7])
-    ax.set_ylim([0.0,None])
+    ax.set_xlim([0.01, 0.7])
+    ax.set_ylim([0.0, None])
     ax.grid()
 
     rate, raterr = pp.getRates()
-    zvals = np.arange(0.01,0.7,0.01)
+    zvals = np.arange(0.01, 0.7, 0.01)
 
     axb = ax.twinx()
-    axb.plot(zvals,rate(zvals),color='k',ls='dashed')
-    axb.set_ylabel('SN Rate',weight='bold')
-    ax.legend(bbox_to_anchor=(0.1, 0.98),ncol=5,frameon=False,fontsize=12)
+    axb.plot(zvals, rate(zvals), color='k', ls='dashed')
+    axb.set_ylabel('SN Rate', weight='bold')
+    ax.legend(loc='upper center', bbox_to_anchor=(
+        0.5, 1.15), ncol=5, frameon=False, fontsize=14)
+
 
 def plotCumul(data, healpixID):
     """
@@ -54,30 +58,33 @@ def plotCumul(data, healpixID):
       healpix id
 
     """
-    
+
     idx = data['healpixID'] == healpixID
 
     sel = data[idx]
 
-    fig, ax = plt.subplots(figsize=(12,6))
+    fig, ax = plt.subplots(figsize=(12, 6))
 
     seasons = np.unique(sel['season'])
-    idx = seasons <=10
-    
-    zvals = np.arange(0.01,0.71,0.01)
+    idx = seasons <= 10
+
+    zvals = np.arange(0.01, 0.71, 0.01)
 
     for season in seasons[idx]:
-    
-        pp.plotCumul(sel, ax,healpixID,season,label='season {}'.format(season))
+
+        pp.plotCumul(sel, ax, healpixID, season,
+                     label='season {}'.format(season))
 
     ax.set_xlabel('z', weight='bold')
     ax.set_ylabel('Normalised Cumulative $N_{SN}$', weight='bold')
-    ax.set_xlim([0.01,0.7])
-    ax.set_ylim([0.0,None])
+    ax.set_xlim([0.01, 0.7])
+    ax.set_ylim([0.0, None])
     ax.grid()
-    ax.plot(zvals,[0.95]*len(zvals),color='k',ls='dashed')
-    ax.text(0.2,0.96,'0.95',fontsize=15)
-    ax.legend(bbox_to_anchor=(0.1, 0.98),ncol=5,frameon=False,fontsize=12)
+    ax.plot(zvals, [0.95]*len(zvals), color='k', ls='dashed')
+    ax.text(0.2, 0.96, '95th percentile', fontsize=15)
+    ax.legend(loc='upper center', bbox_to_anchor=(
+        0.5, 1.15), ncol=5, frameon=False, fontsize=14)
+
 
 def plotNSN(data, healpixID):
     """
@@ -91,34 +98,37 @@ def plotNSN(data, healpixID):
       healpix id
 
     """
-    
+
     idx = data['healpixID'] == healpixID
 
     sel = data[idx]
 
-    fig, ax = plt.subplots(figsize=(12,6))
+    fig, ax = plt.subplots(figsize=(12, 6))
 
     seasons = np.unique(sel['season'])
-    idx = seasons <=10
-    
-    zvals = np.arange(0.01,0.71,0.01)
+    idx = seasons <= 10
+
+    zvals = np.arange(0.01, 0.71, 0.01)
 
     for season in seasons[idx]:
-    
-        pp.plotNSN(sel, ax,healpixID,season,label='season {}'.format(season))
+
+        pp.plotNSN(sel, ax, healpixID, season,
+                   label='season {}'.format(season))
 
     ax.set_xlabel('z', weight='bold')
     ax.set_ylabel('$N_{SN} (z <)$ ', weight='bold')
-    ax.set_xlim([0.01,0.7])
-    ax.set_ylim([0.0,None])
+    ax.set_xlim([0.01, 0.7])
+    ax.set_ylim([0.0, None])
     ax.grid()
-    
-    ax.legend(bbox_to_anchor=(0.35, 0.99),ncol=5,frameon=False,fontsize=12) 
-    
+
+    ax.legend(loc='upper center', bbox_to_anchor=(
+        0.5, 1.15), ncol=5, frameon=False, fontsize=14)
+
+
 parser = OptionParser()
 
 parser.add_option(
-    '--metricDir', help='metric directory [%default]', default='MetricOutput',type=str)
+    '--metricDir', help='metric directory [%default]', default='MetricOutput', type=str)
 parser.add_option(
     '--dbName', help='OS to process [%default]', default='daily_ddf_v1.5_10yrs', type=str)
 parser.add_option(
@@ -131,7 +141,7 @@ metricDir = opts.metricDir
 dbName = opts.dbName
 fieldName = opts.fieldName
 
-pp = plotEffi(metricDir,dbName,fieldName)
+pp = plotEffi(metricDir, dbName, fieldName)
 
 data = pp.data
 
@@ -139,11 +149,11 @@ print(np.unique(data['healpixID']))
 
 healpixID = 144428
 
-plotEffiRate(data,healpixID)
+plotEffiRate(data, healpixID)
 
-plotCumul(data,healpixID)
+plotCumul(data, healpixID)
 
-plotNSN(data,healpixID)
-#pp.plotEffi()
+plotNSN(data, healpixID)
+# pp.plotEffi()
 
 plt.show()
