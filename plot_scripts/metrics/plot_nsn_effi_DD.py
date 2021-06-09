@@ -30,8 +30,8 @@ def plotEffiRate(data, healpixID):
         pp.plotEffi_indiv(sel, ax, healpixID, season, 'effi', 'effi_err',
                           'Observing Efficiencies', ls='-', label='season {}'.format(season))
 
-    ax.set_xlabel('z', weight='bold')
-    ax.set_ylabel('Observing Efficiency', weight='bold')
+    ax.set_xlabel('z')
+    ax.set_ylabel('Observing Efficiency')
     ax.set_xlim([0.01, 0.7])
     ax.set_ylim([0.0, None])
     ax.grid()
@@ -41,7 +41,7 @@ def plotEffiRate(data, healpixID):
 
     axb = ax.twinx()
     axb.plot(zvals, rate(zvals), color='k', ls='dashed')
-    axb.set_ylabel('SN Rate', weight='bold')
+    axb.set_ylabel('SN Rate')
     ax.legend(loc='upper center', bbox_to_anchor=(
         0.5, 1.15), ncol=5, frameon=False, fontsize=14)
 
@@ -75,8 +75,8 @@ def plotCumul(data, healpixID):
         pp.plotCumul(sel, ax, healpixID, season,
                      label='season {}'.format(season))
 
-    ax.set_xlabel('z', weight='bold')
-    ax.set_ylabel('Normalised Cumulative $N_{SN}$', weight='bold')
+    ax.set_xlabel('z')
+    ax.set_ylabel('Normalised Cumulative $\mathrm{N_{SN}}$')
     ax.set_xlim([0.01, 0.7])
     ax.set_ylim([0.0, None])
     ax.grid()
@@ -115,8 +115,8 @@ def plotNSN(data, healpixID):
         pp.plotNSN(sel, ax, healpixID, season,
                    label='season {}'.format(season))
 
-    ax.set_xlabel('z', weight='bold')
-    ax.set_ylabel('$N_{SN} (z <)$ ', weight='bold')
+    ax.set_xlabel('z')
+    ax.set_ylabel('$\mathrm{N_{SN} (z <)}$ ')
     ax.set_xlim([0.01, 0.7])
     ax.set_ylim([0.0, None])
     ax.grid()
