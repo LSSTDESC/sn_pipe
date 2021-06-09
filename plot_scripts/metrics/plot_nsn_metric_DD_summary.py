@@ -2,7 +2,7 @@ import numpy as np
 import sn_plotter_metrics.cadencePlot as sn_plot
 import sn_plotter_metrics.nsnPlot as nsn_plot
 from sn_tools.sn_io import loopStack
-import matplotlib.pylab as plt
+#import matplotlib.pylab as plt
 import argparse
 from optparse import OptionParser
 import glob
@@ -16,6 +16,7 @@ import csv
 import pandas as pd
 import multiprocessing
 import scipy.stats
+from sn_plotter_metrics import plt
 
 
 def dumpcsv_medcad(metricTot):
@@ -126,7 +127,7 @@ def fill(selb, tagprod='', x1=-2.0, color=0.2, ebvofMW=0.0, snrmin=1.0, error_mo
     return ro
 
 
-def plotAllBinned(metricTot, forPlot=pd.DataFrame(), xp='cadence', yp='nsn_med_faint', legx='cadence [day]', legy='$N_{SN} ^ {z < z_{complete}}$', bins=10, therange=(0.5, 10.5), yerrplot=False):
+def plotAllBinned(metricTot, forPlot=pd.DataFrame(), xp='cadence', yp='nsn_med_faint', legx='cadence [day]', legy='$\mathrm{N_{SN} ^ {z < z_{complete}}}$', bins=10, therange=(0.5, 10.5), yerrplot=False):
 
     print(forPlot)
     metricTot = pd.DataFrame(metricTot)
@@ -152,11 +153,12 @@ def plotAllBinned(metricTot, forPlot=pd.DataFrame(), xp='cadence', yp='nsn_med_f
                    label=name, color=color, yerrplot=yerrplot, bins=bins, therange=therange)
 
     ax.grid()
-    ax.set_xlabel(legx, weight='bold')
-    ax.set_ylabel(legy, weight='bold')
+    weight = 'normal'
+    ax.set_xlabel(legx, weight=weight)
+    ax.set_ylabel(legy, weight=weight)
     ax.legend(frameon=False)
     ax.legend(loc='upper center', bbox_to_anchor=(
-        0.5, 1.15), ncol=4, frameon=False, fontsize=14)
+        0.5, 1.20), ncol=4, frameon=False, fontsize=17)
 
 
 def plotAllBinned_old(metricTot, xp='cadence', yp='nsn_med_faint', legx='cadence [day]', legy='$N_{SN} ^ {z < z_{complete}}$'):
@@ -586,6 +588,7 @@ metricTot = Summary(dirFile, 'NSN',
                     'DD', fieldNames, nside, forPlot, outName).data
 
 
+"""
 plotAllBinned(metricTot, forPlot)
 plotAllBinned(metricTot, forPlot, xp='gap_max', yp='cadence',
               legx='max gap [day]', legy='cadence [day]', bins=10, therange=(0.5, 60.5))
@@ -594,9 +597,10 @@ plotAllBinned(metricTot, forPlot, xp='gap_max', yp='cadence',
 
 plt.show()
 """
+"""
 cadenceTable(metricTot)
 """
-print(test)
+
 """
 print('oo', np.unique(
     metricTot[['dbName', 'fieldname', 'zlim_faint']]), type(metricTot))
