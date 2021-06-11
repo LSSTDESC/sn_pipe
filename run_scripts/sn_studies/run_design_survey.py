@@ -176,7 +176,7 @@ if 'plot_inputs' in actions:
 if 'SNR_combi' in actions:
     # estimate combis
     dd_snr.SNR_combi(SNR_par=dict(
-        zip(['Nvisits_max_night', 'max', 'step', 'choice'], [400, 100., 1., 'Nvisits'])), zmin=opts.zmin, zmax=opts.zmax, zstep=opts.zstep)
+        zip(['Nvisits_max_night', 'max', 'step', 'choice'], [400, 200., 1., 'Nvisits'])), zmin=opts.zmin, zmax=opts.zmax, zstep=opts.zstep)
 
 opti_fileName = 'opti_{}_{}_{}_ebvofMW_{}_cad_{}.npy'.format(
     opts.x1, opts.color, cutoff, opts.ebvofMW, opts.cadence_for_opti)
