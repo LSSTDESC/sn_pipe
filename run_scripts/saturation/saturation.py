@@ -1,12 +1,13 @@
 from sn_saturation.psf_pixels import PSF_pixels, PlotPixel, PlotMaxFrac
-from sn_saturation.mag_saturation import MagToFlux, MagSaturation, PlotMagSat
+from sn_saturation.mag_saturation import MagToFlux, MagSaturation, plotMagSat, plotMagContour
 from sn_saturation.observations import Observations, prepareYaml
 from sn_saturation.sn_sat_effects import SaturationTime, plotTimeSaturation, plot_gefficiency
 import numpy as np
 import time
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import pandas as pd
 import os
+from sn_saturation import plt
 
 
 class PixelPSFSeeing:
@@ -210,37 +211,43 @@ psf_type = 'single_gauss'
 print('done', time.time()-time_ref)
 
 # PlotMaxFrac()
-# PlotMaxFrac(psf_type=psf_type, title='Single gaussian profile')
+#PlotMaxFrac(psf_type=psf_type, title='Single gaussian profile')
+"""
+PlotMaxFrac(psf_type=psf_type, title='')
 
 PlotPixel(0.7, 'single_gauss', 'xpixel', 0., 'ypixel', 0., 'xc',
           'yc', 'Single Gaussian profile', type_plot='contour')
-
+"""
 
 # Saturation mag
 """
 mag_flux = MagToFlux()
 
 mag_flux.plot()
-
-psf_types = ['single_gauss']
-exptimes = [5., 15., 30.]
-full_wells = [90000., 120000.]
-
-res_sat = None
-for psf_type in psf_types:
-    mag_sat = MagSaturation(psf_type=psf_type)
-    for exptime in exptimes:
-        for full_well in full_wells:
-            res = mag_sat(exptime, full_well)
-            print(res)
-            if res_sat is None:
-                res_sat = res
-            else:
-                res_sat = np.concatenate((res_sat, res))
-
-
-PlotMagSat('gri', res_sat)
 """
+mag_sat_file = 'mag_sat.npy'
+
+if not os.path.isfile(mag_sat_file):
+    psf_types = ['single_gauss']
+    #exptimes = [5., 15., 30.]
+    exptimes = np.arange(1., 62., 2.)
+    full_wells = [90000., 120000.]
+
+    res_sat = None
+    for psf_type in psf_types:
+        mag_sat = MagSaturation(psf_type=psf_type)
+        for exptime in exptimes:
+            for full_well in full_wells:
+                res = mag_sat(exptime, full_well)
+                print(res)
+                if res_sat is None:
+                    res_sat = res
+                else:
+                    res_sat = np.concatenate((res_sat, res))
+
+    np.save(mag_sat_file, np.copy(res_sat))
+#plotMagSat('gri', res_sat)
+plotMagContour(mag_sat_file)
 plt.show()
 print(tt)
 
