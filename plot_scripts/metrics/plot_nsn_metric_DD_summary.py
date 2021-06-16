@@ -127,7 +127,7 @@ def fill(selb, tagprod='', x1=-2.0, color=0.2, ebvofMW=0.0, snrmin=1.0, error_mo
     return ro
 
 
-def plotAllBinned(metricTot, forPlot=pd.DataFrame(), xp='cadence', yp='nsn_med_faint', legx='cadence [day]', legy='$\mathrm{N_{SN} ^ {z < z_{complete}}}$', bins=10, therange=(0.5, 10.5), yerrplot=False):
+def plotAllBinned(metricTot, forPlot=pd.DataFrame(), xp='cadence', yp='nsn_med_faint', legx='cadence [day]', legy='N$_{\mathrm{SN}} ^ {z \leq z_{\mathrm{complete}}}$', bins=10, therange=(0.5, 10.5), yerrplot=False):
 
     print(forPlot)
     metricTot = pd.DataFrame(metricTot)
@@ -135,7 +135,7 @@ def plotAllBinned(metricTot, forPlot=pd.DataFrame(), xp='cadence', yp='nsn_med_f
     sel = metricTot[idx]
     # plt.plot(sel['cadence'], sel['nsn_med_faint'], 'ko')
     print(sel[['cadence', 'nsn_med_faint']])
-    fig, ax = plt.subplots(figsize=(10, 6))
+    fig, ax = plt.subplots(figsize=(10, 7))
 
     for dbName in np.unique(sel['dbName']):
         ij = sel['dbName'] == dbName
@@ -158,7 +158,7 @@ def plotAllBinned(metricTot, forPlot=pd.DataFrame(), xp='cadence', yp='nsn_med_f
     ax.set_ylabel(legy, weight=weight)
     ax.legend(frameon=False)
     ax.legend(loc='upper center', bbox_to_anchor=(
-        0.5, 1.20), ncol=4, frameon=False, fontsize=17)
+        0.5, 1.17), ncol=4, frameon=False, fontsize=17)
 
 
 def plotAllBinned_old(metricTot, xp='cadence', yp='nsn_med_faint', legx='cadence [day]', legy='$N_{SN} ^ {z < z_{complete}}$'):
@@ -587,11 +587,10 @@ metricTot_med = None
 metricTot = Summary(dirFile, 'NSN',
                     'DD', fieldNames, nside, forPlot, outName).data
 
-
 """
 plotAllBinned(metricTot, forPlot)
 plotAllBinned(metricTot, forPlot, xp='gap_max', yp='cadence',
-              legx='max gap [day]', legy='cadence [day]', bins=10, therange=(0.5, 60.5))
+              legx='max inter-night gap [day]', legy='cadence [day]', bins=10, therange=(0.5, 60.5))
 # dumpcsv_pixels(metricTot)
 # plotAllBinned(metricTot, yp='zlim_faint', legy='$z_{complete}^{0.95}$')
 
