@@ -1,5 +1,5 @@
 from sn_saturation.psf_pixels import PSF_pixels, PlotPixel, PlotMaxFrac
-from sn_saturation.mag_saturation import MagToFlux, MagSaturation, plotMagSat, plotMagContour
+from sn_saturation.mag_saturation import MagToFlux, MagSaturation, plotMagContour, plotDeltamagContour
 from sn_saturation.observations import Observations, prepareYaml
 from sn_saturation.sn_sat_effects import SaturationTime, plotTimeSaturation, plot_gefficiency
 import numpy as np
@@ -8,6 +8,35 @@ import time
 import pandas as pd
 import os
 from sn_saturation import plt
+
+
+def estimate_magsat(psf_types=['single_gauss'], exptimes=np.arange(1., 62., 2.), full_wells=[90000., 120000.]):
+    """
+    Method to estimate saturated magnitude
+
+    Parameters
+    ---------------
+    psf_types: list(str), opt
+      list of psf models to consider (default: ['single_gauss'])
+    exptimes: array, opt
+      array of exposure times (default: np.arange(1.,62.,2.)
+    full_wells: list(float), opt
+      list of full wells (default: [90000, 120000] pe)
+
+    """
+    res_sat = None
+    for psf_type in psf_types:
+        mag_sat = MagSaturation(psf_type=psf_type)
+        for exptime in exptimes:
+            for full_well in full_wells:
+                res = mag_sat(exptime, full_well)
+                print(res)
+                if res_sat is None:
+                    res_sat = res
+                else:
+                    res_sat = np.concatenate((res_sat, res))
+
+    np.save(mag_sat_file, np.copy(res_sat))
 
 
 class PixelPSFSeeing:
@@ -224,32 +253,17 @@ PlotPixel(0.7, 'single_gauss', 'xpixel', 0., 'ypixel', 0., 'xc',
 mag_flux = MagToFlux()
 
 mag_flux.plot()
-"""
+
 mag_sat_file = 'mag_sat.npy'
 
 if not os.path.isfile(mag_sat_file):
-    psf_types = ['single_gauss']
-    #exptimes = [5., 15., 30.]
-    exptimes = np.arange(1., 62., 2.)
-    full_wells = [90000., 120000.]
+    estimate_magsat()
 
-    res_sat = None
-    for psf_type in psf_types:
-        mag_sat = MagSaturation(psf_type=psf_type)
-        for exptime in exptimes:
-            for full_well in full_wells:
-                res = mag_sat(exptime, full_well)
-                print(res)
-                if res_sat is None:
-                    res_sat = res
-                else:
-                    res_sat = np.concatenate((res_sat, res))
-
-    np.save(mag_sat_file, np.copy(res_sat))
 #plotMagSat('gri', res_sat)
 plotMagContour(mag_sat_file)
+plotDeltamagContour()
 plt.show()
-print(tt)
+"""
 
 # Fake Observations
 
@@ -258,8 +272,8 @@ nexp_expt = [(1, 5), (1, 15), (1, 30)]
 obs = Observations('../../DB_Files', 'descddf_v1.5_10yrs')
 cadence_obs = 3
 # plot the seeing
-# obs.plotSeeings()
-# plt.show()
+obs.plotSeeings()
+plt.show()
 # make observations
 obs.make_all_obs(cadence=cadence_obs)
 
