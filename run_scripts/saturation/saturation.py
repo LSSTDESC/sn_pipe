@@ -248,7 +248,7 @@ class PixelPSFSeeing:
         return resfi
 
 
-def estimateSaturationTime(dirFile, x1_color, seasons, nexp_expt, cadence_obs, nproc):
+def estimateSaturationTime(dirFile, x1_color, seasons, nexp_expt, cadence_obs, band, nproc):
     """
     Function to estimate saturation time vs z
 
@@ -264,6 +264,8 @@ def estimateSaturationTime(dirFile, x1_color, seasons, nexp_expt, cadence_obs, n
       list of (nexp, exptime) combis
     cadence: int
       cadence of observations
+    band: str
+      band to process
     nproc: int
      number of proc for multiprocessing
 
@@ -276,13 +278,13 @@ def estimateSaturationTime(dirFile, x1_color, seasons, nexp_expt, cadence_obs, n
         for season in seasons:
             for (nexp, expt) in nexp_expt:
                 sat = SaturationTime(dirFile, x1, color,
-                                     nexp, expt, season, cadence_obs)
+                                     nexp, expt, season, cadence_obs, band)
                 for full_well in full_wells:
                     res = sat.multi_time(full_well, npp=nproc)
                     timesat = pd.concat((timesat, res))
                     print(res)
 
-    np.save('TimeSat_{}.npy'.format(cadence_obs),
+    np.save('TimeSat_{}_{}.npy'.format(cadence_obs, band),
             timesat.to_records(index=False))
 
 
@@ -341,13 +343,12 @@ for expt in range(1, 64, 4):
     nexp_expt.append((1, expt))
 cadence_obs = 1
 
-Simulations(nexp_expt=nexp_expt, cadence=cadence_obs)
-print(test)
+#Simulations(nexp_expt=nexp_expt, cadence=cadence_obs)
 
-cadence_obs = 3
+#cadence_obs = 3
 # estimate the saturation time here
 estimateSaturationTime('Output_Simu', x1_color=[(0.0, 0.0)], seasons=[2],
-                       nexp_expt=[(1, 15), (1, 30)], cadence_obs=cadence_obs, nproc=4)
+                       nexp_expt=nexp_expt, cadence_obs=cadence_obs, nproc=4, band='g')
 
 
 df = pd.DataFrame(
