@@ -8,6 +8,130 @@ import time
 import pandas as pd
 import os
 from sn_saturation import plt
+from sn_tools.sn_utils import multiproc
+
+
+class Simulations:
+    """
+    class to perform LC simulations
+
+    Parameters
+    ---------------
+    nexp_expt: list(tuple), opt
+      list of (nexp, exposuretime) (default: [(1, 5), (1, 15), (1, 30)])
+    dbDir: str, opt
+       location dir of OS files (default: '../../DB_Files')
+    dbName: str, opt
+      OS name to get seeing values (default:  'baseline_nexp1_v1.7_10yrs')
+    cadence: int, opt
+      cadence of observation (default: 3 days)
+
+
+    """
+
+    def __init__(self, nexp_expt=[(1, 1), (1, 5), (1, 10), (1, 15), (1, 20), (1, 30), (1, 40)],
+                 dbDir='../../DB_Files',
+                 dbName='baseline_nexp1_v1.7_10yrs',
+                 cadence=3,
+                 x1_color=[(0.0, 0.0)],
+                 seasons=[2]):
+
+        self.nexp_expt = nexp_expt
+        self.dbDir = dbDir
+        self.dbName = dbName
+        self.cadence = cadence
+        self.x1_color = x1_color
+        self.seasons = seasons
+
+        # generate fake obs
+        self.generateFakes()
+
+        # make simulations here
+        self.simulations()
+
+    def generateFakes(self):
+        """
+        Method to generate fake observations
+        """
+        # Fake Observations
+
+        # this is to generate observations : list of (nexp, exptime)
+        obs = Observations(self.dbDir, self.dbName)
+
+        # plot the seeing
+        # obs.plotSeeings()
+        # plt.show()
+        # make observations
+        obs.make_all_obs(nexp_expt=self.nexp_expt, cadence=self.cadence)
+
+    def simulations(self):
+        """
+        Method to perform a set of simulations using multiprocessing
+
+        """
+
+        nproc = 4
+        # input_yaml = 'input/saturation/param_simulation_gen.yaml'
+
+        for (x1, color) in self.x1_color:
+            for season in self.seasons:
+                params = {}
+                params['x1'] = x1
+                params['color'] = color
+                params['season'] = season
+                params['cadence'] = self.cadence
+                params['dbName'] = self.dbName
+                multiproc(self.nexp_expt, params, self.simulationIndiv, nproc)
+
+    def simulationIndiv(self, nexp_expt, params, j=0, output_q=None):
+        """
+        Method to perform simulations on a subset of parameters
+
+        Parameters
+        ---------------
+        nexp_expt: list(tuple)
+          list of (nexp, exptime)
+        params: dict
+          parameter dict of this function
+        j: int, opt
+          multiproc number (default: 0)
+        output_q: multiprocessing queue, opt
+          queue for multiprocessing (default: None)
+
+        """
+        cadence = params['cadence']
+        x1 = params['x1']
+        color = params['color']
+        season = params['season']
+        dbName = params['dbName']
+
+        for (nexp, expt) in nexp_expt:
+
+            dbName = 'Observations_{}_{}_{}'.format(nexp, expt, cadence)
+            prodid = 'Saturation_{}_{}_{}_{}_{}_{}'.format(
+                nexp, expt, x1, color, cadence, season)
+            cmd = 'python run_scripts/simulation/run_simulation.py --npixels 1'
+            cmd += ' --radius 0.01'
+            cmd += ' --RAmin 0.0'
+            cmd += ' --RAmax 0.1'
+            cmd += ' --SN_x1_type unique --SN_x1_min {}'.format(x1)
+            cmd += ' --SN_color_type unique --SN_color_min {}'.format(
+                color)
+            cmd += ' --SN_z_type uniform --SN_z_min 0.01 --SN_z_max 0.05 --SN_z_step 0.001'
+            cmd += ' --SN_z_type uniform --SN_z_min 0.01 --SN_z_max 0.05 --SN_z_step 0.001'
+            cmd += ' --SN_daymax_type uniform --SN_daymax_step 1.'
+
+            cmd += ' --dbName {} --dbExtens npy --dbDir .'.format(dbName)
+            cmd += ' --ProductionIDSimu {}'.format(prodid)
+            cmd += ' --Observations_fieldtype Fake --Observations_coadd 0'
+            cmd += ' --Simulator_name sn_simulator.sn_fast'
+            cmd += ' --Observations_season {}'.format(season)
+            os.system(cmd)
+
+        if output_q is not None:
+            return output_q.put({j: None})
+        else:
+            return None
 
 
 def estimate_magsat(psf_types=['single_gauss'], exptimes=np.arange(1., 62., 2.), full_wells=[90000., 120000.]):
@@ -124,61 +248,6 @@ class PixelPSFSeeing:
         return resfi
 
 
-def Simulations(nexp_expt=[(1, 15), (1, 30)], x1_color=[(0.0, 0.0)], seasons=[2], cadence=3):
-    """
-    Function to perform a set of simulations
-
-    Parameters
-    ---------------
-    nexp_expt: list(tuples)
-      list of (nexp, exptime) combis
-    x1_color: list(tuple)
-      list of (x1,color) combi
-    season: list(int)
-      list of the seasons to gen
-    cadence: int
-      cadence of observations
-
-    """
-
-    nproc = 1
-    # input_yaml = 'input/saturation/param_simulation_gen.yaml'
-
-    for (x1, color) in x1_color:
-        for season in seasons:
-            for (nexp, expt) in nexp_expt:
-                """
-                output_yaml = 'param_simulation_{}_{}_{}_{}_{}.yaml'.format(
-                    x1, color, nexp, expt, season, cadence)
-                prepareYaml(input_yaml, nexp, expt, x1, color,
-                            season, nproc, output_yaml, cadence)
-                cmd = 'python run_scripts/simulation/run_simulation_from_yaml.py --config_yaml={} --npixels 1'.format(
-                    output_yaml)
-                cmd += ' --radius 0.01'
-                cmd += ' --RAmin 0.0'
-                cmd += ' --RAmax 0.1'
-                """
-                dbName = 'Observations_{}_{}_{}'.format(nexp, expt, cadence)
-                prodid = 'Saturation_{}_{}_{}_{}_{}_{}'.format(
-                    nexp, expt, x1, color, cadence, season)
-                cmd = 'python run_scripts/simulation/run_simulation.py --npixels 1'
-                cmd += ' --radius 0.01'
-                cmd += ' --RAmin 0.0'
-                cmd += ' --RAmax 0.1'
-                cmd += ' --SN_x1_type unique --SN_x1_min {}'.format(x1)
-                cmd += ' --SN_color_type unique --SN_color_min {}'.format(
-                    color)
-                cmd += ' --SN_z_type uniform --SN_z_min 0.01 --SN_z_max 0.05 --SN_z_step 0.001'
-                cmd += ' --SN_z_type uniform --SN_z_min 0.01 --SN_z_max 0.05 --SN_z_step 0.001'
-                cmd += ' --SN_daymax_type uniform --SN_daymax_step 1.'
-
-                cmd += ' --dbName {} --dbExtens npy --dbDir .'.format(dbName)
-                cmd += ' --ProductionIDSimu {}'.format(prodid)
-                cmd += ' --Observations_fieldtype Fake --Observations_coadd 0'
-                cmd += ' --Simulator_name sn_simulator.sn_fast'
-                os.system(cmd)
-
-
 def estimateSaturationTime(dirFile, x1_color, seasons, nexp_expt, cadence_obs, nproc):
     """
     Function to estimate saturation time vs z
@@ -265,29 +334,20 @@ plotDeltamagContour()
 plt.show()
 """
 
-# Fake Observations
 
-# this is to generate observations : list of (nexp, exptime)
-nexp_expt = [(1, 5), (1, 15), (1, 30)]
-obs = Observations('../../DB_Files', 'descddf_v1.5_10yrs')
+# make LC simulation here
+nexp_expt = []
+for expt in range(1, 64, 4):
+    nexp_expt.append((1, expt))
+cadence_obs = 1
+
+Simulations(nexp_expt=nexp_expt, cadence=cadence_obs)
+print(test)
+
 cadence_obs = 3
-# plot the seeing
-obs.plotSeeings()
-plt.show()
-# make observations
-obs.make_all_obs(cadence=cadence_obs)
-
-# perform simulation on Observations_* files
-nexp_expt = [(1, 15), (1, 30)]
-x1_color = [(0.0, 0.0)]
-seasons = [2]
-
-Simulations(nexp_expt=nexp_expt, x1_color=x1_color,
-            seasons=seasons, cadence=cadence_obs)
-
 # estimate the saturation time here
-estimateSaturationTime('Output_Simu', x1_color, seasons,
-                       nexp_expt, cadence_obs, nproc=8)
+estimateSaturationTime('Output_Simu', x1_color=[(0.0, 0.0)], seasons=[2],
+                       nexp_expt=[(1, 15), (1, 30)], cadence_obs=cadence_obs, nproc=4)
 
 
 df = pd.DataFrame(
