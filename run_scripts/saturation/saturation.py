@@ -1,7 +1,7 @@
 from sn_saturation.psf_pixels import PSF_pixels, PlotPixel, PlotMaxFrac
 from sn_saturation.mag_saturation import MagToFlux, MagSaturation, plotMagContour, plotDeltamagContour
 from sn_saturation.observations import Observations, prepareYaml
-from sn_saturation.sn_sat_effects import SaturationTime, plotTimeSaturation, plot_gefficiency
+from sn_saturation.sn_sat_effects import SaturationTime, plotTimeSaturation, plot_gefficiency, plotTimeSaturationContour
 import numpy as np
 import time
 #import matplotlib.pyplot as plt
@@ -347,12 +347,19 @@ cadence_obs = 1
 
 #cadence_obs = 3
 # estimate the saturation time here
+band = 'g'
+"""
 estimateSaturationTime('Output_Simu', x1_color=[(0.0, 0.0)], seasons=[2],
-                       nexp_expt=nexp_expt, cadence_obs=cadence_obs, nproc=4, band='g')
+                       nexp_expt=nexp_expt, cadence_obs=cadence_obs, nproc=4, band=band)
+"""
+
+plotTimeSaturationContour(0.0, 0.0)
+
+plt.show()
 
 
 df = pd.DataFrame(
-    np.load('TimeSat_{}.npy'.format(cadence_obs), allow_pickle=True))
+    np.load('TimeSat_{}_{}.npy'.format(cadence_obs, band), allow_pickle=True))
 
 plotTimeSaturation(0.0, 0.0, df)
 plot_gefficiency(0.0, 0.0, df)
