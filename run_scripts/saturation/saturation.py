@@ -118,14 +118,17 @@ class Simulations:
             cmd += ' --SN_color_type unique --SN_color_min {}'.format(
                 color)
             cmd += ' --SN_z_type uniform --SN_z_min 0.01 --SN_z_max 0.05 --SN_z_step 0.001'
-            cmd += ' --SN_z_type uniform --SN_z_min 0.01 --SN_z_max 0.05 --SN_z_step 0.001'
-            cmd += ' --SN_daymax_type uniform --SN_daymax_step 1.'
+            #cmd += ' --SN_z_type uniform --SN_z_min 0.01 --SN_z_max 0.011 --SN_z_step 0.001'
+            cmd += ' --SN_daymax_type uniform --SN_daymax_step 3.'
+            #cmd += ' --SN_daymax_type unique --SN_daymax_step 50.'
+            cmd += ' --SN_ebvofMW 0.'
 
             cmd += ' --dbName {} --dbExtens npy --dbDir .'.format(dbName)
             cmd += ' --ProductionIDSimu {}'.format(prodid)
             cmd += ' --Observations_fieldtype Fake --Observations_coadd 0'
             cmd += ' --Simulator_name sn_simulator.sn_fast'
             cmd += ' --Observations_season {}'.format(season)
+            #cmd += ' --Display_LC_display 1'
             os.system(cmd)
 
         if output_q is not None:
@@ -248,7 +251,7 @@ class PixelPSFSeeing:
         return resfi
 
 
-def estimateSaturationTime(dirFile, x1_color, seasons, nexp_expt, cadence_obs, band, nproc):
+def estimateSaturationTime(dirFile, nexp_expt_simu, x1_color, seasons, nexp_expt, cadence_obs, band, nproc):
     """
     Function to estimate saturation time vs z
 
@@ -256,6 +259,8 @@ def estimateSaturationTime(dirFile, x1_color, seasons, nexp_expt, cadence_obs, b
     --------------
     dirFile: str
       location dir of the simulation
+    nexp_expt_simu: tuple
+      nexp and exposure time for ref simu file
     x1_color: list(tuple)
       list of (x1,color) combi
     season: list(int)
@@ -271,16 +276,16 @@ def estimateSaturationTime(dirFile, x1_color, seasons, nexp_expt, cadence_obs, b
 
     """
     full_wells = [90000, 120000]
-
+    
     timesat = pd.DataFrame()
-
+    
     for (x1, color) in x1_color:
         for season in seasons:
+            sat = SaturationTime(dirFile, x1, color,
+                             nexp_expt_simu[0], nexp_expt_simu[1], season, cadence_obs, band)
             for (nexp, expt) in nexp_expt:
-                sat = SaturationTime(dirFile, x1, color,
-                                     nexp, expt, season, cadence_obs, band)
                 for full_well in full_wells:
-                    res = sat.multi_time(full_well, npp=nproc)
+                    res = sat.multi_time(full_well, nexp, expt, npp=nproc)
                     timesat = pd.concat((timesat, res))
                     print(res)
 
@@ -338,20 +343,31 @@ plt.show()
 
 
 # make LC simulation here
+"""
 nexp_expt = []
 for expt in range(1, 64, 4):
     nexp_expt.append((1, expt))
+"""    
 cadence_obs = 1
 
-#Simulations(nexp_expt=nexp_expt, cadence=cadence_obs)
+nexp_expt=[(1,30)]
+#Simulations(dbDir='../DB_Files',nexp_expt=nexp_expt, cadence=cadence_obs)
 
+#print(test)
 #cadence_obs = 3
 # estimate the saturation time here
 band = 'g'
-"""
-estimateSaturationTime('Output_Simu', x1_color=[(0.0, 0.0)], seasons=[2],
-                       nexp_expt=nexp_expt, cadence_obs=cadence_obs, nproc=4, band=band)
-"""
+nexp_expt = []
+for expt in range(0, 70, 10):
+    nexp_expt.append((1, expt))
+
+nexp_expt[0] = (1,1)
+
+
+print(nexp_expt)
+#estimateSaturationTime('Output_Simu', nexp_expt_simu=(1,30),x1_color=[(0.0, 0.0)], seasons=[2],
+#                       nexp_expt=nexp_expt, cadence_obs=cadence_obs, nproc=8, band=band)
+
 
 plotTimeSaturationContour(0.0, 0.0)
 
