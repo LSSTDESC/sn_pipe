@@ -119,7 +119,7 @@ class Simulations:
                 color)
             cmd += ' --SN_z_type uniform --SN_z_min 0.01 --SN_z_max 0.05 --SN_z_step 0.001'
             #cmd += ' --SN_z_type uniform --SN_z_min 0.01 --SN_z_max 0.011 --SN_z_step 0.001'
-            cmd += ' --SN_daymax_type uniform --SN_daymax_step 3.'
+            cmd += ' --SN_daymax_type uniform --SN_daymax_step 1.'
             #cmd += ' --SN_daymax_type unique --SN_daymax_step 50.'
             cmd += ' --SN_ebvofMW 0.'
 
@@ -358,7 +358,7 @@ nexp_expt=[(1,30)]
 # estimate the saturation time here
 band = 'g'
 nexp_expt = []
-for expt in range(0, 70, 10):
+for expt in range(0, 70, 5):
     nexp_expt.append((1, expt))
 
 nexp_expt[0] = (1,1)
