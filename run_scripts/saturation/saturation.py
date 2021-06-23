@@ -348,7 +348,7 @@ nexp_expt = []
 for expt in range(1, 64, 4):
     nexp_expt.append((1, expt))
 """    
-cadence_obs = 1
+cadence_obs = 3
 
 nexp_expt=[(1,30)]
 #Simulations(dbDir='../DB_Files',nexp_expt=nexp_expt, cadence=cadence_obs)
@@ -365,15 +365,16 @@ nexp_expt[0] = (1,1)
 
 
 print(nexp_expt)
-#estimateSaturationTime('Output_Simu', nexp_expt_simu=(1,30),x1_color=[(0.0, 0.0)], seasons=[2],
-#                       nexp_expt=nexp_expt, cadence_obs=cadence_obs, nproc=8, band=band)
+"""
+estimateSaturationTime('Output_Simu', nexp_expt_simu=(1,30),x1_color=[(0.0, 0.0)], seasons=[2],
+                       nexp_expt=nexp_expt, cadence_obs=cadence_obs, nproc=8, band=band)
+"""
 
-
-plotTimeSaturationContour(0.0, 0.0)
+plotTimeSaturationContour(0.0, 0.0,cadence=3)
 
 plt.show()
 
-
+"""
 df = pd.DataFrame(
     np.load('TimeSat_{}_{}.npy'.format(cadence_obs, band), allow_pickle=True))
 
@@ -381,3 +382,4 @@ plotTimeSaturation(0.0, 0.0, df)
 plot_gefficiency(0.0, 0.0, df)
 
 plt.show()
+"""
