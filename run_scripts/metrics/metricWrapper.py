@@ -349,7 +349,8 @@ class NSNMetricWrapper(MetricWrapper):
             output_q.put({j: lc_ref})
         else:
             return tab_tot
-        
+
+
 class SaturationMetricWrapper(MetricWrapper):
     def __init__(self, name='Saturation', season=-1, coadd=True, fieldType='DD',
                  nside=64, RAmin=0., RAmax=360.,
@@ -365,7 +366,7 @@ class SaturationMetricWrapper(MetricWrapper):
 
         zmin = 0.
         zmax = 0.05
-       
+
         tel_par = {}
         tel_par['name'] = 'LSST'  # name of the telescope (internal)
         # dir of throughput
@@ -384,20 +385,14 @@ class SaturationMetricWrapper(MetricWrapper):
         lc_reference = {}
 
         templateDir = 'Template_LC'
-        gammaDir = 'reference_files'
+        refDir = 'reference_files'
         gammaName = 'gamma.hdf5'
         web_path = 'https://me.lsst.eu/gris/DESC_SN_pipeline'
         # loading dust file
         dustDir = 'Template_Dust'
         dustcorr = {}
 
-        x1_colors = [(-2.0, -0.2), (-2.0, 0.0), (-2.0, 0.2),
-                     (0.0, -0.2), (0.0, 0.0), (0.0, 0.2),
-                     (2.0, -0.2), (2.0, 0.0), (2.0, 0.2)]
-        # (2.0, -0.2)] #(2.0, 0.0), (2.0, 0.2)]
-
-        if metadata.proxy_level == 2:
-            x1_colors = [(-2.0, 0.2), (0.0, 0.0)]
+        x1_colors = [(0.0, 0.0)]
 
         print('Loading reference files')
         result_queue = multiprocessing.Queue()
@@ -423,7 +418,7 @@ class SaturationMetricWrapper(MetricWrapper):
             else:
                 dustcorr[x1_colors[j]] = None
             p = multiprocessing.Process(
-                name='Subprocess_main-'+str(j), target=self.load, args=(templateDir, fname, gammaDir, gammaName, web_path, j, result_queue))
+                name='Subprocess_main-'+str(j), target=self.load, args=(templateDir, fname, refDir, gammaName, web_path, j, result_queue))
             p.start()
 
         resultdict = {}
@@ -465,38 +460,13 @@ class SaturationMetricWrapper(MetricWrapper):
             n_phase_max = 0
             zlim_coeff = 0.95
 
-        # load x1_color_dist
-
-        fName = 'Dist_x1_color_JLA_high_z.txt'
-        fDir = 'reference_files'
-        check_get_file(web_path, fDir, fName)
-        x1_color_dist = np.genfromtxt('{}/{}'.format(fDir, fName), dtype=None,
-                                      names=('x1', 'color', 'weight_x1', 'weight_c', 'weight_tot'))
-
-        # print(x1_color_dist)
-
-        if metadata.proxy_level == 1:
-            x1vals = np.arange(-3., 5., 2.)
-            cvals = np.arange(-0.3, 0.5, 0.2)
-
-            r = []
-            for ix in range(len(x1vals)-1):
-                ii = x1_color_dist['x1'] >= x1vals[ix]
-                ii &= x1_color_dist['x1'] < x1vals[ix+1]
-                x1med = np.median([x1vals[ix], x1vals[ix+1]])
-                for ic in range(len(cvals)-1):
-                    iib = x1_color_dist['color'] >= cvals[ic]
-                    iib &= x1_color_dist['color'] < cvals[ic+1]
-                    cmed = np.median([cvals[ic], cvals[ic+1]])
-                    print(x1med, np.round(cmed, 1), np.sum(
-                        x1_color_dist[ii & iib]['weight_tot']))
-                    r.append((np.round(x1med, 1), np.round(cmed, 1),
-                              np.sum(x1_color_dist[ii & iib]['weight_tot'])))
-
-            x1_color_dist = np.rec.fromrecords(
-                r, names=['x1', 'color', 'weight_tot'])
-
         pixArea = hp.nside2pixarea(nside, degrees=True)
+
+        # load file to estimate saturation here
+        fracpixelName = 'PSF_pixel_single_gauss_summary.npy'
+        check_get_file(web_path, refDir, fracpixelName)
+
+        fracpixel = np.load('{}/{}'.format(refDir, fracpixelName))
 
         # metric instance
         self.metric = SNSaturationMetric(
@@ -511,9 +481,8 @@ class SaturationMetricWrapper(MetricWrapper):
             errmodrel=errmodrel,
             outputType=metadata.outputType,
             proxy_level=metadata.proxy_level,
-            x1_color_dist=x1_color_dist,
             coadd=coadd, lightOutput=metadata.lightOutput,
-            T0s=metadata.T0s, zlim_coeff=zlim_coeff, ebvofMW=ebvofMW)
+            T0s=metadata.T0s, zlim_coeff=zlim_coeff, ebvofMW=ebvofMW, fracpixel=fracpixel)
 
         self.metadata['n_bef'] = n_bef
         self.metadata['n_aft'] = n_aft
