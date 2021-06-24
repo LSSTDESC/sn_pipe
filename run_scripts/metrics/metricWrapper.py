@@ -352,7 +352,7 @@ class NSNMetricWrapper(MetricWrapper):
 
 
 class SaturationMetricWrapper(MetricWrapper):
-    def __init__(self, name='Saturation', season=-1, coadd=True, fieldType='DD',
+    def __init__(self, name='Saturation', season=-1, coadd=False, fieldType='DD',
                  nside=64, RAmin=0., RAmax=360.,
                  Decmin=-1.0, Decmax=-1.0,
                  npixels=0,
@@ -364,8 +364,9 @@ class SaturationMetricWrapper(MetricWrapper):
             npixels=npixels,
             metadata=metadata, outDir=outDir, ebvofMW=ebvofMW)
 
-        zmin = 0.
+        zmin = 0.01
         zmax = 0.05
+        saturationLevel = 0.5
 
         tel_par = {}
         tel_par['name'] = 'LSST'  # name of the telescope (internal)
@@ -443,6 +444,7 @@ class SaturationMetricWrapper(MetricWrapper):
             n_phase_min = 1
             n_phase_max = 1
             zlim_coeff = 0.95
+            coadd = True
 
         if fieldType == 'WFD':
             n_bef = 4
@@ -451,6 +453,7 @@ class SaturationMetricWrapper(MetricWrapper):
             n_phase_min = 1
             n_phase_max = 1
             zlim_coeff = 0.85
+            coadd = False
 
         if fieldType == 'Fake':
             n_bef = 0
@@ -481,8 +484,9 @@ class SaturationMetricWrapper(MetricWrapper):
             errmodrel=errmodrel,
             outputType=metadata.outputType,
             proxy_level=metadata.proxy_level,
-            coadd=coadd, lightOutput=metadata.lightOutput,
-            T0s=metadata.T0s, zlim_coeff=zlim_coeff, ebvofMW=ebvofMW, fracpixel=fracpixel)
+            coadd=coadd, lightOutput=False,
+            T0s=metadata.T0s, zlim_coeff=zlim_coeff, ebvofMW=ebvofMW,
+            fracpixel=fracpixel, saturationLevel=saturationLevel)
 
         self.metadata['n_bef'] = n_bef
         self.metadata['n_aft'] = n_aft
