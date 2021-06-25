@@ -364,9 +364,8 @@ class SaturationMetricWrapper(MetricWrapper):
             npixels=npixels,
             metadata=metadata, outDir=outDir, ebvofMW=ebvofMW)
 
-        zmin = 0.01
-        zmax = 0.05
-        saturationLevel = 0.5
+        zmin = 0.015
+        zmax = 0.025
 
         tel_par = {}
         tel_par['name'] = 'LSST'  # name of the telescope (internal)
@@ -445,6 +444,7 @@ class SaturationMetricWrapper(MetricWrapper):
             n_phase_max = 1
             zlim_coeff = 0.95
             coadd = True
+            saturationLevel = 0.5
 
         if fieldType == 'WFD':
             n_bef = 4
@@ -454,6 +454,7 @@ class SaturationMetricWrapper(MetricWrapper):
             n_phase_max = 1
             zlim_coeff = 0.85
             coadd = False
+            saturationLevel = 0.99
 
         if fieldType == 'Fake':
             n_bef = 0
@@ -462,6 +463,7 @@ class SaturationMetricWrapper(MetricWrapper):
             n_phase_min = 0
             n_phase_max = 0
             zlim_coeff = 0.95
+            saturationLevel = 0.99
 
         pixArea = hp.nside2pixarea(nside, degrees=True)
 
@@ -474,32 +476,16 @@ class SaturationMetricWrapper(MetricWrapper):
         # metric instance
         self.metric = SNSaturationMetric(
             lc_reference, dustcorr, season=season, zmin=zmin,
-            zmax=zmax, pixArea=pixArea,
+            zmax=zmax,
             verbose=metadata.verbose, timer=metadata.timer,
-            ploteffi=metadata.ploteffi,
-            n_bef=n_bef, n_aft=n_aft,
+            plotmetric=metadata.ploteffi,
             snr_min=snr_min,
-            n_phase_min=n_phase_min,
-            n_phase_max=n_phase_max,
-            errmodrel=errmodrel,
-            outputType=metadata.outputType,
-            proxy_level=metadata.proxy_level,
             coadd=coadd, lightOutput=False,
-            T0s=metadata.T0s, zlim_coeff=zlim_coeff, ebvofMW=ebvofMW,
+            ebvofMW=ebvofMW,
             fracpixel=fracpixel, saturationLevel=saturationLevel)
 
-        self.metadata['n_bef'] = n_bef
-        self.metadata['n_aft'] = n_aft
         self.metadata['snr_min'] = snr_min
-        self.metadata['n_phase_min'] = n_phase_min
-        self.metadata['n_phase_max'] = n_phase_max
-        self.metadata['zlim_coeff'] = zlim_coeff
-        self.metadata['error_model'] = error_model
-        self.metadata['errmodrel'] = errmodrel
-
-        self.metaout += ['ploteffi', 'outputType',
-                         'proxy_level', 'lightOutput', 'T0s',
-                         'n_bef', 'n_aft', 'snr_min', 'n_phase_min', 'n_phase_max', 'error_model', 'errmodrel', 'zlim_coeff']
+        self.metaout += ['ploteffi', 'lightOutput', 'snr_min']
         self.saveConfig()
 
     def load(self, templateDir, fname, gammaDir, gammaName, web_path, j=-1, output_q=None):
