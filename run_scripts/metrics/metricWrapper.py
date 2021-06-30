@@ -386,7 +386,7 @@ class SaturationMetricWrapper(MetricWrapper):
 
         templateDir = 'Template_LC'
         refDir = 'reference_files'
-        gammaName = 'gamma.hdf5'
+        gammaName = 'gamma_extended.hdf5'
         web_path = 'https://me.lsst.eu/gris/DESC_SN_pipeline'
         # loading dust file
         dustDir = 'Template_Dust'
