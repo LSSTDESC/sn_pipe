@@ -97,6 +97,9 @@ parser.add_option("--ebvofMW", type=float, default=-1.0,
                   help="E(B-V) of MW for dust corrections[%default]")
 parser.add_option("--fieldName", type=str, default='COSMOS',
                   help="fieldName - for DD only[%default]")
+parser.add_option("--healpixIDs", type=str, default='',
+                  help="list of healpixIds to process [%default]")
+
 
 opts, args = parser.parse_args()
 
@@ -110,6 +113,8 @@ if opts.remove_dithering:
 outputDir = '{}/{}{}/{}'.format(opts.outDir,
                                 opts.dbName, nodither, opts.metric)
 
+healpixIDs = list(map(int, opts.healpixIDs.split(',')))
+
 if opts.fieldType == 'DD':
     outputDir += '_{}'.format(opts.fieldName)
 
@@ -121,7 +126,8 @@ metricList = []
 
 # check whether the metric is available
 
-available_metrics = ['NSN', 'Cadence', 'SL', 'ObsRate', 'SNRr', 'SNRz','Saturation']
+available_metrics = ['NSN', 'Cadence', 'SL',
+                     'ObsRate', 'SNRr', 'SNRz', 'Saturation']
 if opts.metric not in available_metrics:
     print('Sorry to inform you that', opts.metric, 'is not a metric available')
     print('list of possible metrics:')
@@ -153,10 +159,10 @@ print('seasons and metric', season_int,
 
 
 process = Process(opts.dbDir, opts.dbName, opts.dbExtens,
-                  opts.fieldType, opts.fieldName,opts.nside,
+                  opts.fieldType, opts.fieldName, opts.nside,
                   opts.RAmin, opts.RAmax,
                   opts.Decmin, opts.Decmax,
                   opts.saveData, opts.remove_dithering,
                   outputDir, opts.nproc, metricList,
                   opts.pixelmap_dir, opts.npixels,
-                  opts.nclusters, opts.radius)
+                  opts.nclusters, opts.radius, healpixIDs)
