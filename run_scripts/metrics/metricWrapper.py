@@ -364,8 +364,8 @@ class SaturationMetricWrapper(MetricWrapper):
             npixels=npixels,
             metadata=metadata, outDir=outDir, ebvofMW=ebvofMW)
 
-        zmin = 0.015
-        zmax = 0.025
+        zmin = 0.020
+        zmax = 0.021
 
         tel_par = {}
         tel_par['name'] = 'LSST'  # name of the telescope (internal)
