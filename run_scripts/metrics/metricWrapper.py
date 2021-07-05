@@ -174,8 +174,11 @@ class NSNMetricWrapper(MetricWrapper):
 
         zmin = 0.
         zmax = 1.1
+        bands = 'grizy'
         if fieldType == 'WFD':
-            zmax = 0.6
+            zmin = 0.3
+            zmax = 0.31
+            bands = 'griz'
 
         tel_par = {}
         tel_par['name'] = 'LSST'  # name of the telescope (internal)
@@ -261,9 +264,9 @@ class NSNMetricWrapper(MetricWrapper):
             zlim_coeff = 0.95
 
         if fieldType == 'WFD':
-            n_bef = 4
-            n_aft = 10
-            snr_min = 0.
+            n_bef = 3
+            n_aft = 8
+            snr_min = 1.
             n_phase_min = 1
             n_phase_max = 1
             zlim_coeff = 0.85
@@ -276,6 +279,7 @@ class NSNMetricWrapper(MetricWrapper):
             n_phase_max = 0
             zlim_coeff = 0.95
 
+        """
         # load x1_color_dist
 
         fName = 'Dist_x1_color_JLA_high_z.txt'
@@ -306,7 +310,7 @@ class NSNMetricWrapper(MetricWrapper):
 
             x1_color_dist = np.rec.fromrecords(
                 r, names=['x1', 'color', 'weight_tot'])
-
+        """
         pixArea = hp.nside2pixarea(nside, degrees=True)
 
         # metric instance
@@ -322,9 +326,8 @@ class NSNMetricWrapper(MetricWrapper):
             errmodrel=errmodrel,
             outputType=metadata.outputType,
             proxy_level=metadata.proxy_level,
-            x1_color_dist=x1_color_dist,
             coadd=coadd, lightOutput=metadata.lightOutput,
-            T0s=metadata.T0s, zlim_coeff=zlim_coeff, ebvofMW=ebvofMW)
+            T0s=metadata.T0s, zlim_coeff=zlim_coeff, ebvofMW=ebvofMW, bands=bands)
 
         self.metadata['n_bef'] = n_bef
         self.metadata['n_aft'] = n_aft
