@@ -113,7 +113,9 @@ if opts.remove_dithering:
 outputDir = '{}/{}{}/{}'.format(opts.outDir,
                                 opts.dbName, nodither, opts.metric)
 
-healpixIDs = list(map(int, opts.healpixIDs.split(',')))
+healpixIDs =[]
+if opts.healpixIDs != '':
+    healpixIDs = list(map(int, opts.healpixIDs.split(',')))
 
 if opts.fieldType == 'DD':
     outputDir += '_{}'.format(opts.fieldName)
