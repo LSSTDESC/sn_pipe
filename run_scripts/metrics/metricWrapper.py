@@ -176,80 +176,14 @@ class NSNMetricWrapper(MetricWrapper):
         zmax = 1.1
         bands = 'grizy'
         if fieldType == 'WFD':
-            zmin = 0.3
-            zmax = 0.31
+            zmin = 0.1
+            zmax = 0.5
             bands = 'griz'
 
-        tel_par = {}
-        tel_par['name'] = 'LSST'  # name of the telescope (internal)
-        # dir of throughput
-        tel_par['throughput_dir'] = 'LSST_THROUGHPUTS_BASELINE'
-        tel_par['atmos_dir'] = 'THROUGHPUTS_DIR'  # dir of atmos
-        tel_par['airmass'] = 1.2  # airmass value
-        tel_par['atmos'] = True  # atmos
-        tel_par['aerosol'] = False  # aerosol
+        self.telescope = telescope_def()
 
-        self.telescope = Telescope(name=tel_par['name'],
-                                   throughput_dir=tel_par['throughput_dir'],
-                                   atmos_dir=tel_par['atmos_dir'],
-                                   atmos=tel_par['atmos'],
-                                   aerosol=tel_par['aerosol'],
-                                   airmass=tel_par['airmass'])
-        lc_reference = {}
-
-        templateDir = 'Template_LC'
-        gammaDir = 'reference_files'
-        gammaName = 'gamma.hdf5'
-        web_path = 'https://me.lsst.eu/gris/DESC_SN_pipeline'
-        # loading dust file
-        dustDir = 'Template_Dust'
-        dustcorr = {}
-
-        x1_colors = [(-2.0, -0.2), (-2.0, 0.0), (-2.0, 0.2),
-                     (0.0, -0.2), (0.0, 0.0), (0.0, 0.2),
-                     (2.0, -0.2), (2.0, 0.0), (2.0, 0.2)]
-        # (2.0, -0.2)] #(2.0, 0.0), (2.0, 0.2)]
-
-        if metadata.proxy_level == 2:
-            x1_colors = [(-2.0, 0.2), (0.0, 0.0)]
-
-        print('Loading reference files')
-        result_queue = multiprocessing.Queue()
-
-        wave_cutoff = 'error_model'
-        errmodrel = -1.
-        if error_model:
-            errmodrel = 0.1
-
-        if not error_model:
-            wave_cutoff = '{}_{}'.format(bluecutoff, redcutoff)
-        for j in range(len(x1_colors)):
-            x1 = x1_colors[j][0]
-            color = x1_colors[j][1]
-
-            fname = 'LC_{}_{}_{}_ebvofMW_0.0_vstack.hdf5'.format(
-                x1, color, wave_cutoff)
-            if ebvofMW < 0.:
-                dustFile = 'Dust_{}_{}_{}.hdf5'.format(
-                    x1, color, wave_cutoff)
-                dustcorr[x1_colors[j]] = LoadDust(
-                    dustDir, dustFile, web_path).dustcorr
-            else:
-                dustcorr[x1_colors[j]] = None
-            p = multiprocessing.Process(
-                name='Subprocess_main-'+str(j), target=self.load, args=(templateDir, fname, gammaDir, gammaName, web_path, j, result_queue))
-            p.start()
-
-        resultdict = {}
-        for j in range(len(x1_colors)):
-            resultdict.update(result_queue.get())
-
-        for p in multiprocessing.active_children():
-            p.join()
-
-        for j in range(len(x1_colors)):
-            if resultdict[j] is not None:
-                lc_reference[x1_colors[j]] = resultdict[j]
+        lc_reference, dustcorr = load_reference(
+            error_model, ebvofMW, [(-2.0, 0.2), (0.0, 0.0)], self.telescope)
 
         print('Reference data loaded', lc_reference.keys(), fieldType)
 
@@ -279,38 +213,10 @@ class NSNMetricWrapper(MetricWrapper):
             n_phase_max = 0
             zlim_coeff = 0.95
 
-        """
-        # load x1_color_dist
+        errmodrel = -1.
+        if error_model:
+            errmodrel = 0.05
 
-        fName = 'Dist_x1_color_JLA_high_z.txt'
-        fDir = 'reference_files'
-        check_get_file(web_path, fDir, fName)
-        x1_color_dist = np.genfromtxt('{}/{}'.format(fDir, fName), dtype=None,
-                                      names=('x1', 'color', 'weight_x1', 'weight_c', 'weight_tot'))
-
-        # print(x1_color_dist)
-
-        if metadata.proxy_level == 1:
-            x1vals = np.arange(-3., 5., 2.)
-            cvals = np.arange(-0.3, 0.5, 0.2)
-
-            r = []
-            for ix in range(len(x1vals)-1):
-                ii = x1_color_dist['x1'] >= x1vals[ix]
-                ii &= x1_color_dist['x1'] < x1vals[ix+1]
-                x1med = np.median([x1vals[ix], x1vals[ix+1]])
-                for ic in range(len(cvals)-1):
-                    iib = x1_color_dist['color'] >= cvals[ic]
-                    iib &= x1_color_dist['color'] < cvals[ic+1]
-                    cmed = np.median([cvals[ic], cvals[ic+1]])
-                    print(x1med, np.round(cmed, 1), np.sum(
-                        x1_color_dist[ii & iib]['weight_tot']))
-                    r.append((np.round(x1med, 1), np.round(cmed, 1),
-                              np.sum(x1_color_dist[ii & iib]['weight_tot'])))
-
-            x1_color_dist = np.rec.fromrecords(
-                r, names=['x1', 'color', 'weight_tot'])
-        """
         pixArea = hp.nside2pixarea(nside, degrees=True)
 
         # metric instance
@@ -520,3 +426,141 @@ class SLMetricWrapper(MetricWrapper):
             season=season, nside=nside, coadd=coadd, verbose=metadata.verbose)
 
         self.saveConfig()
+
+
+def telescope_def():
+    """
+    Method to define a telescope
+
+
+    """
+
+    tel_par = {}
+    tel_par['name'] = 'LSST'  # name of the telescope (internal)
+    # dir of throughput
+    tel_par['throughput_dir'] = 'LSST_THROUGHPUTS_BASELINE'
+    tel_par['atmos_dir'] = 'THROUGHPUTS_DIR'  # dir of atmos
+    tel_par['airmass'] = 1.2  # airmass value
+    tel_par['atmos'] = True  # atmos
+    tel_par['aerosol'] = False  # aerosol
+
+    telescope = Telescope(name=tel_par['name'],
+                          throughput_dir=tel_par['throughput_dir'],
+                          atmos_dir=tel_par['atmos_dir'],
+                          atmos=tel_par['atmos'],
+                          aerosol=tel_par['aerosol'],
+                          airmass=tel_par['airmass'])
+
+    return telescope
+
+
+def load_reference(error_model=1, ebvofMW=-1, x1_colors=[(-2.0, 0.2), (0.0, 0.0)], telescope=Telescope()):
+    """
+    Method to load reference files (LC, ...)
+
+    Parameters
+    ---------------
+    error_model: int, opt
+     use error_model (1) or not (0) (default: 1)
+    ebvofMW: float, opt
+      E(B-V) (default -1: loaded from dustmap)
+    x1_colors: list(pair(float)), opt
+     (x1,color) pairs for template loading (default: [(-2.0, 0.2), (0.0, 0.0)])
+    telescope: Telescope, opt
+      telescope (default: Telescope())
+
+    Returns
+    -----------
+    dict of lc reference
+
+    """
+    lc_reference = {}
+
+    templateDir = 'Template_LC'
+    gammaDir = 'reference_files'
+    gammaName = 'gamma.hdf5'
+    web_path = 'https://me.lsst.eu/gris/DESC_SN_pipeline'
+    # loading dust file
+    dustDir = 'Template_Dust'
+    dustcorr = {}
+
+    print('Loading reference files')
+    result_queue = multiprocessing.Queue()
+
+    wave_cutoff = 'error_model'
+
+    if not error_model:
+        wave_cutoff = '{}_{}'.format(bluecutoff, redcutoff)
+    for j in range(len(x1_colors)):
+        x1 = x1_colors[j][0]
+        color = x1_colors[j][1]
+
+        fname = 'LC_{}_{}_{}_ebvofMW_0.0_vstack.hdf5'.format(
+            x1, color, wave_cutoff)
+        if ebvofMW < 0.:
+            dustFile = 'Dust_{}_{}_{}.hdf5'.format(
+                x1, color, wave_cutoff)
+            dustcorr[x1_colors[j]] = LoadDust(
+                dustDir, dustFile, web_path).dustcorr
+        else:
+            dustcorr[x1_colors[j]] = None
+        p = multiprocessing.Process(
+            name='Subprocess_main-'+str(j), target=loadFile, args=(templateDir, fname, gammaDir, gammaName, web_path, telescope, j, result_queue))
+        p.start()
+
+    resultdict = {}
+    for j in range(len(x1_colors)):
+        resultdict.update(result_queue.get())
+
+    for p in multiprocessing.active_children():
+        p.join()
+
+    for j in range(len(x1_colors)):
+        if resultdict[j] is not None:
+            lc_reference[x1_colors[j]] = resultdict[j]
+
+    return lc_reference, dustcorr
+
+
+def loadFile(templateDir, fname, gammaDir, gammaName, web_path, telescope, j=-1, output_q=None):
+
+    lc_ref = GetReference(templateDir,
+                          fname, gammaDir, gammaName, web_path, telescope)
+
+    if output_q is not None:
+        output_q.put({j: lc_ref})
+    else:
+        return lc_ref
+
+
+def load_x1_color_dist():
+
+    fName = 'Dist_x1_color_JLA_high_z.txt'
+    fDir = 'reference_files'
+    check_get_file(web_path, fDir, fName)
+    x1_color_dist = np.genfromtxt('{}/{}'.format(fDir, fName), dtype=None,
+                                  names=('x1', 'color', 'weight_x1', 'weight_c', 'weight_tot'))
+
+    # print(x1_color_dist)
+
+    x1vals = np.arange(-3., 5., 2.)
+    cvals = np.arange(-0.3, 0.5, 0.2)
+
+    r = []
+    for ix in range(len(x1vals)-1):
+        ii = x1_color_dist['x1'] >= x1vals[ix]
+        ii &= x1_color_dist['x1'] < x1vals[ix+1]
+        x1med = np.median([x1vals[ix], x1vals[ix+1]])
+        for ic in range(len(cvals)-1):
+            iib = x1_color_dist['color'] >= cvals[ic]
+            iib &= x1_color_dist['color'] < cvals[ic+1]
+            cmed = np.median([cvals[ic], cvals[ic+1]])
+            print(x1med, np.round(cmed, 1), np.sum(
+                x1_color_dist[ii & iib]['weight_tot']))
+            r.append((np.round(x1med, 1), np.round(cmed, 1),
+                      np.sum(x1_color_dist[ii & iib]['weight_tot'])))
+
+    x1_color_dist = np.rec.fromrecords(
+        r, names=['x1', 'color', 'weight_tot'])
+
+    return x1_color_dist
