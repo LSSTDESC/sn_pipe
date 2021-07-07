@@ -256,7 +256,7 @@ class batchclass:
 
         """
         # qsub command
-        qsub = 'qsub -P P_lsst -l sps=1,ct=12:00:00,h_vmem=16G -j y -o {} -pe multicores {} <<EOF'.format(
+        qsub = 'qsub -P P_lsst -l sps=1,ct=20:00:00,h_vmem=16G -j y -o {} -pe multicores {} <<EOF'.format(
             log, self.nproccomp)
 
         scriptName = dirScript+'/'+name_id+'.sh'
@@ -267,7 +267,7 @@ class batchclass:
         script.write("#!/bin/env bash\n")
         script.write(" cd " + self.cwd + "\n")
         script.write(" echo 'sourcing setups' \n")
-        script.write(" source setup_release.sh Linux\n")
+        script.write(" source setup_release.sh Linux -5\n")
         script.write("echo 'sourcing done' \n")
 
         for vv in self.RADec:
