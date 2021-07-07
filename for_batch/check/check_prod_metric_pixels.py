@@ -7,128 +7,254 @@ from sn_tools.sn_utils import multiproc
 import time
 
 
-def npixels(dirFile, dirObspixels, metricName, dbName):
-
-    df = getFiles(dirFile, metricName, dbName)
-
-    print(df)
-    time_ref = time.time()
-    npixels = df.groupby(['RA_min_max', 'Dec_min_max']).apply(
-        lambda x: countPixels(x)).reset_index()
-
-    print(npixels)
-
-    npixels_obs = countObspixels(dirObspixels, dbName)
-    print(npixels_obs)
-    print('timing', time.time()-time_ref)
-
-    dfm = npixels.merge(npixels_obs, left_on=['RA_min_max', 'Dec_min_max'], right_on=[
-                        'RA_min_max', 'Dec_min_max'])
-
-    dfm['diff_pixels'] = dfm['npixels_obs']-dfm['npixels']
-
-    print(dfm[['RA_min_max', 'Dec_min_max', 'diff_pixels']])
-
-
-def countPixels(grp):
+class Check_Pixels:
     """
-    metricValues = loopStack(grp['fullName'].to_list(), 'astropyTable')
-
-    return pd.DataFrame({'npixels': [len(np.unique(metricValues['healpixID']))]})
-    """
-    params = {}
-    res = multiproc(grp, params, countPixels_loop, 4)['npixels'].sum()
-    return pd.DataFrame({'npixels': [res]})
-
-
-def countPixels_loop(grps, params, j=0, output_q=None):
-
-    npixels = 0
-    for io, grp in grps.iterrows():
-        metricValues = loopStack([grp['fullName']], 'astropyTable')
-        npixels += len(np.unique(metricValues['healpixID']))
-
-    res = pd.DataFrame({'npixels': [npixels]})
-
-    if output_q is not None:
-        return output_q.put({j: res})
-    else:
-        return res
-
-
-def getFiles(dirFile, metricName, dbName):
-    """
-    Method to get the files corresponding to dbName
-
-    Parameters
-    ---------------
-    dirFile: str
-      location dir of the metric files
-    metricName: str
-      metric name
-    dbName: str
-      db file name
-
-    Returns
-    -----------
+    class to check if the number of pixels processed by the metric is equal to the expected one (from obs pixel map)
 
     """
-    path = '{}/{}/{}/{}*.hdf5'.format(dirFile, dbName, metricName, dbName)
 
-    fis = glob.glob(path)
+    def __init__(self, dirFile, dirObspixels, metricName, dbName, nproc=3):
 
-    prefix = '{}_{}Metric_WFD_nside_64_coadd_1_'.format(dbName, metricName)
-    r = []
-    for fi in fis:
+        self.dirFile = dirFile
+        self.dirObspixels = dirObspixels
+        self.metricName = metricName
+        self.dbName = dbName
+        self.nproc = nproc
+
+    def __call__(self):
+        # get metric files infos
+        df_metric = self.getMetricFiles()
+
+        # get number of pixels processed by the metric
+        npixels_metric = df_metric.groupby(['RA_min_max', 'Dec_min_max']).apply(
+            lambda x: self.countPixels(x)).reset_index()
+
+        # get number of files from obs pixel files
+        npixels_obs = self.countObspixels()
+
+        # now look at the difference between the two
+
+        dfm = npixels_metric.merge(npixels_obs, left_on=['RA_min_max', 'Dec_min_max'], right_on=[
+            'RA_min_max', 'Dec_min_max'])
+
+        dfm['diff_pixels'] = dfm['npixels_obs']-dfm['npixels_metric']
+
+        idx = dfm['diff_pixels'] > 0
+
+        return dfm[idx]
+
+    def getMetricFiles(self):
+        """
+        Method to grab all metric files
+
+        Returns
+        -----------
+        pandas df with all infos
+        """
+        path = '{}/{}/{}/{}*.hdf5'.format(self.dirFile,
+                                          self.dbName, self.metricName, self.dbName)
+
+        fis = glob.glob(path)
+
+        prefix = '{}_{}Metric_WFD_nside_64_coadd_1_'.format(
+            self.dbName, self.metricName)
+        r = []
+        for fi in fis:
+            """
+            fispl = fi.split('/')[-1]
+            fisplb = fispl.split(prefix)[1]
+            ra = fisplb.split('_')[:2]
+            dec = fisplb.split('_')[2:4]
+            rastr = '_'.join(ra)
+            decstr = '_'.join(dec)
+            """
+            ra, dec, rastr, decstr, fispl = self.getInfo(fi, prefix)
+            r.append((fispl, ra[0], ra[1], dec[0], dec[1], rastr, decstr, fi))
+
+        df = pd.DataFrame(
+            r, columns=['fName', 'RAmin', 'RAmax', 'Decmin', 'Decmax', 'RA_min_max', 'Dec_min_max', 'fullName'])
+        df['metricName'] = self.metricName
+        df['dirFile'] = self.dirFile
+
+        return df
+
+    def countPixels(self, grp):
+        """
+        Method to estimate the number of pixels grp
+
+        Parameters
+        ---------------
+        grp: pandas df
+          data to process
+
+        Returns
+        ----------
+        pandas df with the number of pixels as col.
+
+        """
+        """
+        metricValues = loopStack(grp['fullName'].to_list(), 'astropyTable')
+
+        return pd.DataFrame({'npixels': [len(np.unique(metricValues['healpixID']))]})
+        """
+        params = {}
+        res = multiproc(grp, params, self.countPixels_loop,
+                        self.nproc)['npixels_metric'].sum()
+        return pd.DataFrame({'npixels_metric': [res]})
+
+    def countPixels_loop(self, grps, params, j=0, output_q=None):
+        """
+        Method to estimate the number of pixel per grp
+
+        Parameters
+        ---------------
+        grps: list(pandas group)
+          data to process
+        params: dict
+          dict of parameters
+        j: int, opt
+           multiproc num (default: 0)
+        output_q: multiprocessing queue, opt
+          queue where results will be launched (default: None)
+
+        Returns
+        -----------
+        dic(pandas df) if output_q is not None, pandas df if output_q is None
+
+        """
+        npixels = 0
+        for io, grp in grps.iterrows():
+            metricValues = loopStack([grp['fullName']], 'astropyTable')
+            npixels += len(np.unique(metricValues['healpixID']))
+
+        res = pd.DataFrame({'npixels_metric': [npixels]})
+
+        if output_q is not None:
+            return output_q.put({j: res})
+        else:
+            return res
+
+    def countObspixels(self):
+        """
+        Method to estimate the number of pixels corresponding to all the obs pixel files
+
+        Returns
+        ----------
+        pandas df with the col RA_min_max, Dec_min_max, npixels_obs
+        """
+        path = '{}/{}/*.npy'.format(self.dirObspixels, self.dbName)
+
+        fis = glob.glob(path)
+        print('ahahaha', fis, path)
+        params = {}
+        params['dbName'] = self.dbName
+        return multiproc(fis, params, self.countObspixels_loop, self.nproc)
+
+    def countObspixels_loop(self, fis, params, j=0, output_q=None):
+        """
+        Method to estimate the number of pixels corresponding to a set of files
+
+        Parameters
+        ---------------
+        fis: list(str)
+           list of files
+        params: dict
+           dict of parameters
+        j: int, opt
+          multiproc number (default: 0)
+        output_q: multi proc queue (default: None)
+
+        Returns
+        -----------
+        pandas df with the number of pixels
+        """
+        dbName = params['dbName']
+        prefix = '{}_WFD_nside_64_'.format(dbName)
+        r = []
+        for fi in fis:
+            tab = np.load(fi, allow_pickle=True)
+            npixels = len(np.unique(tab['healpixID']))
+            ra, dec, rastr, decstr, fispl = self.getInfo(fi, prefix)
+            r.append((npixels, rastr, decstr))
+
+        res = pd.DataFrame(
+            r, columns=['npixels_obs', 'RA_min_max', 'Dec_min_max'])
+
+        if output_q is not None:
+            return output_q.put({j: res})
+        else:
+            return res
+
+    def getInfo(self, fi, prefix):
+        """
+        Method to extract infos from a string
+
+        Parameters
+        ---------------
+        fi: str
+          string to process
+        prefix: str
+          str used in process
+
+        Returns
+        ----------
+        a list of infos related to the string
+
+        """
         fispl = fi.split('/')[-1]
         fisplb = fispl.split(prefix)[1]
         ra = fisplb.split('_')[:2]
         dec = fisplb.split('_')[2:4]
         rastr = '_'.join(ra)
         decstr = '_'.join(dec)
-        r.append((fispl, ra[0], ra[1], dec[0], dec[1], rastr, decstr, fi))
 
-    df = pd.DataFrame(
-        r, columns=['fName', 'RAmin', 'RAmax', 'Decmin', 'Decmax', 'RA_min_max', 'Dec_min_max', 'fullName'])
-    df['metricName'] = metricName
-    df['dirFile'] = dirFile
-
-    return df
+        return ra, dec, rastr, decstr, fispl
 
 
-def countObspixels(dirObspixels, dbName):
+class Script:
 
-    path = '{}/{}/*.npy'.format(dirObspixels, dbName)
+    def __init__(self, df, dirFile, dirObspixels, metricName, dbName):
 
-    fis = glob.glob(path)
-    print('ahahaha', fis, path)
-    params = {}
-    params['dbName'] = dbName
-    return multiproc(fis, params, countObspixels_loop, 3)
+        self.dirFile = dirFile
+        self.dirObspixels = dirObspixels
+        self.metricName = metricName
+        self.dbName = dbName
 
+        scriptmain = 'tt'
+        for io, row in df.iterrows():
+            scriptn = '{}_{}'.format(scriptmain, io)
+            RAs = row['RA_min_max'].split('_')
+            Decs = row['Dec_min_max'].split('_')
+            RAmin = float(RAs[0])
+            RAmax = float(RAs[1])
+            Decmin = float(Decs[0])
+            Decmax = float(Decs[1])
+            cmd = self.script_for_batch(RAmin, RAmax, Decmin, Decmax, scriptn)
+            print(cmd)
+            break
 
-def countObspixels_loop(fis, params, j=0, output_q=None):
+    def script_for_batch(self, RAmin, RAmax, Decmin, Decmax, scriptname):
 
-    dbName = params['dbName']
-    prefix = '{}_WFD_nside_64_'.format(dbName)
-    r = []
-    for fi in fis:
-        tab = np.load(fi, allow_pickle=True)
-        npixels = len(np.unique(tab['healpixID']))
-        fispl = fi.split('/')[-1]
-        fisplb = fispl.split(prefix)[1]
-        ra = fisplb.split('_')[:2]
-        dec = fisplb.split('_')[2:4]
-        rastr = '_'.join(ra)
-        decstr = '_'.join(dec)
-        r.append((npixels, rastr, decstr))
-
-    res = pd.DataFrame(r, columns=['npixels_obs', 'RA_min_max', 'Dec_min_max'])
-
-    if output_q is not None:
-        return output_q.put({j: res})
-    else:
-        return res
+        cmd = 'qsub - P P_lsst - l sps = 1, ct = 20: 00: 00, h_vmem = 16G - j y - o / pbs/throng/lsst/users/gris/sn_pipe_last/sn_pipe/logs/{}.log - pe multicores 8 << EOF \n'.format(
+            scriptname)
+        cmd += '#!/bin/env bash' + '\n'
+        cmd += 'cd /pbs/throng/lsst/users/gris/sn_pipe_last/sn_pipe'+'\n'
+        cmd += 'echo \'sourcing setups\'' + '\n'
+        cmd += 'source setup_release.sh Linux -5'
+        cmd += 'echo \'sourcing done\'' + '\n'
+        cmd_m = 'python run_scripts/metrics/run_metrics.py '
+        cmd_m += ' --dbDir / sps/lsst/cadence/LSST_SN_PhG/cadence_db/fbs_1.7_1/db '
+        cmd_m += ' --dbName {}'.format(self.dbName)
+        cmd_m += ' --dbExtens db --nproc 8 --nside 64 --simuType 0 --outDir {}'.format(
+            self.dirFiles)
+        cmd_m += ' --fieldType WFD --saveData 1 --metric {} --coadd 1'.format(
+            self.metricName)
+        cmd_m += ' --RAmin {} --RAmax {} --Decmin {} --Decmax {}'.format(
+            RAmin, RAmax, Decmin, Decmax)
+        cmd_m += ' --pixelmap_dir {}'.format(self.dirObspixels)
+        cmd_m += ' --npixels -1 --proxy_level 2 \n'
+        cmd += cmd_m
+        cmd += 'EOF'
 
 
 parser = OptionParser()
@@ -153,6 +279,12 @@ print(dbs)
 
 for index, row in dbs.iterrows():
     dbName = row['dbName']
-    npixels(opts.dirFile, opts.dirObspixels, opts.metricName, dbName)
-
+    # npixels(opts.dirFile, opts.dirObspixels, opts.metricName, dbName)
+    check = Check_Pixels(opts.dirFile, opts.dirObspixels,
+                         opts.metricName, dbName)
+    pixels = check()
+    print('res', pixels)
+    if len(pixels) >= 1:
+        Script(pixels, opts.dirFile, opts.dirObspixels,
+               opts.metricName, dbName)
     break
