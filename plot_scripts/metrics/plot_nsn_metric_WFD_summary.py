@@ -468,6 +468,9 @@ parser.add_option("--tagbest", type=str, default='snpipe_a',
                   help="tag for the best OS [%default]")
 parser.add_option("--nproc", type=int, default=3,
                   help="number of proc when multiprocessing used [%default]")
+parser.add_option("--colors", type=str, default='k,r,b,m,g',
+                  help="colors for the plot [%default]")
+
 
 opts, args = parser.parse_args()
 
@@ -487,6 +490,7 @@ for i, row in list_to_process.iterrows():
 
 # get the data to be plotted
 resdf = pd.DataFrame()
+colors = opts.colors.split(',')
 for ip, vv in enumerate(simu_list):
     outFile = 'Summary_WFD_{}_{}.npy'.format(vv.type, vv.num)
 
@@ -494,8 +498,9 @@ for ip, vv in enumerate(simu_list):
         toprocess = Infos(vv).resdf
         processMulti(toprocess, outFile, nproc=nproc)
 
-    resdf = pd.concat((resdf, pd.DataFrame(
-        np.load(outFile, allow_pickle=True))))
+    tabdf = pd.DataFrame(np.load(outFile, allow_pickle=True))
+    tabdf['color'] = colors[ip]
+    resdf = pd.concat((resdf, tabdf))
 
     """
     rfam = []

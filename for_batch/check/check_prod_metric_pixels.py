@@ -9,6 +9,7 @@ from astropy.coordinates import SkyCoord
 from dustmaps.sfd import SFDQuery
 import numpy.lib.recfunctions as rf
 
+
 class Check_Pixels:
     """
     class to check if the number of pixels processed by the metric is equal to the expected one (from obs pixel map)
@@ -25,20 +26,19 @@ class Check_Pixels:
 
     def __call__(self):
 
-       
-
         # get metric files infos
         df_metric = self.getMetricFiles()
 
         # get number of pixels processed by the metric
-        #npixels_metric = df_metric.groupby(['RA_min_max', 'Dec_min_max']).apply(
+        # npixels_metric = df_metric.groupby(['RA_min_max', 'Dec_min_max']).apply(
         #    lambda x: self.countPixels(x)).reset_index()
 
         # get list of pixels processed by the metric
         listpixels_metric = df_metric.groupby(['RA_min_max', 'Dec_min_max']).apply(
             lambda x: self.listPixels(x)).reset_index()
-       
-        print('hhh',listpixels_metric.groupby(['RA_min_max','Dec_min_max']).size())
+
+        print('hhh', listpixels_metric.groupby(
+            ['RA_min_max', 'Dec_min_max']).size())
 
         # get number of files from obs pixel files
         #npixels_obs = self.countObspixels()
@@ -47,18 +47,21 @@ class Check_Pixels:
         listpixels_obs = self.listObspixels()
 
         # ebv cut
-        #idx = listpixels_obs['ebvofMW']<0.25
-        #listpixels_obs_sel  = listpixels_obs[idx]
-        print('bobo',listpixels_obs.groupby(['RA_min_max','Dec_min_max']).size())
-        
-        
+        idx = listpixels_obs['ebvofMW'] < 0.25
+        listpixels_obs = listpixels_obs[idx]
+        print('bobo', listpixels_obs.groupby(
+            ['RA_min_max', 'Dec_min_max']).size())
+
         for rr in listpixels_obs['RA_min_max'].unique():
-            ida = listpixels_obs['RA_min_max']==rr
+            ida = listpixels_obs['RA_min_max'] == rr
             sela = listpixels_obs[ida]
-            idb = listpixels_metric['RA_min_max']==rr
+            idb = listpixels_metric['RA_min_max'] == rr
             selb = listpixels_metric[idb]
-            diff = list(set(sela['healpixID'].to_list())-set(selb['healpixID'].to_list()))
-            print(rr,diff,len(diff))
+            diff = list(set(sela['healpixID'].to_list()) -
+                        set(selb['healpixID'].to_list()))
+            intersect = list(set(sela['healpixID'].to_list()).intersection(
+                set(selb['healpixID'].to_list())))
+            print(rr, diff, len(diff), intersect[0])
         """
         for rr in listpixels_obs['RA_min_max'].unique():
             ida = listpixels_obs['RA_min_max']==rr
@@ -79,8 +82,8 @@ class Check_Pixels:
         print(dfm)
         """
 
-        #return dfm[idx]
-        
+        # return dfm[idx]
+
         return -1
 
     def getMetricFiles(self):
@@ -165,7 +168,7 @@ class Check_Pixels:
             return output_q.put({j: res})
         else:
             return res
- 
+
     def listPixels(self, grp):
         """
         Method to estimate the list of pixels
@@ -210,8 +213,8 @@ class Check_Pixels:
         dic(pandas df) if output_q is not None, pandas df if output_q is None
 
         """
-        
-        ll= []
+
+        ll = []
         for io, grp in grps.iterrows():
             metricValues = loopStack([grp['fullName']], 'astropyTable')
             ll += np.unique(metricValues['healpixID']).tolist()
@@ -259,13 +262,13 @@ class Check_Pixels:
         dbName = params['dbName']
         prefix = '{}_WFD_nside_64_'.format(dbName)
         r = []
-        
+
         for fi in fis:
             tab = np.load(fi, allow_pickle=True)
             # get ebv here
-            ebvs = self.ebvofMW(tab['pixRA'],tab['pixDec'])
-            tab = rf.append_fields(tab,'ebvofMW', ebvs)
-            idx = tab['ebvofMW']< 0.25
+            ebvs = self.ebvofMW(tab['pixRA'], tab['pixDec'])
+            tab = rf.append_fields(tab, 'ebvofMW', ebvs)
+            idx = tab['ebvofMW'] < 0.25
             npixels = len(np.unique(tab[idx]['healpixID']))
             ra, dec, rastr, decstr, fispl = self.getInfo(fi, prefix)
             r.append((npixels, rastr, decstr))
@@ -312,24 +315,26 @@ class Check_Pixels:
         """
         dbName = params['dbName']
         prefix = '{}_WFD_nside_64_'.format(dbName)
-        
+
         res = pd.DataFrame()
 
         for fi in fis:
             tab = np.load(fi, allow_pickle=True)
             ra, dec, rastr, decstr, fispl = self.getInfo(fi, prefix)
-            tab_un = np.unique(tab[['healpixID','pixRA','pixDec']])
-            ro = pd.DataFrame(tab_un['healpixID'].tolist(), columns=['healpixID'])
-            ro['ebvofMW'] = self.ebvofMW(tab_un['pixRA'],tab_un['pixDec']).tolist()
+            tab_un = np.unique(tab[['healpixID', 'pixRA', 'pixDec']])
+            ro = pd.DataFrame(
+                tab_un['healpixID'].tolist(), columns=['healpixID'])
+            ro['ebvofMW'] = self.ebvofMW(
+                tab_un['pixRA'], tab_un['pixDec']).tolist()
             ro['RA_min_max'] = rastr
             ro['Dec_min_max'] = decstr
-            res = pd.concat((res,ro))
-
+            res = pd.concat((res, ro))
 
         if output_q is not None:
             return output_q.put({j: res})
         else:
             return res
+
     def getInfo(self, fi, prefix):
         """
         Method to extract infos from a string
@@ -369,6 +374,7 @@ class Check_Pixels:
         sfd = SFDQuery()
         ebv = sfd(coords)
         return ebv
+
 
 class Script:
 
@@ -441,7 +447,7 @@ for index, row in dbs.iterrows():
     dbName = row['dbName']
     # npixels(opts.dirFile, opts.dirObspixels, opts.metricName, dbName)
     check = Check_Pixels(opts.dirFile, opts.dirObspixels,
-                         opts.metricName, dbName,opts.nproc)
+                         opts.metricName, dbName, opts.nproc)
     pixels = check()
     print('res', pixels)
     break
