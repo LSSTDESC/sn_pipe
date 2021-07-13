@@ -3,6 +3,7 @@ from sn_metrics.sn_snr_metric import SNSNRMetric
 from sn_metrics.sn_cadence_metric import SNCadenceMetric
 from sn_metrics.sn_obsrate_metric import SNObsRateMetric
 from sn_metrics.sn_nsn_metric import SNNSNMetric
+from sn_metrics.sn_nsn_yearly_metric import SNNSNYMetric
 from sn_metrics.sn_saturation_metric import SNSaturationMetric
 from sn_metrics.sn_sl_metric import SLSNMetric
 from sn_tools.sn_cadence_tools import ReferenceData
@@ -183,7 +184,7 @@ class NSNMetricWrapper(MetricWrapper):
         self.telescope = telescope_def()
 
         lc_reference, dustcorr = load_reference(
-            error_model, ebvofMW, [(-2.0, 0.2), (0.0, 0.0)], self.telescope)
+            error_model, 0.0, [(-2.0, 0.2), (0.0, 0.0)], self.telescope)
 
         print('Reference data loaded', lc_reference.keys(), fieldType)
 
@@ -259,7 +260,106 @@ class NSNMetricWrapper(MetricWrapper):
         else:
             return tab_tot
 
+class NSNYMetricWrapper(MetricWrapper):
+    def __init__(self, name='NSN', season=-1, coadd=True, fieldType='DD',
+                 nside=64, RAmin=0., RAmax=360.,
+                 Decmin=-1.0, Decmax=-1.0,
+                 npixels=0,
+                 metadata={}, outDir='', ebvofMW=-1.0, bluecutoff=380.0, redcutoff=800.0, error_model=1):
+        super(NSNYMetricWrapper, self).__init__(
+            name=name, season=season, coadd=coadd, fieldType=fieldType,
+            nside=nside, RAmin=RAmin, RAmax=RAmax,
+            Decmin=Decmin, Decmax=Decmax,
+            npixels=npixels,
+            metadata=metadata, outDir=outDir, ebvofMW=ebvofMW)
 
+        zmin = 0.
+        zmax = 1.1
+        bands = 'grizy'
+        if fieldType == 'WFD':
+            zmin = 0.1
+            zmax = 0.5
+            bands = 'griz'
+
+        self.telescope = telescope_def()
+
+        lc_reference, dustcorr = load_reference(
+            error_model, 0.0, [(-2.0, 0.2), (0.0, 0.0)], self.telescope)
+
+        print('Reference data loaded', lc_reference.keys(), fieldType)
+
+        # LC selection criteria
+
+        if fieldType == 'DD':
+            n_bef = 4
+            n_aft = 10
+            snr_min = 1.
+            n_phase_min = 1
+            n_phase_max = 1
+            zlim_coeff = 0.95
+
+        if fieldType == 'WFD':
+            n_bef = 3
+            n_aft = 8
+            snr_min = 1.
+            n_phase_min = 1
+            n_phase_max = 1
+            zlim_coeff = 0.85
+
+        if fieldType == 'Fake':
+            n_bef = 0
+            n_aft = 0
+            snr_min = 0.
+            n_phase_min = 0
+            n_phase_max = 0
+            zlim_coeff = 0.95
+
+        errmodrel = -1.
+        if error_model:
+            errmodrel = 0.05
+
+        pixArea = hp.nside2pixarea(nside, degrees=True)
+
+        # metric instance
+        self.metric = SNNSNYMetric(
+            lc_reference, dustcorr, season=season, zmin=zmin,
+            zmax=zmax, pixArea=pixArea,
+            verbose=metadata.verbose, timer=metadata.timer,
+            ploteffi=metadata.ploteffi,
+            n_bef=n_bef, n_aft=n_aft,
+            snr_min=snr_min,
+            n_phase_min=n_phase_min,
+            n_phase_max=n_phase_max,
+            errmodrel=errmodrel,
+            outputType=metadata.outputType,
+            proxy_level=metadata.proxy_level,
+            coadd=coadd, lightOutput=metadata.lightOutput,
+            T0s=metadata.T0s, zlim_coeff=zlim_coeff, ebvofMW=ebvofMW, bands=bands)
+
+        self.metadata['n_bef'] = n_bef
+        self.metadata['n_aft'] = n_aft
+        self.metadata['snr_min'] = snr_min
+        self.metadata['n_phase_min'] = n_phase_min
+        self.metadata['n_phase_max'] = n_phase_max
+        self.metadata['zlim_coeff'] = zlim_coeff
+        self.metadata['error_model'] = error_model
+        self.metadata['errmodrel'] = errmodrel
+
+        self.metaout += ['ploteffi', 'outputType',
+                         'proxy_level', 'lightOutput', 'T0s',
+                         'n_bef', 'n_aft', 'snr_min', 'n_phase_min', 'n_phase_max', 'error_model', 'errmodrel', 'zlim_coeff']
+        self.saveConfig()
+
+    def load(self, templateDir, fname, gammaDir, gammaName, web_path, j=-1, output_q=None):
+
+        lc_ref = GetReference(templateDir,
+                              fname, gammaDir, gammaName, web_path, self.telescope)
+
+        if output_q is not None:
+            output_q.put({j: lc_ref})
+        else:
+            return tab_tot
+        
 class SaturationMetricWrapper(MetricWrapper):
     def __init__(self, name='Saturation', season=-1, coadd=False, fieldType='DD',
                  nside=64, RAmin=0., RAmax=360.,
