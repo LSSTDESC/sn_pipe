@@ -288,6 +288,7 @@ class NSNYMetricWrapper(MetricWrapper):
 
         print('Reference data loaded', lc_reference.keys(), fieldType)
 
+        print('hello',metadata)
         # LC selection criteria
 
         if fieldType == 'DD':
@@ -320,6 +321,9 @@ class NSNYMetricWrapper(MetricWrapper):
 
         pixArea = hp.nside2pixarea(nside, degrees=True)
 
+        templateLC = None
+        if metadata.ploteffi:
+            templateLC = loadTemplateLC(error_model, 0, x1_colors=[(-2.0, 0.2), (0.0, 0.0)])
         # metric instance
         self.metric = SNNSNYMetric(
             lc_reference, dustcorr, season=season, zmin=zmin,
@@ -334,7 +338,7 @@ class NSNYMetricWrapper(MetricWrapper):
             outputType=metadata.outputType,
             proxy_level=metadata.proxy_level,
             coadd=coadd, lightOutput=metadata.lightOutput,
-            T0s=metadata.T0s, zlim_coeff=zlim_coeff, ebvofMW=ebvofMW, bands=bands)
+            T0s=metadata.T0s, zlim_coeff=zlim_coeff, ebvofMW=ebvofMW, bands=bands,templateLC=templateLC,dbName=metadata.dbName)
 
         self.metadata['n_bef'] = n_bef
         self.metadata['n_aft'] = n_aft
@@ -664,3 +668,50 @@ def load_x1_color_dist():
         r, names=['x1', 'color', 'weight_tot'])
 
     return x1_color_dist
+
+def loadTemplateLC(error_model=1, ebvofMW=-1, x1_colors=[(-2.0, 0.2), (0.0, 0.0)],bluecutoff=380., redcutoff=800.):
+    """
+    Method to load reference files (LC, ...)
+
+    Parameters
+    ---------------
+    error_model: int, opt
+     use error_model (1) or not (0) (default: 1)
+    ebvofMW: float, opt
+      E(B-V) (default -1: loaded from dustmap)
+    x1_colors: list(pair(float)), opt
+     (x1,color) pairs for template loading (default: [(-2.0, 0.2), (0.0, 0.0)])
+    bluecutoff: float, opt
+      blue cutoff (default: 380.)
+    redcutoff: float, opt
+      red cutoff (default: 800.)
+
+    Returns
+    -----------
+    dict of lc reference
+
+    """
+    import h5py
+    from astropy.table import Table, vstack, Column
+    import pandas as pd
+
+    templateDir = 'Template_LC'
+
+    wave_cutoff = 'error_model'
+
+    if not error_model:
+        wave_cutoff = '{}_{}'.format(bluecutoff, redcutoff)
+
+    templLC = {}
+    for (x1,color) in x1_colors:
+        
+        lcName = 'LC_{}_{}_{}_ebvofMW_0.0_vstack.hdf5'.format(
+            x1, color, wave_cutoff)
+        # Load the file - lc reference
+        lcFullName = '{}/{}'.format(templateDir, lcName)
+        f = h5py.File(lcFullName, 'r')
+        keys = list(f.keys())
+        # lc_ref_tot = Table.read(filename, path=keys[0])
+        templLC[(x1,color)] = Table.from_pandas(pd.read_hdf(lcFullName))
+
+    return templLC
