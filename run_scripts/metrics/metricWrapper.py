@@ -165,7 +165,7 @@ class NSNMetricWrapper(MetricWrapper):
                  nside=64, RAmin=0., RAmax=360.,
                  Decmin=-1.0, Decmax=-1.0,
                  npixels=0,
-                 metadata={}, outDir='', ebvofMW=-1.0, bluecutoff=380.0, redcutoff=800.0, error_model=1):
+                 metadata={}, outDir='', ebvofMW=-1.0, bluecutoff=380.0, redcutoff=800.0, error_model=0):
         super(NSNMetricWrapper, self).__init__(
             name=name, season=season, coadd=coadd, fieldType=fieldType,
             nside=nside, RAmin=RAmin, RAmax=RAmax,
@@ -184,7 +184,7 @@ class NSNMetricWrapper(MetricWrapper):
         self.telescope = telescope_def()
 
         lc_reference, dustcorr = load_reference(
-            error_model, 0.0, [(-2.0, 0.2), (0.0, 0.0)], self.telescope)
+            error_model, 0.0, [(-2.0, 0.2), (0.0, 0.0)], self.telescope,bluecutoff,redcutoff)
 
         print('Reference data loaded', lc_reference.keys(), fieldType)
 
@@ -214,6 +214,10 @@ class NSNMetricWrapper(MetricWrapper):
             n_phase_max = 0
             zlim_coeff = 0.95
 
+        templateLC = None
+        if metadata.ploteffi:
+            templateLC = loadTemplateLC(error_model, 0, x1_colors=[(-2.0, 0.2), (0.0, 0.0)])
+                
         errmodrel = -1.
         if error_model:
             errmodrel = 0.05
@@ -234,7 +238,7 @@ class NSNMetricWrapper(MetricWrapper):
             outputType=metadata.outputType,
             proxy_level=metadata.proxy_level,
             coadd=coadd, lightOutput=metadata.lightOutput,
-            T0s=metadata.T0s, zlim_coeff=zlim_coeff, ebvofMW=ebvofMW, bands=bands)
+            T0s=metadata.T0s, zlim_coeff=zlim_coeff, ebvofMW=ebvofMW, bands=bands,fig_for_movie=False,templateLC=templateLC,dbName=metadata.dbName)
 
         self.metadata['n_bef'] = n_bef
         self.metadata['n_aft'] = n_aft
@@ -250,6 +254,7 @@ class NSNMetricWrapper(MetricWrapper):
                          'n_bef', 'n_aft', 'snr_min', 'n_phase_min', 'n_phase_max', 'error_model', 'errmodrel', 'zlim_coeff']
         self.saveConfig()
 
+"""
     def load(self, templateDir, fname, gammaDir, gammaName, web_path, j=-1, output_q=None):
 
         lc_ref = GetReference(templateDir,
@@ -259,13 +264,14 @@ class NSNMetricWrapper(MetricWrapper):
             output_q.put({j: lc_ref})
         else:
             return tab_tot
+"""
 
 class NSNYMetricWrapper(MetricWrapper):
     def __init__(self, name='NSN', season=-1, coadd=True, fieldType='DD',
                  nside=64, RAmin=0., RAmax=360.,
                  Decmin=-1.0, Decmax=-1.0,
                  npixels=0,
-                 metadata={}, outDir='', ebvofMW=-1.0, bluecutoff=380.0, redcutoff=800.0, error_model=1):
+                 metadata={}, outDir='', ebvofMW=-1.0, bluecutoff=380.0, redcutoff=800.0, error_model=0):
         super(NSNYMetricWrapper, self).__init__(
             name=name, season=season, coadd=coadd, fieldType=fieldType,
             nside=nside, RAmin=RAmin, RAmax=RAmax,
@@ -284,7 +290,7 @@ class NSNYMetricWrapper(MetricWrapper):
         self.telescope = telescope_def()
 
         lc_reference, dustcorr = load_reference(
-            error_model, 0.0, [(-2.0, 0.2), (0.0, 0.0)], self.telescope)
+            error_model, 0.0, [(-2.0, 0.2), (0.0, 0.0)], self.telescope,bluecutoff,redcutoff)
 
         print('Reference data loaded', lc_reference.keys(), fieldType)
 
@@ -353,7 +359,7 @@ class NSNYMetricWrapper(MetricWrapper):
                          'proxy_level', 'lightOutput', 'T0s',
                          'n_bef', 'n_aft', 'snr_min', 'n_phase_min', 'n_phase_max', 'error_model', 'errmodrel', 'zlim_coeff']
         self.saveConfig()
-
+"""
     def load(self, templateDir, fname, gammaDir, gammaName, web_path, j=-1, output_q=None):
 
         lc_ref = GetReference(templateDir,
@@ -363,7 +369,7 @@ class NSNYMetricWrapper(MetricWrapper):
             output_q.put({j: lc_ref})
         else:
             return tab_tot
-        
+ """       
 class SaturationMetricWrapper(MetricWrapper):
     def __init__(self, name='Saturation', season=-1, coadd=False, fieldType='DD',
                  nside=64, RAmin=0., RAmax=360.,
@@ -558,7 +564,7 @@ def telescope_def():
     return telescope
 
 
-def load_reference(error_model=1, ebvofMW=-1, x1_colors=[(-2.0, 0.2), (0.0, 0.0)], telescope=Telescope()):
+def load_reference(error_model=1, ebvofMW=-1, x1_colors=[(-2.0, 0.2), (0.0, 0.0)], telescope=Telescope(),bluecutoff=380.,redcutoff=800.):
     """
     Method to load reference files (LC, ...)
 
