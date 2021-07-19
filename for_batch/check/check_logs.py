@@ -14,13 +14,16 @@ parser.add_option("--logDir", type="str", default='logs',
                   help="log directory [%default]")
 parser.add_option("--relnum", type="str", default='v1.7',
                   help="release number [%default]")
+parser.add_option("--metric", type="str", default='NSN',
+                  help="metric  [%default]")
 
 opts, args = parser.parse_args()
 
 dirLog = opts.logDir
 relnum = opts.relnum
+metric = opts.metric
 
-search_path = '{}/*{}_10yrs*.log'.format(dirLog,relnum)
+search_path = '{}/*{}_10yrs*{}*.log'.format(dirLog,relnum,metric)
 fis = glob.glob(search_path)
 
 print(fis)

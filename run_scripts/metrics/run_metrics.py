@@ -11,6 +11,7 @@ import sys
 #import pandas as pd
 from metricWrapper import CadenceMetricWrapper, SNRMetricWrapper
 from metricWrapper import ObsRateMetricWrapper, NSNMetricWrapper
+from metricWrapper import NSNYMetricWrapper
 from metricWrapper import SaturationMetricWrapper
 from metricWrapper import SLMetricWrapper
 from sn_tools.sn_process import Process
@@ -128,7 +129,7 @@ metricList = []
 
 # check whether the metric is available
 
-available_metrics = ['NSN', 'Cadence', 'SL',
+available_metrics = ['NSN', 'NSNY','Cadence', 'SL',
                      'ObsRate', 'SNRr', 'SNRz', 'Saturation']
 if opts.metric not in available_metrics:
     print('Sorry to inform you that', opts.metric, 'is not a metric available')
