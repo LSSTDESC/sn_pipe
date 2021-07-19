@@ -12,7 +12,7 @@ import pandas as pd
 import os
 import multiprocessing
 from dataclasses import dataclass
-
+from sn_tools.sn_utils import multiproc
 
 @dataclass
 class Simu:
@@ -172,7 +172,7 @@ class Infos:
                              'marker': [self.markers[self.families.index(fam)]]})
 
 
-def processMulti(toproc, outFile, nproc=1):
+def processMulti_old(toproc, outFile, nproc=1):
     """
     Function to analyze metric output using multiprocesses
     The results are stored in outFile (npy file)
@@ -220,8 +220,77 @@ def processMulti(toproc, outFile, nproc=1):
     # saving the results in a npy file
     np.save(outFile, resdf.to_records(index=False))
 
+def processMulti(toproc, outFile, nside, metricName, fieldType, nproc=1):
+    """
+    Function to analyze metric output using multiprocesses
+    The results are stored in outFile (npy file)
 
-def processLoop(toproc, fieldType='WFD', j=0, output_q=None):
+    Parameters
+    --------------
+    toproc: pandas df
+      data to process
+    outFile: str
+       output file name
+    nside: int
+      nside for sphere pixel.
+    metricName: str
+      name of the metric to process
+    fieldType: str
+      type of fiels (DD or WFD) to process
+    nproc: int, opt
+      number of cores to use for the processing
+
+    """
+    params = {}
+    params['fieldType']= 'WFD'
+    params['metricName'] = metricName
+    params['nside'] = nside
+
+    print('multiprocessing',nproc)
+    resdf = multiproc(toproc,params,processLoop,nproc)
+    np.save(outFile, resdf.to_records(index=False))
+
+def processLoop(toproc, params, j=0, output_q=None):
+    """
+    Function to analyze a set of metric result files
+
+    Parameters
+    --------------
+    toproc: pandas df
+      data to process
+    j: int, opt
+       internal int for the multiprocessing
+    output_q: multiprocessing.queue
+      queue for multiprocessing
+
+    Returns
+    -----------
+    pandas df with the following cols:
+    zlim, nsn, sig_nsn, nsn_extra, dbName, plotName, color,marker
+    """
+
+    fieldType = params['fieldType']
+    metricName = params['metricName']
+    nside = params['nside']
+    
+    # this is to get summary values here
+    resdf = pd.DataFrame()
+    for index, val in toproc.iterrows():
+        metricdata = nsn_plot.NSNAnalysis(val, metricName, fieldType,
+                                          nside, npixels=0)
+
+        # metricdata.plot()
+        # plt.show()
+        if metricdata.data_summary is not None:
+            resdf = pd.concat((resdf, metricdata.data_summary))
+
+    print('end of proc',j)
+    if output_q is not None:
+        output_q.put({j: resdf})
+    else:
+        return resdf
+    
+def processLoop_old(toproc, fieldType='WFD', j=0, output_q=None):
     """
     Function to analyze a set of metric result files
 
@@ -250,6 +319,7 @@ def processLoop(toproc, fieldType='WFD', j=0, output_q=None):
         if metricdata.data_summary is not None:
             resdf = pd.concat((resdf, metricdata.data_summary))
 
+    print('end of proc',j)
     if output_q is not None:
         output_q.put({j: resdf})
     else:
@@ -496,7 +566,7 @@ for ip, vv in enumerate(simu_list):
 
     if not os.path.isfile(outFile):
         toprocess = Infos(vv).resdf
-        processMulti(toprocess, outFile, nproc=nproc)
+        processMulti(toprocess, outFile, nside, metricName, 'WFD', nproc=nproc)
 
     tabdf = pd.DataFrame(np.load(outFile, allow_pickle=True))
     tabdf['color'] = colors[ip]
@@ -520,8 +590,10 @@ resdf = filter(
 """
 
 # summary plot
-nsn_plot.NSN_zlim_GUI(resdf)
-# nsn_plot.PlotSummary_Annot(resdf)
+#nsn_plot.NSN_zlim_GUI(resdf,xvar='zpeak',yvar='nsn_zpeak',xlabel='$z_{peak}$',ylabel='$N_{SN}(z\leq z_{peak})$',title='(nSN,zpeak) supernovae metric')
+nsn_plot.NSN_zlim_GUI(resdf,xvar='zlim',yvar='nsn_zlim',xlabel='$z_{lim}$',ylabel='$N_{SN}(z\leq z_{lim})$',title='(nSN,zlim) supernovae metric')
+#nsn_plot.NSN_zlim_GUI(resdf,xvar='cad_sn_mean',yvar='gap_sn_mean',xlabel='SN cadence [day]',ylabel='SN gap [day]',title='(cadence , gap) SN')
+#nsn_plot.PlotSummary_Annot(resdf)
 # plt.show()
 # plotSummary(resdf)
 # plt.show()
