@@ -7,74 +7,104 @@ import matplotlib.pyplot as plt
 import glob
 import healpy as hp
 
-def loadData(dirFile, dbName, metricName,fieldType,nside):
 
-    search_path = '{}/{}/{}/*NSNMetric_{}*_nside_{}_*.hdf5'.format(dirFile, dbName, metricName, fieldType, nside)
+def loadData(dirFile, dbName, metricName, fieldType, nside):
+
+    search_path = '{}/{}/{}/*NSNMetric_{}*_nside_{}_*.hdf5'.format(
+        dirFile, dbName, metricName, fieldType, nside)
     print('looking for', search_path)
     fileNames = glob.glob(search_path)
 
     metricValues = np.array(loopStack(fileNames, 'astropyTable'))
 
     return metricValues
-    
-def plotMollview(data, varName, leg, op, xmin, xmax,nside):
-        """
-        Method to display results as a Mollweid map
 
-        Parameters
-        ---------------
-        data: pandas df
-          data to consider
-        varName: str
-          name of the variable to display
-        leg: str
-          legend of the plot
-        op: operator
-          operator to apply to the pixelize data(median, sum, ...)
-        xmin: float
-          min value for the display
-        xmax: float
-         max value for the display
 
-        """
-        npix = hp.nside2npix(nside)
+def plotMollview(data, dbName, season, varName, leg, op, xmin, xmax, nside, figDir=''):
+    """
+    Method to display results as a Mollweid map
 
-        hpxmap = np.zeros(npix, dtype=np.float)
-        hpxmap = np.full(hpxmap.shape, 0.)
-        hpxmap[data['healpixID'].astype(
-            int)] += data[varName]
+    Parameters
+    ---------------
+    data: pandas df
+      data to consider
+    dbName: str
+      OS to plot
+    season: int
+     season of observation
+    varName: str
+      name of the variable to display
+    leg: str
+      legend of the plot
+    op: operator
+      operator to apply to the pixelize data(median, sum, ...)
+    xmin: float
+      min value for the display
+    xmax: float
+     max value for the display
+    nside: int
+     healpix nside
+    figDir: str, opt
+      directory for figures (default None)
 
-        norm = plt.cm.colors.Normalize(xmin, xmax)
-        cmap = plt.cm.jet
-        cmap.set_under('w')
-        resleg = op(data[varName])
-        if 'nsn' in varName:
-            resleg = int(resleg)
-        else:
-            resleg = np.round(resleg, 2)
-        title = '{}: {}'.format(leg, resleg)
+    """
+    npix = hp.nside2npix(nside)
 
-        hp.mollview(hpxmap, min=xmin, max=xmax, cmap=cmap,
-                    title=title, nest=True, norm=norm)
-        hp.graticule()
+    hpxmap = np.zeros(npix, dtype=np.float)
+    hpxmap = np.full(hpxmap.shape, 0.)
+    hpxmap[data['healpixID'].astype(
+        int)] += data[varName]
 
-        # save plot here
-        name = leg.replace(' - ', '_')
-        name = name.replace(' ', '_')
-        
+    norm = plt.cm.colors.Normalize(xmin, xmax)
+    cmap = plt.cm.jet
+    cmap.set_under('w')
+    resleg = op(data[varName])
+    if 'nsn' in varName:
+        resleg = int(resleg)
+    else:
+        resleg = np.round(resleg, 2)
+    title = '{}: {}'.format(leg, resleg)
+
+    hp.mollview(hpxmap, min=xmin, max=xmax, cmap=cmap,
+                title=title, nest=True, norm=norm)
+    hp.graticule()
+
+    # save plot here
+    name = leg.replace(' - ', '_')
+    name = name.replace(' ', '_')
+
+    if figDir != '':
+        outName = '{}/Moll_{}_season_{}.png'.format(figDir, dbName, season)
+        plt.savefig(outName)
+
+
+def plotHist(sel, dbName, season, figDir):
+
+    fig, ax = plt.subplots(figsize=(8, 6))
+    fig.suptitle('Season {}'.format(season))
+    ax.hist(sel['zlim_faint'], histtype='step', bins=20)
+    ax.set_xlabel('zlim')
+    ax.set_ylabel('Number of Entries')
+    ax.grid()
+    outName = '{}/{}_season_{}.png'.format(figDir, dbName, season)
+    plt.savefig(outName)
+
+
 def jackknife(x, func):
     """Jackknife estimate of the estimator func"""
     n = len(x)
     idx = np.arange(n)
-    return np.sum(func(x[idx!=i]) for i in range(n))/float(n)
+    return np.sum(func(x[idx != i]) for i in range(n))/float(n)
+
 
 def jackknife_var(x, func):
     """Jackknife estiamte of the variance of the estimator func."""
     n = len(x)
     idx = np.arange(n)
     j_est = jackknife(x, func)
-    return (n-1)/(n + 0.0) * np.sum((func(x[idx!=i]) - j_est)**2.0
+    return (n-1)/(n + 0.0) * np.sum((func(x[idx != i]) - j_est)**2.0
                                     for i in range(n))
+
 
 parser = OptionParser(
     description='Display NSN metric results for WFD fields')
@@ -99,7 +129,7 @@ metricName = 'NSN'
 dbName = opts.dbName
 
 
-metricValues = loadData(dirFile,dbName,metricName,fieldType,nside)
+metricValues = loadData(dirFile, dbName, metricName, fieldType, nside)
 
 print(metricValues.dtype)
 sntype = 'faint'
@@ -111,7 +141,8 @@ data = pd.DataFrame(metricValues[idx])
 seasons = data['season'].unique()
 io = seasons <= 10
 seasons = seasons[io]
-fig, ax = plt.subplots()
+
+# fig, ax = plt.subplots()
 
 """
 means = data.groupby(['season']).max().reset_index()
@@ -119,38 +150,42 @@ means = data.groupby(['season']).max().reset_index()
 ax.plot(means['season'],means['zlim_faint'],'ko')
 plt.show()
 """
-
+figDir = 'plots_rolling'
 for season in seasons:
     idx = data['season'] == season
     sel = data[idx]
     leg = 'zlim - season {}'.format(int(season))
-    #plotMollview(sel,'zlim_faint',leg,np.median,0.1,0.4,nside)
-    #ax.hist(sel['zlim_faint'],histtype='step',bins=20)
-    ax.plot(sel['zlim_faint'],np.cumsum(sel['zlim_faint']))
-    #print(jackknife(sel['zlim_faint'],np.mean))
-    
-    
+    # plotMollview(sel, dbName, season, 'zlim_faint', leg,
+    #             np.median, 0.1, 0.4, nside, figDir)
+    plotHist(sel, dbName, int(season), figDir)
+
+    # ax.plot(sel['zlim_faint'],np.cumsum(sel['zlim_faint']))
+    # print(jackknife(sel['zlim_faint'],np.mean))
+
+
 plt.show()
 
 
 print(test)
 
-dbInfo = pd.DataFrame([[dirFile,dbName, 'test', 'test', 'test', 'r', '*']],
-                      columns=['dirFile','dbName', 'newName', 'group', 'plotName', 'color', 'marker'])
-dbInfo = pd.DataFrame([[dirFile,dbName, 'test', 'test', 'test', 'r', '*','fbs','1.7.1','rolling']],
-                      columns=['dirFile','dbName', 'newName', 'group', 'plotName', 'color', 'marker','simuType','simuNum','family'])
+dbInfo = pd.DataFrame([[dirFile, dbName, 'test', 'test', 'test', 'r', '*']],
+                      columns=['dirFile', 'dbName', 'newName', 'group', 'plotName', 'color', 'marker'])
+dbInfo = pd.DataFrame([[dirFile, dbName, 'test', 'test', 'test', 'r', '*', 'fbs', '1.7.1', 'rolling']],
+                      columns=['dirFile', 'dbName', 'newName', 'group', 'plotName', 'color', 'marker', 'simuType', 'simuNum', 'family'])
 metricdata = nsn_plot.NSNAnalysis(dbInfo.loc[0], metricName, fieldType,
                                   nside)
 
 # Mollweid plots
 dbName = dbName.split('_10yrs')[0]
 metricdata.Mollview_median('zlim', '{} - zlim'.format(dbName))
-#metricdata.Mollview_median('ebvofMW', 'E(B-V)')
+# metricdata.Mollview_median('ebvofMW', 'E(B-V)')
 metricdata.Mollview_median('cadence', '{} -  cadence'.format(dbName))
-metricdata.Mollview_median('season_length', '{} -  season length'.format(dbName))
+metricdata.Mollview_median(
+    'season_length', '{} -  season length'.format(dbName))
 metricdata.Mollview_sum('nsn_med_faint', '{} -  NSN'.format(dbName))
 for b in 'ugrizy':
-    metricdata.Mollview_median('N_{}'.format(b), '{} - Nvisits - {} band'.format(dbName,b))
+    metricdata.Mollview_median('N_{}'.format(
+        b), '{} - Nvisits - {} band'.format(dbName, b))
 
 plt.show()
 
@@ -177,5 +212,5 @@ for vv in vars:
 
 
 print('data names', metricdata.data.columns)
-#metricdata.plot_season(metricdata.data, 'm5_med', np.median)
+# metricdata.plot_season(metricdata.data, 'm5_med', np.median)
 plt.show()
