@@ -289,10 +289,12 @@ class NSNYMetricWrapper(MetricWrapper):
         zmin = 0.
         zmax = 1.1
         bands = 'grizy'
+        fig_for_movie = False
         if fieldType == 'WFD':
             zmin = 0.1
             zmax = 0.5
             bands = 'griz'
+            fig_for_movie = False
 
         self.telescope = telescope_def()
 
@@ -352,7 +354,10 @@ class NSNYMetricWrapper(MetricWrapper):
             outputType=metadata.outputType,
             proxy_level=metadata.proxy_level,
             coadd=coadd, lightOutput=metadata.lightOutput,
-            T0s=metadata.T0s, zlim_coeff=zlim_coeff, ebvofMW=ebvofMW, bands=bands, templateLC=templateLC, dbName=metadata.dbName)
+            T0s=metadata.T0s, zlim_coeff=zlim_coeff,
+            ebvofMW=ebvofMW, bands=bands,
+            fig_for_movie=fig_for_movie,
+            templateLC=templateLC, dbName=metadata.dbName)
 
         self.metadata['n_bef'] = n_bef
         self.metadata['n_aft'] = n_aft
