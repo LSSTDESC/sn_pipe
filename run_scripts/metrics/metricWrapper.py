@@ -176,15 +176,17 @@ class NSNMetricWrapper(MetricWrapper):
         zmin = 0.
         zmax = 1.1
         bands = 'grizy'
+        fig_for_movie = False
         if fieldType == 'WFD':
             zmin = 0.1
             zmax = 0.5
             bands = 'griz'
+            fig_for_movie = False
 
         self.telescope = telescope_def()
 
         lc_reference, dustcorr = load_reference(
-            error_model, 0.0, [(-2.0, 0.2), (0.0, 0.0)], self.telescope,bluecutoff,redcutoff)
+            error_model, 0.0, [(-2.0, 0.2), (0.0, 0.0)], self.telescope, bluecutoff, redcutoff)
 
         print('Reference data loaded', lc_reference.keys(), fieldType)
 
@@ -216,8 +218,9 @@ class NSNMetricWrapper(MetricWrapper):
 
         templateLC = None
         if metadata.ploteffi:
-            templateLC = loadTemplateLC(error_model, 0, x1_colors=[(-2.0, 0.2), (0.0, 0.0)])
-                
+            templateLC = loadTemplateLC(error_model, 0, x1_colors=[
+                                        (-2.0, 0.2), (0.0, 0.0)])
+
         errmodrel = -1.
         if error_model:
             errmodrel = 0.05
@@ -238,7 +241,9 @@ class NSNMetricWrapper(MetricWrapper):
             outputType=metadata.outputType,
             proxy_level=metadata.proxy_level,
             coadd=coadd, lightOutput=metadata.lightOutput,
-            T0s=metadata.T0s, zlim_coeff=zlim_coeff, ebvofMW=ebvofMW, bands=bands,fig_for_movie=False,templateLC=templateLC,dbName=metadata.dbName)
+            T0s=metadata.T0s, zlim_coeff=zlim_coeff, ebvofMW=ebvofMW,
+            bands=bands, fig_for_movie=fig_for_movie,
+            templateLC=templateLC, dbName=metadata.dbName)
 
         self.metadata['n_bef'] = n_bef
         self.metadata['n_aft'] = n_aft
@@ -254,6 +259,7 @@ class NSNMetricWrapper(MetricWrapper):
                          'n_bef', 'n_aft', 'snr_min', 'n_phase_min', 'n_phase_max', 'error_model', 'errmodrel', 'zlim_coeff']
         self.saveConfig()
 
+
 """
     def load(self, templateDir, fname, gammaDir, gammaName, web_path, j=-1, output_q=None):
 
@@ -265,6 +271,7 @@ class NSNMetricWrapper(MetricWrapper):
         else:
             return tab_tot
 """
+
 
 class NSNYMetricWrapper(MetricWrapper):
     def __init__(self, name='NSN', season=-1, coadd=True, fieldType='DD',
@@ -290,11 +297,11 @@ class NSNYMetricWrapper(MetricWrapper):
         self.telescope = telescope_def()
 
         lc_reference, dustcorr = load_reference(
-            error_model, 0.0, [(-2.0, 0.2), (0.0, 0.0)], self.telescope,bluecutoff,redcutoff)
+            error_model, 0.0, [(-2.0, 0.2), (0.0, 0.0)], self.telescope, bluecutoff, redcutoff)
 
         print('Reference data loaded', lc_reference.keys(), fieldType)
 
-        print('hello',metadata)
+        print('hello', metadata)
         # LC selection criteria
 
         if fieldType == 'DD':
@@ -329,7 +336,8 @@ class NSNYMetricWrapper(MetricWrapper):
 
         templateLC = None
         if metadata.ploteffi:
-            templateLC = loadTemplateLC(error_model, 0, x1_colors=[(-2.0, 0.2), (0.0, 0.0)])
+            templateLC = loadTemplateLC(error_model, 0, x1_colors=[
+                                        (-2.0, 0.2), (0.0, 0.0)])
         # metric instance
         self.metric = SNNSNYMetric(
             lc_reference, dustcorr, season=season, zmin=zmin,
@@ -344,7 +352,7 @@ class NSNYMetricWrapper(MetricWrapper):
             outputType=metadata.outputType,
             proxy_level=metadata.proxy_level,
             coadd=coadd, lightOutput=metadata.lightOutput,
-            T0s=metadata.T0s, zlim_coeff=zlim_coeff, ebvofMW=ebvofMW, bands=bands,templateLC=templateLC,dbName=metadata.dbName)
+            T0s=metadata.T0s, zlim_coeff=zlim_coeff, ebvofMW=ebvofMW, bands=bands, templateLC=templateLC, dbName=metadata.dbName)
 
         self.metadata['n_bef'] = n_bef
         self.metadata['n_aft'] = n_aft
@@ -359,6 +367,8 @@ class NSNYMetricWrapper(MetricWrapper):
                          'proxy_level', 'lightOutput', 'T0s',
                          'n_bef', 'n_aft', 'snr_min', 'n_phase_min', 'n_phase_max', 'error_model', 'errmodrel', 'zlim_coeff']
         self.saveConfig()
+
+
 """
     def load(self, templateDir, fname, gammaDir, gammaName, web_path, j=-1, output_q=None):
 
@@ -369,7 +379,9 @@ class NSNYMetricWrapper(MetricWrapper):
             output_q.put({j: lc_ref})
         else:
             return tab_tot
- """       
+ """
+
+
 class SaturationMetricWrapper(MetricWrapper):
     def __init__(self, name='Saturation', season=-1, coadd=False, fieldType='DD',
                  nside=64, RAmin=0., RAmax=360.,
@@ -564,7 +576,7 @@ def telescope_def():
     return telescope
 
 
-def load_reference(error_model=1, ebvofMW=-1, x1_colors=[(-2.0, 0.2), (0.0, 0.0)], telescope=Telescope(),bluecutoff=380.,redcutoff=800.):
+def load_reference(error_model=1, ebvofMW=-1, x1_colors=[(-2.0, 0.2), (0.0, 0.0)], telescope=Telescope(), bluecutoff=380., redcutoff=800.):
     """
     Method to load reference files (LC, ...)
 
@@ -675,7 +687,8 @@ def load_x1_color_dist():
 
     return x1_color_dist
 
-def loadTemplateLC(error_model=1, ebvofMW=-1, x1_colors=[(-2.0, 0.2), (0.0, 0.0)],bluecutoff=380., redcutoff=800.):
+
+def loadTemplateLC(error_model=1, ebvofMW=-1, x1_colors=[(-2.0, 0.2), (0.0, 0.0)], bluecutoff=380., redcutoff=800.):
     """
     Method to load reference files (LC, ...)
 
@@ -709,8 +722,8 @@ def loadTemplateLC(error_model=1, ebvofMW=-1, x1_colors=[(-2.0, 0.2), (0.0, 0.0)
         wave_cutoff = '{}_{}'.format(bluecutoff, redcutoff)
 
     templLC = {}
-    for (x1,color) in x1_colors:
-        
+    for (x1, color) in x1_colors:
+
         lcName = 'LC_{}_{}_{}_ebvofMW_0.0_vstack.hdf5'.format(
             x1, color, wave_cutoff)
         # Load the file - lc reference
@@ -718,6 +731,6 @@ def loadTemplateLC(error_model=1, ebvofMW=-1, x1_colors=[(-2.0, 0.2), (0.0, 0.0)
         f = h5py.File(lcFullName, 'r')
         keys = list(f.keys())
         # lc_ref_tot = Table.read(filename, path=keys[0])
-        templLC[(x1,color)] = Table.from_pandas(pd.read_hdf(lcFullName))
+        templLC[(x1, color)] = Table.from_pandas(pd.read_hdf(lcFullName))
 
     return templLC
