@@ -71,7 +71,8 @@ def go_for_batch(toproc, splitSky,
     else:
         # second case: there are pixelmaps available -> run on them
         # first: get the skymap
-        fileSky = glob.glob('{}/skypatch*.npy'.format(pixelmap_dir))
+        path = '{}/skypatch*.npy'.format(pixelmap_dir)
+        fileSky = glob.glob(path)
         skyMap = np.load(fileSky[0],allow_pickle=True)
 
         print(skyMap)
@@ -269,6 +270,10 @@ class batchclass:
         script.write(" echo 'sourcing setups' \n")
         script.write(" source setup_release.sh Linux -5\n")
         script.write("echo 'sourcing done' \n")
+        script.write(" export MKL_NUM_THREADS=1 \n")
+        script.write(" export NUMEXPR_NUM_THREADS=1 \n")
+        script.write(" export OMP_NUM_THREADS=1 \n")
+        script.write(" export OPENBLAS_NUM_THREADS=1 \n")
 
         for vv in self.RADec:
             cmd_ = self.batch_cmd(proc,vv['RAmin'],vv['RAmax'],vv['Decmin'],vv['Decmax'])
