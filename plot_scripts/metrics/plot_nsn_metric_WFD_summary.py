@@ -540,7 +540,8 @@ parser.add_option("--nproc", type=int, default=3,
                   help="number of proc when multiprocessing used [%default]")
 parser.add_option("--colors", type=str, default='k,r,b,m,g',
                   help="colors for the plot [%default]")
-
+parser.add_option("--metric", type=str, default='NSNY',
+                  help="metric name [%default]")
 
 opts, args = parser.parse_args()
 
@@ -548,7 +549,7 @@ opts, args = parser.parse_args()
 nside = opts.nside
 nproc = opts.nproc
 
-metricName = 'NSN'
+metricName = opts.metric
 
 list_to_process = pd.read_csv(opts.configFile, comment='#')
 
@@ -591,7 +592,8 @@ resdf = filter(
 
 # summary plot
 #nsn_plot.NSN_zlim_GUI(resdf,xvar='zpeak',yvar='nsn_zpeak',xlabel='$z_{peak}$',ylabel='$N_{SN}(z\leq z_{peak})$',title='(nSN,zpeak) supernovae metric')
-nsn_plot.NSN_zlim_GUI(resdf,xvar='zlim',yvar='nsn_zlim',xlabel='$z_{lim}$',ylabel='$N_{SN}(z\leq z_{lim})$',title='(nSN,zlim) supernovae metric')
+#nsn_plot.NSN_zlim_GUI(resdf,xvar='zlim',yvar='nsn_zlim',xlabel='$z_{lim}$',ylabel='$N_{SN}(z\leq z_{lim})$',title='(nSN,zlim) supernovae metric')
+nsn_plot.NSN_zlim_GUI(resdf,xvar='zcomp',yvar='nsn',xlabel='$z_{complete}$',ylabel='$N_{SN}(z\leq z_{complete})$',title='(nSN,$z_{complete}$) supernovae metric')
 #nsn_plot.NSN_zlim_GUI(resdf,xvar='cad_sn_mean',yvar='gap_sn_mean',xlabel='SN cadence [day]',ylabel='SN gap [day]',title='(cadence , gap) SN')
 #nsn_plot.PlotSummary_Annot(resdf)
 # plt.show()
