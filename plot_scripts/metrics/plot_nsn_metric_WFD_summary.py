@@ -1,329 +1,130 @@
 import numpy as np
-import sn_plotter_metrics.nsnPlot as nsn_plot
-import matplotlib.patches as mpatches
-import matplotlib.pylab as plt
-import argparse
 from optparse import OptionParser
 import glob
-# from sn_tools.sn_obs import dataInside
 import healpy as hp
-import numpy.lib.recfunctions as rf
 import pandas as pd
 import os
-import multiprocessing
-from dataclasses import dataclass
-from sn_tools.sn_utils import multiproc
 
-@dataclass
-class Simu:
-    type: str
-    num: str
-    dir: str
-    list: str
+from sn_plotter_metrics.utils import Infos,Simu,ProcessData,ProcessFile
+from sn_tools.sn_io import loopStack
+import sn_plotter_metrics.nsnPlot as nsn_plot
 
+class ProcessFileNSN(ProcessFile):
 
-class Infos:
-    """
-    class to build a dataframe
-    with requested infos to make plots
-
-    Parameters
-    ---------------
-    simu: dataclass of type Simu
-
-    """
-
-    def __init__(self, simu):
-
-        self.simu = simu
-        self.families = []
-        self.colors = ['b', 'k', 'r', 'g', 'm', 'c']
-        self.markers = [".", "o", "v", "^", "<", ">", "1", "2", "3", "4", "8",
-                        "s", "p", "P", "*", "h", "H", "+", "x", "X", "D", "d", "|", "_"]
-
-        dbList = pd.read_csv(simu.list, comment='#')
-        print(dbList)
-
-        # self.rlist = self.cleandbName(dbList)
-        self.rlist = dbList['dbName'].to_list()
-        self.resdf = self.dfInfos()
-
-    def cleandbName(self, dbList):
+    def __init__(self,info,metricName,fieldType,nside,npixels):
         """
-        Method to clean dbNames by removing all char after version number (included): v_..
+        class to analyze results from NSN metric
 
         Parameters
         ---------------
-        dbList: pandas df
-          containing the list of dbNames
-
-        Returns
-        ----------
-        list of 'cleaned' dbNames
-
-        """
-        r = []
-        # get 'cleaned' dbName
-        for i, val in dbList.iterrows():
-            spl = val['dbName'].split('v{}'.format(vv.num))[0]
-            if spl[-1] == '_':
-                spl = spl[:-1]
-            r.append(spl)
-
-        return r
-
-    def clean(self, fam):
-        """
-        Method to clean a string
-
-        Parameters
-        ----------------
-        fam: str
-          the string to clean
-
-        Returns
-        -----------
-        the final string
-
-        """
-        if fam[-1] == '_':
-            return fam[:-1]
-
-        if fam[-1] == '.':
-            return fam[:-2]
-
-        return fam
-
-    def family(self, dbName):
-        """
-        Method to get a family from a dbName
-
-        Parameters
-        --------------
+        dirFile: str
+          file directory
         dbName: str
-           the dbName to process
-
-        Returns
-        ----------
-        str: the name of the 'family'
-
+          db name to process
+        metricName: str
+          metric name
+        fieldType: str
+          type of field to process
+        nside: int
+           healpix nside parameter
+        
 
         """
+        super().__init__(info,metricName,fieldType,nside,npixels)
 
-        ro = []
-        fam = dbName
-        for i in range(len(dbName)):
-            stre = dbName[:i+1]
-            num = 0
-            for kk in self.rlist:
-                if stre == kk[:i+1]:
-                    num += 1
-            # print(stre, num)
-            ro.append(num)
-            if i > 5 and ro[-1]-ro[-2] < 0:
-                fam = dbName[:i]
-                break
-
-        return self.clean(fam)
-
-    def dfInfos(self):
+    def process(self, fileNames):
         """
-        Method to build a pandas df
-        with requested infos for the plotter
-        """
-
-        resdf = pd.DataFrame()
-        # get families and fill infos
-        for va in self.rlist:
-            resdf = pd.concat((resdf, self.getInfos(va)))
-
-        return resdf
-
-    def getInfos(self, dbName):
-        """
-        Method to build a df with infos for plotter
-        for a single dbName
+        Method to process metric values from files
 
         Parameters
         ---------------
-        dbName: str
-          dbName to process
+        fileNames: list(str)
+          list of files to process
+
+        Returns
+        ----------
+        resdf: pandas df with a summary of metric infos
+
+        """ 
+        metricValues = np.array(loopStack(fileNames, 'astropyTable'))
+        pixel_area = hp.nside2pixarea(self.nside, degrees=True)
+
+        print('hello',metricValues.dtype)
+        
+        idx = metricValues['status'] == 1
+        idx &= metricValues['zcomp'] > 0.
+
+        data = pd.DataFrame(metricValues[idx])
+        data = data.applymap(
+            lambda x: x.decode() if isinstance(x, bytes) else x)
+       
+        print(len(np.unique(data[['healpixID', 'season']])))
+        self.ratiopixels = 1
+        self.npixels_eff = len(data['healpixID'].unique())
+        if self.npixels > 0:
+            self.ratiopixels = float(
+                npixels)/float(self.npixels_eff)
+
+        nsn_dict= self.nSN_tot(data)
+        nsn_extrapol = {}
+        for key, nsn in nsn_dict.items():
+            nsn_extrapol[key] = int(np.round(nsn*self.ratiopixels))
+
+        meds = data.groupby(['healpixID']).median().reset_index()
+        meds = meds.round({'zcomp' : 5})
+        med_meds = meds.median()
+        resdf = pd.DataFrame(
+            [self.info['dbName']], columns=['dbName'])
+        
+        resdf['zcomp'] = med_meds['zcomp']
+        
+        for key, vals in nsn_dict.items():
+            resdf[key] = [vals]
+            #resdf['sig_nsn'] = [sig_nsn]
+            resdf['{}_extrapol'.format(key)] = [nsn_extrapol[key]]
+        #resdf['dbName'] = self.dbInfo['dbName']
+        resdf['simuType'] = self.info['simuType']
+        resdf['simuNum'] = self.info['simuNum']
+        resdf['family'] = self.info['family']
+        resdf['color'] = self.info['color']
+        resdf['marker'] = self.info['marker']
+        resdf['cadence'] = [med_meds['cadence']]
+        #resdf['season_length'] = [med_meds['season_length']]
+        resdf['gap_max'] = [med_meds['gap_max']]
+        resdf['survey_area'] = self.npixels_eff*pixel_area
+        for key, vals in nsn_dict.items():
+            resdf['{}_per_sqdeg'.format(key)] = resdf[key]/resdf['survey_area']
+
+        means  = data.groupby(['healpixID']).mean().reset_index()
+        #stds  = data.groupby(['healpixID']).std().reset_index()
+
+        for vv in ['cadence_sn','gap_max_sn']:
+            resdf[vv] = means[vv]
+        #for vv in ['cad_sn_std','gap_sn_std']:
+         #   resdf[vv] = stds[vv]
+            
+
+        print(resdf)
+        return resdf
+        
+    def nSN_tot(self,data):
+        """
+        Method to estimate the total number of supernovae(and error)
 
         Returns
         -----------
-        pandas df with infos as cols.
-
-
+        nsn, sig_nsn: int, int
+          number of sn and sigma
         """
-        fam = self.family(dbName)
-        # print(vv, fam)
-        if fam not in self.families:
-            self.families.append(fam)
-        imark = self.families.index(fam)
-        print(vv.type, vv.dir, dbName, fam,
-              self.colors[ip], self.markers[self.families.index(fam)])
+        sums = data.groupby(['healpixID']).sum().reset_index()
 
-        return pd.DataFrame({'simuType': [self.simu.type],
-                             'simuNum': [self.simu.num],
-                             'dirFile': [self.simu.dir],
-                             'dbName': [dbName],
-                             'family': [fam],
-                             'color': [self.colors[ip]],
-                             'marker': [self.markers[self.families.index(fam)]]})
-
-
-def processMulti_old(toproc, outFile, nproc=1):
-    """
-    Function to analyze metric output using multiprocesses
-    The results are stored in outFile (npy file)
-
-    Parameters
-    --------------
-    toproc: pandas df
-      data to process
-    outFile: str
-       output file name
-    nproc: int, opt
-      number of cores to use for the processing
-
-    """
-
-    nfi = len(toproc)
-    tabfi = np.linspace(0, nfi, nproc+1, dtype='int')
-
-    print(tabfi)
-    result_queue = multiprocessing.Queue()
-
-    # launching the processes
-    for j in range(len(tabfi)-1):
-        ida = tabfi[j]
-        idb = tabfi[j+1]
-
-        p = multiprocessing.Process(name='Subprocess-'+str(j), target=processLoop, args=(
-            toproc[ida:idb], 'WFD', j, result_queue))
-        p.start()
-
-    # grabing the results
-    resultdict = {}
-
-    for j in range(len(tabfi)-1):
-        resultdict.update(result_queue.get())
-
-    for p in multiprocessing.active_children():
-        p.join()
-
-    resdf = pd.DataFrame()
-    for j in range(len(tabfi)-1):
-        resdf = pd.concat((resdf, resultdict[j]))
-
-    print('finally', resdf.columns)
-    # saving the results in a npy file
-    np.save(outFile, resdf.to_records(index=False))
-
-def processMulti(toproc, outFile, nside, metricName, fieldType, nproc=1):
-    """
-    Function to analyze metric output using multiprocesses
-    The results are stored in outFile (npy file)
-
-    Parameters
-    --------------
-    toproc: pandas df
-      data to process
-    outFile: str
-       output file name
-    nside: int
-      nside for sphere pixel.
-    metricName: str
-      name of the metric to process
-    fieldType: str
-      type of fiels (DD or WFD) to process
-    nproc: int, opt
-      number of cores to use for the processing
-
-    """
-    params = {}
-    params['fieldType']= 'WFD'
-    params['metricName'] = metricName
-    params['nside'] = nside
-
-    print('multiprocessing',nproc)
-    resdf = multiproc(toproc,params,processLoop,nproc)
-    np.save(outFile, resdf.to_records(index=False))
-
-def processLoop(toproc, params, j=0, output_q=None):
-    """
-    Function to analyze a set of metric result files
-
-    Parameters
-    --------------
-    toproc: pandas df
-      data to process
-    j: int, opt
-       internal int for the multiprocessing
-    output_q: multiprocessing.queue
-      queue for multiprocessing
-
-    Returns
-    -----------
-    pandas df with the following cols:
-    zlim, nsn, sig_nsn, nsn_extra, dbName, plotName, color,marker
-    """
-
-    fieldType = params['fieldType']
-    metricName = params['metricName']
-    nside = params['nside']
-    
-    # this is to get summary values here
-    resdf = pd.DataFrame()
-    for index, val in toproc.iterrows():
-        metricdata = nsn_plot.NSNAnalysis(val, metricName, fieldType,
-                                          nside, npixels=0)
-
-        # metricdata.plot()
-        # plt.show()
-        if metricdata.data_summary is not None:
-            resdf = pd.concat((resdf, metricdata.data_summary))
-
-    print('end of proc',j)
-    if output_q is not None:
-        output_q.put({j: resdf})
-    else:
-        return resdf
-    
-def processLoop_old(toproc, fieldType='WFD', j=0, output_q=None):
-    """
-    Function to analyze a set of metric result files
-
-    Parameters
-    --------------
-    toproc: pandas df
-      data to process
-    j: int, opt
-       internal int for the multiprocessing
-    output_q: multiprocessing.queue
-      queue for multiprocessing
-
-    Returns
-    -----------
-    pandas df with the following cols:
-    zlim, nsn, sig_nsn, nsn_extra, dbName, plotName, color,marker
-    """
-    # this is to get summary values here
-    resdf = pd.DataFrame()
-    for index, val in toproc.iterrows():
-        metricdata = nsn_plot.NSNAnalysis(val, metricName, fieldType,
-                                          nside, npixels=0)
-
-        # metricdata.plot()
-        # plt.show()
-        if metricdata.data_summary is not None:
-            resdf = pd.concat((resdf, metricdata.data_summary))
-
-    print('end of proc',j)
-    if output_q is not None:
-        output_q.put({j: resdf})
-    else:
-        return resdf
+        dictout = {}
+        dictout['nsn'] = sums['nsn'].sum()
+        """
+        for vv in self.ztypes:
+            dictout['nsn_{}'.format(vv)] = sums['nsn_{}_{}'.format(vv,self.sntype)].sum()
+        """
+        return dictout
 
 
 def mscatter(x, y, ax=None, m=None, **kw):
@@ -563,11 +364,13 @@ for i, row in list_to_process.iterrows():
 resdf = pd.DataFrame()
 colors = opts.colors.split(',')
 for ip, vv in enumerate(simu_list):
-    outFile = 'Summary_WFD_{}_{}.npy'.format(vv.type, vv.num)
+    outFile = 'Summary_{}_WFD_{}_{}.npy'.format(metricName,vv.type, vv.num)
 
     if not os.path.isfile(outFile):
-        toprocess = Infos(vv).resdf
-        processMulti(toprocess, outFile, nside, metricName, 'WFD', nproc=nproc)
+        toprocess = Infos(vv,ip).resdf
+        #processMulti(toprocess, outFile, nside, metricName, 'WFD', nproc=nproc)
+        proc = ProcessData(nside, metricName, 'WFD')
+        proc.processMulti(toprocess, outFile, process_class=ProcessFileNSN,nproc=nproc)
 
     tabdf = pd.DataFrame(np.load(outFile, allow_pickle=True))
     tabdf['color'] = colors[ip]
