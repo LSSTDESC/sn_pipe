@@ -80,7 +80,7 @@ class MakeYaml:
                  zType, zmin, zmax, zstep,
                  simu, daymaxType, daymaxstep,
                  coadd, prodid,
-                 ebvofMW, bluecutoff, redcutoff,error_model):
+                 ebvofMW, bluecutoff, redcutoff, error_model):
 
         self.dbDir = dbDir
         self.dbName = dbName
@@ -161,7 +161,7 @@ class MakeYaml:
         filedata = filedata.replace('bluecutoffval', str(self.bluecutoff))
         filedata = filedata.replace('redcutoffval', str(self.redcutoff))
         filedata = filedata.replace('errmod', str(self.error_model))
-        
+
         return yaml.load(filedata, Loader=yaml.FullLoader)
 
 
@@ -178,7 +178,7 @@ class SimuWrapper:
 
     def __init__(self, yaml_config):
 
-        print('hh',type(yaml_config))
+        print('hh', type(yaml_config))
         fileName, fileExtension = os.path.splitext(yaml_config)
         if fileExtension == 'yaml':
             # load config file
@@ -187,7 +187,7 @@ class SimuWrapper:
         else:
             config = yaml_config
 
-        print('oooooo',config)
+        print('oooooo', config)
         self.name = 'simulation'
 
         # get X0 for SNIa normalization
@@ -247,6 +247,7 @@ class SimuWrapper:
           data to process
 
         """
+        print('running here')
         return self.metric.run(obs)
 
     def finish(self):
