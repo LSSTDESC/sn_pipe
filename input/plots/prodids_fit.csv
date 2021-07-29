@@ -1,9 +1,9 @@
 nickname,dirfile,prodid
-## error_model, snrmin=1.,ebvofMW=0,errmodrel=0.1
-cosmo_cosmo_errmod_snr_1_0.1,zlim/Output_Fit_error_model_ebvofMW_0.0_snrmin_1_errmodrel_0.1,sn_cosmo_Fake_-2.0_0.2_error_model_ebvofMW_0.0_sn_cosmo
-fast_fast_errmod_snr_1_0.1,zlim/Output_Fit_error_model_ebvofMW_0.0_snrmin_1_errmodrel_0.1,sn_fast_Fake_-2.0_0.2_error_model_ebvofMW_0.0_sn_fast
-fast_cosmo_errmod_snr_1_0.1,zlim/Output_Fit_error_model_ebvofMW_0.0_snrmin_1_errmodrel_0.1,sn_fast_Fake_-2.0_0.2_error_model_ebvofMW_0.0_sn_cosmo
+## error_model, snrmin=1.,ebvofMW=0,errmodrel=0.05
+cosmo_cosmo_errmod_snr_1_0.05,zlim_fast/Output_Fit_error_model_ebvofMW_0.0_snrmin_1_errmodrel_0.05,sn_cosmo_Fake_-2.0_0.2_error_model_ebvofMW_0.0_2_sn_cosmo
+fast_fast_errmod_snr_1_0.05,zlim_fast/Output_Fit_error_model_ebvofMW_0.0_snrmin_1_errmodrel_0.05,sn_fast_Fake_-2.0_0.2_error_model_ebvofMW_0.0_0_sn_fast
+fast_cosmo_errmod_snr_1_0.05,zlim_fast/Output_Fit_error_model_ebvofMW_0.0_snrmin_1_errmodrel_0.05,sn_fast_Fake_-2.0_0.2_error_model_ebvofMW_0.0_1_sn_cosmo
 ##no error_model, snrmin=1.,ebvofMW=0
-cosmo_cosmo_bluecutoff_snr1,zlim/Output_Fit_380.0_800.0_ebvofMW_0.0_snrmin_1,sn_cosmo_Fake_-2.0_0.2_380.0_800.0_ebvofMW_0.0_sn_cosmo
-fast_fast_bluecutoff_snr1,zlim/Output_Fit_380.0_800.0_ebvofMW_0.0_snrmin_1,sn_fast_Fake_-2.0_0.2_380.0_800.0_ebvofMW_0.0_sn_fast
-fast_cosmo_bluecutoff_snr1,zlim/Output_Fit_380.0_800.0_ebvofMW_0.0_snrmin_1,sn_fast_Fake_-2.0_0.2_380.0_800.0_ebvofMW_0.0_sn_cosmo
+cosmo_cosmo_bluecutoff_snr1,zlim_fast/Output_Fit_380.0_800.0_ebvofMW_0.0_snrmin_1,sn_cosmo_Fake_-2.0_0.2_380.0_800.0_ebvofMW_0.0_2_sn_cosmo
+fast_fast_bluecutoff_snr1,zlim_fast/Output_Fit_380.0_800.0_ebvofMW_0.0_snrmin_1,sn_fast_Fake_-2.0_0.2_380.0_800.0_ebvofMW_0.0_0_sn_fast
+fast_cosmo_bluecutoff_snr1,zlim_fast/Output_Fit_380.0_800.0_ebvofMW_0.0_snrmin_1,sn_fast_Fake_-2.0_0.2_380.0_800.0_ebvofMW_0.0_1_sn_cosmo

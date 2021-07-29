@@ -52,9 +52,9 @@ def cmd(x1=-2.0, color=0.2, ebv=0.0, bluecutoff=380., redcutoff=800., error_mode
 parser = OptionParser()
 
 parser.add_option(
-    '--outputDir', help='main output directory [%default]', default='/sps/lsst/users/gris/config_zlim', type=str)
+    '--outputDir', help='main output directory [%default]', default='zlim_fast', type=str)
 parser.add_option(
-    '--config', help='config file of parameters [%default]', default='config_z_test.csv', type=str)
+    '--config', help='config file of parameters [%default]', default='input/Fake_cadence/config_z.csv', type=str)
 parser.add_option(
     '--tagprod', help='tag for output file [%default]', default=-1, type=int)
 parser.add_option(
