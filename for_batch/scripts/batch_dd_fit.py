@@ -259,6 +259,12 @@ for bb in snTypes:
             list_proc = []
             nlc_sim = 0
 
+    if nlc_sim > 0:
+        iproc += 1
+        process(opts.dbName, list_proc, simuDir, opts.outDir, iproc,
+                opts.nproc, opts.mode, opts.snrmin, bb, opts.mbcov_estimate)
+
+    print('total number of sn', nlc_sim)
 """
 print(test)
 
