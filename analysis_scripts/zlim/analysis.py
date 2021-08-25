@@ -32,9 +32,9 @@ def loadData(dbDir, dbName, tagName):
     return tab
 
 
-class zcompleteness:
+class zlimit:
     """
-    class to estimate the redshift completeness from (fully) fitted LC curves
+    class to estimate the redshift limit from (fully) fitted LC curves
 
     Parameters
     ---------------
@@ -59,6 +59,7 @@ class zcompleteness:
 
         Returns
         ----------
+        numpy array with the following cols: HealpixID, season, zlim_50, zlim_95
 
         """
         from sn_tools.sn_utils import multiproc
@@ -67,12 +68,29 @@ class zcompleteness:
         params['data'] = self.data
         params['sigmaC'] = self.sigmaC
 
-        res = multiproc(healpixIDs, params, self.zcomplete, self.nproc)
+        res = multiproc(healpixIDs, params, self.zlim, self.nproc)
 
         return res
 
-    def zcomplete(self, healpixID_list, params={'sigmaC': 0.04}, j=0, output_q=None):
+    def zlim(self, healpixID_list, params={'sigmaC': 0.04}, j=0, output_q=None):
+        """
+        Method to estimate redshift limits
 
+        Parameters
+        ---------------
+        healpixID_list: list(int)
+          list of healpixIDs to process
+        params: dict
+           dict of parameters
+        j: int, opt
+          tag for multiprocessing (default: 0)
+        output_q: multiprocessing queue
+          default: None
+
+        Returns
+        -----------
+        numpy array with the following cols: HealpixID, season, zlim_50, zlim_95
+        """
         sigmaC = params['sigmaC']
         tab = params['data']
 
@@ -91,21 +109,21 @@ class zcompleteness:
                     idxb = sel['season'] == season
                     selb = sel[idxb]
                     if len(selb) > 0:
-                        r_50, r_95 = self.zcomplete_from_cumul(selb)
+                        r_50, r_95 = self.zlim_from_cumul(selb)
                         r.append((healpixID, season, r_50, r_95))
         res = None
         if len(r) > 0:
             res = np.rec.fromrecords(
-                r, names=['healpixID', 'season', 'z_50', 'z_95'])
+                r, names=['healpixID', 'season', 'zlim_50', 'zlim_95'])
         print('finished', j, len(res))
         if output_q is not None:
             return output_q.put({j: res})
         else:
             return res
 
-    def zcomplete_from_cumul(self, data):
+    def zlim_from_cumul(self, data):
         """
-        Method to estimate zcomplete from the cumulative of redshift distrib
+        Method to estimate zlimit from the cumulative of redshift distrib
 
         Parameters
         ---------------

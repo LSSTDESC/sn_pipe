@@ -1,5 +1,5 @@
 from optparse import OptionParser
-from analysis import loadData, zcompleteness
+from analysis import loadData, zlimit
 
 parser = OptionParser()
 
@@ -19,6 +19,6 @@ tab = loadData(opts.dbDir, opts.dbName, opts.tagName)
 
 print(len(tab))
 
-zcomp = zcompleteness(tab)
+zcomp = zlimit(tab)
 
 print(zcomp())
