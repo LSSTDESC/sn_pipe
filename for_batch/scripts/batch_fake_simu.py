@@ -5,24 +5,6 @@ import numpy as np
 import itertools
 
 
-def process_deprecated(dbName, dbDir, dbExtens, outDir, nproc=8, mode='batch', snTypes=['faintSN', 'allSN']):
-
-    if mode == 'batch':
-        batch(dbName, dbDir, dbExtens, outDir, snTypes, nproc)
-    else:
-        config = config_rec()
-        confNames = snTypes
-        for cf in confNames:
-            idx = config['confName'] == cf
-            sel = config[idx]
-            print('alors', sel)
-            spl = np.array_split(sel, 5)
-            cmd_ = cmd(dbName, dbDir, dbExtens, outDir, 0, nproc)
-            print(cmd_)
-            # os.system(cmd_)
-
-
-# def batch(dbName, dbDir, dbExtens, outDir, snTypes, nproc=8):
 def process(dbName, dbDir, dbExtens, outDir, nproc=8, batch=True, snTypes=['faintSN', 'allSN']):
     # get config for the run
     config = config_rec()
@@ -117,6 +99,7 @@ def config_rec():
     daymax_type = 'random'
     daymax_step = 2
     nsn_factor = 100
+    nsn_absolute = -1
 
     # this is for faintSN
     z_step = 0.1
@@ -126,7 +109,7 @@ def config_rec():
         z_max = z+np.round(z_step, 2)
 
         r.append((x1_type, x1_min, x1_max, color_type, color_min, color_max, z_type,
-                  z_min, z_max, zstep, daymax_type, daymax_step, nsn_factor, 'faintSN'))
+                  z_min, z_max, zstep, daymax_type, daymax_step, nsn_factor, nsn_absolute, 'faintSN'))
 
     for z in np.arange(zmin, zmax, zstep):
         zval = np.round(z, 2)
@@ -142,9 +125,9 @@ def config_rec():
         z_max = zval+np.round(zstep, 2)
         z_step = np.round(zstep, 2)
         nsn_factor_run = nsn_factor
-
+        nsn_absolute_run = nsn_absolute
         r.append((x1_type, x1_min, x1_max, color_type, color_min, color_max, z_type,
-                  z_min, z_max, z_step, daymax_type, daymax_step, nsn_factor, 'mediumSN'))
+                  z_min, z_max, z_step, daymax_type, daymax_step, nsn_factor, nsn_absolute, 'mediumSN'))
 
         z_type = 'random'
         x1_type = 'random'
@@ -152,56 +135,17 @@ def config_rec():
         daymax_type = 'random'
 
         if z_max <= 0.6:
-            nsn_factor_run = 10*nsn_factor
+            nsn_absolute_run = 100
         r.append((x1_type, x1_min, x1_max, color_type, color_min, color_max, z_type,
-                  z_min, z_max, z_step, daymax_type, daymax_step, nsn_factor_run, 'allSN'))
+                  z_min, z_max, z_step, daymax_type, daymax_step, nsn_factor_run, nsn_absolute_run, 'allSN'))
 
     res = np.rec.fromrecords(r, names=['x1_type', 'x1_min', 'x1_max',
                                        'color_type', 'color_min', 'color_max',
                                        'z_type', 'z_min', 'z_max', 'z_step',
-                                       'daymax_type', 'daymax_step', 'nsn_factor',
+                                       'daymax_type', 'daymax_step', 'nsn_factor', 'nsn_absolute',
                                        'confName'])
 
     return res
-
-
-def get_config_deprecated():
-    config = {}
-
-    config['faintSN'] = {}
-    config['allSN'] = {}
-
-    zmin = 0.0
-    zmax = 1.2
-    zstep = 0.05
-
-    for z in np.arange(zmin, zmax, zstep):
-        zval = np.round(z, 2)
-        config['allSN'][zval] = {}
-        config['faintSN'][zval] = {}
-
-        for vv in ['x1', 'color', 'z']:
-            config['allSN'][zval][vv] = {}
-            config['allSN'][zval][vv]['type'] = 'random'
-            config['allSN'][zval][vv]['min'] = zval
-            config['allSN'][zval][vv]['max'] = zval+zstep
-
-        for vv in ['x1', 'color', 'z']:
-            config['faintSN'][zval][vv] = {}
-
-            if vv != 'z':
-                config['faintSN'][zval][vv]['type'] = 'unique'
-                if vv == 'x1':
-                    config['faintSN'][zval][vv]['min'] = -2.0
-                if vv == 'color':
-                    config['faintSN'][zval][vv]['min'] = 0.2
-
-            else:
-                config['faintSN'][zval][vv]['type'] = 'random'
-                config['faintSN'][zval][vv]['min'] = zval
-                config['faintSN'][zval][vv]['max'] = zval+zstep
-
-    return config
 
 
 def cmd(dbName, dbDir, dbExtens, config, outDir, ibatch, iconfig, nproc):
@@ -233,6 +177,7 @@ def cmd(dbName, dbDir, dbExtens, config, outDir, ibatch, iconfig, nproc):
     cmd += ' --SN_daymax_type {} --SN_daymax_step {}'.format(
         config['daymax_type'], config['daymax_step'])
     cmd += ' --SN_NSNfactor {}'.format(config['nsn_factor'])
+    cmd += ' --SN_NSNabsolute {}'.format(config['nsn_absolute'])
     cmd += ' --ProductionIDSimu Fakes_{}_{}_{}_{}_{}'.format(
         dbName, error_model, config['confName'], ibatch, iconfig)
     cmd += ' --Simulator_errorModel {}'.format(errmod)
