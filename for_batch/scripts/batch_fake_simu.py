@@ -5,7 +5,7 @@ import numpy as np
 import itertools
 
 
-def process(dbName, dbDir, dbExtens, outDir, nproc=8, mode='batch', snTypes=['faintSN', 'allSN']):
+def process_deprecated(dbName, dbDir, dbExtens, outDir, nproc=8, mode='batch', snTypes=['faintSN', 'allSN']):
 
     if mode == 'batch':
         batch(dbName, dbDir, dbExtens, outDir, snTypes, nproc)
@@ -22,7 +22,8 @@ def process(dbName, dbDir, dbExtens, outDir, nproc=8, mode='batch', snTypes=['fa
             # os.system(cmd_)
 
 
-def batch(dbName, dbDir, dbExtens, outDir, snTypes, nproc=8):
+# def batch(dbName, dbDir, dbExtens, outDir, snTypes, nproc=8):
+def process(dbName, dbDir, dbExtens, outDir, nproc=8, batch=True, snTypes=['faintSN', 'allSN']):
     # get config for the run
     config = config_rec()
 
@@ -34,10 +35,11 @@ def batch(dbName, dbDir, dbExtens, outDir, snTypes, nproc=8):
         sel = config[idx]
         spl = np.array_split(sel, np.min([1, len(sel)]))
         for ibatch, vv in enumerate(spl):
-            batch_indiv(dbName, dbDir, dbExtens, outDir, cf, vv, ibatch, nproc)
+            process_indiv(dbName, dbDir, dbExtens, outDir,
+                          cf, vv, ibatch, nproc, batch)
 
 
-def batch_indiv(dbName, dbDir, dbExtens, outDir, confname, config, ibatch, nproc=8):
+def process_indiv(dbName, dbDir, dbExtens, outDir, confname, config, ibatch, nproc=8, batch=True):
 
     dirScript, name_id, log, cwd = prepareOut(
         dbName, confname, ibatch)
@@ -49,20 +51,24 @@ def batch_indiv(dbName, dbDir, dbExtens, outDir, confname, config, ibatch, nproc
 
     # fill the script
     script = open(scriptName, "w")
-    script.write(qsub + "\n")
+    if batch:
+        script.write(qsub + "\n")
     script.write("#!/bin/env bash\n")
-    script.write(" cd " + cwd + "\n")
-    script.write(" echo 'sourcing setups' \n")
-    script.write(" source setup_release.sh Linux\n")
-    script.write("echo 'sourcing done' \n")
+    if batch:
+        script.write(" cd " + cwd + "\n")
+        script.write(" echo 'sourcing setups' \n")
+        script.write(" source setup_release.sh Linux\n")
+        script.write("echo 'sourcing done' \n")
 
     for iconf, val in enumerate(config):
         cmd_ = cmd(dbName, dbDir, dbExtens, val, outDir, ibatch, iconf, nproc)
         script.write(cmd_+" \n")
 
-    script.write("EOF" + "\n")
+    if batch:
+        script.write("EOF" + "\n")
     script.close()
-    #os.system("sh "+scriptName)
+    if batch:
+        os.system("sh "+scriptName)
 
 
 def prepareOut(dbName, confname, ibatch):
@@ -118,6 +124,7 @@ def config_rec():
         z = np.round(z, 2)
         z_min = z
         z_max = z+np.round(z_step, 2)
+
         r.append((x1_type, x1_min, x1_max, color_type, color_min, color_max, z_type,
                   z_min, z_max, zstep, daymax_type, daymax_step, nsn_factor, 'faintSN'))
 
@@ -134,7 +141,7 @@ def config_rec():
         z_min = zval
         z_max = zval+np.round(zstep, 2)
         z_step = np.round(zstep, 2)
-        nsn_factor = 50
+        nsn_factor_run = nsn_factor
 
         r.append((x1_type, x1_min, x1_max, color_type, color_min, color_max, z_type,
                   z_min, z_max, z_step, daymax_type, daymax_step, nsn_factor, 'mediumSN'))
@@ -144,8 +151,10 @@ def config_rec():
         color_type = 'random'
         daymax_type = 'random'
 
+        if z_max <= 0.6:
+            nsn_factor_run = 10*nsn_factor
         r.append((x1_type, x1_min, x1_max, color_type, color_min, color_max, z_type,
-                  z_min, z_max, z_step, daymax_type, daymax_step, nsn_factor, 'allSN'))
+                  z_min, z_max, z_step, daymax_type, daymax_step, nsn_factor_run, 'allSN'))
 
     res = np.rec.fromrecords(r, names=['x1_type', 'x1_min', 'x1_max',
                                        'color_type', 'color_min', 'color_max',
@@ -252,12 +261,12 @@ parser.add_option('--dbExtens', type='str', default='npy',
                   help='db extension [%default]')
 parser.add_option('--outDir', type='str',
                   default='Fakes/Simu', help='output directory [%default]')
-parser.add_option('--mode', type='str', default='batch',
-                  help='running mode batch/interactive[%default]')
+parser.add_option('--batch', type=int, default=1,
+                  help='running in batch mode[%default]')
 parser.add_option('--nproc', type=int, default=8,
                   help='number of proc [%default]')
 parser.add_option('--snTypes', type=str,
-                  default='faintSN,allSN', help='SN types to process')
+                  default='faintSN,allSN', help='SN types to process [%default]')
 
 opts, args = parser.parse_args()
 
@@ -266,4 +275,4 @@ print('Start processing...')
 snTypes = opts.snTypes.split(',')
 
 process(opts.dbName, opts.dbDir, opts.dbExtens,
-        opts.outDir, opts.nproc, opts.mode, snTypes)
+        opts.outDir, opts.nproc, opts.batch, snTypes)
