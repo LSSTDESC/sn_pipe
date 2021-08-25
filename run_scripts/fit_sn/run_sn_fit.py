@@ -25,8 +25,6 @@ class Fit_Simu:
     config: dict
       configuration parameters
     covmb: ??
-    nmax_batch: int, opt
-     max number of lc to fit in a process (default: 100)
 
     """
 
@@ -38,7 +36,6 @@ class Fit_Simu:
         self.covmb = covmb
         self.nmax_batch = config['MultiprocessingFit']['nmaxBatch']
         self.timeout = config['MultiprocessingFit']['timeout']
-
 
         # get the simu files
         dirSimu = config['Simulations']['dirname']
@@ -93,7 +90,7 @@ class Fit_Simu:
                 nn = int(n_per_batch/self.nmax_batch)
                 if nn == 1:
                     nn += 1
-            print('batches for multiproc',n_per_batch,nn,n_per_batch)
+            print('batches for multiproc', n_per_batch, nn, n_per_batch)
             t = np.linspace(0, len(simul), nn+1, dtype='int')
 
             print('hello here', t)
@@ -199,7 +196,7 @@ class Fit_Simu:
             # print(type(lc))
             # self.plotLC(lc,10)
             if simu['status'] == 1:
-                #print('fitting',lc)
+                # print('fitting',lc)
                 resfit = self.fit(lc)
                 if resfit is not None:
                     res = vstack([res, resfit])
