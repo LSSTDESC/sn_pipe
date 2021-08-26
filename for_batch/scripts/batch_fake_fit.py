@@ -6,7 +6,7 @@ from sn_tools.sn_io import loopStack
 import numpy as np
 import multiprocessing
 
-
+"""
 def process(dbName, prodid, simuDir, outDir, num, nproc=8, mode='batch', snrmin=5., tag='gg', mbcov=0):
 
     if mode == 'batch':
@@ -18,9 +18,12 @@ def process(dbName, prodid, simuDir, outDir, num, nproc=8, mode='batch', snrmin=
             # os.system(cmd_)
             print('will execute', prodid.item())
             # os.system(cmd_)
+"""
+
+# def batch(dbName, prodids, simuDir, outDir, num, nproc=8, snrmin=5., tag='gg', mbcov=0):
 
 
-def batch(dbName, prodids, simuDir, outDir, num, nproc=8, snrmin=5., tag='gg', mbcov=0):
+def process(dbName, prodids, simuDir, outDir, num, nproc=8, batch=True, snrmin=5., tag='gg', mbcov=0):
 
     dirScript, name_id, log, cwd = prepareOut(dbName, num, tag)
     # qsub command
@@ -31,12 +34,14 @@ def batch(dbName, prodids, simuDir, outDir, num, nproc=8, snrmin=5., tag='gg', m
 
     # fill the script
     script = open(scriptName, "w")
-    script.write(qsub + "\n")
+    if batch:
+        script.write(qsub + "\n")
     script.write("#!/bin/env bash\n")
-    script.write(" cd " + cwd + "\n")
-    script.write(" echo 'sourcing setups' \n")
-    script.write(" source setup_release.sh Linux\n")
-    script.write("echo 'sourcing done' \n")
+    if batch:
+        script.write(" cd " + cwd + "\n")
+        script.write(" echo 'sourcing setups' \n")
+        script.write(" source setup_release.sh Linux\n")
+        script.write("echo 'sourcing done' \n")
 
     # need this to limit the number of multithread
     script.write(" export MKL_NUM_THREADS=1 \n")
@@ -48,9 +53,11 @@ def batch(dbName, prodids, simuDir, outDir, num, nproc=8, snrmin=5., tag='gg', m
         cmd_ = cmd(dbName, prodid, simuDir, outDir, nproc, snrmin, mbcov)
         script.write(cmd_+" \n")
 
-    script.write("EOF" + "\n")
+    if batch:
+        script.write("EOF" + "\n")
     script.close()
-    #os.system("sh "+scriptName)
+    if batch:
+        os.system("sh "+scriptName)
 
 
 def prepareOut(dbName, num, tag):
@@ -213,8 +220,8 @@ parser.add_option("--simuDir", type="str",
                   default='/sps/lsst/users/gris/DD/Simu', help="simu dir [%default]")
 parser.add_option("--outDir", type="str",
                   default='/sps/lsst/users/gris/DD/Fit', help="output directory [%default]")
-parser.add_option("--mode", type="str", default='batch',
-                  help="run mode batch/interactive[%default]")
+parser.add_option("--batch", type=int, default=1,
+                  help="batch running mode [%default]")
 parser.add_option("--snrmin", type=float, default=1.,
                   help="min snr for LC points fit[%default]")
 parser.add_option("--nproc", type=int, default=8,
@@ -252,14 +259,14 @@ for bb in snTypes:
             iproc += 1
             print('processing', iproc, list_proc, nlc_sim)
             process(opts.dbName, list_proc, simuDir, opts.outDir, iproc,
-                    opts.nproc, opts.mode, opts.snrmin, bb, opts.mbcov_estimate)
+                    opts.nproc, opts.batch, opts.snrmin, bb, opts.mbcov_estimate)
             list_proc = []
             nlc_sim = 0
 
     if nlc_sim > 0:
         iproc += 1
         process(opts.dbName, list_proc, simuDir, opts.outDir, iproc,
-                opts.nproc, opts.mode, opts.snrmin, bb, opts.mbcov_estimate)
+                opts.nproc, opts.batch, opts.snrmin, bb, opts.mbcov_estimate)
 
     print('total number of sn', nlc_sim)
 """
