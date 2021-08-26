@@ -3,6 +3,7 @@ from sn_tools.sn_io import make_dict_from_config
 from fake_utils import FakeObservations, add_option, config
 import os
 import numpy as np
+import yaml
 
 # this is to load option for fake cadence
 path = 'input/Fake_cadence'
@@ -29,6 +30,11 @@ if not os.path.isdir(outDir):
 
 # make the config files here
 config_fake = config(confDict_fake, opts)
+
+configName = '{}/{}.yaml'.format(outDir, outName)
+
+with open(configName, 'w') as fi:
+    documents = yaml.dump(config_fake, fi)
 
 fakeData = FakeObservations(config_fake).obs
 
