@@ -31,7 +31,8 @@ def cmd_list():
     cmd: str
       cmd to apply
     """
-    cmd = "pip freeze | grep sn- | cut -d \'=\' -f1"
+    #cmd = "pip freeze | grep sn- | cut -d \'=\' -f1"
+    cmd = "pip freeze | egrep \'sn-|sn_\'"
     return cmd
 
 
