@@ -134,8 +134,10 @@ def config_rec():
         color_type = 'random'
         daymax_type = 'random'
 
-        if z_max <= 0.6:
-            nsn_absolute_run = 100
+        if z_max <= 0.5:
+            nsn_absolute_run = 1000
+        else:
+            nsn_absolute_run = 2000
         r.append((x1_type, x1_min, x1_max, color_type, color_min, color_max, z_type,
                   z_min, z_max, z_step, daymax_type, daymax_step, nsn_factor_run, nsn_absolute_run, 'allSN'))
 
