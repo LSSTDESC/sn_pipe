@@ -47,7 +47,7 @@ fitDir = opts.fitDir
 
 #read config parameters
 
-params = pd.read_csv(configFile)
+params = pd.read_csv(configFile,comment='#')
 
 print(params)
 
