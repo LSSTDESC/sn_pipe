@@ -39,8 +39,13 @@ def process_indiv(dbName, dbDir, dbExtens, outDir, confname, config, ibatch, npr
     if batch:
         script.write(" cd " + cwd + "\n")
         script.write(" echo 'sourcing setups' \n")
-        script.write(" source setup_release.sh Linux\n")
+        script.write(" source setup_release.sh Linux -5\n")
         script.write("echo 'sourcing done' \n")
+        script.write(" export MKL_NUM_THREADS=1 \n")
+        script.write(" export NUMEXPR_NUM_THREADS=1 \n")
+        script.write(" export OMP_NUM_THREADS=1 \n")
+        script.write(" export OPENBLAS_NUM_THREADS=1 \n")
+
 
     for iconf, val in enumerate(config):
         cmd_ = cmd(dbName, dbDir, dbExtens, val, outDir, ibatch, iconf, nproc)
