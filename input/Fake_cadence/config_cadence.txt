@@ -11,11 +11,11 @@ MJDmin -40. str #MJD min for observations
 bands grizy str #bands to consider
 
 ## cadence[day] per band
-cadence g  3. float # cadence g band
-cadence r 3. float # cadence r band
-cadence i  3. float # cadence i band
-cadence z  3. float # cadence z band
-cadence y 3. float # cadence y band
+cadence g 1. float # cadence g band
+cadence r 1. float # cadence r band
+cadence i 1. float # cadence i band
+cadence z 1. float # cadence z band
+cadence y 1. float # cadence y band
 
 ## m5 per band
 m5 g 24.51 float #g 5-sigma depth values
