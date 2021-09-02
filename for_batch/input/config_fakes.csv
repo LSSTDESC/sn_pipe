@@ -1,0 +1,6 @@
+dbName,Nvisits_g,Nvisits_r,Nvisits_i,Nvisits_z,Nvisits_y,bands
+DD_0.60,2,9,1,1,0,griz
+DD_0.65,2,9,10,18,2,grizy
+DD_0.70,2,9,20,34,4,grizy
+DD_0.80,2,9,45,64,11,grizy
+DD_0.90,2,9,89,121,18,grizy
