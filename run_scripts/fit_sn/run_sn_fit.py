@@ -86,10 +86,15 @@ class Fit_Simu:
             nn = 1
 
             n_per_batch = int(len(simul)/self.nproc)
+            rat = len(simul)/(self.nproc*self.nmax_batch)
+            from math import ceil
+            nn = ceil(rat)
+            """
             if n_per_batch >= self.nmax_batch:
                 nn = int(n_per_batch/self.nmax_batch)
                 if nn == 1:
                     nn += 1
+            """
             print('batches for multiproc', n_per_batch, nn, n_per_batch)
             t = np.linspace(0, len(simul), nn+1, dtype='int')
 
