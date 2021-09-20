@@ -39,7 +39,7 @@ def process_indiv(dbName, dbDir, dbExtens, outDir, confname, config, ibatch, npr
     if batch:
         script.write(" cd " + cwd + "\n")
         script.write(" echo 'sourcing setups' \n")
-        script.write(" source setup_release.sh Linux \n")
+        script.write(" source setup_release.sh Linux -5\n")
         script.write("echo 'sourcing done' \n")
         script.write(" export MKL_NUM_THREADS=1 \n")
         script.write(" export NUMEXPR_NUM_THREADS=1 \n")
@@ -56,7 +56,7 @@ def process_indiv(dbName, dbDir, dbExtens, outDir, confname, config, ibatch, npr
     script.close()
     if batch:
         os.system("sh "+scriptName)
-
+        print('gone')
 
 def prepareOut(dbName, confname, ibatch):
     """                                                                                        
@@ -84,12 +84,85 @@ def prepareOut(dbName, confname, ibatch):
     return dirScript, name_id, log, cwd
 
 
+def config_sn(zmin, zmax, zstep, 
+              x1_type='unique',x1_min=-2.0,x1_max=2.0,
+              color_type='unique',color_min=0.2,color_max=0.4,
+              z_type='random',daymax_type='random',daymax_step=2,
+              nsn_factor=100,nsn_absolute=pd.DataFrame(),typeSN='faintSN'):
+
+    r = []
+    for z in np.arange(zmin, zmax, zstep):
+        z = np.round(z, 2)
+        z_min = z
+        z_max = z+np.round(zstep, 2)
+        idx = np.abs(nsn_absolute['z']-z_max)<1.e-5
+        nsn_abs = nsn_absolute[idx]['nsn_absolute'].to_list()[0]
+
+        r.append((x1_type, x1_min, x1_max, color_type, color_min, color_max, z_type,
+                  z_min, z_max, zstep, daymax_type, daymax_step, nsn_factor, nsn_abs, typeSN))
+
+    res = pd.DataFrame(r, columns=['x1_type', 'x1_min', 'x1_max',
+                                   'color_type', 'color_min', 'color_max',
+                                   'z_type', 'z_min', 'z_max', 'z_step',
+                                   'daymax_type', 'daymax_step', 'nsn_factor', 'nsn_absolute',
+                                   'confName'])
+
+    return res
+
+
+
+
 def config_rec():
 
     zmin = 0.0
     zmax = 1.2
     zstep = 0.05
 
+
+    zvals = np.arange(zmin, zmax+zstep, zstep)
+    nsn_abs = [-1]*len(zvals)
+    
+    df = pd.DataFrame(zvals.tolist(), columns=['z'])
+    df['nsn_absolute'] = nsn_abs
+
+
+    faintSN = config_sn(zmin, zmax=1.0, zstep=zstep, 
+                        x1_type='unique',x1_min=-2.0,x1_max=2.0,
+                        color_type='unique',color_min=0.2,color_max=0.4, 
+                        z_type='random',daymax_type='random',daymax_step=2,
+                        nsn_factor=100,nsn_absolute=df,typeSN='faintSN')
+
+    mediumSN = config_sn(zmin, zmax, zstep, 
+                         x1_type='unique',x1_min=0.0,x1_max=0.3,
+                         color_type='unique',color_min=0.0,color_max=0.2, 
+                         z_type='random',daymax_type='random',daymax_step=2,
+                         nsn_factor=100,nsn_absolute=df,typeSN='mediumSN')
+
+    brightSN = config_sn(zmin, zmax, zstep, 
+                         x1_type='unique',x1_min=2.0,x1_max=0.3,
+                         color_type='unique',color_min=-0.2,color_max=-0.2, 
+                         z_type='random',daymax_type='random',daymax_step=2,
+                         nsn_factor=100,nsn_absolute=df,typeSN='brightSN')
+
+    df['nsn_absolute'] = 1000
+    ik = df['z']> 0.5
+    df.loc[ik,'nsn_absolute'] = 2000
+
+    allSN = config_sn(zmin, zmax, zstep, 
+                      x1_type='random',x1_min=-3.0,x1_max=3.0,
+                      color_type='random',color_min=-0.3,color_max=0.3, 
+                      z_type='random',daymax_type='random',daymax_step=2,
+                      nsn_factor=100,nsn_absolute=df,typeSN='allSN')
+
+    df_all = pd.DataFrame()
+    df_all = pd.concat((df_all, faintSN))
+    df_all = pd.concat((df_all, mediumSN))
+    df_all = pd.concat((df_all, brightSN))
+    df_all = pd.concat((df_all, allSN))
+
+
+    return df_all.to_records(index=False)
+    """
     r = []
 
     x1_type = 'unique'
@@ -151,6 +224,7 @@ def config_rec():
                                        'z_type', 'z_min', 'z_max', 'z_step',
                                        'daymax_type', 'daymax_step', 'nsn_factor', 'nsn_absolute',
                                        'confName'])
+    """
 
     return res
 
@@ -218,7 +292,7 @@ parser.add_option('--batch', type=int, default=1,
 parser.add_option('--nproc', type=int, default=8,
                   help='number of proc [%default]')
 parser.add_option('--snTypes', type=str,
-                  default='faintSN,allSN', help='SN types to process [%default]')
+                  default='faintSN,mediumSN,brightSN,allSN', help='SN types to process [%default]')
 
 opts, args = parser.parse_args()
 
