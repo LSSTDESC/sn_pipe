@@ -40,7 +40,7 @@ def process(dbName, prodids, simuDir, outDir, num, nproc=8, batch=True, snrmin=5
     if batch:
         script.write(" cd " + cwd + "\n")
         script.write(" echo 'sourcing setups' \n")
-        script.write(" source setup_release.sh Linux \n")
+        script.write(" source setup_release.sh Linux -5\n")
         script.write("echo 'sourcing done' \n")
 
     # need this to limit the number of multithread
