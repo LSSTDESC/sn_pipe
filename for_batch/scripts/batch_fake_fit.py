@@ -226,7 +226,7 @@ parser.add_option("--snrmin", type=float, default=1.,
                   help="min snr for LC points fit[%default]")
 parser.add_option("--nproc", type=int, default=8,
                   help="number of proc to use[%default]")
-parser.add_option("--snTypes", type='str', default='faintSN,allSN',
+parser.add_option("--snTypes", type='str', default='faintSN,mediumSN,brightSN,allSN',
                   help="tag for production [%default]")
 parser.add_option("--mbcov_estimate", type=int, default=0,
                   help="to estimate covmb[%default]")
