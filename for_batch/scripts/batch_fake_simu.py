@@ -5,9 +5,9 @@ import numpy as np
 import itertools
 
 
-def process(dbName, dbDir, dbExtens, outDir, nproc=8, batch=True, snTypes=['faintSN', 'allSN']):
+def process(dbName, dbDir, dbExtens, outDir, nproc=8, batch=True, snTypes=['faintSN', 'allSN'],nabs=dict(zip(['faintSN', 'allSN'],[-1,-1])),nsnfactor=dict(zip(['faintSN', 'allSN'],[100,100]))):
     # get config for the run
-    config = config_rec()
+    config = config_rec(nabs,nsnfactor)
 
     #confNames = ['faintSN','allSN']
     #confNames = ['faintSN']
@@ -112,7 +112,7 @@ def config_sn(zmin, zmax, zstep,
 
 
 
-def config_rec():
+def config_rec(nabs,nsnfactor):
 
     zmin = 0.0
     zmax = 1.2
@@ -123,42 +123,57 @@ def config_rec():
     nsn_abs = [-1]*len(zvals)
     
     df = pd.DataFrame(zvals.tolist(), columns=['z'])
-    df['nsn_absolute'] = nsn_abs
+
+    if 'faintSN'  in nabs.keys():
+        df['nsn_absolute'] = nabs['faintSN']
 
 
-    faintSN = config_sn(zmin, zmax=1.0, zstep=zstep, 
-                        x1_type='unique',x1_min=-2.0,x1_max=2.0,
-                        color_type='unique',color_min=0.2,color_max=0.4, 
-                        z_type='random',daymax_type='random',daymax_step=2,
-                        nsn_factor=100,nsn_absolute=df,typeSN='faintSN')
+        faintSN = config_sn(zmin, zmax=1.0, zstep=zstep, 
+                            x1_type='unique',x1_min=-2.0,x1_max=2.0,
+                            color_type='unique',color_min=0.2,color_max=0.4, 
+                            z_type='random',daymax_type='random',daymax_step=2,
+                            nsn_factor=nsnfactor('faintSN'),nsn_absolute=df,typeSN='faintSN')
 
-    mediumSN = config_sn(zmin, zmax, zstep, 
-                         x1_type='unique',x1_min=0.0,x1_max=0.3,
-                         color_type='unique',color_min=0.0,color_max=0.2, 
-                         z_type='random',daymax_type='random',daymax_step=2,
-                         nsn_factor=100,nsn_absolute=df,typeSN='mediumSN')
+    if 'mediumSN'  in nabs.keys():
 
-    brightSN = config_sn(zmin, zmax, zstep, 
-                         x1_type='unique',x1_min=2.0,x1_max=0.3,
-                         color_type='unique',color_min=-0.2,color_max=-0.2, 
-                         z_type='random',daymax_type='random',daymax_step=2,
-                         nsn_factor=100,nsn_absolute=df,typeSN='brightSN')
+        df['nsn_absolute'] = nabs['mediumSN']
+        mediumSN = config_sn(zmin, zmax, zstep, 
+                             x1_type='unique',x1_min=0.0,x1_max=0.3,
+                             color_type='unique',color_min=0.0,color_max=0.2, 
+                             z_type='random',daymax_type='random',daymax_step=2,
+                             nsn_factor=nsnfactor['mediumSN'],nsn_absolute=df,typeSN='mediumSN')
 
-    df['nsn_absolute'] = 1000
-    ik = df['z']> 0.5
-    df.loc[ik,'nsn_absolute'] = 2000
+    if 'mediumSN'  in nabs.keys():
+        df['nsn_absolute'] = nabs['brightSN']
+        brightSN = config_sn(zmin, zmax, zstep, 
+                             x1_type='unique',x1_min=2.0,x1_max=0.3,
+                             color_type='unique',color_min=-0.2,color_max=-0.2, 
+                             z_type='random',daymax_type='random',daymax_step=2,
+                             nsn_factor=nsnfactor['brightSN'],nsn_absolute=df,typeSN='brightSN')
 
-    allSN = config_sn(zmin, zmax, zstep, 
-                      x1_type='random',x1_min=-3.0,x1_max=3.0,
-                      color_type='random',color_min=-0.3,color_max=0.3, 
-                      z_type='random',daymax_type='random',daymax_step=2,
-                      nsn_factor=100,nsn_absolute=df,typeSN='allSN')
+    
+    if 'allSN'  in nabs.keys():
+
+        df['nsn_absolute'] = nabs['allSN']
+        ik = df['z']> 0.5
+        if nabs['allSN']>0:
+            df.loc[ik,'nsn_absolute'] = 2*nabs['allSN']
+
+        allSN = config_sn(zmin, zmax, zstep, 
+                          x1_type='random',x1_min=-3.0,x1_max=3.0,
+                          color_type='random',color_min=-0.3,color_max=0.3, 
+                          z_type='random',daymax_type='random',daymax_step=2,
+                          nsn_factor=nsnfactor['allSN'],nsn_absolute=df,typeSN='allSN')
 
     df_all = pd.DataFrame()
-    df_all = pd.concat((df_all, faintSN))
-    df_all = pd.concat((df_all, mediumSN))
-    df_all = pd.concat((df_all, brightSN))
-    df_all = pd.concat((df_all, allSN))
+    if 'faintSN'  in nabs.keys():
+        df_all = pd.concat((df_all, faintSN))
+    if 'mediumSN'  in nabs.keys():
+        df_all = pd.concat((df_all, mediumSN))
+    if 'brightSN'  in nabs.keys():
+        df_all = pd.concat((df_all, brightSN))
+    if 'allSN'  in nabs.keys():
+        df_all = pd.concat((df_all, allSN))
 
 
     return df_all.to_records(index=False)
@@ -293,12 +308,32 @@ parser.add_option('--nproc', type=int, default=8,
                   help='number of proc [%default]')
 parser.add_option('--snTypes', type=str,
                   default='faintSN,mediumSN,brightSN,allSN', help='SN types to process [%default]')
+parser.add_option('--nabs', type=str,
+                  default='-1,-1,-1,2000',help='absolute number for production [%default]')
+parser.add_option('--nsnfactor', type=str,
+                  default='100,100,100,100',help='factor for nsn production [%default]')
+
 
 opts, args = parser.parse_args()
 
 print('Start processing...')
 
 snTypes = opts.snTypes.split(',')
+nabs = list(map(int,opts.nabs.split(',')))
+nsnfactor = list(map(int,opts.nsnfactor.split(',')))
 
+if len(snTypes) != len(nabs):
+    print('problem - check snTypes and nabs')
+
+if len(snTypes) != len(nsnfactor):
+    print('problem - check snTypes and nsnfactor')
+
+assert(len(snTypes) == len(nabs))
+assert(len(snTypes) == len(nsnfactor))
+
+nabs = dict(zip(snTypes,nabs))
+nsnfactor = dict(zip(snTypes,nsnfactor))
+
+print('booo',nabs,nsnfactor)
 process(opts.dbName, opts.dbDir, opts.dbExtens,
-        opts.outDir, opts.nproc, opts.batch, snTypes)
+        opts.outDir, opts.nproc, opts.batch, snTypes,nabs,nsnfactor)
