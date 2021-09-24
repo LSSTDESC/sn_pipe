@@ -266,7 +266,7 @@ def cmd(dbName, dbDir, dbExtens, config, outDir, ibatch, iconfig, nproc):
     cmd += ' --OutputSimu_directory {}'.format(outputDir)
     cmd += ' --SN_minRFphaseQual -15.'
     cmd += ' --SN_maxRFphaseQual 30.'
-    cmd += ' --SN_ebvofMW 0'
+    cmd += ' --SN_ebvofMW 0.01'
     cmd += ' --Pixelisation_nside 64'
 
     # create outputDir here
