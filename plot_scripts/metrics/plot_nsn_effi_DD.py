@@ -21,14 +21,22 @@ def plotEffiRate(data, healpixID):
 
     sel = data[idx]
 
-    fig, ax = plt.subplots(figsize=(12, 6))
-
+    fig, ax = plt.subplots(figsize=(12, 10))
+    fig.subplots_adjust(top=0.85)
     seasons = np.unique(sel['season'])
     idx = seasons <= 10
+    lls = ['solid', 'dotted', 'dashed']*3
+    lls.append('dashdot')
+    mm = ['o', 'v', 's']
+    mm += ['s', 'o', 'v']
+    mm += ['v', 's', 'v']
+    mm.append('o')
+    lsb = dict(zip(range(10), lls))
+    mmb = dict(zip(range(10), mm))
     for season in seasons[idx]:
 
         pp.plotEffi_indiv(sel, ax, healpixID, season, 'effi', 'effi_err',
-                          'Observing Efficiencies', ls='-', label='season {}'.format(season))
+                          'Observing Efficiencies', ls=lsb[season-1], label='season {}'.format(season), marker=mmb[season-1])
 
     ax.set_xlabel('z')
     ax.set_ylabel('Observing Efficiency')
@@ -43,7 +51,7 @@ def plotEffiRate(data, healpixID):
     axb.plot(zvals, rate(zvals), color='k', ls='dashed')
     axb.set_ylabel('SN Rate')
     ax.legend(loc='upper center', bbox_to_anchor=(
-        0.5, 1.15), ncol=5, frameon=False, fontsize=14)
+        0.5, 1.20), ncol=4, frameon=False)
 
 
 def plotCumul(data, healpixID):
@@ -59,12 +67,21 @@ def plotCumul(data, healpixID):
 
     """
 
+    lls = ['solid', 'dotted', 'dashed']*3
+    lls.append('dashdot')
+    mm = ['o', 'v', 's']
+    mm += ['s', 'o', 'v']
+    mm += ['v', 's', 'v']
+    mm.append('o')
+    lsb = dict(zip(range(10), lls))
+    mmb = dict(zip(range(10), mm))
+
     idx = data['healpixID'] == healpixID
 
     sel = data[idx]
 
-    fig, ax = plt.subplots(figsize=(12, 6))
-
+    fig, ax = plt.subplots(figsize=(12, 10))
+    fig.subplots_adjust(top=0.85)
     seasons = np.unique(sel['season'])
     idx = seasons <= 10
 
@@ -73,17 +90,17 @@ def plotCumul(data, healpixID):
     for season in seasons[idx]:
 
         pp.plotCumul(sel, ax, healpixID, season,
-                     label='season {}'.format(season))
+                     label='season {}'.format(season), ls=lsb[season-1], marker=mm[season-1])
 
     ax.set_xlabel('z')
     ax.set_ylabel('Normalised Cumulative $\mathrm{N_{SN}}$')
     ax.set_xlim([0.01, 0.7])
-    ax.set_ylim([0.0, None])
+    ax.set_ylim([0.0, 1.])
     ax.grid()
     ax.plot(zvals, [0.95]*len(zvals), color='k', ls='dashed')
-    ax.text(0.2, 0.96, '95th percentile', fontsize=15)
+    ax.text(0.2, 0.96, '95th percentile')
     ax.legend(loc='upper center', bbox_to_anchor=(
-        0.5, 1.15), ncol=5, frameon=False, fontsize=14)
+        0.5, 1.20), ncol=4, frameon=False)
 
 
 def plotNSN(data, healpixID):
@@ -98,13 +115,20 @@ def plotNSN(data, healpixID):
       healpix id
 
     """
-
+    lls = ['solid', 'dotted', 'dashed']*3
+    lls.append('dashdot')
+    mm = ['o', 'v', 's']
+    mm += ['s', 'o', 'v']
+    mm += ['v', 's', 'v']
+    mm.append('o')
+    lsb = dict(zip(range(10), lls))
+    mmb = dict(zip(range(10), mm))
     idx = data['healpixID'] == healpixID
 
     sel = data[idx]
 
-    fig, ax = plt.subplots(figsize=(12, 6))
-
+    fig, ax = plt.subplots(figsize=(12, 10))
+    fig.subplots_adjust(top=0.85)
     seasons = np.unique(sel['season'])
     idx = seasons <= 10
 
@@ -113,7 +137,7 @@ def plotNSN(data, healpixID):
     for season in seasons[idx]:
 
         pp.plotNSN(sel, ax, healpixID, season,
-                   label='season {}'.format(season))
+                   label='season {}'.format(season), ls=lsb[season-1], marker=mm[season-1])
 
     ax.set_xlabel('z')
     ax.set_ylabel('$\mathrm{N_{SN} (z <)}$ ')
@@ -122,7 +146,25 @@ def plotNSN(data, healpixID):
     ax.grid()
 
     ax.legend(loc='upper center', bbox_to_anchor=(
-        0.5, 1.15), ncol=5, frameon=False, fontsize=14)
+        0.5, 1.20), ncol=4, frameon=False)
+
+    """
+    cell_text = []
+    rob = []
+    columns = []
+    for key, val in ro.items():
+        rob.append(val)
+        columns.append(key)
+    cell_text.append(rob)
+
+    rows = ['NSN']
+
+    the_table = plt.table(cellText=cell_text,
+                          rowLabels=rows,
+                          # rowColours=colors,
+                          colLabels=columns,
+                          loc='center')
+    """
 
 
 parser = OptionParser()
