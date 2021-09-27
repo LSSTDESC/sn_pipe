@@ -135,9 +135,12 @@ def plotAllBinned(metricTot, forPlot=pd.DataFrame(), xp='cadence', yp='nsn_med_f
     sel = metricTot[idx]
     # plt.plot(sel['cadence'], sel['nsn_med_faint'], 'ko')
     print(sel[['cadence', 'nsn_med_faint']])
-    fig, ax = plt.subplots(figsize=(10, 7))
-
-    for dbName in np.unique(sel['dbName']):
+    fig, ax = plt.subplots(figsize=(10, 10))
+    fig.subplots_adjust(top=0.85)
+    dbNames = np.unique(sel['dbName'])
+    lsb = dict(zip(dbNames, ['solid', 'dashed', 'dotted',
+               'dashdot', (0, (5, 1)), (0, (3, 10, 1, 10)), (0, (5, 10))]))
+    for dbName in dbNames:
         ij = sel['dbName'] == dbName
         selb = sel[ij]
         ic = forPlot['dbName'] == dbName
@@ -150,7 +153,7 @@ def plotAllBinned(metricTot, forPlot=pd.DataFrame(), xp='cadence', yp='nsn_med_f
         if name == 'ddf_dither0.00':
             name = name.split('_')[1]
         plotBinned(ax, selb, xp=xp, yp=yp,
-                   label=name, color=color, yerrplot=yerrplot, bins=bins, therange=therange)
+                   label=name, color=color, yerrplot=yerrplot, bins=bins, therange=therange, ls=lsb[dbName])
 
     ax.grid()
     weight = 'normal'
@@ -158,7 +161,7 @@ def plotAllBinned(metricTot, forPlot=pd.DataFrame(), xp='cadence', yp='nsn_med_f
     ax.set_ylabel(legy, weight=weight)
     ax.legend(frameon=False)
     ax.legend(loc='upper center', bbox_to_anchor=(
-        0.5, 1.17), ncol=4, frameon=False, fontsize=17)
+        0.5, 1.2), ncol=3, frameon=False)
 
 
 def plotAllBinned_old(metricTot, xp='cadence', yp='nsn_med_faint', legx='cadence [day]', legy='$N_{SN} ^ {z < z_{complete}}$'):
@@ -207,7 +210,7 @@ def plotAllBinned_old(metricTot, xp='cadence', yp='nsn_med_faint', legx='cadence
     plt.show()
 
 
-def plotBinned(ax, metricTot, xp='cadence', yp='nsn_med_faint', label='', color='k', yerrplot=True, bins=8, therange=(0.5, 8.5)):
+def plotBinned(ax, metricTot, xp='cadence', yp='nsn_med_faint', label='', color='k', yerrplot=True, bins=8, therange=(0.5, 8.5), ls='solid'):
 
     x = metricTot[xp]
     y = metricTot[yp]
@@ -223,7 +226,7 @@ def plotBinned(ax, metricTot, xp='cadence', yp='nsn_med_faint', label='', color=
     if not yerrplot:
         yerr = None
     ax.errorbar(x=bin_centers, y=means, yerr=yerr,
-                marker='.', label=label, color=color, ls='-')
+                marker='.', label=label, color=color, ls=ls)
 
 
 def cadenceTable(metricTot):
@@ -587,15 +590,15 @@ metricTot_med = None
 metricTot = Summary(dirFile, 'NSN',
                     'DD', fieldNames, nside, forPlot, outName).data
 
-"""
+
 plotAllBinned(metricTot, forPlot)
 plotAllBinned(metricTot, forPlot, xp='gap_max', yp='cadence',
               legx='max inter-night gap [day]', legy='cadence [day]', bins=10, therange=(0.5, 60.5))
 # dumpcsv_pixels(metricTot)
 # plotAllBinned(metricTot, yp='zlim_faint', legy='$z_{complete}^{0.95}$')
-
+plt.tight_layout()
 plt.show()
-"""
+
 """
 cadenceTable(metricTot)
 """
