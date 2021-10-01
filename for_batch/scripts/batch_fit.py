@@ -50,7 +50,7 @@ def batch(scriptref, inputDir, prodids, dirOut, nproc,mbcov=0):
     script.write("#!/bin/env bash\n")
     script.write(" cd " + cwd + "\n")
     script.write(" echo 'sourcing setups' \n")
-    script.write(" source setup_release.sh Linux\n")
+    script.write(" source setup_release.sh Linux -5\n")
     script.write("echo 'sourcing done' \n")
     #need this to limit the number of multithread
     script.write(" export MKL_NUM_THREADS=1 \n")

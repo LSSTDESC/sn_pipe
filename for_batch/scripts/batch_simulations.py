@@ -188,7 +188,7 @@ class batchclass:
         script.write("#!/bin/env bash\n")
         script.write(" cd " + self.cwd + "\n")
         script.write(" echo 'sourcing setups' \n")
-        script.write(" source setup_release.sh Linux\n")
+        script.write(" source setup_release.sh Linux -5\n")
         script.write("echo 'sourcing done' \n")
 
         cmd_ = self.batch_cmd(proc, name_id)
