@@ -116,7 +116,7 @@ def config_rec(nabs,nsnfactor):
 
     zmin = 0.0
     zmax = 1.2
-    zstep = 0.05
+    zstep = 0.02
 
 
     zvals = np.arange(zmin, zmax+zstep, zstep)
@@ -132,7 +132,7 @@ def config_rec(nabs,nsnfactor):
                             x1_type='unique',x1_min=-2.0,x1_max=2.0,
                             color_type='unique',color_min=0.2,color_max=0.4, 
                             z_type='random',daymax_type='random',daymax_step=2,
-                            nsn_factor=nsnfactor('faintSN'),nsn_absolute=df,typeSN='faintSN')
+                            nsn_factor=nsnfactor['faintSN'],nsn_absolute=df,typeSN='faintSN')
 
     if 'mediumSN'  in nabs.keys():
 
@@ -307,11 +307,11 @@ parser.add_option('--batch', type=int, default=1,
 parser.add_option('--nproc', type=int, default=8,
                   help='number of proc [%default]')
 parser.add_option('--snTypes', type=str,
-                  default='faintSN,mediumSN,brightSN,allSN', help='SN types to process [%default]')
+                  default='faintSN,allSN', help='SN types to process [%default]')
 parser.add_option('--nabs', type=str,
-                  default='-1,-1,-1,2000',help='absolute number for production [%default]')
+                  default='-1,1500',help='absolute number for production [%default]')
 parser.add_option('--nsnfactor', type=str,
-                  default='100,100,100,100',help='factor for nsn production [%default]')
+                  default='100,100',help='factor for nsn production [%default]')
 
 
 opts, args = parser.parse_args()
