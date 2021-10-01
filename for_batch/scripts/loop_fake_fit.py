@@ -25,4 +25,4 @@ for dbName in dbNames:
     w_ += ' --outDir {}'.format(outDir)
     w_ += ' --snTypes {}'.format(snTypes)
     print(w_)
-    #os.system(w_)
+    os.system(w_)
