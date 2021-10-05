@@ -5,9 +5,9 @@ import numpy as np
 import itertools
 
 
-def process(dbName, dbDir, dbExtens, outDir, nproc=8, batch=True, snTypes=['faintSN', 'allSN'],nabs=dict(zip(['faintSN', 'allSN'],[-1,-1])),nsnfactor=dict(zip(['faintSN', 'allSN'],[100,100]))):
+def process(dbName, dbDir, dbExtens, outDir, nproc=8, batch=True, snTypes=['faintSN', 'allSN'],nabs=dict(zip(['faintSN', 'allSN'],[-1,-1])),nsnfactor=dict(zip(['faintSN', 'allSN'],[100,100])),x1sigma=0,colorsigma=0):
     # get config for the run
-    config = config_rec(nabs,nsnfactor)
+    config = config_rec(nabs,nsnfactor,x1sigma,colorsigma)
 
     #confNames = ['faintSN','allSN']
     #confNames = ['faintSN']
@@ -55,7 +55,7 @@ def process_indiv(dbName, dbDir, dbExtens, outDir, confname, config, ibatch, npr
         script.write("EOF" + "\n")
     script.close()
     if batch:
-        os.system("sh "+scriptName)
+        #os.system("sh "+scriptName)
         print('gone')
 
 def prepareOut(dbName, confname, ibatch):
@@ -88,7 +88,8 @@ def config_sn(zmin, zmax, zstep,
               x1_type='unique',x1_min=-2.0,x1_max=2.0,
               color_type='unique',color_min=0.2,color_max=0.4,
               z_type='random',daymax_type='random',daymax_step=2,
-              nsn_factor=100,nsn_absolute=pd.DataFrame(),typeSN='faintSN'):
+              nsn_factor=100,nsn_absolute=pd.DataFrame(),typeSN='faintSN',
+              x1sigma=0,colorsigma=0):
 
     r = []
     for z in np.arange(zmin, zmax, zstep):
@@ -99,20 +100,20 @@ def config_sn(zmin, zmax, zstep,
         nsn_abs = nsn_absolute[idx]['nsn_absolute'].to_list()[0]
 
         r.append((x1_type, x1_min, x1_max, color_type, color_min, color_max, z_type,
-                  z_min, z_max, zstep, daymax_type, daymax_step, nsn_factor, nsn_abs, typeSN))
+                  z_min, z_max, zstep, daymax_type, daymax_step, nsn_factor, nsn_abs, typeSN,x1sigma,colorsigma))
 
     res = pd.DataFrame(r, columns=['x1_type', 'x1_min', 'x1_max',
                                    'color_type', 'color_min', 'color_max',
                                    'z_type', 'z_min', 'z_max', 'z_step',
                                    'daymax_type', 'daymax_step', 'nsn_factor', 'nsn_absolute',
-                                   'confName'])
+                                   'confName','x1sigma','colorsigma'])
 
     return res
 
 
 
 
-def config_rec(nabs,nsnfactor):
+def config_rec(nabs,nsnfactor,x1sigma,colorsigma):
 
     zmin = 0.0
     zmax = 1.2
@@ -132,7 +133,8 @@ def config_rec(nabs,nsnfactor):
                             x1_type='unique',x1_min=-2.0,x1_max=2.0,
                             color_type='unique',color_min=0.2,color_max=0.4, 
                             z_type='random',daymax_type='random',daymax_step=2,
-                            nsn_factor=nsnfactor['faintSN'],nsn_absolute=df,typeSN='faintSN')
+                            nsn_factor=nsnfactor['faintSN'],nsn_absolute=df,typeSN='faintSN',
+                            x1sigma=x1sigma,colorsigma=colorsigma)
 
     if 'mediumSN'  in nabs.keys():
 
@@ -141,7 +143,8 @@ def config_rec(nabs,nsnfactor):
                              x1_type='unique',x1_min=0.0,x1_max=0.3,
                              color_type='unique',color_min=0.0,color_max=0.2, 
                              z_type='random',daymax_type='random',daymax_step=2,
-                             nsn_factor=nsnfactor['mediumSN'],nsn_absolute=df,typeSN='mediumSN')
+                             nsn_factor=nsnfactor['mediumSN'],nsn_absolute=df,typeSN='mediumSN',
+                             x1sigma=x1sigma,colorsigma=colorsigma)
 
     if 'mediumSN'  in nabs.keys():
         df['nsn_absolute'] = nabs['brightSN']
@@ -149,7 +152,8 @@ def config_rec(nabs,nsnfactor):
                              x1_type='unique',x1_min=2.0,x1_max=0.3,
                              color_type='unique',color_min=-0.2,color_max=-0.2, 
                              z_type='random',daymax_type='random',daymax_step=2,
-                             nsn_factor=nsnfactor['brightSN'],nsn_absolute=df,typeSN='brightSN')
+                             nsn_factor=nsnfactor['brightSN'],nsn_absolute=df,typeSN='brightSN',
+                             x1sigma=x1sigma,colorsigma=colorsigma)
 
     
     if 'allSN'  in nabs.keys():
@@ -163,7 +167,8 @@ def config_rec(nabs,nsnfactor):
                           x1_type='random',x1_min=-3.0,x1_max=3.0,
                           color_type='random',color_min=-0.3,color_max=0.3, 
                           z_type='random',daymax_type='random',daymax_step=2,
-                          nsn_factor=nsnfactor['allSN'],nsn_absolute=df,typeSN='allSN')
+                          nsn_factor=nsnfactor['allSN'],nsn_absolute=df,typeSN='allSN',
+                          x1sigma=x1sigma,colorsigma=colorsigma)
 
     df_all = pd.DataFrame()
     if 'faintSN'  in nabs.keys():
@@ -283,6 +288,8 @@ def cmd(dbName, dbDir, dbExtens, config, outDir, ibatch, iconfig, nproc):
     cmd += ' --SN_maxRFphaseQual 30.'
     cmd += ' --SN_ebvofMW 0.01'
     cmd += ' --Pixelisation_nside 64'
+    cmd += ' --SN_modelPar_x1sigma {}'.format(config['x1sigma'])
+    cmd += ' --SN_modelPar_colorsigma {}'.format(config['colorsigma'])
 
     # create outputDir here
     if not os.path.isdir(outputDir):
@@ -312,7 +319,8 @@ parser.add_option('--nabs', type=str,
                   default='-1,1500',help='absolute number for production [%default]')
 parser.add_option('--nsnfactor', type=str,
                   default='100,100',help='factor for nsn production [%default]')
-
+parser.add_option("--x1sigma", type=int, default=0,help="shift of x1 parameter distribution[%default]")
+parser.add_option("--colorsigma", type=int, default=0,help="shift of color parameter distribution[%default]")
 
 opts, args = parser.parse_args()
 
@@ -333,7 +341,9 @@ assert(len(snTypes) == len(nsnfactor))
 
 nabs = dict(zip(snTypes,nabs))
 nsnfactor = dict(zip(snTypes,nsnfactor))
+x1sigma = opts.x1sigma
+colorsigma = opts.colorsigma
 
 print('booo',nabs,nsnfactor)
 process(opts.dbName, opts.dbDir, opts.dbExtens,
-        opts.outDir, opts.nproc, opts.batch, snTypes,nabs,nsnfactor)
+        opts.outDir, opts.nproc, opts.batch, snTypes,nabs,nsnfactor,x1sigma,colorsigma)
