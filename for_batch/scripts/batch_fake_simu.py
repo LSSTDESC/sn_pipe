@@ -55,7 +55,7 @@ def process_indiv(dbName, dbDir, dbExtens, outDir, confname, config, ibatch, npr
         script.write("EOF" + "\n")
     script.close()
     if batch:
-        #os.system("sh "+scriptName)
+        os.system("sh "+scriptName)
         print('gone')
 
 def prepareOut(dbName, confname, ibatch):
