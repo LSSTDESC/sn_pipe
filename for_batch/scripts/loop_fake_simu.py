@@ -22,6 +22,15 @@ colorsigma = opts.colorsigma
 
 script = 'python for_batch/scripts/batch_fake_simu.py'
 
+nabs_ref = dict(zip(['faintSN','allSN'],[-1,1500]))
+nsnfactor_ref = dict(zip(['faintSN','allSN'],[100,100]))
+
+sntest = snTypes.split(',')
+print('aooo',sntest,nabs_ref)
+nabs = ','.join(['{}'.format(nabs_ref[kk]) for kk in sntest])
+nsnfactor = ','.join(['{}'.format(nsnfactor_ref[kk]) for kk in sntest])
+
+
 for dbName in dbNames:
     w_ = script
     w_ += ' --dbName {}'.format(dbName)
@@ -30,5 +39,7 @@ for dbName in dbNames:
     w_ += ' --snTypes {}'.format(snTypes)
     w_ += ' --x1sigma {}'.format(x1sigma)
     w_ += ' --colorsigma {}'.format(colorsigma)
+    w_ += ' --nabs {}'.format(nabs)
+    w_ += ' --nsnfactor {}'.format(nsnfactor)
     print(w_)
     os.system(w_)
