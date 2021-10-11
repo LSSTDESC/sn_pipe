@@ -24,7 +24,8 @@ rate = opts.rate
 if not os.path.exists(movDir):
     os.mkdir(movDir)
 
-cmd = 'ffmpeg -v verbose -r {} -s 1920x1080 -f image2 -i {}/{}_%00d.{} -vcodec libx264 -crf 25  -pix_fmt yuv420p {}/{}.mp4 -y'.format(rate,figDir, prefix, extens, movDir, prefix)
+cmd = 'ffmpeg -v verbose -r {} -s 1920x1080 -f image2 -i {}/{}_%00d.{} -vcodec libx264 -crf 25  -pix_fmt yuv420p {}/{}.mp4 -y'.format(
+    rate, figDir, prefix, extens, movDir, prefix)
 
 print(cmd)
 
