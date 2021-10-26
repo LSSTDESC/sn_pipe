@@ -14,6 +14,7 @@ from metricWrapper import ObsRateMetricWrapper, NSNMetricWrapper
 from metricWrapper import NSNYMetricWrapper
 from metricWrapper import SaturationMetricWrapper
 from metricWrapper import SLMetricWrapper
+from metricWrapper import SNRTimeMetricWrapper
 from sn_tools.sn_process import Process
 
 parser = OptionParser()
@@ -114,7 +115,7 @@ if opts.remove_dithering:
 outputDir = '{}/{}{}/{}'.format(opts.outDir,
                                 opts.dbName, nodither, opts.metric)
 
-healpixIDs =[]
+healpixIDs = []
 if opts.healpixIDs != '':
     healpixIDs = list(map(int, opts.healpixIDs.split(',')))
 
@@ -129,8 +130,8 @@ metricList = []
 
 # check whether the metric is available
 
-available_metrics = ['NSN', 'NSNY','Cadence', 'SL',
-                     'ObsRate', 'SNRr', 'SNRz', 'Saturation']
+available_metrics = ['NSN', 'NSNY', 'Cadence', 'SL',
+                     'ObsRate', 'SNRr', 'SNRz', 'Saturation', 'SNRTime']
 if opts.metric not in available_metrics:
     print('Sorry to inform you that', opts.metric, 'is not a metric available')
     print('list of possible metrics:')
@@ -144,7 +145,7 @@ else:
     season_int = list(map(int, season_int))
 
 metricname = opts.metric
-if 'SNR' in opts.metric:
+if 'SNR' in opts.metric and 'SNRTime' not in metricname:
     metricname = 'SNR'
 
 classname = '{}MetricWrapper'.format(metricname)
