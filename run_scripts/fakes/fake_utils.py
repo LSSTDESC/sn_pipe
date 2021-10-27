@@ -1,6 +1,7 @@
 from sn_tools.sn_cadence_tools import GenerateFakeObservations
 from sn_tools.sn_io import make_dict_from_optparse
 import numpy.lib.recfunctions as rf
+import numpy as np
 
 
 def add_option(parser, confDict):
@@ -109,8 +110,12 @@ class FakeObservations:
 
         mygen = GenerateFakeObservations(self.dd).Observations
         # add a night column
+        print('hhh', mygen.dtype)
 
-        mygen = rf.append_fields(mygen, 'night', list(range(1, len(mygen)+1)))
+        MJD_min = np.min(mygen['observationStartMJD'])
+        nights = list(map(int, mygen['observationStartMJD']-MJD_min+1))
+
+        mygen = rf.append_fields(mygen, 'night', nights)
         # add pixRA, pixDex, healpixID columns
         for vv in ['pixRA', 'pixDec', 'healpixID']:
             mygen = rf.append_fields(mygen, vv, [0.]*len(mygen))
