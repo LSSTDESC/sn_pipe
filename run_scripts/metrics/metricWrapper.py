@@ -388,8 +388,8 @@ class SNRTimeMetricWrapper(MetricWrapper):
             npixels=npixels,
             metadata=metadata, outDir=outDir, ebvofMW=ebvofMW)
 
-        zmin = 0.6
-        zmax = 0.8
+        zmin = 0.01
+        zmax = 1.1
         bands = 'grizy'
         fig_for_movie = False
         if fieldType == 'WFD':
@@ -425,11 +425,11 @@ class SNRTimeMetricWrapper(MetricWrapper):
             zlim_coeff = 0.85
 
         if fieldType == 'Fake':
-            n_bef = 0
-            n_aft = 0
-            snr_min = 0.
-            n_phase_min = 0
-            n_phase_max = 0
+            n_bef = 4
+            n_aft = 10
+            snr_min = 1.
+            n_phase_min = 1
+            n_phase_max = 1
             zlim_coeff = 0.95
 
         errmodrel = -1.
