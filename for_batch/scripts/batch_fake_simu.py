@@ -284,8 +284,12 @@ def cmd(dbName, dbDir, dbExtens, config, outDir, ibatch, iconfig, nproc):
     cmd += ' --Simulator_errorModel {}'.format(errmod)
     outputDir = '{}/{}'.format(outDir, dbName)
     cmd += ' --OutputSimu_directory {}'.format(outputDir)
+    """
     cmd += ' --SN_minRFphaseQual -15.'
     cmd += ' --SN_maxRFphaseQual 30.'
+    """
+    cmd += ' --SN_minRFphaseQual -10.'
+    cmd += ' --SN_maxRFphaseQual 25.'
     cmd += ' --SN_ebvofMW 0.01'
     cmd += ' --Pixelisation_nside 64'
     cmd += ' --SN_modelPar_x1sigma {}'.format(config['x1sigma'])
