@@ -65,6 +65,7 @@ if action == 'simulation':
 if action == 'fit':
     params['outDir'] = fitDir
     params['simuDir'] = simuDir
-    params['mbcov_estimate'] = 1
-    go(params,'for_batch/scripts/batch_fake_fit.py', ['dbName','outDir','simuDir','mbcov_estimate'])
+    params['mbcov_estimate'] = 0
+    params['snTypes'] = 'faintSN,allSN'
+    go(params,'for_batch/scripts/batch_fake_fit.py', ['dbName','outDir','simuDir','mbcov_estimate','snTypes'])
 
