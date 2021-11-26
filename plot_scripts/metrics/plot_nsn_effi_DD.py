@@ -33,8 +33,8 @@ def plotEffiRate(data, healpixID):
     mm.append('o')
     lsb = dict(zip(range(10), lls))
     mmb = dict(zip(range(10), mm))
-    for season in seasons[idx]:
-
+    # for season in seasons[idx]:
+    for season in [1, 6, 10]:
         pp.plotEffi_indiv(sel, ax, healpixID, season, 'effi', 'effi_err',
                           'Observing Efficiencies', ls=lsb[season-1], label='season {}'.format(season), marker=mmb[season-1])
 
@@ -87,9 +87,12 @@ def plotCumul(data, healpixID):
 
     zvals = np.arange(0.01, 0.71, 0.01)
 
-    for season in seasons[idx]:
+    seasons = [1, 6, 10]
+    shiftplot = dict(zip(seasons, [0., 0.1, 0.2]))
+    # for season in seasons[idx]:
+    for i, season in enumerate(seasons):
 
-        pp.plotCumul(sel, ax, healpixID, season,
+        pp.plotCumul(sel, ax, healpixID, season, shiftplot=shiftplot[season],
                      label='season {}'.format(season), ls=lsb[season-1], marker=mm[season-1])
 
     ax.set_xlabel('z')
@@ -133,10 +136,11 @@ def plotNSN(data, healpixID):
     idx = seasons <= 10
 
     zvals = np.arange(0.01, 0.71, 0.01)
-
-    for season in seasons[idx]:
-
-        pp.plotNSN(sel, ax, healpixID, season,
+    seasons = [1, 6, 10]
+    shiftplot = dict(zip(seasons, [0., 2., 4.]))
+    # for season in seasons[idx]:
+    for season in seasons:
+        pp.plotNSN(sel, ax, healpixID, season, shiftplot=shiftplot[season],
                    label='season {}'.format(season), ls=lsb[season-1], marker=mm[season-1])
 
     ax.set_xlabel('z')

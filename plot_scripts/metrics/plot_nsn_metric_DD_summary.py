@@ -226,7 +226,7 @@ def plotBinned(ax, metricTot, xp='cadence', yp='nsn_med_faint', label='', color=
     if not yerrplot:
         yerr = None
     ax.errorbar(x=bin_centers, y=means, yerr=yerr,
-                marker='.', label=label, color=color, ls=ls)
+                marker='.', label=label, color=color, ls=ls, linewidth=2)
 
 
 def cadenceTable(metricTot):
@@ -597,7 +597,7 @@ plotAllBinned(metricTot, forPlot, xp='gap_max', yp='cadence',
 # dumpcsv_pixels(metricTot)
 # plotAllBinned(metricTot, yp='zlim_faint', legy='$z_{complete}^{0.95}$')
 plt.tight_layout()
-plt.show()
+# plt.show()
 
 """
 cadenceTable(metricTot)
