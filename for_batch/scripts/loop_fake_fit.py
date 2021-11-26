@@ -1,7 +1,7 @@
 import os
 from optparse import OptionParser
 
-parser = OptionParser(description='perform cosmo fit')
+parser = OptionParser(description='perform LC fit')
 
 parser.add_option("--simuDir", type="str",default='/sps/lsst/users/gris/Fakes/Simu',help="simulation directory [%default]")
 parser.add_option("--outDir", type="str",default='/sps/lsst/users/gris/Fakes/Fit',help="output directory [%default]")
