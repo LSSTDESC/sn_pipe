@@ -251,7 +251,7 @@ def config_rec(nabs,nsnfactor,x1sigma,colorsigma):
 
 def cmd(dbName, dbDir, dbExtens, config, outDir, ibatch, iconfig, nproc):
 
-    errmod = 0
+    errmod = 1
     error_model = 'error_model'
     if not errmod:
         error_model = '{}_{}'.format(380.0, 800.0)
@@ -294,6 +294,7 @@ def cmd(dbName, dbDir, dbExtens, config, outDir, ibatch, iconfig, nproc):
     cmd += ' --Pixelisation_nside 64'
     cmd += ' --SN_modelPar_x1sigma {}'.format(config['x1sigma'])
     cmd += ' --SN_modelPar_colorsigma {}'.format(config['colorsigma'])
+    cmd += ' --Simulator_errorModel {}'.format(errmod)
 
     # create outputDir here
     if not os.path.isdir(outputDir):
