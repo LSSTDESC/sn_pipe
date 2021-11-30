@@ -16,7 +16,6 @@ opts, args = parser.parse_args()
 
 print('Start processing...', opts)
 
-plt.show()
 splot = SimuPlot(opts.fileDir, opts.dbName, opts.tagName)
 # plt.show()
 # get the simulation parameters
@@ -36,9 +35,10 @@ print(splot.simuPars)
 
 # plotting SN parameters
 splot.plotParameters()
-plt.show()
-# display LC loop
-splot.plotLoopLC(pause_time=10)
 
+# display LC loop
+#splot.plotLoopLC(pause_time=10)
+splot.plotLoopLC_errmod()
+plt.show()
 
 # splot.checkLC()
