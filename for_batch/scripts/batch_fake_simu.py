@@ -5,7 +5,7 @@ import numpy as np
 import itertools
 
 
-def process(dbName, dbDir, dbExtens, outDir, nproc=8, batch=True, snTypes=['faintSN', 'allSN'],nabs=dict(zip(['faintSN', 'allSN'],[-1,-1])),nsnfactor=dict(zip(['faintSN', 'allSN'],[100,100])),x1sigma=0,colorsigma=0):
+def process(dbName, dbDir, dbExtens, outDir, nproc=8, batch=True, snTypes=['faintSN', 'allSN'],nabs=dict(zip(['faintSN', 'allSN'],[-1,-1])),nsnfactor=dict(zip(['faintSN', 'allSN'],[100,100])),x1sigma=0,colorsigma=0,blue_cutoff=360.,red_cutoff=700.):
     # get config for the run
     config = config_rec(nabs,nsnfactor,x1sigma,colorsigma)
 
@@ -18,10 +18,10 @@ def process(dbName, dbDir, dbExtens, outDir, nproc=8, batch=True, snTypes=['fain
         spl = np.array_split(sel, np.min([1, len(sel)]))
         for ibatch, vv in enumerate(spl):
             process_indiv(dbName, dbDir, dbExtens, outDir,
-                          cf, vv, ibatch, nproc, batch)
+                          cf, vv, blue_cutoff,red_cutoff,ibatch, nproc, batch)
 
 
-def process_indiv(dbName, dbDir, dbExtens, outDir, confname, config, ibatch, nproc=8, batch=True):
+def process_indiv(dbName, dbDir, dbExtens, outDir, confname, config, blue_cutoff,red_cutoff,ibatch, nproc=8, batch=True):
 
     dirScript, name_id, log, cwd = prepareOut(
         dbName, confname, ibatch)
@@ -48,7 +48,7 @@ def process_indiv(dbName, dbDir, dbExtens, outDir, confname, config, ibatch, npr
 
 
     for iconf, val in enumerate(config):
-        cmd_ = cmd(dbName, dbDir, dbExtens, val, outDir, ibatch, iconf, nproc)
+        cmd_ = cmd(dbName, dbDir, dbExtens, val, outDir, ibatch, iconf, nproc,blue_cutoff,red_cutoff)
         script.write(cmd_+" \n")
 
     if batch:
@@ -249,12 +249,13 @@ def config_rec(nabs,nsnfactor,x1sigma,colorsigma):
     return res
 
 
-def cmd(dbName, dbDir, dbExtens, config, outDir, ibatch, iconfig, nproc):
+def cmd(dbName, dbDir, dbExtens, config, outDir, ibatch, iconfig, nproc, blue_cutoff,red_cutoff):
 
-    errmod = 1
+    errmod = 0
     error_model = 'error_model'
     if not errmod:
-        error_model = '{}_{}'.format(380.0, 800.0)
+        #error_model = '{}_{}'.format(blue_cutoff,red_cutoff)
+        error_model = 'bluecutoff_redcutoff'
 
     cmd = 'python run_scripts/simulation/run_simulation.py'
     cmd += ' --dbName {}'.format(dbName)
@@ -295,6 +296,8 @@ def cmd(dbName, dbDir, dbExtens, config, outDir, ibatch, iconfig, nproc):
     cmd += ' --SN_modelPar_x1sigma {}'.format(config['x1sigma'])
     cmd += ' --SN_modelPar_colorsigma {}'.format(config['colorsigma'])
     cmd += ' --Simulator_errorModel {}'.format(errmod)
+    cmd += ' --SN_blueCutoffi {}'.format(blue_cutoff)
+    cmd += ' --SN_redCutoffi {}'.format(red_cutoff)
 
     # create outputDir here
     if not os.path.isdir(outputDir):
@@ -326,6 +329,8 @@ parser.add_option('--nsnfactor', type=str,
                   default='100,100',help='factor for nsn production [%default]')
 parser.add_option("--x1sigma", type=int, default=0,help="shift of x1 parameter distribution[%default]")
 parser.add_option("--colorsigma", type=int, default=0,help="shift of color parameter distribution[%default]")
+parser.add_option("--blue_cutoff", type=float, default=360.,help="blue cutoff value - iband [%default]")
+parser.add_option("--red_cutoff", type=float, default=700.,help="redcutoff value - iband [%default]")
 
 opts, args = parser.parse_args()
 
@@ -348,7 +353,9 @@ nabs = dict(zip(snTypes,nabs))
 nsnfactor = dict(zip(snTypes,nsnfactor))
 x1sigma = opts.x1sigma
 colorsigma = opts.colorsigma
+blue_cutoff = opts.blue_cutoff
+red_cutoff = opts.red_cutoff
 
 print('booo',nabs,nsnfactor)
 process(opts.dbName, opts.dbDir, opts.dbExtens,
-        opts.outDir, opts.nproc, opts.batch, snTypes,nabs,nsnfactor,x1sigma,colorsigma)
+        opts.outDir, opts.nproc, opts.batch, snTypes,nabs,nsnfactor,x1sigma,colorsigma,blue_cutoff,red_cutoff)
