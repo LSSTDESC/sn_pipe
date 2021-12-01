@@ -60,12 +60,15 @@ if action == 'generation':
 if action == 'simulation':
     params['outDir'] = simuDir
     params['dbDir'] = genDir
-    go(params, 'for_batch/scripts/batch_fake_simu.py', ['dbName','outDir','dbDir'])
+    params['snTypes'] = 'allSN'
+    params['nabs'] = 1500
+    params['nsnfactor'] = 1
+    go(params, 'for_batch/scripts/batch_fake_simu.py', ['dbName','outDir','dbDir','snTypes','nabs','nsnfactor'])
 
 if action == 'fit':
     params['outDir'] = fitDir
     params['simuDir'] = simuDir
     params['mbcov_estimate'] = 0
-    params['snTypes'] = 'faintSN,allSN'
+    params['snTypes'] = 'allSN'
     go(params,'for_batch/scripts/batch_fake_fit.py', ['dbName','outDir','simuDir','mbcov_estimate','snTypes'])
 
