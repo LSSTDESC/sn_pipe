@@ -35,6 +35,8 @@ parser.add_option("--action", type="str",default='generation', help="action to p
 parser.add_option("--genDir", type="str",default='/sps/lsst/users/gris/Fake_Observations', help="output dir of observations[%default]")
 parser.add_option("--simuDir", type="str",default='/sps/lsst/users/gris/Fakes/Simu', help="output dir of simulations [%default]")
 parser.add_option("--fitDir", type="str",default='/sps/lsst/users/gris/Fakes/Fit', help="output dir of fits [%default]")
+parser.add_option("--x1sigma", type=int, default=0,help="shift of x1 parameter distribution[%default]")
+parser.add_option("--colorsigma", type=int, default=0,help="shift of color parameter distribution[%default]")
 
 opts, args = parser.parse_args()
 
@@ -43,7 +45,8 @@ action = opts.action
 genDir = opts.genDir
 simuDir = opts.simuDir
 fitDir = opts.fitDir
-
+x1sigma = opts.x1sigma
+colorsigma = opts.colorsigma
 
 #read config parameters
 
@@ -63,7 +66,9 @@ if action == 'simulation':
     params['snTypes'] = 'allSN'
     params['nabs'] = 1500
     params['nsnfactor'] = 1
-    go(params, 'for_batch/scripts/batch_fake_simu.py', ['dbName','outDir','dbDir','snTypes','nabs','nsnfactor'])
+    params['x1sigma'] = x1sigma
+    params['colorsigma'] = colorsigma
+    go(params, 'for_batch/scripts/batch_fake_simu.py', ['dbName','outDir','dbDir','snTypes','nabs','nsnfactor','x1sigma','colorsigma'])
 
 if action == 'fit':
     params['outDir'] = fitDir
