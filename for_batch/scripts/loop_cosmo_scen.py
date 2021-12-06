@@ -83,7 +83,7 @@ def process(row,batch,nproc,outDir,fileDir,Ny,fits_parameters):
     script.close()
 
     if batch:
-        #os.system("sh "+scriptName)
+        os.system("sh "+scriptName)
         print('go man')
 
 parser = OptionParser()
