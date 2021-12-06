@@ -10,7 +10,7 @@ configs = ['config_cosmoSN_universal_10.csv',
 
 outDir = '/sps/lsst/users/gris/fake/Fit_bias'
 
-scr = 'python loop_cosmo_scen.py --fileName'
+scr = 'python for_batch/scripts/loop_cosmo_scen.py --fileName'
 
 for conf in configs:
     cmd = '{} {}'.format(scr,conf)
