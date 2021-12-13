@@ -25,7 +25,7 @@ def process(dbName, prodid, simuDir, outDir, num, nproc=8, mode='batch', snrmin=
 
 def process(dbName, prodids, simuDir, outDir, num, nproc=8, batch=True, snrmin=5., tag='gg', mbcov=0):
 
-    dirScript, name_id, log, cwd = prepareOut(dbName, num, tag)
+    dirScript, name_id, log,errlog, cwd = prepareOut(dbName, num, tag)
     # qsub command
     #qsub = 'qsub -P P_lsst -l sps=1,ct=3:00:00,h_vmem=16G -j y -o {} -pe multicores {} <<EOF'.format(
     #    log, nproc)
@@ -96,8 +96,10 @@ def prepareOut(dbName, num, tag):
 
     name_id = 'fit_{}'.format(id)
     log = dirLog + '/'+name_id+'.log'
+    errlog = dirLog + '/'+name_id+'.err'
 
-    return dirScript, name_id, log, cwd
+
+    return dirScript, name_id, log, errlog, cwd
 
 
 def cmd(dbName, prodid, simuDir, outDir, nproc, snrmin, mbcov):
