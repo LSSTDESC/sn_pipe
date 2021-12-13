@@ -75,7 +75,8 @@ def process(row,batch,nproc,outDir,fileDir,Ny,fits_parameters):
     script = open(scriptName, "w")
     script.write("#!/bin/env bash\n")
     if batch:
-        script.write(qsub + "\n")
+        for key, vals in dict_batch.items():
+            script.write("#SBATCH {} {} \n".format(key,vals))
 
     if batch:
         script.write(" cd " + cwd + "\n")
