@@ -47,23 +47,36 @@ def prepareOut(tag):
 
     name_id = 'cosmofit_{}'.format(id)
     log = dirLog + '/'+name_id+'.log'
+    errlog = dirLog + '/'+name_id+'.err'
 
-    return dirScript, name_id, log, cwd
+    return dirScript, name_id, log, errlog, cwd
 
 def process(row,batch,nproc,outDir,fileDir,Ny,fits_parameters):
      
-    dirScript, name_id, log, cwd = prepareOut('{}_Ny_{}'.format(row['configName'],Ny))
+    dirScript, name_id, log, errlog, cwd = prepareOut('{}_Ny_{}'.format(row['configName'],Ny))
     # qsub command
-    qsub = 'qsub -P P_lsst -l sps=1,ct=3:00:00,h_vmem=16G -j y -o {} -pe multicores {} <<EOF'.format(
-        log, nproc)
+    #qsub = 'qsub -P P_lsst -l sps=1,ct=3:00:00,h_vmem=16G -j y -o {} -pe multicores {} <<EOF'.format(
+    #    log, nproc)
+
+    dict_batch = {}
+    dict_batch['--account'] = 'lsst'
+    dict_batch['-L'] = 'sps'
+    dict_batch['--time'] = '3:00:00'
+    dict_batch['--mem'] = '16G'
+    dict_batch['--output'] = log
+    #dict_batch['--cpus-per-task'] = str(nproc)                                                                    
+    dict_batch['-n'] = 8
+    dict_batch['--error'] = errlog
+    dict_batch['-p'] = 'hpc'
 
     scriptName = dirScript+'/'+name_id+'.sh'
 
     # fill the script
     script = open(scriptName, "w")
+    script.write("#!/bin/env bash\n")
     if batch:
         script.write(qsub + "\n")
-    script.write("#!/bin/env bash\n")
+
     if batch:
         script.write(" cd " + cwd + "\n")
         script.write(" echo 'sourcing setups' \n")
@@ -78,12 +91,11 @@ def process(row,batch,nproc,outDir,fileDir,Ny,fits_parameters):
 
     cmd_ = cmd(row,nproc,outDir,fileDir,Ny,fits_parameters)
     script.write(cmd_+ "\n")
-    if batch:
-        script.write("EOF" + "\n")
+    
     script.close()
 
     if batch:
-        os.system("sh "+scriptName)
+        os.system("sbatch "+scriptName)
         print('go man')
 
 parser = OptionParser()
