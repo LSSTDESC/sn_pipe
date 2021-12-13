@@ -27,16 +27,30 @@ def process(dbName, prodids, simuDir, outDir, num, nproc=8, batch=True, snrmin=5
 
     dirScript, name_id, log, cwd = prepareOut(dbName, num, tag)
     # qsub command
-    qsub = 'qsub -P P_lsst -l sps=1,ct=3:00:00,h_vmem=16G -j y -o {} -pe multicores {} <<EOF'.format(
-        log, nproc)
+    #qsub = 'qsub -P P_lsst -l sps=1,ct=3:00:00,h_vmem=16G -j y -o {} -pe multicores {} <<EOF'.format(
+    #    log, nproc)
+
+    dict_batch = {}
+    dict_batch['--account'] = 'lsst'
+    dict_batch['-L'] = 'sps'
+    dict_batch['--time'] = '3:00:00'
+    dict_batch['--mem'] = '16G'
+    dict_batch['--output'] = log
+    #dict_batch['--cpus-per-task'] = str(nproc)
+    dict_batch['-n'] = 8
+    dict_batch['--error'] = errlog
+    dict_batch['-p'] = 'hpc'
 
     scriptName = dirScript+'/'+name_id+'.sh'
 
     # fill the script
     script = open(scriptName, "w")
-    if batch:
-        script.write(qsub + "\n")
     script.write("#!/bin/env bash\n")
+    if batch:
+        #script.write(qsub + "\n")
+        for key, vals in dict_batch.items():
+            script.write("#SBATCH {} {} \n".format(key,vals))
+
     if batch:
         script.write(" cd " + cwd + "\n")
         script.write(" echo 'sourcing setups' \n")
@@ -53,11 +67,11 @@ def process(dbName, prodids, simuDir, outDir, num, nproc=8, batch=True, snrmin=5
         cmd_ = cmd(dbName, prodid, simuDir, outDir, nproc, snrmin, mbcov)
         script.write(cmd_+" \n")
 
-    if batch:
-        script.write("EOF" + "\n")
+    #if batch:
+    #    script.write("EOF" + "\n")
     script.close()
     if batch:
-        os.system("sh "+scriptName)
+        os.system("sbatch "+scriptName)
 
 
 def prepareOut(dbName, num, tag):

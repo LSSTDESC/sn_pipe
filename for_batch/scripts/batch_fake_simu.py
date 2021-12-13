@@ -23,19 +23,35 @@ def process(dbName, dbDir, dbExtens, outDir, nproc=8, batch=True, snTypes=['fain
 
 def process_indiv(dbName, dbDir, dbExtens, outDir, confname, config, blue_cutoff,red_cutoff,ibatch, nproc=8, batch=True):
 
-    dirScript, name_id, log, cwd = prepareOut(
+    dirScript, name_id, log, errlog, cwd = prepareOut(
         dbName, confname, ibatch)
     # qsub command
     qsub = 'qsub -P P_lsst -l sps=1,ct=3:00:00,h_vmem=16G -j y -o {} -pe multicores {} <<EOF'.format(
         log, nproc)
 
+    qsub = 'sbatch --account P_lsst -L sps --time 3:00:00 --mem 16G -output{} -cpus_per_task {} --error {} <<EOF'.format(log, nproc, errlog)
+
+    dict_batch = {}
+    dict_batch['--account'] = 'lsst'
+    dict_batch['-L'] = 'sps'
+    dict_batch['--time'] = '3:00:00'
+    dict_batch['--mem'] = '16G'
+    dict_batch['--output'] = log
+    #dict_batch['--cpus-per-task'] = str(nproc)
+    dict_batch['--nodes'] = 1
+    dict_batch['--error'] = errlog
+    dict_batch['-p'] = 'hpc'
+
     scriptName = dirScript+'/'+name_id+'.sh'
 
     # fill the script
     script = open(scriptName, "w")
-    if batch:
-        script.write(qsub + "\n")
     script.write("#!/bin/env bash\n")
+    if batch:
+        #script.write(qsub + "\n")
+        for key, vals in dict_batch.items():
+            script.write("#SBATCH {} {} \n".format(key,vals))
+
     if batch:
         script.write(" cd " + cwd + "\n")
         script.write(" echo 'sourcing setups' \n")
@@ -51,11 +67,9 @@ def process_indiv(dbName, dbDir, dbExtens, outDir, confname, config, blue_cutoff
         cmd_ = cmd(dbName, dbDir, dbExtens, val, outDir, ibatch, iconf, nproc,blue_cutoff,red_cutoff)
         script.write(cmd_+" \n")
 
-    if batch:
-        script.write("EOF" + "\n")
     script.close()
     if batch:
-        os.system("sh "+scriptName)
+        os.system("sbatch "+scriptName)
         print('gone')
 
 def prepareOut(dbName, confname, ibatch):
@@ -80,8 +94,9 @@ def prepareOut(dbName, confname, ibatch):
 
     name_id = 'simulation_{}'.format(id)
     log = dirLog + '/'+name_id+'.log'
+    errlog = dirLog + '/'+name_id+'.err'
 
-    return dirScript, name_id, log, cwd
+    return dirScript, name_id, log, errlog, cwd
 
 
 def config_sn(zmin, zmax, zstep, 
