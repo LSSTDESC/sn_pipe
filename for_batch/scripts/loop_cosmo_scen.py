@@ -67,7 +67,7 @@ def process(row,batch,nproc,outDir,fileDir,Ny,fits_parameters):
     #dict_batch['--cpus-per-task'] = str(nproc)                                                                    
     dict_batch['-n'] = 8
     dict_batch['--error'] = errlog
-    dict_batch['-p'] = 'hpc'
+    #dict_batch['-p'] = 'hpc'
 
     scriptName = dirScript+'/'+name_id+'.sh'
 
