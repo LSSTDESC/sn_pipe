@@ -2,7 +2,7 @@ import pandas as pd
 import os
 from optparse import OptionParser
 
-def cmd(row,nproc,outDir,fileDir,Ny,fit_parameters,scr='python sn_studies/sn_fom/fom.py'):
+def cmd(row,nproc,outDir,fileDir,Ny,fit_parameters,sigma_mu_photoz, sigma_mu_bias_x1_color,scr='python sn_studies/sn_fom/fom.py'):
     
     fparams = fit_parameters.split(',')
     fparams = '_'.join(ff for ff in fparams)
@@ -20,7 +20,9 @@ def cmd(row,nproc,outDir,fileDir,Ny,fit_parameters,scr='python sn_studies/sn_fom
     cmd_ += ' --fileDir {}'.format(fDir)
     cmd_ += ' --Ny {}'.format(Ny)
     cmd_ += ' --fit_parameters {}'.format(fit_parameters)
-
+    if sigma_mu_photoz != 'None':
+        cmd_ += ' --sigma_mu_photoz {}'.format(sigma_mu_photoz)
+    cmd_ += ' --sigma_mu_bias_x1_color {}'.format(sigma_mu_bias_x1_color)
     print(cmd_)
     return cmd_
 
@@ -51,7 +53,7 @@ def prepareOut(tag):
 
     return dirScript, name_id, log, errlog, cwd
 
-def process(row,batch,nproc,outDir,fileDir,Ny,fits_parameters):
+def process(row,batch,nproc,outDir,fileDir,Ny,fits_parameters,sigma_mu_photoz, sigma_mu_bias_x1_color):
      
     dirScript, name_id, log, errlog, cwd = prepareOut('{}_Ny_{}'.format(row['configName'],Ny))
     # qsub command
@@ -90,7 +92,7 @@ def process(row,batch,nproc,outDir,fileDir,Ny,fits_parameters):
     script.write(" export OMP_NUM_THREADS=1 \n")
     script.write(" export OPENBLAS_NUM_THREADS=1 \n")
 
-    cmd_ = cmd(row,nproc,outDir,fileDir,Ny,fits_parameters)
+    cmd_ = cmd(row,nproc,outDir,fileDir,Ny,fits_parameters,sigma_mu_photoz, sigma_mu_bias_x1_color)
     script.write(cmd_+ "\n")
     
     script.close()
@@ -114,12 +116,20 @@ parser.add_option("--nproc", type=int, default=8,
 parser.add_option("--Ny", type=int, default=20,help="y-band max visits at z=0.9 [%default]")
 parser.add_option("--fit_parameters", type=str, default='Om,w0',
                   help="parameters to fit [%default]")
+parser.add_option("--sigma_mu_photoz", type=str, default='',
+                  help="mu error from photoz [%default]")
+parser.add_option("--sigma_mu_bias_x1_color", type=str, default='sigma_mu_bias_x1_color_1_sigma',
+                  help="mu error bias from x1 and color n-sigma variation [%default]")
 
 opts, args = parser.parse_args()
 
 cosmo_scen = pd.read_csv(opts.fileName, delimiter=';', comment='#')
 
 for i, row in cosmo_scen.iterrows():
-    process(row,opts.batch,opts.nproc,opts.outDir,opts.fileDir,opts.Ny,opts.fit_parameters)
+    process(row,opts.batch,opts.nproc,
+            opts.outDir,opts.fileDir,opts.Ny,
+            opts.fit_parameters,
+            opts.sigma_mu_photoz,
+            opts.sigma_mu_bias_x1_color)
     
 # print(cosmo_scen)
