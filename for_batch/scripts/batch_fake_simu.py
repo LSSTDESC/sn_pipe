@@ -40,7 +40,7 @@ def process_indiv(dbName, dbDir, dbExtens, outDir, confname, config, blue_cutoff
     #dict_batch['--cpus-per-task'] = str(nproc)
     dict_batch['--nodes'] = 1
     dict_batch['--error'] = errlog
-    dict_batch['-p'] = 'hpc'
+    #dict_batch['-p'] = 'hpc'
 
     scriptName = dirScript+'/'+name_id+'.sh'
 
