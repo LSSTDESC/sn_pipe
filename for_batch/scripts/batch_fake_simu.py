@@ -15,7 +15,7 @@ def process(dbName, dbDir, dbExtens, outDir, nproc=8, batch=True, snTypes=['fain
     for cf in confNames:
         idx = config['confName'] == cf
         sel = config[idx]
-        spl = np.array_split(sel, np.min([1, len(sel)]))
+        spl = np.array_split(sel, np.min([3, len(sel)]))
         for ibatch, vv in enumerate(spl):
             process_indiv(dbName, dbDir, dbExtens, outDir,
                           cf, vv, blue_cutoff,red_cutoff,ibatch, nproc, batch)
