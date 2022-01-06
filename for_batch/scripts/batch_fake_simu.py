@@ -5,9 +5,9 @@ import numpy as np
 import itertools
 
 
-def process(dbName, dbDir, dbExtens, outDir, nproc=8, batch=True, snTypes=['faintSN', 'allSN'],nabs=dict(zip(['faintSN', 'allSN'],[-1,-1])),nsnfactor=dict(zip(['faintSN', 'allSN'],[100,100])),x1sigma=0,colorsigma=0,sigmaInt=0.0,blue_cutoff=360.,red_cutoff=700.):
+def process(dbName, dbDir, dbExtens, outDir, nproc=8, batch=True, snTypes=['faintSN', 'allSN'],nabs=dict(zip(['faintSN', 'allSN'],[-1,-1])),nsnfactor=dict(zip(['faintSN', 'allSN'],[100,100])),x1sigma=0,colorsigma=0,mbsigma=0,blue_cutoff=360.,red_cutoff=700.):
     # get config for the run
-    config = config_rec(nabs,nsnfactor,x1sigma,colorsigma,sigmaInt)
+    config = config_rec(nabs,nsnfactor,x1sigma,colorsigma,mbsigma)
 
     #confNames = ['faintSN','allSN']
     #confNames = ['faintSN']
@@ -104,7 +104,7 @@ def config_sn(zmin, zmax, zstep,
               color_type='unique',color_min=0.2,color_max=0.4,
               z_type='random',daymax_type='random',daymax_step=2,
               nsn_factor=100,nsn_absolute=pd.DataFrame(),typeSN='faintSN',
-              x1sigma=0,colorsigma=0,sigmaInt=0.0):
+              x1sigma=0,colorsigma=0,mbsigma=0):
 
     r = []
     for z in np.arange(zmin, zmax, zstep):
@@ -115,20 +115,20 @@ def config_sn(zmin, zmax, zstep,
         nsn_abs = nsn_absolute[idx]['nsn_absolute'].to_list()[0]
 
         r.append((x1_type, x1_min, x1_max, color_type, color_min, color_max, z_type,
-                  z_min, z_max, zstep, daymax_type, daymax_step, nsn_factor, nsn_abs, typeSN,x1sigma,colorsigma,sigmaInt))
+                  z_min, z_max, zstep, daymax_type, daymax_step, nsn_factor, nsn_abs, typeSN,x1sigma,colorsigma,mbsigma))
 
     res = pd.DataFrame(r, columns=['x1_type', 'x1_min', 'x1_max',
                                    'color_type', 'color_min', 'color_max',
                                    'z_type', 'z_min', 'z_max', 'z_step',
                                    'daymax_type', 'daymax_step', 'nsn_factor', 'nsn_absolute',
-                                   'confName','x1sigma','colorsigma','sigmaInt'])
+                                   'confName','x1sigma','colorsigma','mbsigma'])
 
     return res
 
 
 
 
-def config_rec(nabs,nsnfactor,x1sigma,colorsigma,sigmaInt):
+def config_rec(nabs,nsnfactor,x1sigma,colorsigma,mbsigma):
 
     zmin = 0.0
     zmax = 1.2
@@ -149,7 +149,7 @@ def config_rec(nabs,nsnfactor,x1sigma,colorsigma,sigmaInt):
                             color_type='unique',color_min=0.2,color_max=0.4, 
                             z_type='random',daymax_type='random',daymax_step=2,
                             nsn_factor=nsnfactor['faintSN'],nsn_absolute=df,typeSN='faintSN',
-                            x1sigma=x1sigma,colorsigma=colorsigma,sigmaInt=sigmaInt)
+                            x1sigma=x1sigma,colorsigma=colorsigma,mbsigma=mbsigma)
 
     if 'mediumSN'  in nabs.keys():
 
@@ -159,7 +159,7 @@ def config_rec(nabs,nsnfactor,x1sigma,colorsigma,sigmaInt):
                              color_type='unique',color_min=0.0,color_max=0.2, 
                              z_type='random',daymax_type='random',daymax_step=2,
                              nsn_factor=nsnfactor['mediumSN'],nsn_absolute=df,typeSN='mediumSN',
-                             x1sigma=x1sigma,colorsigma=colorsigma,sigmaInt=sigmaInt)
+                             x1sigma=x1sigma,colorsigma=colorsigma,mbsigma=mbsigma)
 
     if 'mediumSN'  in nabs.keys():
         df['nsn_absolute'] = nabs['brightSN']
@@ -168,7 +168,7 @@ def config_rec(nabs,nsnfactor,x1sigma,colorsigma,sigmaInt):
                              color_type='unique',color_min=-0.2,color_max=-0.2, 
                              z_type='random',daymax_type='random',daymax_step=2,
                              nsn_factor=nsnfactor['brightSN'],nsn_absolute=df,typeSN='brightSN',
-                             x1sigma=x1sigma,colorsigma=colorsigma,sigmaInt=sigmaInt)
+                             x1sigma=x1sigma,colorsigma=colorsigma,mbsigma=mbsigma)
 
     
     if 'allSN'  in nabs.keys():
@@ -183,7 +183,7 @@ def config_rec(nabs,nsnfactor,x1sigma,colorsigma,sigmaInt):
                           color_type='random',color_min=-0.3,color_max=0.3, 
                           z_type='random',daymax_type='random',daymax_step=2,
                           nsn_factor=nsnfactor['allSN'],nsn_absolute=df,typeSN='allSN',
-                          x1sigma=x1sigma,colorsigma=colorsigma,sigmaInt=sigmaInt)
+                          x1sigma=x1sigma,colorsigma=colorsigma,mbsigma=mbsigma)
 
     df_all = pd.DataFrame()
     if 'faintSN'  in nabs.keys():
@@ -272,6 +272,8 @@ def cmd(dbName, dbDir, dbExtens, config, outDir, ibatch, iconfig, nproc, blue_cu
         #error_model = '{}_{}'.format(blue_cutoff,red_cutoff)
         error_model = 'bluecutoff_redcutoff'
 
+    mbsigmafile = 'sigma_mb_from_simu_{}.hdf5'.format(dbName)
+
     cmd = 'python run_scripts/simulation/run_simulation.py'
     cmd += ' --dbName {}'.format(dbName)
     cmd += '  --dbExtens {}'.format(dbExtens)
@@ -310,7 +312,8 @@ def cmd(dbName, dbDir, dbExtens, config, outDir, ibatch, iconfig, nproc, blue_cu
     cmd += ' --Pixelisation_nside 64'
     cmd += ' --SN_modelPar_x1sigma {}'.format(config['x1sigma'])
     cmd += ' --SN_modelPar_colorsigma {}'.format(config['colorsigma'])
-    cmd += ' --SN_sigmaInt {}'.format(config['sigmaInt'])
+    cmd += ' --SN_modelPar_mbsigma {}'.format(config['mbsigma'])
+    cmd += ' --SN_modelPar_mbsigmafile {}'.format(mbsigmafile)
     cmd += ' --Simulator_errorModel {}'.format(errmod)
     cmd += ' --SN_blueCutoffi {}'.format(blue_cutoff)
     cmd += ' --SN_redCutoffi {}'.format(red_cutoff)
@@ -345,7 +348,7 @@ parser.add_option('--nsnfactor', type=str,
                   default='100,100',help='factor for nsn production [%default]')
 parser.add_option("--x1sigma", type=int, default=0,help="shift of x1 parameter distribution[%default]")
 parser.add_option("--colorsigma", type=int, default=0,help="shift of color parameter distribution[%default]")
-parser.add_option("--sigmaInt", type=float, default=0.0,help="shift of Mb value [%default]")
+parser.add_option("--mbsigma", type=int, default=0,help="shift of Mb value [%default]")
 parser.add_option("--blue_cutoff", type=float, default=360.,help="blue cutoff value - iband [%default]")
 parser.add_option("--red_cutoff", type=float, default=700.,help="redcutoff value - iband [%default]")
 
@@ -370,10 +373,10 @@ nabs = dict(zip(snTypes,nabs))
 nsnfactor = dict(zip(snTypes,nsnfactor))
 x1sigma = opts.x1sigma
 colorsigma = opts.colorsigma
-sigmaInt = opts.sigmaInt
+mbsigma = opts.mbsigma
 blue_cutoff = opts.blue_cutoff
 red_cutoff = opts.red_cutoff
 
 print('booo',nabs,nsnfactor)
 process(opts.dbName, opts.dbDir, opts.dbExtens,
-        opts.outDir, opts.nproc, opts.batch, snTypes,nabs,nsnfactor,x1sigma,colorsigma,sigmaInt,blue_cutoff,red_cutoff)
+        opts.outDir, opts.nproc, opts.batch, snTypes,nabs,nsnfactor,x1sigma,colorsigma,mbsigma,blue_cutoff,red_cutoff)
