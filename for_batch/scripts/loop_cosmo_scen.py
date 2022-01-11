@@ -2,7 +2,7 @@ import pandas as pd
 import os
 from optparse import OptionParser
 
-def cmd(row,nproc,outDir,fileDir,Ny,fit_parameters,sigma_mu_photoz, sigma_mu_bias_x1_color,scr='python sn_studies/sn_fom/fom.py'):
+def cmd(row,nproc,outDir,fileDir,Ny,fit_parameters,sigma_mu_photoz, sigma_mu_bias_x1_color,nsn_bias_simu,scr='python sn_studies/sn_fom/fom.py'):
     
     fparams = fit_parameters.split(',')
     fparams = '_'.join(ff for ff in fparams)
@@ -23,6 +23,7 @@ def cmd(row,nproc,outDir,fileDir,Ny,fit_parameters,sigma_mu_photoz, sigma_mu_bia
     if sigma_mu_photoz != 'None':
         cmd_ += ' --sigma_mu_photoz {}'.format(sigma_mu_photoz)
     cmd_ += ' --sigma_mu_bias_x1_color {}'.format(sigma_mu_bias_x1_color)
+    cmd_ += ' --nsn_bias_simu {}'.format(nsn_bias_simu)
     print(cmd_)
     return cmd_
 
@@ -53,9 +54,13 @@ def prepareOut(tag):
 
     return dirScript, name_id, log, errlog, cwd
 
-def process(row,batch,nproc,outDir,fileDir,Ny,fits_parameters,sigma_mu_photoz, sigma_mu_bias_x1_color):
-     
-    dirScript, name_id, log, errlog, cwd = prepareOut('{}_Ny_{}'.format(row['configName'],Ny))
+def process(row,batch,nproc,outDir,fileDir,Ny,fits_parameters,sigma_mu_photoz, sigma_mu_bias_x1_color, nsn_bias_simu,tagscript):
+
+    tag = '{}_Ny_{}'.format(row['configName'],Ny)
+    if tagscript != '':
+        tag += '_{}'.format(tagscript)
+    
+    dirScript, name_id, log, errlog, cwd = prepareOut(tag)
     # qsub command
     #qsub = 'qsub -P P_lsst -l sps=1,ct=3:00:00,h_vmem=16G -j y -o {} -pe multicores {} <<EOF'.format(
     #    log, nproc)
@@ -92,7 +97,7 @@ def process(row,batch,nproc,outDir,fileDir,Ny,fits_parameters,sigma_mu_photoz, s
     script.write(" export OMP_NUM_THREADS=1 \n")
     script.write(" export OPENBLAS_NUM_THREADS=1 \n")
 
-    cmd_ = cmd(row,nproc,outDir,fileDir,Ny,fits_parameters,sigma_mu_photoz, sigma_mu_bias_x1_color)
+    cmd_ = cmd(row,nproc,outDir,fileDir,Ny,fits_parameters,sigma_mu_photoz, sigma_mu_bias_x1_color,nsn_bias_simu)
     script.write(cmd_+ "\n")
     
     script.close()
@@ -120,6 +125,10 @@ parser.add_option("--sigma_mu_photoz", type=str, default='',
                   help="mu error from photoz [%default]")
 parser.add_option("--sigma_mu_bias_x1_color", type=str, default='sigma_mu_bias_x1_color_1_sigma',
                   help="mu error bias from x1 and color n-sigma variation [%default]")
+parser.add_option("--nsn_bias_simu", type=str, default='nsn_bias_Ny_40',
+                  help="nsn_bias file for distance moduli simulation [%default]")
+parser.add_option("--tagscript", type=str, default='',
+                  help="tag for the script [%default]")
 
 opts, args = parser.parse_args()
 
@@ -130,6 +139,8 @@ for i, row in cosmo_scen.iterrows():
             opts.outDir,opts.fileDir,opts.Ny,
             opts.fit_parameters,
             opts.sigma_mu_photoz,
-            opts.sigma_mu_bias_x1_color)
+            opts.sigma_mu_bias_x1_color,
+            opts.nsn_bias_simu,
+            opts.tagscript)
     
 # print(cosmo_scen)

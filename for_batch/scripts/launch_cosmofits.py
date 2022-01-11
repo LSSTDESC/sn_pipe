@@ -13,6 +13,10 @@ parser.add_option("--sigma_mu_bias_x1_color", type=str, default='sigma_mu_bias_x
                   help="mu error bias from x1 and color n-sigma variation [%default]")
 parser.add_option("--outDir", type=str, default='/sps/lsst/users/gris/cosmofit/Fit_bias',
                   help="output directory [%default]")
+parser.add_option("--nsn_bias_simu", type=str, default='nsn_bias_Ny_40',
+                  help="nsn_bias file for distance moduli simulation [%default]")
+parser.add_option("--tagscript", type=str, default='',
+                  help="tag for the scripts[%default]")
 
 opts, args = parser.parse_args()
 
@@ -21,6 +25,8 @@ fit_parameters = opts.fit_parameters
 sigma_mu_photoz = opts.sigma_mu_photoz
 sigma_mu_bias_x1_color = opts.sigma_mu_bias_x1_color
 outDir = opts.outDir
+nsn_bias_simu = opts.nsn_bias_simu
+tagscript = opts.tagscript
 
 configs = ['config_cosmoSN_universal_10.csv',
            #'config_cosmoSN_deep_rolling_0.90_0.90_2_2.csv',
@@ -31,7 +37,7 @@ configs = ['config_cosmoSN_universal_10.csv',
            #'config_cosmoSN_deep_rolling_0.80_0.80_3_3.csv']
 #configs = ['config_cosmoSN_deep_rolling_2_2_mini.csv']
 
-configs += ['config_cosmoSN_deep_rolling_0.80_0.80_yearly.csv',
+configs = ['config_cosmoSN_deep_rolling_0.80_0.80_yearly.csv',
            'config_cosmoSN_deep_rolling_2_2_mini_yearly.csv',
            'config_cosmoSN_universal_yearly.csv',
            'config_cosmoSN_deep_rolling_2_2_mini_0.65_yearly.csv',
@@ -48,5 +54,7 @@ for conf in configs:
     cmd += ' --fit_parameters {}'.format(fit_parameters)
     cmd += ' --sigma_mu_photoz {}'.format(sigma_mu_photoz)
     cmd += ' --sigma_mu_bias_x1_color {}'.format(sigma_mu_bias_x1_color)
+    cmd += ' --nsn_bias_simu {}'.format(nsn_bias_simu)
+    cmd += ' --tagscript {}'.format(tagscript)
     print(cmd)
     os.system(cmd)
