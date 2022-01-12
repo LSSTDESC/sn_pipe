@@ -36,18 +36,20 @@ configs = ['config_cosmoSN_universal_10.csv',
            #'config_cosmoSN_deep_rolling_0.90_0.90_3_3.csv',
            #'config_cosmoSN_deep_rolling_0.80_0.80_3_3.csv']
 #configs = ['config_cosmoSN_deep_rolling_2_2_mini.csv']
+nsn_WFD_yearly = [-1]*len(configs)
 
 configs = ['config_cosmoSN_deep_rolling_0.80_0.80_yearly.csv',
            'config_cosmoSN_deep_rolling_2_2_mini_yearly.csv',
            'config_cosmoSN_universal_yearly.csv',
            'config_cosmoSN_deep_rolling_2_2_mini_0.65_yearly.csv',
            'config_cosmoSN_deep_rolling_2_2_mini_0.60_yearly.csv']
+nsn_WFD_yearly = [10000]*len(configs)
 
 #configs = ['config_cosmoSN_deep_rolling_2_2_mini_0.65_yearly.csv']
 
 scr = 'python for_batch/scripts/loop_cosmo_scen.py --fileName'
 
-for conf in configs:
+for io,conf in enumerate(configs):
     cmd = '{} {}'.format(scr,conf)
     cmd += ' --outDir {}'.format(outDir)
     cmd += ' --Ny {}'.format(Ny)
@@ -56,5 +58,6 @@ for conf in configs:
     cmd += ' --sigma_mu_bias_x1_color {}'.format(sigma_mu_bias_x1_color)
     cmd += ' --nsn_bias_simu {}'.format(nsn_bias_simu)
     cmd += ' --tagscript {}'.format(tagscript)
+    cmd += ' --nsn_WFD_yearly {}'.format(nsn_WFD_yearly[io])
     print(cmd)
     os.system(cmd)
