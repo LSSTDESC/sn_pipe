@@ -14,6 +14,8 @@ def cmd(row,nproc,outDir,fileDir,Ny,fit_parameters,sigma_mu_photoz, sigma_mu_bia
     for vv in ['dbName', 'fields', 'nseasons', 'npointings', 'configName']:
         cmd_ += ' --{} {}'.format(vv, row[vv])
 
+    cmd_ += ' --year_season {}'.format(row['year'])
+
     cmd_ += ' --add_WFD SN_WFD_100000'
     cmd_ += ' --nproc {}'.format(nproc)
     cmd_ += ' --dirFit {}'.format(oDir)
