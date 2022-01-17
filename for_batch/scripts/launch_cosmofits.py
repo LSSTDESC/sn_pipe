@@ -17,6 +17,8 @@ parser.add_option("--nsn_bias_simu", type=str, default='nsn_bias_Ny_40',
                   help="nsn_bias file for distance moduli simulation [%default]")
 parser.add_option("--tagscript", type=str, default='',
                   help="tag for the scripts[%default]")
+parser.add_option("--surveytype", type=str, default='10_years',
+                  help="survey type (10_years/yearly/all) [%default]")
 
 opts, args = parser.parse_args()
 
@@ -27,23 +29,26 @@ sigma_mu_bias_x1_color = opts.sigma_mu_bias_x1_color
 outDir = opts.outDir
 nsn_bias_simu = opts.nsn_bias_simu
 tagscript = opts.tagscript
+surveytype = opts.surveytype
 
-configs = ['config_cosmoSN_universal_10.csv',
-           #'config_cosmoSN_deep_rolling_0.90_0.90_2_2.csv',
-           'config_cosmoSN_deep_rolling_0.80_0.80_2_2.csv',
-           'config_cosmoSN_deep_rolling_2_2_mini.csv']
-           #'config_cosmoSN_deep_rolling_0.80_2.csv']
-           #'config_cosmoSN_deep_rolling_0.90_0.90_3_3.csv',
-           #'config_cosmoSN_deep_rolling_0.80_0.80_3_3.csv']
-#configs = ['config_cosmoSN_deep_rolling_2_2_mini.csv']
-nsn_WFD_yearly = [-1]*len(configs)
+configs = []
+nsn_WFD_yearly = []
 
-configs = ['config_cosmoSN_deep_rolling_0.80_0.80_yearly.csv',
-           'config_cosmoSN_deep_rolling_2_2_mini_yearly.csv',
-           'config_cosmoSN_universal_yearly.csv',
-           'config_cosmoSN_deep_rolling_2_2_mini_0.65_yearly.csv',
-           'config_cosmoSN_deep_rolling_2_2_mini_0.60_yearly.csv']
-nsn_WFD_yearly = [10000]*len(configs)
+if surveytype == '10_years':
+    configs += ['config_cosmoSN_universal_10.csv',
+                #'config_cosmoSN_deep_rolling_0.90_0.90_2_2.csv',
+                'config_cosmoSN_deep_rolling_0.80_0.80_2_2.csv',
+                'config_cosmoSN_deep_rolling_2_2_mini.csv']
+
+if surveytype == 'yearly':
+
+    configs += ['config_cosmoSN_deep_rolling_0.80_0.80_yearly.csv',
+                'config_cosmoSN_deep_rolling_2_2_mini_yearly.csv',
+                'config_cosmoSN_universal_yearly.csv']
+           #'config_cosmoSN_deep_rolling_2_2_mini_0.65_yearly.csv',
+           #'config_cosmoSN_deep_rolling_2_2_mini_0.60_yearly.csv']
+nsn_WFD_yearly += [-1]*len(configs)
+
 
 #configs = ['config_cosmoSN_deep_rolling_2_2_mini_0.65_yearly.csv']
 
