@@ -161,7 +161,7 @@ def config_rec(nabs,nsnfactor,x1sigma,colorsigma,mbsigma):
                              nsn_factor=nsnfactor['mediumSN'],nsn_absolute=df,typeSN='mediumSN',
                              x1sigma=x1sigma,colorsigma=colorsigma,mbsigma=mbsigma)
 
-    if 'mediumSN'  in nabs.keys():
+    if 'brightSN'  in nabs.keys():
         df['nsn_absolute'] = nabs['brightSN']
         brightSN = config_sn(zmin, zmax, zstep, 
                              x1_type='unique',x1_min=2.0,x1_max=0.3,
