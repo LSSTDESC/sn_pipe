@@ -1,6 +1,7 @@
 from optparse import OptionParser
 import pandas as pd
 import os
+import numpy as np
 
 def go(config, script, lvar):
     """
@@ -38,6 +39,10 @@ parser.add_option("--fitDir", type="str",default='/sps/lsst/users/gris/Fakes/Fit
 parser.add_option("--x1sigma", type=int, default=0,help="shift of x1 parameter distribution[%default]")
 parser.add_option("--colorsigma", type=int, default=0,help="shift of color parameter distribution[%default]")
 parser.add_option("--mbsigma", type=int, default=0,help="shift of Mb value [%default]")
+parser.add_option("--dbNames", type="str",
+                  default='DD_0.90,DD_0.85,DD_0.80,DD_0.75,DD_0.70,DD_0.65,DD_0.60,DD_0.55,DD_0.50',
+                  help="config name [%default]")
+
 
 opts, args = parser.parse_args()
 
@@ -49,12 +54,25 @@ fitDir = opts.fitDir
 x1sigma = opts.x1sigma
 colorsigma = opts.colorsigma
 mbsigma = opts.mbsigma
+if opts.dbNames == '':
+    dbNames = []
+else:
+    dbNames = opts.dbNames.split(',')
 
 #read config parameters
 
 params = pd.read_csv(configFile,comment='#')
 
-print(params)
+if dbNames:
+    idx = np.isin(params['dbName'],dbNames)
+    params = params[idx]
+
+if params.empty:
+    action = 'nothing'
+
+
+if action == 'nothing':
+    print('no data to process')
 
 if action == 'generation':
     params['outDir'] = genDir
@@ -65,8 +83,8 @@ if action == 'generation':
 if action == 'simulation':
     params['outDir'] = simuDir
     params['dbDir'] = genDir
-    params['snTypes'] = 'allSN'
-    params['nabs'] = 1500
+    params['snTypes'] = 'mediumSN' # also allSN
+    params['nabs'] = 100 # 1500 for allSN
     params['nsnfactor'] = 1
     params['x1sigma'] = x1sigma
     params['colorsigma'] = colorsigma
@@ -77,6 +95,7 @@ if action == 'fit':
     params['outDir'] = fitDir
     params['simuDir'] = simuDir
     params['mbcov_estimate'] = 0
-    params['snTypes'] = 'allSN'
+    params['snTypes'] = 'faintSN'
+    params['snTypes'] = 'mediumSN'
     go(params,'for_batch/scripts/batch_fake_fit.py', ['dbName','outDir','simuDir','mbcov_estimate','snTypes'])
 
