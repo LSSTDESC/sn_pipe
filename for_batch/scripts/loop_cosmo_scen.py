@@ -2,7 +2,7 @@ import pandas as pd
 import os
 from optparse import OptionParser
 
-def cmd(row,nproc,outDir,fileDir,Ny,fit_parameters,sigma_mu_photoz, sigma_mu_bias_x1_color,nsn_bias_simu,nsn_WFD_yearly,scr='python sn_studies/sn_fom/fom.py'):
+def cmd(row,nproc,outDir,fileDir,Ny,fit_parameters,sigma_mu_photoz, sigma_mu_bias_x1_color,nsn_bias_simu,nsn_WFD_yearly,zspectro_only,scr='python sn_studies/sn_fom/fom.py'):
     
     fparams = fit_parameters.split(',')
     fparams = '_'.join(ff for ff in fparams)
@@ -27,6 +27,8 @@ def cmd(row,nproc,outDir,fileDir,Ny,fit_parameters,sigma_mu_photoz, sigma_mu_bia
     cmd_ += ' --sigma_mu_bias_x1_color {}'.format(sigma_mu_bias_x1_color)
     cmd_ += ' --nsn_bias_simu {}'.format(nsn_bias_simu)
     cmd_ += ' --nsn_WFD_yearly {}'.format(nsn_WFD_yearly)
+    cmd_ += ' --zspectro_only {}'.format(zspectro_only)
+
     print(cmd_)
     return cmd_
 
@@ -57,7 +59,7 @@ def prepareOut(tag):
 
     return dirScript, name_id, log, errlog, cwd
 
-def process(row,batch,nproc,outDir,fileDir,Ny,fits_parameters,sigma_mu_photoz, sigma_mu_bias_x1_color, nsn_bias_simu,nsn_WFD_yearly,tagscript):
+def process(row,batch,nproc,outDir,fileDir,Ny,fits_parameters,sigma_mu_photoz, sigma_mu_bias_x1_color, nsn_bias_simu,nsn_WFD_yearly,zspectro_only,tagscript):
 
     tag = '{}_Ny_{}'.format(row['configName'],Ny)
     if tagscript != '':
@@ -100,7 +102,7 @@ def process(row,batch,nproc,outDir,fileDir,Ny,fits_parameters,sigma_mu_photoz, s
     script.write(" export OMP_NUM_THREADS=1 \n")
     script.write(" export OPENBLAS_NUM_THREADS=1 \n")
 
-    cmd_ = cmd(row,nproc,outDir,fileDir,Ny,fits_parameters,sigma_mu_photoz, sigma_mu_bias_x1_color,nsn_bias_simu,nsn_WFD_yearly)
+    cmd_ = cmd(row,nproc,outDir,fileDir,Ny,fits_parameters,sigma_mu_photoz, sigma_mu_bias_x1_color,nsn_bias_simu,nsn_WFD_yearly,zspectro_only)
     script.write(cmd_+ "\n")
     
     script.close()
@@ -134,6 +136,9 @@ parser.add_option("--tagscript", type=str, default='',
                   help="tag for the script [%default]")
 parser.add_option("--nsn_WFD_yearly", type=int, default=-1,
                   help="number of WFD SN per year (-1=full sample) [%default]")
+parser.add_option("--zspectro_only", type=int, default=0,
+                  help="select SN with z spectro only [%default]")
+
 
 opts, args = parser.parse_args()
 
@@ -147,6 +152,7 @@ for i, row in cosmo_scen.iterrows():
             opts.sigma_mu_bias_x1_color,
             opts.nsn_bias_simu,
             opts.nsn_WFD_yearly,
+            opts.zspectro_only,
             opts.tagscript)
     
 # print(cosmo_scen)
