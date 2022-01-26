@@ -21,6 +21,17 @@ parser.add_option("--surveytype", type=str, default='10_years',
                   help="survey type (10_years/yearly/all) [%default]")
 parser.add_option("--nsn_WFD_yearly", type=int, default=-1,
                   help="nsn WFD per year [%default]")
+parser.add_option("--zspectro_only", type=int, default=0,
+                  help="select SN with z spectro only [%default]")
+parser.add_option("--nsn_spectro_ultra_yearly", type=int, default=200,
+                  help="number of spectro-z host for ultradeep fields (per year) [%default]")
+parser.add_option("--nsn_spectro_ultra_tot", type=int, default=2000,
+                  help="number of spectro-z host for ultradeep fields (total) [%default]")
+parser.add_option("--nsn_spectro_deep_yearly", type=int, default=500,
+                  help="number of spectro-z host for deep fields (per year) [%default]")
+parser.add_option("--nsn_spectro_deep_tot", type=int, default=2500,
+                  help="number of spectro-z host for deep fields (total) [%default]")
+
 
 opts, args = parser.parse_args()
 
@@ -33,6 +44,12 @@ nsn_bias_simu = opts.nsn_bias_simu
 tagscript = opts.tagscript
 surveytype = opts.surveytype
 nsn_WFD_yearly = opts.nsn_WFD_yearly
+zspectro_only = opts.zspectro_only
+nsn_spectro_ultra_yearly = opts.nsn_spectro_ultra_yearly
+nsn_spectro_ultra_tot = opts.nsn_spectro_ultra_tot
+nsn_spectro_deep_yearly = opts.nsn_spectro_deep_yearly
+nsn_spectro_deep_tot = opts.nsn_spectro_deep_tot
+
 
 configs = []
 nsn_WFD_yearly_list = []
@@ -67,5 +84,10 @@ for io,conf in enumerate(configs):
     cmd += ' --nsn_bias_simu {}'.format(nsn_bias_simu)
     cmd += ' --tagscript {}'.format(tagscript)
     cmd += ' --nsn_WFD_yearly {}'.format(nsn_WFD_yearly_list[io])
+    cmd += ' --zspectro_only {}'.format(zspectro_only)
+    cmd += ' --nsn_spectro_ultra_yearly {}'.format(nsn_spectro_ultra_yearly)
+    cmd += ' --nsn_spectro_ultra_tot {}'.format(nsn_spectro_ultra_tot)
+    cmd += ' --nsn_spectro_deep_yearly {}'.format(nsn_spectro_deep_yearly)
+    cmd += ' --nsn_spectro_deep_tot {}'.format(nsn_spectro_deep_tot)
     print(cmd)
     os.system(cmd)
