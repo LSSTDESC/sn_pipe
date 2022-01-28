@@ -31,7 +31,8 @@ parser.add_option("--nsn_spectro_deep_yearly", type=int, default=500,
                   help="number of spectro-z host for deep fields (per year) [%default]")
 parser.add_option("--nsn_spectro_deep_tot", type=int, default=2500,
                   help="number of spectro-z host for deep fields (total) [%default]")
-
+parser.add_option("--nsn_spectro_tuned", type=int, default=0,
+                  help="to tune the number of SN with host spectro[%default]")
 
 opts, args = parser.parse_args()
 
@@ -49,6 +50,7 @@ nsn_spectro_ultra_yearly = opts.nsn_spectro_ultra_yearly
 nsn_spectro_ultra_tot = opts.nsn_spectro_ultra_tot
 nsn_spectro_deep_yearly = opts.nsn_spectro_deep_yearly
 nsn_spectro_deep_tot = opts.nsn_spectro_deep_tot
+nsn_spectro_tuned = opts.nsn_spectro_tuned
 
 
 configs = []
@@ -89,5 +91,6 @@ for io,conf in enumerate(configs):
     cmd += ' --nsn_spectro_ultra_tot {}'.format(nsn_spectro_ultra_tot)
     cmd += ' --nsn_spectro_deep_yearly {}'.format(nsn_spectro_deep_yearly)
     cmd += ' --nsn_spectro_deep_tot {}'.format(nsn_spectro_deep_tot)
+    cmd += ' --nsn_spectro_tuned {}'.format(nsn_spectro_tuned)
     print(cmd)
     os.system(cmd)
