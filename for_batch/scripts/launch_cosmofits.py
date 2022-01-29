@@ -7,6 +7,8 @@ parser = OptionParser()
 parser.add_option("--Ny", type=int, default=40,help="y-band max visits at z=0.9 [%default]")
 parser.add_option("--fit_parameters", type=str, default='Om,w0',
                   help="parameters to fit [%default]")
+parser.add_option("--fit_prior", type=int, default=0,
+                  help="prior for the fit [%default]")
 parser.add_option("--sigma_mu_photoz", type=str, default='None',
                   help="mu error from photoz [%default]")
 parser.add_option("--sigma_mu_bias_x1_color", type=str, default='sigma_mu_bias_x1_color_1_sigma',
@@ -38,6 +40,7 @@ opts, args = parser.parse_args()
 
 Ny = opts.Ny
 fit_parameters = opts.fit_parameters
+fit_prior = opts.fit_prior
 sigma_mu_photoz = opts.sigma_mu_photoz
 sigma_mu_bias_x1_color = opts.sigma_mu_bias_x1_color
 outDir = opts.outDir
@@ -81,6 +84,7 @@ for io,conf in enumerate(configs):
     cmd += ' --outDir {}'.format(outDir)
     cmd += ' --Ny {}'.format(Ny)
     cmd += ' --fit_parameters {}'.format(fit_parameters)
+    cmd += ' --fit_prior {}'.format(fit_prior)
     cmd += ' --sigma_mu_photoz {}'.format(sigma_mu_photoz)
     cmd += ' --sigma_mu_bias_x1_color {}'.format(sigma_mu_bias_x1_color)
     cmd += ' --nsn_bias_simu {}'.format(nsn_bias_simu)

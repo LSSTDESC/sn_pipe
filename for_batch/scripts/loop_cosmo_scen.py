@@ -2,7 +2,7 @@ import pandas as pd
 import os
 from optparse import OptionParser
 
-def cmd(row,nproc,outDir,fileDir,Ny,fit_parameters,sigma_mu_photoz, sigma_mu_bias_x1_color,nsn_bias_simu,nsn_WFD_yearly,zspectro_only,nsn_spectro_ultra_yearly,nsn_spectro_ultra_tot,nsn_spectro_deep_yearly,nsn_spectro_deep_tot,nsn_spectro_tuned,scr='python sn_studies/sn_fom/fom.py'):
+def cmd(row,nproc,outDir,fileDir,Ny,fit_parameters,fit_prior,sigma_mu_photoz, sigma_mu_bias_x1_color,nsn_bias_simu,nsn_WFD_yearly,zspectro_only,nsn_spectro_ultra_yearly,nsn_spectro_ultra_tot,nsn_spectro_deep_yearly,nsn_spectro_deep_tot,nsn_spectro_tuned,scr='python sn_studies/sn_fom/fom.py'):
     
     fparams = fit_parameters.split(',')
     fparams = '_'.join(ff for ff in fparams)
@@ -22,6 +22,7 @@ def cmd(row,nproc,outDir,fileDir,Ny,fit_parameters,sigma_mu_photoz, sigma_mu_bia
     cmd_ += ' --fileDir {}'.format(fDir)
     cmd_ += ' --Ny {}'.format(Ny)
     cmd_ += ' --fit_parameters {}'.format(fit_parameters)
+    cmd_ += ' --fit_prior {}'.format(fit_prior)
     if sigma_mu_photoz != 'None':
         cmd_ += ' --sigma_mu_photoz {}'.format(sigma_mu_photoz)
     cmd_ += ' --sigma_mu_bias_x1_color {}'.format(sigma_mu_bias_x1_color)
@@ -63,7 +64,7 @@ def prepareOut(tag):
 
     return dirScript, name_id, log, errlog, cwd
 
-def process(row,batch,nproc,outDir,fileDir,Ny,fits_parameters,sigma_mu_photoz, sigma_mu_bias_x1_color, nsn_bias_simu,nsn_WFD_yearly,zspectro_only,nsn_spectro_ultra_yearly,nsn_spectro_ultra_tot,nsn_spectro_deep_yearly,nsn_spectro_deep_tot,nsn_spectro_tuned,tagscript):
+def process(row,batch,nproc,outDir,fileDir,Ny,fit_parameters,fit_prior,sigma_mu_photoz, sigma_mu_bias_x1_color, nsn_bias_simu,nsn_WFD_yearly,zspectro_only,nsn_spectro_ultra_yearly,nsn_spectro_ultra_tot,nsn_spectro_deep_yearly,nsn_spectro_deep_tot,nsn_spectro_tuned,tagscript):
 
     tag = '{}_Ny_{}'.format(row['configName'],Ny)
     if tagscript != '':
@@ -106,7 +107,7 @@ def process(row,batch,nproc,outDir,fileDir,Ny,fits_parameters,sigma_mu_photoz, s
     script.write(" export OMP_NUM_THREADS=1 \n")
     script.write(" export OPENBLAS_NUM_THREADS=1 \n")
 
-    cmd_ = cmd(row,nproc,outDir,fileDir,Ny,fits_parameters,sigma_mu_photoz, sigma_mu_bias_x1_color,nsn_bias_simu,nsn_WFD_yearly,zspectro_only,nsn_spectro_ultra_yearly,nsn_spectro_ultra_tot,nsn_spectro_deep_yearly,nsn_spectro_deep_tot,nsn_spectro_tuned)
+    cmd_ = cmd(row,nproc,outDir,fileDir,Ny,fit_parameters,fit_prior,sigma_mu_photoz, sigma_mu_bias_x1_color,nsn_bias_simu,nsn_WFD_yearly,zspectro_only,nsn_spectro_ultra_yearly,nsn_spectro_ultra_tot,nsn_spectro_deep_yearly,nsn_spectro_deep_tot,nsn_spectro_tuned)
     script.write(cmd_+ "\n")
     
     script.close()
@@ -130,6 +131,8 @@ parser.add_option("--nproc", type=int, default=8,
 parser.add_option("--Ny", type=int, default=20,help="y-band max visits at z=0.9 [%default]")
 parser.add_option("--fit_parameters", type=str, default='Om,w0',
                   help="parameters to fit [%default]")
+parser.add_option("--fit_prior", type=int, default=0,
+                  help="prior for the fit [%default]")
 parser.add_option("--sigma_mu_photoz", type=str, default='',
                   help="mu error from photoz [%default]")
 parser.add_option("--sigma_mu_bias_x1_color", type=str, default='sigma_mu_bias_x1_color_1_sigma',
@@ -161,6 +164,7 @@ for i, row in cosmo_scen.iterrows():
     process(row,opts.batch,opts.nproc,
             opts.outDir,opts.fileDir,opts.Ny,
             opts.fit_parameters,
+            opts.fit_prior,
             opts.sigma_mu_photoz,
             opts.sigma_mu_bias_x1_color,
             opts.nsn_bias_simu,
