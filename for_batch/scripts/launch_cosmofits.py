@@ -35,6 +35,8 @@ parser.add_option("--nsn_spectro_deep_tot", type=int, default=2500,
                   help="number of spectro-z host for deep fields (total) [%default]")
 parser.add_option("--nsn_spectro_tuned", type=int, default=0,
                   help="to tune the number of SN with host spectro[%default]")
+parser.add_option("--pfs_current_strategy", type=int, default=0,
+                  help="to activate PFS current strategy [%default]")
 
 opts, args = parser.parse_args()
 
@@ -54,7 +56,7 @@ nsn_spectro_ultra_tot = opts.nsn_spectro_ultra_tot
 nsn_spectro_deep_yearly = opts.nsn_spectro_deep_yearly
 nsn_spectro_deep_tot = opts.nsn_spectro_deep_tot
 nsn_spectro_tuned = opts.nsn_spectro_tuned
-
+pfs_current_strategy = opts.pfs_current_strategy
 
 configs = []
 nsn_WFD_yearly_list = []
@@ -96,5 +98,6 @@ for io,conf in enumerate(configs):
     cmd += ' --nsn_spectro_deep_yearly {}'.format(nsn_spectro_deep_yearly)
     cmd += ' --nsn_spectro_deep_tot {}'.format(nsn_spectro_deep_tot)
     cmd += ' --nsn_spectro_tuned {}'.format(nsn_spectro_tuned)
+    cmd += ' --pfs_current_strategy {}'.format(pfs_current_strategy)
     print(cmd)
     os.system(cmd)

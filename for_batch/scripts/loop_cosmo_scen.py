@@ -2,7 +2,7 @@ import pandas as pd
 import os
 from optparse import OptionParser
 
-def cmd(row,nproc,outDir,fileDir,Ny,fit_parameters,fit_prior,sigma_mu_photoz, sigma_mu_bias_x1_color,nsn_bias_simu,nsn_WFD_yearly,zspectro_only,nsn_spectro_ultra_yearly,nsn_spectro_ultra_tot,nsn_spectro_deep_yearly,nsn_spectro_deep_tot,nsn_spectro_tuned,scr='python sn_studies/sn_fom/fom.py'):
+def cmd(row,nproc,outDir,fileDir,Ny,fit_parameters,fit_prior,sigma_mu_photoz, sigma_mu_bias_x1_color,nsn_bias_simu,nsn_WFD_yearly,zspectro_only,nsn_spectro_ultra_yearly,nsn_spectro_ultra_tot,nsn_spectro_deep_yearly,nsn_spectro_deep_tot,nsn_spectro_tuned,pfs_current_strategy,scr='python sn_studies/sn_fom/fom.py'):
     
     fparams = fit_parameters.split(',')
     fparams = '_'.join(ff for ff in fparams)
@@ -34,6 +34,7 @@ def cmd(row,nproc,outDir,fileDir,Ny,fit_parameters,fit_prior,sigma_mu_photoz, si
     cmd_ += ' --nsn_spectro_deep_yearly {}'.format(nsn_spectro_deep_yearly)
     cmd_ += ' --nsn_spectro_deep_tot {}'.format(nsn_spectro_deep_tot)
     cmd_ += ' --nsn_spectro_tuned {}'.format(nsn_spectro_tuned)
+    cmd_ += ' --pfs_current_strategy {}'.format(pfs_current_strategy)
     print(cmd_)
     return cmd_
 
@@ -64,7 +65,7 @@ def prepareOut(tag):
 
     return dirScript, name_id, log, errlog, cwd
 
-def process(row,batch,nproc,outDir,fileDir,Ny,fit_parameters,fit_prior,sigma_mu_photoz, sigma_mu_bias_x1_color, nsn_bias_simu,nsn_WFD_yearly,zspectro_only,nsn_spectro_ultra_yearly,nsn_spectro_ultra_tot,nsn_spectro_deep_yearly,nsn_spectro_deep_tot,nsn_spectro_tuned,tagscript):
+def process(row,batch,nproc,outDir,fileDir,Ny,fit_parameters,fit_prior,sigma_mu_photoz, sigma_mu_bias_x1_color, nsn_bias_simu,nsn_WFD_yearly,zspectro_only,nsn_spectro_ultra_yearly,nsn_spectro_ultra_tot,nsn_spectro_deep_yearly,nsn_spectro_deep_tot,nsn_spectro_tuned,pfs_current_strategy,tagscript):
 
     tag = '{}_Ny_{}'.format(row['configName'],Ny)
     if tagscript != '':
@@ -107,7 +108,7 @@ def process(row,batch,nproc,outDir,fileDir,Ny,fit_parameters,fit_prior,sigma_mu_
     script.write(" export OMP_NUM_THREADS=1 \n")
     script.write(" export OPENBLAS_NUM_THREADS=1 \n")
 
-    cmd_ = cmd(row,nproc,outDir,fileDir,Ny,fit_parameters,fit_prior,sigma_mu_photoz, sigma_mu_bias_x1_color,nsn_bias_simu,nsn_WFD_yearly,zspectro_only,nsn_spectro_ultra_yearly,nsn_spectro_ultra_tot,nsn_spectro_deep_yearly,nsn_spectro_deep_tot,nsn_spectro_tuned)
+    cmd_ = cmd(row,nproc,outDir,fileDir,Ny,fit_parameters,fit_prior,sigma_mu_photoz, sigma_mu_bias_x1_color,nsn_bias_simu,nsn_WFD_yearly,zspectro_only,nsn_spectro_ultra_yearly,nsn_spectro_ultra_tot,nsn_spectro_deep_yearly,nsn_spectro_deep_tot,nsn_spectro_tuned,pfs_current_strategy)
     script.write(cmd_+ "\n")
     
     script.close()
@@ -155,6 +156,8 @@ parser.add_option("--nsn_spectro_deep_tot", type=int, default=2500,
                   help="number of spectro-z host for deep fields (total) [%default]")
 parser.add_option("--nsn_spectro_tuned", type=int, default=0,
                   help="number of spectro-z host for ud abs [%default]")
+parser.add_option("--pfs_current_strategy", type=int, default=0,
+                  help="to activate PFS current strategy [%default]")
 
 opts, args = parser.parse_args()
 
@@ -175,6 +178,7 @@ for i, row in cosmo_scen.iterrows():
             opts.nsn_spectro_deep_yearly,
             opts.nsn_spectro_deep_tot,
             opts.nsn_spectro_tuned,
+            opts.pfs_current_strategy,
             opts.tagscript)
     
 # print(cosmo_scen)
