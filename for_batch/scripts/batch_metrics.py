@@ -205,9 +205,9 @@ class batchclass:
         self.npixels_tot = npixels_tot
         self.proxy_level = proxy_level
 
-        dirScript, name_id, log = self.prepareOut(ibatch)
+        dirScript, name_id, log, errlog = self.prepareOut(ibatch)
 
-        self.script(dirScript, name_id, log, toprocess)
+        self.script(dirScript, name_id, log, errlog, toprocess)
 
     def prepareOut(self,ibatch):
         """
@@ -237,10 +237,11 @@ class batchclass:
 
         name_id = 'metric_{}'.format(id)
         log = dirLog + '/'+name_id+'.log'
+        errlog = dirLog + '/'+name_id+'.err'
 
-        return dirScript, name_id, log
+        return dirScript, name_id, log,errlog
 
-    def script(self, dirScript, name_id, log, proc):
+    def script(self, dirScript, name_id, log, errlog, proc):
         """
         Method to generate and run the script to be executed
 
@@ -257,15 +258,29 @@ class batchclass:
 
         """
         # qsub command
-        qsub = 'qsub -P P_lsst -l sps=1,ct=20:00:00,h_vmem=16G -j y -o {} -pe multicores {} <<EOF'.format(
-            log, self.nproccomp)
+        #qsub = 'qsub -P P_lsst -l sps=1,ct=20:00:00,h_vmem=16G -j y -o {} -pe multicores {} <<EOF'.format(
+        #    log, self.nproccomp)
+
+        dict_batch = {}
+        dict_batch['--account'] = 'lsst'
+        dict_batch['-L'] = 'sps'
+        dict_batch['--time'] = '20:00:00'
+        dict_batch['--mem'] = '16G'
+        dict_batch['--output'] = log
+        #dict_batch['--cpus-per-task'] = str(nproc)
+        dict_batch['-n'] = 8
+        dict_batch['--error'] = errlog
+
 
         scriptName = dirScript+'/'+name_id+'.sh'
 
         # fill the script
         script = open(scriptName, "w")
-        script.write(qsub + "\n")
-        script.write("#!/bin/env bash\n")
+        #script.write(qsub + "\n")
+        script.write("#!/bin/env bash\n") 
+        for key, vals in dict_batch.items():
+            script.write("#SBATCH {} {} \n".format(key,vals))
+
         script.write(" cd " + self.cwd + "\n")
         script.write(" echo 'sourcing setups' \n")
         script.write(" source setup_release.sh Linux -5\n")
@@ -281,8 +296,8 @@ class batchclass:
 
         script.write("EOF" + "\n")
         script.close()
-        os.system("sh "+scriptName)
-
+        #os.system("sh "+scriptName)
+        os.system("sbatch "+scriptName)
     def batch_cmd(self, proc, RAmin, RAmax, Decmin, Decmax):
         """
         Method for the batch command
