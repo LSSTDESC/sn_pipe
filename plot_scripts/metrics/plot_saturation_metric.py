@@ -1,18 +1,19 @@
+import matplotlib.pyplot as plt
 from optparse import OptionParser
 import pandas as pd
 import os
 import numpy as np
 
-from sn_plotter_metrics.utils import Infos,Simu,ProcessData,ProcessFile
+from sn_plotter_metrics.utils import Infos, Simu, ProcessData, ProcessFile
 from sn_tools.sn_io import loopStack
 import sn_plotter_metrics.nsnPlot as nsn_plot
 
 
 class ProcessFileSat(ProcessFile):
 
-    def __init__(self,info,metricName,fieldType,nside,npixels):
+    def __init__(self, info, metricName, fieldType, nside, npixels=-1):
         """
-        class to analyze results from NSN metric
+        class to analyze results from Saturation metric
 
         Parameters
         ---------------
@@ -28,10 +29,10 @@ class ProcessFileSat(ProcessFile):
            healpix nside parameter
         npixels: int
           total number of processed pixels
-        
+
 
         """
-        super().__init__(info,metricName,fieldType,nside)
+        super().__init__(info, metricName, fieldType, nside, npixels)
 
     def process(self, fileNames):
         """
@@ -48,15 +49,14 @@ class ProcessFileSat(ProcessFile):
 
         """
         resdf = loopStack(fileNames, 'astropyTable').to_pandas()
-       
-        print(resdf.columns)
-        resdf = resdf.groupby(['healpixID','pixRA','pixDec']).median().reset_index()
-        
-        for vv in ['dbName','marker','simuType','simuNum','family']:
+
+        resdf = resdf.groupby(
+            ['healpixID', 'pixRA', 'pixDec']).median().reset_index()
+
+        for vv in ['dbName', 'marker', 'simuType', 'simuNum', 'family']:
             resdf[vv] = self.info[vv]
-        
+
         return resdf
-        
 
 
 parser = OptionParser(
@@ -95,25 +95,40 @@ print(simu_list)
 resdf = pd.DataFrame()
 colors = opts.colors.split(',')
 
-#getting the data here
+# getting the data here
 for ip, vv in enumerate(simu_list):
-    outFile = 'Summary_{}_WFD_{}_{}.npy'.format(metricName,vv.type, vv.num)
+    outFile = 'Summary_{}_WFD_{}_{}.npy'.format(metricName, vv.type, vv.num)
 
     if not os.path.isfile(outFile):
-        toprocess = Infos(vv,ip).resdf
+        toprocess = Infos(vv, ip).resdf
         proc = ProcessData(nside, metricName, 'WFD')
-        proc.processMulti(toprocess, outFile, process_class=ProcessFileSat,nproc=nproc)
+        proc.processMulti(toprocess, outFile,
+                          process_class=ProcessFileSat, nproc=nproc)
 
     tabdf = pd.DataFrame(np.load(outFile, allow_pickle=True))
     tabdf['color'] = colors[ip]
     resdf = pd.concat((resdf, tabdf))
 
 # make the plots here
-print(resdf.columns)
-resplot = resdf.groupby(['dbName','family','color','marker','simuType','simuNum']).median().reset_index()
 
-print(resplot.columns)
+idx = resdf['probasat'] > 0.
+#idx = resdf['dbName'] == 'baseline_nexp1_v1.7_10yrs'
+resdf = resdf[idx]
+"""
+for i, row in resdf.iterrows():
+    print(row['deltaT_befsat'])
+plt.hist(resdf['deltaT_befsat'])
+plt.show()
+"""
+# print(test)
+resplot = resdf.groupby(['dbName', 'family', 'color',
+                        'marker', 'simuType', 'simuNum']).median().reset_index()
 
-#nsn_plot.NSN_zlim_GUI(resplot,xvar='deltaT_befsat',yvar='fractwi',xlabel='$\Delta T_{before sat}$ [day]',ylabel='Twi frac',title='Saturation metric')
+print(resplot.columns,
+      resplot[['dbName', 'family', 'marker', 'fractwi', 'deltaT_befsat']])
 
-nsn_plot.NSN_zlim_GUI(resplot,xvar='probasat',yvar='effipeak',xlabel='Proba sat',ylabel='Effi peak',title='Saturation metric')
+# nsn_plot.NSN_zlim_GUI(resplot, xvar='deltaT_befsat', yvar='fractwi',
+#                      xlabel='$\Delta T_{before sat}$ [day]', ylabel='Twi frac', title='Saturation metric')
+
+nsn_plot.NSN_zlim_GUI(resplot, xvar='probasat', yvar='effipeak',
+                      xlabel='Proba sat', ylabel='Effi peak', title='Saturation metric')
