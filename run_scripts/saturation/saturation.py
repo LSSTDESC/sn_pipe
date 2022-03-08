@@ -276,13 +276,13 @@ def estimateSaturationTime(dirFile, nexp_expt_simu, x1_color, seasons, nexp_expt
 
     """
     full_wells = [90000, 120000]
-    
+
     timesat = pd.DataFrame()
-    
+
     for (x1, color) in x1_color:
         for season in seasons:
             sat = SaturationTime(dirFile, x1, color,
-                             nexp_expt_simu[0], nexp_expt_simu[1], season, cadence_obs, band)
+                                 nexp_expt_simu[0], nexp_expt_simu[1], season, cadence_obs, band)
             for (nexp, expt) in nexp_expt:
                 for full_well in full_wells:
                     res = sat.multi_time(full_well, nexp, expt, npp=nproc)
@@ -315,7 +315,7 @@ psf_type = 'single_gauss'
 
 print('done', time.time()-time_ref)
 
-# PlotMaxFrac()
+PlotMaxFrac()
 #PlotMaxFrac(psf_type=psf_type, title='Single gaussian profile')
 """
 PlotMaxFrac(psf_type=psf_type, title='')
@@ -325,35 +325,36 @@ PlotPixel(0.7, 'single_gauss', 'xpixel', 0., 'ypixel', 0., 'xc',
 """
 
 # Saturation mag
+
+mag_sat_file = 'mag_sat.npy'
 """
 mag_flux = MagToFlux()
 
 mag_flux.plot()
-
-mag_sat_file = 'mag_sat.npy'
+plt.show()
 
 if not os.path.isfile(mag_sat_file):
     estimate_magsat()
 
 #plotMagSat('gri', res_sat)
 plotMagContour(mag_sat_file)
-plotDeltamagContour()
+plotMagContour(mag_sat_file, band='r')
+# plotDeltamagContour()
 plt.show()
 """
-
 
 # make LC simulation here
 """
 nexp_expt = []
 for expt in range(1, 64, 4):
     nexp_expt.append((1, expt))
-"""    
+"""
 cadence_obs = 3
 
-nexp_expt=[(1,30)]
+nexp_expt = [(1, 30)]
 #Simulations(dbDir='../DB_Files',nexp_expt=nexp_expt, cadence=cadence_obs)
 
-#print(test)
+# print(test)
 #cadence_obs = 3
 # estimate the saturation time here
 band = 'g'
@@ -361,7 +362,7 @@ nexp_expt = []
 for expt in range(0, 70, 5):
     nexp_expt.append((1, expt))
 
-nexp_expt[0] = (1,1)
+nexp_expt[0] = (1, 1)
 
 
 print(nexp_expt)
@@ -370,7 +371,7 @@ estimateSaturationTime('Output_Simu', nexp_expt_simu=(1,30),x1_color=[(0.0, 0.0)
                        nexp_expt=nexp_expt, cadence_obs=cadence_obs, nproc=8, band=band)
 """
 
-plotTimeSaturationContour(0.0, 0.0,cadence=3)
+plotTimeSaturationContour(0.0, 0.0, cadence=3)
 
 plt.show()
 
