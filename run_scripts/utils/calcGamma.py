@@ -12,7 +12,7 @@ mag_range = np.arange(13., 38., 0.05)
 #nexps = range(1, 500, 1)
 nexps = [1, 2]
 #single_exposure_time = [15., 30.]
-single_exposure_time = range(1, 30, 2)
+single_exposure_time = range(1, 32, 2)
 
 Gamma(bands, telescope, outName,
       mag_range=mag_range,
