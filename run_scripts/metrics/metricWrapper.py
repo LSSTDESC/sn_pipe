@@ -494,7 +494,7 @@ class SaturationMetricWrapper(MetricWrapper):
                  nside=64, RAmin=0., RAmax=360.,
                  Decmin=-1.0, Decmax=-1.0,
                  npixels=0,
-                 metadata={}, outDir='', ebvofMW=-1.0, bluecutoff=380.0, redcutoff=800.0, error_model=1):
+                 metadata={}, outDir='', ebvofMW=-1.0, bluecutoff=380.0, redcutoff=800.0, error_model=0):
         super(SaturationMetricWrapper, self).__init__(
             name=name, season=season, coadd=coadd, fieldType=fieldType,
             nside=nside, RAmin=RAmin, RAmax=RAmax,
@@ -548,6 +548,7 @@ class SaturationMetricWrapper(MetricWrapper):
 
             fname = 'LC_{}_{}_{}_ebvofMW_0.0_vstack.hdf5'.format(
                 x1, color, wave_cutoff)
+            print('loading', fname)
             if ebvofMW < 0.:
                 dustFile = 'Dust_{}_{}_{}.hdf5'.format(
                     x1, color, wave_cutoff)
@@ -587,7 +588,7 @@ class SaturationMetricWrapper(MetricWrapper):
         if fieldType == 'WFD':
             n_bef = 4
             n_aft = 10
-            snr_min = 0.
+            snr_min = 1.
             n_phase_min = 1
             n_phase_max = 1
             zlim_coeff = 0.85
