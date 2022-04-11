@@ -591,12 +591,12 @@ metricTot = Summary(dirFile, 'NSN',
                     'DD', fieldNames, nside, forPlot, outName).data
 
 
-plotAllBinned(metricTot, forPlot)
-plotAllBinned(metricTot, forPlot, xp='gap_max', yp='cadence',
-              legx='max inter-night gap [day]', legy='cadence [day]', bins=10, therange=(0.5, 60.5))
+#plotAllBinned(metricTot, forPlot)
+# plotAllBinned(metricTot, forPlot, xp='gap_max', yp='cadence',
+#              legx='max inter-night gap [day]', legy='cadence [day]', bins=10, therange=(0.5, 60.5))
 # dumpcsv_pixels(metricTot)
 # plotAllBinned(metricTot, yp='zlim_faint', legy='$z_{complete}^{0.95}$')
-plt.tight_layout()
+# plt.tight_layout()
 # plt.show()
 
 """
