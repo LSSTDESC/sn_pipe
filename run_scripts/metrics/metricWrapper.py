@@ -586,8 +586,8 @@ class SaturationMetricWrapper(MetricWrapper):
             saturationLevel = 0.5
 
         if fieldType == 'WFD':
-            n_bef = 4
-            n_aft = 10
+            n_bef = 3
+            n_aft = 5
             snr_min = 1.
             n_phase_min = 1
             n_phase_max = 1
@@ -596,11 +596,11 @@ class SaturationMetricWrapper(MetricWrapper):
             saturationLevel = 0.99
 
         if fieldType == 'Fake':
-            n_bef = 0
-            n_aft = 0
-            snr_min = 0.
-            n_phase_min = 0
-            n_phase_max = 0
+            n_bef = 3
+            n_aft = 5
+            snr_min = 1.
+            n_phase_min = 1
+            n_phase_max = 1
             zlim_coeff = 0.95
             saturationLevel = 0.99
 
@@ -621,7 +621,7 @@ class SaturationMetricWrapper(MetricWrapper):
             snr_min=snr_min,
             coadd=coadd, lightOutput=False,
             ebvofMW=ebvofMW,
-            fracpixel=fracpixel, saturationLevel=saturationLevel)
+            fracpixel=fracpixel, saturationLevel=saturationLevel, telescope=self.telescope)
 
         self.metadata['snr_min'] = snr_min
         self.metaout += ['ploteffi', 'lightOutput', 'snr_min']
