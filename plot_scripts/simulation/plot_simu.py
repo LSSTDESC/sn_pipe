@@ -34,11 +34,11 @@ print(splot.simuPars)
 # plt.show()
 
 # plotting SN parameters
-splot.plotParameters()
+splot.plotParameters(season=3)
 
 # display LC loop
-#splot.plotLoopLC(pause_time=10)
-splot.plotLoopLC_errmod()
+splot.plotLoopLC(pause_time=10)
+# splot.plotLoopLC_errmod()
 plt.show()
 
 # splot.checkLC()
