@@ -315,7 +315,7 @@ psf_type = 'single_gauss'
 
 print('done', time.time()-time_ref)
 
-PlotMaxFrac()
+# PlotMaxFrac()
 #PlotMaxFrac(psf_type=psf_type, title='Single gaussian profile')
 """
 PlotMaxFrac(psf_type=psf_type, title='')
@@ -365,13 +365,20 @@ for expt in range(0, 70, 5):
 nexp_expt[0] = (1, 1)
 
 
+x1 = -1.0
+color = -1.0
+
 print(nexp_expt)
+nexp_expt = []
+for expt in [5, 15, 30]:
+    nexp_expt.append((1, expt))
 """
-estimateSaturationTime('Output_Simu', nexp_expt_simu=(1,30),x1_color=[(0.0, 0.0)], seasons=[2],
+estimateSaturationTime('Output_Simu', nexp_expt_simu=(1, 30), x1_color=[(x1,color)], seasons=[3],
                        nexp_expt=nexp_expt, cadence_obs=cadence_obs, nproc=8, band=band)
+print(test)
 """
 
-plotTimeSaturationContour(0.0, 0.0, cadence=3)
+plotTimeSaturationContour(x1, color, cadence=3)
 
 plt.show()
 
