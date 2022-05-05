@@ -226,7 +226,7 @@ def plotBinned(ax, metricTot, xp='cadence', yp='nsn_med_faint', label='', color=
     if not yerrplot:
         yerr = None
     ax.errorbar(x=bin_centers, y=means, yerr=yerr,
-                marker='.', label=label, color=color, ls=ls, linewidth=2)
+                marker='.', label=label, color=color, ls=ls, linewidth=3)
 
 
 def cadenceTable(metricTot):
@@ -590,10 +590,13 @@ metricTot_med = None
 metricTot = Summary(dirFile, 'NSN',
                     'DD', fieldNames, nside, forPlot, outName).data
 
-
-#plotAllBinned(metricTot, forPlot)
-# plotAllBinned(metricTot, forPlot, xp='gap_max', yp='cadence',
-#              legx='max inter-night gap [day]', legy='cadence [day]', bins=10, therange=(0.5, 60.5))
+# figs 6 and 7
+"""
+plotAllBinned(metricTot, forPlot)
+plotAllBinned(metricTot, forPlot, xp='gap_max', yp='cadence',
+              legx='max inter-night gap [day]', legy='cadence [day]', bins=10, therange=(0.5, 60.5))
+plt.show()
+"""
 # dumpcsv_pixels(metricTot)
 # plotAllBinned(metricTot, yp='zlim_faint', legy='$z_{complete}^{0.95}$')
 # plt.tight_layout()
@@ -617,7 +620,7 @@ nsn_plot.plot_DDSummary(metricTot, forPlot, sntype=snType,
 # nsn_plot.plot_DD_Moll(metricTot, 'descddf_v1.5_10yrs', 1, 128)
 plt.show()
 
-print(test)
+# print(test)
 fontsize = 15
 fields_DD = DDFields()
 # print(metricTot[['cadence','filter']])
