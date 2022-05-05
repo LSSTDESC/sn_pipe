@@ -16,7 +16,8 @@ def plotEffiRate(data, healpixID):
       healpix id
 
     """
-
+    thecol = 'm'
+    lw = 3
     idx = data['healpixID'] == healpixID
 
     sel = data[idx]
@@ -30,13 +31,13 @@ def plotEffiRate(data, healpixID):
     mm = ['o', 'v', 's']
     mm += ['s', 'o', 'v']
     mm += ['v', 's', 'v']
-    mm.append('o')
+    mm.append('s')
     lsb = dict(zip(range(10), lls))
     mmb = dict(zip(range(10), mm))
     # for season in seasons[idx]:
     for season in [1, 6, 10]:
         pp.plotEffi_indiv(sel, ax, healpixID, season, 'effi', 'effi_err',
-                          'Observing Efficiencies', ls=lsb[season-1], label='season {}'.format(season), marker=mmb[season-1])
+                          'Observing Efficiencies', ls=lsb[season-1], label='season {}'.format(season), marker=mmb[season-1], lw=lw)
 
     ax.set_xlabel('z')
     ax.set_ylabel('Observing Efficiency')
@@ -48,10 +49,12 @@ def plotEffiRate(data, healpixID):
     zvals = np.arange(0.01, 0.7, 0.01)
 
     axb = ax.twinx()
-    axb.plot(zvals, rate(zvals), color='k', ls='dashed')
-    axb.set_ylabel('SN Rate')
+    axb.plot(zvals, rate(zvals), color=thecol, ls='dashed', lw=lw)
+    axb.set_ylabel('SN Ia Rate', color=thecol)
     ax.legend(loc='upper center', bbox_to_anchor=(
         0.5, 1.20), ncol=4, frameon=False)
+    axb.tick_params(axis='y', colors=thecol)
+    axb.spines['right'].set_color(thecol)
 
 
 def plotCumul(data, healpixID):
@@ -66,13 +69,13 @@ def plotCumul(data, healpixID):
       healpix id
 
     """
-
+    lw = 3
     lls = ['solid', 'dotted', 'dashed']*3
     lls.append('dashdot')
     mm = ['o', 'v', 's']
     mm += ['s', 'o', 'v']
     mm += ['v', 's', 'v']
-    mm.append('o')
+    mm.append('s')
     lsb = dict(zip(range(10), lls))
     mmb = dict(zip(range(10), mm))
 
@@ -93,7 +96,7 @@ def plotCumul(data, healpixID):
     for i, season in enumerate(seasons):
 
         pp.plotCumul(sel, ax, healpixID, season, shiftplot=shiftplot[season],
-                     label='season {}'.format(season), ls=lsb[season-1], marker=mm[season-1])
+                     label='season {}'.format(season), ls=lsb[season-1], marker=mm[season-1], lw=lw)
 
     ax.set_xlabel('z')
     ax.set_ylabel('Normalised Cumulative $\mathrm{N_{SN}}$')
@@ -199,7 +202,7 @@ plotEffiRate(data, healpixID)
 
 plotCumul(data, healpixID)
 
-plotNSN(data, healpixID)
+#plotNSN(data, healpixID)
 # pp.plotEffi()
 
 plt.show()
