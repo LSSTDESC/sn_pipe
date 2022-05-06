@@ -162,7 +162,7 @@ def plotAllBinned(ax, metricTot, forPlot=pd.DataFrame(), xp='cadence', yp='nsn_m
     if legend:
         ax.legend(frameon=False)
         ax.legend(loc='upper left', bbox_to_anchor=(
-            0.1, 1.2), ncol=4, frameon=False)
+            -0.05, 1.42), ncol=3, frameon=False)
     ylims = np.copy(ax.get_ylim())
     xlims = np.copy(ax.get_xlim())
     if xp == 'cadence':
@@ -605,7 +605,7 @@ metricTot = Summary(dirFile, 'NSN',
                     'DD', fieldNames, nside, forPlot, outName).data
 
 # figs 6 and 7
-fig, ax = plt.subplots(figsize=(16, 8), ncols=2)
+fig, ax = plt.subplots(figsize=(9, 16), nrows=2)
 fig.subplots_adjust(top=0.85)
 drawrec = {}
 drawrec['x'] = [0, 3, 3, 0]
