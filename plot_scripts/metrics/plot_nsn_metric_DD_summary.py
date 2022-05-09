@@ -605,6 +605,7 @@ metricTot = Summary(dirFile, 'NSN',
                     'DD', fieldNames, nside, forPlot, outName).data
 
 # figs 6 and 7
+"""
 fig, ax = plt.subplots(figsize=(9, 16), nrows=2)
 fig.subplots_adjust(top=0.85)
 drawrec = {}
@@ -617,7 +618,7 @@ drawrecb['y'] = [1., 1., 3., 3.]
 plotAllBinned(ax[1], metricTot, forPlot, xp='gap_max', yp='cadence',
               legx='max inter-night gap [day]', legy='cadence [day]', bins=10, therange=(0.5, 60.5), legend=False, drawrec=drawrecb)
 plt.show()
-
+"""
 # dumpcsv_pixels(metricTot)
 # plotAllBinned(metricTot, yp='zlim_faint', legy='$z_{complete}^{0.95}$')
 # plt.tight_layout()
