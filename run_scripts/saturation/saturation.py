@@ -377,11 +377,11 @@ for psf_type in ['single_gauss']:
 
 time_ref = time.time()
 psf_type = 'single_gauss'
-
-# PixelPSFSeeing(psf_type)
+psf_type = 'moffat'
+PixelPSFSeeing(psf_type)
 
 print('done', time.time()-time_ref)
-
+print(test)
 # PlotMaxFrac()
 #PlotMaxFrac(psf_type=psf_type, title='Single gaussian profile')
 """
