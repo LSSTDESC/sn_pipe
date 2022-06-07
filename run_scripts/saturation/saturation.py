@@ -33,7 +33,8 @@ class Simulations:
                  dbDir='../../DB_Files',
                  dbName='baseline_nexp1_v1.7_10yrs',
                  cadence=3,
-                 x1_color=[(0.0, 0.0)],
+                 x1_color=[dict(zip(['x1_type', 'x1_min', 'x1_max', 'color_type', 'color_min', 'color_max'], [
+                     'unique', 0.0, 0.0, 'unique', 0.0, 0.0]))],
                  seasons=[2]):
 
         self.nexp_expt = nexp_expt
@@ -73,17 +74,83 @@ class Simulations:
         nproc = 4
         # input_yaml = 'input/saturation/param_simulation_gen.yaml'
 
-        for (x1, color) in self.x1_color:
+        for vals in self.x1_color:
             for season in self.seasons:
                 params = {}
-                params['x1'] = x1
-                params['color'] = color
+                params['x1_type'] = vals['x1_type']
+                params['x1_min'] = vals['x1_min']
+                params['x1_max'] = vals['x1_max']
+                params['color_type'] = vals['color_type']
+                params['color_min'] = vals['color_min']
+                params['color_max'] = vals['color_max']
                 params['season'] = season
                 params['cadence'] = self.cadence
                 params['dbName'] = self.dbName
                 multiproc(self.nexp_expt, params, self.simulationIndiv, nproc)
 
     def simulationIndiv(self, nexp_expt, params, j=0, output_q=None):
+        """
+        Method to perform simulations on a subset of parameters
+
+        Parameters
+        ---------------
+        nexp_expt: list(tuple)
+          list of (nexp, exptime)
+        params: dict
+          parameter dict of this function
+        j: int, opt
+          multiproc number (default: 0)
+        output_q: multiprocessing queue, opt
+          queue for multiprocessing (default: None)
+
+        """
+        cadence = params['cadence']
+        x1_type = params['x1_type']
+        x1_min = params['x1_min']
+        x1_max = params['x1_max']
+        color_type = params['color_type']
+        color_min = params['color_min']
+        color_max = params['color_max']
+
+        season = params['season']
+        dbName = params['dbName']
+
+        for (nexp, expt) in nexp_expt:
+
+            dbName = 'Observations_{}_{}_{}'.format(nexp, expt, cadence)
+            prodid = 'Saturation_{}_{}_{}_{}_{}_{}'.format(
+                nexp, expt, x1_min, color_min, cadence, season)
+            cmd = 'python run_scripts/simulation/run_simulation.py --npixels 1'
+            cmd += ' --radius 0.01'
+            cmd += ' --RAmin 0.0'
+            cmd += ' --RAmax 0.1'
+            cmd += ' --SN_x1_type {}'.format(x1_type)
+            cmd += ' --SN_x1_min {}'.format(x1_min)
+            cmd += ' --SN_x1_min {}'.format(x1_max)
+            cmd += ' --SN_color_type {}'.format(color_type)
+            cmd += ' --SN_color_min {}'.format(color_min)
+            cmd += ' --SN_color_min {}'.format(color_max)
+            cmd += ' --SN_z_type uniform --SN_z_min 0.01 --SN_z_max 0.05 --SN_z_step 0.001'
+            #cmd += ' --SN_z_type uniform --SN_z_min 0.01 --SN_z_max 0.011 --SN_z_step 0.001'
+            #cmd += ' --SN_daymax_type uniform --SN_daymax_step 1.'
+            cmd += ' --SN_daymax_type uniform'
+            cmd += ' --SN_ebvofMW 0.'
+
+            cmd += ' --dbName {} --dbExtens npy --dbDir .'.format(dbName)
+            cmd += ' --ProductionIDSimu {}'.format(prodid)
+            cmd += ' --Observations_fieldtype Fake --Observations_coadd 0'
+            cmd += ' --Simulator_name sn_simulator.sn_cosmo'
+            cmd += ' --Observations_season {}'.format(season)
+            cmd += ' --SN_NSNabsolute 1000'
+            #cmd += ' --Display_LC_display 1'
+            os.system(cmd)
+
+        if output_q is not None:
+            return output_q.put({j: None})
+        else:
+            return None
+
+    def simulationIndiv_fast(self, nexp_expt, params, j=0, output_q=None):
         """
         Method to perform simulations on a subset of parameters
 
@@ -276,13 +343,13 @@ def estimateSaturationTime(dirFile, nexp_expt_simu, x1_color, seasons, nexp_expt
 
     """
     full_wells = [90000, 120000]
-    
+
     timesat = pd.DataFrame()
-    
+
     for (x1, color) in x1_color:
         for season in seasons:
             sat = SaturationTime(dirFile, x1, color,
-                             nexp_expt_simu[0], nexp_expt_simu[1], season, cadence_obs, band)
+                                 nexp_expt_simu[0], nexp_expt_simu[1], season, cadence_obs, band)
             for (nexp, expt) in nexp_expt:
                 for full_well in full_wells:
                     res = sat.multi_time(full_well, nexp, expt, npp=nproc)
@@ -310,11 +377,11 @@ for psf_type in ['single_gauss']:
 
 time_ref = time.time()
 psf_type = 'single_gauss'
-
-# PixelPSFSeeing(psf_type)
+psf_type = 'moffat'
+PixelPSFSeeing(psf_type)
 
 print('done', time.time()-time_ref)
-
+print(test)
 # PlotMaxFrac()
 #PlotMaxFrac(psf_type=psf_type, title='Single gaussian profile')
 """
@@ -325,35 +392,45 @@ PlotPixel(0.7, 'single_gauss', 'xpixel', 0., 'ypixel', 0., 'xc',
 """
 
 # Saturation mag
+
+mag_sat_file = 'mag_sat.npy'
 """
 mag_flux = MagToFlux()
 
 mag_flux.plot()
-
-mag_sat_file = 'mag_sat.npy'
+plt.show()
 
 if not os.path.isfile(mag_sat_file):
     estimate_magsat()
 
 #plotMagSat('gri', res_sat)
 plotMagContour(mag_sat_file)
-plotDeltamagContour()
+plotMagContour(mag_sat_file, band='r')
+# plotDeltamagContour()
 plt.show()
 """
-
 
 # make LC simulation here
 """
 nexp_expt = []
 for expt in range(1, 64, 4):
     nexp_expt.append((1, expt))
-"""    
+"""
 cadence_obs = 3
 
-nexp_expt=[(1,30)]
-#Simulations(dbDir='../DB_Files',nexp_expt=nexp_expt, cadence=cadence_obs)
+nexp_expt = [(2, 15)]
+# make observations and simulations here
+x1_color = {}
+x1_color['x1_type'] = 'unique'
+x1_color['x1_min'] = -2.0
+x1_color['x1_max'] = 3.0
+x1_color['color_type'] = 'unique'
+x1_color['color_min'] = 0.2
+x1_color['color_max'] = 0.3
+Simulations(dbDir='../DB_Files', nexp_expt=nexp_expt,
+            cadence=cadence_obs, x1_color=[x1_color])
 
-#print(test)
+print(test)
 #cadence_obs = 3
 # estimate the saturation time here
 band = 'g'
@@ -361,16 +438,21 @@ nexp_expt = []
 for expt in range(0, 70, 5):
     nexp_expt.append((1, expt))
 
-nexp_expt[0] = (1,1)
+nexp_expt[0] = (1, 1)
 
+
+x1 = -1.0
+color = -1.0
 
 print(nexp_expt)
+nexp_expt = []
+for expt in [5, 15, 30]:
+    nexp_expt.append((1, expt))
 """
-estimateSaturationTime('Output_Simu', nexp_expt_simu=(1,30),x1_color=[(0.0, 0.0)], seasons=[2],
+estimateSaturationTime('Output_Simu', nexp_expt_simu=(1, 30), x1_color=[(x1, color)], seasons=[3],
                        nexp_expt=nexp_expt, cadence_obs=cadence_obs, nproc=8, band=band)
 """
-
-plotTimeSaturationContour(0.0, 0.0,cadence=3)
+plotTimeSaturationContour(x1, color, cadence=3)
 
 plt.show()
 

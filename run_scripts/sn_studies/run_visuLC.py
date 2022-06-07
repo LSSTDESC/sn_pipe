@@ -21,4 +21,4 @@ lcproc = VisuLC(dirTemplates='dd_design/Templates')
 
 # lcproc.plot(0.9)
 
-plot(lcproc, 0.9, 'y', 10, m5_singleExposure)
+plot(lcproc, 0.9, 'y', 20, m5_singleExposure)

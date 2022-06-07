@@ -127,7 +127,7 @@ def fill(selb, tagprod='', x1=-2.0, color=0.2, ebvofMW=0.0, snrmin=1.0, error_mo
     return ro
 
 
-def plotAllBinned(metricTot, forPlot=pd.DataFrame(), xp='cadence', yp='nsn_med_faint', legx='cadence [day]', legy='N$_{\mathrm{SN}} ^ {z \leq z_{\mathrm{complete}}}$', bins=10, therange=(0.5, 10.5), yerrplot=False):
+def plotAllBinned(ax, metricTot, forPlot=pd.DataFrame(), xp='cadence', yp='nsn_med_faint', legx='cadence [day]', legy='N$_{\mathrm{SN}} ^ {z \leq z_{\mathrm{complete}}}$', bins=10, therange=(0.5, 10.5), yerrplot=False, legend=True, drawrec={}):
 
     print(forPlot)
     metricTot = pd.DataFrame(metricTot)
@@ -135,8 +135,8 @@ def plotAllBinned(metricTot, forPlot=pd.DataFrame(), xp='cadence', yp='nsn_med_f
     sel = metricTot[idx]
     # plt.plot(sel['cadence'], sel['nsn_med_faint'], 'ko')
     print(sel[['cadence', 'nsn_med_faint']])
-    fig, ax = plt.subplots(figsize=(10, 10))
-    fig.subplots_adjust(top=0.85)
+    #fig, ax = plt.subplots(figsize=(10, 10))
+    # fig.subplots_adjust(top=0.85)
     dbNames = np.unique(sel['dbName'])
     lsb = dict(zip(dbNames, ['solid', 'dashed', 'dotted',
                'dashdot', (0, (5, 1)), (0, (3, 10, 1, 10)), (0, (5, 10))]))
@@ -159,9 +159,23 @@ def plotAllBinned(metricTot, forPlot=pd.DataFrame(), xp='cadence', yp='nsn_med_f
     weight = 'normal'
     ax.set_xlabel(legx, weight=weight)
     ax.set_ylabel(legy, weight=weight)
-    ax.legend(frameon=False)
-    ax.legend(loc='upper center', bbox_to_anchor=(
-        0.5, 1.2), ncol=3, frameon=False)
+    if legend:
+        ax.legend(frameon=False)
+        ax.legend(loc='upper left', bbox_to_anchor=(
+            -0.05, 1.42), ncol=3, frameon=False)
+    ylims = np.copy(ax.get_ylim())
+    xlims = np.copy(ax.get_xlim())
+    if xp == 'cadence':
+        ylims[0] = 0
+    if yp == 'cadence':
+        ylims[0] = 1
+    print('alors', xlims, ylims)
+    if drawrec:
+        ax.fill_between(drawrec['x'], drawrec['y'], color='yellow', alpha=0.1)
+
+    print('alors', xlims, ylims)
+    ax.set_xlim([xlims[0], xlims[1]])
+    ax.set_ylim([ylims[0], ylims[1]])
 
 
 def plotAllBinned_old(metricTot, xp='cadence', yp='nsn_med_faint', legx='cadence [day]', legy='$N_{SN} ^ {z < z_{complete}}$'):
@@ -226,7 +240,7 @@ def plotBinned(ax, metricTot, xp='cadence', yp='nsn_med_faint', label='', color=
     if not yerrplot:
         yerr = None
     ax.errorbar(x=bin_centers, y=means, yerr=yerr,
-                marker='.', label=label, color=color, ls=ls, linewidth=2)
+                marker='.', label=label, color=color, ls=ls, linewidth=3)
 
 
 def cadenceTable(metricTot):
@@ -590,13 +604,24 @@ metricTot_med = None
 metricTot = Summary(dirFile, 'NSN',
                     'DD', fieldNames, nside, forPlot, outName).data
 
-
-plotAllBinned(metricTot, forPlot)
-plotAllBinned(metricTot, forPlot, xp='gap_max', yp='cadence',
-              legx='max inter-night gap [day]', legy='cadence [day]', bins=10, therange=(0.5, 60.5))
+# figs 6 and 7
+"""
+fig, ax = plt.subplots(figsize=(9, 16), nrows=2)
+fig.subplots_adjust(top=0.85)
+drawrec = {}
+drawrec['x'] = [0, 3, 3, 0]
+drawrec['y'] = [0., 0., 3., 3.]
+plotAllBinned(ax[0], metricTot, forPlot, drawrec=drawrec)
+drawrecb = {}
+drawrecb['x'] = [1., 15., 15., 1.]
+drawrecb['y'] = [1., 1., 3., 3.]
+plotAllBinned(ax[1], metricTot, forPlot, xp='gap_max', yp='cadence',
+              legx='max inter-night gap [day]', legy='cadence [day]', bins=10, therange=(0.5, 60.5), legend=False, drawrec=drawrecb)
+plt.show()
+"""
 # dumpcsv_pixels(metricTot)
 # plotAllBinned(metricTot, yp='zlim_faint', legy='$z_{complete}^{0.95}$')
-plt.tight_layout()
+# plt.tight_layout()
 # plt.show()
 
 """
@@ -617,7 +642,7 @@ nsn_plot.plot_DDSummary(metricTot, forPlot, sntype=snType,
 # nsn_plot.plot_DD_Moll(metricTot, 'descddf_v1.5_10yrs', 1, 128)
 plt.show()
 
-print(test)
+# print(test)
 fontsize = 15
 fields_DD = DDFields()
 # print(metricTot[['cadence','filter']])
