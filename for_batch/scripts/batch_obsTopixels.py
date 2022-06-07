@@ -8,7 +8,7 @@ def process(dbDir, dbName, dbExtens, scriptref, outDir, nproc,
           saveData, fieldType, simuType, nside, fieldNames, nclusters,
             RAmin,RAmax,nRA,Decmin,Decmax,nDec,radius,mode='batch'):
 
-    print('boa',RAmin,RAmax,nRA,Decmin,Decmax,nDec,radius)
+    print('boa',RAmin,RAmax,nRA,Decmin,Decmax,nDec,radius,mode)
 
     cwd = os.getcwd()
     dirScript = cwd + "/scripts"
@@ -27,21 +27,32 @@ def process(dbDir, dbName, dbExtens, scriptref, outDir, nproc,
         dbName, nside, fieldType)
 
     name_id = 'obsTopixels_{}'.format(id)
-    log = dirLog + '/'+name_id+'.log'
+    logName = dirLog + '/'+name_id+'.log'
+    errlogName = dirLog + '/'+name_id+'.err'
 
-    qsub = 'qsub -P P_lsst -l sps=1,ct=9:00:00,h_vmem=20G -j y -o {} -pe multicores {} <<EOF'.format(
-        log, nproc)
 
+    dict_batch = {}
+    dict_batch['--account'] = 'lsst'
+    dict_batch['-L'] = 'sps'
+    dict_batch['--time'] = '10:00:00'
+    dict_batch['--mem'] = '20G'
+    dict_batch['--output'] = logName
+    #dict_batch['--cpus-per-task'] = str(nproc)
+    dict_batch['-n'] = 8
+    dict_batch['--error'] = errlogName
+
+    # fill the script
     scriptName = dirScript+'/'+name_id+'.sh'
+    script = open(scriptName, "w")
+    
+    #script.write(qsub + "\n")
+    script.write("#!/bin/env bash\n") 
+    for key, vals in dict_batch.items():
+         script.write("#SBATCH {} {} \n".format(key,vals))
 
-    script = open(scriptName, "w")
-    script.write(qsub + "\n")
-    script = open(scriptName, "w")
-    script.write(qsub + "\n")
-    script.write("#!/bin/env bash\n")
     script.write(" cd " + cwd + "\n")
     script.write(" echo 'sourcing setups' \n")
-    script.write(" source setup_release.sh Linux\n")
+    script.write(" source setup_release.sh Linux -5\n")
     script.write("echo 'sourcing done' \n")
 
     if fieldType == 'WFD':
@@ -62,7 +73,7 @@ def process(dbDir, dbName, dbExtens, scriptref, outDir, nproc,
     script.write("EOF" + "\n")
     script.close()
     if mode == 'batch':
-        os.system("sh "+scriptName)
+        os.system("sbatch "+scriptName)
 
 
 def cmdb(dbDir, dbName, dbExtens, scriptref, outDir, nproc,
@@ -150,9 +161,11 @@ scriptref = 'run_scripts/obs_pixelize/run_obs_to_pixels.py'
 fieldNames = []
 #fieldDD = ['COSMOS', 'CDFS', 'ELAIS', 'XMM-LSS', 'ADFS1', 'ADFS2']
 fieldDD = opts.DDFs.split(',')
+
 for io, val in toprocess.iterrows():
     if val['fieldType'] == 'DD':
         fieldNames = fieldDD
     process(val['dbDir'], val['dbName'], val['dbExtens'], scriptref, outDir, val['nproc'],
               1, val['fieldType'], val['simuType'], val['nside'], fieldNames, opts.nclusters,
               RAmin,RAmax,nRA,Decmin,Decmax,nDec,radius,mode)
+    
