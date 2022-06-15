@@ -127,7 +127,7 @@ parser.add_option("--Decmin", type=float, default=-80.,
                   help="Dec min for obs area - [%default]")
 parser.add_option("--Decmax", type=float, default=20.,
                   help="Dec max for obs area - [%default]")
-parser.add_option("--nDec", type=int, default=4,
+parser.add_option("--nDec", type=int, default=1,
                   help="number of Dec patches - [%default]")
 parser.add_option("--radius", type=float, default=4.,
                   help="radius for pixel arounf center [DD only] - [%default]")
