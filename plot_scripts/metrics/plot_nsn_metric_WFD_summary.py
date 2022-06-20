@@ -380,6 +380,7 @@ for ip, vv in enumerate(simu_list):
 
     tabdf = pd.DataFrame(np.load(outFile, allow_pickle=True))
     tabdf['color'] = colors[ip]
+    tabdf['nside'] = vv.nside
     resdf = pd.concat((resdf, tabdf))
 
     """
