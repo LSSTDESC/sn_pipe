@@ -294,7 +294,6 @@ class batchclass:
             cmd_ = self.batch_cmd(proc,vv['RAmin'],vv['RAmax'],vv['Decmin'],vv['Decmax'])
             script.write(cmd_+" \n")
 
-        script.write("EOF" + "\n")
         script.close()
         #os.system("sh "+scriptName)
         os.system("sbatch "+scriptName)
@@ -363,7 +362,7 @@ parser.add_option("--fieldType", type=str, default='WFD',
 """
 parser.add_option("--pixelmap_dir", type=str, default='',
                   help="dir where to find pixel maps[%default]")
-parser.add_option("--npixels", type=int, default=0,
+parser.add_option("--npixels", type=int, default=-1,
                   help="number of pixels to process[%default]")
 parser.add_option("--outDir", type=str, default='/sps/lsst/users/gris/MetricOutput_pixels',
                   help="output directory[%default]")
