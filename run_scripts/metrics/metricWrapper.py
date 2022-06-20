@@ -178,6 +178,7 @@ class NSNMetricWrapper(MetricWrapper):
         zmax = 1.1
         bands = 'grizy'
         fig_for_movie = False
+
         if fieldType == 'WFD':
             zmin = 0.1
             zmax = 0.5
