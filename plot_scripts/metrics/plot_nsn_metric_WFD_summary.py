@@ -5,13 +5,14 @@ import healpy as hp
 import pandas as pd
 import os
 
-from sn_plotter_metrics.utils import Infos,Simu,ProcessData,ProcessFile
+from sn_plotter_metrics.utils import Infos, Simu, ProcessData, ProcessFile
 from sn_tools.sn_io import loopStack
 import sn_plotter_metrics.nsnPlot as nsn_plot
 
+
 class ProcessFileNSN(ProcessFile):
 
-    def __init__(self,info,metricName,fieldType,nside,npixels):
+    def __init__(self, info, metricName, fieldType, nside, npixels):
         """
         class to analyze results from NSN metric
 
@@ -27,10 +28,10 @@ class ProcessFileNSN(ProcessFile):
           type of field to process
         nside: int
            healpix nside parameter
-        
+
 
         """
-        super().__init__(info,metricName,fieldType,nside,npixels)
+        super().__init__(info, metricName, fieldType, nside, npixels)
 
     def process(self, fileNames):
         """
@@ -45,19 +46,22 @@ class ProcessFileNSN(ProcessFile):
         ----------
         resdf: pandas df with a summary of metric infos
 
-        """ 
+        """
         metricValues = np.array(loopStack(fileNames, 'astropyTable'))
         pixel_area = hp.nside2pixarea(self.nside, degrees=True)
 
-        print('hello',metricValues.dtype)
-        
-        idx = metricValues['status'] == 1
-        idx &= metricValues['zcomp'] > 0.
+        print('hello', metricValues.dtype)
+
+        #idx = metricValues['status'] == 1
+        #idx &= metricValues['zcomp'] > 0.
+
+        zzval = 'zlim_faint'
+        idx = metricValues[zzval] > 0.
 
         data = pd.DataFrame(metricValues[idx])
         data = data.applymap(
             lambda x: x.decode() if isinstance(x, bytes) else x)
-       
+
         print(len(np.unique(data[['healpixID', 'season']])))
         self.ratiopixels = 1
         self.npixels_eff = len(data['healpixID'].unique())
@@ -65,19 +69,19 @@ class ProcessFileNSN(ProcessFile):
             self.ratiopixels = float(
                 npixels)/float(self.npixels_eff)
 
-        nsn_dict= self.nSN_tot(data)
+        nsn_dict = self.nSN_tot(data)
         nsn_extrapol = {}
         for key, nsn in nsn_dict.items():
             nsn_extrapol[key] = int(np.round(nsn*self.ratiopixels))
 
         meds = data.groupby(['healpixID']).median().reset_index()
-        meds = meds.round({'zcomp' : 5})
+        meds = meds.round({zzval: 5})
         med_meds = meds.median()
         resdf = pd.DataFrame(
             [self.info['dbName']], columns=['dbName'])
-        
-        resdf['zcomp'] = med_meds['zcomp']
-        
+
+        resdf[zzval] = med_meds[zzval]
+
         for key, vals in nsn_dict.items():
             resdf[key] = [vals]
             #resdf['sig_nsn'] = [sig_nsn]
@@ -95,19 +99,18 @@ class ProcessFileNSN(ProcessFile):
         for key, vals in nsn_dict.items():
             resdf['{}_per_sqdeg'.format(key)] = resdf[key]/resdf['survey_area']
 
-        means  = data.groupby(['healpixID']).mean().reset_index()
+        means = data.groupby(['healpixID']).mean().reset_index()
         #stds  = data.groupby(['healpixID']).std().reset_index()
 
-        for vv in ['cadence_sn','gap_max_sn']:
+        for vv in ['cad_sn_mean', 'gap_sn_mean']:
             resdf[vv] = means[vv]
-        #for vv in ['cad_sn_std','gap_sn_std']:
+        # for vv in ['cad_sn_std','gap_sn_std']:
          #   resdf[vv] = stds[vv]
-            
 
         print(resdf)
         return resdf
-        
-    def nSN_tot(self,data):
+
+    def nSN_tot(self, data):
         """
         Method to estimate the total number of supernovae(and error)
 
@@ -119,7 +122,8 @@ class ProcessFileNSN(ProcessFile):
         sums = data.groupby(['healpixID']).sum().reset_index()
 
         dictout = {}
-        dictout['nsn'] = sums['nsn'].sum()
+        #dictout['nsn'] = sums['nsn'].sum()
+        dictout['nsn'] = sums['nsn_zlim_faint'].sum()
         """
         for vv in self.ztypes:
             dictout['nsn_{}'.format(vv)] = sums['nsn_{}_{}'.format(vv,self.sntype)].sum()
@@ -333,8 +337,8 @@ parser = OptionParser(
 
 parser.add_option("--configFile", type=str, default='plot_scripts/input/config_NSN_WFD.csv',
                   help="config file [%default]")
-parser.add_option("--nside", type=int, default=64,
-                  help="nside for healpixels [%default]")
+# parser.add_option("--nside", type=int, default=64,
+#                  help="nside for healpixels [%default]")
 parser.add_option("--tagbest", type=str, default='snpipe_a',
                   help="tag for the best OS [%default]")
 parser.add_option("--nproc", type=int, default=3,
@@ -347,7 +351,7 @@ parser.add_option("--metric", type=str, default='NSNY',
 opts, args = parser.parse_args()
 
 # Load parameters
-nside = opts.nside
+#nside = opts.nside
 nproc = opts.nproc
 
 metricName = opts.metric
@@ -358,19 +362,21 @@ simu_list = []
 
 for i, row in list_to_process.iterrows():
     simu_list.append(Simu(row['simuType'], row['simuNum'],
-                          row['dirFile'], row['dbList']))
+                          row['dirFile'], row['dbList'], row['nside']))
 
 # get the data to be plotted
 resdf = pd.DataFrame()
 colors = opts.colors.split(',')
 for ip, vv in enumerate(simu_list):
-    outFile = 'Summary_{}_WFD_{}_{}.npy'.format(metricName,vv.type, vv.num)
+    outFile = 'Summary_{}_WFD_{}_{}_{}.npy'.format(
+        metricName, vv.type, vv.num, vv.nside)
 
     if not os.path.isfile(outFile):
-        toprocess = Infos(vv,ip).resdf
+        toprocess = Infos(vv, ip).resdf
         #processMulti(toprocess, outFile, nside, metricName, 'WFD', nproc=nproc)
-        proc = ProcessData(nside, metricName, 'WFD')
-        proc.processMulti(toprocess, outFile, process_class=ProcessFileNSN,nproc=nproc)
+        proc = ProcessData(vv.nside, metricName, 'WFD')
+        proc.processMulti(toprocess, outFile,
+                          process_class=ProcessFileNSN, nproc=nproc)
 
     tabdf = pd.DataFrame(np.load(outFile, allow_pickle=True))
     tabdf['color'] = colors[ip]
@@ -396,9 +402,10 @@ resdf = filter(
 # summary plot
 #nsn_plot.NSN_zlim_GUI(resdf,xvar='zpeak',yvar='nsn_zpeak',xlabel='$z_{peak}$',ylabel='$N_{SN}(z\leq z_{peak})$',title='(nSN,zpeak) supernovae metric')
 #nsn_plot.NSN_zlim_GUI(resdf,xvar='zlim',yvar='nsn_zlim',xlabel='$z_{lim}$',ylabel='$N_{SN}(z\leq z_{lim})$',title='(nSN,zlim) supernovae metric')
-nsn_plot.NSN_zlim_GUI(resdf,xvar='zcomp',yvar='nsn',xlabel='$z_{complete}$',ylabel='$N_{SN}(z\leq z_{complete})$',title='(nSN,$z_{complete}$) supernovae metric')
+nsn_plot.NSN_zlim_GUI(resdf, xvar='zlim_faint', yvar='nsn',
+                      xlabel='$z_{complete}$', ylabel='$N_{SN}(z\leq z_{complete})$', title='(nSN,$z_{complete}$) supernovae metric')
 #nsn_plot.NSN_zlim_GUI(resdf,xvar='cad_sn_mean',yvar='gap_sn_mean',xlabel='SN cadence [day]',ylabel='SN gap [day]',title='(cadence , gap) SN')
-#nsn_plot.PlotSummary_Annot(resdf)
+# nsn_plot.PlotSummary_Annot(resdf)
 # plt.show()
 # plotSummary(resdf)
 # plt.show()

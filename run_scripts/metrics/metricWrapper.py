@@ -207,7 +207,7 @@ class NSNMetricWrapper(MetricWrapper):
             snr_min = 1.
             n_phase_min = 1
             n_phase_max = 1
-            zlim_coeff = 0.85
+            zlim_coeff = 0.95
 
         if fieldType == 'Fake':
             n_bef = 0
@@ -215,7 +215,7 @@ class NSNMetricWrapper(MetricWrapper):
             snr_min = 0.
             n_phase_min = 0
             n_phase_max = 0
-            zlim_coeff = 0.95
+            zlim_coeff = 0.90
 
         templateLC = None
         if metadata.ploteffi:
@@ -721,6 +721,7 @@ def load_reference(error_model=1, ebvofMW=-1, x1_colors=[(-2.0, 0.2), (0.0, 0.0)
 
     if not error_model:
         wave_cutoff = '{}_{}'.format(bluecutoff, redcutoff)
+
     for j in range(len(x1_colors)):
         x1 = x1_colors[j][0]
         color = x1_colors[j][1]
