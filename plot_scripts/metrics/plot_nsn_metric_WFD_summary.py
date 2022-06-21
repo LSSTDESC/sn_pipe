@@ -343,7 +343,7 @@ parser.add_option("--tagbest", type=str, default='snpipe_a',
                   help="tag for the best OS [%default]")
 parser.add_option("--nproc", type=int, default=3,
                   help="number of proc when multiprocessing used [%default]")
-parser.add_option("--colors", type=str, default='k,r,b,m,g',
+parser.add_option("--colors", type=str, default='k,r,b,m,g,grey,darkgreen',
                   help="colors for the plot [%default]")
 parser.add_option("--metric", type=str, default='NSNY',
                   help="metric name [%default]")
@@ -379,6 +379,7 @@ for ip, vv in enumerate(simu_list):
                           process_class=ProcessFileNSN, nproc=nproc)
 
     tabdf = pd.DataFrame(np.load(outFile, allow_pickle=True))
+    print('hello color', ip, colors)
     tabdf['color'] = colors[ip]
     tabdf['nside'] = vv.nside
     resdf = pd.concat((resdf, tabdf))
@@ -410,7 +411,7 @@ nsn_plot.NSN_zlim_GUI(resdf, xvar='zlim_faint', yvar='nsn',
 # plt.show()
 # plotSummary(resdf)
 # plt.show()
-print(test)
+# print(test)
 
 # 2D plots
 

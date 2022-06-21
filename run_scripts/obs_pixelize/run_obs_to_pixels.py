@@ -50,8 +50,8 @@ def skyPatch(RAmin, RAmax, nRA, Decmin, Decmax, nDec, outName):
 class procObsPixels:
     def __init__(self, outDir, dbDir, dbName, dbExtens, nodither,
                  fieldType, RAmin, RAmax, Decmin, Decmax, nside,
-                 nprocs, saveData=False, fieldName='unknown', 
-                 nclusters=6,radius=4):
+                 nprocs, saveData=False, fieldName='unknown',
+                 nclusters=6, radius=4):
         """
         Class to process obs <-> pixels on a patch of the sky
 
@@ -270,7 +270,7 @@ class procObsPixels:
 
             # get the pixels
             pixels = datapixels(observations, pointing['RA'], pointing['Dec'],
-                                pointing['radius_RA'], pointing['radius_Dec'], self.nodither, display=False)
+                                pointing['radius_RA'], pointing['radius_Dec'], self.nodither, display=True, inclusive=True)
             """
             import matplotlib.pyplot as plt
             print(pixels.columns)
@@ -384,5 +384,5 @@ for patch in patches:
                          opts.nprocs, saveData=opts.saveData,
                          fieldName=opts.fieldName,
                          nclusters=opts.nclusters,
-                         radius = opts.radius)
+                         radius=opts.radius)
     # break
