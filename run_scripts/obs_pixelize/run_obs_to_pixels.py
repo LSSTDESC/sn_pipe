@@ -255,7 +255,7 @@ class procObsPixels:
 
         """
 
-        print('processing area', j, pointings)
+        #print('processing area', j, pointings)
 
         time_ref = time.time()
         ipoint = 1
@@ -270,7 +270,7 @@ class procObsPixels:
 
             # get the pixels
             pixels = datapixels(observations, pointing['RA'], pointing['Dec'],
-                                pointing['radius_RA'], pointing['radius_Dec'], self.nodither, display=True, inclusive=True)
+                                pointing['radius_RA'], pointing['radius_Dec'], self.nodither, display=False)
             """
             import matplotlib.pyplot as plt
             print(pixels.columns)
