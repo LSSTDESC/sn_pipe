@@ -74,6 +74,28 @@ def getResults(dirFile, dbName, metricName, fieldType, nside, npixels=-1):
     return (dbName, nside, zlim_mean, nsn_tot)
 
 
+def processMultiple(dirFile):
+    dbList = glob.glob('{}/*'.format(dirFile))
+
+    dbList = list(map(lambda elem: elem.split('/')[-1], dbList))
+
+    res = []
+    io = -1
+    for nside in [64, 16]:
+        for dbName in dbList:
+            rr = getResults(dirFile, dbName, metricName, fieldType, nside)
+            res.append(rr)
+            io += 1
+        # if io > 0:
+        #    break
+
+    rt = pd.DataFrame(res, columns=['dbName', 'nside', 'zcomp', 'nsn'])
+    print(rt)
+    #np.savetxt('sample.csv', rt, delimiter=",")
+    rt.to_csv('sample.csv', index=False)
+    #print(getResults(dirFile, dbName, metricName, fieldType, nside))
+
+
 parser = OptionParser()
 
 parser.add_option("--dbName", type="str", default='baseline_v2.0_10yrs',
@@ -89,6 +111,60 @@ parser.add_option("--fieldType", type="str", default='WFD',
 parser.add_option("--nside", type="int", default=64,
                   help="healpix nside [%default]")
 
+
+def plotIt(dirFile, dbName, metricName, fieldType, nside, npixels=-1):
+
+    info = pd.DataFrame()
+
+    info['simuType'] = ['fbs']
+    info['simuNum'] = ['2.0']
+    info['dirFile'] = [dirFile]
+    info['dbName'] = [dbName]
+    info['family'] = ['baseline']
+    info['color'] = ['b']
+    info['marker'] = ['o']
+
+    df = pd.DataFrame()
+    for io, row in info.iterrows():
+        df = Data(row, metricName, fieldType, nside, npixels).data_summary
+
+    idx = df['zlim_faint'] > 0
+
+    df = df[idx]
+    zlim_mean = np.mean(df['zlim_faint'])
+    nsn_tot = np.sum(df['nsn_zlim_faint'])
+    nseasons = len(np.unique(df['season']))
+    print('resultat', zlim_mean, nsn_tot, nseasons,
+          np.median(df['nsn_zlim_faint']), len(df))
+
+    idx = df['zlim_faint'] >= zlim_mean
+    idx &= df['zlim_faint'] <= 1.05*zlim_mean
+    pix = np.unique(df[idx]['healpixID'])
+    print(pix, len(pix))
+    """
+    idx = df['zlim_faint'] >= 0.25
+    idx &= df['zlim_faint'] <= 0.26
+
+    idx = np.abs(df['healpixID']-1449.) < 1.
+    print(np.unique(df[idx]['healpixID']), len(df[idx]))
+    print(df[idx][['pixRA', 'pixDec', 'season', 'zlim_faint', 'nsn_zlim_faint']])
+    """
+    fig, ax = plt.subplots()
+
+    #ax.hist(df['zlim_faint'], histtype='step')
+    ax.plot(df['zlim_faint'], df['healpixID'], 'ko')
+
+    fig, ax = plt.subplots()
+
+    #ax.hist(df['zlim_faint'], histtype='step')
+    ax.plot(df['nsn_zlim_faint'], df['healpixID'], 'ko')
+
+    fig, ax = plt.subplots(ncols=2)
+    ax[0].hist(df['zlim_faint'], histtype='step', bins=20)
+    ax[1].hist(df['nsn_zlim_faint'], histtype='step', bins=20)
+    plt.show()
+
+
 opts, args = parser.parse_args()
 
 
@@ -98,67 +174,5 @@ metricName = opts.metric
 fieldType = opts.fieldType
 nside = opts.nside
 
-dbList = glob.glob('{}/*'.format(dirFile))
-
-dbList = list(map(lambda elem: elem.split('/')[-1], dbList))
-
-res = []
-io = -1
-for nside in [64, 16]:
-    for dbName in dbList:
-        rr = getResults(dirFile, dbName, metricName, fieldType, nside)
-        res.append(rr)
-        io += 1
-        # if io > 0:
-        #    break
-
-rt = pd.DataFrame(res, columns=['dbName', 'nside', 'zcomp', 'nsn'])
-print(rt)
-#np.savetxt('sample.csv', rt, delimiter=",")
-rt.to_csv('sample.csv', index=False)
-#print(getResults(dirFile, dbName, metricName, fieldType, nside))
-
-
-"""
-info = pd.DataFrame()
-
-info['simuType'] = ['fbs']
-info['simuNum'] = ['2.0']
-info['dirFile'] = [dirFile]
-info['dbName'] = [dbName]
-info['family'] = ['baseline']
-info['color'] = ['b']
-info['marker'] = ['o']
-
-df = pd.DataFrame()
-for io, row in info.iterrows():
-    df = Data(row, metricName, fieldType, nside, npixels).data_summary
-
-idx = df['zlim_faint'] > 0
-
-df = df[idx]
-zlim_mean = np.mean(df['zlim_faint'])
-nsn_tot = np.sum(df['nsn_zlim_faint'])
-print('resultat', zlim_mean, nsn_tot)
-"""
-"""
-pix = np.unique(df['healpixID'])
-print(pix, len(pix))
-
-idx = df['zlim_faint'] >= 0.25
-idx &= df['zlim_faint'] <= 0.26
-
-idx = np.abs(df['healpixID']-1449.) < 1.
-print(np.unique(df[idx]['healpixID']), len(df[idx]))
-print(df[idx][['pixRA', 'pixDec', 'season', 'zlim_faint', 'nsn_zlim_faint']])
-fig, ax = plt.subplots()
-
-#ax.hist(df['zlim_faint'], histtype='step')
-ax.plot(df['zlim_faint'], df['healpixID'], 'ko')
-
-fig, ax = plt.subplots()
-
-#ax.hist(df['zlim_faint'], histtype='step')
-ax.plot(df['nsn_zlim_faint'], df['healpixID'], 'ko')
-plt.show()
-"""
+# processMultiple(dirFile)
+plotIt(dirFile, dbName, metricName, fieldType, nside, npixels=-1)
