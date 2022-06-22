@@ -182,8 +182,6 @@ class NSNMetricWrapper(MetricWrapper):
         if fieldType == 'WFD':
             zmin = 0.1
             zmax = 0.5
-            if nside <= 32:
-                zmax = 0.9
             bands = 'griz'
             fig_for_movie = False
 
