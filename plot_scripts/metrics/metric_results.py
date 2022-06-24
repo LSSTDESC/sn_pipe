@@ -139,8 +139,15 @@ def plotIt(dirFile, dbName, metricName, fieldType, nside, npixels=-1):
 
     idx = df['zlim_faint'] >= zlim_mean
     idx &= df['zlim_faint'] <= 1.05*zlim_mean
+    idx = df['healpixID'] == 2218
+
     pix = np.unique(df[idx]['healpixID'])
     print(pix, len(pix))
+    sel = pd.DataFrame(df[idx])
+    print(sel.columns)
+    cols = ['healpixID', 'season', 'gap_max', 'cadence',
+            'season_length', 'zlim_faint', 'nsn_zlim_faint']
+    print(sel[cols])
     """
     idx = df['zlim_faint'] >= 0.25
     idx &= df['zlim_faint'] <= 0.26
