@@ -176,19 +176,23 @@ class NSNMetricWrapper(MetricWrapper):
 
         zmin = 0.
         zmax = 1.1
+        zStep = 0.03
+        daymaxStep = 2.
         bands = 'grizy'
         fig_for_movie = False
+        gammaName = 'gamma_DDF.hdf5'
 
         if fieldType == 'WFD':
             zmin = 0.1
             zmax = 0.5
             bands = 'griz'
             fig_for_movie = False
+            gammaName = 'gamma_WFD.hdf5'
 
         self.telescope = telescope_def()
 
         lc_reference, dustcorr = load_reference(
-            error_model, 0.0, [(-2.0, 0.2), (0.0, 0.0)], self.telescope, bluecutoff, redcutoff)
+            error_model, 0.0, [(-2.0, 0.2), (0.0, 0.0)], self.telescope, bluecutoff, redcutoff, gammaName=gammaName)
 
         print('Reference data loaded', lc_reference.keys(), fieldType)
 
@@ -232,7 +236,7 @@ class NSNMetricWrapper(MetricWrapper):
         # metric instance
         self.metric = SNNSNMetric(
             lc_reference, dustcorr, season=season, zmin=zmin,
-            zmax=zmax, pixArea=pixArea,
+            zmax=zmax, zStep=zStep, daymaxStep=daymaxStep, pixArea=pixArea,
             verbose=metadata.verbose, timer=metadata.timer,
             ploteffi=metadata.ploteffi,
             n_bef=n_bef, n_aft=n_aft,
@@ -290,18 +294,21 @@ class NSNYMetricWrapper(MetricWrapper):
 
         zmin = 0.
         zmax = 1.1
+        zStep = 0.03
+        daymaxStep = 2.
         bands = 'grizy'
         fig_for_movie = False
+        gammaName = 'gamma_DDF.hdf5'
         if fieldType == 'WFD':
             zmin = 0.1
             zmax = 0.50
             bands = 'griz'
             fig_for_movie = False
-
+            gammaName = 'gamma_WFD.hdf5'
         self.telescope = telescope_def()
 
         lc_reference, dustcorr = load_reference(
-            error_model, 0.0, [(-2.0, 0.2), (0.0, 0.0)], self.telescope, bluecutoff, redcutoff)
+            error_model, 0.0, [(-2.0, 0.2), (0.0, 0.0)], self.telescope, bluecutoff, redcutoff, gammaName=gammaName)
 
         print('Reference data loaded', lc_reference.keys(), fieldType)
 
@@ -322,7 +329,7 @@ class NSNYMetricWrapper(MetricWrapper):
             snr_min = 1.
             n_phase_min = 1
             n_phase_max = 1
-            zlim_coeff = 0.85
+            zlim_coeff = 0.95
 
         if fieldType == 'Fake':
             n_bef = 4
@@ -345,7 +352,8 @@ class NSNYMetricWrapper(MetricWrapper):
         # metric instance
         self.metric = SNNSNYMetric(
             lc_reference, dustcorr, season=season, zmin=zmin,
-            zmax=zmax, pixArea=pixArea,
+            zmax=zmax,  zStep=zStep,
+            daymaxStep=daymaxStep, pixArea=pixArea,
             verbose=metadata.verbose, timer=metadata.timer,
             ploteffi=metadata.ploteffi,
             n_bef=n_bef, n_aft=n_aft,
@@ -685,7 +693,7 @@ def telescope_def():
     return telescope
 
 
-def load_reference(error_model=1, ebvofMW=-1, x1_colors=[(-2.0, 0.2), (0.0, 0.0)], telescope=Telescope(), bluecutoff=380., redcutoff=800.):
+def load_reference(error_model=1, ebvofMW=-1, x1_colors=[(-2.0, 0.2), (0.0, 0.0)], telescope=Telescope(), bluecutoff=380., redcutoff=800., gammaName='gamma_WFD.hdf5'):
     """
     Method to load reference files (LC, ...)
 
@@ -709,7 +717,6 @@ def load_reference(error_model=1, ebvofMW=-1, x1_colors=[(-2.0, 0.2), (0.0, 0.0)
 
     templateDir = 'Template_LC'
     gammaDir = 'reference_files'
-    gammaName = 'gamma.hdf5'
     web_path = 'https://me.lsst.eu/gris/DESC_SN_pipeline'
     # loading dust file
     dustDir = 'Template_Dust'
