@@ -110,9 +110,13 @@ parser.add_option("--fieldType", type="str", default='WFD',
                   help="field type DD or WFD[%default]")
 parser.add_option("--nside", type="int", default=64,
                   help="healpix nside [%default]")
+parser.add_option("--zlimstr", type="str", default='zlim_faint',
+                  help="zlim column in df [%default]")
+parser.add_option("--nsnstr", type="str", default='nsn_zlim_faint',
+                  help="nsn column in df [%default]")
 
 
-def plotIt(dirFile, dbName, metricName, fieldType, nside, npixels=-1):
+def plotIt(dirFile, dbName, metricName, fieldType, nside, zlimstr, nsnstr, npixels=-1):
 
     info = pd.DataFrame()
 
@@ -128,47 +132,53 @@ def plotIt(dirFile, dbName, metricName, fieldType, nside, npixels=-1):
     for io, row in info.iterrows():
         df = Data(row, metricName, fieldType, nside, npixels).data_summary
 
-    idx = df['zlim_faint'] > 0
+    print(df.dtype.names)
+    idx = df[zlimstr] > 0
 
     df = df[idx]
-    zlim_mean = np.mean(df['zlim_faint'])
-    nsn_tot = np.sum(df['nsn_zlim_faint'])
+    zlim_mean = np.mean(df[zlimstr])
+    nsn_tot = np.sum(df[nsnstr])
     nseasons = len(np.unique(df['season']))
     print('resultat', zlim_mean, nsn_tot, nseasons,
-          np.median(df['nsn_zlim_faint']), len(df))
+          np.median(df[nsnstr]), len(df))
 
-    idx = df['zlim_faint'] >= zlim_mean
-    idx &= df['zlim_faint'] <= 1.05*zlim_mean
+    idx = df[zlimstr] >= zlim_mean
+    idx &= df[zlimstr] <= 1.05*zlim_mean
     idx = df['healpixID'] == 2218
 
     pix = np.unique(df[idx]['healpixID'])
     print(pix, len(pix))
     sel = pd.DataFrame(df[idx])
     print(sel.columns)
-    cols = ['healpixID', 'season', 'gap_max', 'cadence',
-            'season_length', 'zlim_faint', 'nsn_zlim_faint']
+    # cols = ['healpixID', 'season', 'gap_max', 'cadence',
+    #        'season_length', zlimstr, nsnstr]
+    cols = ['healpixID', 'season', 'gap_max', 'cadence', zlimstr, nsnstr]
     print(sel[cols])
     """
-    idx = df['zlim_faint'] >= 0.25
-    idx &= df['zlim_faint'] <= 0.26
+    idx = df[zlimstr] >= 0.25
+    idx &= df[zlimstr] <= 0.26
 
     idx = np.abs(df['healpixID']-1449.) < 1.
     print(np.unique(df[idx]['healpixID']), len(df[idx]))
-    print(df[idx][['pixRA', 'pixDec', 'season', 'zlim_faint', 'nsn_zlim_faint']])
+    print(df[idx][['pixRA', 'pixDec', 'season', zlimstr, nsnstr]])
     """
+    np.save('dfb.npy', np.copy(df))
     fig, ax = plt.subplots()
 
-    #ax.hist(df['zlim_faint'], histtype='step')
-    ax.plot(df['zlim_faint'], df['healpixID'], 'ko')
+    #ax.hist(df[zlimstr], histtype='step')
+    ax.plot(df[zlimstr], df['healpixID'], 'ko')
 
     fig, ax = plt.subplots()
 
-    #ax.hist(df['zlim_faint'], histtype='step')
-    ax.plot(df['nsn_zlim_faint'], df['healpixID'], 'ko')
+    #ax.hist(df[zlimstr], histtype='step')
+    ax.plot(df[nsnstr], df['healpixID'], 'ko')
 
     fig, ax = plt.subplots(ncols=2)
-    ax[0].hist(df['zlim_faint'], histtype='step', bins=20)
-    ax[1].hist(df['nsn_zlim_faint'], histtype='step', bins=20)
+    ax[0].hist(df[zlimstr], histtype='step', bins=20)
+    ax[1].hist(df[nsnstr], histtype='step', bins=20)
+
+    fig, ax = plt.subplots()
+    ax.hist(df['timeproc'], histtype='step', bins=20)
     plt.show()
 
 
@@ -180,6 +190,9 @@ dbName = opts.dbName
 metricName = opts.metric
 fieldType = opts.fieldType
 nside = opts.nside
+zlimstr = opts.zlimstr
+nsnstr = opts.nsnstr
 
 # processMultiple(dirFile)
-plotIt(dirFile, dbName, metricName, fieldType, nside, npixels=-1)
+plotIt(dirFile, dbName, metricName, fieldType,
+       nside, zlimstr, nsnstr, npixels=-1)
