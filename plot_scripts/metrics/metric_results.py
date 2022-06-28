@@ -179,6 +179,15 @@ def plotIt(dirFile, dbName, metricName, fieldType, nside, zlimstr, nsnstr, npixe
 
     fig, ax = plt.subplots()
     ax.hist(df['timeproc'], histtype='step', bins=20)
+
+    fig, ax = plt.subplots()
+    bins = np.arange(0.5, 12, 1)
+    ddf = pd.DataFrame(df.copy())
+    group = ddf.groupby(pd.cut(ddf.cadence, bins))
+    plot_centers = (bins[:-1] + bins[1:])/2
+    plot_values = group.nsn.mean()
+    ax.plot(df['cadence'], df['nsn'], 'ko', mfc=None)
+    ax.plot(plot_centers, plot_values, color='r')
     plt.show()
 
 
