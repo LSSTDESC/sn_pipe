@@ -56,6 +56,7 @@ class ProcessFileNSN(ProcessFile):
         #idx &= metricValues['zcomp'] > 0.
 
         zzval = 'zlim_faint'
+        zzval = 'zcomp'
         idx = metricValues[zzval] > 0.
 
         data = pd.DataFrame(metricValues[idx])
@@ -102,7 +103,9 @@ class ProcessFileNSN(ProcessFile):
         means = data.groupby(['healpixID']).mean().reset_index()
         #stds  = data.groupby(['healpixID']).std().reset_index()
 
-        for vv in ['cad_sn_mean', 'gap_sn_mean']:
+        print(means.columns)
+        # for vv in ['cad_sn_mean', 'gap_sn_mean']:
+        for vv in ['cadence_sn', 'gap_max_sn']:
             resdf[vv] = means[vv]
         # for vv in ['cad_sn_std','gap_sn_std']:
          #   resdf[vv] = stds[vv]
@@ -122,8 +125,8 @@ class ProcessFileNSN(ProcessFile):
         sums = data.groupby(['healpixID']).sum().reset_index()
 
         dictout = {}
-        #dictout['nsn'] = sums['nsn'].sum()
-        dictout['nsn'] = sums['nsn_zlim_faint'].sum()
+        dictout['nsn'] = sums['nsn'].sum()
+        #dictout['nsn'] = sums['nsn_zlim_faint'].sum()
         """
         for vv in self.ztypes:
             dictout['nsn_{}'.format(vv)] = sums['nsn_{}_{}'.format(vv,self.sntype)].sum()
@@ -404,7 +407,7 @@ resdf = filter(
 # summary plot
 #nsn_plot.NSN_zlim_GUI(resdf,xvar='zpeak',yvar='nsn_zpeak',xlabel='$z_{peak}$',ylabel='$N_{SN}(z\leq z_{peak})$',title='(nSN,zpeak) supernovae metric')
 #nsn_plot.NSN_zlim_GUI(resdf,xvar='zlim',yvar='nsn_zlim',xlabel='$z_{lim}$',ylabel='$N_{SN}(z\leq z_{lim})$',title='(nSN,zlim) supernovae metric')
-nsn_plot.NSN_zlim_GUI(resdf, xvar='zlim_faint', yvar='nsn',
+nsn_plot.NSN_zlim_GUI(resdf, xvar='zcomp', yvar='nsn',
                       xlabel='$z_{complete}$', ylabel='$N_{SN}(z\leq z_{complete})$', title='(nSN,$z_{complete}$) supernovae metric')
 #nsn_plot.NSN_zlim_GUI(resdf,xvar='cad_sn_mean',yvar='gap_sn_mean',xlabel='SN cadence [day]',ylabel='SN gap [day]',title='(cadence , gap) SN')
 # nsn_plot.PlotSummary_Annot(resdf)
