@@ -16,12 +16,13 @@ class Check_Pixels:
 
     """
 
-    def __init__(self, dirFile, dirObspixels, metricName, dbName, nproc=3):
+    def __init__(self, dirFile, dirObspixels, metricName, dbName,nside=64,nproc=3):
 
         self.dirFile = dirFile
         self.dirObspixels = dirObspixels
         self.metricName = metricName
         self.dbName = dbName
+        self.nside = nside
         self.nproc = nproc
 
     def __call__(self):
@@ -37,8 +38,8 @@ class Check_Pixels:
         listpixels_metric = df_metric.groupby(['RA_min_max', 'Dec_min_max']).apply(
             lambda x: self.listPixels(x)).reset_index()
 
-        print('hhh', listpixels_metric.groupby(
-            ['RA_min_max', 'Dec_min_max']).size())
+        #print('hhh', listpixels_metric.groupby(
+        #    ['RA_min_max', 'Dec_min_max']).size())
 
         # get number of files from obs pixel files
         #npixels_obs = self.countObspixels()
@@ -48,10 +49,12 @@ class Check_Pixels:
 
         # ebv cut
         idx = listpixels_obs['ebvofMW'] < 0.25
+        idx &= listpixels_obs['Nvisits'] >= 6
         listpixels_obs = listpixels_obs[idx]
-        print('bobo', listpixels_obs.groupby(
-            ['RA_min_max', 'Dec_min_max']).size())
+        #print('bobo', listpixels_obs.groupby(
+        #    ['RA_min_max', 'Dec_min_max']).size())
 
+        res = pd.DataFrame()
         for rr in listpixels_obs['RA_min_max'].unique():
             ida = listpixels_obs['RA_min_max'] == rr
             sela = listpixels_obs[ida]
@@ -61,7 +64,15 @@ class Check_Pixels:
                         set(selb['healpixID'].to_list()))
             intersect = list(set(sela['healpixID'].to_list()).intersection(
                 set(selb['healpixID'].to_list())))
-            print(rr, diff, len(diff), intersect[0])
+            if len(diff)>=1:
+                print('missing pixels',diff)
+                dd = pd.DataFrame(diff,columns=['pixels'])
+                dd['dbName'] = self.dbName
+                dd['nside'] = self.nside
+                dd['RA_min'] = np.round(float(rr.split('_')[0]),1)
+                dd['RA_max'] = np.round(float(rr.split('_')[1]),1)
+                res = pd.concat((res,dd))
+                #print(rr, diff, len(diff), intersect[0])
         """
         for rr in listpixels_obs['RA_min_max'].unique():
             ida = listpixels_obs['RA_min_max']==rr
@@ -84,7 +95,7 @@ class Check_Pixels:
 
         # return dfm[idx]
 
-        return -1
+        return res
 
     def getMetricFiles(self):
         """
@@ -94,13 +105,13 @@ class Check_Pixels:
         -----------
         pandas df with all infos
         """
-        path = '{}/{}/{}/{}*.hdf5'.format(self.dirFile,
-                                          self.dbName, self.metricName, self.dbName)
+        path = '{}/{}/{}/{}*_nside_{}_*.hdf5'.format(self.dirFile,
+                                             self.dbName, self.metricName, self.dbName,self.nside)
 
         fis = glob.glob(path)
 
-        prefix = '{}_{}Metric_WFD_nside_64_coadd_1_'.format(
-            self.dbName, self.metricName)
+        prefix = '{}_{}Metric_WFD_nside_{}_coadd_1_'.format(
+            self.dbName, self.metricName,self.nside)
         r = []
         for fi in fis:
             ra, dec, rastr, decstr, fispl = self.getInfo(fi, prefix)
@@ -264,6 +275,7 @@ class Check_Pixels:
         r = []
 
         for fi in fis:
+            print('processing',fi)
             tab = np.load(fi, allow_pickle=True)
             # get ebv here
             ebvs = self.ebvofMW(tab['pixRA'], tab['pixDec'])
@@ -293,7 +305,10 @@ class Check_Pixels:
         fis = glob.glob(path)
         params = {}
         params['dbName'] = self.dbName
-        return multiproc(fis, params, self.listObspixels_loop, self.nproc)
+        params['nside'] = self.nside
+        res = multiproc(fis, params, self.listObspixels_loop, self.nproc)
+
+        return res
 
     def listObspixels_loop(self, fis, params, j=0, output_q=None):
         """
@@ -314,7 +329,8 @@ class Check_Pixels:
         pandas df with healpixID and ebvofMW
         """
         dbName = params['dbName']
-        prefix = '{}_WFD_nside_64_'.format(dbName)
+        nside = params['nside']
+        prefix = '{}_WFD_nside_{}_'.format(dbName,nside)
 
         res = pd.DataFrame()
 
@@ -328,6 +344,7 @@ class Check_Pixels:
                 tab_un['pixRA'], tab_un['pixDec']).tolist()
             ro['RA_min_max'] = rastr
             ro['Dec_min_max'] = decstr
+            ro['Nvisits'] = pd.DataFrame(tab).groupby(['healpixID']).size().to_list()
             res = pd.concat((res, ro))
 
         if output_q is not None:
@@ -351,6 +368,7 @@ class Check_Pixels:
         a list of infos related to the string
 
         """
+
         fispl = fi.split('/')[-1]
         fisplb = fispl.split(prefix)[1]
         ra = fisplb.split('_')[:2]
@@ -443,17 +461,21 @@ dbs = pd.read_csv(opts.cvsList, comment='#')
 
 print(dbs)
 
+
+df = pd.DataFrame()
 for index, row in dbs.iterrows():
+    print('processing',row['dbName'])
     dbName = row['dbName']
+    nside = row['nside']
     # npixels(opts.dirFile, opts.dirObspixels, opts.metricName, dbName)
     check = Check_Pixels(opts.dirFile, opts.dirObspixels,
-                         opts.metricName, dbName, opts.nproc)
+                         opts.metricName, dbName, nside,opts.nproc)
     pixels = check()
-    print('res', pixels)
-    break
-    """
-    if len(pixels) >= 1:
-        Script(pixels, opts.dirFile, opts.dirObspixels,
-               opts.metricName, dbName)
-    break
-    """
+    df = pd.concat((df,pixels))
+
+if len(df)>0:
+    print('missing pixels')
+    print(df)
+    df.to_csv('missingPixels.csv',index=False)
+else:
+    print('Processing ok!')
