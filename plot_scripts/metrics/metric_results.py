@@ -178,8 +178,8 @@ def plotIt(dirFile, dbName, metricName, fieldType, nside, zlimstr, nsnstr, npixe
     ax[1].hist(df[nsnstr], histtype='step', bins=20)
 
     fig, ax = plt.subplots()
-    ax.hist(df['timeproc'], histtype='step', bins=20)
-
+    #ax.hist(df['timeproc'], histtype='step', bins=20)
+    ax.plot(df['cadence'], df['timeproc'], 'ko', mfc=None)
     fig, ax = plt.subplots()
     bins = np.arange(0.5, 12, 1)
     ddf = pd.DataFrame(df.copy())
