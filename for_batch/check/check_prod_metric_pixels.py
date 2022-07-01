@@ -452,6 +452,8 @@ parser.add_option("--dirObspixels", type="str",
                   default='/sps/lsst/users/gris/ObsPixelized_circular_fbs171', help="obs pixel dir [%default]")
 parser.add_option("--nproc", type=int,
                   default=8, help="number of proc for multiprocessing [%default]")
+parser.add_option("--outputDir", type="str",
+                  default='/sps/lsst/users/gris/batchCheck', help="output directory [%default]")
 
 opts, args = parser.parse_args()
 
@@ -476,6 +478,7 @@ for index, row in dbs.iterrows():
 if len(df)>0:
     print('missing pixels')
     print(df)
-    df.to_csv('missingPixels.csv',index=False)
+    outName = '{}/missingPixels_{}'.format(opts.outputDir,opts.cvsList.split('/')[-1])
+    df.to_csv(outName,index=False)
 else:
     print('Processing ok!')
