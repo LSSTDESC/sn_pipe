@@ -6,6 +6,7 @@ import os
 from sn_tools.sn_obs import DataToPixels, ProcessPixels, renameFields, patchObs
 from sn_tools.sn_io import getObservations
 import pandas as pd
+from os.path import exists
 
 
 def skyPatch(RAmin, RAmax, nRA, Decmin, Decmax, nDec, outName):
@@ -108,11 +109,22 @@ class procObsPixels:
         # create output directory
         self.genDir(outDir)
 
-        # get observations/patches
-        observations, patches = self.load_obs()
+        self.outName = '{}/{}_{}_nside_{}_{}_{}_{}_{}_{}.npy'.format(self.outDir,
+                                                                     dbName, fieldType, nside,
+                                                                     RAmin, RAmax,
+                                                                     Decmin, Decmax,
+                                                                     fieldName)
+        # if the file already exist -> do not re-process it
 
-        # run using multiprocessing
-        self.multiprocess(patches, observations)
+        if not exists(self.outName):
+            print('file ',self.outName,' does not exist -> processing')
+            # get observations/patches
+            observations, patches = self.load_obs()
+
+            # run using multiprocessing
+            self.multiprocess(patches, observations)
+        else:
+            print('file ',self.outName,' does already exist -> no processing')
 
     def genDir(self, outDir):
         """
@@ -193,7 +205,7 @@ class procObsPixels:
         npixels = int(len(healpixels))
 
         tabpix = np.linspace(0, npixels, self.nprocs+1, dtype='int')
-        print(tabpix, len(tabpix))
+        #print(tabpix, len(tabpix))
         result_queue = multiprocessing.Queue()
 
         # multiprocessing
@@ -201,7 +213,7 @@ class procObsPixels:
             ida = tabpix[j]
             idb = tabpix[j+1]
 
-            print('Field', healpixels[ida:idb])
+            #print('Field', healpixels[ida:idb])
 
             field = healpixels[ida:idb]
 
@@ -225,12 +237,7 @@ class procObsPixels:
 
         # now save
         if self.saveData:
-            outName = '{}/{}_{}_nside_{}_{}_{}_{}_{}_{}.npy'.format(self.outDir,
-                                                                    self.dbName, self.fieldType, self.nside,
-                                                                    self.RAmin, self.RAmax,
-                                                                    self.Decmin, self.Decmax,
-                                                                    self.fieldName)
-            np.save(outName, restot.to_records(index=False))
+            np.save(self.outName, restot.to_records(index=False))
 
     def processPatch(self, pointings, observations, j=0, output_q=None):
         """
@@ -369,6 +376,7 @@ if opts.fieldType == 'WFD':
                  skymapName)
 
     patches = np.load(skymapName)
+
 else:
     r = [(opts.RAmin, opts.RAmax, opts.Decmin, opts.Decmax)]
     patches = np.rec.fromrecords(
