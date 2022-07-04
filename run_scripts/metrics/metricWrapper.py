@@ -294,7 +294,7 @@ class NSNYMetricWrapper(MetricWrapper):
 
         zmin = 0.
         zmax = 1.1
-        zStep = 0.03
+        zStep = 0.02
         daymaxStep = 2.
         bands = 'grizy'
         fig_for_movie = False
@@ -329,7 +329,7 @@ class NSNYMetricWrapper(MetricWrapper):
             snr_min = 1.
             n_phase_min = 1
             n_phase_max = 1
-            zlim_coeff = 0.90
+            zlim_coeff = 0.95
 
         if fieldType == 'Fake':
             n_bef = 4
