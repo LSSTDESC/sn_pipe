@@ -91,9 +91,22 @@ def processMultiple(dirFile):
 
     rt = pd.DataFrame(res, columns=['dbName', 'nside', 'zcomp', 'nsn'])
     print(rt)
-    #np.savetxt('sample.csv', rt, delimiter=",")
+    # np.savetxt('sample.csv', rt, delimiter=",")
     rt.to_csv('sample.csv', index=False)
-    #print(getResults(dirFile, dbName, metricName, fieldType, nside))
+    # print(getResults(dirFile, dbName, metricName, fieldType, nside))
+
+
+def plotBinned(df, xcol='cadence', ycol='nsn', bins_x=np.arange(0.5, 12, 1.)):
+
+    fig, ax = plt.subplots()
+    # bins = np.arange(5., 120, 1.)
+    ddf = pd.DataFrame(df.copy())
+    group = ddf.groupby(pd.cut(ddf[xcol], bins_x))
+    # group = ddf.groupby(pd.cut(ddf.gap_max_sn, bins))
+    plot_centers = (bins_x[:-1] + bins_x[1:])/2
+    plot_values = group[ycol].mean()
+    ax.plot(df[xcol], df[ycol], 'ko', mfc='None')
+    ax.plot(plot_centers, plot_values, color='r')
 
 
 parser = OptionParser()
@@ -165,29 +178,26 @@ def plotIt(dirFile, dbName, metricName, fieldType, nside, zlimstr, nsnstr, npixe
     np.save('dfb.npy', np.copy(df))
     fig, ax = plt.subplots()
 
-    #ax.hist(df[zlimstr], histtype='step')
+    # ax.hist(df[zlimstr], histtype='step')
     ax.plot(df[zlimstr], df['healpixID'], 'ko')
 
     fig, ax = plt.subplots()
 
-    #ax.hist(df[zlimstr], histtype='step')
+    # ax.hist(df[zlimstr], histtype='step')
     ax.plot(df[nsnstr], df['healpixID'], 'ko')
 
-    fig, ax = plt.subplots(ncols=2)
+    fig, ax = plt.subplots(ncols=3)
     ax[0].hist(df[zlimstr], histtype='step', bins=20)
     ax[1].hist(df[nsnstr], histtype='step', bins=20)
+    ax[2].hist(df['timeproc'], histtype='step', bins=20)
 
-    fig, ax = plt.subplots()
-    #ax.hist(df['timeproc'], histtype='step', bins=20)
-    ax.plot(df['cadence'], df['timeproc'], 'ko', mfc=None)
-    fig, ax = plt.subplots()
-    bins = np.arange(0.5, 12, 1)
-    ddf = pd.DataFrame(df.copy())
-    group = ddf.groupby(pd.cut(ddf.cadence, bins))
-    plot_centers = (bins[:-1] + bins[1:])/2
-    plot_values = group.nsn.mean()
-    ax.plot(df['cadence'], df['nsn'], 'ko', mfc=None)
-    ax.plot(plot_centers, plot_values, color='r')
+    for b in 'grizy':
+        print('filter alloc ', b, np.median(df['frac_{}'.format(b)]))
+
+    plotBinned(df)
+    plotBinned(df, xcol='cadence', ycol='zcomp')
+    plotBinned(df, xcol='cadence', ycol='timeproc')
+    print(df.dtype.names)
     plt.show()
 
 
