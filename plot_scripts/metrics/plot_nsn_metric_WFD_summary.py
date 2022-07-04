@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 import numpy as np
 from optparse import OptionParser
 import glob
@@ -335,6 +336,93 @@ def filter(resdf, strfilt=['_noddf']):
     return resdf
 
 
+def plotSummary_new(resdf, ref='baseline_v2.0_10yrs', osversion=['2.0'], clean=['_v2.0_10yrs']):
+    """"
+    Method to plot summary for WFD OS
+
+    Parameters
+    ---------------
+    resdf: pandas df
+      data to plot
+    ref: str, opt
+      reference OS for plots
+    osversion: str, opt
+      OS version to plot
+
+    """
+    #
+    resdf['simuNum'] = resdf['simuNum'].astype(str)
+    # get reference numbers
+    idx = resdf['dbName'] == ref
+    refdf = resdf[idx]
+    if refdf.empty:
+        print('The proposed ref OS', ref, 'does not exist')
+        return
+
+    nsn_ref = refdf['nsn'].values[0]
+    zcomp_ref = refdf['zcomp'].values[0]
+
+    print(ref, nsn_ref, zcomp_ref, resdf.dtypes)
+
+    # select OS with osversion
+    seldf = pd.DataFrame()
+    for io, osv in enumerate(osversion):
+        idxb = resdf['simuNum'] == osv
+        sel = resdf[idxb][['dbName', 'nsn', 'zcomp', 'simuNum', 'family']]
+        print('jjj', io, clean)
+        sel['family_strip'] = sel['family'].str.split(clean[io]).str.get(0)
+        sel['family_strip'] += '_{}'.format(osv)
+        seldf = pd.concat((seldf, sel))
+
+    seldf['deltaN'] = (seldf['nsn']-nsn_ref)/nsn_ref
+    seldf['deltaz'] = seldf['zcomp']-zcomp_ref
+
+    print(seldf)
+    plotFig(seldf, clean=clean, osversion=osversion)
+    plotFig(seldf, var='deltaz',
+            ylabel=r'$\Delta z_{complete}$', clean=clean)
+
+
+def plotFig(seldf, var='deltaN', ylabel=r'$\frac{\Delta N_{SN}}{N_{SN}}$', clean=['_v2.0_10yrs'], osversion=['2.0']):
+
+    statdf = calcOS(seldf, var=var)
+
+    fig, ax = plt.subplots(figsize=(15, 8))
+    fig.subplots_adjust(bottom=0.25)
+
+    medvar = '{}_med'.format(var)
+    minvar = '{}_min'.format(var)
+    maxvar = '{}_max'.format(var)
+    statdf = statdf.sort_values(by=[medvar])
+
+    """
+    for io, cl in enumerate(clean):
+        statdf['family_strip'] = statdf['family'].str.split(cl).str.get(0)
+        ido = statdf['simuNum'] == osversion[io]
+        statdf[ido]['family_strip'] += '_{}'.format(osversion[io])
+    """
+    ax.plot(statdf['family_strip'], statdf[medvar], color='r')
+    #ax.plot(statdf['family_strip'], statdf[minvar], 'bo', mfc='None')
+    #ax.plot(statdf['family_strip'], statdf[maxvar], 'bo', mfc='None')
+    ax.fill_between(statdf['family_strip'], statdf[minvar],
+                    statdf[maxvar], color='yellow')
+    ax.tick_params(axis='x', labelrotation=30.)
+    # ax.set_ylabel(r'{}'.format(ylabel))
+    ax.set_ylabel(ylabel, fontsize=30)
+    ax.grid()
+    ax.tick_params(axis='x', labelsize=12)
+    for tick in ax.xaxis.get_majorticklabels():
+        tick.set_horizontalalignment("right")
+
+
+def calcOS(df, var='deltaN'):
+
+    dd = df.groupby(['family', 'simuNum', 'family_strip']).apply(lambda x: pd.DataFrame({'{}_min'.format(var): [x[var].min()],
+                                                                                        '{}_max'.format(var): [x[var].max()],
+                                                                                         '{}_med'.format(var): [x[var].median()]})).reset_index()
+    return dd
+
+
 parser = OptionParser(
     description='Display NSN metric results for WFD fields')
 
@@ -387,7 +475,13 @@ for ip, vv in enumerate(simu_list):
     tabdf['nside'] = vv.nside
     resdf = pd.concat((resdf, tabdf))
 
-    """
+plotSummary_new(resdf, ref='baseline_v2.0_10yrs',
+                osversion=['2.0', '2.1'], clean=['_v2.0_10yrs', '_v2.1_10yrs'])
+plotSummary_new(resdf, ref='baseline_v2.1_10yrs',
+                osversion=['2.1'], clean=['_v1.2_10yrs'])
+plt.show()
+print(test)
+"""
     rfam = []
     for io, row in resdf.iterrows():
         rfam.append(family(row['dbName'], resdf['dbName'].to_list()))
@@ -407,6 +501,7 @@ resdf = filter(
 # summary plot
 #nsn_plot.NSN_zlim_GUI(resdf,xvar='zpeak',yvar='nsn_zpeak',xlabel='$z_{peak}$',ylabel='$N_{SN}(z\leq z_{peak})$',title='(nSN,zpeak) supernovae metric')
 #nsn_plot.NSN_zlim_GUI(resdf,xvar='zlim',yvar='nsn_zlim',xlabel='$z_{lim}$',ylabel='$N_{SN}(z\leq z_{lim})$',title='(nSN,zlim) supernovae metric')
+# interactive plot
 nsn_plot.NSN_zlim_GUI(resdf, xvar='zcomp', yvar='nsn',
                       xlabel='$z_{complete}$', ylabel='$N_{SN}(z\leq z_{complete})$', title='(nSN,$z_{complete}$) supernovae metric')
 #nsn_plot.NSN_zlim_GUI(resdf,xvar='cad_sn_mean',yvar='gap_sn_mean',xlabel='SN cadence [day]',ylabel='SN gap [day]',title='(cadence , gap) SN')
