@@ -35,8 +35,6 @@ parser.add_option("--nproc", type="int", default='8',
                   help="number of proc  [%default]")
 parser.add_option("--fieldType", type="str", default='DD',
                   help="field type DD or WFD[%default]")
-parser.add_option("--zmax", type="float", default='1.2',
-                  help="zmax for simu [%default]")
 parser.add_option("--remove_dithering", type="int", default='0',
                   help="remove dithering for DDF [%default]")
 parser.add_option("--simuType", type="int", default='0',
@@ -57,6 +55,16 @@ parser.add_option("--Decmin", type=float, default=-1.,
                   help="Dec min for obs area - for WDF only[%default]")
 parser.add_option("--Decmax", type=float, default=-1.,
                   help="Dec max for obs area - for WDF only[%default]")
+parser.add_option("--zmin", type=float, default=0.1,
+                  help="z min for simu [%default]")
+parser.add_option("--zmax", type=float, default=0.5,
+                  help="z max for simu [%default]")
+parser.add_option("--zStep", type=float, default=0.02,
+                  help="z step for simu [%default]")
+parser.add_option("--daymaxStep", type=float, default=2,
+                  help="daymax step for simu [%default]")
+parser.add_option("--zlim_coeff", type=float, default=0.95,
+                  help="zlim_coeff for nsn metric[%default]")
 parser.add_option("--proxy_level", type=int, default=2,
                   help="proxy level for the metric[%default]")
 parser.add_option("--T0s", type=str, default='all',
@@ -156,6 +164,8 @@ metricList.append(globals()[classname](name=opts.metric, season=season_int,
                                        nside=opts.nside,
                                        RAmin=opts.RAmin, RAmax=opts.RAmax,
                                        Decmin=opts.Decmin, Decmax=opts.Decmax,
+                                       zmin=opts.zmin, zmax=opts.zmax, zStep=opts.zStep,
+                                       daymaxStep=opts.daymaxStep, zlim_coeff=opts.zlim_coeff,
                                        npixels=opts.npixels, metadata=opts, outDir=outputDir, ebvofMW=opts.ebvofMW))
 
 print('seasons and metric', season_int,

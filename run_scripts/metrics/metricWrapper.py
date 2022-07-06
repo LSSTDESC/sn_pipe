@@ -283,6 +283,7 @@ class NSNYMetricWrapper(MetricWrapper):
     def __init__(self, name='NSN', season=-1, coadd=True, fieldType='DD',
                  nside=64, RAmin=0., RAmax=360.,
                  Decmin=-1.0, Decmax=-1.0,
+                 zmin=0.01, zmax=0.5, zStep=0.03, daymaxStep=2, zlim_coeff=0.95,
                  npixels=0,
                  metadata={}, outDir='', ebvofMW=-1.0, bluecutoff=380.0, redcutoff=800.0, error_model=0):
         super(NSNYMetricWrapper, self).__init__(
@@ -292,16 +293,18 @@ class NSNYMetricWrapper(MetricWrapper):
             npixels=npixels,
             metadata=metadata, outDir=outDir, ebvofMW=ebvofMW)
 
+        """
         zmin = 0.
         zmax = 1.1
         zStep = 0.02
         daymaxStep = 2.
+        """
         bands = 'grizy'
         fig_for_movie = False
         gammaName = 'gamma_DDF.hdf5'
         if fieldType == 'WFD':
-            zmin = 0.1
-            zmax = 0.50
+            #zmin = 0.1
+            #zmax = 0.50
             bands = 'griz'
             fig_for_movie = False
             gammaName = 'gamma_WFD.hdf5'
@@ -321,7 +324,7 @@ class NSNYMetricWrapper(MetricWrapper):
             snr_min = 1.
             n_phase_min = 1
             n_phase_max = 1
-            zlim_coeff = 0.95
+            #zlim_coeff = 0.95
 
         if fieldType == 'WFD':
             n_bef = 3
@@ -329,7 +332,7 @@ class NSNYMetricWrapper(MetricWrapper):
             snr_min = 1.
             n_phase_min = 1
             n_phase_max = 1
-            zlim_coeff = 0.95
+            #zlim_coeff = 0.95
 
         if fieldType == 'Fake':
             n_bef = 4
@@ -337,7 +340,7 @@ class NSNYMetricWrapper(MetricWrapper):
             snr_min = 1.
             n_phase_min = 1
             n_phase_max = 1
-            zlim_coeff = 0.95
+            #zlim_coeff = 0.95
 
         errmodrel = -1.
         if error_model:
