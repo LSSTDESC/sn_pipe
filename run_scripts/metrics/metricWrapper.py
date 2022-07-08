@@ -380,10 +380,15 @@ class NSNYMetricWrapper(MetricWrapper):
         self.metadata['zlim_coeff'] = zlim_coeff
         self.metadata['error_model'] = error_model
         self.metadata['errmodrel'] = errmodrel
+        self.metadata['zmin'] = zmin
+        self.metadata['zmax'] = zmax
+        self.metadata['zStep'] = zStep
+        self.metadata['daymaxStep'] = daymaxStep
 
         self.metaout += ['ploteffi', 'outputType',
                          'proxy_level', 'lightOutput', 'T0s',
-                         'n_bef', 'n_aft', 'snr_min', 'n_phase_min', 'n_phase_max', 'error_model', 'errmodrel', 'zlim_coeff']
+                         'n_bef', 'n_aft', 'snr_min', 'n_phase_min', 'n_phase_max', 'error_model', 'errmodrel', 'zlim_coeff', 'zmin', 'zmax', 'zStep', 'daymaxStep']
+
         self.saveConfig()
 
 
