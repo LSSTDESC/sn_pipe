@@ -8,7 +8,7 @@ import pandas as pd
 def go_for_batch(toproc, splitSky,
                  outDir, metricName,
                  nodither, nside, band,
-                 pixelmap_dir, npixels, proxy_level):
+                 pixelmap_dir, npixels, proxy_level,zmin,zmax,zStep,daymaxStep,zlim_coeff):
     """
     Function to prepare and start batches
 
@@ -82,6 +82,7 @@ def go_for_batch(toproc, splitSky,
         # npixels=-1 means processing all pixels
 
         npixels_tot = 0
+        print('aooo',npixels)
         if npixels > 0:
             for val in skyMap:
                 search_path = '{}/{}/{}_{}_nside_{}_{}_{}_{}_{}_WFD.npy'.format(
@@ -120,23 +121,27 @@ def go_for_batch(toproc, splitSky,
                 RADec_sky = RADec
             else:
                 RADec_sky = np.concatenate((RADec_sky, RADec))
+            print('moving to batchclass')
             if 'SNR' not in metricName and 'SL' not in metricName:
                 batchclass(dbName, dbDir, dbExtens, 'run_scripts/metrics/run_metrics',
                            outDir, 8, 1, metricName, toproc,
-                           nodither, nside, fieldType,RADec, band=band,
+                           nodither, nside, zmin,zmax,
+                           zStep,daymaxStep,zlim_coeff,fieldType,RADec, band=band,
                            pixelmap_dir=pixelmap_dir, npixels=npixel_proc,
                            proxy_level=proxy_level, npixels_tot=npixels, ibatch=io)
         if 'SNR' in metricName or 'SL' in metricName:
             batchclass(dbName, dbDir, dbExtens, 'run_scripts/metrics/run_metrics',
                        outDir, 8, 1, metricName, toproc,
-                       nodither, nside, fieldType,RADec_sky, band=band,
+                       nodither, nside, zmin,zmax,
+                       zStep,daymaxStep,zlim_coeff,fieldType,RADec_sky, band=band,
                        pixelmap_dir=pixelmap_dir, npixels=npixel_proc,
                        proxy_level=proxy_level, npixels_tot=npixels, ibatch=0)
 
 
 class batchclass:
     def __init__(self, dbName, dbDir, dbExtens, scriptref, outDir, nproccomp,
-                 saveData, metric, toprocess, nodither, nside,
+                 saveData, metric, toprocess, nodither, nside,zmin,zmax,
+                 zStep,daymaxStep,zlim_coeff,
                  fieldType='WFD',
                  RADec=None, band='',
                  pixelmap_dir='', 
@@ -204,6 +209,11 @@ class batchclass:
         self.npixels = npixels
         self.npixels_tot = npixels_tot
         self.proxy_level = proxy_level
+        self.zmin = zmin
+        self.zmax = zmax
+        self.zStep = zStep
+        self.daymaxStep = daymaxStep
+        self.zlim_coeff = zlim_coeff
 
         dirScript, name_id, log, errlog = self.prepareOut(ibatch)
 
@@ -324,8 +334,16 @@ class batchclass:
         cmd += ' --RAmax {}'.format(RAmax)
         cmd += ' --Decmin {}'.format(Decmin)
         cmd += ' --Decmax {}'.format(Decmax)
+        cmd += ' --zmin {}'.format(self.zmin)
+        cmd += ' --zmax {}'.format(self.zmax)
+        cmd += ' --zStep {}'.format(self.zStep)
+        cmd += ' --daymaxStep {}'.format(self.daymaxStep)
+        cmd += ' --zlim_coeff {}'.format(self.zlim_coeff)
+
         if self.band != '':
             cmd += ' --band {}'.format(self.band)
+
+        
 
         if self.pixelmap_dir != '':
             cmd += ' --pixelmap_dir {}'.format(self.pixelmap_dir)
@@ -368,7 +386,16 @@ parser.add_option("--outDir", type=str, default='/sps/lsst/users/gris/MetricOutp
                   help="output directory[%default]")
 parser.add_option("--proxy_level", type=int, default=-1,
                   help="proxy level - For NSN metric only[%default]")
-
+parser.add_option("--zmin", type=float, default=0.1,
+                  help="z min for simu [%default]")
+parser.add_option("--zmax", type=float, default=0.5,
+                  help="z max for simu [%default]")
+parser.add_option("--zStep", type=float, default=0.02,
+                  help="z step for simu [%default]")
+parser.add_option("--daymaxStep", type=float, default=3,
+                  help="daymax step for simu [%default]")
+parser.add_option("--zlim_coeff", type=float, default=0.95,
+                  help="zlim_coeff for nsn metric[%default]")
 opts, args = parser.parse_args()
 
 print('Start processing...')
@@ -387,6 +414,12 @@ nside = opts.nside
 pixelmap_dir = opts.pixelmap_dir
 npixels = opts.npixels
 proxy_level = opts.proxy_level
+zmin = opts.zmin
+zmax = opts.zmax
+zStep = opts.zStep
+daymaxStep = opts.daymaxStep
+zlim_coeff = opts.zlim_coeff
+
 
 # toprocess = np.genfromtxt(dbList, dtype=None, names=[
 #                          'dbName', 'simuType', 'nside', 'coadd', 'fieldType', 'nproc'])
@@ -407,5 +440,5 @@ proc  = batchclass(dbDir, dbExtens, scriptref, outDir, nproccomp,
 for index, proc in toprocess.iterrows():
     myproc = go_for_batch(proc, splitSky,
                           outDir,metricName, nodither, nside,
-                          band, pixelmap_dir, npixels, proxy_level)
+                          band, pixelmap_dir, npixels, proxy_level,zmin,zmax,zStep,daymaxStep,zlim_coeff)
     # break
