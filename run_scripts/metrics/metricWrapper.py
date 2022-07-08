@@ -40,8 +40,8 @@ class MetricWrapper:
         self.metadata['Output dir'] = outDir
         self.outDir = outDir
 
-    def run(self, obs):
-        return self.metric.run(obs)
+    def run(self, obs, imulti=-1):
+        return self.metric.run(obs, imulti=imulti)
 
     def saveConfig(self):
         ti = dict(zip(self.metaout, [self.metadata[k] for k in self.metaout]))
