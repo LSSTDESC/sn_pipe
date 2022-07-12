@@ -94,9 +94,9 @@ class ProcessFileNSN(ProcessFile):
         resdf['family'] = self.info['family']
         resdf['color'] = self.info['color']
         resdf['marker'] = self.info['marker']
-        resdf['cadence'] = [med_meds['cadence']]
+        #resdf['cadence'] = [med_meds['cadence']]
         #resdf['season_length'] = [med_meds['season_length']]
-        resdf['gap_max'] = [med_meds['gap_max']]
+        #resdf['gap_max'] = [med_meds['gap_max']]
         resdf['survey_area'] = self.npixels_eff*pixel_area
         for key, vals in nsn_dict.items():
             resdf['{}_per_sqdeg'.format(key)] = resdf[key]/resdf['survey_area']
@@ -106,8 +106,10 @@ class ProcessFileNSN(ProcessFile):
 
         print(means.columns)
         # for vv in ['cad_sn_mean', 'gap_sn_mean']:
+        """
         for vv in ['cadence_sn', 'gap_max_sn']:
             resdf[vv] = means[vv]
+        """
         # for vv in ['cad_sn_std','gap_sn_std']:
          #   resdf[vv] = stds[vv]
 
