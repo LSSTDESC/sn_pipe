@@ -165,7 +165,7 @@ def plotIt(dirFile, dbName, metricName, fieldType, nside, zlimstr, nsnstr, npixe
     print(sel.columns)
     # cols = ['healpixID', 'season', 'gap_max', 'cadence',
     #        'season_length', zlimstr, nsnstr]
-    cols = ['healpixID', 'season', 'gap_max', 'cadence', zlimstr, nsnstr]
+    cols = ['healpixID', 'season', 'cadence', zlimstr, nsnstr]
     print(sel[cols])
     """
     idx = df[zlimstr] >= 0.25
@@ -191,8 +191,10 @@ def plotIt(dirFile, dbName, metricName, fieldType, nside, zlimstr, nsnstr, npixe
     ax[1].hist(df[nsnstr], histtype='step', bins=20)
     ax[2].hist(df['timeproc'], histtype='step', bins=20)
 
+    """
     for b in 'grizy':
         print('filter alloc ', b, np.median(df['frac_{}'.format(b)]))
+    """
 
     plotBinned(df)
     plotBinned(df, xcol='cadence', ycol='zcomp')
