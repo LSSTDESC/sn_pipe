@@ -111,7 +111,7 @@ class ProcessFileNSN(ProcessFile):
             resdf[vv] = means[vv]
         """
         # for vv in ['cad_sn_std','gap_sn_std']:
-         #   resdf[vv] = stds[vv]
+        #   resdf[vv] = stds[vv]
 
         print(resdf)
         return resdf
@@ -380,16 +380,17 @@ def plotSummary_new(resdf, ref='baseline_v2.0_10yrs', osversion=['2.0'], clean=[
     seldf['deltaz'] = seldf['zcomp']-zcomp_ref
 
     print(seldf)
-    plotFig(seldf, clean=clean, osversion=osversion)
-    plotFig(seldf, var='deltaz',
+    plotFig(seldf, ref, clean=clean, osversion=osversion)
+    plotFig(seldf, ref, var='deltaz',
             ylabel=r'$\Delta z_{complete}$', clean=clean)
 
 
-def plotFig(seldf, var='deltaN', ylabel=r'$\frac{\Delta N_{SN}}{N_{SN}}$', clean=['_v2.0_10yrs'], osversion=['2.0']):
+def plotFig(seldf, ref, var='deltaN', ylabel=r'$\frac{\Delta N_{SN}}{N_{SN}}$', clean=['_v2.0_10yrs'], osversion=['2.0']):
 
     statdf = calcOS(seldf, var=var)
 
     fig, ax = plt.subplots(figsize=(15, 8))
+    fig.suptitle('Ref: {}'.format(ref))
     fig.subplots_adjust(bottom=0.25)
 
     medvar = '{}_med'.format(var)
@@ -477,12 +478,15 @@ for ip, vv in enumerate(simu_list):
     tabdf['nside'] = vv.nside
     resdf = pd.concat((resdf, tabdf))
 
+# plotSummary_new(resdf, ref='baseline_v2.0_10yrs',
+#                osversion=['2.0', '2.1'], clean=['_v2.0_10yrs', '_v2.1_10yrs'])
 plotSummary_new(resdf, ref='baseline_v2.0_10yrs',
-                osversion=['2.0', '2.1'], clean=['_v2.0_10yrs', '_v2.1_10yrs'])
+                osversion=['2.0'], clean=['_v2.0_10yrs'])
+
 plotSummary_new(resdf, ref='baseline_v2.1_10yrs',
-                osversion=['2.1'], clean=['_v1.2_10yrs'])
+                osversion=['2.1'], clean=['_v2.1_10yrs'])
 plt.show()
-print(test)
+
 """
     rfam = []
     for io, row in resdf.iterrows():
@@ -506,6 +510,7 @@ resdf = filter(
 # interactive plot
 nsn_plot.NSN_zlim_GUI(resdf, xvar='zcomp', yvar='nsn',
                       xlabel='$z_{complete}$', ylabel='$N_{SN}(z\leq z_{complete})$', title='(nSN,$z_{complete}$) supernovae metric')
+plt.show()
 #nsn_plot.NSN_zlim_GUI(resdf,xvar='cad_sn_mean',yvar='gap_sn_mean',xlabel='SN cadence [day]',ylabel='SN gap [day]',title='(cadence , gap) SN')
 # nsn_plot.PlotSummary_Annot(resdf)
 # plt.show()
