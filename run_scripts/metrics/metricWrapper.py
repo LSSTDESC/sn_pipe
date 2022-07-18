@@ -349,7 +349,7 @@ class NSNYMetricWrapper(MetricWrapper):
         pixArea = hp.nside2pixarea(nside, degrees=True)
 
         templateLC = None
-        if metadata.ploteffi:
+        if metadata.ploteffi or fig_for_movie:
             templateLC = loadTemplateLC(error_model, 0, x1_colors=[
                                         (-2.0, 0.2), (0.0, 0.0)])
         # metric instance
