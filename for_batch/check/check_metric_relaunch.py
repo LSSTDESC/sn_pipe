@@ -18,7 +18,7 @@ parser.add_option("--fieldType", type="str",
                   default='WFD', help="field type [%default]")
 parser.add_option("--nside", type=int,
                   default=64, help="nside [%default]")
-parser.add_option("--process", type=int,
+parser.add_option("--nprocess", type=int,
                   default=8, help="expected number of process [%default]")
 
 opts, args = parser.parse_args()
@@ -52,6 +52,6 @@ for i, row in df.iterrows():
                 count += 1
         if count < nprocess:
             script = fi.replace('{}/'.format(logDir),'{}/'.format(scriptDir)).replace('.log','.sh')
-            print('reprocessing needed here', script)
+            print('reprocessing needed here', dbName,script)
             cmd = 'sbatch {}'.format(script)
             os.system(cmd)
