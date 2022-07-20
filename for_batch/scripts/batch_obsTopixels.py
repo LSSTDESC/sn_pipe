@@ -35,7 +35,7 @@ def process(dbDir, dbName, dbExtens, scriptref, outDir, nproc,
     dict_batch = {}
     dict_batch['--account'] = 'lsst'
     dict_batch['-L'] = 'sps'
-    dict_batch['--time'] = '10:00:00'
+    dict_batch['--time'] = '20:00:00'
     dict_batch['--mem'] = '20G'
     dict_batch['--output'] = logName
     #dict_batch['--cpus-per-task'] = str(nproc)
