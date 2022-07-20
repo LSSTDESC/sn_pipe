@@ -167,14 +167,14 @@ def plotIt(dirFile, dbName, metricName, fieldType, nside, zlimstr, nsnstr, npixe
     #        'season_length', zlimstr, nsnstr]
     cols = ['healpixID', 'season', 'cadence', zlimstr, nsnstr]
     print(sel[cols])
-    """
-    idx = df[zlimstr] >= 0.25
-    idx &= df[zlimstr] <= 0.26
 
-    idx = np.abs(df['healpixID']-1449.) < 1.
+    idx = df[zlimstr] >= 0.40
+    idx &= df[zlimstr] <= 0.42
+
+    #idx = np.abs(df['healpixID']-1449.) < 1.
     print(np.unique(df[idx]['healpixID']), len(df[idx]))
-    print(df[idx][['pixRA', 'pixDec', 'season', zlimstr, nsnstr]])
-    """
+    print(df[idx][['healpixID', 'pixRA', 'pixDec', 'season', zlimstr, nsnstr]])
+
     np.save('dfb.npy', np.copy(df))
     fig, ax = plt.subplots()
 
@@ -190,6 +190,10 @@ def plotIt(dirFile, dbName, metricName, fieldType, nside, zlimstr, nsnstr, npixe
     ax[0].hist(df[zlimstr], histtype='step', bins=20)
     ax[1].hist(df[nsnstr], histtype='step', bins=20)
     ax[2].hist(df['timeproc'], histtype='step', bins=20)
+
+    fig, ax = plt.subplots()
+
+    ax.plot(df['pixRA'], df['pixDec'], 'ko')
 
     """
     for b in 'grizy':
