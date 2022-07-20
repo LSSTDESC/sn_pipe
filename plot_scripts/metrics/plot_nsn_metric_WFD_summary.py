@@ -352,6 +352,54 @@ def plotSummary_new(resdf, ref='baseline_v2.0_10yrs', osversion=['2.0'], clean=[
       OS version to plot
 
     """
+    """
+    resdf['simuNum'] = resdf['simuNum'].astype(str)
+    # get reference numbers
+    idx = resdf['dbName'] == ref
+    refdf = resdf[idx]
+    if refdf.empty:
+        print('The proposed ref OS', ref, 'does not exist')
+        return
+
+    nsn_ref = refdf['nsn'].values[0]
+    zcomp_ref = refdf['zcomp'].values[0]
+
+    print(ref, nsn_ref, zcomp_ref, resdf.dtypes)
+
+    # select OS with osversion
+    seldf = pd.DataFrame()
+    for io, osv in enumerate(osversion):
+        idxb = resdf['simuNum'] == osv
+        sel = resdf[idxb][['dbName', 'nsn', 'zcomp', 'simuNum', 'family']]
+        print('jjj', io, clean)
+        sel['family_strip'] = sel['family'].str.split(clean[io]).str.get(0)
+        sel['family_strip'] += '_{}'.format(osv)
+        seldf = pd.concat((seldf, sel))
+
+    seldf['deltaN'] = (seldf['nsn']-nsn_ref)/nsn_ref
+    seldf['deltaz'] = seldf['zcomp']-zcomp_ref
+    """
+    seldf = data_sub(resdf, ref=ref, osversion=osversion, clean=clean)
+    print(seldf)
+    plotFig(seldf, ref, clean=clean, osversion=osversion)
+    plotFig(seldf, ref, var='deltaz',
+            ylabel=r'$\Delta z_{complete}$', clean=clean)
+
+
+def data_sub(resdf, ref='baseline_v2.0_10yrs', osversion=['2.0'], clean=['_v2.0_10yrs']):
+    """"
+    Method to plot summary for WFD OS
+
+    Parameters
+    ---------------
+    resdf: pandas df
+      data to plot
+    ref: str, opt
+      reference OS for plots
+    osversion: str, opt
+      OS version to plot
+
+    """
     #
     resdf['simuNum'] = resdf['simuNum'].astype(str)
     # get reference numbers
@@ -379,10 +427,19 @@ def plotSummary_new(resdf, ref='baseline_v2.0_10yrs', osversion=['2.0'], clean=[
     seldf['deltaN'] = (seldf['nsn']-nsn_ref)/nsn_ref
     seldf['deltaz'] = seldf['zcomp']-zcomp_ref
 
-    print(seldf)
-    plotFig(seldf, ref, clean=clean, osversion=osversion)
-    plotFig(seldf, ref, var='deltaz',
-            ylabel=r'$\Delta z_{complete}$', clean=clean)
+    return seldf
+
+
+def print_res(resdf, ref='baseline_v2.0_10yrs', osversion=['2.0'], clean=['_v2.0_10yrs']):
+
+    seldf = data_sub(resdf, ref=ref, osversion=osversion, clean=clean)
+    print(seldf[['dbName', 'deltaN', 'deltaz']])
+
+    for_csv = seldf[['dbName', 'deltaN', 'deltaz']]
+
+    for_csv = for_csv.round({'deltaN': 4, 'deltaz': 4})
+    for_csv = for_csv.rename(columns={'dbName': 'Observing Strategy'})
+    for_csv.to_csv('metric_ref_{}.csv'.format(ref), index=False)
 
 
 def plotFig(seldf, ref, var='deltaN', ylabel=r'$\frac{\Delta N_{SN}}{N_{SN}}$', clean=['_v2.0_10yrs'], osversion=['2.0']):
@@ -480,12 +537,22 @@ for ip, vv in enumerate(simu_list):
 
 # plotSummary_new(resdf, ref='baseline_v2.0_10yrs',
 #                osversion=['2.0', '2.1'], clean=['_v2.0_10yrs', '_v2.1_10yrs'])
+"""
 plotSummary_new(resdf, ref='baseline_v2.0_10yrs',
                 osversion=['2.0'], clean=['_v2.0_10yrs'])
 
 plotSummary_new(resdf, ref='baseline_v2.1_10yrs',
                 osversion=['2.1'], clean=['_v2.1_10yrs'])
 plt.show()
+"""
+"""
+print_res(resdf, ref='baseline_v2.0_10yrs',
+          osversion=['2.0'], clean=['_v2.0_10yrs'])
+
+print_res(resdf, ref='baseline_v2.1_10yrs',
+          osversion=['2.1'], clean=['_v2.1_10yrs'])
+print(test)
+"""
 
 """
     rfam = []
