@@ -1,7 +1,6 @@
 import sncosmo
 from astropy.cosmology import w0waCDM
 import numpy as np
-from lsst.sims.catUtils.dust import EBV
 import os
 from scipy.interpolate import griddata
 from sn_tools.sn_telescope import Telescope
@@ -51,8 +50,6 @@ class Cutoffs:
             source = sncosmo.SALT2Source(modeldir=SALT2Dir)
 
         dustmap = sncosmo.OD94Dust()
-
-        lsstmwebv = EBV.EBVbase()
 
         self.mjdCol = mjdCol
         self.filterCol = filterCol
