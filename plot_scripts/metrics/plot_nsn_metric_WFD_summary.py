@@ -430,14 +430,30 @@ def data_sub(resdf, ref='baseline_v2.0_10yrs', osversion=['2.0'], clean=['_v2.0_
     return seldf
 
 
+def plot_specific(resdf, llist=['roll_early', 'rolling_all_sky', 'rolling_bulge', 'rolling_ns2', 'rolling_ns3', 'six_rolling_ns6'], ref='baseline_v2.0_10yrs', osversion=['2.0'], clean=['_v2.0_10yrs']):
+
+    seldf = data_sub(resdf, ref=ref, osversion=osversion, clean=clean)
+    print(seldf['dbName'])
+    # select data
+    totdf = pd.DataFrame()
+    for vv in llist:
+        idx = seldf['dbName'].str.contains(vv)
+        sel = seldf[idx]
+        totdf = pd.concat((totdf, sel))
+
+    print(totdf)
+    plotFigSimple(totdf, ref)
+    plotFigSimple(totdf, ref, var='deltaz', ylabel=r'$\Delta z_{complete}$')
+
+
 def print_res(resdf, ref='baseline_v2.0_10yrs', osversion=['2.0'], clean=['_v2.0_10yrs']):
 
     seldf = data_sub(resdf, ref=ref, osversion=osversion, clean=clean)
     print(seldf[['dbName', 'deltaN', 'deltaz']])
 
-    for_csv = seldf[['dbName', 'deltaN', 'deltaz']]
+    for_csv = seldf[['dbName', 'zcomp', 'nsn', 'deltaN', 'deltaz']]
 
-    for_csv = for_csv.round({'deltaN': 4, 'deltaz': 4})
+    for_csv = for_csv.round({'deltaN': 4, 'deltaz': 4, 'zcomp': 4, 'nsn': 4})
     for_csv = for_csv.rename(columns={'dbName': 'Observing Strategy'})
     for_csv.to_csv('metric_ref_{}.csv'.format(ref), index=False)
 
@@ -473,6 +489,44 @@ def plotFig(seldf, ref, var='deltaN', ylabel=r'$\frac{\Delta N_{SN}}{N_{SN}}$', 
     ax.tick_params(axis='x', labelsize=12)
     for tick in ax.xaxis.get_majorticklabels():
         tick.set_horizontalalignment("right")
+
+
+def plotFigSimple(statdf, ref, var='deltaN', ylabel=r'$\frac{\Delta N_{SN}}{N_{SN}}$'):
+
+    fig, ax = plt.subplots(figsize=(15, 8))
+    fig.suptitle('Ref: {}'.format(ref))
+    fig.subplots_adjust(bottom=0.25)
+
+    statdf = statdf.sort_values(by=[var])
+    ax.plot(statdf['dbName'], statdf[var], color='r')
+    ax.tick_params(axis='x', labelrotation=30.)
+    # ax.set_ylabel(r'{}'.format(ylabel))
+    ax.set_ylabel(ylabel, fontsize=30)
+    ax.grid()
+    ax.tick_params(axis='x', labelsize=12)
+    for tick in ax.xaxis.get_majorticklabels():
+        tick.set_horizontalalignment("right")
+
+
+def plotFamily(resdf, familyName):
+    io = resdf['dbName'].str.contains('shave')
+    resdf = resdf[io]
+
+    fig, ax = plt.subplots(figsize=(12, 8))
+    fig.suptitle('shave observing strategy')
+    ax.plot(resdf['zcomp'], resdf['nsn'], color='k', marker='+')
+    ax.grid()
+    ax.set_xlabel('$z_{complete}$')
+    ax.set_ylabel('$N_{SN}(z\leq z_{complete})$')
+
+    for ii, sol in resdf.iterrows():
+        x = sol['zcomp']+0.000
+        y = 1.005*sol['nsn']
+        txt = sol['dbName'].split('_')[1]
+        txt += 's'
+        ax.text(x, y, txt, color='r')
+
+    plt.show()
 
 
 def calcOS(df, var='deltaN'):
@@ -537,23 +591,40 @@ for ip, vv in enumerate(simu_list):
 
 # plotSummary_new(resdf, ref='baseline_v2.0_10yrs',
 #                osversion=['2.0', '2.1'], clean=['_v2.0_10yrs', '_v2.1_10yrs'])
-"""
-plotSummary_new(resdf, ref='baseline_v2.0_10yrs',
-                osversion=['2.0'], clean=['_v2.0_10yrs'])
 
-plotSummary_new(resdf, ref='baseline_v2.1_10yrs',
-                osversion=['2.1'], clean=['_v2.1_10yrs'])
+# these OS require further investigation
+list_rm = ['twi_neo_pattern1_v1.7_10yrs', 'multi_short_v2.0_10yrs']
+
+idx = resdf['dbName'].isin(list_rm)
+
+resdf = resdf[~idx]
+
+"""
+print(resdf['dbName'].unique)
+iref = resdf['dbName'] == 'baseline_v2.0_10yrs'
+selref = resdf[iref]
+print('rrr', selref)
+plot_specific(resdf, ref='noroll_v2.0_10yrs')
+
 plt.show()
 """
 """
+idx = resdf['dbName'].str.contains('roll')
+sel_noroll = resdf[~idx]
+
+plotSummary_new(sel_noroll, ref='baseline_v2.0_10yrs',
+                osversion=['2.0'], clean=['_v2.0_10yrs'])
+
+plotSummary_new(sel_noroll, ref='baseline_v2.1_10yrs',
+                osversion=['2.1'], clean=['_v2.1_10yrs'])
+
 print_res(resdf, ref='baseline_v2.0_10yrs',
           osversion=['2.0'], clean=['_v2.0_10yrs'])
 
 print_res(resdf, ref='baseline_v2.1_10yrs',
           osversion=['2.1'], clean=['_v2.1_10yrs'])
-print(test)
+plt.show()
 """
-
 """
     rfam = []
     for io, row in resdf.iterrows():
@@ -571,6 +642,7 @@ resdf = filter(
     resdf, ['_noddf', 'footprint_stuck_rolling', 'weather', 'wfd_depth'])
 """
 
+plotFamily(resdf, 'shave')
 # summary plot
 #nsn_plot.NSN_zlim_GUI(resdf,xvar='zpeak',yvar='nsn_zpeak',xlabel='$z_{peak}$',ylabel='$N_{SN}(z\leq z_{peak})$',title='(nSN,zpeak) supernovae metric')
 #nsn_plot.NSN_zlim_GUI(resdf,xvar='zlim',yvar='nsn_zlim',xlabel='$z_{lim}$',ylabel='$N_{SN}(z\leq z_{lim})$',title='(nSN,zlim) supernovae metric')
