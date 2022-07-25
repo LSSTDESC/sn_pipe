@@ -1,5 +1,5 @@
 import glob
-from sn_tools.sn_tools.sn_io import loopStack
+from sn_tools.sn_io import loopStack
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
