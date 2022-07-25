@@ -335,7 +335,6 @@ class GenSimFit:
         r = []
         # print('res', len(restot), self.zlim_calc)
         if self.zlim_calc and len(restot) >= 1:
-            # print('ici', restot)
             restot.sort('z')
             if 'sigma_mu' in restot.columns:
                 print(restot[['z', 'sigma_mu']], np.sqrt(
@@ -390,8 +389,8 @@ class GenSimFit:
         """
         # generate fake obs
         fakeData = FakeObservations(config_fake).obs
-
         print('fake Data', len(fakeData))
+
         # simulate LCs
         list_lc = self.simu.run(fakeData)
 
@@ -405,6 +404,7 @@ class GenSimFit:
         # fit LCs
         res = self.fit_loop(list_lc)
 
+        print(res[['z', 'Cov_colorcolor']])
         print('fit lc', len(res))
         return res
 
@@ -509,7 +509,7 @@ class GenSimFit:
         """
         errormod = self.config_simu['Simulator']['errorModel']
         cutoff = '{}_{}'.format(
-            self.config_simu['SN']['blueCutoff'], self.config_simu['SN']['redCutoff'])
+            self.config_simu['SN']['blueCutoffg'], self.config_simu['SN']['redCutoffg'])
         ebv = self.config_simu['SN']['ebvofMW']
 
         if errormod:
