@@ -66,8 +66,6 @@ def cmd_install(package, verbose, available_packs):
     cmd = "pip {} install . --user --install-option=\"--package={}\"".format(vv,
                                                                              package)
 
-    if package == 'sn_metrics':
-        cmd += '-r requirements.txt'
     print('install cmd', cmd)
     return cmd
 
