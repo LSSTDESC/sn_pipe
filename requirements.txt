@@ -3,7 +3,6 @@ shapely[vectorized]
 descartes
 astropy-healpix
 dustmaps
-rubin_sim
 ###### Requirements with Version Specifiers ######
 #h5py==2.7.1
 #### git packages
@@ -11,4 +10,4 @@ rubin_sim
 #git+https://github.com/lsstdesc/sn_stackers.git#egg=sn_stackers-v1.0.0
 git+https://github.com/lsstdesc/sn_tools.git@dev#egg=sn_tools
 git+https://github.com/lsstdesc/sn_stackers.git@master#egg=sn_stackers
-
+git+https://github.com/lsst/rubin_sim.git#egg=rubin_sim
