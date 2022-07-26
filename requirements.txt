@@ -3,6 +3,7 @@ shapely[vectorized]
 descartes
 astropy-healpix
 dustmaps
+rubin_sim
 ###### Requirements with Version Specifiers ######
 #h5py==2.7.1
 #### git packages

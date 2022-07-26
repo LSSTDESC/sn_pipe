@@ -1,8 +1,8 @@
 import matplotlib.pyplot as plt
-import lsst.sims.maf.metricBundles as metricBundles
-import lsst.sims.maf.slicers as slicers
-import lsst.sims.maf.db as db
-import lsst.sims.maf.utils as utils
+import rubin_sim.maf.metricBundles as metricBundles
+import rubin_sim.maf.slicers as slicers
+import rubin_sim.maf.db as db
+import rubin_sim.maf.utils as utils
 import argparse
 import time
 import yaml

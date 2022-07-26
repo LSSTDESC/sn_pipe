@@ -4,7 +4,7 @@ import numpy as np
 import os
 from scipy.interpolate import griddata
 from sn_tools.sn_telescope import Telescope
-from lsst.sims.photUtils import Bandpass, Sed
+from rubin_sim.photUtils import Bandpass, Sed
 from astropy import units as u
 import pandas as pd
 from sn_tools.sn_io import check_get_dir, check_get_file
