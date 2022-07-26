@@ -59,13 +59,15 @@ def cmd_install(package, verbose, available_packs):
               available_packs['packname'].tolist())
         return None
 
+    vv = ''
     if verbose:
-        cmd = "pip -v install . --user --install-option=\"--package={}\"".format(
-            pack)
-    else:
-        cmd = "pip install . --user --install-option=\"--package={}\"".format(
-            pack)
+        vv = '-v'
 
+    cmd = "pip {} install . --user --install-option=\"--package={}\"".format(vv,
+                                                                             package)
+
+    if package == 'sn_metrics':
+        cmd += '-r requirements.txt'
     print('install cmd', cmd)
     return cmd
 
