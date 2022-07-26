@@ -39,18 +39,6 @@ or
 git clone -b <tag_name> https://github.com/lsstdesc/sn_pipe (release tag_name)
  ```
 
-## Environnement setup
-- [on your machine](docs/Installation/computer.md)
-- [at NERSC](docs/Installation/nersc.md)
-- at CCIN2P3
- 
- 
- - Instruction to "setup" your environment [here](docs/Gen/usage_setup_release.md)
-
-```
-**Important : you have to make this setup prior to any use of the pipeline**
-```
-
 ## Installation 
 
 ```
@@ -63,7 +51,7 @@ The Survey Strategy Support pipeline is supposed to be modular, in the sense tha
 |----|----|----|
 | SN metrics | sn_metrics | python pip_sn_pack.py --action install --package=sn_metrics |
 | LC simulations | sn_simulation|python pip_sn_pack.py --action install --package=sn_simulation |
-| LC fit | sn_fit |python pip_sn_pack.py --action install --package=sn_fit |
+| LC fit | sn_fit_lc |python pip_sn_pack.py --action install --package=sn_fit |
 | Plot | sn_plotters |python pip_sn_pack.py --action install --package=sn_plotters |
 |all | all | python pip_sn_pack.py --action install --package=all| 
 
