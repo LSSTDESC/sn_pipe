@@ -44,21 +44,31 @@ class InstallCommand(install):
             if self.package != 'all':
                 # now install the requested package
                 # get the version for this package
-                idx = self.packs['packname'] == self.package
-                version = self.packs[idx]['version'].item()
-                cmd = 'pip install -v --user git+https://github.com/lsstdesc/{}.git@{}'.format(
-                    self.package, version)
-                os.system(cmd)
+                if self.package == 'sn_metrics':
+                    # need to install sn_fit_lc !!!
+                    version = self.packvers('sn_fit_lc')
+                    os.system(self.cmd_('sn_fit_lc', version))
+
+                version = self.packvers(self.package)
+                os.system(self.cmd_(self.package, version))
             else:
                 for pack in self.packs:
                     # get the version for this package
                     packname = pack['packname']
                     version = pack['version']
-                    cmd = 'pip install --user git+https://github.com/lsstdesc/{}.git@{}'.format(
-                        packname, version)
-                    os.system(cmd)
+                    os.system(self.cmd_(packname, version))
 
         install.run(self)
+
+    def cmd_(self, package, version):
+        cmd = 'pip install --user git+https://github.com/lsstdesc/{}.git@{}'.format(
+            package, version)
+        return cmd
+
+    def packvers(self, package):
+        idx = self.packs['packname'] == package
+        version = self.packs[idx]['version'].item()
+        return version
 
 
 # get the version here
