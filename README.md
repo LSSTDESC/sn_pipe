@@ -51,7 +51,7 @@ The Survey Strategy Support pipeline is supposed to be modular, in the sense tha
 |----|----|----|
 | SN metrics | sn_metrics | python pip_sn_pack.py --action install --package=sn_metrics |
 | LC simulations | sn_simulation|python pip_sn_pack.py --action install --package=sn_simulation |
-| LC fit | sn_fit_lc |python pip_sn_pack.py --action install --package=sn_fit |
+| LC fit | sn_fit_lc |python pip_sn_pack.py --action install --package=sn_fit_lc |
 | Plot | sn_plotters |python pip_sn_pack.py --action install --package=sn_plotters |
 |all | all | python pip_sn_pack.py --action install --package=all| 
 
