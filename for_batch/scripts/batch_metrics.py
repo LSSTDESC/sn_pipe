@@ -291,6 +291,8 @@ class batchclass:
         for key, vals in dict_batch.items():
             script.write("#SBATCH {} {} \n".format(key,vals))
 
+        script.write('. \"/pbs/throng/lsst/users/gris/anaconda3/etc/profile.d/conda.sh\"'+'\n')
+        script.write('conda activate myenv'+'\n')
         script.write(" cd " + self.cwd + "\n")
         script.write(" echo 'sourcing setups' \n")
         script.write(" source setup_release.sh Linux -5\n")
