@@ -90,5 +90,6 @@ setup(
     cmdclass={
         'install': InstallCommand,
     },
+    packages=[],
 
 )
