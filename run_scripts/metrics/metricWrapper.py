@@ -303,8 +303,8 @@ class NSNYMetricWrapper(MetricWrapper):
         fig_for_movie = False
         gammaName = 'gamma_DDF.hdf5'
         if fieldType == 'WFD':
-            #zmin = 0.1
-            #zmax = 0.50
+            # zmin = 0.1
+            # zmax = 0.50
             bands = 'griz'
             fig_for_movie = False
             gammaName = 'gamma_WFD.hdf5'
@@ -324,7 +324,7 @@ class NSNYMetricWrapper(MetricWrapper):
             snr_min = 1.
             n_phase_min = 1
             n_phase_max = 1
-            #zlim_coeff = 0.95
+            # zlim_coeff = 0.95
 
         if fieldType == 'WFD':
             n_bef = 3
@@ -332,7 +332,7 @@ class NSNYMetricWrapper(MetricWrapper):
             snr_min = 1.
             n_phase_min = 1
             n_phase_max = 1
-            #zlim_coeff = 0.95
+            # zlim_coeff = 0.95
 
         if fieldType == 'Fake':
             n_bef = 4
@@ -340,7 +340,7 @@ class NSNYMetricWrapper(MetricWrapper):
             snr_min = 1.
             n_phase_min = 1
             n_phase_max = 1
-            #zlim_coeff = 0.95
+            # zlim_coeff = 0.95
 
         errmodrel = -1.
         if error_model:
@@ -352,6 +352,17 @@ class NSNYMetricWrapper(MetricWrapper):
         if metadata.ploteffi or fig_for_movie:
             templateLC = loadTemplateLC(error_model, 0, x1_colors=[
                                         (-2.0, 0.2), (0.0, 0.0)])
+
+        zp = {'u': 27.009, 'g': 28.399, 'r': 28.177,
+              'i': 27.879, 'z': 27.482, 'y': 26.687}
+        mean_wavelength = {'u': 366.92, 'g': 479.78,
+                           'r': 623.03, 'i': 754.16, 'z': 869.07, 'y': 973.81}
+
+        zp = {'u': 27.009, 'g': 28.186812051401645, 'r': 27.979260503055546,
+              'i': 27.68961482555567, 'z': 27.296997266117014, 'y': 26.506245199165402}
+        mean_wavelength = {'u': 366.92, 'g': 480.00048773429126, 'r': 623.1435821795548,
+                           'i': 754.2219977729688, 'z': 869.1034641448532, 'y': 973.8489143445476}
+
         # metric instance
         self.metric = SNNSNYMetric(
             lc_reference, dustcorr, season=season, zmin=zmin,
@@ -370,7 +381,9 @@ class NSNYMetricWrapper(MetricWrapper):
             T0s=metadata.T0s, zlim_coeff=zlim_coeff,
             ebvofMW=ebvofMW, bands=bands,
             fig_for_movie=fig_for_movie,
-            templateLC=templateLC, dbName=metadata.dbName)
+            templateLC=templateLC, dbName=metadata.dbName,
+            zp=zp,
+            mean_wavelength=mean_wavelength)
 
         self.metadata['n_bef'] = n_bef
         self.metadata['n_aft'] = n_aft
