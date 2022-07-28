@@ -109,26 +109,6 @@ def plotBinned(df, xcol='cadence', ycol='nsn', bins_x=np.arange(0.5, 12, 1.)):
     ax.plot(plot_centers, plot_values, color='r')
 
 
-parser = OptionParser()
-
-parser.add_option("--dbName", type="str", default='baseline_v2.0_10yrs',
-                  help="db name [%default]")
-parser.add_option("--dbExtens", type="str", default='npy',
-                  help="db extension [%default]")
-parser.add_option("--dbDir", type="str",
-                  default='../MetricOutput_pixels', help="db dir [%default]")
-parser.add_option("--metric", type="str", default='NSN',
-                  help="metric to process [%default]")
-parser.add_option("--fieldType", type="str", default='WFD',
-                  help="field type DD or WFD[%default]")
-parser.add_option("--nside", type="int", default=64,
-                  help="healpix nside [%default]")
-parser.add_option("--zlimstr", type="str", default='zlim_faint',
-                  help="zlim column in df [%default]")
-parser.add_option("--nsnstr", type="str", default='nsn_zlim_faint',
-                  help="nsn column in df [%default]")
-
-
 def plotIt(dirFile, dbName, metricName, fieldType, nside, zlimstr, nsnstr, npixels=-1):
 
     info = pd.DataFrame()
@@ -206,6 +186,25 @@ def plotIt(dirFile, dbName, metricName, fieldType, nside, zlimstr, nsnstr, npixe
     print(df.dtype.names)
     plt.show()
 
+
+parser = OptionParser()
+
+parser.add_option("--dbName", type="str", default='baseline_v2.0_10yrs',
+                  help="db name [%default]")
+parser.add_option("--dbExtens", type="str", default='npy',
+                  help="db extension [%default]")
+parser.add_option("--dbDir", type="str",
+                  default='../MetricOutput_pixels', help="db dir [%default]")
+parser.add_option("--metric", type="str", default='NSN',
+                  help="metric to process [%default]")
+parser.add_option("--fieldType", type="str", default='WFD',
+                  help="field type DD or WFD[%default]")
+parser.add_option("--nside", type="int", default=64,
+                  help="healpix nside [%default]")
+parser.add_option("--zlimstr", type="str", default='zcomp',
+                  help="zlim column in df [%default]")
+parser.add_option("--nsnstr", type="str", default='nsn',
+                  help="nsn column in df [%default]")
 
 opts, args = parser.parse_args()
 
