@@ -385,14 +385,12 @@ class NSNYMetricWrapper(MetricWrapper):
             n_phase_min=n_phase_min,
             n_phase_max=n_phase_max,
             errmodrel=errmodrel,
-            outputType=metadata.outputType,
-            proxy_level=metadata.proxy_level,
             coadd=coadd, lightOutput=metadata.lightOutput,
             T0s=metadata.T0s, zlim_coeff=zlim_coeff,
             ebvofMW=ebvofMW, bands=bands,
             fig_for_movie=fig_for_movie,
             templateLC=templateLC, dbName=metadata.dbName,
-            telescope_params=telescope_params)
+            telescope_params=telescope_params, fieldType=fieldType)
 
         self.metadata['n_bef'] = n_bef
         self.metadata['n_aft'] = n_aft
