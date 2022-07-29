@@ -1,5 +1,5 @@
 # list of packages and tagged github version
-sn_metrics dev
-sn_simulation dev
+sn_metrics lsstdeps
+sn_simulation lsstdeps
 sn_fit_lc dev
 sn_plotters dev
