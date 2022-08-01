@@ -353,12 +353,12 @@ class NSNYMetricWrapper(MetricWrapper):
             templateLC = loadTemplateLC(error_model, 0, x1_colors=[
                                         (-2.0, 0.2), (0.0, 0.0)])
 
+        """
         zp = {'u': 26.87850390726474, 'g': 28.375600660188038, 'r': 28.1646330015672,
               'i': 27.85215178952283, 'z': 27.438320998147496, 'y': 26.64627260066651}
         mean_wavelength = {'u': 368.4154478841252, 'g': 479.9808017139049, 'r': 623.0058318793193,
                            'i': 754.1040224557244, 'z': 869.0132673693349, 'y': 973.6060703394403}
 
-        """
         zp = {'u': 27.009, 'g': 28.399, 'r': 28.177,
               'i': 27.879, 'z': 27.482, 'y': 26.687}
         mean_wavelength = {'u': 366.92, 'g': 479.78,
@@ -368,11 +368,11 @@ class NSNYMetricWrapper(MetricWrapper):
               'i': 27.68961482555567, 'z': 27.296997266117014, 'y': 26.506245199165402}
         mean_wavelength = {'u': 366.92, 'g': 480.00048773429126, 'r': 623.1435821795548,
                            'i': 754.2219977729688, 'z': 869.1034641448532, 'y': 973.8489143445476}
-        """
+
         telescope_params = {}
         telescope_params['zp'] = zp
         telescope_params['mean_wavelength'] = mean_wavelength
-
+        """
         # metric instance
         self.metric = SNNSNYMetric(
             lc_reference, dustcorr, season=season, zmin=zmin,
@@ -389,8 +389,7 @@ class NSNYMetricWrapper(MetricWrapper):
             T0s=metadata.T0s, zlim_coeff=zlim_coeff,
             ebvofMW=ebvofMW, bands=bands,
             fig_for_movie=fig_for_movie,
-            templateLC=templateLC, dbName=metadata.dbName,
-            telescope_params=telescope_params, fieldType=fieldType)
+            templateLC=templateLC, dbName=metadata.dbName, fieldType=fieldType)
 
         self.metadata['n_bef'] = n_bef
         self.metadata['n_aft'] = n_aft
