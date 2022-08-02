@@ -11,7 +11,7 @@ def cmd(x1=-2.0, color=0.2, ebv=0.0,
         bluecutoffi=380., redcutoffi=800.,
         bluecutoffz=380., redcutoffz=800.,
         bluecutoffy=380., redcutoffy=800.,
-        error_model=1, errmodrel=0.1, simu='sn_cosmo', fitter='sn_cosmo', zlim_calc=0, nsn_calc=0, survey_area=0.21, mbcov_estimate=0, nproc=4, outputDir='.', config=pd.DataFrame(), confName='', tagprod=-1, zmin=0.1, zmax=1.0, zstep=0.05, plot=0):
+        error_model=1, errmodrel=0.1, simu='sn_cosmo', fitter='sn_cosmo', zlim_calc=0, nsn_calc=0, survey_area=0.21, mbcov_estimate=0, nproc=4, outputDir='.', config=pd.DataFrame(), confName='', tagprod=-1, zmin=0.1, zmax=1.0, zstep=0.05, plot=0, model='salt2-extended', version='1.0'):
 
     #configName = 'config_z_{}.csv'.format(tagprod)
     configName = confName.replace('.csv', '_zlim_{}.csv'.format(tagprod))
@@ -42,6 +42,9 @@ def cmd(x1=-2.0, color=0.2, ebv=0.0,
     script_cmd += ' --LCSelection_errmodinlcerr 0'
     script_cmd += ' --Simulator_name sn_simulator.{}'.format(
         np.unique(config['simulator']).item())
+    script_cmd += ' --Simulator_model {}'.format(model)
+    script_cmd += ' --Simulator_version {}'.format(version)
+
     script_cmd += ' --Fitter_name sn_fitter.fit_{}'.format(
         np.unique(config['fitter']).item())
     script_cmd += ' --OutputSimu_save 0'
@@ -63,6 +66,7 @@ def cmd(x1=-2.0, color=0.2, ebv=0.0,
     script_cmd += ' --plot {}'.format(plot)
     script_cmd += ' --SN_NSNabsolute 1'
 
+    print('running', script_cmd)
     return script_cmd
 
 
@@ -112,6 +116,8 @@ for simu in confp['simulator'].unique():
         selb = sel[ida]
         x1_color = selb[['x1', 'color', 'error_model',
                          'errmodrel']].to_records(index=False)
+        model = selb.iloc[0]['model']
+        version = selb.iloc[0]['version']
         for (x1, color, error_model, errmodrel) in np.unique(x1_color[['x1', 'color', 'error_model', 'errmodrel']]):
             cmd_ = cmd(x1=x1, color=color,
                        error_model=error_model,
@@ -128,6 +134,8 @@ for simu in confp['simulator'].unique():
                        zmin=opts.zmin,
                        zmax=opts.zmax,
                        zstep=opts.zstep,
-                       plot=opts.plot)
+                       plot=opts.plot,
+                       model=model,
+                       version=version)
 
             os.system(cmd_)
