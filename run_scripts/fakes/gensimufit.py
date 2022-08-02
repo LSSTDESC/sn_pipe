@@ -47,6 +47,10 @@ def cmd(x1=-2.0, color=0.2, ebv=0.0,
 
     script_cmd += ' --Fitter_name sn_fitter.fit_{}'.format(
         np.unique(config['fitter']).item())
+
+    script_cmd += ' --Fitter_model {}'.format(model)
+    script_cmd += ' --Fitter_version {}'.format(version)
+
     script_cmd += ' --OutputSimu_save 0'
     script_cmd += ' --MultiprocessingFit_nproc {}'.format(nproc)
     script_cmd += ' --outputDir {}'.format(outputDir)
