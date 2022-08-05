@@ -305,7 +305,7 @@ class NSNYMetricWrapper(MetricWrapper):
         if fieldType == 'WFD':
             # zmin = 0.1
             # zmax = 0.50
-            bands = 'griz'
+            bands = 'grizy'
             fig_for_movie = False
             gammaName = 'gamma_WFD.hdf5'
         self.telescope = telescope_def()
