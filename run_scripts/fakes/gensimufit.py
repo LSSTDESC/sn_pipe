@@ -52,6 +52,7 @@ def cmd(x1=-2.0, color=0.2, ebv=0.0,
     script_cmd += ' --Fitter_version {}'.format(version)
 
     script_cmd += ' --OutputSimu_save 0'
+    script_cmd += ' --OutputSimu_throwafterdump 0'
     script_cmd += ' --MultiprocessingFit_nproc {}'.format(nproc)
     script_cmd += ' --outputDir {}'.format(outputDir)
     script_cmd += ' --config {}'.format(configName)
@@ -70,8 +71,8 @@ def cmd(x1=-2.0, color=0.2, ebv=0.0,
     script_cmd += ' --plot {}'.format(plot)
     script_cmd += ' --SN_NSNabsolute 1'
 
-    print('running', script_cmd)
-    return script_cmd
+    # return script_cmd
+    os.system(script_cmd)
 
 
 parser = OptionParser()
@@ -111,6 +112,33 @@ if os.path.exists(opts.outputDir):
 confp = pd.read_csv(opts.config, comment='#')
 confp['season'] = confp['season'].astype(str)
 io = -1
+"""
+print(confp)
+for io, c in confp.iterrows():
+    print('uuu', c)
+    cmd_ = cmd(x1=c['x1'], color=c['color'],
+               error_model=c['error_model'],
+               errmodrel=c['errmodrel'],
+               zlim_calc=opts.zlim_calc,
+               nsn_calc=opts.nsn_calc,
+               survey_area=opts.survey_area,
+               mbcov_estimate=opts.mbcov_estimate,
+               nproc=opts.nproc,
+               outputDir=opts.outputDir,
+               config=c,
+               confName=opts.config,
+               tagprod=io,
+               zmin=opts.zmin,
+               zmax=opts.zmax,
+               zstep=opts.zstep,
+               plot=opts.plot,
+               model=c['model'],
+               version=c['version'])
+
+    os.system(cmd_)
+
+
+"""
 for simu in confp['simulator'].unique():
     idx = confp['simulator'] == simu
     sel = confp[idx]
@@ -119,10 +147,19 @@ for simu in confp['simulator'].unique():
         io += 1
         selb = sel[ida]
         x1_color = selb[['x1', 'color', 'error_model',
-                         'errmodrel']].to_records(index=False)
-        model = selb.iloc[0]['model']
-        version = selb.iloc[0]['version']
-        for (x1, color, error_model, errmodrel) in np.unique(x1_color[['x1', 'color', 'error_model', 'errmodrel']]):
+                         'errmodrel', 'model', 'version']].to_records(index=False)
+        #model = selb.iloc[0]['model']
+        #version = selb.iloc[0]['version']
+        print('aaaaaaaaa', x1_color)
+        for (x1, color, error_model, errmodrel, model, version) in np.unique(x1_color[['x1', 'color', 'error_model',
+                                                                                       'errmodrel', 'model', 'version']]):
+            print('running', x1, color, error_model, errmodrel, model, version)
+            idb = selb['x1'] == x1
+            idb &= selb['color'] == color
+            idb &= selb['error_model'] == error_model
+            idb &= selb['model'] == model
+            idb &= selb['version'] == version
+
             cmd_ = cmd(x1=x1, color=color,
                        error_model=error_model,
                        errmodrel=errmodrel,
@@ -132,7 +169,7 @@ for simu in confp['simulator'].unique():
                        mbcov_estimate=opts.mbcov_estimate,
                        nproc=opts.nproc,
                        outputDir=opts.outputDir,
-                       config=sel[ida],
+                       config=selb[idb],
                        confName=opts.config,
                        tagprod=io,
                        zmin=opts.zmin,
@@ -142,4 +179,4 @@ for simu in confp['simulator'].unique():
                        model=model,
                        version=version)
 
-            os.system(cmd_)
+            # os.system(cmd_)

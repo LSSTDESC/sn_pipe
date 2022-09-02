@@ -394,7 +394,7 @@ class GenSimFit:
         # simulate LCs
         list_lc = self.simu.run(fakeData)
 
-        print('simu LC', len(list_lc))
+        print('simu LC', len(list_lc), config_fake, self.config_fit)
         # add the tag prod to lc metadata
 
         for lc in list_lc:
@@ -404,8 +404,14 @@ class GenSimFit:
         # fit LCs
         res = self.fit_loop(list_lc)
 
-        print(res[['z', 'Cov_colorcolor']])
         print('fit lc', len(res))
+        res['model'] = self.config_fit['Fitter']['model']
+        res['version'] = self.config_fit['Fitter']['version']
+
+        forout = np.copy(res[['z', 'Cov_colorcolor', 'model', 'version']])
+
+        np.save('LCFit_{}.npy'.format(config_fake['tagprod']), forout)
+
         return res
 
     def fit_loop(self, list_lc):
@@ -633,6 +639,7 @@ process = GenSimFit(config_fake, config_simu, config_fit,
 
 # run
 params = pd.read_csv(opts.config, comment='#')
+
 res, zlimdf = process(params)
 
 params = params.merge(zlimdf, left_on=['tagprod'], right_on=[
