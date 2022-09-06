@@ -10,27 +10,29 @@ Display:
     display: 0
     time: 5.0
 Host: 0
-Instrument:
+InstrumentSimu:
   aerosol: 0
   airmass: 1.2
   atmos: 1
   atmosDir: THROUGHPUTS_DIR
   name: LSST
   throughputDir: LSST_THROUGHPUTS_BASELINE
-Multiprocessing:
+MultiprocessingSimu:
   nproc: 1
 Observations:
-  coadd: 0
+  coadd: 1
   fieldname: all
-  fieldtype: Fake
-  filename: datatoprocess
-  season: -1
-Output:
-  directory: outdirname
+  fieldtype: WFD
+  filename: fullDbName
+  season: '-1'
+OutputSimu:
+  directory: Output_Simu
   save: 1
+  throwafterdump: 1
+  throwempty: 1
 Pixelisation:
   nside: 64
-ProductionID: prodid
+ProductionIDSimu: prodid
 ReferenceFiles:
   DustCorrDir: Template_Dust
   GammaDir: reference_files
@@ -38,46 +40,61 @@ ReferenceFiles:
   TemplateDir: Template_LC
 SN:
   Id: 100
+  NSNabsolute: -1
   NSNfactor: 1
   absmag: -19.0906
   band: bessellB
-  blueCutoff: bluecutoffval
+  blueCutoffg: 380.0
+  blueCutoffi: 360.0
+  blueCutoffr: 380.0
+  blueCutoffu: 380.0
+  blueCutoffy: 380.0
+  blueCutoffz: 380.0
   color:
     max: 1.0
-    min: colorval
+    min: 0.2
     step: 0.1
     type: unique
   daymax:
     step: 1.0
     type: unique
-  differentialFlux: diff_flux_val
-  ebvofMW: ebvofMWval
+  differentialFlux: 0
+  ebvofMW: -1.0
   magsys: vega
   maxRFphase: 60.0
   maxRFphaseQual: 45.0
   minRFphase: -20.0
   minRFphaseQual: -15.0
   modelPar:
+    colorsigma: 0
     dirFile: reference_files
-    name: x1_color
-    rate: JLA
-  redCutoff: redcutoffval
+    mbsigma: 0
+    mbsigmafile: sigma_mb_from_simu_Ny_40.hdf5
+    nameFile: x1_color_G10.csv
+    x1sigma: 0
+  redCutoffg: 800.0
+  redCutoffi: 800.0
+  redCutoffr: 800.0
+  redCutoffu: 800.0
+  redCutoffy: 800.0
+  redCutoffz: 800.0
   salt2Dir: SALT2_Files
-  type: sn_type_val
+  sigmaInt: 0.0
+  type: SN_Ia
   x1:
     max: 0.2
-    min: x1val
+    min: -2.0
     step: 0.1
     type: unique
   z:
     max: 1.0
-    min: zval
+    min: 0.01
     rate: Perrett
     step: 0.01
     type: unique
 Simulator:
-  errorModel: error_val
-  model: sn_model_val
+  errorModel: 0
+  model: salt2-extended
   name: sn_simulator.sn_cosmo
   version: 1.0
-WebPath: https://me.lsst.eu/gris/DESC_SN_pipeline
+WebPathSimu: https://me.lsst.eu/gris/DESC_SN_pipeline
