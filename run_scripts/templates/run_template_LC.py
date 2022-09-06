@@ -5,6 +5,11 @@ from optparse import OptionParser
 import multiprocessing
 
 
+def add_option(name, val):
+    cmd = ' --{} {}'.format(name, val)
+    return cmd
+
+
 class MakeYamlFake:
     """
     class to generate yaml files used as input to generate fake observations
@@ -82,7 +87,7 @@ class MakeYamlSimulation:
     """
 
     def __init__(self, x1, color, sn_type, sn_model, diff_flux,
-                 z, ebvofMW, bluecutoff, redcutoff,error_model,
+                 z, ebvofMW, bluecutoff, redcutoff, error_model,
                  config_orig, outDir, datatoprocess, outDirSimu):
         # grab parameters
         self.x1 = x1
@@ -97,7 +102,8 @@ class MakeYamlSimulation:
         if 'salt2' in sn_model:
             self.config_out = 'params_fakes_{}_{}_{}.yaml'.format(x1, color, z)
         else:
-            self.config_out = 'params_fakes_{}_{}_{}.yaml'.format(sn_type, sn_model, z)
+            self.config_out = 'params_fakes_{}_{}_{}.yaml'.format(
+                sn_type, sn_model, z)
         self.datatoprocess = datatoprocess
         self.outDirSimu = outDirSimu
         self.bluecutoff = bluecutoff
@@ -138,7 +144,7 @@ class MakeYamlSimulation:
             file.write(filedata)
 
 
-def SimuFakes(x1, color, sn_type, sn_model,diff_flux,z, ebvofMW, bluecutoff, redcutoff, error_model,outDir):
+def SimuFakes(x1, color, sn_type, sn_model, sn_version, diff_flux, z, ebvofMW, bluecutoff, redcutoff, error_model, outDir):
     """
     method to simulate LC from fake observations
 
@@ -152,6 +158,8 @@ def SimuFakes(x1, color, sn_type, sn_model,diff_flux,z, ebvofMW, bluecutoff, red
       sn_type
     sn_model: str
       sn model
+    sn_version: str
+      sn model version
     diff_flux: int
       to make simu with elem var of the simulator parameter
     z: float
@@ -204,15 +212,54 @@ def SimuFakes(x1, color, sn_type, sn_model,diff_flux,z, ebvofMW, bluecutoff, red
     # make input yaml file
     config_orig = 'input/templates/param_fakesimulation_template.yaml'
     genfakes = MakeYamlSimulation(
-        x1, color, sn_type,sn_model,diff_flux,z, ebvofMW, bluecutoff, redcutoff, error_model,config_orig, fake_simu_yaml, '{}.npy'.format(fake_output), fake_simu_data)
+        x1, color, sn_type, sn_model, diff_flux, z, ebvofMW, bluecutoff, redcutoff, error_model, config_orig, fake_simu_yaml, '{}.npy'.format(fake_output), fake_simu_data)
+
+    cutoff = '{}_{}'.format(bluecutoff, redcutoff)
+    if error_model > 0:
+        cutoff = error_model
+    if 'salt' in sn_model:
+        prodid = 'Fake_{}_{}_{}_{}_{}_{}_ebvofMW_{}'.format(
+            x1, color, z, cutoff, sn_model, sn_version, ebvofMW)
+    else:
+        prodid = 'Fake_{}_{}_{}_{}_ebvofMW_{}'.format(
+            sn_type, sn_model, z, cutoff, ebvofMW)
 
     # run simulation on this
+    """
     cmd = 'python run_scripts/simulation/run_simulation_from_yaml.py'
     cmd += ' --config_yaml {}/{}'.format(genfakes.outDir, genfakes.config_out)
     cmd += ' --radius 0.01'
     cmd += ' --RAmin 0.'
     cmd += ' --RAmax 0.1'
     cmd += ' --npixels 1'
+    """
+    cmd = 'python run_scripts/simulation/run_simulation.py'
+    cmd += add_option('SN_z_min', z)
+    cmd += add_option('SN_x1_min', x1)
+    cmd += add_option('SN_color_min', color)
+    cmd += add_option('SN_color_min', color)
+    cmd += add_option('Simulator_model', sn_model)
+    cmd += add_option('Simulator_version', sn_version)
+    cmd += add_option('SN_ebvofMW', ebvofMW)
+    for b in 'ugrizy':
+        cmd += add_option('SN_blueCutoff{}'.format(b), bluecutoff)
+        cmd += add_option('SN_redCutoff{}'.format(b), redcutoff)
+    cmd += add_option('Simulator_errorModel', error_model)
+    cmd += add_option('SN_differentialFlux', diff_flux)
+    cmd += add_option('ProductionIDSimu', prodid)
+    cmd += add_option('radius', 0.01)
+    cmd += add_option('RAmin', 0.)
+    cmd += add_option('RAmax', 0.1)
+    cmd += add_option('npixels', 1)
+    cmd += add_option('OutputSimu_directory', fake_simu_data)
+    cmd += add_option('Observations_fieldname', 'all')
+    cmd += add_option('Observations_coadd', 0)
+    cmd += add_option('Observations_fieldtype', 'Fake')
+    cmd += add_option('dbDir', fake_obs_data)
+    cmd += add_option('dbName', fake_npy)
+    cmd += add_option('dbExtens', 'npy')
+    cmd += add_option('SN_NSNabsolute', 1)
+
     os.system(cmd)
 
 
@@ -230,6 +277,8 @@ class MultiSimuFakes:
       SN type
     sn_model: str
       SN model
+    sn_version: str
+      SN model version
     diff_flux: int
       to make simu with simulator param vars.
     zmin: float
@@ -250,12 +299,13 @@ class MultiSimuFakes:
       red cutoff for SN
     """
 
-    def __init__(self, x1, color, sn_type,sn_model,diff_flux,zmin, zmax, zstep, nproc, outDir, ebvofMW, bluecutoff, redcutoff,error_model):
+    def __init__(self, x1, color, sn_type, sn_model, sn_version, diff_flux, zmin, zmax, zstep, nproc, outDir, ebvofMW, bluecutoff, redcutoff, error_model):
 
         self.x1 = x1
         self.color = color
         self.sn_type = sn_type
         self.sn_model = sn_model
+        self.sn_version = sn_version
         self.diff_flux = diff_flux
         self.outDir = outDir
         self.ebvofMW = ebvofMW
@@ -287,11 +337,11 @@ class MultiSimuFakes:
         zval: list(float)
           redshift values
         """
-        if isinstance(zval, np.float):
+        if isinstance(zval, np.float64):
             zval = [zval]
         for z in zval:
-            SimuFakes(self.x1, self.color, self.sn_type,self.sn_model,self.diff_flux,z,
-                      self.ebvofMW, self.bluecutoff, self.redcutoff,self.error_model, self.outDir)
+            SimuFakes(self.x1, self.color, self.sn_type, self.sn_model, self.sn_version, self.diff_flux, z,
+                      self.ebvofMW, self.bluecutoff, self.redcutoff, self.error_model, self.outDir)
 
 
 parser = OptionParser()
@@ -302,7 +352,10 @@ parser.add_option("--sn_type", type=str, default='SN_Ia',
                   help="SN type [%default]")
 parser.add_option("--sn_model", type=str, default='salt2-extended',
                   help="SN model [%default]")
-parser.add_option('--nproc', type='int', default=1, help='number of procs [%default]')
+parser.add_option("--sn_version", type=str, default='1.0',
+                  help="SN model version [%default]")
+parser.add_option('--nproc', type='int', default=1,
+                  help='number of procs [%default]')
 parser.add_option('--zmin', type='float', default=0.01, help='zmin [%default]')
 parser.add_option('--zmax', type='float', default=1.0, help='zmax [%default]')
 parser.add_option('--zstep', type='float',
@@ -314,7 +367,7 @@ parser.add_option('--ebvofMW', type=float,
 parser.add_option('--bluecutoff', type=float,
                   default=380, help='blue cutoff for SN[%default]')
 parser.add_option('--redcutoff', type=float,
-                  default=800, help='blue cutoff for SN[%default]')
+                  default=700, help='blue cutoff for SN[%default]')
 parser.add_option('--error_model', type=int,
                   default=0, help='error model for SN[%default]')
 parser.add_option("--diff_flux", type=int, default=1,
@@ -323,11 +376,10 @@ parser.add_option("--diff_flux", type=int, default=1,
 opts, args = parser.parse_args()
 
 
-  
 # create output directory
-    
+
 if not os.path.isdir(opts.outDir):
-        os.makedirs(opts.outDir)
+    os.makedirs(opts.outDir)
 
 # List of requested directories
 fake_obs_yaml = '{}/fake_obs_yaml'.format(opts.outDir)
@@ -341,8 +393,8 @@ for vv in [fake_obs_yaml, fake_obs_data, fake_simu_yaml, fake_simu_data]:
         os.makedirs(vv)
 
 
-MultiSimuFakes(opts.x1, opts.color, 
-               opts.sn_type,opts.sn_model,opts.diff_flux,
-               opts.zmin,opts.zmax, opts.zstep, opts.nproc,
+MultiSimuFakes(opts.x1, opts.color,
+               opts.sn_type, opts.sn_model, opts.sn_version, opts.diff_flux,
+               opts.zmin, opts.zmax, opts.zstep, opts.nproc,
                opts.outDir, opts.ebvofMW,
-               opts.bluecutoff, opts.redcutoff,opts.error_model)
+               opts.bluecutoff, opts.redcutoff, opts.error_model)

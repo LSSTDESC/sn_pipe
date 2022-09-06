@@ -10,7 +10,10 @@ x1_color = [(-2.0, 0.2)]
 zmin = 0.1
 zmax = 1.1
 zstep = 0.01
-nproc = 1
+nproc = 8
+#sn_model = 'salt2-extended'
+sn_model = 'salt3'
+sn_version = '1.0'
 bluecutoff = 380
 redcutoff = 700
 ebvofMW = 0
@@ -32,6 +35,8 @@ for (x1, color) in x1_color:
     cmd = addoption(cmd, 'bluecutoff', bluecutoff)
     cmd = addoption(cmd, 'redcutoff', redcutoff)
     cmd = addoption(cmd, 'ebvofMW', ebvofMW)
+    cmd = addoption(cmd, 'sn_model', sn_model)
+    cmd = addoption(cmd, 'sn_version', sn_version)
 
     print(cmd)
     os.system(cmd)
@@ -45,5 +50,7 @@ for (x1, color) in x1_color:
     cmd = addoption(cmd, 'ebvofMW', ebvofMW)
     cmd = addoption(cmd, 'lcDir', '{}/fake_simu_data'.format(outDirLC))
     cmd = addoption(cmd, 'outDir', outDirTemplates)
+    cmd = addoption(cmd, 'sn_model', sn_model)
+    cmd = addoption(cmd, 'sn_version', sn_version)
     print(cmd)
     os.system(cmd)

@@ -2,8 +2,9 @@ import h5py
 import glob
 from optparse import OptionParser
 import os
-from astropy.table import Table, Column, vstack,join,unique
+from astropy.table import Table, Column, vstack, join, unique
 import numpy as np
+
 
 class LCStack:
     """
@@ -29,9 +30,9 @@ class LCStack:
       error model for SN
     """
 
-    def __init__(self, x1, color, sn_type,sn_model, diff_flux,lcDir, outDir, bluecutoff, redcutoff, ebvofMW, error_model):
+    def __init__(self, x1, color, sn_type, sn_model, sn_version, diff_flux, lcDir, outDir, bluecutoff, redcutoff, ebvofMW, error_model):
 
-         # create output directory
+        # create output directory
         if not os.path.isdir(outDir):
             os.makedirs(outDir)
             
@@ -40,11 +41,11 @@ class LCStack:
             cutoff='error_model'
 
         fname = '{}_{}'.format(sn_type,sn_model)
-        if 'salt2' in sn_model:
+        if 'salt' in sn_model:
             fname = '{}_{}'.format(x1,color)
 
-        lc_name = 'LC_{}_{}_ebvofMW_{}'.format(
-            fname, cutoff, ebvofMW)
+        lc_name = 'LC_{}_{}_{}_{}_ebvofMW_{}'.format(
+            fname, cutoff, sn_model,sn_version,ebvofMW)
         lc_out = '{}/{}.hdf5'.format(outDir, lc_name)
         if os.path.exists(lc_out):
             os.remove(lc_out)
@@ -278,11 +279,13 @@ parser.add_option("--sn_type", type=str, default='SN_Ia',
                   help="SN type [%default]")
 parser.add_option("--sn_model", type=str, default='salt2-extended',
                   help="SN model [%default]")
+parser.add_option("--sn_version", type=str, default='1.0',
+                  help="SN model [%default]")
 parser.add_option("--diff_flux", type=int, default=1,
                   help="to make simulations with simulator param variation [%default]")
 
 opts, args = parser.parse_args()
 
 LCStack(opts.x1, opts.color, 
-        opts.sn_type,opts.sn_model,opts.diff_flux,
+        opts.sn_type,opts.sn_model,opts.sn_version,opts.diff_flux,
         opts.lcDir, opts.outDir,opts.bluecutoff, opts.redcutoff, opts.ebvofMW,opts.error_model)
