@@ -11,8 +11,21 @@ def cmd(x1=-2.0, color=0.2, ebv=0.0,
         bluecutoffi=380., redcutoffi=800.,
         bluecutoffz=380., redcutoffz=800.,
         bluecutoffy=380., redcutoffy=800.,
-        error_model=1, errmodrel=0.1, simu='sn_cosmo', fitter='sn_cosmo', zlim_calc=0, nsn_calc=0, survey_area=0.21, mbcov_estimate=0, nproc=4, outputDir='.', config=pd.DataFrame(), confName='', tagprod=-1, zmin=0.1, zmax=1.0, zstep=0.05, plot=0, model='salt2-extended', version='1.0'):
+        error_model=1, errmodrel=0.1, simu='sn_cosmo', fitter='sn_cosmo', zlim_calc=0, nsn_calc=0, survey_area=0.21, mbcov_estimate=0, nproc=4, config=pd.DataFrame(), confName='', tagprod=-1, zmin=0.1, zmax=1.0, zstep=0.05, plot=0, model='salt2-extended', version='1.0'):
 
+    bluecutoff = np.unique(config['bluecutoff']).item()
+    redcutoff = np.unique(config['redcutoff']).item()
+    bluecutoffg = bluecutoff
+    bluecutoffr = bluecutoff
+    bluecutoffi = bluecutoff
+    bluecutoffz = bluecutoff
+    bluecutoffy = bluecutoff
+    redcutoffg = redcutoff
+    redcutoffr = redcutoff
+    redcutoffi = redcutoff
+    redcutoffz = redcutoff
+    redcutoffy = redcutoff
+    snrmin = np.unique(config['snrmin']).item()
     #configName = 'config_z_{}.csv'.format(tagprod)
     configName = confName.replace('.csv', '_zlim_{}.csv'.format(tagprod))
     my_dict = dict(config.to_dict())
@@ -42,6 +55,7 @@ def cmd(x1=-2.0, color=0.2, ebv=0.0,
     script_cmd += ' --LCSelection_errmodinlcerr 0'
     script_cmd += ' --Simulator_name sn_simulator.{}'.format(
         np.unique(config['simulator']).item())
+    script_cmd += ' --LCSelection_snrmin {}'.format(snrmin)
     script_cmd += ' --Simulator_model {}'.format(model)
     script_cmd += ' --Simulator_version {}'.format(version)
 
@@ -51,10 +65,10 @@ def cmd(x1=-2.0, color=0.2, ebv=0.0,
     script_cmd += ' --Fitter_model {}'.format(model)
     script_cmd += ' --Fitter_version {}'.format(version)
 
-    script_cmd += ' --OutputSimu_save 0'
+    script_cmd += ' --OutputSimu_save 1'
     script_cmd += ' --OutputSimu_throwafterdump 0'
     script_cmd += ' --MultiprocessingFit_nproc {}'.format(nproc)
-    script_cmd += ' --outputDir {}'.format(outputDir)
+    script_cmd += ' --outputDir {}'.format(np.unique(config['outdir']).item())
     script_cmd += ' --config {}'.format(configName)
     script_cmd += ' --SN_z_min {}'.format(zmin)
     script_cmd += ' --SN_z_max {}'.format(zmax)
@@ -70,6 +84,7 @@ def cmd(x1=-2.0, color=0.2, ebv=0.0,
     script_cmd += ' --tagprod {}'.format(tagprod)
     script_cmd += ' --plot {}'.format(plot)
     script_cmd += ' --SN_NSNabsolute 1'
+    script_cmd += ' --MultiprocessingFit_nproc 1'
 
     # return script_cmd
     os.system(script_cmd)
@@ -147,18 +162,21 @@ for simu in confp['simulator'].unique():
         io += 1
         selb = sel[ida]
         x1_color = selb[['x1', 'color', 'error_model',
-                         'errmodrel', 'model', 'version']].to_records(index=False)
+                         'errmodrel', 'model', 'version', 'outdir']].to_records(index=False)
         #model = selb.iloc[0]['model']
         #version = selb.iloc[0]['version']
         print('aaaaaaaaa', x1_color)
-        for (x1, color, error_model, errmodrel, model, version) in np.unique(x1_color[['x1', 'color', 'error_model',
-                                                                                       'errmodrel', 'model', 'version']]):
-            print('running', x1, color, error_model, errmodrel, model, version)
+        for (x1, color, error_model, errmodrel, model, version, outdir) in np.unique(x1_color[['x1', 'color', 'error_model',
+                                                                                              'errmodrel', 'model', 'version', 'outdir']]):
+
             idb = selb['x1'] == x1
             idb &= selb['color'] == color
             idb &= selb['error_model'] == error_model
             idb &= selb['model'] == model
             idb &= selb['version'] == version
+            idb &= selb['outdir'] == outdir
+            print('running', x1, color, error_model,
+                  errmodrel, model, version, outdir)
 
             cmd_ = cmd(x1=x1, color=color,
                        error_model=error_model,
@@ -168,7 +186,6 @@ for simu in confp['simulator'].unique():
                        survey_area=opts.survey_area,
                        mbcov_estimate=opts.mbcov_estimate,
                        nproc=opts.nproc,
-                       outputDir=opts.outputDir,
                        config=selb[idb],
                        confName=opts.config,
                        tagprod=io,

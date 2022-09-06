@@ -7,12 +7,12 @@ def addoption(cmd, name, val):
 
 
 x1_color = [(-2.0, 0.2)]
-zmin = 0.01
-zmax = 0.05
+zmin = 0.1
+zmax = 1.1
 zstep = 0.01
 nproc = 1
 bluecutoff = 380
-redcutoff = 800
+redcutoff = 700
 ebvofMW = 0
 outDirLC = 'fakes_for_templates_{}_{}_ebvofMW_{}'.format(
     bluecutoff, redcutoff, ebvofMW)

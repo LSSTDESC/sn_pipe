@@ -402,13 +402,15 @@ class GenSimFit:
             lc.meta['season_length'] = season_length
 
         # fit LCs
-        res = self.fit_loop(list_lc)
+        #res = self.fit_loop(list_lc)
+        res = self.fit_lc(list_lc)
 
-        print('fit lc', len(res))
+        #print('fit lc', len(res))
         res['model'] = self.config_fit['Fitter']['model']
         res['version'] = self.config_fit['Fitter']['version']
 
-        forout = np.copy(res[['z', 'Cov_colorcolor', 'model', 'version']])
+        #forout = np.copy(res[['z', 'Cov_colorcolor', 'model', 'version']])
+        forout = np.copy(res)
 
         np.save('LCFit_{}.npy'.format(config_fake['tagprod']), forout)
 
@@ -474,7 +476,8 @@ class GenSimFit:
         """
 
         tabfit = Table()
-        for lc in list_lc:
+        for io, lc in enumerate(list_lc):
+            print('fitting', io, len(lc))
             resfit = self.fit(lc)
             tabfit = vstack([tabfit, resfit])
 
