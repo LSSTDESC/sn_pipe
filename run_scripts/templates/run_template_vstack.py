@@ -35,7 +35,7 @@ class LCStack:
         # create output directory
         if not os.path.isdir(outDir):
             os.makedirs(outDir)
-            
+
         cutoff = '{}_{}'.format(bluecutoff, redcutoff)
         if error_model:
             cutoff='error_model'
@@ -54,8 +54,8 @@ class LCStack:
         if os.path.exists(lc_out_v):
             os.remove(lc_out_v)
 
-        lc_dir = '{}/LC*'.format(
-            lcDir, x1, color)
+        lc_dir = '{}/LC*{}_{}*{}_{}*'.format(
+            lcDir, x1, color,sn_model,sn_version)
 
         files = glob.glob(lc_dir)
 
