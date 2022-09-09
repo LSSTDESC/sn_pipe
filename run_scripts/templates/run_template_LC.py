@@ -194,7 +194,7 @@ def SimuFakes(x1, color, sn_type, sn_model, sn_version, diff_flux, z, ebvofMW, b
     """
     z = np.round(z, 2)
     x1 = np.round(x1, 1)
-    color = np.round(color, 1)
+    color = np.round(color, 2)
 
     # first step: generate fake datas
     # make yaml file
