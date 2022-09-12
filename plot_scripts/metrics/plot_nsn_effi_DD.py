@@ -49,8 +49,10 @@ def plotEffiRate(data, healpixID):
     zvals = np.arange(0.01, 0.7, 0.01)
 
     axb = ax.twinx()
-    axb.plot(zvals, rate(zvals), color=thecol, ls='dashed', lw=lw)
-    axb.set_ylabel('SN Ia Rate', color=thecol)
+    axb.plot(zvals, rate(zvals)/9.6, color=thecol, ls='dashed', lw=lw)
+    #axb.set_ylabel('SN Ia Rate', color=thecol)
+    #axb.set_ylabel('Number of exploding SNe Ia/deg$^2$', color=thecol)
+    axb.set_ylabel('$\mathrm{N_{SNe Ia} ^ {exploding}/deg ^ 2}$', color=thecol)
     ax.legend(loc='upper center', bbox_to_anchor=(
         0.5, 1.20), ncol=4, frameon=False)
     axb.tick_params(axis='y', colors=thecol)
