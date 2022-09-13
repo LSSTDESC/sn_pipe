@@ -22,7 +22,12 @@ class MetricWrapper:
                  coadd=True, fieldType='DD', nside=64,
                  RAmin=0., RAmax=360.,
                  Decmin=-1.0, Decmax=-1.0,
-                 npixels=0, metadata={}, outDir='', ebvofMW=-1.0):
+                 npixels=0, metadata={}, outDir='', ebvofMW=-1.0,
+                 downtimes_tel=True,
+                 downtimes_telcloud=True,
+                 recovery=3,
+                 z_tracker=0.7,
+                 recovery_threshold=38.):
 
         self.name = '{}Metric_{}_nside_{}_coadd_{}_{}_{}_{}_{}_npixels_{}_ebvofMW_{}'.format(name,
                                                                                              fieldType, nside, coadd, RAmin, RAmax, Decmin, Decmax, npixels, ebvofMW)
@@ -41,7 +46,7 @@ class MetricWrapper:
         self.outDir = outDir
 
     def run(self, obs, imulti=-1):
-        return self.metric.run(obs, imulti=imulti)
+        return self.metric.run(obs)
 
     def saveConfig(self):
         ti = dict(zip(self.metaout, [self.metadata[k] for k in self.metaout]))
@@ -283,7 +288,7 @@ class NSNYMetricWrapper(MetricWrapper):
     def __init__(self, name='NSN', season=-1, coadd=True, fieldType='DD',
                  nside=64, RAmin=0., RAmax=360.,
                  Decmin=-1.0, Decmax=-1.0,
-                 zmin=0.01, zmax=0.5, zStep=0.03, daymaxStep=2, zlim_coeff=0.95,
+                 zmin=0.01, zmax=1.1, zStep=0.03, daymaxStep=2, zlim_coeff=0.95,
                  npixels=0,
                  metadata={}, outDir='', ebvofMW=-1.0, bluecutoff=380.0, redcutoff=800.0, error_model=0):
         super(NSNYMetricWrapper, self).__init__(
@@ -397,28 +402,41 @@ class SNRTimeMetricWrapper(MetricWrapper):
                  nside=64, RAmin=0., RAmax=360.,
                  Decmin=-1.0, Decmax=-1.0,
                  npixels=0,
-                 metadata={}, outDir='', ebvofMW=-1.0, bluecutoff=380.0, redcutoff=800.0, error_model=0):
+                 metadata={}, outDir='', ebvofMW=-1.0, bluecutoff=380.0, redcutoff=800.0, error_model=0,
+                 downtimes_tel=True,
+                 downtimes_telcloud=True,
+                 recovery=3,
+                 z_tracker=0.7,
+                 recovery_threshold=38.):
         super(SNRTimeMetricWrapper, self).__init__(
             name=name, season=season, coadd=coadd, fieldType=fieldType,
             nside=nside, RAmin=RAmin, RAmax=RAmax,
             Decmin=Decmin, Decmax=Decmax,
             npixels=npixels,
-            metadata=metadata, outDir=outDir, ebvofMW=ebvofMW)
+            metadata=metadata, outDir=outDir, ebvofMW=ebvofMW,
+            downtimes_tel=downtimes_tel,
+            downtimes_telcloud=downtimes_telcloud,
+            recovery=recovery,
+            z_tracker=z_tracker,
+            recovery_threshold=recovery_threshold)
 
         zmin = 0.01
         zmax = 1.1
         bands = 'grizy'
         fig_for_movie = False
+        gammaName = 'gamma_DDF.hdf5'
+
         if fieldType == 'WFD':
             zmin = 0.1
             zmax = 0.50
             bands = 'griz'
             fig_for_movie = False
+            gammaName = 'gamma_WFD.hdf5'
 
         self.telescope = telescope_def()
 
         lc_reference, dustcorr = load_reference(
-            error_model, 0.0, [(0.0, 0.0)], self.telescope, bluecutoff, redcutoff)
+            error_model, 0.0, [(0.0, 0.0)], self.telescope, bluecutoff, redcutoff, gammaName=gammaName)
 
         print('Reference data loaded', lc_reference.keys(), fieldType)
 
@@ -476,7 +494,12 @@ class SNRTimeMetricWrapper(MetricWrapper):
             T0s=metadata.T0s, zlim_coeff=zlim_coeff,
             ebvofMW=ebvofMW, bands=bands,
             fig_for_movie=fig_for_movie,
-            templateLC=templateLC, dbName=metadata.dbName)
+            templateLC=templateLC, dbName=metadata.dbName,
+            downtimes_tel=downtimes_tel,
+            downtimes_telcloud=downtimes_telcloud,
+            recovery=recovery,
+            z_tracker=z_tracker,
+            recovery_threshold=recovery_threshold)
 
         self.metadata['n_bef'] = n_bef
         self.metadata['n_aft'] = n_aft

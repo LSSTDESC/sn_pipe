@@ -1,14 +1,14 @@
 # import matplotlib.pyplot as plt
-#import matplotlib
+# import matplotlib
 # matplotlib.use('agg')
 import numpy as np
 from optparse import OptionParser
 import time
 import os
-#import glob
+# import glob
 import sys
-#import random
-#import pandas as pd
+# import random
+# import pandas as pd
 from metricWrapper import CadenceMetricWrapper, SNRMetricWrapper
 from metricWrapper import ObsRateMetricWrapper, NSNMetricWrapper
 from metricWrapper import NSNYMetricWrapper
@@ -55,10 +55,10 @@ parser.add_option("--Decmin", type=float, default=-1.,
                   help="Dec min for obs area - for WDF only[%default]")
 parser.add_option("--Decmax", type=float, default=-1.,
                   help="Dec max for obs area - for WDF only[%default]")
-parser.add_option("--zmin", type=float, default=0.1,
-                  help="z min for simu [%default]")
-parser.add_option("--zmax", type=float, default=0.5,
-                  help="z max for simu [%default]")
+# parser.add_option("--zmin", type=float, default=0.1,
+#                  help="z min for simu [%default]")
+# parser.add_option("--zmax", type=float, default=0.5,
+#                  help="z max for simu [%default]")
 parser.add_option("--zStep", type=float, default=0.02,
                   help="z step for simu [%default]")
 parser.add_option("--daymaxStep", type=float, default=2,
@@ -109,7 +109,16 @@ parser.add_option("--fieldName", type=str, default='COSMOS',
                   help="fieldName - for DD only[%default]")
 parser.add_option("--healpixIDs", type=str, default='',
                   help="list of healpixIds to process [%default]")
-
+parser.add_option("--downtimes_tel", type=int, default=1,
+                  help="telescope downtimes [%default]")
+parser.add_option("--downtimes_telcloud", type=int, default=1,
+                  help="cloud downtimes [%default]")
+parser.add_option("--recovery", type=int, default=0,
+                  help="recovery method (0-3) [%default]")
+parser.add_option("--z_tracker", type=float, default=0.7,
+                  help="z for the gap tracker [%default]")
+parser.add_option("--recovery_threshold", type=float, default=38.,
+                  help="recovery threshold [%default]")
 
 opts, args = parser.parse_args()
 
@@ -164,9 +173,12 @@ metricList.append(globals()[classname](name=opts.metric, season=season_int,
                                        nside=opts.nside,
                                        RAmin=opts.RAmin, RAmax=opts.RAmax,
                                        Decmin=opts.Decmin, Decmax=opts.Decmax,
-                                       zmin=opts.zmin, zmax=opts.zmax, zStep=opts.zStep,
-                                       daymaxStep=opts.daymaxStep, zlim_coeff=opts.zlim_coeff,
-                                       npixels=opts.npixels, metadata=opts, outDir=outputDir, ebvofMW=opts.ebvofMW))
+                                       npixels=opts.npixels, metadata=opts, outDir=outputDir, ebvofMW=opts.ebvofMW,
+                                       downtimes_tel=opts.downtimes_tel,
+                                       downtimes_telcloud=opts.downtimes_telcloud,
+                                       recovery=opts.recovery,
+                                       z_tracker=opts.z_tracker,
+                                       recovery_threshold=opts.recovery_threshold))
 
 print('seasons and metric', season_int,
       metricname, opts.pixelmap_dir, opts.npixels)
