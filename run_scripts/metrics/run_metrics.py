@@ -109,16 +109,8 @@ parser.add_option("--fieldName", type=str, default='COSMOS',
                   help="fieldName - for DD only[%default]")
 parser.add_option("--healpixIDs", type=str, default='',
                   help="list of healpixIds to process [%default]")
-parser.add_option("--downtimes_tel", type=int, default=1,
-                  help="telescope downtimes [%default]")
-parser.add_option("--downtimes_telcloud", type=int, default=1,
-                  help="cloud downtimes [%default]")
-parser.add_option("--recovery", type=int, default=0,
-                  help="recovery method (0-3) [%default]")
 parser.add_option("--z_tracker", type=float, default=0.7,
                   help="z for the gap tracker [%default]")
-parser.add_option("--recovery_threshold", type=float, default=38.,
-                  help="recovery threshold [%default]")
 
 opts, args = parser.parse_args()
 
@@ -174,11 +166,7 @@ metricList.append(globals()[classname](name=opts.metric, season=season_int,
                                        RAmin=opts.RAmin, RAmax=opts.RAmax,
                                        Decmin=opts.Decmin, Decmax=opts.Decmax,
                                        npixels=opts.npixels, metadata=opts, outDir=outputDir, ebvofMW=opts.ebvofMW,
-                                       downtimes_tel=opts.downtimes_tel,
-                                       downtimes_telcloud=opts.downtimes_telcloud,
-                                       recovery=opts.recovery,
-                                       z_tracker=opts.z_tracker,
-                                       recovery_threshold=opts.recovery_threshold))
+                                       z_tracker=opts.z_tracker))
 
 print('seasons and metric', season_int,
       metricname, opts.pixelmap_dir, opts.npixels)

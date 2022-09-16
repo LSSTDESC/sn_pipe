@@ -23,11 +23,7 @@ class MetricWrapper:
                  RAmin=0., RAmax=360.,
                  Decmin=-1.0, Decmax=-1.0,
                  npixels=0, metadata={}, outDir='', ebvofMW=-1.0,
-                 downtimes_tel=True,
-                 downtimes_telcloud=True,
-                 recovery=3,
-                 z_tracker=0.7,
-                 recovery_threshold=38.):
+                 z_tracker=0.7):
 
         self.name = '{}Metric_{}_nside_{}_coadd_{}_{}_{}_{}_{}_npixels_{}_ebvofMW_{}'.format(name,
                                                                                              fieldType, nside, coadd, RAmin, RAmax, Decmin, Decmax, npixels, ebvofMW)
@@ -290,13 +286,13 @@ class NSNYMetricWrapper(MetricWrapper):
                  Decmin=-1.0, Decmax=-1.0,
                  zmin=0.01, zmax=1.1, zStep=0.03, daymaxStep=2, zlim_coeff=0.95,
                  npixels=0,
-                 metadata={}, outDir='', ebvofMW=-1.0, bluecutoff=380.0, redcutoff=800.0, error_model=0):
+                 metadata={}, outDir='', ebvofMW=-1.0, bluecutoff=380.0, redcutoff=800.0, error_model=0, z_tracker=-1.):
         super(NSNYMetricWrapper, self).__init__(
             name=name, season=season, coadd=coadd, fieldType=fieldType,
             nside=nside, RAmin=RAmin, RAmax=RAmax,
             Decmin=Decmin, Decmax=Decmax,
             npixels=npixels,
-            metadata=metadata, outDir=outDir, ebvofMW=ebvofMW)
+            metadata=metadata, outDir=outDir, ebvofMW=ebvofMW,z_tracker=z_tracker)
 
         """
         zmin = 0.
@@ -403,22 +399,14 @@ class SNRTimeMetricWrapper(MetricWrapper):
                  Decmin=-1.0, Decmax=-1.0,
                  npixels=0,
                  metadata={}, outDir='', ebvofMW=-1.0, bluecutoff=380.0, redcutoff=800.0, error_model=0,
-                 downtimes_tel=True,
-                 downtimes_telcloud=True,
-                 recovery=3,
-                 z_tracker=0.7,
-                 recovery_threshold=38.):
+                 z_tracker=0.7):
         super(SNRTimeMetricWrapper, self).__init__(
             name=name, season=season, coadd=coadd, fieldType=fieldType,
             nside=nside, RAmin=RAmin, RAmax=RAmax,
             Decmin=Decmin, Decmax=Decmax,
             npixels=npixels,
             metadata=metadata, outDir=outDir, ebvofMW=ebvofMW,
-            downtimes_tel=downtimes_tel,
-            downtimes_telcloud=downtimes_telcloud,
-            recovery=recovery,
-            z_tracker=z_tracker,
-            recovery_threshold=recovery_threshold)
+            z_tracker=z_tracker)
 
         zmin = 0.01
         zmax = 1.1
@@ -495,11 +483,7 @@ class SNRTimeMetricWrapper(MetricWrapper):
             ebvofMW=ebvofMW, bands=bands,
             fig_for_movie=fig_for_movie,
             templateLC=templateLC, dbName=metadata.dbName,
-            downtimes_tel=downtimes_tel,
-            downtimes_telcloud=downtimes_telcloud,
-            recovery=recovery,
-            z_tracker=z_tracker,
-            recovery_threshold=recovery_threshold)
+            z_tracker=z_tracker)
 
         self.metadata['n_bef'] = n_bef
         self.metadata['n_aft'] = n_aft
