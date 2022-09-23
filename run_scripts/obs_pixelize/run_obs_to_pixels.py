@@ -109,22 +109,30 @@ class procObsPixels:
         # create output directory
         self.genDir(outDir)
 
-        self.outName = '{}/{}_{}_nside_{}_{}_{}_{}_{}_{}.npy'.format(self.outDir,
-                                                                     dbName, fieldType, nside,
-                                                                     RAmin, RAmax,
-                                                                     Decmin, Decmax,
-                                                                     fieldName)
-        # if the file already exist -> do not re-process it
+        self.outName = {}
 
-        if not exists(self.outName):
-            print('file ',self.outName,' does not exist -> processing')
+        fieldName = fieldName.split(',')
+        for field in fieldName:
+            self.outName[field] = '{}/{}_{}_nside_{}_{}_{}_{}_{}_{}.npy'.format(self.outDir,
+                                                                                dbName, fieldType, nside,
+                                                                                RAmin, RAmax,
+                                                                                Decmin, Decmax,
+                                                                                field)
+        # if the files already exist -> do not re-process it
+
+        process_it = False
+        for key, vals in self.outName.items():
+            if not exists(vals):
+                process_it = True
+
+        if process_it:
             # get observations/patches
             observations, patches = self.load_obs()
 
             # run using multiprocessing
             self.multiprocess(patches, observations)
         else:
-            print('file ',self.outName,' does already exist -> no processing')
+            print('file ', self.outName, ' does already exist -> no processing')
 
     def genDir(self, outDir):
         """
@@ -237,7 +245,9 @@ class procObsPixels:
 
         # now save
         if self.saveData:
-            np.save(self.outName, restot.to_records(index=False))
+            for key, vals in self.outName.items():
+                idx = restot['fieldName'] == key
+                np.save(vals, restot[idx].to_records(index=False))
 
     def processPatch(self, pointings, observations, j=0, output_q=None):
         """
@@ -271,6 +281,7 @@ class procObsPixels:
             self.nside, self.RACol, self.DecCol, self.outDir, self.dbName)
 
         pixelsTot = pd.DataFrame()
+        print('starting process', j)
         for index, pointing in pointings.iterrows():
             ipoint += 1
             print('pointing', ipoint)
@@ -278,6 +289,7 @@ class procObsPixels:
             # get the pixels
             pixels = datapixels(observations, pointing['RA'], pointing['Dec'],
                                 pointing['radius_RA'], pointing['radius_Dec'], self.nodither, display=False)
+            pixels['fieldName'] = pointing['fieldName']
             """
             import matplotlib.pyplot as plt
             print(pixels.columns)
