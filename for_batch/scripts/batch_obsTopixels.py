@@ -4,110 +4,80 @@ from optparse import OptionParser
 import pandas as pd
 from sn_tools.sn_batchutils import BatchIt
 
-"""
-def process(dbDir, dbName, dbExtens, scriptref, outDir, nproc,
-          saveData, fieldType, simuType, nside, fieldNames, nclusters,
-            RAmin,RAmax,nRA,Decmin,Decmax,nDec,radius,mode='batch'):
+def batch_allDDF(params, toprocess):
+    """
+    Function to generate a single script for a set of DDF db
+    and launch the batch
 
-    print('boa',RAmin,RAmax,nRA,Decmin,Decmax,nDec,radius,mode)
+    Parameters
+    ----------------
+    params: dict
+      dict of parameters
+    toprocess: pandas df
+      list of db and params to process
 
-    cwd = os.getcwd()
-    dirScript = cwd + "/scripts"
-
-    if not os.path.isdir(dirScript):
-        os.makedirs(dirScript)
-
-    dirLog = cwd + "/logs"
-    if not os.path.isdir(dirLog):
-        os.makedirs(dirLog)
-
-    # dbName = dbName.decode()
-    # fieldType = fieldType.decode()
-
-    id = '{}_{}_{}'.format(
-        dbName, nside, fieldType)
-
-    name_id = 'obsTopixels_{}'.format(id)
-    logName = dirLog + '/'+name_id+'.log'
-    errlogName = dirLog + '/'+name_id+'.err'
-
-
-    dict_batch = {}
-    dict_batch['--account'] = 'lsst'
-    dict_batch['-L'] = 'sps'
-    dict_batch['--time'] = '20:00:00'
-    dict_batch['--mem'] = '20G'
-    dict_batch['--output'] = logName
-    #dict_batch['--cpus-per-task'] = str(nproc)
-    dict_batch['-n'] = 8
-    dict_batch['--error'] = errlogName
-
-    # fill the script
-    scriptName = dirScript+'/'+name_id+'.sh'
-    script = open(scriptName, "w")
+    """
+    processName =  'obsTopixels_allDD'
+    mybatch = BatchIt(processName=processName)
+    for io, val in toprocess.iterrows():
+        for vv in vvars:
+            params[vv] = val[vv]
+        mybatch.add_batch(scriptref,params)
     
-    #script.write(qsub + "\n")
-    script.write("#!/bin/env bash\n") 
-    for key, vals in dict_batch.items():
-         script.write("#SBATCH {} {} \n".format(key,vals))
-
-    script.write(" cd " + cwd + "\n")
-    script.write(" echo 'sourcing setups' \n")
-    script.write(" source setup_release.sh Linux -5\n")
-    script.write("echo 'sourcing done' \n")
-
-    if fieldType == 'WFD':
-        cmd = cmdb(dbDir, dbName, dbExtens, scriptref, outDir, nproc,
-                   saveData, fieldType, simuType, nside,'',0,
-                   RAmin,RAmax,nRA,Decmin,Decmax,nDec)
-        script.write(cmd + " \n")
-        if mode == 'interactive':
-            os.system(cmd)
-    if fieldType == 'DD':
-        for fieldName in fieldNames:
-            cmd = cmdb(dbDir, dbName, dbExtens, scriptref, outDir, nproc,
-                       saveData, fieldType, simuType, nside, fieldName, nclusters,
-                       RAmin,RAmax,nRA,Decmin,Decmax,nDec,radius)
-            script.write(cmd + " \n")
-            if mode == 'interactive':
-                os.system(cmd)
-    script.write("EOF" + "\n")
-    script.close()
-    if mode == 'batch':
-        os.system("sbatch "+scriptName)
+    mybatch.go_batch()
 
 
-def cmdb(dbDir, dbName, dbExtens, scriptref, outDir, nproc,
-         saveData, fieldType, simuType, nside, fieldName='', nclusters=0,
-         RAmin=0.,RAmax=360.,nRA=10,Decmin=-80.,Decmax=20.,nDec=4,radius=4.):
+def batch_indiv(params,toprocess,mode):
+    """
+    Method to generate a script and launch it per db
 
-    cmd = 'python {}'.format(scriptref)
-    cmd += ' --dbDir {}'.format(dbDir)
-    cmd += ' --dbExtens {}'.format(dbExtens)
-    cmd += ' --dbName {}'.format(dbName)
-    cmd += ' --nproc {}'.format(nproc)
-    cmd += ' --nside {}'.format(nside)
-    #cmd += ' --simuType {}'.format(simuType)
-    cmd += ' --saveData {}'.format(saveData)
-    cmd += ' --outDir {}'.format(outDir)
-    cmd += ' --fieldType {}'.format(fieldType) 
-    cmd += ' --RAmin {}'.format(RAmin)
-    cmd += ' --RAmax {}'.format(RAmax)
-    cmd += ' --nRA {}'.format(nRA)
-    cmd += ' --Decmin {}'.format(Decmin)
-    cmd += ' --Decmax {}'.format(Decmax)
-    cmd += ' --nDec {}'.format(nDec)
-    cmd += ' --radius {}'.format(radius)
+    Parameters
+    ----------------
+    params: dict
+       dict of parameters
+    toprocess: pandas df
+      list of db and params to process
+    mode: str
+      mode of running (batch or interactive)
 
-    if fieldName != '':
-        cmd += ' --fieldName {}'.format(fieldName)
-        cmd += ' --nclusters {}'.format(nclusters)
+    """
+    
+    for io, val in toprocess.iterrows():
+        bid = '{}_{}_{}'.format(val['dbName'], val['nside'], val['fieldType'])
+        if mode == 'batch':
+            if val['fieldType'] == 'DD':
+                params['nclusters'] = nclusters
+                bbid = '{}_{}'.format(bid,opts.DDFs.replace(',','_'))
+                bbatch(scriptref,params,vvars,val,bbid)
+            else:
+                bbatch(scriptref,params,vvars,val,bid)
+        else:
+            scrName = 'test_{}.sh'.format(bid)
+            for vv in vvars:
+                params[vv] = val[vv]
+            make_scr(scriptref,params,scrName)
+            os.system('chmod +x {}'.format(scrName))
+        
 
-    return cmd
-"""
 
 def bbatch(scriptref,params,vvars,val,bid):
-    
+    """
+    Function to generate batch script and launc it
+
+    Parameters
+    ----------------
+    scriptref: str
+      name of the script to run in batch
+    params: dict
+      dict of parameters
+    vvars: list(str)
+      additionnal parameter names
+    val: dict
+      additionnal parameter values
+    bid: str
+      batch id
+
+    """
     processName =  'obsTopixels_{}'.format(bid)
     mybatch = BatchIt(processName=processName)
     for vv in vvars:
@@ -163,6 +133,8 @@ parser.add_option("--DDFs", type=str, default='COSMOS,XMM-LSS,ELAIS,CDFS,ADFS1',
                   help="list of DDF ro consider - [%default]")
 parser.add_option("--mode", type=str, default='batch',
                   help="mode to run (batch/interactive) - [%default]")
+parser.add_option("--runType", type=str, default='allDDF',
+                  help="type of run - [%default]")
 
 opts, args = parser.parse_args()
 
@@ -179,11 +151,8 @@ nDec = opts.nDec
 radius = opts.radius
 mode = opts.mode
 nclusters = opts.nclusters
+runType = opts.runType
 
-"""
-toprocess = np.genfromtxt(dbList, dtype=None, names=[
-                          'dbName', 'simuType', 'nside', 'coadd', 'fieldType', 'nproc'])
-"""
 toprocess = pd.read_csv(dbList, comment='#')
 
 # print('there', toprocess)
@@ -202,33 +171,15 @@ params['Decmax'] = Decmax
 params['nDec'] = nDec
 params['radius'] = radius
 params['saveData'] = 1
+params['fieldName'] = opts.DDFs
 
 vvars = ['dbDir', 'dbName', 'dbExtens','nproc','fieldType','simuType','nside']
 
-for io, val in toprocess.iterrows():
-    bid = '{}_{}_{}'.format(val['dbName'], val['nside'], val['fieldType'])
-    if mode == 'batch':
-        if val['fieldType'] == 'DD':
-            fieldNames = fieldDD
-            params['nclusters'] = nclusters
-            for fieldName in fieldNames:
-                bbid = '{}_{}'.format(bid,fneldName)
-                bbatch(scriptref,params,vvars+['fieldName'],val,bbid)
-        else:
-            bbatch(scriptref,params,vvars,val,bid)
-    else:
-        scrName = 'test_{}.sh'.format(bid)
-        for vv in vvars:
-             params[vv] = val[vv]
-        make_scr(scriptref,params,scrName)
-        os.system('chmod +x {}'.format(scrName))
+#make a big and unique file for DD
+if runType == 'allDDF':
+    batch_allDDF(params,toprocess)
+else:
+    batch_indiv(params,toprocess,mode)
 
-
-    """
-    process(val['dbDir'], val['dbName'], val['dbExtens'], scriptref, outDir, val['nproc'],
-              1, val['fieldType'], val['simuType'], val['nside'], fieldNames, opts.nclusters,
-              RAmin,RAmax,nRA,Decmin,Decmax,nDec,radius,mode)
-    """ 
-        
     
     
