@@ -19,20 +19,21 @@ opts, args = parser.parse_args()
 
 actions = opts.action.split(',')
 
-ll = pd.read_csv(opts.OSlist,comment='#')
+ll = pd.read_csv(opts.OSlist, comment='#')
 
 pixel_ana_dir = opts.pixel_ana_dir
 for i, row in ll.iterrows():
     cmd = 'python sn_studies/sn_DD_nsn/obspixel_analysis_DD.py'
-    cmd += ' --fileDir {}'.format(opts.pixelDir) 
+    cmd += ' --fileDir {}'.format(opts.pixelDir)
     cmd += ' --outputDir {}'.format(pixel_ana_dir)
     cmd += ' --dbName {}'.format(row['dbName'])
+    cmd += ' --fieldNames COSMOS,CDFS,XMM-LSS,ELAISS1,EDFSa,EDFSb'
     if 'pixels_analysis' in actions:
         os.system(cmd)
     cmd = 'python sn_studies/sn_DD_nsn/OS_downtime.py' 
     cmd += ' --dbDir {}'.format(row['dbDir'])
     cmd += ' --dbName {}'.format(row['dbName']) 
-    cmd += ' --fieldNames COSMOS,CDFS,XMM-LSS,ELAIS,ADFS1,ADFS2' 
+    cmd += ' --fieldNames COSMOS,CDFS,XMM-LSS,ELAISS1,EDFSa,EDFSb' 
     cmd += ' --fieldDir {}'.format(pixel_ana_dir)
     cmd += ' --outputDir {}'.format(opts.outputDir)
     if 'OS_downtime' in actions:
