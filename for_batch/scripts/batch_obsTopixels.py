@@ -129,7 +129,7 @@ parser.add_option("--nDec", type=int, default=1,
                   help="number of Dec patches - [%default]")
 parser.add_option("--radius", type=float, default=4.,
                   help="radius for pixel arounf center [DD only] - [%default]")
-parser.add_option("--DDFs", type=str, default='COSMOS,XMM-LSS,ELAIS,CDFS,ADFS1',
+parser.add_option("--DDFs", type=str, default='COSMOS,XMM-LSS,ELAISS1,CDFS,EDFSa,EDFsb',
                   help="list of DDF ro consider - [%default]")
 parser.add_option("--mode", type=str, default='batch',
                   help="mode to run (batch/interactive) - [%default]")
