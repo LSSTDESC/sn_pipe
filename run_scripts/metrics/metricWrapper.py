@@ -1,15 +1,8 @@
 import numpy as np
-from sn_metrics.sn_snr_metric import SNSNRMetric
-from sn_metrics.sn_cadence_metric import SNCadenceMetric
-from sn_metrics.sn_obsrate_metric import SNObsRateMetric
-from sn_metrics.sn_nsn_metric import SNNSNMetric
-from sn_metrics.sn_nsn_yearly_metric import SNNSNYMetric
-from sn_metrics.sn_snr_time_metric import SNSNRTIMEMetric
-from sn_metrics.sn_saturation_metric import SNSaturationMetric
-from sn_metrics.sn_sl_metric import SLSNMetric
+
+
 from sn_tools.sn_cadence_tools import ReferenceData
-from sn_tools.sn_utils import GetReference, LoadDust
-from sn_tools.sn_telescope import Telescope
+from sn_tools.sn_calcFast import GetReference, LoadDust
 from sn_tools.sn_io import check_get_file
 import os
 import multiprocessing
@@ -63,6 +56,7 @@ class CadenceMetricWrapper(MetricWrapper):
             nside=nside, RAmin=RAmin, RAmax=RAmax,
             Decmin=Decmin, Decmax=Decmax, npixels=npixels, metadata=metadata, outDir=outDir, ebvofMW=ebvofMW)
 
+        from sn_metrics.sn_cadence_metric import SNCadenceMetric
         self.metric = SNCadenceMetric(
             coadd=coadd, nside=nside, verbose=metadata.verbose)
 
@@ -110,6 +104,7 @@ class SNRMetricWrapper(MetricWrapper):
         lim_sn = ReferenceData(
             Li_files, mag_to_flux_files, metadata.band, metadata.z)
 
+        from sn_metrics.sn_snr_metric import SNSNRMetric
         self.metric = SNSNRMetric(lim_sn=lim_sn, fake_file=fake_file, coadd=coadd,
                                   names_ref=[metadata.names_ref], shift=shift, season=season, z=metadata.z, verbose=metadata.verbose)
         self.saveConfig()
@@ -155,6 +150,7 @@ class ObsRateMetricWrapper(MetricWrapper):
 
         snr_ref = dict(zip(bands, SNR))
 
+        from sn_metrics.sn_obsrate_metric import SNObsRateMetric
         self.metric = SNObsRateMetric(lim_sn=lim_sn, names_ref=[metadata.names_ref],
                                       coadd=coadd, season=season, z=metadata.z, bands=bands, snr_ref=snr_ref, verbose=metadata.verbose)
 
@@ -189,10 +185,10 @@ class NSNMetricWrapper(MetricWrapper):
             fig_for_movie = False
             gammaName = 'gamma_WFD.hdf5'
 
-        self.telescope = telescope_def()
+        #self.telescope = telescope_def()
 
         lc_reference, dustcorr = load_reference(
-            error_model, 0.0, [(-2.0, 0.2), (0.0, 0.0)], self.telescope, bluecutoff, redcutoff, gammaName=gammaName)
+            error_model, 0.0, [(-2.0, 0.2), (0.0, 0.0)], bluecutoff, redcutoff, gammaName=gammaName)
 
         print('Reference data loaded', lc_reference.keys(), fieldType)
 
@@ -234,6 +230,7 @@ class NSNMetricWrapper(MetricWrapper):
         pixArea = hp.nside2pixarea(nside, degrees=True)
 
         # metric instance
+        from sn_metrics.sn_nsn_metric import SNNSNMetric
         self.metric = SNNSNMetric(
             lc_reference, dustcorr, season=season, zmin=zmin,
             zmax=zmax, zStep=zStep, daymaxStep=daymaxStep, pixArea=pixArea,
@@ -308,10 +305,10 @@ class NSNYMetricWrapper(MetricWrapper):
             bands = 'grizy'
             fig_for_movie = False
             gammaName = 'gamma_WFD.hdf5'
-        self.telescope = telescope_def()
+        #self.telescope = telescope_def()
 
         lc_reference, dustcorr = load_reference(
-            error_model, 0.0, [(-2.0, 0.2), (0.0, 0.0)], self.telescope, bluecutoff, redcutoff, gammaName=gammaName)
+            error_model, 0.0, [(-2.0, 0.2), (0.0, 0.0)], bluecutoff, redcutoff, gammaName=gammaName)
 
         print('Reference data loaded', lc_reference.keys(), fieldType)
 
@@ -374,6 +371,7 @@ class NSNYMetricWrapper(MetricWrapper):
         telescope_params['mean_wavelength'] = mean_wavelength
         """
         # metric instance
+        from sn_metrics.sn_nsn_yearly_metric import SNNSNYMetric
         self.metric = SNNSNYMetric(
             lc_reference, dustcorr, season=season, zmin=zmin,
             zmax=zmax,  zStep=zStep,
@@ -437,7 +435,7 @@ class SNRTimeMetricWrapper(MetricWrapper):
         self.telescope = telescope_def()
 
         lc_reference, dustcorr = load_reference(
-            error_model, 0.0, [(0.0, 0.0)], self.telescope, bluecutoff, redcutoff)
+            error_model, 0.0, [(0.0, 0.0)], bluecutoff, redcutoff)
 
         print('Reference data loaded', lc_reference.keys(), fieldType)
 
@@ -479,6 +477,7 @@ class SNRTimeMetricWrapper(MetricWrapper):
             templateLC = loadTemplateLC(error_model, 0, x1_colors=[
                                         (-2.0, 0.2), (0.0, 0.0)])
         # metric instance
+        from sn_metrics.sn_snr_time_metric import SNSNRTIMEMetric
         self.metric = SNSNRTIMEMetric(
             lc_reference, dustcorr, season=season, zmin=zmin,
             zmax=zmax, pixArea=pixArea,
@@ -649,6 +648,7 @@ class SaturationMetricWrapper(MetricWrapper):
         fracpixel = np.load('{}/{}'.format(refDir, fracpixelName))
 
         # metric instance
+        from sn_metrics.sn_saturation_metric import SNSaturationMetric
         self.metric = SNSaturationMetric(
             lc_reference, dustcorr, season=season, zmin=zmin,
             zmax=zmax,
@@ -666,7 +666,7 @@ class SaturationMetricWrapper(MetricWrapper):
     def load(self, templateDir, fname, gammaDir, gammaName, web_path, j=-1, output_q=None):
 
         lc_ref = GetReference(templateDir,
-                              fname, gammaDir, gammaName, web_path, self.telescope)
+                              fname, gammaDir, gammaName, web_path)
 
         if output_q is not None:
             output_q.put({j: lc_ref})
@@ -688,6 +688,7 @@ class SLMetricWrapper(MetricWrapper):
             npixels=npixels,
             metadata=metadata, outDir=outDir, ebvofMW=ebvofMW)
 
+        from sn_metrics.sn_sl_metric import SLSNMetric
         self.metric = SLSNMetric(
             season=season, nside=nside, coadd=coadd, verbose=metadata.verbose)
 
@@ -700,7 +701,7 @@ def telescope_def():
 
 
     """
-
+    from sn_tools.sn_telescope import Telescope
     tel_par = {}
     tel_par['name'] = 'LSST'  # name of the telescope (internal)
     # dir of throughput
@@ -720,7 +721,7 @@ def telescope_def():
     return telescope
 
 
-def load_reference(error_model=1, ebvofMW=-1, x1_colors=[(-2.0, 0.2), (0.0, 0.0)], telescope=Telescope(), bluecutoff=380., redcutoff=800., gammaName='gamma_WFD.hdf5'):
+def load_reference(error_model=1, ebvofMW=-1, x1_colors=[(-2.0, 0.2), (0.0, 0.0)], bluecutoff=380., redcutoff=800., gammaName='gamma_WFD.hdf5'):
     """
     Method to load reference files (LC, ...)
 
@@ -732,8 +733,6 @@ def load_reference(error_model=1, ebvofMW=-1, x1_colors=[(-2.0, 0.2), (0.0, 0.0)
       E(B-V) (default -1: loaded from dustmap)
     x1_colors: list(pair(float)), opt
      (x1,color) pairs for template loading (default: [(-2.0, 0.2), (0.0, 0.0)])
-    telescope: Telescope, opt
-      telescope (default: Telescope())
 
     Returns
     -----------
@@ -771,7 +770,7 @@ def load_reference(error_model=1, ebvofMW=-1, x1_colors=[(-2.0, 0.2), (0.0, 0.0)
         else:
             dustcorr[x1_colors[j]] = None
         p = multiprocessing.Process(
-            name='Subprocess_main-'+str(j), target=loadFile, args=(templateDir, fname, gammaDir, gammaName, web_path, telescope, j, result_queue))
+            name='Subprocess_main-'+str(j), target=loadFile, args=(templateDir, fname, gammaDir, gammaName, web_path, j, result_queue))
         p.start()
 
     resultdict = {}
@@ -788,10 +787,10 @@ def load_reference(error_model=1, ebvofMW=-1, x1_colors=[(-2.0, 0.2), (0.0, 0.0)
     return lc_reference, dustcorr
 
 
-def loadFile(templateDir, fname, gammaDir, gammaName, web_path, telescope, j=-1, output_q=None):
+def loadFile(templateDir, fname, gammaDir, gammaName, web_path, j=-1, output_q=None):
 
     lc_ref = GetReference(templateDir,
-                          fname, gammaDir, gammaName, web_path, telescope)
+                          fname, gammaDir, gammaName, web_path)
 
     if output_q is not None:
         output_q.put({j: lc_ref})
