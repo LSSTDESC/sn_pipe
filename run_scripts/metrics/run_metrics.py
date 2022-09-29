@@ -20,9 +20,10 @@ metric = sys.argv[1]
 print('metric', metric)
 
 # get all possible simulation parameters and put in a dict
-path_metric = sn_metrics_input.__path__
-confDict_gen = make_dict_from_config('.', 'config_metric.txt')
-confDict_metric = make_dict_from_config('.', 'config_{}.txt'.format(metric))
+path_metric_input = sn_metrics_input.__path__
+confDict_gen = make_dict_from_config(path_metric_input[0], 'config_metric.txt')
+confDict_metric = make_dict_from_config(
+    path_metric_input[0], 'config_{}.txt'.format(metric))
 
 parser = OptionParser()
 # parser for simulation parameters : 'dynamical' generation
