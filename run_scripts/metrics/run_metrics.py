@@ -61,7 +61,7 @@ if not os.path.isdir(outputDir):
 metricDict['outDir'] = outputDir
 #metricDict['season'] = season_int
 metricDict['metric'] = metric
-
+metricDict['OSName'] = opts.dbName
 classname = '{}MetricWrapper'.format(metric)
 metricList = []
 
