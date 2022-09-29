@@ -9,47 +9,37 @@ import yaml
 
 
 class MetricWrapper:
-    def __init__(self, **params):
-
-        self.metric = None
-
-        name = params['metric']
-        npixels = params['npixels']
-        fieldType = params['fieldType']
-        nside = params['nside']
-        coadd = params['coadd']
-        RAmin = params['RAmin']
-        RAmax = params['RAmax']
-        Decmin = params['Decmin']
-        Decmax = params['Decmax']
-        npixels = params['npixels']
-        ebvofMW = params['ebvofMW']
-
-        metadata = dict(params)
+    def __init__(self, name='Cadence', season=-1,
+                 coadd=True, fieldType='DD', nside=64,
+                 RAmin=0., RAmax=360.,
+                 Decmin=-1.0, Decmax=-1.0,
+                 npixels=0, metadata={}, outDir='', ebvofMW=-1.0):
 
         self.name = '{}Metric_{}_nside_{}_coadd_{}_{}_{}_{}_{}_npixels_{}_ebvofMW_{}'.format(name,
                                                                                              fieldType, nside, coadd, RAmin, RAmax, Decmin, Decmax, npixels, ebvofMW)
-        # self.metadata = vars(metadata)
-        self.metadata = metadata
+
+        self.metric = None
+
+        self.metadata = vars(metadata)
+
         # select values to dump
         self.metaout = ['name', 'seasons', 'coadd', 'fieldType',
                         'nside', 'RAmin', 'RAmax', 'Decmin', 'Decmax', 'metric', 'Output dir', 'remove_dithering', 'ebvofMW']
 
         self.metadata['name'] = self.name
-        # self.metadata['metric'] = name
-        self.metadata['Output dir'] = params['outDir']
-        self.outDir = params['outDir']
+        self.metadata['metric'] = name
+        self.metadata['Output dir'] = outDir
+        self.outDir = outDir
 
     def run(self, obs, imulti=-1):
         return self.metric.run(obs, imulti=imulti)
 
-    def saveConfig(self, params={}):
-        #ti = dict(zip(self.metaout, [self.metadata[k] for k in self.metaout]))
-        if params:
-            nameOut = '{}/{}_conf.yaml'.format(self.outDir, self.name)
-            print('Saving configuration file', nameOut)
-            with open(nameOut, 'w') as file:
-                yaml.dump(params, file)
+    def saveConfig(self):
+        ti = dict(zip(self.metaout, [self.metadata[k] for k in self.metaout]))
+        nameOut = '{}/{}_conf.yaml'.format(self.outDir, self.name)
+        print('Saving configuration file', nameOut)
+        with open(nameOut, 'w') as file:
+            yaml.dump(ti, file)
 
 
 class CadenceMetricWrapper(MetricWrapper):
@@ -193,7 +183,7 @@ class NSNMetricWrapper(MetricWrapper):
             fig_for_movie = False
             gammaName = 'gamma_WFD.hdf5'
 
-        # self.telescope = telescope_def()
+        #self.telescope = telescope_def()
 
         lc_reference, dustcorr = load_reference(
             error_model, 0.0, [(-2.0, 0.2), (0.0, 0.0)], bluecutoff, redcutoff, gammaName=gammaName)
@@ -235,7 +225,7 @@ class NSNMetricWrapper(MetricWrapper):
         if error_model:
             errmodrel = 0.05
 
-        pixArea = np.round(hp.nside2pixarea(nside, degrees=True), 3)
+        pixArea = hp.nside2pixarea(nside, degrees=True)
 
         # metric instance
         from sn_metrics.sn_nsn_metric import SNNSNMetric
@@ -285,45 +275,136 @@ class NSNMetricWrapper(MetricWrapper):
 
 
 class NSNYMetricWrapper(MetricWrapper):
-    def __init__(self, **params):
-        super(NSNYMetricWrapper, self).__init__(**params)
+    def __init__(self, name='NSN', season=-1, coadd=True, fieldType='DD',
+                 nside=64, RAmin=0., RAmax=360.,
+                 Decmin=-1.0, Decmax=-1.0,
+                 zmin=0.01, zmax=0.5, zStep=0.03, daymaxStep=2, zlim_coeff=0.95,
+                 npixels=0,
+                 metadata={}, outDir='', ebvofMW=-1.0, bluecutoff=380.0, redcutoff=800.0, error_model=0):
+        super(NSNYMetricWrapper, self).__init__(
+            name=name, season=season, coadd=coadd, fieldType=fieldType,
+            nside=nside, RAmin=RAmin, RAmax=RAmax,
+            Decmin=Decmin, Decmax=Decmax,
+            npixels=npixels,
+            metadata=metadata, outDir=outDir, ebvofMW=ebvofMW)
 
-        gammaName = params['gamma_file']
-        bluecutoff = params['bluecutoff']
-        redcutoff = params['redcutoff']
-        error_model = params['error_model']
-        nside = params['nside']
+        """
+        zmin = 0.
+        zmax = 1.1
+        zStep = 0.02
+        daymaxStep = 2.
+        """
+        bands = 'grizy'
+        fig_for_movie = False
+        gammaName = 'gamma_DDF.hdf5'
+        if fieldType == 'WFD':
+            # zmin = 0.1
+            # zmax = 0.50
+            bands = 'grizy'
+            fig_for_movie = False
+            gammaName = 'gamma_WFD.hdf5'
+        #self.telescope = telescope_def()
 
         lc_reference, dustcorr = load_reference(
             error_model, 0.0, [(-2.0, 0.2), (0.0, 0.0)], bluecutoff, redcutoff, gammaName=gammaName)
 
-        print('Reference data loaded',
-              lc_reference.keys(), params['fieldType'])
+        print('Reference data loaded', lc_reference.keys(), fieldType)
+
+        print('hello', metadata)
+        # LC selection criteria
+
+        if fieldType == 'DD':
+            n_bef = 3
+            n_aft = 4
+            snr_min = 1.
+            n_phase_min = 1
+            n_phase_max = 1
+            # zlim_coeff = 0.95
+
+        if fieldType == 'WFD':
+            n_bef = 3
+            n_aft = 8
+            snr_min = 1.
+            n_phase_min = 1
+            n_phase_max = 1
+            # zlim_coeff = 0.95
+
+        if fieldType == 'Fake':
+            n_bef = 4
+            n_aft = 10
+            snr_min = 1.
+            n_phase_min = 1
+            n_phase_max = 1
+            # zlim_coeff = 0.95
 
         errmodrel = -1.
         if error_model:
             errmodrel = 0.05
 
         pixArea = hp.nside2pixarea(nside, degrees=True)
+
         templateLC = None
-        if params['ploteffi'] or params['fig_for_movie']:
+        if metadata.ploteffi or fig_for_movie:
             templateLC = loadTemplateLC(error_model, 0, x1_colors=[
                                         (-2.0, 0.2), (0.0, 0.0)])
 
-        params['templateLC'] = templateLC
-        params['pixArea'] = float(np.round(pixArea, 4))
-        params['lc_reference'] = lc_reference
-        params['dustcorr'] = dustcorr
+        """
+        zp = {'u': 26.87850390726474, 'g': 28.375600660188038, 'r': 28.1646330015672,
+              'i': 27.85215178952283, 'z': 27.438320998147496, 'y': 26.64627260066651}
+        mean_wavelength = {'u': 368.4154478841252, 'g': 479.9808017139049, 'r': 623.0058318793193,
+                           'i': 754.1040224557244, 'z': 869.0132673693349, 'y': 973.6060703394403}
 
+        zp = {'u': 27.009, 'g': 28.399, 'r': 28.177,
+              'i': 27.879, 'z': 27.482, 'y': 26.687}
+        mean_wavelength = {'u': 366.92, 'g': 479.78,
+                           'r': 623.03, 'i': 754.16, 'z': 869.07, 'y': 973.81}
+
+        zp = {'u': 27.009, 'g': 28.186812051401645, 'r': 27.979260503055546,
+              'i': 27.68961482555567, 'z': 27.296997266117014, 'y': 26.506245199165402}
+        mean_wavelength = {'u': 366.92, 'g': 480.00048773429126, 'r': 623.1435821795548,
+                           'i': 754.2219977729688, 'z': 869.1034641448532, 'y': 973.8489143445476}
+
+        telescope_params = {}
+        telescope_params['zp'] = zp
+        telescope_params['mean_wavelength'] = mean_wavelength
+        """
         # metric instance
-        from sn_metrics.sn_nsn_yearly_metric import SNNSNYMetric
-        self.metric = SNNSNYMetric(**params)
+        from sn_metrics.sn_nsn_yearly_metric_last import SNNSNYMetric
+        self.metric = SNNSNYMetric(
+            lc_reference, dustcorr, season=season, zmin=zmin,
+            zmax=zmax,  zStep=zStep,
+            daymaxStep=daymaxStep, pixArea=pixArea,
+            verbose=metadata.verbose, timer=metadata.timer,
+            ploteffi=metadata.ploteffi,
+            n_bef=n_bef, n_aft=n_aft,
+            snr_min=snr_min,
+            n_phase_min=n_phase_min,
+            n_phase_max=n_phase_max,
+            errmodrel=errmodrel,
+            coadd=coadd, lightOutput=metadata.lightOutput,
+            T0s=metadata.T0s, zlim_coeff=zlim_coeff,
+            ebvofMW=ebvofMW, bands=bands,
+            fig_for_movie=fig_for_movie,
+            templateLC=templateLC, dbName=metadata.dbName, fieldType=fieldType)
 
-        params.pop('lc_reference')
-        params.pop('dustcorr')
-        params.pop('templateLC')
-        print('kkk', params)
-        self.saveConfig(params)
+        self.metadata['n_bef'] = n_bef
+        self.metadata['n_aft'] = n_aft
+        self.metadata['snr_min'] = snr_min
+        self.metadata['n_phase_min'] = n_phase_min
+        self.metadata['n_phase_max'] = n_phase_max
+        self.metadata['zlim_coeff'] = zlim_coeff
+        self.metadata['error_model'] = error_model
+        self.metadata['errmodrel'] = errmodrel
+        self.metadata['zmin'] = zmin
+        self.metadata['zmax'] = zmax
+        self.metadata['zStep'] = zStep
+        self.metadata['daymaxStep'] = daymaxStep
+
+        self.metaout += ['ploteffi', 'outputType',
+                         'proxy_level', 'lightOutput', 'T0s',
+                         'n_bef', 'n_aft', 'snr_min', 'n_phase_min', 'n_phase_max', 'error_model', 'errmodrel', 'zlim_coeff', 'zmin', 'zmax', 'zStep', 'daymaxStep']
+
+        self.saveConfig()
 
 
 class SNRTimeMetricWrapper(MetricWrapper):

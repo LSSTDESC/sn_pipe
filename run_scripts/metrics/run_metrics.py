@@ -1,127 +1,51 @@
-# import matplotlib.pyplot as plt
-#import matplotlib
-# matplotlib.use('agg')
-import numpy as np
-from optparse import OptionParser
-import time
-import os
-#import glob
 import sys
-#import random
-#import pandas as pd
-from metricWrapper import CadenceMetricWrapper, SNRMetricWrapper
-from metricWrapper import ObsRateMetricWrapper, NSNMetricWrapper
-from metricWrapper import NSNYMetricWrapper
-from metricWrapper import SaturationMetricWrapper
-from metricWrapper import SLMetricWrapper
-from metricWrapper import SNRTimeMetricWrapper
+from optparse import OptionParser
+from sn_tools.sn_io import make_dict_from_config
+import sn_metrics_input
+import os
 from sn_tools.sn_process import Process
 
+
+def add_parser(parser, confDict):
+    for key, vals in confDict.items():
+        vv = vals[1]
+        if vals[0] != 'str':
+            vv = eval('{}({})'.format(vals[0], vals[1]))
+        parser.add_option('--{}'.format(key), help='{} [%default]'.format(
+            vals[2]), default=vv, type=vals[0], metavar='')
+
+
+metric = sys.argv[1]
+
+print('metric', metric)
+
+# get all possible simulation parameters and put in a dict
+path_metric = sn_metrics_input.__path__
+confDict_gen = make_dict_from_config('.', 'config_metric.txt')
+confDict_metric = make_dict_from_config('.', 'config_{}.txt'.format(metric))
+
 parser = OptionParser()
-
-parser.add_option("--dbName", type="str", default='alt_sched',
-                  help="db name [%default]")
-parser.add_option("--dbExtens", type="str", default='npy',
-                  help="db extension [%default]")
-parser.add_option("--dbDir", type="str",
-                  default='/sps/lsst/cadence/LSST_SN_CADENCE/cadence_db', help="db dir [%default]")
-parser.add_option("--outDir", type="str", default='MetricOutput',
-                  help="output dir [%default]")
-parser.add_option("--templateDir", type="str", default='/sps/lsst/data/dev/pgris/Templates_final_new',
-                  help="template dir [%default]")
-parser.add_option("--nside", type="int", default=64,
-                  help="healpix nside [%default]")
-parser.add_option("--nproc", type="int", default='8',
-                  help="number of proc  [%default]")
-parser.add_option("--fieldType", type="str", default='DD',
-                  help="field type DD or WFD[%default]")
-parser.add_option("--remove_dithering", type="int", default='0',
-                  help="remove dithering for DDF [%default]")
-parser.add_option("--simuType", type="int", default='0',
-                  help="flag for new simulations [%default]")
-parser.add_option("--saveData", type="int", default='0',
-                  help="flag to dump data on disk [%default]")
-parser.add_option("--metric", type="str", default='cadence',
-                  help="metric to process [%default]")
-parser.add_option("--coadd", type="int", default='1',
-                  help="nightly coaddition [%default]")
-# parser.add_option("--nodither", type="str", default='',
-#                  help="to remove dithering - for DDF only[%default]")
-parser.add_option("--RAmin", type=float, default=0.,
-                  help="RA min for obs area - for WDF only[%default]")
-parser.add_option("--RAmax", type=float, default=360.,
-                  help="RA max for obs area - for WDF only[%default]")
-parser.add_option("--Decmin", type=float, default=-1.,
-                  help="Dec min for obs area - for WDF only[%default]")
-parser.add_option("--Decmax", type=float, default=-1.,
-                  help="Dec max for obs area - for WDF only[%default]")
-parser.add_option("--zmin", type=float, default=0.1,
-                  help="z min for simu [%default]")
-parser.add_option("--zmax", type=float, default=0.5,
-                  help="z max for simu [%default]")
-parser.add_option("--zStep", type=float, default=0.02,
-                  help="z step for simu [%default]")
-parser.add_option("--daymaxStep", type=float, default=2,
-                  help="daymax step for simu [%default]")
-parser.add_option("--zlim_coeff", type=float, default=0.95,
-                  help="zlim_coeff for nsn metric[%default]")
-parser.add_option("--proxy_level", type=int, default=2,
-                  help="proxy level for the metric[%default]")
-parser.add_option("--T0s", type=str, default='all',
-                  help="T0 values to consider[%default]")
-parser.add_option("--lightOutput", type=int, default=0,
-                  help="light LC output[%default]")
-parser.add_option("--outputType", type=str, default='zlims',
-                  help="outputType of the metric[%default]")
-parser.add_option("--seasons", type=str, default='-1',
-                  help="seasons to process[%default]")
-parser.add_option("--verbose", type=int, default=0,
-                  help="verbose mode for the metric[%default]")
-parser.add_option("--timer", type=int, default=0,
-                  help="timer mode for the metric[%default]")
-parser.add_option("--ploteffi", type=int, default=0,
-                  help="plot efficiencies for the metric[%default]")
-parser.add_option("--z", type=float, default=0.2,
-                  help="redshift for the metric[%default]")
-parser.add_option("--band", type=str, default='r',
-                  help="band for the metric[%default]")
-parser.add_option("--dirRefs", type=str, default='reference_files',
-                  help="dir of reference files for the metric[%default]")
-parser.add_option("--dirFake", type=str, default='input/Fake_cadence',
-                  help="dir of fake files for the metric[%default]")
-parser.add_option("--names_ref", type=str, default='SNCosmo',
-                  help="ref name for the ref files for the metric[%default]")
-parser.add_option("--x1", type=float, default=-2.0,
-                  help="Supernova stretch[%default]")
-parser.add_option("--color", type=float, default=0.2,
-                  help="Supernova color[%default]")
-parser.add_option("--pixelmap_dir", type=str, default='',
-                  help="dir where to find pixel maps[%default]")
-parser.add_option("--npixels", type=int, default=0,
-                  help="number of pixels to process[%default]")
-parser.add_option("--nclusters", type=int, default=0,
-                  help="number of clusters in data (DD only)[%default]")
-parser.add_option("--radius", type=float, default=4.,
-                  help="radius around clusters (DD and Fakes)[%default]")
-parser.add_option("--ebvofMW", type=float, default=-1.0,
-                  help="E(B-V) of MW for dust corrections[%default]")
-parser.add_option("--fieldName", type=str, default='COSMOS',
-                  help="fieldName - for DD only[%default]")
-parser.add_option("--healpixIDs", type=str, default='',
-                  help="list of healpixIds to process [%default]")
-
+# parser for simulation parameters : 'dynamical' generation
+add_parser(parser, confDict_gen)
+add_parser(parser, confDict_metric)
 
 opts, args = parser.parse_args()
 
-print('Start processing...', opts)
+# load the new values
+metricDict = {}
+for key, vals in confDict_metric.items():
+    metricDict[key] = eval('opts.{}'.format(key))
 
+print(metricDict)
+
+print('Start processing...', opts)
 
 # prepare outputDir
 nodither = ''
 if opts.remove_dithering:
     nodither = '_nodither'
 outputDir = '{}/{}{}/{}'.format(opts.outDir,
-                                opts.dbName, nodither, opts.metric)
+                                opts.dbName, nodither, metric)
 
 healpixIDs = []
 if opts.healpixIDs != '':
@@ -133,43 +57,18 @@ if opts.fieldType == 'DD':
 if not os.path.isdir(outputDir):
     os.makedirs(outputDir)
 
-# List of (instance of) metrics to process
+metricDict['outDir'] = outputDir
+#metricDict['season'] = season_int
+metricDict['metric'] = metric
+
+classname = '{}MetricWrapper'.format(metric)
 metricList = []
 
-# check whether the metric is available
+exec('from metricWrapper import {}MetricWrapper'.format(metric))
+metricList.append(globals()[classname](**metricDict))
 
-available_metrics = ['NSN', 'NSNY', 'Cadence', 'SL',
-                     'ObsRate', 'SNRr', 'SNRz', 'Saturation', 'SNRTime']
-if opts.metric not in available_metrics:
-    print('Sorry to inform you that', opts.metric, 'is not a metric available')
-    print('list of possible metrics:')
-    print(available_metrics)
-    sys.exit(0)
-
-season_int = list(opts.seasons.split(','))
-if season_int[0] == '-':
-    season_int = -1
-else:
-    season_int = list(map(int, season_int))
-
-metricname = opts.metric
-if 'SNR' in opts.metric and 'SNRTime' not in metricname:
-    metricname = 'SNR'
-
-classname = '{}MetricWrapper'.format(metricname)
-
-
-metricList.append(globals()[classname](name=opts.metric, season=season_int,
-                                       coadd=opts.coadd, fieldType=opts.fieldType,
-                                       nside=opts.nside,
-                                       RAmin=opts.RAmin, RAmax=opts.RAmax,
-                                       Decmin=opts.Decmin, Decmax=opts.Decmax,
-                                       zmin=opts.zmin, zmax=opts.zmax, zStep=opts.zStep,
-                                       daymaxStep=opts.daymaxStep, zlim_coeff=opts.zlim_coeff,
-                                       npixels=opts.npixels, metadata=opts, outDir=outputDir, ebvofMW=opts.ebvofMW))
-
-print('seasons and metric', season_int,
-      metricname, opts.pixelmap_dir, opts.npixels)
+print('seasons and metric', opts.seasons,
+      metric, opts.pixelmap_dir, opts.npixels)
 
 
 process = Process(opts.dbDir, opts.dbName, opts.dbExtens,
