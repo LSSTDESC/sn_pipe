@@ -165,6 +165,7 @@ class ObsRateMetricWrapper(MetricWrapper):
         self.saveConfig()
 
 
+"""
 class NSNMetricWrapper(MetricWrapper):
     def __init__(self, name='NSN', season=-1, coadd=True, fieldType='DD',
                  nside=64, RAmin=0., RAmax=360.,
@@ -177,98 +178,48 @@ class NSNMetricWrapper(MetricWrapper):
             Decmin=Decmin, Decmax=Decmax,
             npixels=npixels,
             metadata=metadata, outDir=outDir, ebvofMW=ebvofMW)
+"""
 
-        zmin = 0.
-        zmax = 1.1
-        zStep = 0.03
-        daymaxStep = 2.
-        bands = 'grizy'
-        fig_for_movie = False
-        gammaName = 'gamma_DDF.hdf5'
 
-        if fieldType == 'WFD':
-            zmin = 0.1
-            zmax = 0.5
-            bands = 'griz'
-            fig_for_movie = False
-            gammaName = 'gamma_WFD.hdf5'
+class NSNMetricWrapper(MetricWrapper):
+    def __init__(self, **params):
+        super(NSNMetricWrapper, self).__init__(**params)
 
-        # self.telescope = telescope_def()
+        gammaName = params['gamma_file']
+        bluecutoff = params['bluecutoff']
+        redcutoff = params['redcutoff']
+        error_model = params['error_model']
+        nside = params['nside']
 
         lc_reference, dustcorr = load_reference(
             error_model, 0.0, [(-2.0, 0.2), (0.0, 0.0)], bluecutoff, redcutoff, gammaName=gammaName)
-
-        print('Reference data loaded', lc_reference.keys(), fieldType)
-
-        # LC selection criteria
-
-        if fieldType == 'DD':
-            n_bef = 4
-            n_aft = 10
-            snr_min = 1.
-            n_phase_min = 1
-            n_phase_max = 1
-            zlim_coeff = 0.95
-
-        if fieldType == 'WFD':
-            n_bef = 3
-            n_aft = 8
-            snr_min = 1.
-            n_phase_min = 1
-            n_phase_max = 1
-            zlim_coeff = 0.95
-
-        if fieldType == 'Fake':
-            n_bef = 0
-            n_aft = 0
-            snr_min = 0.
-            n_phase_min = 0
-            n_phase_max = 0
-            zlim_coeff = 0.90
-
+        pixArea = np.round(hp.nside2pixarea(nside, degrees=True), 3)
         templateLC = None
-        if metadata.ploteffi:
+
+        if params['ploteffi']:
             templateLC = loadTemplateLC(error_model, 0, x1_colors=[
                                         (-2.0, 0.2), (0.0, 0.0)])
+
+        params['lc_reference'] = lc_reference
+        params['dustcorr'] = dustcorr
+        params['pixArea'] = float(pixArea)
+        params['templateLC'] = templateLC
+
+        print('Reference data loaded',
+              lc_reference.keys(), params['fieldType'])
 
         errmodrel = -1.
         if error_model:
             errmodrel = 0.05
 
-        pixArea = np.round(hp.nside2pixarea(nside, degrees=True), 3)
-
         # metric instance
         from sn_metrics.sn_nsn_metric import SNNSNMetric
-        self.metric = SNNSNMetric(
-            lc_reference, dustcorr, season=season, zmin=zmin,
-            zmax=zmax, zStep=zStep, daymaxStep=daymaxStep, pixArea=pixArea,
-            verbose=metadata.verbose, timer=metadata.timer,
-            ploteffi=metadata.ploteffi,
-            n_bef=n_bef, n_aft=n_aft,
-            snr_min=snr_min,
-            n_phase_min=n_phase_min,
-            n_phase_max=n_phase_max,
-            errmodrel=errmodrel,
-            outputType=metadata.outputType,
-            proxy_level=metadata.proxy_level,
-            coadd=coadd, lightOutput=metadata.lightOutput,
-            T0s=metadata.T0s, zlim_coeff=zlim_coeff, ebvofMW=ebvofMW,
-            bands=bands, fig_for_movie=fig_for_movie,
-            templateLC=templateLC, dbName=metadata.dbName)
+        self.metric = SNNSNMetric(**params)
 
-        self.metadata['n_bef'] = n_bef
-        self.metadata['n_aft'] = n_aft
-        self.metadata['snr_min'] = snr_min
-        self.metadata['n_phase_min'] = n_phase_min
-        self.metadata['n_phase_max'] = n_phase_max
-        self.metadata['zlim_coeff'] = zlim_coeff
-        self.metadata['error_model'] = error_model
-        self.metadata['errmodrel'] = errmodrel
-
-        self.metaout += ['ploteffi', 'outputType',
-                         'proxy_level', 'lightOutput', 'T0s',
-                         'n_bef', 'n_aft', 'snr_min', 'n_phase_min', 'n_phase_max', 'error_model', 'errmodrel', 'zlim_coeff']
-        self.saveConfig()
+        params.pop('lc_reference')
+        params.pop('dustcorr')
+        params.pop('templateLC')
+        self.saveConfig(params)
 
 
 """
@@ -322,7 +273,7 @@ class NSNYMetricWrapper(MetricWrapper):
         params.pop('lc_reference')
         params.pop('dustcorr')
         params.pop('templateLC')
-        print('kkk', params)
+
         self.saveConfig(params)
 
 
