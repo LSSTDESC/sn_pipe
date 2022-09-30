@@ -49,7 +49,8 @@ outputDir = '{}/{}{}/{}'.format(opts.outDir,
                                 opts.dbName, nodither, metric)
 
 healpixIDs = []
-if opts.healpixIDs != '':
+
+if opts.healpixIDs.strip() != '\'\'':
     healpixIDs = list(map(int, opts.healpixIDs.split(',')))
 
 if opts.fieldType == 'DD':
