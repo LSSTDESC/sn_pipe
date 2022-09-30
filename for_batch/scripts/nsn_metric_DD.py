@@ -36,6 +36,8 @@ parser.add_option("--Decmin", type=float, default=-1.,
                   help="Dec min for obs area - for WDF only[%default]")
 parser.add_option("--Decmax", type=float, default=-1.,
                   help="Dec max for obs area - for WDF only[%default]")
+parser.add_option("--select_epochs", type=int, default=0,
+                  help="to select LC shapes according to epochs [%default]")
 
 
 opts, args = parser.parse_args()
@@ -44,13 +46,12 @@ toprocess = pd.read_csv(opts.dbList, comment='#')
 
 fieldNames = opts.fieldNames.split(',')
 
-ppNames = ['outDir','pixelmap_dir','nclusters','nside','nproc','ebvofMW','RAmin','RAmax','Decmin','Decmax']
+ppNames = ['outDir','pixelmap_dir','nclusters','nside','nproc','ebvofMW','RAmin','RAmax','Decmin','Decmax','select_epochs']
 
 params=dict_filter(opts.__dict__,ppNames)
-scriptref = 'run_scripts/metrics/run_metrics.py'
+scriptref = 'run_scripts/metrics/run_metrics.py NSNY'
 params['fieldType'] = 'DD'
 params['zmax'] = 1.1
-params['metric'] = 'NSNY'
 params['npixels'] = -1
 params['saveData'] = 1
 
