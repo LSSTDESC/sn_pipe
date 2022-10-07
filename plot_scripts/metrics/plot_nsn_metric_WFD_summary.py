@@ -608,7 +608,7 @@ plot_specific(resdf, ref='noroll_v2.0_10yrs')
 
 plt.show()
 """
-"""
+
 idx = resdf['dbName'].str.contains('roll')
 sel_noroll = resdf[~idx]
 
@@ -624,7 +624,7 @@ print_res(resdf, ref='baseline_v2.0_10yrs',
 print_res(resdf, ref='baseline_v2.1_10yrs',
           osversion=['2.1'], clean=['_v2.1_10yrs'])
 plt.show()
-"""
+
 """
     rfam = []
     for io, row in resdf.iterrows():
