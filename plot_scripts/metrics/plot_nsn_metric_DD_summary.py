@@ -560,8 +560,10 @@ parser.add_option("--snType", type="str", default='faint',
                   help="SN type: faint or medium[%default]")
 parser.add_option("--outName", type="str", default='Summary_DD_fbs14.npy',
                   help="output name for the summary[%default]")
-parser.add_option("--fieldNames", type="str", default='COSMOS,CDFS,XMM-LSS,ELAIS,ADFS1,ADFS2',
+parser.add_option("--fieldNames", type="str", default='COSMOS,CDFS,XMM-LSS,ELAISS1,EDFSa,EDFSb,EDFS',
                   help="fields to process [%default]")
+parser.add_option("--metric", type="str", default='NSNY',
+                  help="metric name [%default]")
 
 
 opts, args = parser.parse_args()
@@ -570,7 +572,7 @@ opts, args = parser.parse_args()
 dirFile = opts.dirFile
 nside = opts.nside
 fieldType = opts.fieldType
-metricName = 'NSN'
+metricName = opts.metric
 snType = opts.snType
 outName = opts.outName
 fieldNames = opts.fieldNames.split(',')
@@ -601,7 +603,7 @@ metricTot_med = None
 # Summary: to reproduce the plots faster
 
 
-metricTot = Summary(dirFile, 'NSN',
+metricTot = Summary(dirFile, metricName,
                     'DD', fieldNames, nside, forPlot, outName).data
 
 # figs 6 and 7
@@ -636,8 +638,28 @@ print('oo', np.unique(
 # fieldNames = ['COSMOS']
 # nsn_plot.plot_DDArea(metricTot, forPlot, sntype='faint')
 
-nsn_plot.plot_DDSummary(metricTot, forPlot, sntype=snType,
+df = pd.DataFrame(np.copy(metricTot))
+var = 'nsn_med_faint'
+varz = 'zlim_faint'
+var = 'nsn'
+varz = 'zcomp'
+idx = df[var] > 0.
+idx &= df[varz] > 0.
+
+dfb = df[idx].groupby(['dbName', 'fieldname', 'season'])[
+    var].sum().reset_index()
+idx = dfb['dbName'] != ''
+ssel = dfb[idx]
+for i, row in ssel.iterrows():
+    print(row[['dbName', 'fieldname', 'season', var]].values)
+
+# print(test)
+
+idx = metricTot[var] > 0.
+idx &= metricTot[varz] > 0.
+nsn_plot.plot_DDSummary(metricTot[idx], forPlot, sntype=snType,
                         fieldNames=fieldNames, nside=nside)
+
 # nsn_plot.plot_DD_Moll(metricTot, 'ddf_dither0.00_v1.7_10yrs', 1, 128)
 # nsn_plot.plot_DD_Moll(metricTot, 'descddf_v1.5_10yrs', 1, 128)
 plt.show()
