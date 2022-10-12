@@ -130,6 +130,31 @@ def plot_night(df, dbName, field):
     plt.show()
 
 
+def plot_indiv(data, field='COSMOS'):
+
+    print('hhhhhh', data.columns)
+
+    idx = data['field'] == 'COSMOS'
+    sel = data[idx]
+    dbName = sel['dbName'].unique()[0]
+    field = sel['field'].unique()[0]
+    fig, ax = plt.subplots(nrows=2, ncols=1, figsize=(12, 8))
+    fig.suptitle('{} \n {} pointings'.format(dbName, field))
+
+    ax[0].plot(sel['season'], sel['season_length'], color='k')
+    ax[0].set_ylabel('Season length [days]')
+    ax[0].get_xaxis().set_ticklabels([])
+    ax[1].plot(sel['season'], sel['cadence_mean'], color='k')
+    ax[1].set_ylabel('Cadence [days]')
+    ax[1].set_xlabel('Season')
+
+    ax[0].grid()
+    ax[1].grid()
+
+    plt.subplots_adjust(hspace=0.02)
+    plt.show()
+
+
 def get_list(tt):
 
     r = []
@@ -156,7 +181,8 @@ configGroup = 'DD_fbs_2.1_plot.csv'
 dfgroup = pd.read_csv(configGroup, comment='#')
 
 
-df = pd.read_hdf('Summary_DD_orig.hdf5')
+#df = pd.read_hdf('Summary_DD_orig.hdf5')
+df = pd.read_hdf('Summary_DD_pointings_baseline_v2.1_10yrs.hdf5')
 
 df = df.merge(toprocess[['dbName', 'family']],
               left_on=['dbName'], right_on=['dbName'])
@@ -184,6 +210,9 @@ print(df.columns)
 
 #plot_hist_OS(df, what='cadence_median')
 # plt.show()
+
+plot_indiv(df, field='COSMOS')
+plt.show()
 """
 toplot = ['season_length', 'cadence_median']
 leg = ['Season length [days]', 'Median cadence [days]']
@@ -202,12 +231,13 @@ flat = flat.groupby(['dbName', 'field', 'family', 'filter_alloc', 'season'])[
 
 
 #idx = flat['family'] == 'ddf_deep'
-"""
+
 toplot = ['filter_frac']
 leg = ['Median obs. night frac']
 
+print(np.unique(flat[['family', 'field']]))
 # for family in np.unique(flat['family']):
-for family in ['early_deep']:
+for family in ['baseline']:
     idx = flat['family'] == family
     idx &= flat['field'] == 'COSMOS'
     idx &= flat['filter_frac'] > 0.05
@@ -219,7 +249,7 @@ for family in ['early_deep']:
     print(len(sel['filter_alloc']), len(np.unique(sel['filter_alloc'])))
     tit = '{} - COSMOS'.format(family)
     plot_series(sel, title=tit, varx='filter_alloc', what=toplot, leg=leg)
-"""
+
 
 plot_night(
     df, dbName='ddf_early_deep_slf0.20_f10.60_f20.80_v2.1_10yrs', field='COSMOS')
