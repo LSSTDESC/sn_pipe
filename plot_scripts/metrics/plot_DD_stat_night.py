@@ -1,14 +1,28 @@
 import pandas as pd
-import matplotlib.pyplot as plt
 import numpy as np
 from optparse import OptionParser
 import operator as op
+from sn_plotter_metrics import plt
 
 
-def get_moon(data):
+def get_moon(data, lunar_phase=40.):
+    """
+    Function to select moon obs and grab corresponding obs duration
+
+    Parameters
+    ---------------
+    data: pandas df
+      data to process
+    lunar_phase: float, opt
+       lunar phase below which obs are considered to be moon obs (default: 40%)
+
+    Returns
+    ----------
+    median moon obs duration over a season
+    """
 
     # get moon obs
-    idx = data['u'] > 0
+    idx = data['moonPhase'] <= lunar_phase
     selmoon = data[idx]
 
     # remove the season column
@@ -30,6 +44,20 @@ def get_moon(data):
 
 
 def season_length(grp):
+    """
+    Function to estimate season length from a set of obs
+
+    Parameters
+    ---------------
+    grp: pandas df group
+      data to process
+
+    Returns
+    ----------
+    pandas df with the following cols: moon_length, night_min, night_max
+
+
+    """
 
     nmin = grp['night'].min()
     nmax = grp['night'].max()
@@ -40,18 +68,56 @@ def season_length(grp):
 
 
 def select_data(data, config, ope):
+    """
+    Function to select data
 
+    Parameters
+    ---------------
+    data: array
+      data to process
+    config: dict
+      selection criteria
+    ope: operator
+      operator used for selection
+
+    Returns
+    ----------
+    filtered array of data
+
+    """
     idx = True
     for key, vv in config.items():
-        print('hello', key, vv)
         idx &= ope(data[key], vv)
 
     return data[idx]
 
 
-def plot(data, varx='night', vary='config', legx='night', legy='', figtit='', line=[], highlight={}):
+def plot(data, varx='night', vary='config', legx='night', legy='', figtit='', line=[], highlight={}, labelsize_x=-1, labelsize_y=-1):
+    """
+    Function to make a plot
 
-    fig, ax = plt.subplots(figsize=(17, 8))
+    Parameters
+    ----------------
+    data: array
+      data to plot
+    varx: str, opt
+      xaxis variable to plot (default: night)
+    vary: str, opt
+      yaxis variable to plot (default: config)
+    legx: str, opt
+      xaxis legend (default: night)
+    legy: str, opt
+      yaxis legend (default: '')
+    figtit: str, opt
+      figure title (default: '')
+    line: list(float), opt
+      line to draw [xmin, xmax] (default: [])
+    hightlight: dict, opt
+      data to highlight (default: {})
+
+
+    """
+    fig, ax = plt.subplots(figsize=(17, 10))
     fig.suptitle(figtit)
 
     ax.plot(data[varx], data[vary], 'ko', mfc='None')
@@ -62,8 +128,15 @@ def plot(data, varx='night', vary='config', legx='night', legy='', figtit='', li
         for key, vals in highlight.items():
             seldata = select_data(data, vals['config'], vals['op'])
             ax.plot(seldata[varx], seldata[vary], '{}*'.format(vals['color']))
+
     ax.set_xlabel(legx)
     ax.set_ylabel(legy)
+
+    if labelsize_x != -1:
+        ax.tick_params(axis='x', labelsize=labelsize_x)
+    if labelsize_y != -1:
+        ax.tick_params(axis='y', labelsize=labelsize_y)
+
     ax.grid()
 
 
@@ -102,8 +175,8 @@ sel['nvisits'] = sel['u']+sel['g']+sel['r']+sel['i']+sel['z']+sel['y']
 highlight = {}
 
 hh = {}
-#hh['config'] = dict(zip('ugrizy', [0, 2, 9, 37, 52, 21]))
-hh['config'] = dict(zip('ugrizy', [0, 2, 9, 1, 1, 1]))
+hh['config'] = dict(zip('ugrizy', [0, 2, 9, 37, 52, 21]))
+#hh['config'] = dict(zip('ugrizy', [0, 2, 9, 1, 1, 1]))
 hh['op'] = op.eq
 hh['color'] = 'r'
 highlight[1] = hh
@@ -116,13 +189,32 @@ highlight[2] = hhb
 moon_dur = get_moon(sel)
 
 print('Moon', moon_dur)
-plot(sel, figtit=figtit, highlight=highlight)
+#plot(sel, figtit=figtit, highlight=highlight, labelsize_y=12)
+plot(sel, figtit=figtit, highlight=[], labelsize_y=12)
+plt.show()
 plot(sel, varx='night', vary='nvisits',
      legx='night', legy='Nvisits', figtit=figtit, line=[], highlight=highlight)
+plt.show()
 plot(sel, varx='moonPhase', vary='config',
      legx='lunar phase', legy='', figtit=figtit, line=[], highlight=highlight)
+plt.show()
 plot(sel, varx='night', vary='moonPhase',
-     legx='night', legy='lunar phase', figtit=figtit, line=[40, 40], highlight=highlight)
+     legx='night', legy='lunar phase', figtit=figtit, line=[], highlight=highlight)
+plt.show()
+for b in 'ugrizy':
+    vva = 'deltaT_{}_mean'.format(b)
+    vvb = 'deltaT_{}_rms'.format(b)
+    sel[vva] *= 24.*3600.
+    sel[vvb] *= 24.*3600.
+    idx = sel[vva] > 0.
+    figtitb = figtit
+    figtitb += '\n {}-band'.format(b)
+    plot(sel[idx], varx='night', vary=vva,
+         legx='night', legy='Mean $\Delta T_{visit}$ [sec]', figtit=figtitb, line=[], highlight=highlight)
+    plot(sel[idx], varx='night', vary=vvb,
+         legx='night', legy='RMS $\Delta T_{visit}$ [sec]', figtit=figtitb, line=[], highlight=highlight)
+
+
 dd = sel.groupby(['config', 'u', 'g', 'r', 'i', 'z', 'y']
                  ).size().to_frame('nnights').reset_index()
 print('hhhh', dd)

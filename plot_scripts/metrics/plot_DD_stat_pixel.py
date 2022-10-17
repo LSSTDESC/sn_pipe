@@ -206,7 +206,7 @@ season = opts.season.split(',')
 # loading data
 df = pd.read_hdf(fi)
 
-
+print(df.columns)
 for io, db in enumerate(dbName):
     idx = df['dbName'] == db
     idx &= df['season'] == int(season[io])
@@ -217,6 +217,6 @@ for io, db in enumerate(dbName):
     suptit += '\n {}'.format(db)
     plot_2D(df[idx], figtitle=suptit)
     plot_Hist(df[idx], figtitle=suptit)
-
+    print(np.unique(df[idx]['filter_alloc']))
 
 plt.show()

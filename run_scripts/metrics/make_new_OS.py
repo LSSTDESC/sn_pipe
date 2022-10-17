@@ -5,7 +5,7 @@ import numpy.lib.recfunctions as rf
 
 
 class newOS:
-    def __init__(self, sum_night, data_OS, outName, lunar_phase=40, median_ref=dict(zip('grizy', [24.49, 24.04, 23.6, 22.98, 22.14]))):
+    def __init__(self, sum_night, data_OS, outName, lunar_phase=20, median_ref=dict(zip('grizy', [24.49, 24.04, 23.6, 22.98, 22.14]))):
         """
         class to make a "new" OS for an original one (data_OS)
 
@@ -22,6 +22,9 @@ class newOS:
         """
         # grab original data types
         dtypes = data_OS.dtype
+
+        # this is for obsid counting
+        self.count = 1
 
         self.lunar_phase = lunar_phase
         self.median_ref = median_ref
@@ -80,7 +83,7 @@ class newOS:
         # print(data_non_DD.dtype, data_non_DD['note'])
         print(trans.dtype)
         print(data_non_DD[cols].dtype)
-
+        """
         trans = np.concatenate((trans, data_non_DD[cols]))
         trans = rf.append_fields(
             trans, 'note', res['note'].to_list()+data_non_DD['note'].tolist())
@@ -89,7 +92,7 @@ class newOS:
         """
         trans = rf.append_fields(trans, 'note', res['note'].to_list())
         trans = rf.append_fields(trans, 'band', res['band'].to_list())
-        """
+
         np.save(outName, np.copy(trans))
 
     def grab_nvisits(self, config):
@@ -204,10 +207,40 @@ class newOS:
 
         night = grp.name
 
-        # now build OS
+        # deltaT between two visits same band: 36 sec
+        deltaT_visit_band = 36./(24.*3600.)
+        # deltaT between two visits two bands: 2.56 sec
+        deltaT_visit_band_seq = 2.56/(24.*60.)
+        # grab some infos such as: deltaT between visits (same band)
+        """
+        import matplotlib.pyplot as plt
+        plt.plot(grp['mjd'], grp['band'], 'ko')
+        plt.show()
+        
+        visit_time = {}
+        for b in 'ugrizy':
+            idx = grp['band'] == b
+            sel = grp[idx]
+            if len(sel) > 0:
+                visit_time[b] = sel['mjd']
 
+        min_visit_time = {}
+        max_visit_time = {}
+        for b in visit_time.keys():
+            diff = np.diff(visit_time[b])
+            print(b, np.mean(diff)*24.*3600, np.std(diff)*24.*3600)
+            min_visit_time[b] = np.min(visit_time[b])
+            max_visit_time[b] = np.max(visit_time[b])
+
+        for bb in ['gi', 'ir', 'ry', 'yz']:
+            if bb[1] in min_visit_time.keys() and bb[0] in min_visit_time.keys():
+                dd = min_visit_time[bb[1]]-max_visit_time[bb[0]]
+                print(bb, dd*24.*60.)
+        """
+        # now build OS
         totdf = pd.DataFrame()
 
+        mjd_min = grp['mjd'].min()
         meds = grp.groupby('band').median().reset_index()
         selmed = grp.drop(columns=['band', 'note', 'night'])
         meds_all = pd.DataFrame(
@@ -235,8 +268,15 @@ class newOS:
                     selmeds = meds_season[io]
                     if len(selmeds) > 0:
                         df['fiveSigmaDepth'] = selmeds['fiveSigmaDepth']
-                df['observationId'] = 0
+
                 newdf = pd.concat([df]*nv, ignore_index=True)
+                obsid = list(range(self.count, self.count+nv))
+                newdf['observationId'] = obsid
+                mjds = np.arange(
+                    mjd_min, mjd_min+nv*deltaT_visit_band, deltaT_visit_band)
+                newdf['mjd'] = mjds[:nv]
+                self.count += nv
+                mjd_min += nv*deltaT_visit_band+deltaT_visit_band_seq
                 totdf = pd.concat((totdf, newdf))
 
         return totdf
@@ -273,5 +313,5 @@ data_OS = np.load('{}/{}.npy'.format(dbDir, dbName), allow_pickle=True)
 
 print(np.unique(data_OS['note']))
 
-idd = sum_night['field'] == 'DD:EDFS_a'
+idd = sum_night['field'] == 'DD:COSMOS'
 nOS = newOS(sum_night, data_OS, outName)
