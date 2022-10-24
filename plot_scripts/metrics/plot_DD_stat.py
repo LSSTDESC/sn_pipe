@@ -164,6 +164,7 @@ def get_list(tt):
     return r
 
 
+"""
 configFile = 'config_DD.csv'
 list_to_process = pd.read_csv(configFile, comment='#')
 simu_list = []
@@ -176,21 +177,25 @@ for i, row in list_to_process.iterrows():
 for ip, vv in enumerate(simu_list):
     toprocess = Infos(vv, ip).resdf
 print(toprocess)
+"""
 
 configGroup = 'DD_fbs_2.1_plot.csv'
 dfgroup = pd.read_csv(configGroup, comment='#')
 
 
-#df = pd.read_hdf('Summary_DD_orig.hdf5')
-df = pd.read_hdf('Summary_DD_pointings_baseline_v2.1_10yrs.hdf5')
-
+df = pd.read_hdf('Summary_DD_pointings.hdf5')
+#df = pd.read_hdf('Summary_DD_pointings_baseline_v2.1_10yrs.hdf5')
+"""
 df = df.merge(toprocess[['dbName', 'family']],
               left_on=['dbName'], right_on=['dbName'])
 df['time_budget'] *= 100.
+"""
+print('ici', df)
 df = df.merge(dfgroup[['dbName', 'group']],
               left_on=['dbName'], right_on=['dbName'])
 
 df['family'] = df['group']
+print('hello', df)
 # strip db Name
 df['family'] = df['family'].str.split('_v2.1_10yrs', expand=True)[0]
 
