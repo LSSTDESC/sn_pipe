@@ -2,10 +2,12 @@ import numpy as np
 from optparse import OptionParser
 import pandas as pd
 import numpy.lib.recfunctions as rf
+import yaml
+from pathlib import Path
 
 
 class newOS:
-    def __init__(self, sum_night, data_OS, outName, lunar_phase=20, median_ref=dict(zip('grizy', [24.49, 24.04, 23.6, 22.98, 22.14]))):
+    def __init__(self, sum_night, data_OS, outDir, outName, ref_config, lunar_phase=20, median_ref=dict(zip('grizy', [24.49, 24.04, 23.6, 22.98, 22.14]))):
         """
         class to make a "new" OS for an original one (data_OS)
 
@@ -15,10 +17,16 @@ class newOS:
            OS summary per night
         data_OS: numpy array
            original OS data
+        outDir: str
+          output directory
         outName: str
           file outputName
+        ref_config: dict
+          visits config for the fields considered
         lunar_phase: float, opt
           lunar phase threshold for u-band swapping
+        median_ref: dict, opt
+          median m5 values for grizy bands
         """
         # grab original data types
         dtypes = data_OS.dtype
@@ -26,25 +34,9 @@ class newOS:
         # this is for obsid counting
         self.count = 1
 
-        self.lunar_phase = lunar_phase
+        self.lunar_phase = 100.*lunar_phase
         self.median_ref = median_ref
-
-        self.ref_config = {}
-        self.ref_config['DD:COSMOS'] = {}
-        self.ref_config['DD:COSMOS']['config'] = '0u-2g-9r-37i-52z-21y'
-        self.ref_config['DD:COSMOS']['lunar_config'] = '1u-2g-9r-37i-0z-21y'
-
-        self.ref_config['DD:XMM_LSS'] = {}
-        self.ref_config['DD:XMM_LSS']['config'] = '0u-2g-9r-37i-52z-21y'
-        self.ref_config['DD:XMM_LSS']['lunar_config'] = '1u-2g-9r-37i-0z-21y'
-
-        self.ref_config['DD:EDFS_a'] = {}
-        self.ref_config['DD:EDFS_a']['config'] = '0u-2g-9r-1i-1z-1y'
-        self.ref_config['DD:EDFS_a']['lunar_config'] = '1u-2g-9r-1i-0z-1y'
-
-        self.ref_config['DD:EDFS_b'] = {}
-        self.ref_config['DD:EDFS_b']['config'] = '0u-2g-9r-1i-1z-1y'
-        self.ref_config['DD:EDFS_b']['lunar_config'] = '1u-2g-9r-1i-0z-1y'
+        self.ref_config = ref_config
 
         # self.data = data_OS
         # extract non ddf data
@@ -93,7 +85,11 @@ class newOS:
         trans = rf.append_fields(trans, 'note', res['note'].to_list())
         trans = rf.append_fields(trans, 'band', res['band'].to_list())
 
-        np.save(outName, np.copy(trans))
+        # include lunar_phase value in outName
+        dd = outName.split('_')
+        dd.insert(-2, 'lp{}'.format(np.round(lunar_phase, 2)).ljust(6, '0'))
+        outName = '_'.join(dd)
+        np.save('{}/{}'.format(outDir, outName), np.copy(trans))
 
     def grab_nvisits(self, config):
 
@@ -283,23 +279,23 @@ class newOS:
 
 
 parser = OptionParser()
-parser.add_option("--dbName", type="str", default='ddf_early_deep_slf0.20_f10.60_f20.80_v2.1_10yrs',
-                  help="db to process[%default]")
-parser.add_option("--dbDir", type="str", default='../DB_Files',
-                  help="location dir of db to process [%default]")
 parser.add_option("--sumNightName", type="str", default='Summary_night_ddf_early_deep_slf0.20_f10.60_f20.80_v2.1_10yrs.hdf5',
                   help="summary file name[%default]")
-parser.add_option("--outName", type=str, default='test_newOS.npy',
-                  help="output file name [%default]")
+parser.add_option("--lunar_phase", type=float, default=0.40,
+                  help="lunar phase for night with Moon [%default]")
+parser.add_option("--config", type=str, default='config_newOS.yaml',
+                  help="config file [%default]")
 
 opts, args = parser.parse_args()
-
-dbName = opts.dbName
-dbDir = opts.dbDir
 sumNightName = opts.sumNightName
-outName = opts.outName
+lunar_phase = float(opts.lunar_phase)
+yaml_file = opts.config
 
 summary_night = pd.read_hdf(sumNightName)
+
+# load config parameters
+yaml_dict = yaml.safe_load(Path(yaml_file).read_text())
+dbName = yaml_dict['dbName']
 
 # grab dbName data
 idx = summary_night['dbName'] == dbName
@@ -308,10 +304,17 @@ sum_night = summary_night[idx]
 if len(sum_night) == 0:
     print('Problem here: night summary file could not be found. Stop.')
 
+
 # load original OS
+dbDir = yaml_dict['dbDir']
 data_OS = np.load('{}/{}.npy'.format(dbDir, dbName), allow_pickle=True)
 
 print(np.unique(data_OS['note']))
 
 idd = sum_night['field'] == 'DD:COSMOS'
-nOS = newOS(sum_night, data_OS, outName)
+ref_config = yaml_dict['fields_visits']
+outName = yaml_dict['outName']
+outDir = yaml_dict['outDir']
+
+nOS = newOS(sum_night, data_OS, outDir, outName,
+            ref_config, lunar_phase=lunar_phase)
