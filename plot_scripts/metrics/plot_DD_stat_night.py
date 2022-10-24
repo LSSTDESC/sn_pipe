@@ -148,12 +148,16 @@ parser.add_option("--field", type=str, default='DD:COSMOS',
                   help="field to display [%default]")
 parser.add_option("--season", type=int, default=1,
                   help="season to display [%default]")
+parser.add_option("--lunar_phase", type=int, default=40,
+                  help="lunar_phase sel cut [%default]")
+
 
 opts, args = parser.parse_args()
 
 fName = opts.fName
 season = opts.season
 field = opts.field
+lunar_phase = opts.lunar_phase
 
 dbName = fName.split('.hdf5')[0].replace('Summary_night_', '')
 df = pd.read_hdf(fName)
@@ -186,7 +190,7 @@ hhb['op'] = op.ge
 hhb['color'] = 'b'
 highlight[2] = hhb
 
-moon_dur = get_moon(sel)
+moon_dur = get_moon(sel, lunar_phase=lunar_phase)
 
 print('Moon', moon_dur)
 #plot(sel, figtit=figtit, highlight=highlight, labelsize_y=12)
