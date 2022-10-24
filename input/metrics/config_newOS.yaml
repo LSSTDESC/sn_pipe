@@ -1,0 +1,18 @@
+# yaml config file
+dbName: ddf_early_deep_slf0.20_f10.60_f20.80_v2.1_10yrs
+dbDir: ../../DB_Files
+outName: ddf_idr_0.80_0.60_v2.1_10yrs
+outDir: ../../DB_Files
+fields_visits:
+ DD:COSMOS:
+   config: 0u-2g-9r-37i-52z-21y
+   lunar_config: 2u-2g-9r-37i-0z-21y
+ DD:XMM_LSS:
+   config: 0u-2g-9r-37i-52z-21y
+   lunar_config: 2u-2g-9r-37i-0z-21y
+ DD:EDFS_a:
+   config: 0u-2g-9r-1i-1z-1y
+   lunar_config: 2u-2g-9r-1i-0z-1y
+ DD:EDFS_b:
+   config: 0u-2g-9r-1i-1z-1y
+   lunar_config: 2u-2g-9r-1i-0z-1y
