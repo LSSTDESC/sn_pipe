@@ -21,7 +21,7 @@ mag_range = np.arange(13., 38., 0.05)
 #exptimes[0] = 1.
 # DD parameters
 if fieldType == 'DD':
-    nexps = range(1, 200, 1)
+    nexps = range(1, 250, 1)
     single_exposure_time = [15., 30.]
 # WFD parameters
 if fieldType == 'WFD':
