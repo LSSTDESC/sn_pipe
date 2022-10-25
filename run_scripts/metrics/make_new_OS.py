@@ -259,13 +259,14 @@ class newOS:
                 if df.empty:
                     df = meds_all
                     df['band'] = key
-                    df['note'] = grp['note'].unique()
+                    #df['note'] = grp['note'].unique()
                     io = meds_season['band'] == key
                     selmeds = meds_season[io]
                     if len(selmeds) > 0:
-                        df['fiveSigmaDepth'] = selmeds['fiveSigmaDepth']
+                        df['fiveSigmaDepth'] = selmeds['fiveSigmaDepth'].to_list()
 
                 newdf = pd.concat([df]*nv, ignore_index=True)
+
                 obsid = list(range(self.count, self.count+nv))
                 newdf['observationId'] = obsid
                 mjds = np.arange(
