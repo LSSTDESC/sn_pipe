@@ -4,6 +4,7 @@ import pandas as pd
 import numpy.lib.recfunctions as rf
 import yaml
 from pathlib import Path
+import operator
 
 
 class newOS:
@@ -53,10 +54,11 @@ class newOS:
 
         if add_nightly:
             print(res.columns)
-            res = res.merge(sum_night[['night', 'season']], left_on=[
-                            'night'], right_on=['night'])
-            res = res.groupby(['field', 'season']).apply(
+            resb = res.merge(sum_night[['night', 'season']], left_on=[
+                'night'], right_on=['night'])
+            resb = resb.groupby(['note', 'season']).apply(
                 lambda x: self.add_nights(x))
+            print('hello', resb)
 
         if no_dithering:
             res = res.groupby('field').apply(
@@ -110,36 +112,52 @@ class newOS:
 
     def add_nights(self, grp):
 
+        from scipy.interpolate import interp1d
+        from astroplan import Observer
+        from astropy.time import Time
+        apo = Observer.at_site('APO')
+
+        obs_night = grp.groupby(
+            'night')['moonPhase', 'mjd'].median().reset_index()
+        interp_night = interp1d(
+            obs_night['night'], obs_night['mjd'], bounds_error=False, fill_value=0.)
+
         night_min = grp['night'].min()
         night_max = grp['night'].max()
+        obs_allnight = pd.DataFrame(
+            range(night_min, night_max), columns=['night'])
+        obs_allnight['mjd'] = interp_night(obs_allnight['night'])
+        idx = obs_allnight['night'].isin(np.unique(grp['night']))
 
-        print('hello', night_min, night_max)
+        new_nights = obs_allnight[~idx]
+        times = Time(new_nights['mjd'], format='mjd', scale='utc')
+        new_nights['moonPhase'] = 100.*apo.moon_illumination(times)
+        print(new_nights)
 
-        nights = pd.DataFrame(range(night_min, night_max), columns=['night'])
+        idx = new_nights['moonPhase'] <= self.lunar_phase
+        data_moon = new_nights[idx]
+        data_nomoon = new_nights[~idx]
 
-        obs_nights = np.unique(grp['night'])
-        print('obs', len(nights), len(obs_nights))
-        idx = nights['night'].isin(obs_nights)
+        new_data = pd.DataFrame()
+        # select configuration for cadence
+        config_cadence = self.ref_config[grp.name[0]]
+        grpb = grp.drop(columns=['level_1', 'season'])
+        if len(data_moon) > 0:
+            meds, meds_all = self.get_meds(
+                grpb, moon_cut=self.lunar_phase, op=operator.le)
+            print('processing data moon - add night')
+            res = data_moon.groupby('night').apply(
+                lambda x: self.make_new_OS_night(x, meds_moon, config_cadence['lunar_config'], meds=meds, meds_all=meds_all)).reset_index(level=0)
+            new_data = pd.concat((new_data, res))
+        if len(data_nomoon) > 0:
+            meds, meds_all = self.get_meds(
+                grpb, moon_cut=self.lunar_phase, op=operator.gt)
+            print('processing data no moon - add night')
+            res = data_nomoon.groupby('night').apply(
+                lambda x: self.make_new_OS_night(x, meds_nomoon, config_cadence['config'], meds=meds, meds_all=meds_all)).reset_index(level=0)
+            new_data = pd.concat((new_data, res))
 
-        print('noobs', len(nights[~idx]))
-        obs_night = grp.groupby('night')['moonPhase'].median().reset_index()
-        from scipy.interpolate import interp1d
-        for io, row in nights[~idx].iterrows():
-
-            # what is the expected moonPhase for this?
-            nn = row['night']
-            res = obs_night.iloc[(obs_night['night']-nn).abs().argsort()[:2]]
-            nnmin = res['night'].min()
-            nnmax = res['night'].max()
-
-            idx = obs_night['night'] >= nnmin
-            idx = obs_night['night'] <= nnmax
-            sel = obs_night[idx]
-            interp = interp1d(sel['night'], sel['moonPhase'],
-                              bounds_error=False, fill_value=0.)
-            print('nnn', nnmin, nnmax, interp(nn))
-
-        print(test)
+        return new_data
 
     def nodith(self, grp, fieldRA='RA', fieldDec='Dec'):
         """
@@ -272,7 +290,7 @@ class newOS:
         """
         return new_data
 
-    def make_new_OS_night(self, grp, meds_season, config):
+    def make_new_OS_night(self, grp, meds_season, config, meds=None, meds_all=None):
 
         night = grp.name
 
@@ -280,48 +298,14 @@ class newOS:
         deltaT_visit_band = 36./(24.*3600.)
         # deltaT between two visits two bands: 2.56 sec
         deltaT_visit_band_seq = 2.56/(24.*60.)
-        # grab some infos such as: deltaT between visits (same band)
-        """
-        import matplotlib.pyplot as plt
-        plt.plot(grp['mjd'], grp['band'], 'ko')
-        plt.show()
-        
-        visit_time = {}
-        for b in 'ugrizy':
-            idx = grp['band'] == b
-            sel = grp[idx]
-            if len(sel) > 0:
-                visit_time[b] = sel['mjd']
 
-        min_visit_time = {}
-        max_visit_time = {}
-        for b in visit_time.keys():
-            diff = np.diff(visit_time[b])
-            print(b, np.mean(diff)*24.*3600, np.std(diff)*24.*3600)
-            min_visit_time[b] = np.min(visit_time[b])
-            max_visit_time[b] = np.max(visit_time[b])
-
-        for bb in ['gi', 'ir', 'ry', 'yz']:
-            if bb[1] in min_visit_time.keys() and bb[0] in min_visit_time.keys():
-                dd = min_visit_time[bb[1]]-max_visit_time[bb[0]]
-                print(bb, dd*24.*60.)
-        """
         # now build OS
         totdf = pd.DataFrame()
 
         mjd_min = grp['mjd'].min()
-        meds = grp.groupby('band').median().reset_index()
-        selmed = grp.drop(columns=['band', 'note', 'night'])
-        meds_all = pd.DataFrame(
-            [selmed.median().to_list()], columns=selmed.columns)
-        colint = grp.select_dtypes(include=['int64']).columns
 
-        for col in colint:
-            meds[col] = meds[col].astype(int)
-            if col in meds_all.columns:
-                meds_all[col] = meds_all[col].astype(int)
-
-        meds = meds.drop(columns=['night'])
+        if meds is None:
+            meds, meds_all = self.get_meds(grp)
 
         visits = self.grab_nvisits(config)
 
@@ -332,7 +316,7 @@ class newOS:
                 if df.empty:
                     df = meds_all
                     df['band'] = key
-                    #df['note'] = grp['note'].unique()
+                    # df['note'] = grp['note'].unique()
                     io = meds_season['band'] == key
                     selmeds = meds_season[io]
                     if len(selmeds) > 0:
@@ -352,6 +336,30 @@ class newOS:
                 totdf = pd.concat((totdf, newdf))
 
         return totdf
+
+    def get_meds(self, grpa, moonCol='moonPhase', moon_cut=-100., op=operator.ge):
+
+        idx = op(grpa[moonCol], moon_cut)
+        grp = grpa[idx]
+
+        meds = grp.groupby('band').median().reset_index()
+        selmed = grp.drop(columns=['band', 'note', 'night'])
+
+        print('there man', len(meds.columns), len(selmed.columns))
+        print(meds.columns)
+
+        meds_all = pd.DataFrame(
+            [selmed.median().to_list()], columns=selmed.columns)
+        colint = grp.select_dtypes(include=['int64']).columns
+
+        for col in colint:
+            meds[col] = meds[col].astype(int)
+            if col in meds_all.columns:
+                meds_all[col] = meds_all[col].astype(int)
+
+        meds = meds.drop(columns=['night'])
+
+        return meds, meds_all
 
 
 parser = OptionParser()
