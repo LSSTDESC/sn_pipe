@@ -7,7 +7,7 @@ from pathlib import Path
 
 
 class newOS:
-    def __init__(self, sum_night, data_OS, outDir, outName, ref_config, lunar_phase=20, median_ref=dict(zip('grizy', [24.49, 24.04, 23.6, 22.98, 22.14]))):
+    def __init__(self, sum_night, data_OS, outDir, outName, ref_config, lunar_phase=20, no_dithering=False, medobs=False, add_nightly=False, median_ref=dict(zip('ugrizy', [23.38, 24.49, 24.04, 23.6, 22.98, 22.14]))):
         """
         class to make a "new" OS for an original one (data_OS)
 
@@ -37,6 +37,7 @@ class newOS:
         self.lunar_phase = 100.*lunar_phase
         self.median_ref = median_ref
         self.ref_config = ref_config
+        self.medobs = medobs
 
         # self.data = data_OS
         # extract non ddf data
@@ -49,6 +50,17 @@ class newOS:
 
         res = sum_night.groupby('field').apply(
             lambda x: self.make_new_OS(x)).reset_index()
+
+        if add_nightly:
+            print(res.columns)
+            res = res.merge(sum_night[['night', 'season']], left_on=[
+                            'night'], right_on=['night'])
+            res = res.groupby(['field', 'season']).apply(
+                lambda x: self.add_nights(x))
+
+        if no_dithering:
+            res = res.groupby('field').apply(
+                lambda x: self.nodith(x)).reset_index()
 
         for cc in ['note', 'band']:
             res[cc] = res[cc].astype(pd.StringDtype())
@@ -74,7 +86,7 @@ class newOS:
         # print(trans.dtype, trans['note'])
         # print(data_non_DD.dtype, data_non_DD['note'])
         print(trans.dtype)
-        print(data_non_DD[cols].dtype)
+        # print(data_non_DD[cols].dtype)
         """
         trans = np.concatenate((trans, data_non_DD[cols]))
         trans = rf.append_fields(
@@ -87,9 +99,70 @@ class newOS:
 
         # include lunar_phase value in outName
         dd = outName.split('_')
+        if no_dithering:
+            dd.insert(-2, 'nodith')
+        if self.medobs:
+            dd.insert(-2, 'medobs')
         dd.insert(-2, 'lp{}'.format(np.round(lunar_phase, 2)).ljust(6, '0'))
+
         outName = '_'.join(dd)
         np.save('{}/{}'.format(outDir, outName), np.copy(trans))
+
+    def add_nights(self, grp):
+
+        night_min = grp['night'].min()
+        night_max = grp['night'].max()
+
+        print('hello', night_min, night_max)
+
+        nights = pd.DataFrame(range(night_min, night_max), columns=['night'])
+
+        obs_nights = np.unique(grp['night'])
+        print('obs', len(nights), len(obs_nights))
+        idx = nights['night'].isin(obs_nights)
+
+        print('noobs', len(nights[~idx]))
+        obs_night = grp.groupby('night')['moonPhase'].median().reset_index()
+        from scipy.interpolate import interp1d
+        for io, row in nights[~idx].iterrows():
+
+            # what is the expected moonPhase for this?
+            nn = row['night']
+            res = obs_night.iloc[(obs_night['night']-nn).abs().argsort()[:2]]
+            nnmin = res['night'].min()
+            nnmax = res['night'].max()
+
+            idx = obs_night['night'] >= nnmin
+            idx = obs_night['night'] <= nnmax
+            sel = obs_night[idx]
+            interp = interp1d(sel['night'], sel['moonPhase'],
+                              bounds_error=False, fill_value=0.)
+            print('nnn', nnmin, nnmax, interp(nn))
+
+        print(test)
+
+    def nodith(self, grp, fieldRA='RA', fieldDec='Dec'):
+        """
+        Method to remove the dithering
+
+        Parameters
+        ---------------
+        grp: pandas group
+          data to process
+        fieldRA: str, opt
+          field RA col (default: RA)
+        fieldDec: str, opt
+          field Dec col (default: Dec)
+
+        Returns
+        -----------
+        pandas df with mean fieldRA and fieldDec; other columns unchanged
+
+        """
+        grp[fieldRA] = grp[fieldRA].mean()
+        grp[fieldDec] = grp[fieldDec].mean()
+
+        return grp
 
     def grab_nvisits(self, config):
 
@@ -265,6 +338,8 @@ class newOS:
                     if len(selmeds) > 0:
                         df['fiveSigmaDepth'] = selmeds['fiveSigmaDepth'].to_list()
 
+                if self.medobs:
+                    df['fiveSigmaDepth'] = self.median_ref[key]
                 newdf = pd.concat([df]*nv, ignore_index=True)
 
                 obsid = list(range(self.count, self.count+nv))
@@ -284,12 +359,21 @@ parser.add_option("--sumNightName", type="str", default='Summary_night_ddf_early
                   help="summary file name[%default]")
 parser.add_option("--lunar_phase", type=float, default=0.40,
                   help="lunar phase for night with Moon [%default]")
+parser.add_option("--no_dithering", type=int, default=0,
+                  help="OS with no dithering [%default]")
+parser.add_option("--medobs", type=int, default=0,
+                  help="median observing conditions (m5) [%default]")
+parser.add_option("--add_nightly", type=int, default=0,
+                  help="to add nightly visits if necessary [%default]")
 parser.add_option("--config", type=str, default='config_newOS.yaml',
                   help="config file [%default]")
 
 opts, args = parser.parse_args()
 sumNightName = opts.sumNightName
 lunar_phase = float(opts.lunar_phase)
+no_dithering = opts.no_dithering
+medobs = opts.medobs
+add_nightly = opts.add_nightly
 yaml_file = opts.config
 
 summary_night = pd.read_hdf(sumNightName)
@@ -317,5 +401,12 @@ ref_config = yaml_dict['fields_visits']
 outName = yaml_dict['outName']
 outDir = yaml_dict['outDir']
 
-nOS = newOS(sum_night, data_OS, outDir, outName,
-            ref_config, lunar_phase=lunar_phase)
+nOS = newOS(sum_night[idd],
+            data_OS,
+            outDir,
+            outName,
+            ref_config,
+            lunar_phase=lunar_phase,
+            no_dithering=no_dithering,
+            medobs=medobs,
+            add_nightly=add_nightly)
