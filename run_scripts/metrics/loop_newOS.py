@@ -42,7 +42,7 @@ opts, args = parser.parse_args()
 
 nproc = opts.nproc
 
-cmd_scr = 'python run_scripts/metrics/make_new_OS.py'
+cmd_scr = 'python -W\"ignore\" run_scripts/metrics/make_new_OS.py'
 configDir = 'input/metrics'
 
 configs = ['config_newOS.yaml', 'config_newOS_double.yaml']
@@ -68,4 +68,4 @@ for lp in lps:
 
 print(processes, len(processes))
 
-multiproc(processes, {}, func, nproc)
+#multiproc(processes, {}, func, nproc)
