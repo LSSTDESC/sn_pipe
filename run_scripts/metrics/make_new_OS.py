@@ -39,7 +39,7 @@ class newOS:
         self.median_ref = median_ref
         self.ref_config = ref_config
         self.medobs = medobs
-
+        self.add_nightly = add_nightly
         # self.data = data_OS
         # extract non ddf data
         # idx = data_OS['note'].isin(sum_night['field'])
@@ -51,14 +51,6 @@ class newOS:
 
         res = sum_night.groupby('field').apply(
             lambda x: self.make_new_OS(x)).reset_index()
-
-        if add_nightly:
-            print(res.columns)
-            resb = res.merge(sum_night[['night', 'season']], left_on=[
-                'night'], right_on=['night'])
-            resb = resb.groupby(['note', 'season']).apply(
-                lambda x: self.add_nights(x))
-            print('hello', resb)
 
         if no_dithering:
             res = res.groupby('field').apply(
@@ -87,7 +79,7 @@ class newOS:
         # add non ddf data
         # print(trans.dtype, trans['note'])
         # print(data_non_DD.dtype, data_non_DD['note'])
-        print(trans.dtype)
+        # print(trans.dtype)
         # print(data_non_DD[cols].dtype)
         """
         trans = np.concatenate((trans, data_non_DD[cols]))
@@ -105,59 +97,12 @@ class newOS:
             dd.insert(-2, 'nodith')
         if self.medobs:
             dd.insert(-2, 'medobs')
+        if self.add_nightly:
+            dd.insert(-2, 'allnight')
         dd.insert(-2, 'lp{}'.format(np.round(lunar_phase, 2)).ljust(6, '0'))
 
         outName = '_'.join(dd)
         np.save('{}/{}'.format(outDir, outName), np.copy(trans))
-
-    def add_nights(self, grp):
-
-        from scipy.interpolate import interp1d
-        from astroplan import Observer
-        from astropy.time import Time
-        apo = Observer.at_site('APO')
-
-        obs_night = grp.groupby(
-            'night')['moonPhase', 'mjd'].median().reset_index()
-        interp_night = interp1d(
-            obs_night['night'], obs_night['mjd'], bounds_error=False, fill_value=0.)
-
-        night_min = grp['night'].min()
-        night_max = grp['night'].max()
-        obs_allnight = pd.DataFrame(
-            range(night_min, night_max), columns=['night'])
-        obs_allnight['mjd'] = interp_night(obs_allnight['night'])
-        idx = obs_allnight['night'].isin(np.unique(grp['night']))
-
-        new_nights = obs_allnight[~idx]
-        times = Time(new_nights['mjd'], format='mjd', scale='utc')
-        new_nights['moonPhase'] = 100.*apo.moon_illumination(times)
-        print(new_nights)
-
-        idx = new_nights['moonPhase'] <= self.lunar_phase
-        data_moon = new_nights[idx]
-        data_nomoon = new_nights[~idx]
-
-        new_data = pd.DataFrame()
-        # select configuration for cadence
-        config_cadence = self.ref_config[grp.name[0]]
-        grpb = grp.drop(columns=['level_1', 'season'])
-        if len(data_moon) > 0:
-            meds, meds_all = self.get_meds(
-                grpb, moon_cut=self.lunar_phase, op=operator.le)
-            print('processing data moon - add night')
-            res = data_moon.groupby('night').apply(
-                lambda x: self.make_new_OS_night(x, meds_moon, config_cadence['lunar_config'], meds=meds, meds_all=meds_all)).reset_index(level=0)
-            new_data = pd.concat((new_data, res))
-        if len(data_nomoon) > 0:
-            meds, meds_all = self.get_meds(
-                grpb, moon_cut=self.lunar_phase, op=operator.gt)
-            print('processing data no moon - add night')
-            res = data_nomoon.groupby('night').apply(
-                lambda x: self.make_new_OS_night(x, meds_nomoon, config_cadence['config'], meds=meds, meds_all=meds_all)).reset_index(level=0)
-            new_data = pd.concat((new_data, res))
-
-        return new_data
 
     def nodith(self, grp, fieldRA='RA', fieldDec='Dec'):
         """
@@ -203,11 +148,23 @@ class newOS:
         # select configuration for cadence
         config_cadence = self.ref_config[DDF]
 
-        print(len(np.unique(sum_night['night'])),
-              len(np.unique(data_DDF['night'])))
+        # print(len(np.unique(sum_night['night'])),
+        #      len(np.unique(data_DDF['night'])))
 
         res = sum_night.groupby('season').apply(
             lambda x: self.make_new_OS_season(x, data_DDF, config_cadence)).reset_index(drop=True)
+
+        if self.add_nightly:
+            resb = sum_night.groupby('season').apply(
+                lambda x: self.make_new_OS_season_nightly(x, data_DDF, config_cadence)).reset_index(drop=True)
+            """
+            list1 = np.unique(res['night'])
+            list2 = np.unique(resb['night'])
+            intersect = list(set(list1).intersection(list2))
+            print('alors', intersect, np.min(res['night']), np.max(
+                res['night']), np.min(resb['night']), np.max(resb['night']))
+            """
+            res = pd.concat((res, resb))
 
         res['note'] = DDF
 
@@ -259,12 +216,12 @@ class newOS:
 
         new_data = pd.DataFrame()
         if len(data_moon) > 0:
-            print('processing data moon')
+            #print('processing data moon')
             res = data_moon.groupby('night').apply(
                 lambda x: self.make_new_OS_night(x, meds_moon, config_cadence['lunar_config'])).reset_index(level=0)
             new_data = pd.concat((new_data, res))
         if len(data_nomoon) > 0:
-            print('processing data no moon')
+            #print('processing data no moon')
             res = data_nomoon.groupby('night').apply(
                 lambda x: self.make_new_OS_night(x, meds_nomoon, config_cadence['config'])).reset_index(level=0)
             new_data = pd.concat((new_data, res))
@@ -290,10 +247,61 @@ class newOS:
         """
         return new_data
 
+    def make_new_OS_season_nightly(self, sum_night_season, data_DDF, config_cadence):
+
+        # select data corresponding to this season
+        idx = data_DDF['night'].isin(sum_night_season['night'])
+        grp = data_DDF[idx]
+
+        from scipy.interpolate import interp1d
+        from astroplan import Observer
+        from astropy.time import Time
+        apo = Observer.at_site('APO')
+
+        obs_night = grp.groupby(
+            'night')['moonPhase', 'mjd'].median().reset_index()
+        interp_night = interp1d(
+            obs_night['night'], obs_night['mjd'], bounds_error=False, fill_value=0.)
+
+        night_min = grp['night'].min()
+        night_max = grp['night'].max()
+        obs_allnight = pd.DataFrame(
+            range(night_min, night_max), columns=['night'])
+        obs_allnight['mjd'] = interp_night(obs_allnight['night'])
+        idx = obs_allnight['night'].isin(np.unique(grp['night']))
+
+        new_nights = obs_allnight[~idx]
+        times = Time(new_nights['mjd'], format='mjd', scale='utc')
+        new_nights['moonPhase'] = 100.*apo.moon_illumination(times)
+
+        idx = new_nights['moonPhase'] <= self.lunar_phase
+        data_moon = new_nights[idx]
+        data_nomoon = new_nights[~idx]
+
+        new_data = pd.DataFrame()
+        if len(data_moon) > 0:
+            meds, meds_all = self.get_meds(
+                grp, moon_cut=self.lunar_phase, op=operator.le)
+            #print('processing data moon - add night')
+            res = data_moon.groupby('night').apply(
+                lambda x: self.make_new_OS_night(x, meds, config_cadence['lunar_config'], meds=meds, meds_all=meds_all)).reset_index(level=0)
+            new_data = pd.concat((new_data, res))
+        if len(data_nomoon) > 0:
+            meds, meds_all = self.get_meds(
+                grp, moon_cut=self.lunar_phase, op=operator.gt)
+            #print('processing data no moon - add night')
+            res = data_nomoon.groupby('night').apply(
+                lambda x: self.make_new_OS_night(x, meds, config_cadence['config'], meds=meds, meds_all=meds_all)).reset_index(level=0)
+            new_data = pd.concat((new_data, res))
+
+        return new_data
+
     def make_new_OS_night(self, grp, meds_season, config, meds=None, meds_all=None):
 
         night = grp.name
+        moonPhase = grp.moonPhase.median()
 
+        #print(night, moonPhase)
         # deltaT between two visits same band: 36 sec
         deltaT_visit_band = 36./(24.*3600.)
         # deltaT between two visits two bands: 2.56 sec
@@ -324,6 +332,8 @@ class newOS:
 
                 if self.medobs:
                     df['fiveSigmaDepth'] = self.median_ref[key]
+
+                df['moonPhase'] = moonPhase
                 newdf = pd.concat([df]*nv, ignore_index=True)
 
                 obsid = list(range(self.count, self.count+nv))
@@ -344,9 +354,6 @@ class newOS:
 
         meds = grp.groupby('band').median().reset_index()
         selmed = grp.drop(columns=['band', 'note', 'night'])
-
-        print('there man', len(meds.columns), len(selmed.columns))
-        print(meds.columns)
 
         meds_all = pd.DataFrame(
             [selmed.median().to_list()], columns=selmed.columns)
@@ -402,14 +409,14 @@ if len(sum_night) == 0:
 dbDir = yaml_dict['dbDir']
 data_OS = np.load('{}/{}.npy'.format(dbDir, dbName), allow_pickle=True)
 
-print(np.unique(data_OS['note']))
-
+# print(np.unique(data_OS['note']))
 idd = sum_night['field'] == 'DD:COSMOS'
+
 ref_config = yaml_dict['fields_visits']
 outName = yaml_dict['outName']
 outDir = yaml_dict['outDir']
 
-nOS = newOS(sum_night[idd],
+nOS = newOS(sum_night,
             data_OS,
             outDir,
             outName,
