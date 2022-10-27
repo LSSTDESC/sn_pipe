@@ -68,4 +68,4 @@ for lp in lps:
 
 print(processes, len(processes))
 
-#multiproc(processes, {}, func, nproc)
+multiproc(processes, {}, func, nproc)
