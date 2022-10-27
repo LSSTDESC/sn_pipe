@@ -26,6 +26,12 @@ class newOS:
           visits config for the fields considered
         lunar_phase: float, opt
           lunar phase threshold for u-band swapping
+        no_dithering: bool, opt
+          to remove dithering (default: False)
+        medobs: bool, opt
+          to use median observing conditions (m5) for all obs (default: False)
+        add_nightly: bool, opt
+          to add nightly obs if do not exist in the original OS
         median_ref: dict, opt
           median m5 values for grizy bands
         """
@@ -128,7 +134,18 @@ class newOS:
         return grp
 
     def grab_nvisits(self, config):
+        """
+        Method to get the number of visits from config
 
+        Parameters
+        ---------------
+        config: str
+          visit info in the form N_uu-N_gg-...
+
+        Returns
+        -----------
+        dict with visits (val) per band (key)
+        """
         vv = config.split('-')
         pos = dict(zip('ugrizy', [0, 1, 2, 3, 4, 5]))
         Nvisits = {}
@@ -138,7 +155,21 @@ class newOS:
         return Nvisits
 
     def make_new_OS(self, sum_night):
+        """
+        Method to generate new OS
 
+        Parameters
+        ---------------
+        sum_night: pandas df
+          OS summary per night
+
+        Returns
+        -----------
+        the new observing strategy (pandas df)
+
+
+
+        """
         DDF = sum_night.name
 
         # select data corresponding to this DDF
@@ -171,6 +202,23 @@ class newOS:
         return res
 
     def make_new_OS_season(self, sum_night_season, data_DDF, config_cadence):
+        """
+        Method to generate a new OS per season
+
+        Parameters
+        ---------------
+        sum_night_season: pandas df
+          summary night OS for this season
+        data_DDF: pandas df
+           DDF data to process
+        config_cadence: dict
+          cadence config for the new obs
+
+        Returns
+        -----------
+        new OS for the season (pandas df)
+
+        """
 
         season = sum_night_season.name
 
@@ -216,12 +264,12 @@ class newOS:
 
         new_data = pd.DataFrame()
         if len(data_moon) > 0:
-            #print('processing data moon')
+            # print('processing data moon')
             res = data_moon.groupby('night').apply(
                 lambda x: self.make_new_OS_night(x, meds_moon, config_cadence['lunar_config'])).reset_index(level=0)
             new_data = pd.concat((new_data, res))
         if len(data_nomoon) > 0:
-            #print('processing data no moon')
+            # print('processing data no moon')
             res = data_nomoon.groupby('night').apply(
                 lambda x: self.make_new_OS_night(x, meds_nomoon, config_cadence['config'])).reset_index(level=0)
             new_data = pd.concat((new_data, res))
@@ -248,7 +296,23 @@ class newOS:
         return new_data
 
     def make_new_OS_season_nightly(self, sum_night_season, data_DDF, config_cadence):
+        """
+        Method to generate a new OS per season
 
+        Parameters
+        ---------------
+        sum_night_season: pandas df
+          summary night OS for this season
+        data_DDF: pandas df
+           DDF data to process
+        config_cadence: dict
+          cadence config for the new obs
+
+        Returns
+        -----------
+        new OS for the nights with initially no obs.(pandas df)
+
+        """
         # select data corresponding to this season
         idx = data_DDF['night'].isin(sum_night_season['night'])
         grp = data_DDF[idx]
@@ -282,14 +346,14 @@ class newOS:
         if len(data_moon) > 0:
             meds, meds_all = self.get_meds(
                 grp, moon_cut=self.lunar_phase, op=operator.le)
-            #print('processing data moon - add night')
+            # print('processing data moon - add night')
             res = data_moon.groupby('night').apply(
                 lambda x: self.make_new_OS_night(x, meds, config_cadence['lunar_config'], meds=meds, meds_all=meds_all)).reset_index(level=0)
             new_data = pd.concat((new_data, res))
         if len(data_nomoon) > 0:
             meds, meds_all = self.get_meds(
                 grp, moon_cut=self.lunar_phase, op=operator.gt)
-            #print('processing data no moon - add night')
+            # print('processing data no moon - add night')
             res = data_nomoon.groupby('night').apply(
                 lambda x: self.make_new_OS_night(x, meds, config_cadence['config'], meds=meds, meds_all=meds_all)).reset_index(level=0)
             new_data = pd.concat((new_data, res))
@@ -297,11 +361,27 @@ class newOS:
         return new_data
 
     def make_new_OS_night(self, grp, meds_season, config, meds=None, meds_all=None):
+        """
+        Method to generate a new OS per season
 
+        Parameters
+        ---------------
+        sum_night_season: pandas df
+          summary night OS for this season
+        data_DDF: pandas df
+           DDF data to process
+        config_cadence: dict
+          cadence config for the new obs
+
+        Returns
+        -----------
+        new OS for the nights corresponding to initial obs.(pandas df)
+
+        """
         night = grp.name
         moonPhase = grp.moonPhase.median()
 
-        #print(night, moonPhase)
+        # print(night, moonPhase)
         # deltaT between two visits same band: 36 sec
         deltaT_visit_band = 36./(24.*3600.)
         # deltaT between two visits two bands: 2.56 sec
@@ -348,7 +428,21 @@ class newOS:
         return totdf
 
     def get_meds(self, grpa, moonCol='moonPhase', moon_cut=-100., op=operator.ge):
+        """
+        Method to extract median values from data
 
+        Parameters
+        ---------------
+        grpa: pandas df
+           data to process
+        moonCol: str, opt
+          moon phase col name (default: moonPhase)
+        moon_cut: float, opt
+          moon phase selection cut (default: -100)
+        op: operator, opt
+          operator to apply for the moon_cut (default: operator.ge)
+
+        """
         idx = op(grpa[moonCol], moon_cut)
         grp = grpa[idx]
 
