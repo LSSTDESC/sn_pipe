@@ -1,9 +1,28 @@
 import os
 from sn_tools.sn_utils import multiproc
+from optparse import OptionParser
 
 
 def func(data, params={}, j=0, output_q=None):
+    """
+    Function to process a set of data - required by multiproc
 
+    Parameters
+    --------------
+    data: list(str)
+      data to process
+    params: dict, opt
+      parameters (default: {})
+    j: int, opt
+      internal multiproc tag (default: 0)
+    output_q:  multiprocessing queue, opt
+      default: None
+
+    Returns
+    -----------
+    1 (directly or in processing queue)
+
+    """
     for dd in data:
         print('processing', dd)
         os.system(dd)
@@ -13,6 +32,15 @@ def func(data, params={}, j=0, output_q=None):
     else:
         return 1
 
+
+parser = OptionParser()
+
+parser.add_option("--nproc", type="int", default=3,
+                  help="number of proc for multiproc [%default]")
+
+opts, args = parser.parse_args()
+
+nproc = opts.nproc
 
 cmd_scr = 'python run_scripts/metrics/make_new_OS.py'
 configDir = 'input/metrics'
@@ -40,4 +68,4 @@ for lp in lps:
 
 print(processes, len(processes))
 
-multiproc(processes, {}, func, 7)
+multiproc(processes, {}, func, nproc)
