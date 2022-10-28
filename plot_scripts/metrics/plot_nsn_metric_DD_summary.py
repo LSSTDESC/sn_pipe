@@ -34,12 +34,17 @@ def dumpcsv_medcad(metricTot):
     summary_fields_season = data.groupby(['dbName', 'fieldname', 'season']).agg({'nsn': 'sum',
                                                                                 'zcomp': 'median',
                                                                                  }).reset_index()
+    summary_fields_pixels = data.groupby(['dbName', 'fieldname', 'healpixID']).agg({'nsn': 'sum',
+                                                                                   'zcomp': 'median',
+                                                                                    }).reset_index()
     print(summary)
     print(summary_fields)
     summary.to_csv('metric_summary_DD.csv', index=False)
     summary_fields.to_csv('metric_summary_fields_DD.csv', index=False)
     summary_fields_season.to_csv(
         'metric_summary_fields_season_DD.csv', index=False)
+    summary_fields_pixels.to_csv(
+        'metric_summary_fields_pixels_DD.csv', index=False)
     """
     for fieldName in np.unique(sel['fieldname']):
         ij = sel['fieldname'] == fieldName
@@ -678,7 +683,7 @@ idx &= metricTot[varz] > 0.
 dumpcsv_medcad(metricTot[idx])
 # print(test)
 nsn_plot.plot_DDSummary(metricTot[idx], forPlot, sntype=snType,
-                        fieldNames=fieldNames, nside=nside)
+                        fieldNames=fieldNames, nside=nside, figtit=opts.fieldNames)
 
 
 # nsn_plot.plot_DD_Moll(metricTot, 'ddf_dither0.00_v1.7_10yrs', 1, 128)
