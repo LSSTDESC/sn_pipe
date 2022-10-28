@@ -21,11 +21,26 @@ from sn_plotter_metrics import plt
 
 def dumpcsv_medcad(metricTot):
 
-    metricTot = pd.DataFrame(metricTot)
-    idx = metricTot['nsn_med_faint'] >= 0
-    sel = metricTot[idx]
+    data = pd.DataFrame(metricTot)
     r = pd.DataFrame()
 
+    summary = data.groupby(['dbName']).agg({'nsn': 'sum',
+                                            'zcomp': 'median',
+                                            }).reset_index()
+
+    summary_fields = data.groupby(['dbName', 'fieldname']).agg({'nsn': 'sum',
+                                                               'zcomp': 'median',
+                                                                }).reset_index()
+    summary_fields_season = data.groupby(['dbName', 'fieldname', 'season']).agg({'nsn': 'sum',
+                                                                                'zcomp': 'median',
+                                                                                 }).reset_index()
+    print(summary)
+    print(summary_fields)
+    summary.to_csv('metric_summary_DD.csv', index=False)
+    summary_fields.to_csv('metric_summary_fields_DD.csv', index=False)
+    summary_fields_season.to_csv(
+        'metric_summary_fields_season_DD.csv', index=False)
+    """
     for fieldName in np.unique(sel['fieldname']):
         ij = sel['fieldname'] == fieldName
         selb = sel[ij]
@@ -36,6 +51,7 @@ def dumpcsv_medcad(metricTot):
 
     print(r)
     r.to_csv('config_DD_obs_medcad.csv', index=False)
+    """
 
 
 def dumpcsv_pixels(metricTot, x1=-2.0, color=0.2, ebvofMW=0.0, snrmin=1.0, error_model=1, errmodrel=0.1, bluecutoff=380., redcutoff=800., simulator='sn_fast', fitter='sn_fast', Nvisits=dict(zip('grizy', [1, 1, 2, 2, 2]))):
@@ -655,10 +671,15 @@ for i, row in ssel.iterrows():
 
 # print(test)
 
+
 idx = metricTot[var] > 0.
 idx &= metricTot[varz] > 0.
+
+dumpcsv_medcad(metricTot[idx])
+# print(test)
 nsn_plot.plot_DDSummary(metricTot[idx], forPlot, sntype=snType,
                         fieldNames=fieldNames, nside=nside)
+
 
 # nsn_plot.plot_DD_Moll(metricTot, 'ddf_dither0.00_v1.7_10yrs', 1, 128)
 # nsn_plot.plot_DD_Moll(metricTot, 'descddf_v1.5_10yrs', 1, 128)
