@@ -37,12 +37,20 @@ parser = OptionParser()
 
 parser.add_option("--nproc", type="int", default=3,
                   help="number of proc for multiproc [%default]")
+parser.add_option("--outDir", type=str, default='../DB_Files',
+                  help="output directory [%default]")
+parser.add_option("--dbDir", type=str, default='../DB_Files',
+                  help="input directory [%default]")
 
 opts, args = parser.parse_args()
 
 nproc = opts.nproc
+outDir = opts.outDir
+dbDir = opts.dbDir
 
 cmd_scr = 'python -W\"ignore\" run_scripts/metrics/make_new_OS.py'
+cmd_scr += ' --outDir {}'.format(outDir)
+cmd_scr += ' --dbDir {}'.format(dbDir)
 configDir = 'input/metrics'
 
 configs = ['config_newOS.yaml', 'config_newOS_double.yaml']

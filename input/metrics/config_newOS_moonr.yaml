@@ -1,8 +1,6 @@
 # yaml config file
 dbName: ddf_early_deep_slf0.20_f10.60_f20.80_v2.1_10yrs
-dbDir: ../../DB_Files
 outName: ddf_idr_0.80_0.60_moonr_v2.1_10yrs
-outDir: ../../DB_Files
 fields_visits:
  DD:COSMOS:
    config: 0u-2g-9r-37i-52z-21y

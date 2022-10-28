@@ -476,6 +476,10 @@ parser.add_option("--add_nightly", type=int, default=0,
                   help="to add nightly visits if necessary [%default]")
 parser.add_option("--config", type=str, default='config_newOS.yaml',
                   help="config file [%default]")
+parser.add_option("--outDir", type=str, default='../DB_Files',
+                  help="output directory [%default]")
+parser.add_option("--dbDir", type=str, default='../DB_Files',
+                  help="input directory [%default]")
 
 opts, args = parser.parse_args()
 sumNightName = opts.sumNightName
@@ -484,6 +488,8 @@ no_dithering = opts.no_dithering
 medobs = opts.medobs
 add_nightly = opts.add_nightly
 yaml_file = opts.config
+outDir = opts.outDir
+dbDir = opts.dbDir
 
 summary_night = pd.read_hdf(sumNightName)
 
@@ -500,7 +506,8 @@ if len(sum_night) == 0:
 
 
 # load original OS
-dbDir = yaml_dict['dbDir']
+#dbDir = yaml_dict['dbDir']
+dbDir = opts.dbDir
 data_OS = np.load('{}/{}.npy'.format(dbDir, dbName), allow_pickle=True)
 
 # print(np.unique(data_OS['note']))
@@ -508,7 +515,7 @@ idd = sum_night['field'] == 'DD:COSMOS'
 
 ref_config = yaml_dict['fields_visits']
 outName = yaml_dict['outName']
-outDir = yaml_dict['outDir']
+#outDir = yaml_dict['outDir']
 
 nOS = newOS(sum_night,
             data_OS,
