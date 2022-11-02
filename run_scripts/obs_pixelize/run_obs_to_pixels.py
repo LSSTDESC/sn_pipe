@@ -52,7 +52,7 @@ class procObsPixels:
     def __init__(self, outDir, dbDir, dbName, dbExtens, nodither,
                  fieldType, RAmin, RAmax, Decmin, Decmax, nside,
                  nprocs, saveData=False, fieldName='unknown',
-                 nclusters=6, radius=4):
+                 nclusters=6, radius=4, project_FP='gnomonic', VRO_FP='circle'):
         """
         Class to process obs <-> pixels on a patch of the sky
 
@@ -86,6 +86,10 @@ class procObsPixels:
            to save the data (default:False)
         radius: float, opt
          radius around DD center to grab pixels
+        project_FP: str, opt
+          type of projection on FP (gnomonic or hp_query) (default: gnomonic)
+        VRO_FP: str, opt
+          geometry of the VRO FP (circle or realistic) (default: circle)
 
         """
 
@@ -105,6 +109,8 @@ class procObsPixels:
         self.saveData = saveData
         self.nclusters = nclusters
         self.radius = radius
+        self.project_FP = project_FP
+        self.VRO_FP = VRO_FP
 
         # create output directory
         self.genDir(outDir)
@@ -113,11 +119,11 @@ class procObsPixels:
 
         fieldName = fieldName.split(',')
         for field in fieldName:
-            self.outName[field] = '{}/{}_{}_nside_{}_{}_{}_{}_{}_{}.npy'.format(self.outDir,
-                                                                                dbName, fieldType, nside,
-                                                                                RAmin, RAmax,
-                                                                                Decmin, Decmax,
-                                                                                field)
+            self.outName[field] = '{}/{}_{}_nside_{}_{}_{}_{}_{}_{}_{}_{}.npy'.format(self.outDir,
+                                                                                      dbName, fieldType, nside,
+                                                                                      RAmin, RAmax,
+                                                                                      Decmin, Decmax,
+                                                                                      field, project_FP, VRO_FP)
         # if the files already exist -> do not re-process it
 
         process_it = False
@@ -129,6 +135,9 @@ class procObsPixels:
             # get observations/patches
             observations, patches = self.load_obs()
 
+            print('proccesssi', np.unique(
+                observations['note']), len(observations))
+            #observations = observations
             # run using multiprocessing
             self.multiprocess(patches, observations)
         else:
@@ -278,7 +287,7 @@ class procObsPixels:
         ipoint = 1
 
         datapixels = DataToPixels(
-            self.nside, self.RACol, self.DecCol, self.outDir, self.dbName)
+            self.nside, self.RACol, self.DecCol, self.outDir, self.dbName, self.fieldType, self.project_FP, self.VRO_FP)
 
         pixelsTot = pd.DataFrame()
         print('starting process', j)
@@ -290,12 +299,15 @@ class procObsPixels:
             pixels = datapixels(observations, pointing['RA'], pointing['Dec'],
                                 pointing['radius_RA'], pointing['radius_Dec'], self.nodither, display=False)
             pixels['fieldName'] = pointing['fieldName']
+
             """
             import matplotlib.pyplot as plt
-            print(pixels.columns)
+            print(pixels.columns, len(
+                np.unique(observations['observationId'])))
             plt.plot(
                 observations[self.RACol], observations[self.DecCol], color='k', marker='o', mfc=None, linestyle='None')
             plt.plot(pixels['pixRA'], pixels['pixDec'], 'r*')
+            plt.show()
             """
             # print(test)
             sel = pixels
@@ -370,6 +382,10 @@ parser.add_option("--nclusters", type=int, default=6,
                   help="number of clusters - for DD only[%default]")
 parser.add_option("--radius", type=float, default=4.,
                   help="radius around center - for DD only[%default]")
+parser.add_option("--VRO_FP", type=str, default='circle',
+                  help="VRO Focal Plane (circle or realistic) [%default]")
+parser.add_option("--project_FP", type=str, default='gnomonic',
+                  help="Focal Plane projection (gnomonic or hp_query) [%default]")
 
 opts, args = parser.parse_args()
 
@@ -404,5 +420,7 @@ for patch in patches:
                          opts.nprocs, saveData=opts.saveData,
                          fieldName=opts.fieldName,
                          nclusters=opts.nclusters,
-                         radius=opts.radius)
+                         radius=opts.radius,
+                         project_FP=opts.project_FP,
+                         VRO_FP=opts.VRO_FP)
     # break
