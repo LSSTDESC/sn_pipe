@@ -67,7 +67,7 @@ class procObsPixels:
          dbExtens: str
            extension (db or npy) of the observing strategy file
          nodither: bool
-            to remove dithering 
+            to remove dithering
          fieldType: str
            type of field (DD, WFD, Fakes) considered
          RAmin: float
@@ -117,6 +117,7 @@ class procObsPixels:
 
         self.outName = {}
 
+        """
         fieldName = fieldName.split(',')
         for field in fieldName:
             self.outName[field] = '{}/{}_{}_nside_{}_{}_{}_{}_{}_{}_{}_{}.npy'.format(self.outDir,
@@ -124,24 +125,23 @@ class procObsPixels:
                                                                                       RAmin, RAmax,
                                                                                       Decmin, Decmax,
                                                                                       field, project_FP, VRO_FP)
+        """
         # if the files already exist -> do not re-process it
 
-        process_it = False
-        for key, vals in self.outName.items():
-            if not exists(vals):
-                process_it = True
+    def __call__(self):
 
-        if process_it:
-            # get observations/patches
-            observations, patches = self.load_obs()
+        observations, patches = self.load_obs()
 
-            print('proccesssi', np.unique(
-                observations['note']), len(observations))
-            #observations = observations
-            # run using multiprocessing
-            self.multiprocess(patches, observations)
-        else:
-            print('file ', self.outName, ' does already exist -> no processing')
+        #idx = observations['observationId'] == 24804
+        #observations = observations[idx]
+        print('proccesssi', np.unique(
+            observations['note']), len(observations))
+
+        # run using multiprocessing
+        #self.multiprocess(patches, observations)
+        res = self.processPatch(patches, observations)
+
+        return res
 
     def genDir(self, outDir):
         """
@@ -287,7 +287,7 @@ class procObsPixels:
         ipoint = 1
 
         datapixels = DataToPixels(
-            self.nside, self.RACol, self.DecCol, self.outDir, self.dbName, self.fieldType, self.project_FP, self.VRO_FP)
+            self.nside, self.RACol, self.DecCol, self.outDir, self.dbName, self.fieldType, self.project_FP, self.VRO_FP, nproc=self.nprocs)
 
         pixelsTot = pd.DataFrame()
         print('starting process', j)
@@ -366,7 +366,7 @@ parser.add_option("--RAmin", type=float, default=0.,
                   help="RA min for obs area - [%default]")
 parser.add_option("--RAmax", type=float, default=360.,
                   help="RA max for obs area - [%default]")
-parser.add_option("--nRA", type=int, default=10,
+parser.add_option("--nRA", type=int, default=1,
                   help="number of RA patches - [%default]")
 parser.add_option("--Decmin", type=float, default=-1.,
                   help="Dec min for obs area - [%default]")
@@ -382,7 +382,7 @@ parser.add_option("--nclusters", type=int, default=6,
                   help="number of clusters - for DD only[%default]")
 parser.add_option("--radius", type=float, default=4.,
                   help="radius around center - for DD only[%default]")
-parser.add_option("--VRO_FP", type=str, default='circle',
+parser.add_option("--VRO_FP", type=str, default='circular',
                   help="VRO Focal Plane (circle or realistic) [%default]")
 parser.add_option("--project_FP", type=str, default='gnomonic',
                   help="Focal Plane projection (gnomonic or hp_query) [%default]")
@@ -411,16 +411,45 @@ else:
         r, names=['RAmin', 'RAmax', 'Decmin', 'Decmax'])
 
 
-for patch in patches:
-    proc = procObsPixels(opts.outDir,
-                         opts.dbDir, opts.dbName, opts.dbExtens,
-                         opts.remove_dithering, opts.fieldType,
-                         patch['RAmin'], patch['RAmax'],
-                         patch['Decmin'], patch['Decmax'], opts.nside,
-                         opts.nprocs, saveData=opts.saveData,
-                         fieldName=opts.fieldName,
-                         nclusters=opts.nclusters,
-                         radius=opts.radius,
-                         project_FP=opts.project_FP,
-                         VRO_FP=opts.VRO_FP)
+df_tot = pd.DataFrame()
+if opts.fieldType == 'WFD':
+    for patch in patches:
+        proc = procObsPixels(opts.outDir,
+                             opts.dbDir, opts.dbName, opts.dbExtens,
+                             opts.remove_dithering, opts.fieldType,
+                             patch['RAmin'], patch['RAmax'],
+                             patch['Decmin'], patch['Decmax'], opts.nside,
+                             opts.nprocs, saveData=opts.saveData,
+                             fieldName=opts.fieldName,
+                             nclusters=opts.nclusters,
+                             radius=opts.radius,
+                             project_FP=opts.project_FP,
+                             VRO_FP=opts.VRO_FP)
+        res = proc()
+        df_tot = pd.concat((df_tot, res))
+
+if opts.fieldType == 'DD':
+    fieldName = opts.fieldName.split(',')
+    patch = patches[0]
+    for field in fieldName:
+        outDirfull = '{}/{}'.format(opts.outDir, opts.dbName)
+        outName = '{}/{}_{}_nside_{}_{}_{}_{}_{}_{}.npy'.format(outDirfull,
+                                                                opts.dbName, opts.fieldType, opts.nside,
+                                                                patch['RAmin'], patch['RAmax'],
+                                                                patch['Decmin'], patch['Decmax'], field)
+
+        proc = procObsPixels(opts.outDir,
+                             opts.dbDir, opts.dbName, opts.dbExtens,
+                             opts.remove_dithering, opts.fieldType,
+                             patch['RAmin'], patch['RAmax'],
+                             patch['Decmin'], patch['Decmax'], opts.nside,
+                             opts.nprocs, saveData=opts.saveData,
+                             fieldName=opts.fieldName,
+                             nclusters=opts.nclusters,
+                             radius=opts.radius,
+                             project_FP=opts.project_FP,
+                             VRO_FP=opts.VRO_FP)
+        df_res = proc()
+        if opts.saveData:
+            np.save(outName, df_res.to_records(index=False))
     # break
