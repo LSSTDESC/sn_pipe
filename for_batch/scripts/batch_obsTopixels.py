@@ -4,6 +4,7 @@ from optparse import OptionParser
 import pandas as pd
 from sn_tools.sn_batchutils import BatchIt
 
+
 def batch_allDDF(params, toprocess):
     """
     Function to generate a single script for a set of DDF db
@@ -17,17 +18,17 @@ def batch_allDDF(params, toprocess):
       list of db and params to process
 
     """
-    processName =  'obsTopixels_allDD'
+    processName = 'obsTopixels_allDD'
     mybatch = BatchIt(processName=processName)
     for io, val in toprocess.iterrows():
         for vv in vvars:
             params[vv] = val[vv]
-        mybatch.add_batch(scriptref,params)
-    
+        mybatch.add_batch(scriptref, params)
+
     mybatch.go_batch()
 
 
-def batch_indiv(params,toprocess,mode):
+def batch_indiv(params, toprocess, mode):
     """
     Method to generate a script and launch it per db
 
@@ -41,7 +42,7 @@ def batch_indiv(params,toprocess,mode):
       mode of running (batch or interactive)
 
     """
-    
+
     for io, val in toprocess.iterrows():
         bid = '{}_{}_{}'.format(val['dbName'], val['nside'], val['fieldType'])
         if mode == 'batch':
@@ -135,6 +136,10 @@ parser.add_option("--mode", type=str, default='batch',
                   help="mode to run (batch/interactive) - [%default]")
 parser.add_option("--runType", type=str, default='allDDF',
                   help="type of run - [%default]")
+parser.add_option("--VRO_FP", type=str, default='circular',
+                  help="VRO Focal Plane (circle or realistic) [%default]")
+parser.add_option("--project_FP", type=str, default='gnomonic',
+                  help="Focal Plane projection (gnomonic or hp_query) [%default]")
 
 opts, args = parser.parse_args()
 
@@ -152,6 +157,8 @@ radius = opts.radius
 mode = opts.mode
 nclusters = opts.nclusters
 runType = opts.runType
+VRO_FP = opts.VRO_FP
+project_FP = opts.project_FP
 
 toprocess = pd.read_csv(dbList, comment='#')
 
@@ -172,6 +179,8 @@ params['nDec'] = nDec
 params['radius'] = radius
 params['saveData'] = 1
 params['fieldName'] = opts.DDFs
+params['VRO_FP'] = VRO_FP
+params['project_FP'] = opts.project_FP
 
 vvars = ['dbDir', 'dbName', 'dbExtens','nproc','fieldType','simuType','nside']
 
