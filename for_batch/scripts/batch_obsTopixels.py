@@ -20,9 +20,11 @@ def batch_allDDF(params, toprocess):
     """
     processName = 'obsTopixels_allDD'
     mybatch = BatchIt(processName=processName)
+    outDir_main = params['outDir']
     for io, val in toprocess.iterrows():
         for vv in vvars:
             params[vv] = val[vv]
+        params['outDir'] = '{}_{}_{}_{}'.format(outDir_main,params['nside'],params['project_FP'],params['VRO_FP'])
         mybatch.add_batch(scriptref, params)
 
     mybatch.go_batch()
