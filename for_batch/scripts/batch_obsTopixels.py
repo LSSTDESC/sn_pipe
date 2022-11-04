@@ -16,9 +16,8 @@ def batch_allDDF(params, toprocess):
       dict of parameters
     toprocess: pandas df
       list of db and params to process
-
     """
-    processName = 'obsTopixels_allDD'
+    processName = 'obsTopixels_allDD_{}_{}_{}'.format(params['nside'],params['project_FP'],params['VRO_FP'])
     mybatch = BatchIt(processName=processName)
     outDir_main = params['outDir']
     for io, val in toprocess.iterrows():
@@ -142,6 +141,8 @@ parser.add_option("--VRO_FP", type=str, default='circular',
                   help="VRO Focal Plane (circle or realistic) [%default]")
 parser.add_option("--project_FP", type=str, default='gnomonic',
                   help="Focal Plane projection (gnomonic or hp_query) [%default]")
+parser.add_option("--nside", type=int, default=128,
+                  help="nside [%default]")
 
 opts, args = parser.parse_args()
 
@@ -161,6 +162,7 @@ nclusters = opts.nclusters
 runType = opts.runType
 VRO_FP = opts.VRO_FP
 project_FP = opts.project_FP
+nside = opts.nside
 
 toprocess = pd.read_csv(dbList, comment='#')
 
@@ -183,8 +185,9 @@ params['saveData'] = 1
 params['fieldName'] = opts.DDFs
 params['VRO_FP'] = VRO_FP
 params['project_FP'] = opts.project_FP
+params['nside'] = nside
 
-vvars = ['dbDir', 'dbName', 'dbExtens','nproc','fieldType','simuType','nside']
+vvars = ['dbDir', 'dbName', 'dbExtens','nproc','fieldType','simuType']
 
 #make a big and unique file for DD
 if runType == 'allDDF':
