@@ -117,15 +117,21 @@ class procObsPixels:
 
         self.outName = {}
 
-        """
-        fieldName = fieldName.split(',')
-        for field in fieldName:
-            self.outName[field] = '{}/{}_{}_nside_{}_{}_{}_{}_{}_{}_{}_{}.npy'.format(self.outDir,
-                                                                                      dbName, fieldType, nside,
-                                                                                      RAmin, RAmax,
-                                                                                      Decmin, Decmax,
-                                                                                      field, project_FP, VRO_FP)
-        """
+        if self.fieldType == 'DD':
+            fieldName = fieldName.split(',')
+            for field in fieldName:
+                self.outName[field] = '{}/{}_{}_nside_{}_{}_{}_{}_{}_{}_{}_{}.npy'.format(self.outDir,
+                                                                                          dbName, fieldType, nside,
+                                                                                          RAmin, RAmax,
+                                                                                          Decmin, Decmax,
+                                                                                          field, project_FP, VRO_FP)
+            if self.fieldType == 'WFD':
+                self.outName['WFD'] = '{}/{}_{}_nside_{}_{}_{}_{}_{}_{}_{}.npy'.format(self.outDir,
+                                                                                       dbName, fieldType, nside,
+                                                                                       RAmin, RAmax,
+                                                                                       Decmin, Decmax,
+                                                                                       project_FP, VRO_FP)
+
         # if the files already exist -> do not re-process it
 
     def __call__(self):
@@ -139,9 +145,18 @@ class procObsPixels:
 
         # run using multiprocessing
         #self.multiprocess(patches, observations)
-        res = self.processPatch(patches, observations)
-
-        return res
+        if self.fieldType == 'WFD':
+            res = self.processPatch(patches, observations)
+            if self.saveData:
+                np.save(self.outName['WFD'], res.to_records(index=False))
+        if self.fieldType == 'DD':
+            for i, field in enumerate(self.fieldName.split(',')):
+                idx = observations['note'] == field
+                idxb = patches['fieldName'] == field
+                print('processing', field)
+                res = self.processPatch(patches[idxb], observations[idx])
+                if self.saveData:
+                    np.save(self.outName[field], res.to_records(index=False))
 
     def genDir(self, outDir):
         """
@@ -431,25 +446,17 @@ if opts.fieldType == 'WFD':
 if opts.fieldType == 'DD':
     fieldName = opts.fieldName.split(',')
     patch = patches[0]
-    for field in fieldName:
-        outDirfull = '{}/{}'.format(opts.outDir, opts.dbName)
-        outName = '{}/{}_{}_nside_{}_{}_{}_{}_{}_{}.npy'.format(outDirfull,
-                                                                opts.dbName, opts.fieldType, opts.nside,
-                                                                patch['RAmin'], patch['RAmax'],
-                                                                patch['Decmin'], patch['Decmax'], field)
+    outDirfull = '{}/{}'.format(opts.outDir, opts.dbName)
 
-        proc = procObsPixels(opts.outDir,
-                             opts.dbDir, opts.dbName, opts.dbExtens,
-                             opts.remove_dithering, opts.fieldType,
-                             patch['RAmin'], patch['RAmax'],
-                             patch['Decmin'], patch['Decmax'], opts.nside,
-                             opts.nprocs, saveData=opts.saveData,
-                             fieldName=opts.fieldName,
-                             nclusters=opts.nclusters,
-                             radius=opts.radius,
-                             project_FP=opts.project_FP,
-                             VRO_FP=opts.VRO_FP)
-        df_res = proc()
-        if opts.saveData:
-            np.save(outName, df_res.to_records(index=False))
-    # break
+    proc = procObsPixels(outDirfull,
+                         opts.dbDir, opts.dbName, opts.dbExtens,
+                         opts.remove_dithering, opts.fieldType,
+                         patch['RAmin'], patch['RAmax'],
+                         patch['Decmin'], patch['Decmax'], opts.nside,
+                         opts.nprocs, saveData=opts.saveData,
+                         fieldName=opts.fieldName,
+                         nclusters=opts.nclusters,
+                         radius=opts.radius,
+                         project_FP=opts.project_FP,
+                         VRO_FP=opts.VRO_FP)
+    proc()
