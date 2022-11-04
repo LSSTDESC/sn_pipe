@@ -446,9 +446,7 @@ if opts.fieldType == 'WFD':
 if opts.fieldType == 'DD':
     fieldName = opts.fieldName.split(',')
     patch = patches[0]
-    outDirfull = '{}/{}'.format(opts.outDir, opts.dbName)
-
-    proc = procObsPixels(outDirfull,
+    proc = procObsPixels(opts.outDir,
                          opts.dbDir, opts.dbName, opts.dbExtens,
                          opts.remove_dithering, opts.fieldType,
                          patch['RAmin'], patch['RAmax'],
