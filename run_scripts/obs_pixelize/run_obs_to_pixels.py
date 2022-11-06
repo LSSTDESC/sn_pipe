@@ -120,17 +120,16 @@ class procObsPixels:
         if self.fieldType == 'DD':
             fieldName = fieldName.split(',')
             for field in fieldName:
-                self.outName[field] = '{}/{}_{}_nside_{}_{}_{}_{}_{}_{}_{}_{}.npy'.format(self.outDir,
+                self.outName[field] = '{}/{}_{}_nside_{}_{}_{}_{}_{}_{}.npy'.format(self.outDir,
                                                                                           dbName, fieldType, nside,
                                                                                           RAmin, RAmax,
                                                                                           Decmin, Decmax,
-                                                                                          field, project_FP, VRO_FP)
+                                                                                          field)
             if self.fieldType == 'WFD':
-                self.outName['WFD'] = '{}/{}_{}_nside_{}_{}_{}_{}_{}_{}_{}.npy'.format(self.outDir,
+                self.outName['WFD'] = '{}/{}_{}_nside_{}_{}_{}_{}_{}.npy'.format(self.outDir,
                                                                                        dbName, fieldType, nside,
                                                                                        RAmin, RAmax,
-                                                                                       Decmin, Decmax,
-                                                                                       project_FP, VRO_FP)
+                                                                                       Decmin, Decmax)
 
         # if the files already exist -> do not re-process it
 
