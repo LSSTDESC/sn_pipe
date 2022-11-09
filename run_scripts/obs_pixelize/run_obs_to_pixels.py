@@ -121,15 +121,15 @@ class procObsPixels:
             fieldName = fieldName.split(',')
             for field in fieldName:
                 self.outName[field] = '{}/{}_{}_nside_{}_{}_{}_{}_{}_{}.npy'.format(self.outDir,
-                                                                                          dbName, fieldType, nside,
-                                                                                          RAmin, RAmax,
-                                                                                          Decmin, Decmax,
-                                                                                          field)
-            if self.fieldType == 'WFD':
-                self.outName['WFD'] = '{}/{}_{}_nside_{}_{}_{}_{}_{}.npy'.format(self.outDir,
-                                                                                       dbName, fieldType, nside,
-                                                                                       RAmin, RAmax,
-                                                                                       Decmin, Decmax)
+                                                                                    dbName, fieldType, nside,
+                                                                                    RAmin, RAmax,
+                                                                                    Decmin, Decmax,
+                                                                                    field)
+        if self.fieldType == 'WFD':
+            self.outName['WFD'] = '{}/{}_{}_nside_{}_{}_{}_{}_{}.npy'.format(self.outDir,
+                                                                             dbName, fieldType, nside,
+                                                                             RAmin, RAmax,
+                                                                             Decmin, Decmax)
 
         # if the files already exist -> do not re-process it
 
@@ -218,9 +218,12 @@ class procObsPixels:
         plt.plot(observations['fieldRA'], observations['fieldDec'], 'ko')
         plt.show()
         """
+        #idx = observations['observationId'] == 1582202
+        #observations = observations[idx]
+
         return observations, patches
 
-    def multiprocess(self, patches, observations):
+    def multiprocess_deprecated(self, patches, observations):
         """
         Method to process data using multiprocessing
 
@@ -295,7 +298,7 @@ class procObsPixels:
 
         """
 
-        #print('processing area', j, pointings)
+        print('processing area', j, len(pointings))
 
         time_ref = time.time()
         ipoint = 1
@@ -312,7 +315,7 @@ class procObsPixels:
             # get the pixels
             pixels = datapixels(observations, pointing['RA'], pointing['Dec'],
                                 pointing['radius_RA'], pointing['radius_Dec'], self.nodither, display=False)
-            pixels['fieldName'] = pointing['fieldName']
+            #print('eee', pointing)
 
             """
             import matplotlib.pyplot as plt
@@ -326,10 +329,11 @@ class procObsPixels:
             # print(test)
             sel = pixels
             if pixels is not None:
-
+                if self.fieldType == 'DD':
+                    pixels['fieldName'] = pointing['fieldName']
                 if self.fieldType == 'WFD':
                     # select pixels that are inside the original area
-
+                    pixels['fieldName'] = 'WFD'
                     idx = (pixels['pixRA']-pointing['RA']) >= - \
                         pointing['radius_RA']/2.
                     idx &= (pixels['pixRA']-pointing['RA']
@@ -425,6 +429,7 @@ else:
         r, names=['RAmin', 'RAmax', 'Decmin', 'Decmax'])
 
 
+print('patches', patches)
 df_tot = pd.DataFrame()
 if opts.fieldType == 'WFD':
     for patch in patches:
