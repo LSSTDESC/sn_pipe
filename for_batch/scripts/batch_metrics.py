@@ -8,7 +8,7 @@ import pandas as pd
 def go_for_batch(toproc, splitSky,
                  outDir, metricName,
                  nodither, nside, band,
-                 pixelmap_dir, npixels, proxy_level,zmin,zmax,zStep,daymaxStep,zlim_coeff):
+                 pixelmap_dir, npixels, proxy_level,zmin,zmax,zStep,daymaxStep,zlim_coeff,select_epochs,n_bef,n_aft):
     """
     Function to prepare and start batches
 
@@ -66,7 +66,7 @@ def go_for_batch(toproc, splitSky,
             batchclass(dbName, dbDir, dbExtens, 'run_scripts/metrics/run_metrics',
                        outDir, 8, 1, metricName, toproc,
                        nodither, nside, fieldType, RADec, band,
-                       pixelmap_dir, npixels,npixels,ira,proxy_level)
+                       pixelmap_dir, npixels,npixels,ira,proxy_level,select_epochs,n_bef,n_aft)
 
     else:
         # second case: there are pixelmaps available -> run on them
@@ -85,7 +85,7 @@ def go_for_batch(toproc, splitSky,
         print('aooo',npixels)
         if npixels > 0:
             for val in skyMap:
-                search_path = '{}/{}/{}_{}_nside_{}_{}_{}_{}_{}_WFD.npy'.format(
+                search_path = '{}/{}/{}_{}_nside_{}_{}_{}_{}_{}.npy'.format(
                     pixelmap_dir, dbName, dbName, fieldType, nside, val['RAmin'], val['RAmax'], val['Decmin'], val['Decmax'])
                 ffi = glob.glob(search_path)
                 if len(ffi) == 0:
@@ -100,7 +100,7 @@ def go_for_batch(toproc, splitSky,
         RADec_sky = None
         for io,val in enumerate(skyMap):
             # get the number of pixels for this map
-            search_path = '{}/{}/{}_{}_nside_{}_{}_{}_{}_{}_WFD.npy'.format(
+            search_path = '{}/{}/{}_{}_nside_{}_{}_{}_{}_{}.npy'.format(
                 pixelmap_dir, dbName, dbName, fieldType, nside, val['RAmin'], val['RAmax'], val['Decmin'], val['Decmax'])
             ffi = glob.glob(search_path)
             if len(ffi) == 0:
@@ -128,7 +128,7 @@ def go_for_batch(toproc, splitSky,
                            nodither, nside, zmin,zmax,
                            zStep,daymaxStep,zlim_coeff,fieldType,RADec, band=band,
                            pixelmap_dir=pixelmap_dir, npixels=npixel_proc,
-                           proxy_level=proxy_level, npixels_tot=npixels, ibatch=io)
+                           proxy_level=proxy_level, npixels_tot=npixels, ibatch=io,select_epochs=select_epochs,n_bef=n_bef,n_aft=n_aft)
         if 'SNR' in metricName or 'SL' in metricName:
             batchclass(dbName, dbDir, dbExtens, 'run_scripts/metrics/run_metrics',
                        outDir, 8, 1, metricName, toproc,
@@ -146,7 +146,7 @@ class batchclass:
                  RADec=None, band='',
                  pixelmap_dir='', 
                  npixels=0, npixels_tot=0,
-                 ibatch=0,proxy_level=-1):
+                 ibatch=0,proxy_level=-1,select_epochs=1,n_bef=3,n_aft=8):
         """
         class to prepare and launch batches
 
@@ -214,6 +214,9 @@ class batchclass:
         self.zStep = zStep
         self.daymaxStep = daymaxStep
         self.zlim_coeff = zlim_coeff
+        self.select_epochs = select_epochs
+        self.n_bef = n_bef
+        self.n_aft = n_aft
 
         dirScript, name_id, log, errlog = self.prepareOut(ibatch)
 
@@ -291,8 +294,8 @@ class batchclass:
         for key, vals in dict_batch.items():
             script.write("#SBATCH {} {} \n".format(key,vals))
 
-        script.write('. \"/pbs/throng/lsst/users/gris/anaconda3/etc/profile.d/conda.sh\"'+'\n')
-        script.write('conda activate myenv'+'\n')
+        #script.write('. \"/pbs/throng/lsst/users/gris/anaconda3/etc/profile.d/conda.sh\"'+'\n')
+        #script.write('conda activate myenv'+'\n')
         script.write(" cd " + self.cwd + "\n")
         #script.write(" echo 'sourcing setups' \n")
         #script.write(" source setup_release.sh Linux -5\n")
@@ -309,6 +312,7 @@ class batchclass:
         script.close()
         #os.system("sh "+scriptName)
         os.system("sbatch "+scriptName)
+
     def batch_cmd(self, proc, RAmin, RAmax, Decmin, Decmax):
         """
         Method for the batch command
@@ -320,14 +324,13 @@ class batchclass:
 
         """
 
-        cmd = 'python {}.py --dbDir {} --dbName {} --dbExtens {}'.format(
-            self.scriptref, self.dbDir, proc['dbName'], self.dbExtens)
+        cmd = 'python {}.py {} --dbDir {} --dbName {} --dbExtens {}'.format(self.scriptref, self.metric,self.dbDir, proc['dbName'], self.dbExtens)
         cmd += ' --nproc {} --nside {} --simuType {}'.format(
             proc['nproc'], proc['nside'], proc['simuType'])
         cmd += ' --outDir {}'.format(self.outDir)
         cmd += ' --fieldType {}'.format(self.fieldType)
         cmd += ' --saveData {}'.format(self.saveData)
-        cmd += ' --metric {}'.format(self.metric)
+        #cmd += ' --metric {}'.format(self.metric)
         cmd += ' --coadd {}'.format(proc['coadd'])
         if self.nodither != '':
             cmd += ' --nodither {}'.format(self.nodither)
@@ -352,6 +355,9 @@ class batchclass:
             cmd += ' --npixels {}'.format(self.npixels)
         if self.proxy_level > -1:
             cmd += ' --proxy_level {}'.format(self.proxy_level)
+        cmd += ' --select_epochs {}'.format(self.select_epochs)
+        cmd += ' --n_bef {}'.format(self.n_bef)
+        cmd += ' --n_aft {}'.format(self.n_aft)
 
         return cmd
 
@@ -398,6 +404,14 @@ parser.add_option("--daymaxStep", type=float, default=3,
                   help="daymax step for simu [%default]")
 parser.add_option("--zlim_coeff", type=float, default=0.95,
                   help="zlim_coeff for nsn metric[%default]")
+parser.add_option("--select_epochs", type=int, default=1,
+                  help="to select LC shapes according to epochs [%default]")
+parser.add_option("--n_bef", type=int, default=3,
+                  help="n points (epochs) before max [%default]")
+parser.add_option("--n_aft", type=int, default=8,
+                  help="n points (epochs) after max [%default]")
+
+
 opts, args = parser.parse_args()
 
 print('Start processing...')
@@ -421,7 +435,9 @@ zmax = opts.zmax
 zStep = opts.zStep
 daymaxStep = opts.daymaxStep
 zlim_coeff = opts.zlim_coeff
-
+select_epochs = opts.select_epochs
+n_bef = opts.n_bef
+n_aft = opts.n_aft
 
 # toprocess = np.genfromtxt(dbList, dtype=None, names=[
 #                          'dbName', 'simuType', 'nside', 'coadd', 'fieldType', 'nproc'])
@@ -442,5 +458,5 @@ proc  = batchclass(dbDir, dbExtens, scriptref, outDir, nproccomp,
 for index, proc in toprocess.iterrows():
     myproc = go_for_batch(proc, splitSky,
                           outDir,metricName, nodither, nside,
-                          band, pixelmap_dir, npixels, proxy_level,zmin,zmax,zStep,daymaxStep,zlim_coeff)
+                          band, pixelmap_dir, npixels, proxy_level,zmin,zmax,zStep,daymaxStep,zlim_coeff,select_epochs,n_bef,n_aft)
     # break
