@@ -6,8 +6,11 @@ import numpy.lib.recfunctions as rf
 
 
 def summary_plots(df):
+    df['time_budget'] *= 100.
+    df['time_budget_field'] *= 100.
     plot_series(df)
     df['time_budget_rel'] = df['time_budget_field']/df['time_budget']
+    df['time_budget_rel'] *= 100.
     plot_series_fields(df)
     df_noseas = df.groupby(['dbName', 'field', 'family'])[
         'Nfc'].sum().reset_index()
@@ -262,12 +265,12 @@ df['field'] = df['field'].str.split(':', expand=True)[1]
 # plt.show()
 
 # plots per field
-"""
+
 for field in df['field'].unique():
     # field = 'COSMOS'
     plot_field(df, field=field)
 plt.show()
-"""
+
 # Medians over season
 """
 toplot = ['season_length', 'cadence_median']
