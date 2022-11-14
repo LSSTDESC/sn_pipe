@@ -2,7 +2,7 @@ import numpy as np
 import sn_plotter_metrics.cadencePlot as sn_plot
 import sn_plotter_metrics.nsnPlot as nsn_plot
 from sn_tools.sn_io import loopStack
-#import matplotlib.pylab as plt
+# import matplotlib.pylab as plt
 import argparse
 from optparse import OptionParser
 import glob
@@ -17,6 +17,7 @@ import pandas as pd
 import multiprocessing
 import scipy.stats
 from sn_plotter_metrics import plt
+from sn_tools.sn_utils import multiproc
 
 
 def dumpcsv_medcad(metricTot):
@@ -34,17 +35,19 @@ def dumpcsv_medcad(metricTot):
     summary_fields_season = data.groupby(['dbName', 'fieldname', 'season']).agg({'nsn': 'sum',
                                                                                 'zcomp': 'median',
                                                                                  }).reset_index()
-    summary_fields_pixels = data.groupby(['dbName', 'fieldname', 'healpixID']).agg({'nsn': 'sum',
-                                                                                   'zcomp': 'median',
-                                                                                    }).reset_index()
+    if 'healpixID' in data.columns:
+        summary_fields_pixels = data.groupby(['dbName', 'fieldname', 'healpixID']).agg({'nsn': 'sum',
+                                                                                        'zcomp': 'median',
+                                                                                        }).reset_index()
     print(summary)
     print(summary_fields)
     summary.to_csv('metric_summary_DD.csv', index=False)
     summary_fields.to_csv('metric_summary_fields_DD.csv', index=False)
     summary_fields_season.to_csv(
         'metric_summary_fields_season_DD.csv', index=False)
-    summary_fields_pixels.to_csv(
-        'metric_summary_fields_pixels_DD.csv', index=False)
+    if 'healpixID' in data.columns:
+        summary_fields_pixels.to_csv(
+            'metric_summary_fields_pixels_DD.csv', index=False)
     """
     for fieldName in np.unique(sel['fieldname']):
         ij = sel['fieldname'] == fieldName
@@ -156,7 +159,7 @@ def plotAllBinned(ax, metricTot, forPlot=pd.DataFrame(), xp='cadence', yp='nsn_m
     sel = metricTot[idx]
     # plt.plot(sel['cadence'], sel['nsn_med_faint'], 'ko')
     print(sel[['cadence', 'nsn_med_faint']])
-    #fig, ax = plt.subplots(figsize=(10, 10))
+    # fig, ax = plt.subplots(figsize=(10, 10))
     # fig.subplots_adjust(top=0.85)
     dbNames = np.unique(sel['dbName'])
     lsb = dict(zip(dbNames, ['solid', 'dashed', 'dotted',
@@ -374,9 +377,17 @@ class Summary:
         self.pixArea = hp.nside2pixarea(nside, degrees=True)
         x1_colors = [(-2.0, 0.2), (0.0, 0.0)]
         self.corr = dict(zip(x1_colors, ['faint', 'medium']))
-        self.data = self.process_loop(dirFile, metricName, fieldType, fieldNames,
-                                      nside, forPlot).to_records()
+        # self.data = self.process_loop(dirFile, metricName, fieldType, fieldNames,
+        #                              nside, forPlot).to_records()
 
+        params = {}
+        params['dirFile'] = dirFile
+        params['metricName'] = metricName
+        params['fieldType'] = fieldType
+        params['fieldNames'] = fieldNames
+        params['nside'] = nside
+
+        self.data = multiproc(forPlot['dbName'], params, self.process, nproc=8)
         """
         self.data = Match_DD(fields_DD, df).to_records()
         """
@@ -386,87 +397,13 @@ class Summary:
         # else:
         #    self.data = np.load(outName, allow_pickle=True)
 
-    def process_loop(self, dirFile, metricName, fieldType, fieldNames, nside, forPlot, nproc=8):
-        """
-        Method to loop on all the files and process the data
+    def process(self, dbNames, params, j=0, output_q=None):
 
-        Parameters
-        --------------
-        dirFile: str
-          directory of the files to process
-        metricName: str, opt
-          name of the metric to consider (default: NSN)
-        fieldType: str,opt
-          field type to consider (default: DD)
-        nside: int, opt
-          nside healpix parameter (default: 128)
-        forPlot: pandas df, opt
-          list of cadences to process and associated plot parameters (default: empty df)
-
-        Returns
-        ----------
-        pandas df with the following cols:
-         pixRA: RA of the sn pixel location
-         pixDec: Dec of the sn pixel location
-         healpixID: healpixID of the sn pixel location
-         season: season number
-         status:  status of the processing
-         zlim_faint: redshift limit for faint sn
-         nsn_zfaint:  number of sn with z<= zfaint
-         nsn_med_zfaint: number of medium sn with z<= zfaint
-         zlim_medium: redshift limit for medium sn
-         nsn_zmedium: number of sn with z<= zmedium
-         nsn_med_zmedium: number of medium sn with z<= zmedium
-         cadence: cadence name
-
-        """
-
-        nz = len(forPlot['dbName'])
-        t = np.linspace(0, nz, nproc+1, dtype='int')
-        # print('multi', nz, t)
-        result_queue = multiprocessing.Queue()
-        """
-        self.process(dirFile, dbName, metricName,
-                               fieldType, fieldNames, nside)
-        """
-        procs = [multiprocessing.Process(name='Subprocess-'+str(j), target=self.process,
-                                         args=(dirFile, forPlot['dbName'][t[j]:t[j+1]], metricName,
-                                               fieldType, fieldNames, nside, j, result_queue))
-                 for j in range(nproc)]
-
-        for p in procs:
-            p.start()
-
-        resultdict = {}
-        # get the results in a dict
-
-        for i in range(nproc):
-            resultdict.update(result_queue.get())
-
-        for p in multiprocessing.active_children():
-            p.join()
-
-        restot = pd.DataFrame()
-
-        # gather the results
-        for key, vals in resultdict.items():
-            restot = pd.concat((restot, vals), sort=False)
-
-        return restot
-        """
-        metricTot = None
-
-        df = pd.DataFrame()
-
-        for dbName in forPlot['dbName']:
-            dfi = self.process(dirFile, dbName, metricName,
-                               fieldType, fieldNames, nside)
-            df = pd.concat([df, dfi], sort=False)
-
-        return df
-        """
-
-    def process(self, dirFile, dbNames, metricName, fieldType, fieldNames, nside, j=0, output_q=None):
+        dirFile = params['dirFile']
+        metricName = params['metricName']
+        fieldType = params['fieldType']
+        fieldNames = params['fieldNames']
+        nside = params['nside']
 
         restot = pd.DataFrame()
         for dbName in dbNames:
@@ -518,9 +455,14 @@ class Summary:
           cadence: cadence name
 
         """
-
-        search_path = '{}/{}/{}_{}/*{}Metric_{}*_nside_{}_*.hdf5'.format(
-            dirFile, dbName, metricName,  fieldName, metricName, fieldType, nside)
+        print('ici', fieldType)
+        if fieldType == 'DD':
+            search_path = '{}/{}/{}_{}/*{}Metric_{}*_nside_{}_*.hdf5'.format(
+                dirFile, dbName, metricName,  fieldName, metricName, fieldType, nside)
+        if fieldType == 'WFD':
+            print('jjjjjjjjjjjjjjjjjjjjjjjjj')
+            search_path = '{}/{}/{}/*{}Metric_{}*_nside_{}_*.hdf5'.format(
+                dirFile, dbName, metricName, metricName, fieldType, nside)
         print('looking for', search_path)
         vars = ['pixRA', 'pixDec', 'healpixID', 'season', 'status']
         # vars = ['healpixID', 'season']
@@ -564,6 +506,54 @@ class Summary:
 
         return finaldf
         """
+
+
+def get_dist(data, pixRA_mean=-1, pixDec_mean=-1):
+    """
+    Function to estimate the distance dist = sqrt((deltaRA*cos(Dec))**2+deltaDec**2)
+
+    Parameters
+    ---------------
+    data: pandas df
+      data to process
+
+    Returns
+    ----------
+    pandas df with dist col
+
+    """
+    if pixRA_mean == -1:
+        pixRA_mean = np.mean(data['pixRA'])
+        pixDec_mean = np.mean(data['pixDec'])
+    data['dist'] = np.sqrt(((data['pixRA']-pixRA_mean)*np.cos(np.deg2rad(data['pixDec'])))**2
+                           + (data['pixDec']-pixDec_mean)**2)
+    data['pixRA_mean'] = pixRA_mean
+    data['pixDec_mean'] = pixDec_mean
+
+    return data
+
+
+def zcomp_frac(grp, frac=0.9):
+
+    selfi = get_dist(grp)
+    nmax = np.max(selfi['nsn'])
+    idx = selfi['nsn'] <= frac*nmax
+
+    dist_cut = np.min(selfi[idx]['dist'])
+    idd = selfi['dist'] <= dist_cut
+
+    zcomp = np.median(selfi[idd]['zcomp'])
+    nsn = np.sum(grp['nsn'])
+
+    return pd.DataFrame({'nsn': [nsn], 'zcomp': [zcomp]})
+
+
+def zcomp_weighted(grp):
+
+    nsn = np.sum(grp['nsn'])
+    zcomp = np.sum(grp['nsn']*grp['zcomp'])/nsn
+
+    return pd.DataFrame({'nsn': [nsn], 'zcomp': [zcomp]})
 
 
 parser = OptionParser(
@@ -625,7 +615,7 @@ metricTot_med = None
 
 
 metricTot = Summary(dirFile, metricName,
-                    'DD', fieldNames, nside, forPlot, outName).data
+                    fieldType, fieldNames, nside, forPlot, outName).data
 
 # figs 6 and 7
 """
@@ -660,6 +650,8 @@ print('oo', np.unique(
 # nsn_plot.plot_DDArea(metricTot, forPlot, sntype='faint')
 
 df = pd.DataFrame(np.copy(metricTot))
+print('jj', type(metricTot), metricTot.columns)
+df = metricTot
 var = 'nsn_med_faint'
 varz = 'zlim_faint'
 var = 'nsn'
@@ -680,10 +672,30 @@ for i, row in ssel.iterrows():
 idx = metricTot[var] > 0.
 idx &= metricTot[varz] > 0.
 
-dumpcsv_medcad(metricTot[idx])
+metricPlot = metricTot[idx]
+
+print(metricPlot.columns)
+# estimate new zcomp (for the plot)
+
+# metricPlot = metricPlot.groupby(['dbName', 'season', 'fieldname']).apply(
+#    lambda x: zcomp_weighted(x)).reset_index()
+
+#metricPlot = tt.to_records(index=False)
+dumpcsv_medcad(metricPlot)
 # print(test)
-nsn_plot.plot_DDSummary(metricTot[idx], forPlot, sntype=snType,
-                        fieldNames=fieldNames, nside=nside, figtit=opts.fieldNames)
+# nsn_plot.plot_DDSummary(metricPlot, forPlot, sntype=snType,
+#                        fieldNames=fieldNames, nside=nside, figtit=opts.fieldNames)
+
+summary = metricPlot.groupby(['dbName']).agg({'nsn': 'sum',
+                                              'zcomp': 'median',
+                                              }).reset_index()
+
+# summary = metricPlot.groupby(['dbName']).apply(
+#    lambda x: zcomp_weighted(x)).reset_index()
+
+
+nsn_plot.plotNSN(summary, forPlot, varx='zcomp', vary='nsn',
+                 legx='${z_{\mathrm{complete}}}$', legy='N$_{\mathrm{SN}} (z<z_{\mathrm{complete}})}$', figtit=opts.fieldNames)
 
 
 # nsn_plot.plot_DD_Moll(metricTot, 'ddf_dither0.00_v1.7_10yrs', 1, 128)
