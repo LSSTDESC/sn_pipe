@@ -152,6 +152,14 @@ def plot_2D(selfi, whatx='dist', legx='radius [deg]', whaty='cadence_mean', legy
     ax.grid()
 
 
+def getVal(selfi, whatx='dist', whaty='nsn', frac=0.9):
+
+    nmax = np.max(selfi[whaty])
+    idx = selfi[whaty] <= frac*nmax
+
+    return np.min(selfi[idx][whatx])
+
+
 def plot_cumsum(selfi, whatx='dist', legx='radius [deg]', figtitle='', fig=None, ax=None, color='k', marker='o', mfc='k', sort=True):
     """
     Method to plot 2D variables
@@ -189,21 +197,21 @@ def plot_cumsum(selfi, whatx='dist', legx='radius [deg]', figtitle='', fig=None,
     selfi = selfi.fillna(0.0)
     print(selfi[['dist', 'healpixID']])
 
-    bins = np.arange(0., 2.5, 0.01)
-    group = selfi.groupby(pd.cut(selfi['dist'], bins))
+    ntot = np.sum(selfi['nsn'])
+    bins = np.arange(0.1, 2.5, 0.1)
+    r = []
+    for bb in bins:
+        bbi = [0., bb]
+        group = selfi.groupby(pd.cut(selfi['dist'], bbi))
+        print('group', group)
+        for group_name, df_group in group:
+            r.append(np.sum(df_group['nsn'])/ntot)
 
-    print('group', group)
-    for group_name, df_group in group:
-        print(group_name, df_group)
+    print(r)
 
-    plot_centers = (bins[:-1] + bins[1:])/2
-    plot_values = np.sum(group['nsn'])/np.sum(selfi['nsn'])
-    print(plot_values)
-    print(test)
-    cumsum = np.cumsum(selfi[whatx].to_list())
-    print('lll', cumsum)
-    ax.plot(selfi[whatx], cumsum/cumsum[-1],
-            color=color, marker=marker, mfc=mfc)
+    #plot_centers = (bins[:-1] + bins[1:])/2
+
+    ax.plot(bins, r, color=color, marker=marker, mfc=mfc)
     ax.set_xlabel(legx)
     ax.grid()
 
@@ -309,19 +317,27 @@ for io, db in enumerate(dbName):
     # get distance
     selfi = get_dist(df[idx])
     plot_2D(selfi, figtitle=suptit, fig=fig, ax=ax, mfc='None')
-    plot_cumsum(selfi, mfc='None')
     mmet = get_dist(metricValues[idxb], pixRA_mean=np.mean(
         selfi['pixRA_mean']), pixDec_mean=np.mean(selfi['pixDec_mean']))
-    plot_cumsum(mmet, whatx='zcomp', legx='$z_{complete}$', mfc='None')
-    plot_cumsum(mmet, whatx='nsn', legx='$N_{SN}$', mfc='None')
-    """
+
     plot_2D(mmet, whaty='nsn', legy='N$_{SN}$',
             figtitle=suptit, fig=fig, ax=ax.twinx(), color='b', marker='s', mfc='None')
+    dist_cut = getVal(mmet)
+    print('dist_cut', dist_cut)
+    idd = mmet['dist'] <= dist_cut
+    print('vv', np.median(mmet['zcomp']), np.median(mmet[idd]['zcomp']))
     """
     plot_2D(mmet, whaty='zcomp', legy='$z_{complete}$',
             figtitle=suptit, fig=fig, ax=ax.twinx(), color='b', marker='s', mfc='None')
+    """
+    #plot_cumsum(mmet, whatx='nsn', legx='$N_{SN}$', mfc='None')
+    """
+    plot_cumsum(selfi, mfc='None')
 
-    print('median', mmet['zcomp'].median())
+    plot_cumsum(mmet, whatx='zcomp', legx='$z_{complete}$', mfc='None')
+    plot_cumsum(mmet, whatx='nsn', legx='$N_{SN}$', mfc='None')
+    """
+
     """
     plot_Hist(df[idx], figtitle=suptit)
     print(np.unique(df[idx]['filter_alloc']))
