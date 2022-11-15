@@ -13,7 +13,7 @@ def bbatch(scriptref,params,fieldNames,mem='20G'):
         params['fieldName'] = fieldName
         mybatch.add_batch(scriptref, params)
 
-    #mybatch.go_batch()
+    mybatch.go_batch()
     
     
 parser = OptionParser()
