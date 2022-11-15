@@ -5,15 +5,15 @@ from sn_tools.sn_batchutils import BatchIt
 
 dict_filter = lambda x, y: dict([ (i,x[i]) for i in x if i in set(y) ])
 
-def bbatch(scriptref,params,fieldNames):
+def bbatch(scriptref,params,fieldNames,mem='20G'):
 
     processName = 'metric_DD_{}'.format(params['dbName'])
-    mybatch = BatchIt(processName=processName)
+    mybatch = BatchIt(processName=processName,mem=mem)
     for fieldName in fieldNames:
         params['fieldName'] = fieldName
         mybatch.add_batch(scriptref, params)
 
-    mybatch.go_batch()
+    #mybatch.go_batch()
     
     
 parser = OptionParser()
