@@ -143,7 +143,7 @@ def plot_2D(selfi, whatx='dist', legx='radius [deg]', whaty='cadence_mean', legy
     if sort:
         selfi = selfi.sort_values(by=['dist'])
     selfi = selfi.fillna(0.0)
-    print(selfi[['dist', 'healpixID']])
+    print(selfi[['dist', 'healpixID']][:5])
 
     ax.plot(selfi[whatx], selfi[whaty], color=color, marker=marker, mfc=mfc)
     ax.set_xlabel(legx)
@@ -268,6 +268,24 @@ def load_metric(dirFile, dbName, metricName, fieldName, nside):
     return metricValues
 
 
+def check_pixel(data, hpix):
+    """
+    Function to check if hpix is in data
+
+    Parameters
+    ---------------
+    data: pandas df
+      data to process
+    hpix: int
+      healpix id
+
+    """
+
+    idx = data['healpixID'] == hpix
+
+    print('result for', hpix, data[idx])
+
+
 parser = OptionParser()
 
 parser.add_option("--dbName", type=str, default='alt_sched',
@@ -302,6 +320,7 @@ print(df.columns)
 for io, db in enumerate(dbName):
     # loading metric results
     metricValues = load_metric(dbDir, db, metric, field[io], nside)
+    check_pixel(metricValues, hpix=109033)
     idx = metricValues['zcomp'] > 0.
     metricValues = metricValues[idx]
     idx = df['dbName'] == db
@@ -322,15 +341,16 @@ for io, db in enumerate(dbName):
 
     plot_2D(mmet, whaty='nsn', legy='N$_{SN}$',
             figtitle=suptit, fig=fig, ax=ax.twinx(), color='b', marker='s', mfc='None')
-    dist_cut = getVal(mmet)
-    print('dist_cut', dist_cut)
-    idd = mmet['dist'] <= dist_cut
-    print('vv', np.median(mmet['zcomp']), np.median(mmet[idd]['zcomp']))
     """
     plot_2D(mmet, whaty='zcomp', legy='$z_{complete}$',
             figtitle=suptit, fig=fig, ax=ax.twinx(), color='b', marker='s', mfc='None')
     """
-    #plot_cumsum(mmet, whatx='nsn', legx='$N_{SN}$', mfc='None')
+    dist_cut = getVal(mmet)
+    print('dist_cut', dist_cut)
+    idd = mmet['dist'] <= dist_cut
+    print('vv', np.median(mmet['zcomp']), np.median(mmet[idd]['zcomp']))
+
+    plot_cumsum(mmet, whatx='nsn', legx='$N_{SN}$', mfc='None')
     """
     plot_cumsum(selfi, mfc='None')
 

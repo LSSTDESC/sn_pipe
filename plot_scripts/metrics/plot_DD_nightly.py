@@ -26,7 +26,8 @@ data = np.load('{}/{}'.format(dbDir, dbName))
 
 # select DDF and night
 idx = data['note'] == field
-idx &= data['night'] == night
+if night >= 0:
+    idx &= data['night'] == night
 ddf = data[idx]
 print(np.unique(ddf['note']))
 # plot
@@ -37,9 +38,9 @@ figtit = '{} - night {}'.format(field.split(':')[1], int(night))
 figtit += '\n {}'.format(dbName)
 fig.suptitle(figtit)
 
-ax.plot(ddf['mjd'], ddf['band'], 'ko', mfc='None')
+ax.plot(ddf['mjd'], ddf['airmass'], 'ko', mfc='None')
 
 ax.set_xlabel('MJD [days]')
-ax.set_ylabel('Filter')
+ax.set_ylabel('altitude')
 ax.grid()
 plt.show()
