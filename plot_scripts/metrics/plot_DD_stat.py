@@ -411,6 +411,8 @@ for field in ['COSMOS']:
         selm = metric[idc]
         plot_field(selm, yvars=['nsn', 'zcomp'], ylab=[
                    'N$_{SN}$', '$z_{complete}$'], title='{} metrics'.format(field))
+        plot_field(selm, yvars=['time_budget_field_season', 'zcomp'], ylab=[
+                   'Time budget [%]', '$z_{complete}$'], title='{} metrics'.format(field))
 print(metric['field'].unique())
 metric_field = metric.groupby(['dbName', 'field', 'family', 'marker', 'color']).agg({'nsn': 'sum',
                                                                                      'zcomp': 'median',
