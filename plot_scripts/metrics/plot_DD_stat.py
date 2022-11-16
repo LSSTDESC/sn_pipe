@@ -1,8 +1,117 @@
 import pandas as pd
 from sn_plotter_metrics import plt
 import numpy as np
-from sn_plotter_metrics.utils import Infos, Simu
+from sn_plotter_metrics.utils import Infos, Simu, get_dist
 import numpy.lib.recfunctions as rf
+from optparse import OptionParser
+
+
+def zcomp_frac(grp, frac=0.95):
+
+    selfi = get_dist(grp)
+    nmax = np.max(selfi['nsn'])
+    idx = selfi['nsn'] <= frac*nmax
+
+    dist_cut = np.min(selfi[idx]['dist'])
+    idd = selfi['dist'] <= dist_cut
+
+    zcomp = np.median(selfi[idd]['zcomp'])
+    nsn = np.sum(grp['nsn'])
+
+    return pd.DataFrame({'nsn': [nsn], 'zcomp': [zcomp]})
+
+
+def sel(df, season=1, field='COSMOS'):
+
+    idx = df['season'] == season
+    idx &= df['field'] == field
+
+    return df[idx]
+
+
+def merge_with_pointing(metric, pointings):
+
+    metric_season = metric.groupby(['dbName', 'fieldname', 'season']).apply(
+        lambda x: zcomp_frac(x)).reset_index()
+
+    # metric_season = metric.groupby(['dbName', 'fieldname', 'season']).agg({'nsn': 'sum',
+    #                                                                       'zcomp': 'median',
+    #                                                                       }).reset_index()
+
+    print(metric_season[['season', 'nsn']])
+    print(sel(pointings))
+    metric_merged = pointings.merge(metric_season, left_on=['dbName', 'field', 'season'], right_on=[
+        'dbName', 'fieldname', 'season'], how='outer')
+
+    print(sel(metric_merged))
+    io = metric_merged['season'] > 0
+    metric_merged = metric_merged[io]
+
+    ii = metric_merged['field'].isna()
+    metric_merged = metric_merged[~ii]
+    # print(test)
+    print('before', metric_merged['field'].unique(),
+          metric_merged['fieldname'].unique())
+    metric_merged = metric_merged.fillna(0.)
+    print('after', metric_merged['field'].unique(),
+          metric_merged['fieldname'].unique())
+
+    return metric_merged
+
+
+def load_metric(dirFile, dbNames, metricName,
+                fieldType, fieldNames, nside):
+
+    from sn_plotter_metrics.utils import MetricValues
+    metric = MetricValues(dirFile, dbNames, metricName,
+                          fieldType, fieldNames, nside).data
+    var, varz = 'nsn', 'zcomp'
+    idx = metric[var] > 0.
+    idx &= metric[varz] > 0.
+
+    metricPlot = metric[idx]
+    bad = metric[~idx]
+    bad['nsn'] = 0.
+    bad['zcomp'] = 0.
+    metricPlot = pd.concat((metricPlot, bad))
+    return metricPlot
+
+
+def complete_pointing(df, dfgroup):
+    """
+    function to merge two df, make some cleaning, ...
+
+    Parameters
+    ---------------
+    df: pandas df
+      first pandas df
+    dfgroup: pandas df
+      second pandas df
+
+    Returns
+    ------------
+    modified merged df
+
+    """
+    df = df.merge(dfgroup[['dbName', 'group', 'marker', 'color']],
+                  left_on=['dbName'], right_on=['dbName'])
+
+    df['family'] = df['group']
+
+    # strip db Name
+    df['family'] = df['family'].str.split('_v2.1_10yrs', expand=True)[0]
+
+    # uniformity of DD names
+
+    torep = dict(zip(['ECDFS', 'EDFS, a', 'EDFS, b', 'EDFS_a', 'EDFS_b', 'XMM_LSS'], [
+        'CDFS', 'EDFSa', 'EDFSb', 'EDFSa', 'EDFSb', 'XMM-LSS']))
+
+    for key, vals in torep.items():
+        df['field'] = df['field'].str.replace(
+            key, vals)
+    df['field'] = df['field'].str.split(':', expand=True)[1]
+
+    return df
 
 
 def summary_plots(df):
@@ -170,7 +279,7 @@ def plot_night(df, dbName, field):
     plt.show()
 
 
-def plot_indiv(data, dbName, field='COSMOS', fig=None, ax=None, xvars=['season', 'season'], xlab=['Season', 'Season'], yvars=['season_length', 'cadence_mean'], ylab=['Season length [days]', 'Mean Cadence [days]'], label='', color='k', marker='.', mfc='k'):
+def plot_indiv(data, dbName, fig=None, ax=None, xvars=['season', 'season'], xlab=['Season', 'Season'], yvars=['season_length', 'cadence_mean'], ylab=['Season length [days]', 'Mean Cadence [days]'], label='', color='k', marker='.', mfc='k'):
 
     print('hhhhhh', data.columns)
 
@@ -178,14 +287,13 @@ def plot_indiv(data, dbName, field='COSMOS', fig=None, ax=None, xvars=['season',
         fig, ax = plt.subplots(nrows=2, ncols=1, figsize=(12, 8))
         fig.suptitle('{} pointings'.format(field))
         fig.subplots_adjust(hspace=0.02)
-    idx = data['field'] == field
-    sel = data[idx]
+
     # dbName = sel['dbName'].unique()[0]
     # field = sel['field'].unique()[0]
     # fig.suptitle('{} \n {} pointings'.format(dbName, field))
 
     for io, vv in enumerate(xvars):
-        ax[io].plot(sel[vv], sel[yvars[io]], label=label,
+        ax[io].plot(data[vv], data[yvars[io]], label=label,
                     marker=marker, mfc=mfc, color=color)
         ax[io].set_ylabel(ylab[io])
         if io == 0:
@@ -204,9 +312,10 @@ def get_list(tt):
     return r
 
 
-def plot_field(df, field='COSMOS'):
+def plot_field(df, xvars=['season', 'season'], xlab=['Season', 'Season'], yvars=['season_length', 'cadence_mean'], ylab=['Season length [days]', 'Mean Cadence [days]'], title=''):
+
     fig, ax = plt.subplots(nrows=2, ncols=1, figsize=(14, 8))
-    fig.suptitle('{} pointings'.format(field))
+    fig.suptitle(title)
     fig.subplots_adjust(hspace=0.02, right=0.75)
     colors = ['k', 'r', 'b', 'g']
     for dbName in df['dbName'].unique():
@@ -215,7 +324,7 @@ def plot_field(df, field='COSMOS'):
         family = sel['family'].unique()[0]
         marker = sel['marker'].unique()[0]
         color = sel['color'].unique()[0]
-        plot_indiv(sel, dbName, field=field, fig=fig, ax=ax,
+        plot_indiv(sel, dbName, fig=fig, ax=ax, xvars=xvars, xlab=xlab, yvars=yvars, ylab=ylab,
                    label=family, marker=marker, color=color, mfc='None')
 
     ax[0].legend(bbox_to_anchor=(1., 0.5), ncol=1, frameon=False)
@@ -237,28 +346,53 @@ def plot_filter_alloc(flat, family, field):
     plot_series(sel, title=tit, varx='filter_alloc', what=toplot, leg=leg)
 
 
-configGroup = 'DD_fbs_2.99_plot.csv'
-dfgroup = pd.read_csv(configGroup, comment='#')
+parser = OptionParser(
+    description='Display correlation plots between (NSN,zlim) metric results for DD fields and the budget')
+parser.add_option("--dirFile", type="str",
+                  default='../MetricOutput_DD_new_128_gnomonic_circular',
+                  help="file directory [%default]")
+parser.add_option("--nside", type="int", default=128,
+                  help="nside for healpixels [%default]")
+parser.add_option("--fieldType", type="str", default='DD',
+                  help="field type - DD, WFD, Fake [%default]")
+parser.add_option("--dbList", type="str", default='List.csv',
+                  help="list of cadences to display[%default]")
+parser.add_option("--fieldNames", type="str", default='COSMOS,CDFS,XMM-LSS,ELAISS1,EDFSa,EDFSb,EDFS',
+                  help="fields to process [%default]")
+parser.add_option("--metric", type="str", default='NSNY',
+                  help="metric name [%default]")
+parser.add_option("--pointingFile", type="str", default='Summary_DD_pointings.hdf5',
+                  help="pointing file name [%default]")
+parser.add_option("--configGroup", type="str", default='DD_fbs_2.99_plot.csv',
+                  help="pointing file name [%default]")
+parser.add_option("--addMetric", type=int, default=0,
+                  help="to add metric correlation plots [%default]")
 
-df = pd.read_hdf('Summary_DD_pointings_v2.99.hdf5')
+opts, args = parser.parse_args()
+# Load parameters
+dirFile = opts.dirFile
+dbList = opts.dbList
+nside = opts.nside
+fieldType = opts.fieldType
+metricName = opts.metric
+fieldNames = opts.fieldNames.split(',')
+pointingFile = opts.pointingFile
+configGroup = opts.configGroup
+addMetric = opts.addMetric
 
-df = df.merge(dfgroup[['dbName', 'group', 'marker', 'color']],
-              left_on=['dbName'], right_on=['dbName'])
+dfgroup = pd.read_csv(configGroup, comment='#')  # load list of db+plot infos
+df = pd.read_hdf(pointingFile)  # load pointing data
+df = complete_pointing(df, dfgroup)  # merge pointing data+plot data
 
-df['family'] = df['group']
+metric = pd.DataFrame()
+if addMetric:
+    # load metric data here
+    dbNames = df['dbName'].unique()
+    metric = load_metric(dirFile, dbNames, metricName,
+                         fieldType, fieldNames, nside)
+    metric = merge_with_pointing(metric, df)
 
-# strip db Name
-df['family'] = df['family'].str.split('_v2.1_10yrs', expand=True)[0]
-
-# uniformity of DD names
-
-torep = dict(zip(['ECDFS', 'EDFS, a', 'EDFS, b', 'EDFS_a', 'EDFS_b', 'XMM_LSS'], [
-    'CDFS', 'EDFSa', 'EDFSb', 'EDFSa', 'EDFSb', 'XMM-LSS']))
-
-for key, vals in torep.items():
-    df['field'] = df['field'].str.replace(
-        key, vals)
-df['field'] = df['field'].str.split(':', expand=True)[1]
+print('ahhh', metric)
 
 # summary plots
 # summary_plots(df)
@@ -266,9 +400,27 @@ df['field'] = df['field'].str.split(':', expand=True)[1]
 
 # plots per field
 
-for field in df['field'].unique():
-    # field = 'COSMOS'
-    plot_field(df, field=field)
+# for field in df['field'].unique():
+for field in ['COSMOS']:
+    idx = df['field'] == field
+    sel = df[idx]
+    plot_field(sel, title='{} pointings'.format(field))
+    if addMetric:
+        print(metric.columns)
+        idc = metric['field'] == field
+        selm = metric[idc]
+        plot_field(selm, yvars=['nsn', 'zcomp'], ylab=[
+                   'N$_{SN}$', '$z_{complete}$'], title='{} metrics'.format(field))
+print(metric['field'].unique())
+metric_field = metric.groupby(['dbName', 'field', 'family', 'marker', 'color']).agg({'nsn': 'sum',
+                                                                                     'zcomp': 'median',
+                                                                                     }).reset_index()
+# plot_field(metric_field, xvars=['fieldname', 'fieldname'], xlab=['', ''], yvars=['nsn', 'zcomp'], ylab=[
+#    'N$_{SN}$', '$z_{complete}$'], title='{} metrics'.format(field))
+metric_field['fieldname'] = metric_field['field']
+plot_series_fields(metric_field, title='', varx='family', what=[
+                   'nsn', 'zcomp'], leg=['N$_{SN}$', '$z_{complete}$'])
+
 plt.show()
 
 # Medians over season
