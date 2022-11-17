@@ -10,6 +10,8 @@ import scipy.stats
 from sn_plotter_metrics import plt
 from sn_plotter_metrics.utils import MetricValues
 from sn_plotter_metrics.utils import dumpcsv_medcad, get_dist
+import warnings
+warnings.filterwarnings("ignore", category=RuntimeWarning)
 
 
 def dumpcsv_pixels(metricTot, x1=-2.0, color=0.2, ebvofMW=0.0, snrmin=1.0, error_model=1, errmodrel=0.1, bluecutoff=380., redcutoff=800., simulator='sn_fast', fitter='sn_fast', Nvisits=dict(zip('grizy', [1, 1, 2, 2, 2]))):
@@ -292,15 +294,27 @@ def cadenceTable(metricTot):
 
 def zcomp_frac(grp, frac=0.95):
 
+    nsn = np.sum(grp['nsn'])
     selfi = get_dist(grp)
     nmax = np.max(selfi['nsn'])
+
     idx = selfi['nsn'] <= frac*nmax
 
-    dist_cut = np.min(selfi[idx]['dist'])
-    idd = selfi['dist'] <= dist_cut
+    res = selfi[idx]
+    if len(res) > 0:
+        dist_cut = np.min(res['dist'])
+        idd = selfi['dist'] <= dist_cut
+        zcomp = np.median(selfi[idd]['zcomp'])
+    else:
+        zcomp = np.median(selfi['zcomp'])
 
-    zcomp = np.median(selfi[idd]['zcomp'])
-    nsn = np.sum(grp['nsn'])
+    """
+    print('zcomp_frac', grp.name, dist_cut,
+              nmax, selfi[['zcomp', 'nsn', 'dist']])
+    fig, ax = plt.subplots()
+    ax.plot(selfi['dist'], selfi['nsn'], 'ko')
+    plt.show()
+    """
 
     return pd.DataFrame({'nsn': [nsn], 'zcomp': [zcomp]})
 
@@ -309,6 +323,27 @@ def zcomp_weighted(grp):
 
     nsn = np.sum(grp['nsn'])
     zcomp = np.sum(grp['nsn']*grp['zcomp'])/nsn
+
+    return pd.DataFrame({'nsn': [nsn], 'zcomp': [zcomp]})
+
+
+def zcomp_cumsum(grp, frac=0.95):
+
+    xvar, yvar = 'zcomp', 'nsn'
+    nsn = np.sum(grp[yvar])
+    from scipy.interpolate import interp1d
+
+    selp = grp.sort_values(by=[xvar], ascending=False)
+    print('ee', grp.name, selp[[xvar, yvar]])
+    if len(selp) >= 2:
+        cumulnorm = np.cumsum(selp[yvar])/np.sum(selp[yvar])
+        interp = interp1d(
+            cumulnorm, selp[xvar], bounds_error=False, fill_value=0.)
+        zcompl = interp(frac)
+        io = selp[xvar] >= zcompl
+        zcomp = np.median(selp[io][xvar])
+    else:
+        zcomp = np.median(selp[xvar])
 
     return pd.DataFrame({'nsn': [nsn], 'zcomp': [zcomp]})
 
@@ -406,8 +441,8 @@ print('oo', np.unique(
 # fieldNames = ['COSMOS']
 # nsn_plot.plot_DDArea(metricTot, forPlot, sntype='faint')
 
-#df = pd.DataFrame(np.copy(metricTot))
-#print('jj', type(metricTot), metricTot.columns)
+# df = pd.DataFrame(np.copy(metricTot))
+# print('jj', type(metricTot), metricTot.columns)
 df = metricTot
 var = 'nsn'
 varz = 'zcomp'
@@ -435,7 +470,7 @@ print(metricPlot.columns)
 # metricPlot = metricPlot.groupby(['dbName', 'season', 'fieldname']).apply(
 #    lambda x: zcomp_weighted(x)).reset_index()
 
-#metricPlot = tt.to_records(index=False)
+# metricPlot = tt.to_records(index=False)
 dumpcsv_medcad(metricPlot)
 # print(test)
 # nsn_plot.plot_DDSummary(metricPlot, forPlot, sntype=snType,
@@ -445,12 +480,17 @@ summary = metricPlot.groupby(['dbName']).agg({'nsn': 'sum',
                                               'zcomp': 'median',
                                               }).reset_index()
 
-summary = metricPlot.groupby(['dbName', 'fieldname', 'season']).apply(
+
+summary_season = metricPlot.groupby(['dbName', 'fieldname', 'season']).apply(
     lambda x: zcomp_frac(x)).reset_index()
 
-summary = summary.groupby(['dbName']).agg({'nsn': 'sum',
-                                           'zcomp': 'median',
-                                           }).reset_index()
+# print(test)
+summary_field = summary_season.groupby(['dbName', 'fieldname']).apply(
+    lambda x: zcomp_cumsum(x)).reset_index()
+
+summary = summary_field.groupby(['dbName']).agg({'nsn': 'sum',
+                                                 'zcomp': 'median',
+                                                 }).reset_index()
 
 nsn_plot.plotNSN(summary, forPlot, varx='zcomp', vary='nsn',
                  legx='${z_{\mathrm{complete}}}$', legy='N$_{\mathrm{SN}} (z<z_{\mathrm{complete}})}$', figtit=opts.fieldNames)

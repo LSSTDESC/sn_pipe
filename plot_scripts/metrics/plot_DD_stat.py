@@ -227,7 +227,6 @@ def plot_series_fields(df, title='', varx='family', what=['time_budget_field', '
         for io, field in enumerate(np.unique(df['field'])):
             idx = df['field'] == field
             sel = df[idx]
-            print('aoooouuu', field)
             plot_vs_OS(sel, varx=varx, vary=vv,
                        legy=leg[i], title=title, fig=fig, ax=ax, ls=ls[io], label='{}'.format(field), marker=marker[io], mfc='None', color=colors[io])
         ax.legend(bbox_to_anchor=(0.5, 1.17), ncol=3,
@@ -346,6 +345,27 @@ def plot_filter_alloc(flat, family, field):
     plot_series(sel, title=tit, varx='filter_alloc', what=toplot, leg=leg)
 
 
+def plot_cumsum(selb, xvar='zcomp', yvar='nsn', ascending=False):
+
+    fig, ax = plt.subplots(figsize=(12, 8))
+    from scipy.interpolate import interp1d
+    # fig.suptitle(title)
+    fig.subplots_adjust(bottom=0.20)
+    for dbName in selb['dbName'].unique():
+        idx = selb['dbName'] == dbName
+        selp = selb[idx]
+        selp = selp.sort_values(by=[xvar], ascending=ascending)
+        cumulnorm = np.cumsum(selp[yvar])/np.sum(selp[yvar])
+        ax.plot(selp[xvar], cumulnorm, linestyle='None', marker='o')
+        interp = interp1d(
+            cumulnorm, selp[xvar], bounds_error=False, fill_value=0.)
+        zcomp = interp(0.95)
+        io = selp[xvar] >= zcomp
+        print('zcomp', np.median(selp[io][xvar]))
+    ax.grid()
+    ax.invert_xaxis()
+
+
 parser = OptionParser(
     description='Display correlation plots between (NSN,zlim) metric results for DD fields and the budget')
 parser.add_option("--dirFile", type="str",
@@ -395,13 +415,13 @@ if addMetric:
 print('ahhh', metric)
 
 # summary plots
-# summary_plots(df)
-# plt.show()
+summary_plots(df)
+plt.show()
 
 # plots per field
 
-# for field in df['field'].unique():
-for field in ['COSMOS']:
+for field in df['field'].unique():
+    # for field in ['COSMOS']:
     idx = df['field'] == field
     sel = df[idx]
     plot_field(sel, title='{} pointings'.format(field))
@@ -409,10 +429,28 @@ for field in ['COSMOS']:
         print(metric.columns)
         idc = metric['field'] == field
         selm = metric[idc]
+
         plot_field(selm, yvars=['nsn', 'zcomp'], ylab=[
                    'N$_{SN}$', '$z_{complete}$'], title='{} metrics'.format(field))
+        """
+        selm['time_budget_field_season'] *= 100.
         plot_field(selm, yvars=['time_budget_field_season', 'zcomp'], ylab=[
                    'Time budget [%]', '$z_{complete}$'], title='{} metrics'.format(field))
+        plot_field(selm, yvars=['time_budget_field_season', 'nsn'], ylab=[
+                   'Time budget [%]', 'N$_{SN}$'], title='{} metrics'.format(field))
+        selmm = selm.groupby(['dbName'])['nsn'].sum().reset_index()
+        selmm = selmm.rename(columns={'nsn': 'nsn_season'})
+        selb = selm.merge(selmm, left_on=['dbName'], right_on=['dbName'])
+        selb['nsn_frac'] = selb['nsn']/selb['nsn_season']
+        plot_field(selb, yvars=['time_budget_field_season', 'nsn_frac'], ylab=[
+                   'Time budget [%]', 'N$_{SN}$ frac'], title='{} metrics'.format(field))
+        """
+        """
+        idx = selm['zcomp'] > 0
+        plot_cumsum(selm[idx], xvar='zcomp', yvar='nsn', ascending=False)
+        """
+
+"""
 print(metric['field'].unique())
 metric_field = metric.groupby(['dbName', 'field', 'family', 'marker', 'color']).agg({'nsn': 'sum',
                                                                                      'zcomp': 'median',
@@ -422,7 +460,7 @@ metric_field = metric.groupby(['dbName', 'field', 'family', 'marker', 'color']).
 metric_field['fieldname'] = metric_field['field']
 plot_series_fields(metric_field, title='', varx='family', what=[
                    'nsn', 'zcomp'], leg=['N$_{SN}$', '$z_{complete}$'])
-
+"""
 plt.show()
 
 # Medians over season
