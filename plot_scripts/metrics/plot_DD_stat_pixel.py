@@ -203,13 +203,12 @@ def plot_cumsum(selfi, whatx='dist', legx='radius [deg]', figtitle='', fig=None,
     for bb in bins:
         bbi = [0., bb]
         group = selfi.groupby(pd.cut(selfi['dist'], bbi))
-        print('group', group)
         for group_name, df_group in group:
             r.append(np.sum(df_group['nsn'])/ntot)
 
     print(r)
 
-    #plot_centers = (bins[:-1] + bins[1:])/2
+    # plot_centers = (bins[:-1] + bins[1:])/2
 
     ax.plot(bins, r, color=color, marker=marker, mfc=mfc)
     ax.set_xlabel(legx)
@@ -286,6 +285,34 @@ def check_pixel(data, hpix):
     print('result for', hpix, data[idx])
 
 
+def plot_Molls(df, metricValues):
+
+    plot_Moll_season(nside, df)
+    plot_Moll_season(nside, metricValues, what='nsn')
+
+
+def plotIt(df, metricValues, suptit='', color='b', fig=None, ax=None):
+
+    if fig is None:
+        fig, ax = plt.subplots(figsize=(12, 8))
+
+        # get distance
+    selfi = get_dist(df)
+    plot_2D(selfi, figtitle=suptit, fig=fig, ax=ax, mfc='None', color=color)
+
+    mmet = get_dist(metricValues, pixRA_mean=np.mean(
+        selfi['pixRA_mean']), pixDec_mean=np.mean(selfi['pixDec_mean']))
+
+    plot_2D(mmet, whaty='nsn', legy='N$_{SN}$',
+            figtitle=suptit, fig=fig, ax=ax.twinx(), color=color, marker='s', mfc='None')
+
+    print('total number of sn', np.sum(mmet['nsn']))
+    dist_cut = getVal(mmet)
+    print('dist_cut', dist_cut)
+    idd = mmet['dist'] <= dist_cut
+    print('vv', np.median(mmet['zcomp']), np.median(mmet[idd]['zcomp']))
+
+
 parser = OptionParser()
 
 parser.add_option("--dbName", type=str, default='alt_sched',
@@ -317,6 +344,9 @@ metric = opts.metric
 df = pd.read_hdf(fi)
 
 print(df.columns)
+
+fig, ax = plt.subplots(figsize=(12, 8))
+colors = ['b', 'r']
 for io, db in enumerate(dbName):
     # loading metric results
     metricValues = load_metric(dbDir, db, metric, field[io], nside)
@@ -325,32 +355,22 @@ for io, db in enumerate(dbName):
     metricValues = metricValues[idx]
     idx = df['dbName'] == db
     idx &= df['season'] == int(season[io])
-    idxb = metricValues['season'] == int(season[io])
-    # plot Mollview here
-    plot_Moll_season(nside, df[idx])
-    plot_Moll_season(nside, metricValues[idxb], what='nsn')
     idx &= df['field'] == field[io]
-    suptit = '{} - season {}'.format(field[io], int(season[io]))
-    suptit += '\n {}'.format(db)
-    fig, ax = plt.subplots(figsize=(12, 8))
-    # get distance
-    selfi = get_dist(df[idx])
-    plot_2D(selfi, figtitle=suptit, fig=fig, ax=ax, mfc='None')
-    mmet = get_dist(metricValues[idxb], pixRA_mean=np.mean(
-        selfi['pixRA_mean']), pixDec_mean=np.mean(selfi['pixDec_mean']))
+    # plot Mollview here
+    # plot_Molls(df[idx],metricValues[idxb])
+    idxb = metricValues['season'] == int(season[io])
 
-    plot_2D(mmet, whaty='nsn', legy='N$_{SN}$',
-            figtitle=suptit, fig=fig, ax=ax.twinx(), color='b', marker='s', mfc='None')
+    suptit = '{} - season {}'.format(field[io], int(season[io]))
+    #suptit += '\n {}'.format(db)
+    plotIt(df[idx], metricValues[idxb], suptit=suptit,
+           fig=fig, ax=ax, color=colors[io])
+
     """
     plot_2D(mmet, whaty='zcomp', legy='$z_{complete}$',
             figtitle=suptit, fig=fig, ax=ax.twinx(), color='b', marker='s', mfc='None')
     """
-    dist_cut = getVal(mmet)
-    print('dist_cut', dist_cut)
-    idd = mmet['dist'] <= dist_cut
-    print('vv', np.median(mmet['zcomp']), np.median(mmet[idd]['zcomp']))
 
-    plot_cumsum(mmet, whatx='nsn', legx='$N_{SN}$', mfc='None')
+    #plot_cumsum(mmet, whatx='nsn', legx='$N_{SN}$', mfc='None')
     """
     plot_cumsum(selfi, mfc='None')
 

@@ -92,7 +92,7 @@ def select_data(data, config, ope):
     return data[idx]
 
 
-def plot(data, varx='night', vary='config', legx='night', legy='', figtit='', line=[], highlight={}, labelsize_x=-1, labelsize_y=-1):
+def plot(data, varx='night', vary='config', legx='night', legy='', figtit='', line=[], highlight={}, labelsize_x=-1, labelsize_y=-1, labelrotation_x=0., labelrotation_y=0.):
     """
     Function to make a plot
 
@@ -119,7 +119,7 @@ def plot(data, varx='night', vary='config', legx='night', legy='', figtit='', li
     """
     fig, ax = plt.subplots(figsize=(17, 10))
     fig.suptitle(figtit)
-
+    fig.subplots_adjust(left=0.20)
     ax.plot(data[varx], data[vary], 'ko', mfc='None')
     if line:
         xmin, xmax = ax.get_xlim()
@@ -131,6 +131,9 @@ def plot(data, varx='night', vary='config', legx='night', legy='', figtit='', li
 
     ax.set_xlabel(legx)
     ax.set_ylabel(legy)
+
+    ax.tick_params(axis='x', labelrotation=labelrotation_x)
+    ax.tick_params(axis='y', labelrotation=labelrotation_y)
 
     if labelsize_x != -1:
         ax.tick_params(axis='x', labelsize=labelsize_x)
@@ -205,6 +208,8 @@ plt.show()
 plot(sel, varx='night', vary='moonPhase',
      legx='night', legy='lunar phase', figtit=figtit, line=[], highlight=highlight)
 plt.show()
+
+"""
 for b in 'ugrizy':
     vva = 'deltaT_{}_mean'.format(b)
     vvb = 'deltaT_{}_rms'.format(b)
@@ -217,15 +222,18 @@ for b in 'ugrizy':
          legx='night', legy='Mean $\Delta T_{visit}$ [sec]', figtit=figtitb, line=[], highlight=highlight)
     plot(sel[idx], varx='night', vary=vvb,
          legx='night', legy='RMS $\Delta T_{visit}$ [sec]', figtit=figtitb, line=[], highlight=highlight)
-
+"""
 
 dd = sel.groupby(['config', 'u', 'g', 'r', 'i', 'z', 'y']
                  ).size().to_frame('nnights').reset_index()
 print('hhhh', dd)
 nn = 'N$_{nights}$'
-figtitb += '\n {}={}'.format(nn, len(sel))
-plot(dd, varx='nnights', legx='N$_{nights}$',
-     figtit=figtitb, highlight=highlight)
+figtitb += ' - {}={}'.format(nn, len(sel))
+idx = dd['nnights'] >= 10
+plot(dd[idx], varx='nnights', legx='N$_{nights}$',
+     figtit=figtitb, labelsize_y=20, labelrotation_y=20.)
+
+"""
 io = dd['nnights'] <= 10
 
 if len(sel) > 0:
@@ -236,5 +244,5 @@ if len(sel) > 0:
 
     print('new cad', np.mean(np.diff(sel[iu]['night'])), np.mean(
         np.diff(sel[iub]['night'])))
-
+"""
 plt.show()

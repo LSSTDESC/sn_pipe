@@ -345,18 +345,25 @@ def plot_filter_alloc(flat, family, field):
     plot_series(sel, title=tit, varx='filter_alloc', what=toplot, leg=leg)
 
 
-def plot_cumsum(selb, xvar='zcomp', yvar='nsn', ascending=False):
+def plot_cumsum(selb, title='', xvar='zcomp', xleg='$z_{complete}$',
+                yvar='nsn', yleg='$N_{SN}$', ascending=False):
 
-    fig, ax = plt.subplots(figsize=(12, 8))
+    fig, ax = plt.subplots(figsize=(14, 8))
+    fig.suptitle(title)
+    fig.subplots_adjust(right=0.75)
     from scipy.interpolate import interp1d
     # fig.suptitle(title)
     fig.subplots_adjust(bottom=0.20)
     for dbName in selb['dbName'].unique():
         idx = selb['dbName'] == dbName
         selp = selb[idx]
+        family = selp['family'].unique()[0]
+        marker = selp['marker'].unique()[0]
+        color = selp['color'].unique()[0]
         selp = selp.sort_values(by=[xvar], ascending=ascending)
         cumulnorm = np.cumsum(selp[yvar])/np.sum(selp[yvar])
-        ax.plot(selp[xvar], cumulnorm, linestyle='None', marker='o')
+        ax.plot(selp[xvar], cumulnorm, marker=marker,
+                color=color, mfc='None', label=family)
         interp = interp1d(
             cumulnorm, selp[xvar], bounds_error=False, fill_value=0.)
         zcomp = interp(0.95)
@@ -364,6 +371,9 @@ def plot_cumsum(selb, xvar='zcomp', yvar='nsn', ascending=False):
         print('zcomp', np.median(selp[io][xvar]))
     ax.grid()
     ax.invert_xaxis()
+    ax.legend(bbox_to_anchor=(1.4, 0.8), ncol=1, frameon=False)
+    ax.set_xlabel(xleg)
+    ax.set_ylabel(yleg)
 
 
 parser = OptionParser(
@@ -415,13 +425,13 @@ if addMetric:
 print('ahhh', metric)
 
 # summary plots
-summary_plots(df)
-plt.show()
+# summary_plots(df)
+# plt.show()
 
 # plots per field
 
-for field in df['field'].unique():
-    # for field in ['COSMOS']:
+# for field in df['field'].unique():
+for field in ['COSMOS']:
     idx = df['field'] == field
     sel = df[idx]
     plot_field(sel, title='{} pointings'.format(field))
@@ -430,6 +440,7 @@ for field in df['field'].unique():
         idc = metric['field'] == field
         selm = metric[idc]
 
+        #
         plot_field(selm, yvars=['nsn', 'zcomp'], ylab=[
                    'N$_{SN}$', '$z_{complete}$'], title='{} metrics'.format(field))
         """
@@ -444,11 +455,12 @@ for field in df['field'].unique():
         selb['nsn_frac'] = selb['nsn']/selb['nsn_season']
         plot_field(selb, yvars=['time_budget_field_season', 'nsn_frac'], ylab=[
                    'Time budget [%]', 'N$_{SN}$ frac'], title='{} metrics'.format(field))
-        """
+        
         """
         idx = selm['zcomp'] > 0
-        plot_cumsum(selm[idx], xvar='zcomp', yvar='nsn', ascending=False)
-        """
+        plot_cumsum(selm[idx], title=field, xvar='zcomp', xleg='$z_{complete}$',
+                    yvar='nsn', yleg='$N_{SN}$ frac', ascending=False)
+
 
 """
 print(metric['field'].unique())
