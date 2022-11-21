@@ -480,17 +480,17 @@ summary = metricPlot.groupby(['dbName']).agg({'nsn': 'sum',
                                               'zcomp': 'median',
                                               }).reset_index()
 
+if fieldType == 'DD':
+    summary_season = metricPlot.groupby(['dbName', 'fieldname', 'season']).apply(
+        lambda x: zcomp_frac(x)).reset_index()
 
-summary_season = metricPlot.groupby(['dbName', 'fieldname', 'season']).apply(
-    lambda x: zcomp_frac(x)).reset_index()
+    # print(test)
+    summary_field = summary_season.groupby(['dbName', 'fieldname']).apply(
+        lambda x: zcomp_cumsum(x)).reset_index()
 
-# print(test)
-summary_field = summary_season.groupby(['dbName', 'fieldname']).apply(
-    lambda x: zcomp_cumsum(x)).reset_index()
-
-summary = summary_field.groupby(['dbName']).agg({'nsn': 'sum',
-                                                 'zcomp': 'median',
-                                                 }).reset_index()
+    summary = summary_field.groupby(['dbName']).agg({'nsn': 'sum',
+                                                     'zcomp': 'median',
+                                                     }).reset_index()
 
 nsn_plot.plotNSN(summary, forPlot, varx='zcomp', vary='nsn',
                  legx='${z_{\mathrm{complete}}}$', legy='N$_{\mathrm{SN}} (z<z_{\mathrm{complete}})}$', figtit=opts.fieldNames)
