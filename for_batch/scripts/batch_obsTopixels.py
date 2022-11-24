@@ -2,10 +2,11 @@ import os
 import numpy as np
 from optparse import OptionParser
 import pandas as pd
+import copy
 from sn_tools.sn_batchutils import BatchIt
 
 
-def batch_allDDF(params, toprocess):
+def batch_allDDF(params, toprocess,tag):
     """
     Function to generate a single script for a set of DDF db
     and launch the batch
@@ -16,15 +17,19 @@ def batch_allDDF(params, toprocess):
       dict of parameters
     toprocess: pandas df
       list of db and params to process
+    tag: int
+      additional info to tag the script
     """
-    processName = 'obsTopixels_allDD_{}_{}_{}'.format(params['nside'],params['project_FP'],params['VRO_FP'])
+    pp = copy.deepcopy(params)
+    processName = 'obsTopixels_allDD_{}_{}_{}_{}'.format(pp['nside'],pp['project_FP'],pp['VRO_FP'],tag)
     mybatch = BatchIt(processName=processName)
     outDir_main = params['outDir']
+    pp['outDir'] = '{}_{}_{}_{}'.format(outDir_main,pp['nside'],pp['project_FP'],pp['VRO_FP'])
     for io, val in toprocess.iterrows():
         for vv in vvars:
-            params[vv] = val[vv]
-        params['outDir'] = '{}_{}_{}_{}'.format(outDir_main,params['nside'],params['project_FP'],params['VRO_FP'])
-        mybatch.add_batch(scriptref, params)
+            pp[vv] = val[vv]
+      
+        mybatch.add_batch(scriptref, pp)
 
     mybatch.go_batch()
 
@@ -143,6 +148,8 @@ parser.add_option("--project_FP", type=str, default='gnomonic',
                   help="Focal Plane projection (gnomonic or hp_query) [%default]")
 parser.add_option("--nside", type=int, default=128,
                   help="nside [%default]")
+parser.add_option("--n_per_batch", type=int, default=5,
+                  help="number of OS per batch [%default]")
 
 opts, args = parser.parse_args()
 
@@ -163,6 +170,7 @@ runType = opts.runType
 VRO_FP = opts.VRO_FP
 project_FP = opts.project_FP
 nside = opts.nside
+n_per_batch = opts.n_per_batch
 
 toprocess = pd.read_csv(dbList, comment='#')
 
@@ -193,7 +201,14 @@ vvars = ['dbDir', 'dbName', 'dbExtens','nproc','fieldType','simuType']
 if runType == 'allDDF':
     batch_allDDF(params,toprocess)
 else:
-    batch_indiv(params,toprocess,mode)
+    if runType == 'splitDDF':
+        print(len(toprocess))
+        nn = int(len(toprocess)/n_per_batch)
+        dfs = np.array_split(toprocess, nn)
+        for io,vv in enumerate(dfs):
+            batch_allDDF(params,vv,io)
+    else:
+        batch_indiv(params,toprocess,mode)
 
     
     
