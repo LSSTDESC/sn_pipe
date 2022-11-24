@@ -6,7 +6,7 @@ import copy
 from sn_tools.sn_batchutils import BatchIt
 
 
-def batch_allDDF(params, toprocess,tag):
+def batch_allDDF(scriptref,params, toprocess,tag):
     """
     Function to generate a single script for a set of DDF db
     and launch the batch
@@ -21,7 +21,7 @@ def batch_allDDF(params, toprocess,tag):
       additional info to tag the script
     """
     pp = copy.deepcopy(params)
-    processName = 'obsTopixels_allDD_{}_{}_{}_{}'.format(pp['nside'],pp['project_FP'],pp['VRO_FP'],tag)
+    processName = 'obsTopixels_allDD_{}_{}_{}_{}_{}'.format(pp['nside'],pp['project_FP'],pp['VRO_FP'],pp['telrot'],tag)
     mybatch = BatchIt(processName=processName)
     outDir_main = params['outDir']
     pp['outDir'] = '{}_{}_{}_{}'.format(outDir_main,pp['nside'],pp['project_FP'],pp['VRO_FP'])
@@ -34,7 +34,7 @@ def batch_allDDF(params, toprocess,tag):
     mybatch.go_batch()
 
 
-def batch_indiv(params, toprocess, mode):
+def batch_indiv(scriptref,params, toprocess, mode):
     """
     Method to generate a script and launch it per db
 
@@ -150,6 +150,8 @@ parser.add_option("--nside", type=int, default=128,
                   help="nside [%default]")
 parser.add_option("--n_per_batch", type=int, default=5,
                   help="number of OS per batch [%default]")
+parser.add_option("--telrot", type=int, default=0,
+                  help="telescope rotation angle [%default]")
 
 opts, args = parser.parse_args()
 
@@ -171,6 +173,7 @@ VRO_FP = opts.VRO_FP
 project_FP = opts.project_FP
 nside = opts.nside
 n_per_batch = opts.n_per_batch
+telrot = opts.telrot
 
 toprocess = pd.read_csv(dbList, comment='#')
 
@@ -194,21 +197,22 @@ params['fieldName'] = opts.DDFs
 params['VRO_FP'] = VRO_FP
 params['project_FP'] = opts.project_FP
 params['nside'] = nside
+params['telrot'] = telrot
 
 vvars = ['dbDir', 'dbName', 'dbExtens','nproc','fieldType','simuType']
 
 #make a big and unique file for DD
 if runType == 'allDDF':
-    batch_allDDF(params,toprocess)
+    batch_allDDF(scriptref,params,toprocess)
 else:
     if runType == 'splitDDF':
         print(len(toprocess))
         nn = int(len(toprocess)/n_per_batch)
         dfs = np.array_split(toprocess, nn)
         for io,vv in enumerate(dfs):
-            batch_allDDF(params,vv,io)
+            batch_allDDF(scriptref,params,vv,io)
     else:
-        batch_indiv(params,toprocess,mode)
+        batch_indiv(scriptref,params,toprocess,mode)
 
     
     

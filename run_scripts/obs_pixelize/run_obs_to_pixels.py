@@ -52,7 +52,7 @@ class procObsPixels:
     def __init__(self, outDir, dbDir, dbName, dbExtens, nodither,
                  fieldType, RAmin, RAmax, Decmin, Decmax, nside,
                  nprocs, saveData=False, fieldName='unknown',
-                 nclusters=6, radius=4, project_FP='gnomonic', VRO_FP='circle'):
+                 nclusters=6, radius=4, project_FP='gnomonic', VRO_FP='circle',telrot=0):
         """
         Class to process obs <-> pixels on a patch of the sky
 
@@ -90,6 +90,8 @@ class procObsPixels:
           type of projection on FP (gnomonic or hp_query) (default: gnomonic)
         VRO_FP: str, opt
           geometry of the VRO FP (circle or realistic) (default: circle)
+        telrot: int, opt
+          factor to apply to the telescope rotation angle
 
         """
 
@@ -111,6 +113,7 @@ class procObsPixels:
         self.radius = radius
         self.project_FP = project_FP
         self.VRO_FP = VRO_FP
+        self.telrot = telrot
 
         # create output directory
         self.genDir(outDir)
@@ -223,58 +226,6 @@ class procObsPixels:
 
         return observations, patches
 
-    def multiprocess_deprecated(self, patches, observations):
-        """
-        Method to process data using multiprocessing
-
-        Parameters
-        ---------------
-        patches: pandas df
-           patches inside the patch to process
-        observations: numpy array
-           array of observations
-        """
-
-        healpixels = patches
-        npixels = int(len(healpixels))
-
-        tabpix = np.linspace(0, npixels, self.nprocs+1, dtype='int')
-        #print(tabpix, len(tabpix))
-        result_queue = multiprocessing.Queue()
-
-        # multiprocessing
-        for j in range(len(tabpix)-1):
-            ida = tabpix[j]
-            idb = tabpix[j+1]
-
-            #print('Field', healpixels[ida:idb])
-
-            field = healpixels[ida:idb]
-
-            p = multiprocessing.Process(name='Subprocess-'+str(j), target=self.processPatch, args=(
-                healpixels[ida:idb], observations, j, result_queue))
-            p.start()
-
-        resultdict = {}
-
-        for i in range(self.nprocs):
-            resultdict.update(result_queue.get())
-
-        for p in multiprocessing.active_children():
-            p.join()
-
-        restot = pd.DataFrame()
-
-        # gather the results
-        for key, vals in resultdict.items():
-            restot = pd.concat((restot, vals), sort=False)
-
-        # now save
-        if self.saveData:
-            for key, vals in self.outName.items():
-                idx = restot['fieldName'] == key
-                np.save(vals, restot[idx].to_records(index=False))
-
     def processPatch(self, pointings, observations, j=0, output_q=None):
         """
         Method to process a single patch on the sky
@@ -304,7 +255,7 @@ class procObsPixels:
         ipoint = 1
 
         datapixels = DataToPixels(
-            self.nside, self.RACol, self.DecCol, self.outDir, self.dbName, self.fieldType, self.project_FP, self.VRO_FP, nproc=self.nprocs)
+            self.nside, self.RACol, self.DecCol, self.outDir, self.dbName, self.fieldType, self.project_FP, self.VRO_FP, self.telrot,nproc=self.nprocs)
 
         pixelsTot = pd.DataFrame()
         print('starting process', j)
@@ -404,6 +355,8 @@ parser.add_option("--VRO_FP", type=str, default='circular',
                   help="VRO Focal Plane (circle or realistic) [%default]")
 parser.add_option("--project_FP", type=str, default='gnomonic',
                   help="Focal Plane projection (gnomonic or hp_query) [%default]")
+parser.add_option("--telrot", type=int, default=0,
+                  help="telescope rotation angle [%default]")
 
 opts, args = parser.parse_args()
 
@@ -443,7 +396,8 @@ if opts.fieldType == 'WFD':
                              nclusters=opts.nclusters,
                              radius=opts.radius,
                              project_FP=opts.project_FP,
-                             VRO_FP=opts.VRO_FP)
+                             VRO_FP=opts.VRO_FP,
+                             telrot=opts.telrot)
         res = proc()
         df_tot = pd.concat((df_tot, res))
 
@@ -460,5 +414,5 @@ if opts.fieldType == 'DD':
                          nclusters=opts.nclusters,
                          radius=opts.radius,
                          project_FP=opts.project_FP,
-                         VRO_FP=opts.VRO_FP)
+                         VRO_FP=opts.VRO_FP,telrot=opts.telrot)
     proc()
