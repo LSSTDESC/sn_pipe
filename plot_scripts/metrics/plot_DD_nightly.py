@@ -29,18 +29,24 @@ idx = data['note'] == field
 if night >= 0:
     idx &= data['night'] == night
 ddf = data[idx]
-print(np.unique(ddf['note']))
+print(np.unique(ddf['note']), ddf.dtype)
 # plot
 
-fig, ax = plt.subplots()
-figsize = (17, 8)
+fig, ax = plt.subplots(figsize=(17, 8), nrows=2)
+fig.subplots_adjust(wspace=0, hspace=0)
 figtit = '{} - night {}'.format(field.split(':')[1], int(night))
-figtit += '\n {}'.format(dbName)
+figtit += '\n {}'.format(dbName.split('.npy')[0])
 fig.suptitle(figtit)
 
-ax.plot(ddf['mjd'], ddf['airmass'], 'ko', mfc='None')
+ax[0].plot(ddf['mjd'], ddf['band'], 'ro', markersize=8)
 
-ax.set_xlabel('MJD [days]')
-ax.set_ylabel('altitude')
-ax.grid()
+#ax.set_xlabel('MJD [days]')
+ax[0].set_ylabel('band')
+ax[0].grid()
+ax[0].set_xticklabels([])
+ddf.sort(order=['mjd'])
+print(np.unique(ddf[['numExposures', 'exptime', 'visitTime']]))
+ax[1].plot(ddf['mjd'], np.cumsum(ddf['numExposures']), 'k.')
+ax[1].grid()
+ax[1].set_xlabel('MJD [days]')
 plt.show()

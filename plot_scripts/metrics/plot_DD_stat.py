@@ -326,7 +326,10 @@ def plot_field(df, xvars=['season', 'season'], xlab=['Season', 'Season'], yvars=
         plot_indiv(sel, dbName, fig=fig, ax=ax, xvars=xvars, xlab=xlab, yvars=yvars, ylab=ylab,
                    label=family, marker=marker, color=color, mfc='None')
 
-    ax[0].legend(bbox_to_anchor=(1., 0.5), ncol=1, frameon=False)
+    ax[1].legend(bbox_to_anchor=(1., 1.), ncol=1, frameon=False)
+    for io in range(2):
+        ax[io].grid()
+
     for io in range(2):
         ax[io].grid()
 
@@ -457,10 +460,11 @@ for field in ['COSMOS']:
                    'Time budget [%]', 'N$_{SN}$ frac'], title='{} metrics'.format(field))
         
         """
+        """
         idx = selm['zcomp'] > 0
         plot_cumsum(selm[idx], title=field, xvar='zcomp', xleg='$z_{complete}$',
                     yvar='nsn', yleg='$N_{SN}$ frac', ascending=False)
-
+        """
 
 """
 print(metric['field'].unique())

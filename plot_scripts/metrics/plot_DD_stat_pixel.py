@@ -291,20 +291,31 @@ def plot_Molls(df, metricValues):
     plot_Moll_season(nside, metricValues, what='nsn')
 
 
-def plotIt(df, metricValues, suptit='', color='b', fig=None, ax=None):
+def plotIt(df, metricValues, suptit='', color='b', fig=None, ax=None, whaty='nsn', legy='N$_{SN}$'):
 
     if fig is None:
         fig, ax = plt.subplots(figsize=(12, 8))
 
         # get distance
     selfi = get_dist(df)
-    plot_2D(selfi, figtitle=suptit, fig=fig, ax=ax, mfc='None', color=color)
 
     mmet = get_dist(metricValues, pixRA_mean=np.mean(
         selfi['pixRA_mean']), pixDec_mean=np.mean(selfi['pixDec_mean']))
 
-    plot_2D(mmet, whaty='nsn', legy='N$_{SN}$',
-            figtitle=suptit, fig=fig, ax=ax.twinx(), color=color, marker='s', mfc='None')
+    io = mmet[whaty] > 0.
+    rad_max = np.max(mmet[io]['dist'])
+    idx = selfi['dist'] <= rad_max
+    selfi_rad = selfi[idx]
+    frac_area = 1.-(len(selfi)-len(selfi_rad))/len(selfi)
+    area = np.round(len(selfi_rad)*pixArea, 1)
+    suptit += '\n obs. area: {} deg$^2$ ({}%)'.format(area,
+                                                      int(100.*frac_area))
+    plot_2D(selfi_rad, figtitle=suptit, fig=fig, ax=ax, mfc='None', color='r')
+
+    axb = ax.twinx()
+    plot_2D(mmet, whaty=whaty, legy=legy,
+            figtitle=suptit, fig=fig, ax=axb, color=color, marker='s', mfc='None')
+    axb.grid(None)
 
     print('total number of sn', np.sum(mmet['nsn']))
     dist_cut = getVal(mmet)
@@ -344,8 +355,10 @@ metric = opts.metric
 df = pd.read_hdf(fi)
 
 print(df.columns)
-
+print(df['dbName'].unique())
+pixArea = hp.nside2pixarea(nside, degrees=True)
 fig, ax = plt.subplots(figsize=(12, 8))
+figb, axb = plt.subplots(figsize=(12, 8))
 colors = ['b', 'r']
 for io, db in enumerate(dbName):
     # loading metric results
@@ -354,8 +367,11 @@ for io, db in enumerate(dbName):
     idx = metricValues['zcomp'] > 0.
     metricValues = metricValues[idx]
     idx = df['dbName'] == db
+    print('allo1', len(df[idx]))
     idx &= df['season'] == int(season[io])
+    print('allo2', len(df[idx]))
     idx &= df['field'] == field[io]
+    print('allo3', len(df[idx]))
     # plot Mollview here
     # plot_Molls(df[idx],metricValues[idxb])
     idxb = metricValues['season'] == int(season[io])
@@ -364,6 +380,8 @@ for io, db in enumerate(dbName):
     #suptit += '\n {}'.format(db)
     plotIt(df[idx], metricValues[idxb], suptit=suptit,
            fig=fig, ax=ax, color=colors[io])
+    plotIt(df[idx], metricValues[idxb], suptit=suptit,
+           fig=figb, ax=axb, color=colors[io], whaty='zcomp', legy='$z_{complete}$')
 
     """
     plot_2D(mmet, whaty='zcomp', legy='$z_{complete}$',

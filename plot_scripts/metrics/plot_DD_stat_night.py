@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from optparse import OptionParser
 import operator as op
-from sn_plotter_metrics import plt
+from sn_plotter_metrics import plt, filtercolors
 
 
 def get_moon(data, lunar_phase=40.):
@@ -143,6 +143,39 @@ def plot(data, varx='night', vary='config', legx='night', legy='', figtit='', li
     ax.grid()
 
 
+def plot_filters(sel, figtit='', varx='night', vary='ugrizy'):
+
+    fig, ax = plt.subplots(figsize=(10, 12), ncols=2, nrows=int(len(vary)/2))
+    fig.suptitle(figtit)
+    fig.subplots_adjust(wspace=0, hspace=0)
+    pos = dict(zip('ugrizy', [(0, 0), (0, 1), (1, 0), (1, 1), (2, 0), (2, 1)]))
+    for fi in vary:
+        ipos = pos[fi][0]
+        jpos = pos[fi][1]
+        axb = ax[ipos, jpos]
+        if jpos == 1:
+            axb.yaxis.tick_right()
+        axb.plot(sel[varx], sel[fi],
+                 linestyle='None', marker='o', mfc='None', markersize=10, color=filtercolors[fi])
+        idx = sel['moonPhase'] <= 40.
+        axb.plot(sel[idx][varx], sel[idx][fi],
+                 linestyle='None', marker='o', markersize=3, color='k', label='Moon phase $\lesssim$ 40%')
+        axb.grid()
+        axb.text(0.02, 0.82, '{}'.format(fi),
+                 transform=axb.transAxes, color=filtercolors[fi], fontstyle='italic')
+    ax[2, 0].legend(loc='lower center', bbox_to_anchor=(
+        0., -0.5), ncol=3, fontsize=15, frameon=False)
+    ax[1, 0].set_ylabel('N$_{visits}$')
+    ax[1, 1].yaxis.set_label_position("right")
+    ax[1, 1].set_ylabel('N$_{visits}$')
+    ax[2, 0].set_xlabel('night')
+    ax[2, 1].set_xlabel('night')
+    ax[0, 0].set_xticklabels([])
+    ax[1, 0].set_xticklabels([])
+    ax[0, 1].set_xticklabels([])
+    ax[1, 1].set_xticklabels([])
+
+
 parser = OptionParser()
 
 parser.add_option("--fName", type=str, default='Summary_night_ddf_early_deep_slf0.20_f10.60_f20.80_v2.1_10yrs.hdf5',
@@ -175,7 +208,7 @@ sel = sel.sort_values(by=['night'])
 
 figtitb = figtit
 cad = np.mean(np.diff(sel['night']))
-figtit += '\n mean cad: {} days'.format(np.round(cad, 1))
+
 print('hello', sel.columns)
 sel['nvisits'] = sel['u']+sel['g']+sel['r']+sel['i']+sel['z']+sel['y']
 
@@ -197,6 +230,10 @@ moon_dur = get_moon(sel, lunar_phase=lunar_phase)
 
 print('Moon', moon_dur)
 #plot(sel, figtit=figtit, highlight=highlight, labelsize_y=12)
+print(sel.columns)
+
+plot_filters(sel, figtit=figtit, varx='night', vary='ugrizy')
+figtit += '\n mean cad: {} days'.format(np.round(cad, 1))
 plot(sel, figtit=figtit, highlight=[], labelsize_y=12)
 plt.show()
 plot(sel, varx='night', vary='nvisits',
