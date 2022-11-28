@@ -400,6 +400,9 @@ parser.add_option("--configGroup", type="str", default='DD_fbs_2.99_plot.csv',
                   help="pointing file name [%default]")
 parser.add_option("--addMetric", type=int, default=0,
                   help="to add metric correlation plots [%default]")
+parser.add_option("--plotSummary", type=int, default=0,
+                  help="to draw summary plots [%default]")
+
 
 opts, args = parser.parse_args()
 # Load parameters
@@ -412,6 +415,7 @@ fieldNames = opts.fieldNames.split(',')
 pointingFile = opts.pointingFile
 configGroup = opts.configGroup
 addMetric = opts.addMetric
+plotSummary = opts.plotSummary
 
 dfgroup = pd.read_csv(configGroup, comment='#')  # load list of db+plot infos
 df = pd.read_hdf(pointingFile)  # load pointing data
@@ -428,8 +432,9 @@ if addMetric:
 print('ahhh', metric)
 
 # summary plots
-# summary_plots(df)
-# plt.show()
+if plotSummary:
+    summary_plots(df)
+    plt.show()
 
 # plots per field
 
