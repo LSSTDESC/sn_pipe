@@ -1,6 +1,7 @@
 import numpy as np
 from optparse import OptionParser
 from sn_plotter_metrics import plt
+import numpy.lib.recfunctions as rf
 
 parser = OptionParser()
 
@@ -45,8 +46,11 @@ ax[0].set_ylabel('band')
 ax[0].grid()
 ax[0].set_xticklabels([])
 ddf.sort(order=['mjd'])
+rr = ddf['numExposures']*ddf['exptime']/30.
+ddf = rf.append_fields(ddf, 'Nvisits', rr)
 print(np.unique(ddf[['numExposures', 'exptime', 'visitTime']]))
-ax[1].plot(ddf['mjd'], np.cumsum(ddf['numExposures']), 'k.')
+ax[1].plot(ddf['mjd'], np.cumsum(ddf['Nvisits']), 'k.')
 ax[1].grid()
 ax[1].set_xlabel('MJD [days]')
+ax[1].set_ylabel('$\Sigma N_{visits}$')
 plt.show()
