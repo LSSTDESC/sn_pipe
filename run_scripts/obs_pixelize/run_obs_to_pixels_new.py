@@ -6,6 +6,7 @@ import os
 from sn_tools.sn_obs import DataToPixels_new, ProcessPixels, renameFields, patchObs
 from sn_tools.sn_obs import renameDDF
 from sn_tools.sn_io import getObservations
+from sn_tools.sn_utils import get_colName
 import pandas as pd
 from os.path import exists
 
@@ -116,7 +117,8 @@ class procObsPixels:
         self.telrot = telrot
 
         # create output directory
-        self.genDir(outDir)
+        if saveData:
+            self.genDir(outDir)
 
         self.outName = {}
 
@@ -134,16 +136,15 @@ class procObsPixels:
                                                                              RAmin, RAmax,
                                                                              Decmin, Decmax)
 
-        # if the files already exist -> do not re-process it
-
     def __call__(self):
 
-        # observations, patches = self.load_obs()
-
-        observations = self.get_obs()
-
+        # loading observations
+        observations = get_obs(self.fieldType, self.dbDir,
+                               self.dbName, self.dbExtens)
+        RACol = get_colName(observations, ['fieldRA', 'RA'])[0]
+        DecCol = get_colName(observations, ['fieldDec', 'Dec'])[0]
         datapixels = DataToPixels_new(
-            self.nside, self.project_FP, self.VRO_FP, telrot=self.telrot, nproc=self.nprocs)
+            self.nside, self.project_FP, self.VRO_FP, RACol=RACol, DecCol=DecCol, telrot=self.telrot, nproc=self.nprocs)
 
         print('proccesssi', np.unique(
             observations['note']), len(observations))
@@ -161,7 +162,8 @@ class procObsPixels:
                 pixels = datapixels(np.copy(observations[idx]), display=False)
                 pixels['fieldName'] = field
                 if self.saveData:
-                    np.save(self.outName[field], res.to_records(index=False))
+                    np.save(self.outName[field],
+                            pixels.to_records(index=False))
 
     def genDir(self, outDir):
         """
@@ -180,30 +182,6 @@ class procObsPixels:
 
         if not os.path.isdir(self.outDir):
             os.makedirs(self.outDir)
-
-    def get_obs(self):
-
-        # loading all obs here
-        observations = load_obs(self.dbDir, self.dbName, self.dbExtens)
-        self.RACol = 'fieldRA'
-        self.DecCol = 'fieldDec'
-
-        if 'RA' in observations.dtype.names:
-            self.RACol = 'RA'
-            self.DecCol = 'Dec'
-
-        if 'note' in observations.dtype.names:
-            ido = np.core.defchararray.find(
-                observations['note'].astype(str), 'DD')
-            if ido.tolist():
-                ies = np.ma.asarray(
-                    list(map(lambda st: False if st != -1 else True, ido)))
-                if self.fieldType == 'WFD':
-                    return observations[ies]
-                if self.fieldType == 'DD':
-                    return renameDDF(observations[~ies], self.RACol, self.DecCol)
-        else:
-            return observations
 
     def processPatch(self, pointings, observations, j=0, output_q=None):
         """
@@ -228,13 +206,13 @@ class procObsPixels:
 
         """
 
-        print('processing area', j, len(pointings))
+        print('processing area', j, len(pointings), self.RACol, self.DecCol)
 
         time_ref = time.time()
         ipoint = 1
 
         datapixels = DataToPixels_new(
-            self.nside, self.project_FP, self.VRO_FP, self.telrot, nproc=self.nprocs)
+            self.nside, self.project_FP, self.VRO_FP, RACol=self.RACol, DecCol=self.DecCol, telrot=self.telrot, nproc=self.nprocs)
 
         pixelsTot = pd.DataFrame()
         print('starting process', j)
@@ -292,6 +270,25 @@ def load_obs(dbDir, dbName, dbExtens):
     observations = renameFields(observations)
 
     return observations
+
+
+def get_obs(fieldType, dbDir, dbName, dbExtens):
+
+    # loading all obs here
+    observations = load_obs(dbDir, dbName, dbExtens)
+
+    if 'note' in observations.dtype.names:
+        ido = np.core.defchararray.find(
+            observations['note'].astype(str), 'DD')
+        if ido.tolist():
+            ies = np.ma.asarray(
+                list(map(lambda st: False if st != -1 else True, ido)))
+            if fieldType == 'WFD':
+                return observations[ies]
+            if fieldType == 'DD':
+                return renameDDF(observations[~ies])
+    else:
+        return observations
 
 
 parser = OptionParser()
