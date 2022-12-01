@@ -363,7 +363,7 @@ parser.add_option("--snType", type="str", default='faint',
                   help="SN type: faint or medium[%default]")
 parser.add_option("--outName", type="str", default='Summary_DD_fbs14.npy',
                   help="output name for the summary[%default]")
-parser.add_option("--fieldNames", type="str", default='COSMOS,CDFS,XMM-LSS,ELAISS1,EDFSa,EDFSb,EDFS',
+parser.add_option("--fieldNames", type="str", default='COSMOS,CDFS,XMM-LSS,ELAISS1,EDFSa,EDFSb',
                   help="fields to process [%default]")
 parser.add_option("--metric", type="str", default='NSNY',
                   help="metric name [%default]")
