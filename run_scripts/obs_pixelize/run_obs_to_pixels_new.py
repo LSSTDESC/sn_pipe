@@ -3,9 +3,7 @@ from optparse import OptionParser
 import time
 import multiprocessing
 import os
-from sn_tools.sn_obs import DataToPixels_new, ProcessPixels, renameFields, patchObs
-from sn_tools.sn_obs import renameDDF
-from sn_tools.sn_io import getObservations
+from sn_tools.sn_obs import DataToPixels_new, get_obs
 from sn_tools.sn_utils import get_colName
 import pandas as pd
 from os.path import exists
@@ -250,15 +248,16 @@ class procObsPixels:
             return pixelsTot
 
 
+"""
 def load_obs(dbDir, dbName, dbExtens):
-    """
+    """"""
     Method to load observations
 
     Returns
     ----------
     observations: numpy array of observations
 
-    """
+    """"""
 
     # loading observations
 
@@ -289,7 +288,7 @@ def get_obs(fieldType, dbDir, dbName, dbExtens):
                 return renameDDF(observations[~ies])
     else:
         return observations
-
+"""
 
 parser = OptionParser()
 

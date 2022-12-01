@@ -4,7 +4,7 @@ import time
 import multiprocessing
 import os
 from sn_tools.sn_obs import DataToPixels, ProcessPixels, renameFields, patchObs
-from sn_tools.sn_io import getObservations
+from sn_tools.sn_obs import getObservations
 import pandas as pd
 from os.path import exists
 
@@ -52,7 +52,7 @@ class procObsPixels:
     def __init__(self, outDir, dbDir, dbName, dbExtens, nodither,
                  fieldType, RAmin, RAmax, Decmin, Decmax, nside,
                  nprocs, saveData=False, fieldName='unknown',
-                 nclusters=6, radius=4, project_FP='gnomonic', VRO_FP='circle',telrot=0):
+                 nclusters=6, radius=4, project_FP='gnomonic', VRO_FP='circle', telrot=0):
         """
         Class to process obs <-> pixels on a patch of the sky
 
@@ -255,7 +255,7 @@ class procObsPixels:
         ipoint = 1
 
         datapixels = DataToPixels(
-            self.nside, self.RACol, self.DecCol, self.outDir, self.dbName, self.fieldType, self.project_FP, self.VRO_FP, self.telrot,nproc=self.nprocs)
+            self.nside, self.RACol, self.DecCol, self.outDir, self.dbName, self.fieldType, self.project_FP, self.VRO_FP, self.telrot, nproc=self.nprocs)
 
         pixelsTot = pd.DataFrame()
         print('starting process', j)
@@ -414,5 +414,5 @@ if opts.fieldType == 'DD':
                          nclusters=opts.nclusters,
                          radius=opts.radius,
                          project_FP=opts.project_FP,
-                         VRO_FP=opts.VRO_FP,telrot=opts.telrot)
+                         VRO_FP=opts.VRO_FP, telrot=opts.telrot)
     proc()

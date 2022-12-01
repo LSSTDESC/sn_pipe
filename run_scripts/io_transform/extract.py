@@ -1,6 +1,6 @@
 import numpy as np
 from optparse import OptionParser
-from sn_tools.sn_io import getObservations
+from sn_tools.sn_obs import getObservations
 from sn_tools.sn_obs import renameFields, patchObs
 import numpy.lib.recfunctions as rf
 
