@@ -84,6 +84,7 @@ print('seasons and metric', opts.seasons,
 metricProc['fieldType'] = opts.fieldType
 metricProc['metricList'] = metricList
 metricProc['fieldName'] = opts.fieldName
+metricProc['outDir'] = opts.outDir
 metricProc['healpixIDs'] = healpixIDs
 
 print('processing', metricProc)
