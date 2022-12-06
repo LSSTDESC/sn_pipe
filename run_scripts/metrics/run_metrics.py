@@ -37,6 +37,11 @@ metricDict = {}
 for key, vals in confDict_metric.items():
     metricDict[key] = eval('opts.{}'.format(key))
 
+metricDict['RAmin'] = opts.RAmin
+metricDict['RAmax'] = opts.RAmax
+metricDict['Decmin'] = opts.Decmin
+metricDict['Decmax'] = opts.Decmax
+metricDict['npixels'] = opts.npixels
 print(metricDict)
 
 print('Start processing...', opts)

@@ -65,6 +65,8 @@ if opts.healpixIDs.strip() != '\'\'':
 if opts.fieldType == 'DD':
     outputDir += '_{}'.format(opts.fieldName)
 
+print('aooooooooooooo', outputDir)
+
 if not os.path.isdir(outputDir):
     os.makedirs(outputDir)
 
@@ -84,7 +86,7 @@ print('seasons and metric', opts.seasons,
 metricProc['fieldType'] = opts.fieldType
 metricProc['metricList'] = metricList
 metricProc['fieldName'] = opts.fieldName
-metricProc['outDir'] = opts.outDir
+metricProc['outDir'] = outputDir
 metricProc['healpixIDs'] = healpixIDs
 
 print('processing', metricProc)
