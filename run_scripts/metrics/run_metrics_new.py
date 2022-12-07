@@ -57,15 +57,8 @@ if opts.remove_dithering:
 outputDir = '{}/{}{}/{}'.format(opts.outDir,
                                 opts.dbName, nodither, metric)
 
-healpixIDs = []
-
-if opts.healpixIDs.strip() != '\'\'':
-    healpixIDs = list(map(int, opts.healpixIDs.split(',')))
-
 if opts.fieldType == 'DD':
     outputDir += '_{}'.format(opts.fieldName)
-
-print('aooooooooooooo', outputDir)
 
 if not os.path.isdir(outputDir):
     os.makedirs(outputDir)
@@ -87,7 +80,7 @@ metricProc['fieldType'] = opts.fieldType
 metricProc['metricList'] = metricList
 metricProc['fieldName'] = opts.fieldName
 metricProc['outDir'] = outputDir
-metricProc['healpixIDs'] = healpixIDs
+metricProc['pixelList'] = opts.pixelList
 
 print('processing', metricProc)
 process = Process_new(**metricProc)
