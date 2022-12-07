@@ -22,7 +22,7 @@ parser.add_option('--dbList', type='str', default='for_batch/input/List_Db_DD.cs
 parser.add_option('--outDir', type='str', default='/sps/lsst/users/gris/MetricOutput_DD_new_128',help='output Dir to  [%default]')
 parser.add_option('--mode', type='str', default='batch',help='running mode batch/interactive [%default]')
 parser.add_option('--snrmin', type=float, default=1.,help='min snr for LC point fit [%default]')
-parser.add_option('--pixelmap_dir', type='str', default='/sps/lsst/users/gris/ObsPixelized_128',help='pixelmap directory [%default]')
+parser.add_option('--pixelmap_dir', type='str', default='None',help='pixelmap directory [%default]')
 parser.add_option('--nproc', type=int, default=8,help='number of proc [%default]')
 parser.add_option('--ebvofMW', type=float, default=-1.0,help='E(B-V) [%default]')
 parser.add_option('--fieldNames', type=str, default='COSMOS,CDFS,ELAISS1,XMM-LSS,EDFSa,EDFSb',help='DD fields to process [%default]')
@@ -52,7 +52,7 @@ fieldNames = opts.fieldNames.split(',')
 ppNames = ['outDir','pixelmap_dir','nclusters','nside','nproc','ebvofMW','RAmin','RAmax','Decmin','Decmax','select_epochs','n_bef','n_aft']
 
 params=dict_filter(opts.__dict__,ppNames)
-scriptref = 'run_scripts/metrics/run_metrics.py NSNY'
+scriptref = 'run_scripts/metrics/run_metrics_new.py NSNY'
 params['fieldType'] = 'DD'
 params['zmax'] = 1.1
 params['npixels'] = -1
