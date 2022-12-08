@@ -7,7 +7,7 @@ dict_filter = lambda x, y: dict([ (i,x[i]) for i in x if i in set(y) ])
 
 def bbatch(scriptref,params,fieldNames,mem='20G'):
 
-    processName = 'metric_DD_{}'.format(params['dbName'])
+    processName = 'metric_DD_{}_{}_{}_{}'.format(params['dbName'],params['project_FP'],params['VRO_FP'],params['telrot'])
     mybatch = BatchIt(processName=processName,mem=mem)
     for fieldName in fieldNames:
         params['fieldName'] = fieldName
@@ -42,6 +42,14 @@ parser.add_option("--n_bef", type=int, default=4,
                   help="n points (epochs) before max [%default]")
 parser.add_option("--n_aft", type=int, default=8,
                   help="n points (epochs) after max [%default]")
+parser.add_option("--project_FP", type=str, default='gnomonic',
+                  help="type of projection in FP [%default]")
+parser.add_option("--VRO_FP", type=str, default='circular',
+                  help="FP model [%default]")
+parser.add_option("--telrot", type=int, default=0,
+                  help="telescope rotation angle [%default]")
+
+
 
 opts, args = parser.parse_args()
 
@@ -49,7 +57,7 @@ toprocess = pd.read_csv(opts.dbList, comment='#')
 
 fieldNames = opts.fieldNames.split(',')
 
-ppNames = ['outDir','pixelmap_dir','nclusters','nside','nproc','ebvofMW','RAmin','RAmax','Decmin','Decmax','select_epochs','n_bef','n_aft']
+ppNames = ['outDir','pixelmap_dir','nclusters','nside','nproc','ebvofMW','RAmin','RAmax','Decmin','Decmax','select_epochs','n_bef','n_aft','project_FP','VRO_FP','telrot']
 
 params=dict_filter(opts.__dict__,ppNames)
 scriptref = 'run_scripts/metrics/run_metrics_new.py NSNY'
