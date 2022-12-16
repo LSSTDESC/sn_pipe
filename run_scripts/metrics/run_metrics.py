@@ -34,14 +34,19 @@ opts, args = parser.parse_args()
 
 # load the new values
 metricDict = {}
+metricProc = {}
 for key, vals in confDict_metric.items():
     metricDict[key] = eval('opts.{}'.format(key))
+for key, vals in confDict_gen.items():
+    metricProc[key] = eval('opts.{}'.format(key))
 
 metricDict['RAmin'] = opts.RAmin
 metricDict['RAmax'] = opts.RAmax
 metricDict['Decmin'] = opts.Decmin
 metricDict['Decmax'] = opts.Decmax
 metricDict['npixels'] = opts.npixels
+
+
 print(metricDict)
 
 print('Start processing...', opts)
@@ -52,11 +57,6 @@ if opts.remove_dithering:
     nodither = '_nodither'
 outputDir = '{}/{}{}/{}'.format(opts.outDir,
                                 opts.dbName, nodither, metric)
-
-healpixIDs = []
-
-if opts.healpixIDs.strip() != '\'\'':
-    healpixIDs = list(map(int, opts.healpixIDs.split(',')))
 
 if opts.fieldType == 'DD':
     outputDir += '_{}'.format(opts.fieldName)
@@ -77,12 +77,12 @@ metricList.append(globals()[classname](**metricDict))
 print('seasons and metric', opts.seasons,
       metric, opts.pixelmap_dir, opts.npixels)
 
+metricProc['fieldType'] = opts.fieldType
+metricProc['metricList'] = metricList
+metricProc['fieldName'] = opts.fieldName
+metricProc['outDir'] = outputDir
+metricProc['pixelList'] = opts.pixelList
+metricProc['nside'] = opts.nside
 
-process = Process(opts.dbDir, opts.dbName, opts.dbExtens,
-                  opts.fieldType, opts.fieldName, opts.nside,
-                  opts.RAmin, opts.RAmax,
-                  opts.Decmin, opts.Decmax,
-                  opts.saveData, opts.remove_dithering,
-                  outputDir, opts.nproc, metricList,
-                  opts.pixelmap_dir, opts.npixels,
-                  opts.nclusters, opts.radius, healpixIDs)
+print('processing', metricProc)
+process = Process(**metricProc)
