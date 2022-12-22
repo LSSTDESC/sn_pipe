@@ -50,7 +50,7 @@ def go_for_batch(toproc, splitSky,
     dbExtens = toproc['dbExtens']
     fieldType = toproc['fieldType']
 
-    if pixelmap_dir == '':
+    if pixelmap_dir == 'None':
 
         # first case: no pixelmap - run on all the pixels - possibility to split the sky
         n_per_slice = 1
@@ -61,13 +61,20 @@ def go_for_batch(toproc, splitSky,
         for ira in range(len(RAs)-1):
             RAmin = RAs[ira]
             RAmax = RAs[ira+1] 
-            r = [(RAmin,RAmax,-1.0,-1.0)]
+            r = [(RAmin,RAmax,-90,40)]
             RADec = np.rec.fromrecords(r, names=['RAmin','RAmax','Decmin','Decmax'])
+            """
             batchclass(dbName, dbDir, dbExtens, 'run_scripts/metrics/run_metrics',
                        outDir, 8, 1, metricName, toproc,
                        nodither, nside, fieldType, RADec, band,
                        pixelmap_dir, npixels,npixels,ira,proxy_level,select_epochs,n_bef,n_aft)
-
+            """
+            batchclass(dbName, dbDir, dbExtens, 'run_scripts/metrics/run_metrics',
+                           outDir, 8, 1, metricName, toproc,
+                           nodither, nside, zmin,zmax,
+                           zStep,daymaxStep,zlim_coeff,fieldType,RADec, band=band,
+                           pixelmap_dir=pixelmap_dir, npixels=npixels,
+                           proxy_level=proxy_level, npixels_tot=npixels, ibatch=ira,select_epochs=select_epochs,n_bef=n_bef,n_aft=n_aft)
     else:
         # second case: there are pixelmaps available -> run on them
         # first: get the skymap
