@@ -1,6 +1,43 @@
 from sn_tools.sn_process import FP2pixels
 from optparse import OptionParser
+import os
 
+def outName(outDir='',dbName='',fieldType='',nside=128,RAmin=0., RAmax=360.,Decmin=-85,Decmax=40.,fieldName='',**kwargs):
+    
+    if fieldType == 'DD':
+        outName_ = '{}/{}_{}_nside_{}_{}_{}_{}_{}_{}.hdf5'.format(outDir,
+                                                                 dbName, fieldType, nside,
+                                                                 RAmin, RAmax,
+                                                                 Decmin, Decmax,
+                                                                 fieldName)
+    if fieldType == 'WFD':
+        outName_ = '{}/{}_{}_nside_{}_{}_{}_{}_{}.hdf5'.format(outDir,
+                                                             dbName, fieldType, nside,
+                                                             RAmin, RAmax,
+                                                             Decmin, Decmax)
+
+    return outName_
+
+def genDir(outDir,dbName,nodither):
+    """
+    Method to create directory
+    """
+    
+    # prepare outputDir
+    nodither = ''
+    if nodither==1:
+        nodither = '_nodither'
+
+    outDir = '{}/{}{}'.format(outDir,dbName, nodither)
+
+    # create output directory (if necessary)
+
+    if not os.path.isdir(outDir):
+        os.makedirs(outDir)
+
+    return outDir
+    
+        
 parser = OptionParser()
 
 parser.add_option("--dbName", type="str", default='draft_connected_v2.99_10yrs',
@@ -17,15 +54,15 @@ parser.add_option("--nproc", type="int", default=1,
                   help="number of procs  [%default]")
 parser.add_option("--fieldType", type="str", default='DD',
                   help="field type DD or WFD[%default]")
-parser.add_option("--remove_dithering", type="int", default='0',
+parser.add_option("--remove_dithering", type="int", default=0,
                   help="remove dithering for DDF [%default]")
-parser.add_option("--saveData", type="int", default='0',
+parser.add_option("--saveData", type="int", default=1,
                   help="flag to dump data on disk [%default]")
 parser.add_option("--RAmin", type=float, default=0.,
                   help="RA min for obs area - [%default]")
 parser.add_option("--RAmax", type=float, default=360.,
                   help="RA max for obs area - [%default]")
-parser.add_option("--Decmin", type=float, default=-80.,
+parser.add_option("--Decmin", type=float, default=-90.,
                   help="Dec min for obs area - [%default]")
 parser.add_option("--Decmax", type=float, default=40.,
                   help="Dec max for obs area - [%default]")
@@ -49,8 +86,22 @@ parser.add_option("--npixels", type="int", default=-1,
 opts, args = parser.parse_args()
 
 
-obs2pixels = FP2pixels(**vars(opts))
+fieldNames = opts.fieldName.split(',')
+dict_process = vars(opts)
 
-pixels = obs2pixels()
 
-print(pixels)
+if opts.saveData:
+    outDir = genDir(opts.outDir,opts.dbName,opts.remove_dithering)
+
+for fieldName in fieldNames:
+    dict_process['fieldName']=fieldName
+    obs2pixels = FP2pixels(**dict_process)
+
+    pixels = obs2pixels()
+
+    print(type(pixels),outDir)
+    if opts.saveData:
+        dict_process['outDir'] = outDir
+        outName_= outName(**dict_process)
+        print('outName',outName_)
+        pixels.to_hdf(outName_,key=fieldName)
