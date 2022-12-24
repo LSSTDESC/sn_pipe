@@ -1,0 +1,21 @@
+#obs_pixelize parameters
+dbName draft_connected_v2.99_10yrs str #db name
+dbExtens npy str #db extension
+dbDir ../DB_Files str #db dir
+outDir ObsPixelized str #output dir
+nside 128 int #healpixnside
+nproc 8 int # number of procs
+fieldType DD str #field type DD or WFD
+remove_dithering 0 int #to remove dithering for DDF
+saveData 1 int #flag to dump data on disk
+RAmin 0.0 float #RA min for obs. area
+RAmax 360.0 float #RA max for obs. area
+Decmin -90. float #Dec min for obs. area
+Decmax 40. float #Dec max for obs. area
+fieldName COSMOS str#fieldName list
+radius 4.0 float #radius for data/pixels
+VRO_FP circular str #VRO Focal Plane (circle or realistic)
+project_FP gnomonic str #Focal Plane projection (gnomonic or hp_query)
+telrot 0. int #telescope rotation angle
+display 0 int #to display results
+npixels -1. int #number of pixels to process
