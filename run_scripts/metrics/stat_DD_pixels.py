@@ -1,7 +1,4 @@
 import pandas as pd
-import numpy as np
-import os
-import glob
 from sn_tools.sn_cadence_tools import stat_DD_night_pixel, stat_DD_season_pixel
 from optparse import OptionParser
 from sn_tools.sn_io import make_dict_from_config,add_parser
@@ -92,20 +89,10 @@ for fieldName in fieldNames:
     pixels['fieldName'] = fieldName
     pixels = transform(pixels,observations)
     resdf = stat_DD_night_pixel(pixels,opts.dbName)
-    restot = pd.concat((restot, resdf))
-
-
-restot.to_hdf(opts.outName, key='summary')
-
-    
-"""
-for i, row in dfdb.iterrows():
-    # processing obspixelfiles
-    
-    
-    resdf = stat_DD_night_pixel(pixels)
+    #restot = pd.concat((restot, resdf))
     restat = stat_DD_season_pixel(resdf)
     restot = pd.concat((restot, restat))
+    
+    
 
 restot.to_hdf(opts.outName, key='summary')
-"""

@@ -76,6 +76,7 @@ def plot_Moll_season(nside, data, what='cadence_mean', leg='cadence [days]', min
 
     """
 
+    print('alors leg',leg)
     plotMollview(nside, data, what, leg, np.median, minval, maxval)
 
 
@@ -285,119 +286,48 @@ def check_pixel(data, hpix):
     print('result for', hpix, data[idx])
 
 
-def plot_Molls(df, metricValues):
+def plot_Molls(df):
 
+    print('plotting Moll',len(df))
     plot_Moll_season(nside, df)
-    plot_Moll_season(nside, metricValues, what='nsn')
-
-
-def plotIt(df, metricValues, suptit='', color='b', fig=None, ax=None, whaty='nsn', legy='N$_{SN}$'):
-
-    if fig is None:
-        fig, ax = plt.subplots(figsize=(12, 8))
-
-        # get distance
-    selfi = get_dist(df)
-
-    mmet = get_dist(metricValues, pixRA_mean=np.mean(
-        selfi['pixRA_mean']), pixDec_mean=np.mean(selfi['pixDec_mean']))
-
-    io = mmet[whaty] > 0.
-    rad_max = np.max(mmet[io]['dist'])
-    idx = selfi['dist'] <= rad_max
-    selfi_rad = selfi[idx]
-    frac_area = 1.-(len(selfi)-len(selfi_rad))/len(selfi)
-    area = np.round(len(selfi_rad)*pixArea, 1)
-    suptit += '\n obs. area: {} deg$^2$ ({}%)'.format(area,
-                                                      int(100.*frac_area))
-    plot_2D(selfi_rad, figtitle=suptit, fig=fig, ax=ax, mfc='None', color='r')
-
-    axb = ax.twinx()
-    plot_2D(mmet, whaty=whaty, legy=legy,
-            figtitle=suptit, fig=fig, ax=axb, color=color, marker='s', mfc='None')
-    axb.grid(None)
-
-    print('total number of sn', np.sum(mmet['nsn']))
-    dist_cut = getVal(mmet)
-    print('dist_cut', dist_cut)
-    idd = mmet['dist'] <= dist_cut
-    print('vv', np.median(mmet['zcomp']), np.median(mmet[idd]['zcomp']))
 
 
 parser = OptionParser()
 
-parser.add_option("--dbName", type=str, default='alt_sched',
-                  help="db name [%default]")
+
 parser.add_option("--field", type=str, default='COSMOS',
                   help="field [%default]")
-parser.add_option("--season", type=str, default="1",
-                  help="season of observation [%default]")
 parser.add_option("--inputFile", type=str, default='Summary_DD_pixel.hdf5',
-                  help="season of observation [%default]")
+                  help="input file name [%default]")
 parser.add_option("--nside", type=int, default=128,
                   help="healPix nside parameter [%default]")
-parser.add_option("--dbDir", type=str, default='../MetricOutput_DD_new_128_gnomonic_circular',
-                  help="main location dir of metric files [%default]")
-parser.add_option("--metric", type=str, default='NSNY',
-                  help="metric name [%default]")
 
 opts, args = parser.parse_args()
 
 fi = opts.inputFile
 nside = opts.nside
-dbName = opts.dbName.split(',')
 field = opts.field.split(',')
-season = opts.season.split(',')
-dbDir = opts.dbDir
-metric = opts.metric
 
 # loading data - os pixels
 df = pd.read_hdf(fi)
 
 print(df.columns)
 print(df['dbName'].unique())
+dbName = df['dbName'].unique()
 pixArea = hp.nside2pixarea(nside, degrees=True)
-fig, ax = plt.subplots(figsize=(12, 8))
-figb, axb = plt.subplots(figsize=(12, 8))
+#fig, ax = plt.subplots(figsize=(12, 8))
+#figb, axb = plt.subplots(figsize=(12, 8))
 colors = ['b', 'r']
 for io, db in enumerate(dbName):
-    # loading metric results
-    metricValues = load_metric(dbDir, db, metric, field[io], nside)
-    check_pixel(metricValues, hpix=109033)
-    idx = metricValues['zcomp'] > 0.
-    metricValues = metricValues[idx]
     idx = df['dbName'] == db
-    print('allo1', len(df[idx]))
-    idx &= df['season'] == int(season[io])
-    print('allo2', len(df[idx]))
     idx &= df['field'] == field[io]
-    print('allo3', len(df[idx]))
-    # plot Mollview here
-    # plot_Molls(df[idx],metricValues[idxb])
-    idxb = metricValues['season'] == int(season[io])
+    print('allo1', len(df[idx]))
+    sel = df[idx]
+    for season in sel['season'].unique():
+        idxb = sel['season'] == int(season)
+        print('allo2', len(sel[idxb]))
+        # plot Mollview here
+        if season<=10:
+            plot_Moll_season(nside,sel[idxb], leg='season {} \n cadence [days]'.format(season))
 
-    suptit = '{} - season {}'.format(field[io], int(season[io]))
-    #suptit += '\n {}'.format(db)
-    plotIt(df[idx], metricValues[idxb], suptit=suptit,
-           fig=fig, ax=ax, color=colors[io])
-    plotIt(df[idx], metricValues[idxb], suptit=suptit,
-           fig=figb, ax=axb, color=colors[io], whaty='zcomp', legy='$z_{complete}$')
-
-    """
-    plot_2D(mmet, whaty='zcomp', legy='$z_{complete}$',
-            figtitle=suptit, fig=fig, ax=ax.twinx(), color='b', marker='s', mfc='None')
-    """
-
-    #plot_cumsum(mmet, whatx='nsn', legx='$N_{SN}$', mfc='None')
-    """
-    plot_cumsum(selfi, mfc='None')
-
-    plot_cumsum(mmet, whatx='zcomp', legx='$z_{complete}$', mfc='None')
-    plot_cumsum(mmet, whatx='nsn', legx='$N_{SN}$', mfc='None')
-    """
-
-    """
-    plot_Hist(df[idx], figtitle=suptit)
-    print(np.unique(df[idx]['filter_alloc']))
-    """
 plt.show()
