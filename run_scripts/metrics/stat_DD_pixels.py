@@ -5,6 +5,33 @@ from sn_tools.sn_io import make_dict_from_config,add_parser
 from sn_tools.sn_process import FP2pixels
 from sn_tools.sn_obs import ProcessPixels
 
+def add_year(df):
+    """
+    
+
+    Parameters
+    ----------
+    res : pandas df
+        data to process
+
+    Returns
+    -------
+    original df plus year column
+
+    """
+    
+    res = pd.DataFrame(df)
+    
+    res['year'] = 1
+
+    for i in range(10):
+        idx = res['night'] >= i*365.
+        idx &= res['night'] < (i+1)*365.
+        res.loc[idx,'year'] = i+1
+
+    return res
+
+
 def transform(pixels,obs):
     """
     Function to transform the pixels df
@@ -28,6 +55,8 @@ def transform(pixels,obs):
     obsm = obsm.groupby(['observationId','filter','night'])[obsCol].mean().reset_index()
 
     res = res.merge(obsm, left_on=['observationId'],right_on=['observationId'])
+
+        
     
     return res
 
@@ -88,9 +117,10 @@ for fieldName in fieldNames:
     pixels = obs2pixels()
     pixels['fieldName'] = fieldName
     pixels = transform(pixels,observations)
-    resdf = stat_DD_night_pixel(pixels,opts.dbName)
+    resdf = stat_DD_night_pixel(pixels,opts.dbName,nproc=opts.nproc)
+    resdf = add_year(resdf)
     #restot = pd.concat((restot, resdf))
-    restat = stat_DD_season_pixel(resdf)
+    restat = stat_DD_season_pixel(resdf,cols=['healpixID', 'field', 'pixRA', 'pixDec', 'year', 'dbName'])
     restot = pd.concat((restot, restat))
     
     
