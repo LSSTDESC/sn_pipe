@@ -301,12 +301,15 @@ parser.add_option("--inputFile", type=str, default='Summary_DD_pixel.hdf5',
                   help="input file name [%default]")
 parser.add_option("--nside", type=int, default=128,
                   help="healPix nside parameter [%default]")
+parser.add_option("--timeCol", type=str, default='season',
+                  help="colname for time display[%default]")
 
 opts, args = parser.parse_args()
 
 fi = opts.inputFile
 nside = opts.nside
 field = opts.field.split(',')
+timeCol = opts.timeCol
 
 # loading data - os pixels
 df = pd.read_hdf(fi)
@@ -323,11 +326,11 @@ for io, db in enumerate(dbName):
     idx &= df['field'] == field[io]
     print('allo1', len(df[idx]))
     sel = df[idx]
-    for season in sel['season'].unique():
-        idxb = sel['season'] == int(season)
+    for season in sel[timeCol].unique():
+        idxb = sel[timeCol] == int(season)
         print('allo2', len(sel[idxb]))
         # plot Mollview here
         if season<=10:
-            plot_Moll_season(nside,sel[idxb], leg='season {} \n cadence [days]'.format(season),maxval=10)
-            plot_Hist(sel[idxb],figtitle='season {}'.format(season))
+            plot_Moll_season(nside,sel[idxb], leg='{} {} \n cadence [days]'.format(timeCol,season),maxval=10)
+            plot_Hist(sel[idxb],figtitle='{} {}'.format(timeCol,season))
 plt.show()
