@@ -2,6 +2,7 @@ import sys
 from optparse import OptionParser
 from sn_tools.sn_io import make_dict_from_config
 import sn_metrics_input
+import sn_script_input
 import os
 from sn_tools.sn_process import Process
 
@@ -21,7 +22,9 @@ print('metric', metric)
 
 # get all possible simulation parameters and put in a dict
 path_metric_input = sn_metrics_input.__path__
-confDict_gen = make_dict_from_config(path_metric_input[0], 'config_metric.txt')
+path_process_input = sn_script_input.__path__
+confDict_gen = make_dict_from_config(
+    path_process_input[0], 'config_process.txt')
 confDict_metric = make_dict_from_config(
     path_metric_input[0], 'config_{}.txt'.format(metric))
 
