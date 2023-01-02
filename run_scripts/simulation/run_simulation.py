@@ -1,20 +1,23 @@
-from sn_simu_wrapper.sn_wrapper_for_simu import SimuWrapper, MakeYaml
+from sn_simu_wrapper.sn_wrapper_for_simu import SimuWrapper
 import sn_simu_input as simu_input
-from sn_tools.sn_io import make_dict_from_config, make_dict_from_optparse
+import sn_script_input
+from sn_tools.sn_io import make_dict_from_config, make_dict_from_optparse, add_parser
 from sn_tools.sn_process import Process
 from optparse import OptionParser
-import numpy as np
 import os
 import yaml
 
 
 # get all possible simulation parameters and put in a dict
+path_process_input = sn_script_input.__path__
 path = simu_input.__path__
-confDict = make_dict_from_config(path[0], 'config_simulation.txt')
+confDict_gen = make_dict_from_config(
+    path_process_input[0], 'config_process.txt')
+confDict_simu = make_dict_from_config(path[0], 'config_simulation.txt')
 
 
 parser = OptionParser()
-
+"""
 parser.add_option("--dbName", type="str", default='descddf_v1.4_10yrs',
                   help="db name [%default]")
 parser.add_option("--dbDir", type="str",
@@ -43,7 +46,15 @@ parser.add_option("--radius", type=float, default=4.,
                   help="radius around clusters (DD and Fakes)[%default]")
 parser.add_option("--nproc", type=int, default=1,
                   help="number of procs to run[%default]")
+"""
 
+parser = OptionParser()
+# parser for simulation parameters : 'dynamical' generation
+add_parser(parser, confDict_gen)
+add_parser(parser, confDict_simu)
+
+opts, args = parser.parse_args()
+"""
 # parser for simulation parameters : 'dynamical' generation
 for key, vals in confDict.items():
     vv = vals[1]
@@ -61,9 +72,20 @@ newDict = {}
 for key, vals in confDict.items():
     newval = eval('opts.{}'.format(key))
     newDict[key] = (vals[0], newval)
+"""
+# load the new values
+simuDict = {}
+procDict = {}
+for key, vals in confDict_simu.items():
+    #simuDict[key] = eval('opts.{}'.format(key))
+    newval = eval('opts.{}'.format(key))
+    simuDict[key] = (vals[0], newval)
+for key, vals in confDict_gen.items():
+    procDict[key] = eval('opts.{}'.format(key))
 
 # new dict with configuration params
-yaml_params = make_dict_from_optparse(newDict)
+print('simudict', simuDict)
+yaml_params = make_dict_from_optparse(simuDict)
 
 # one modif: full dbName
 yaml_params['Observations']['filename'] = '{}/{}.{}'.format(
@@ -111,6 +133,21 @@ saveData = 0
 outDir = yaml_params['OutputSimu']['directory']
 # now perform the processing
 
+
+print('seasons and metric', opts.Observations_season,
+      metricList, opts.pixelmap_dir, opts.npixels)
+
+procDict['fieldType'] = opts.fieldType
+procDict['metricList'] = metricList
+procDict['fieldName'] = opts.fieldName
+procDict['outDir'] = outDir
+procDict['pixelList'] = opts.pixelList
+procDict['nside'] = opts.nside
+
+print('processing', procDict)
+process = Process(**procDict)
+
+"""
 Process(opts.dbDir, opts.dbName, opts.dbExtens,
         fieldType, fieldName, nside,
         opts.RAmin, opts.RAmax,
@@ -119,3 +156,4 @@ Process(opts.dbDir, opts.dbName, opts.dbExtens,
         outDir, opts.nproc, metricList,
         opts.pixelmap_dir, opts.npixels,
         opts.nclusters, opts.radius)
+"""

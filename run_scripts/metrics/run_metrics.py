@@ -71,6 +71,9 @@ metricDict['outDir'] = outputDir
 #metricDict['season'] = season_int
 metricDict['metric'] = metric
 metricDict['OSName'] = opts.dbName
+metricDict['fieldType'] = opts.fieldType
+metricDict['fieldName'] = opts.fieldName
+metricDict['nside'] = opts.nside
 classname = '{}MetricWrapper'.format(metric)
 metricList = []
 
@@ -80,12 +83,8 @@ metricList.append(globals()[classname](**metricDict))
 print('seasons and metric', opts.seasons,
       metric, opts.pixelmap_dir, opts.npixels)
 
-metricProc['fieldType'] = opts.fieldType
 metricProc['metricList'] = metricList
-metricProc['fieldName'] = opts.fieldName
 metricProc['outDir'] = outputDir
-metricProc['pixelList'] = opts.pixelList
-metricProc['nside'] = opts.nside
 
 print('processing', metricProc)
 process = Process(**metricProc)
