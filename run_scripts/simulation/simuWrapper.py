@@ -230,6 +230,7 @@ class SimuWrapper:
             version = str(config['Simulator']['version'])
 
             # need the SALT2 dir for this
+            from sn_tools.sn_io import check_get_dir
             check_get_dir(config['Web path'], 'SALT2', salt2Dir)
             from sn_tools.sn_utils import X0_norm
             X0_norm(salt2Dir=salt2Dir, model=model, version=version,
@@ -248,7 +249,9 @@ class SimuWrapper:
 
         """
         print('running here')
+        
         return self.metric.run(obs, imulti=imulti)
+
 
     def finish(self):
         """
