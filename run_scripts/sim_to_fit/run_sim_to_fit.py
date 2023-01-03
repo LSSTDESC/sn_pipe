@@ -1,5 +1,6 @@
 from sn_simu_wrapper.sn_wrapper_for_simu import SimInfoFitWrapper
 import sn_simu_input as simu_input
+import sn_fit_input as simu_fit
 import sn_script_input
 from sn_tools.sn_io import make_dict_from_config, make_dict_from_optparse, add_parser
 from sn_tools.sn_process import Process
@@ -10,12 +11,14 @@ import yaml
 
 # get all possible simulation parameters and put in a dict
 path_process_input = sn_script_input.__path__
-path = simu_input.__path__
+path_simu = simu_input.__path__
+path_fit = simu_fit.__path__
 confDict_gen = make_dict_from_config(
     path_process_input[0], 'config_process.txt')
-confDict_simu = make_dict_from_config(path[0], 'config_simulation.txt')
+confDict_simu = make_dict_from_config(path_simu[0], 'config_simulation.txt')
 confDict_info = make_dict_from_config(
     path_process_input[0], 'config_sel.txt')
+confDict_fit = make_dict_from_config(path_fit[0], 'config_fit.txt')
 
 parser = OptionParser()
 """
@@ -54,6 +57,7 @@ parser = OptionParser()
 add_parser(parser, confDict_gen)
 add_parser(parser, confDict_simu)
 add_parser(parser, confDict_info)
+add_parser(parser, confDict_fit)
 
 opts, args = parser.parse_args()
 """
@@ -79,6 +83,7 @@ for key, vals in confDict.items():
 simuDict = {}
 procDict = {}
 infoDict = {}
+fitDict = {}
 for key, vals in confDict_simu.items():
     #simuDict[key] = eval('opts.{}'.format(key))
     newval = eval('opts.{}'.format(key))
@@ -87,10 +92,16 @@ for key, vals in confDict_gen.items():
     procDict[key] = eval('opts.{}'.format(key))
 for key, vals in confDict_info.items():
     infoDict[key] = eval('opts.{}'.format(key))
+# load the new values
+for key, vals in confDict_fit.items():
+    newval = eval('opts.{}'.format(key))
+    fitDict[key] = (vals[0], newval)
+    
 # new dict with configuration params
 print('simudict', simuDict)
 yaml_params = make_dict_from_optparse(simuDict)
-
+yaml_params_fit = make_dict_from_optparse(fitDict)
+print('polo',yaml_params_fit)
 # one modif: full dbName
 yaml_params['Observations']['filename'] = '{}/{}.{}'.format(
     opts.dbDir, opts.dbName, opts.dbExtens)
@@ -123,13 +134,16 @@ prodid = yaml_params['ProductionIDSimu']
 if not os.path.isdir(outDir):
     os.makedirs(outDir)
 
-yaml_name = '{}/{}.yaml'.format(outDir, prodid)
+yaml_name = '{}/{}_simu.yaml'.format(outDir, prodid)
 with open(yaml_name, 'w') as f:
     data = yaml.dump(yaml_params, f)
+yaml_name_fit = '{}/{}_fit.yaml'.format(outDir, prodid)
+with open(yaml_name_fit, 'w') as f:
+    data_fit = yaml.dump(yaml_params_fit, f)
 
 # define what to process using simuWrapper
 
-metricList = [SimInfoFitWrapper(yaml_name,infoDict)]
+metricList = [SimInfoFitWrapper(yaml_name,infoDict,yaml_name_fit)]
 fieldType = yaml_params['Observations']['fieldtype']
 fieldName = yaml_params['Observations']['fieldname']
 nside = yaml_params['Pixelisation']['nside']
