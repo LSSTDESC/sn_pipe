@@ -2,6 +2,8 @@ from optparse import OptionParser
 from sn_plotter_simu.simuPlot import SimuPlot
 from sn_plotter_simu import plt
 from sn_tools.sn_io import checkDir
+import numpy as np
+
 parser = OptionParser()
 
 parser.add_option("--dbName", type="str", default='alt_sched',
@@ -10,7 +12,7 @@ parser.add_option("--fileDir", type="str", default='Output_Simu',
                   help="dir location of the results [%default]")
 parser.add_option("--tagName", type="str", default='SNIa',
                   help="tag name for production [%default]")
-parser.add_option("--pause_time", type=int, default=5,
+parser.add_option("--pause_time", type=int, default=-1,
                   help="display time (sec) [%default]")
 parser.add_option("--save_fig", type=int, default=0,
                   help="to save figures [%default]")
@@ -25,18 +27,19 @@ splot = SimuPlot(opts.fileDir, opts.dbName, opts.tagName)
 # plt.show()
 # get the simulation parameters
 simupars = splot.simuPars
+simupars.round({'z':2,'daymax':1})
+vvals = ['SNID','z','daymax','x1','color']
+#print(simupars[vvals])
 
-# plt.show()
+simupars.convert_bytestring_to_unicode()
+simupars[vvals].pprint_all()
+
+
 
 print('Number of simulated supernovae', len(simupars))
 # get columns
 
 cols = simupars.columns
-
-print(cols)
-#plt.plot(simupars['pixRA'], simupars['pixDec'], 'ko')
-print(splot.simuPars)
-# plt.show()
 
 # plotting SN parameters
 # splot.plotParameters(season=3)
@@ -44,9 +47,19 @@ print(splot.simuPars)
 # display LC loop
 if opts.save_fig:
     checkDir(opts.dir_fig)
-splot.plotLoopLC(pause_time=opts.pause_time,
+    
+while 1:
+    answer = input('SN to plot? ')
+
+    snids = answer.split(',')
+    print('snids',snids)
+    idx = np.in1d(simupars['SNID'],snids)
+    selpars = simupars[idx]
+    print('sel',selpars)
+    splot.plotLoopLC(selpars,
                  save_fig=opts.save_fig, dir_fig=opts.dir_fig)
+
 # splot.plotLoopLC_errmod()
-plt.show()
+#plt.show()
 
 # splot.checkLC()
