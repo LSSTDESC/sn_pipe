@@ -21,36 +21,7 @@ confDict_info = make_dict_from_config(
 confDict_fit = make_dict_from_config(path_fit[0], 'config_fit.txt')
 
 parser = OptionParser()
-"""
-parser.add_option("--dbName", type="str", default='descddf_v1.4_10yrs',
-                  help="db name [%default]")
-parser.add_option("--dbDir", type="str",
-                  default=' /sps/lsst/cadence/LSST_SN_CADENCE/cadence_db', help="db dir [%default]")
-parser.add_option("--dbExtens", type="str", default='npy',
-                  help="db extension [%default]")
-parser.add_option("--nodither", type="int", default=0,
-                  help="to remove dithering [%default]")
-parser.add_option("--RAmin", type=float, default=0.,
-                  help="RA min for obs area - for WDF only[%default]")
-parser.add_option("--RAmax", type=float, default=360.,
-                  help="RA max for obs area - for WDF only[%default]")
-parser.add_option("--Decmin", type=float, default=-1.,
-                  help="Dec min for obs area - for WDF only[%default]")
-parser.add_option("--Decmax", type=float, default=-1.,
-                  help="Dec max for obs area - for WDF only[%default]")
-parser.add_option("--remove_dithering", type="int", default='0',
-                  help="remove dithering for DDF [%default]")
-parser.add_option("--pixelmap_dir", type=str, default='',
-                  help="dir where to find pixel maps[%default]")
-parser.add_option("--npixels", type=int, default=-1,
-                  help="number of pixels to process[%default]")
-parser.add_option("--nclusters", type=int, default=0,
-                  help="number of clusters in data (DD only)[%default]")
-parser.add_option("--radius", type=float, default=4.,
-                  help="radius around clusters (DD and Fakes)[%default]")
-parser.add_option("--nproc", type=int, default=1,
-                  help="number of procs to run[%default]")
-"""
+
 
 parser = OptionParser()
 # parser for simulation parameters : 'dynamical' generation
