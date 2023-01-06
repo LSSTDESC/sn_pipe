@@ -13,8 +13,10 @@ from sn_tools.sn_io import make_dict_from_config, make_dict_from_optparse, add_p
 from optparse import OptionParser
 import os
 import yaml
-from astropy.table import Table, vstack
+from astropy.table import Table
+import numpy as np
 import h5py
+import random
 
 def load_lc_as_list(fName):
    """
@@ -98,8 +100,21 @@ lc_list = []
 
 for fi in fis:
     lc_list += load_lc_as_list(fi)
-    
+
 print('loaded',len(lc_list))
+   
+nights = []
+for lc in lc_list:
+    if np.abs(lc.meta['z']-1.11) < 1.e-5:
+        print('ici',lc.meta['z'],list(np.unique(lc['night'])))    
+        nights = list(np.unique(lc['night']))
+        
+for i in range(1,len(nights)):
+    rc = random.choices(nights,k=i)
+    print(rc)
+
+"""
 res = process.run(lc_list)
 
 print(res)
+"""
