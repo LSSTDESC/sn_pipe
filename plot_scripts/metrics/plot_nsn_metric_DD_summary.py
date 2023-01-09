@@ -367,7 +367,8 @@ parser.add_option("--fieldNames", type="str", default='COSMOS,CDFS,XMM-LSS,ELAIS
                   help="fields to process [%default]")
 parser.add_option("--metric", type="str", default='NSNY',
                   help="metric name [%default]")
-
+parser.add_option("--prefix_csv", type="str", default='metric_summary_DD',
+                  help="prefix for csv output files [%default]")
 
 opts, args = parser.parse_args()
 
@@ -379,6 +380,7 @@ metricName = opts.metric
 snType = opts.snType
 outName = opts.outName
 fieldNames = opts.fieldNames.split(',')
+prefix_csv = opts.prefix_csv
 
 # Loading input file with the list of cadences to take into account and siaplay features
 filename = opts.dbList
@@ -471,7 +473,8 @@ print(metricPlot.columns)
 #    lambda x: zcomp_weighted(x)).reset_index()
 
 # metricPlot = tt.to_records(index=False)
-dumpcsv_medcad(metricPlot)
+metricPlotb = metricPlot.merge(forPlot, left_on=['dbName'],right_on=['dbName'])
+dumpcsv_medcad(metricPlotb,prefix=prefix_csv)
 # print(test)
 # nsn_plot.plot_DDSummary(metricPlot, forPlot, sntype=snType,
 #                        fieldNames=fieldNames, nside=nside, figtit=opts.fieldNames)
@@ -491,7 +494,6 @@ if fieldType == 'DD':
     summary = summary_field.groupby(['dbName']).agg({'nsn': 'sum',
                                                      'zcomp': 'median',
                                                      }).reset_index()
-
 nsn_plot.plotNSN(summary, forPlot, varx='zcomp', vary='nsn',
                  legx='${z_{\mathrm{complete}}}$', legy='N$_{\mathrm{SN}} (z<z_{\mathrm{complete}})}$', figtit=opts.fieldNames)
 
