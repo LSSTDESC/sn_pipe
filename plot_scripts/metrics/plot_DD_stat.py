@@ -1,8 +1,7 @@
 import pandas as pd
 from sn_plotter_metrics import plt
 import numpy as np
-from sn_plotter_metrics.utils import Infos, Simu, get_dist
-import numpy.lib.recfunctions as rf
+from sn_plotter_metrics.utils import get_dist
 from optparse import OptionParser
 
 
@@ -99,7 +98,7 @@ def complete_pointing(df, dfgroup):
     df['family'] = df['group']
 
     # strip db Name
-    df['family'] = df['family'].str.split('_v2.1_10yrs', expand=True)[0]
+    df['family'] = df['family'].str.split('_v2.99_10yrs', expand=True)[0]
 
     # uniformity of DD names
 
@@ -327,12 +326,9 @@ def plot_field(df, xvars=['season', 'season'], xlab=['Season', 'Season'], yvars=
                    label=family, marker=marker, color=color, mfc='None')
 
     ax[1].legend(bbox_to_anchor=(1., 1.), ncol=1, frameon=False)
-    for io in range(2):
-        ax[io].grid()
 
-    for io in range(2):
-        ax[io].grid()
-
+    ax[0].grid()
+    ax[1].grid()
 
 def plot_filter_alloc(flat, family, field):
 
