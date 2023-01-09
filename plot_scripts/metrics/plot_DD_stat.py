@@ -6,6 +6,22 @@ from optparse import OptionParser
 
 
 def zcomp_frac(grp, frac=0.95):
+    """
+    Function to estimate metric values from NSN distribution
+
+    Parameters
+    ----------
+    grp : pandas df
+        data to process.
+    frac : float, optional
+        NSN frac to estimate nsn, zcomp. The default is 0.95.
+
+    Returns
+    -------
+    pandas df
+        metric data with the frac selection.
+
+    """
 
     selfi = get_dist(grp)
     nmax = np.max(selfi['nsn'])
@@ -21,7 +37,24 @@ def zcomp_frac(grp, frac=0.95):
 
 
 def sel(df, season=1, field='COSMOS'):
+    """
+    Function to select a field from data
 
+    Parameters
+    ----------
+    df : pandas df
+        data to process
+    season : int, optional
+        Season of observation. The default is 1.
+    field : str, optional
+        Name of the field to consider. The default is 'COSMOS'.
+
+    Returns
+    -------
+    pandas df
+        data corresponding to (field,season)
+
+    """
     idx = df['season'] == season
     idx &= df['field'] == field
 
@@ -29,6 +62,22 @@ def sel(df, season=1, field='COSMOS'):
 
 
 def merge_with_pointing(metric, pointings):
+    """
+    Function to merge metric and pointing data
+
+    Parameters
+    ----------
+    metric : pandas df
+        metric data
+    pointings : pandas df
+        pointings data
+
+    Returns
+    -------
+    metric_merged : pandas df
+        metric+pointings data
+
+    """
 
     metric_season = metric.groupby(['dbName', 'fieldname', 'season']).apply(
         lambda x: zcomp_frac(x)).reset_index()
@@ -60,6 +109,30 @@ def merge_with_pointing(metric, pointings):
 
 def load_metric(dirFile, dbNames, metricName,
                 fieldType, fieldNames, nside):
+    """
+    Function to load metric values
+
+    Parameters
+    ----------
+    dirFile : str
+        location dir of the files
+    dbNames : list(str)
+        list of db to load
+    metricName : str
+        metric to consider
+    fieldType : str
+        type of field (DD or WFD)
+    fieldNames : list(str)
+        list of fields to consider
+    nside : int
+        healpix nside parameter
+
+    Returns
+    -------
+    metricPlot : pandas df
+        metric data
+
+    """
 
     from sn_plotter_metrics.utils import MetricValues
     metric = MetricValues(dirFile, dbNames, metricName,
@@ -114,6 +187,19 @@ def complete_pointing(df, dfgroup):
 
 
 def summary_plots(df):
+    """
+    Function to plot a set of OS parameters (pointings)
+
+    Parameters
+    ----------
+    df : pandas df
+        data to plot
+
+    Returns
+    -------
+    None.
+
+    """
     df['time_budget'] *= 100.
     df['time_budget_field'] *= 100.
     plot_series(df)
@@ -134,6 +220,22 @@ def summary_plots(df):
 
 
 def flat_this(grp, cols=['filter_alloc', 'filter_frac']):
+    """
+    Function to flatten some df columns
+
+    Parameters
+    ----------
+    grp : pandas df
+        data to process
+    cols : list(str), optional
+        list of cols to flatten. The default is ['filter_alloc', 'filter_frac'].
+
+    Returns
+    -------
+    pandas df
+        data with flattened cols
+
+    """
 
     dictout = {}
 
@@ -144,7 +246,41 @@ def flat_this(grp, cols=['filter_alloc', 'filter_frac']):
 
 
 def plot_vs_OS(data, varx='family', vary='time_budget', legy='Time Budget [%]', title='', fig=None, ax=None, label='', color='k', marker='.', ls='solid', mfc='k'):
+    """
+    Function to plot results vs OS name
 
+    Parameters
+    ----------
+    data : pandas df
+        data to process
+    varx : str, optional
+        x-axis col value. The default is 'family'.
+    vary : str, optional
+        y-axis col value. The default is 'time_budget'.
+    legy : str, optional
+        y-axis legend. The default is 'Time Budget [%]'.
+    title : str, optional
+        figure title. The default is ''.
+    fig : matplotlib figure, optional
+        figure where to plot. The default is None.
+    ax : matplotlib axis, optional
+        axis where to plot. The default is None.
+    label : str, optional
+        plot label. The default is ''.
+    color : str, optional
+        color for the plot. The default is 'k'.
+    marker : str, optional
+        marker for the plot. The default is '.'.
+    ls : str, optional
+        linestyle for the plot. The default is 'solid'.
+    mfc : str, optional
+        marker font color for the plot. The default is 'k'.
+
+    Returns
+    -------
+    None.
+
+    """
     if ax is None:
         fig, ax = plt.subplots(figsize=(12, 8))
 
@@ -168,7 +304,42 @@ def plot_vs_OS(data, varx='family', vary='time_budget', legy='Time Budget [%]', 
 
 
 def plot_vs_OS_dual(data, varx='family', vary=['time_budget'], legy=['Time Budget [%]'], title='', fig=None, ax=None, color='k', marker='.', ls='solid'):
+    """
+    Function to plot two results vs OS name
 
+    Parameters
+    ----------
+    data : pandas df
+        data to process
+    varx : str, optional
+        x-axis col value. The default is 'family'.
+    vary : str, optional
+        y-axis col value. The default is 'time_budget'.
+    legy : str, optional
+        y-axis legend. The default is 'Time Budget [%]'.
+    title : str, optional
+        figure title. The default is ''.
+    fig : matplotlib figure, optional
+        figure where to plot. The default is None.
+    ax : matplotlib axis, optional
+        axis where to plot. The default is None.
+    label : str, optional
+        plot label. The default is ''.
+    color : str, optional
+        color for the plot. The default is 'k'.
+    marker : str, optional
+        marker for the plot. The default is '.'.
+    ls : str, optional
+        linestyle for the plot. The default is 'solid'.
+    mfc : str, optional
+        marker font color for the plot. The default is 'k'.
+
+    Returns
+    -------
+    None.
+
+    """
+   
     if ax is None:
         fig, ax = plt.subplots(figsize=(12, 8), ncols=1, nrows=len(vary))
 
@@ -195,6 +366,23 @@ def plot_vs_OS_dual(data, varx='family', vary=['time_budget'], legy=['Time Budge
 
 
 def plot_hist_OS(data, by='family', what='cadence'):
+    """
+    Function to plot a set of histograms
+
+    Parameters
+    ----------
+    data : pandas df
+        Data to process.
+    by : str, optional
+        index to plot. The default is 'family'.
+    what : str, optional
+        Column to plot. The default is 'cadence'.
+
+    Returns
+    -------
+    None.
+
+    """
 
     fig, ax = plt.subplots()
     for fam in np.unique(data['family']):
@@ -210,12 +398,54 @@ def plot_hist_OS(data, by='family', what='cadence'):
 
 
 def plot_series(df, title='', varx='family', what=['time_budget', 'field'], leg=['Time budget [%]', 'DD Field']):
+    """
+    Function to plot a serie of figures
+
+    Parameters
+    ----------
+    df : pandas df
+        data to plot
+    title : str, optional
+        Figure title. The default is ''.
+    varx : str, optional
+        x-axis column. The default is 'family'.
+    what : str, optional
+        y-axis column. The default is ['time_budget', 'field'].
+    leg : str, optional
+        y-axis legend. The default is ['Time budget [%]', 'DD Field'].
+
+    Returns
+    -------
+    None.
+
+    """
 
     for i, vv in enumerate(what):
         plot_vs_OS(df, varx=varx, vary=vv, legy=leg[i], title=title)
 
 
 def plot_series_fields(df, title='', varx='family', what=['time_budget_field', 'time_budget_rel'], leg=['Field Time budget [%]', 'Relative Field Time budget [%]']):
+    """
+    Function to plot a serie of plots per field
+
+    Parameters
+    ----------
+    df : pandas df
+        data to plot.
+    title : str, optional
+        Figure title. The default is ''.
+    varx : str, optional
+        x-axis column. The default is 'family'.
+    what : list(str), optional
+        List of y-axis columns to plot. The default is ['time_budget_field', 'time_budget_rel'].
+    leg : list(str), optional
+        List of y-axis legends. The default is ['Field Time budget [%]', 'Relative Field Time budget [%]'].
+
+    Returns
+    -------
+    None.
+
+    """
 
     ls = ['solid', 'dotted', 'dashed', 'dashdot']*2
     marker = ['.', 's', 'o', '^', 'P', 'h']
@@ -234,6 +464,27 @@ def plot_series_fields(df, title='', varx='family', what=['time_budget_field', '
 
 
 def plot_series_median(df, title='', varx='family', what=['time_budget', 'field'], leg=['Time budget [%]', 'DD Field']):
+    """
+    Function to plot a set of figures with median values
+
+    Parameters
+    ----------
+    df : pandas df
+        data to plot
+    title : str, optional
+        Figure title. The default is ''.
+    varx : str, optional
+        x-axis column. The default is 'family'.
+    what : str, optional
+        y-axis column. The default is ['time_budget', 'field'].
+    leg : str, optional
+        y-axis legend. The default is ['Time budget [%]', 'DD Field'].
+
+    Returns
+    -------
+    None.
+
+    """
 
     df = df.groupby(varx)[what].median().reset_index()
     for i, vv in enumerate(what):
@@ -241,6 +492,29 @@ def plot_series_median(df, title='', varx='family', what=['time_budget', 'field'
 
 
 def plot_series_median_fields(df, title='', varx='family', what=['time_budget', 'field'], leg=['Time budget [%]', 'DD Field']):
+    """
+    
+    Function to plot a serie of plots per field - median values
+
+    Parameters
+    ----------
+    df : pandas df
+        data to plot.
+    title : str, optional
+        Figure title. The default is ''.
+    varx : str, optional
+        x-axis column. The default is 'family'.
+    what : list(str), optional
+        List of y-axis columns to plot. The default is ['time_budget_field', 'time_budget_rel'].
+    leg : list(str), optional
+        List of y-axis legends. The default is ['Field Time budget [%]', 'Relative Field Time budget [%]'].
+   
+
+    Returns
+    -------
+    None.
+
+    """
 
     df = df.groupby([varx, 'field'])[what].median().reset_index()
 
@@ -481,13 +755,13 @@ plot_series_fields(metric_field, title='', varx='family', what=[
 plt.show()
 
 # Medians over season
-"""
+
 toplot = ['season_length', 'cadence_median']
 leg = ['Season length [days]', 'Median cadence [days]']
 
 plot_series_median_fields(df, what=toplot, leg=leg)
 plt.show()
-"""
+
 
 flat = df.groupby(['dbName', 'field', 'family', 'season']).apply(
     lambda x: flat_this(x, cols=['filter_alloc', 'filter_frac'])).reset_index()
