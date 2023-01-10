@@ -1,5 +1,5 @@
 import pandas as pd
-from sn_plotter_metrics.plot4metric import plot_vs_OS_dual,plot_series_fields,plot_field
+from sn_plotter_metrics.plot4metric import plot_vs_OS_dual,plot_series_fields,plot_field,plot_pixels
 import numpy as np
 
 def get_diff(dfa, dfb,right_on=['dbName','family'],left_on=['dbName','family']):
@@ -32,7 +32,8 @@ dbList = pd.read_csv('DD_fbs_2.99_plot.csv')
 print(dbList)
 
 csvFiles = dict(zip(['gnomonic_circular_0',  'gnomonic_realistic_0'],
-                    ['metric_summary_DD_gnomonic_circular_0_fields_season.csv', 'metric_summary_DD_gnomonic_realistic_0_fields_season.csv']))
+                    ['metric_summary_DD_gnomonic_circular_0_fields_pixels.csv', 'metric_summary_DD_gnomonic_realistic_0_fields_pixels.csv']))
+
 
 
 df = {}
@@ -78,8 +79,24 @@ if run_type == 'season':
         idx = res['fieldname'] == field
         sel = res[idx]
         print(sel)
-        plot_field(sel,yvars=vary,ylab=legy)            
+        plot_field(sel,yvars=vary,ylab=legy)  
 
+if run_type == 'pixels':
+   vv = ['dbName','family','fieldname','season','healpixID','pixRA','pixDec']
+   res = get_diff(dfa,dfb,left_on=vv,right_on=vv)
+   print(res['dbName'].unique(),res.columns)
+   dbName = 'draft_connected_v2.99_10yrs'
+   field = 'COSMOS'
+   season = 3
+   idx = res['dbName'] == dbName
+   idx &= res['fieldname'] == field
+   idx &= res['season'] == season
+   import matplotlib.pyplot as plt
+   fig, ax = plt.subplots(figsize=(14,8))
+   figtitle = '{} - {} \n season {}'.format(dbName,field,season)
+   plot_pixels(res[idx],yvar='nsn_x',fig=fig,ax=ax,figtitle=figtitle,marker='s',color='k',showIt=False,label='{} FP'.format(val_str.split('_')[1]))
+   plot_pixels(res[idx],yvar='nsn_y',fig=fig,ax=ax,figtitle=figtitle,marker='*',color='r',mfc='r',label='{} FP'.format(ref_str.split('_')[1]))
+   
 """
 fig, ax = plt.subplots()
 for i, row in dbList.iterrows():
