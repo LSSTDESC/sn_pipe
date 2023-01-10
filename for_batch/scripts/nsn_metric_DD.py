@@ -48,7 +48,8 @@ parser.add_option("--VRO_FP", type=str, default='circular',
                   help="FP model [%default]")
 parser.add_option("--telrot", type=int, default=0,
                   help="telescope rotation angle [%default]")
-
+parser.add_option("--addInfo", type=int, default=0,
+                  help="to get additionnal infos from obs [%default]")
 
 opts, args = parser.parse_args()
 
@@ -56,7 +57,7 @@ toprocess = pd.read_csv(opts.dbList, comment='#')
 
 fieldNames = opts.fieldNames.split(',')
 
-ppNames = ['outDir','pixelmap_dir','nclusters','nside','nproc','ebvofMW','RAmin','RAmax','Decmin','Decmax','select_epochs','n_bef','n_aft','project_FP','VRO_FP','telrot']
+ppNames = ['outDir','pixelmap_dir','nclusters','nside','nproc','ebvofMW','RAmin','RAmax','Decmin','Decmax','select_epochs','n_bef','n_aft','project_FP','VRO_FP','telrot','addInfo']
 
 params=dict_filter(opts.__dict__,ppNames)
 scriptref = 'run_scripts/metrics/run_metrics.py NSNY'
