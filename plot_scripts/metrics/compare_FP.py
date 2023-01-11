@@ -96,7 +96,7 @@ if run_type == 'pixels':
    figtitle = '{} - {} \n season {}'.format(dbName,field,season)
    lba = '{} FP'.format(val_str.split('_')[1])
    lbb = '{} FP'.format(ref_str.split('_')[1])
-   yleg='$N_{SN}^{z\leq z_{complete}}$/pixel()'
+   yleg='$N_{SN}^{z\leq z_{complete}}$/pixel(0.21deg$^2$)'
    plot_pixels(res[idx],yvar='nsn_x',yleg=yleg,fig=fig,ax=ax,figtitle=figtitle,marker='s',color='k',showIt=False,label=lba)
    plot_pixels(res[idx],yvar='nsn_y',yleg=yleg,fig=fig,ax=ax,figtitle=figtitle,marker='*',color='k',mfc='k',showIt=False,label=lbb)
    axb = ax.twinx()
