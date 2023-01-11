@@ -94,8 +94,15 @@ if run_type == 'pixels':
    import matplotlib.pyplot as plt
    fig, ax = plt.subplots(figsize=(14,8))
    figtitle = '{} - {} \n season {}'.format(dbName,field,season)
-   plot_pixels(res[idx],yvar='nsn_x',fig=fig,ax=ax,figtitle=figtitle,marker='s',color='k',showIt=False,label='{} FP'.format(val_str.split('_')[1]))
-   plot_pixels(res[idx],yvar='nsn_y',fig=fig,ax=ax,figtitle=figtitle,marker='*',color='r',mfc='r',label='{} FP'.format(ref_str.split('_')[1]))
+   lba = '{} FP'.format(val_str.split('_')[1])
+   lbb = '{} FP'.format(ref_str.split('_')[1])
+   yleg='$N_{SN}^{z\leq z_{complete}}$/pixel()'
+   plot_pixels(res[idx],yvar='nsn_x',yleg=yleg,fig=fig,ax=ax,figtitle=figtitle,marker='s',color='k',showIt=False,label=lba)
+   plot_pixels(res[idx],yvar='nsn_y',yleg=yleg,fig=fig,ax=ax,figtitle=figtitle,marker='*',color='k',mfc='k',showIt=False,label=lbb)
+   axb = ax.twinx()
+   plot_pixels(res[idx],yvar='cadence_x',fig=fig,ax=axb,figtitle=figtitle,marker='s',color='b',showIt=False,label=lba,ls='dotted')
+   plot_pixels(res[idx],yvar='cadence_y',yleg='cadence [days]',fig=fig,ax=axb,figtitle=figtitle,marker='*',color='b',mfc='k',label=lbb,ls='dotted')
+   print(res[idx][['cadence_x','cadence_y']])
    
 """
 fig, ax = plt.subplots()
