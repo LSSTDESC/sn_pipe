@@ -3,9 +3,34 @@ import numpy as np
 from optparse import OptionParser
 import glob
 import pandas as pd
+from sn_tools.sn_batchutils import BatchIt
+import copy
+
+dict_filter = lambda x, y: dict([ (i,x[i]) for i in x if i in set(y) ])
+
+def bbatch(scriptref,pp,splitSky=True,mem='20G'):
+  
+    RAs = [0., 360.]
+    if splitSky:
+            RAs = np.linspace(0., 360., 11)
+
+    params = copy.deepcopy(pp)
+    outDir = pp['outDir']
+    telpars = '{}_{}_{}'.format(params['project_FP'],params['VRO_FP'],params['telrot'])
+    for ira in range(len(RAs)-1):
+        RAmin = RAs[ira]
+        RAmax = RAs[ira+1]
+        processName = 'metric_WFD_{}_{}_{}_{}'.format(params['dbName'],telpars,RAmin,RAmax)
+        mybatch = BatchIt(processName=processName,mem=mem)
+        params['RAmin'] = RAmin
+        params['RAmax'] = RAmax
+        params['outDir'] = '{}_{}/{}'.format(outDir,telpars,params['dbName'])
+        mybatch.add_batch(scriptref, params)
+
+        mybatch.go_batch()
 
 
-def go_for_batch(toproc, splitSky,
+def go_for_batch_deprecated(toproc, splitSky,
                  outDir, metricName,
                  nodither, nside, band,
                  pixelmap_dir, npixels, proxy_level,zmin,zmax,zStep,daymaxStep,zlim_coeff,select_epochs,n_bef,n_aft):
@@ -145,7 +170,7 @@ def go_for_batch(toproc, splitSky,
                        proxy_level=proxy_level, npixels_tot=npixels, ibatch=0)
 
 
-class batchclass:
+class batchclass_deprecated:
     def __init__(self, dbName, dbDir, dbExtens, scriptref, outDir, nproccomp,
                  saveData, metric, toprocess, nodither, nside,zmin,zmax,
                  zStep,daymaxStep,zlim_coeff,
@@ -417,6 +442,14 @@ parser.add_option("--n_bef", type=int, default=3,
                   help="n points (epochs) before max [%default]")
 parser.add_option("--n_aft", type=int, default=8,
                   help="n points (epochs) after max [%default]")
+parser.add_option("--project_FP", type=str, default='gnomonic',
+                  help="type of projection in FP [%default]")
+parser.add_option("--VRO_FP", type=str, default='circular',
+                  help="FP model [%default]")
+parser.add_option("--telrot", type=int, default=0,
+                  help="telescope rotation angle [%default]")
+parser.add_option("--addInfo", type=int, default=0,
+                  help="to get additionnal infos from obs [%default]")
 
 
 opts, args = parser.parse_args()
@@ -445,25 +478,31 @@ zlim_coeff = opts.zlim_coeff
 select_epochs = opts.select_epochs
 n_bef = opts.n_bef
 n_aft = opts.n_aft
-
+splitSky = opts.splitSky
 # toprocess = np.genfromtxt(dbList, dtype=None, names=[
 #                          'dbName', 'simuType', 'nside', 'coadd', 'fieldType', 'nproc'])
 
 toprocess = pd.read_csv(dbList, comment='#')
-print('there', toprocess, type(toprocess), toprocess.size)
+print('to process', toprocess, type(toprocess), toprocess.size)
 
+ppNames = ['outDir','pixelmap_dir','nclusters','nside','nproc','ebvofMW','RAmin','RAmax','Decmin','Decmax','select_epochs','n_bef','n_aft','project_FP','VRO_FP','telrot','addInfo']
 
-# if toprocess.size == 1:
-#    toprocess= np.array([toprocess])
+params=dict_filter(opts.__dict__,ppNames)
+scriptref = 'run_scripts/metrics/run_metrics.py NSNY'
+params['fieldType'] = 'WFD'
+params['zmax'] = 0.6
+params['npixels'] = -1
+params['saveData'] = 1
+
+for i,row in toprocess.iterrows():
+    for vv in ['dbDir','dbName','dbExtens']:
+        params[vv] = row[vv]
+    bbatch(scriptref,params,splitSky)
+
 """
-proc  = batchclass(dbDir, dbExtens, scriptref, outDir, nproccomp,
-                 saveData, metric, toprocess, nodither,nside,
-                 RA_min=0.0, RA_max=360.0, 
-                 Dec_min=-1.0, Dec_max=-1.0,band=''
-"""
-
 for index, proc in toprocess.iterrows():
     myproc = go_for_batch(proc, splitSky,
                           outDir,metricName, nodither, nside,
                           band, pixelmap_dir, npixels, proxy_level,zmin,zmax,zStep,daymaxStep,zlim_coeff,select_epochs,n_bef,n_aft)
     # break
+"""
