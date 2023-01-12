@@ -24,7 +24,7 @@ def bbatch(scriptref,pp,splitSky=True,mem='20G'):
         mybatch = BatchIt(processName=processName,mem=mem)
         params['RAmin'] = RAmin
         params['RAmax'] = RAmax
-        params['outDir'] = '{}_{}/{}'.format(outDir,telpars,params['dbName'])
+        params['outDir'] = '{}_{}'.format(outDir,telpars)
         mybatch.add_batch(scriptref, params)
 
         mybatch.go_batch()
