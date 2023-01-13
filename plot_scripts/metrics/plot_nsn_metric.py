@@ -273,5 +273,6 @@ if plot_level == 'pixels':
             sel = metricTot[idx]
             xmin = np.min(sel['nsn'])
             xmax = np.max(sel['nsn'])
-            plotMollview(nside,sel,'nsn','NSN',np.sum,xmin,xmax)
+            tit = dbName +' - N$_{SN}^{z\leq z_{complete}}$'
+            plotMollview(nside,sel,'nsn',tit,np.sum,xmin,xmax)
         plt.show()
