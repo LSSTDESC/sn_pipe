@@ -76,7 +76,7 @@ def plot_Moll_season(nside, data, what='cadence_mean', leg='cadence [days]', min
 
     """
 
-    print('alors leg',leg)
+    print('alors leg', leg)
     plotMollview(nside, data, what, leg, np.median, minval, maxval)
 
 
@@ -288,7 +288,7 @@ def check_pixel(data, hpix):
 
 def plot_Molls(df):
 
-    print('plotting Moll',len(df))
+    print('plotting Moll', len(df))
     plot_Moll_season(nside, df)
 
 
