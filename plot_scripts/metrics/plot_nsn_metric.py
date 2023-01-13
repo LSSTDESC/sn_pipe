@@ -261,12 +261,18 @@ if plot_level == 'pixels':
         idx = res['dbName'] == dbName
         idx &= res['fieldname'] == field
         idx &= res['season'] == season
+        sel = res[idx]
         fig, ax = plt.subplots(figsize=(14,8))
         figtitle = '{} - {} \n season {}'.format(dbName,field,season)
         yleg='$N_{SN}^{z\leq z_{complete}}$/pixel(0.21deg$^2$)'
-        plot_pixels(res[idx],yvar='nsn',yleg=yleg,fig=fig,ax=ax,figtitle=figtitle,marker='s',color='k',showIt=False)
+        plot_pixels(sel,yvar='nsn',yleg=yleg,fig=fig,ax=ax,figtitle=figtitle,marker='s',color='k',showIt=False)
         axb = ax.twinx()
-        plot_pixels(res[idx],yvar='cadence',fig=fig,ax=axb,figtitle=figtitle,marker='s',color='b',showIt=True,ls='dotted')
+        plot_pixels(sel,yvar='cadence',fig=fig,ax=axb,figtitle=figtitle,marker='s',color='b',showIt=True,ls='dotted')
+        xmin = np.min(sel['nsn'])
+        xmax = np.max(sel['nsn'])
+        tit = 'DDF'
+        plotMollview(nside,sel,'nsn',tit,np.sum,xmin,xmax)
+        plt.show()
     else:
         for dbName in metricTot['dbName'].unique():
             idx = metricTot['dbName'] == dbName
