@@ -108,8 +108,10 @@ for lc in lc_list:
     if np.abs(lc.meta['z']-1.11) < 1.e-5:
         print('ici',lc.meta['z'],list(np.unique(lc['night'])))    
         nights = list(np.unique(lc['night']))
-        
+
+from math import comb       
 for i in range(1,len(nights)):
+    print(comb(len(nights),i))
     rc = random.choices(nights,k=i)
     print(rc)
 
