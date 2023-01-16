@@ -10,13 +10,16 @@ import pandas as pd
 from sn_plotter_metrics.utils import MetricValues
 from sn_plotter_metrics.utils import dumpcsv_medcad, get_dist
 from sn_plotter_metrics.plot4metric import plot_vs_OS_dual, plot_series_fields
-from sn_plotter_metrics.plot4metric import plot_field, plot_pixels, plotMollview
+from sn_plotter_metrics.plot4metric import plot_field, plot_pixels
+from sn_plotter_metrics.plot4metric import plotMollview, plotMollview_seasons
+from sn_plotter_metrics.plot4metric import plot_xy
 import numpy as np
 
 
 def zcomp_frac(grp, frac=0.95):
     """
-    Fonction to estimate the redshift completeness from ns distribution over pixels
+    Fonction to estimate the redshift completeness
+    from ns distribution over pixels
 
     Parameters
     ----------
@@ -81,7 +84,7 @@ def zcomp_weighted(grp):
 
 def zcomp_cumsum(grp, frac=0.95):
     """
-    Function to estimated zcomp from nsn cumulative dist 
+    Function to estimated zcomp from nsn cumulative dist
 
     Parameters
     ----------
@@ -129,8 +132,9 @@ def zcomp(metricTot):
 
 def zcomp_field_season(metricTot):
 
-    summary_season = metricPlot.groupby(['dbName', 'fieldname', 'season']).apply(
-        lambda x: zcomp_frac(x)).reset_index()
+    summary_season = \
+        metricPlot.groupby(['dbName', 'fieldname', 'season']).apply(
+            lambda x: zcomp_frac(x)).reset_index()
 
     return summary_season
 
@@ -187,6 +191,9 @@ parser.add_option("--prefix_csv", type="str", default='metric_summary_DD',
                   help="prefix for csv output files [%default]")
 parser.add_option("--plot_level", type='str', default='global',
                   help="type of plot to perform [%default]")
+parser.add_option("--seasons", type='str', default='3',
+                  help="seasons to display (pixel plot) [%default]")
+
 
 opts, args = parser.parse_args()
 
@@ -198,6 +205,8 @@ metricName = opts.metric
 fieldNames = opts.fieldNames.split(',')
 prefix_csv = opts.prefix_csv
 plot_level = opts.plot_level
+seasons = opts.seasons.split(',')
+seasons = list(map(int, seasons))
 
 # Loading input file with the list of cadences and display features
 filename = opts.dbList
@@ -221,7 +230,7 @@ metricPlot = metricTot[idx]
 metricPlot = metricPlot.merge(forPlot, left_on=['dbName'], right_on=['dbName'])
 
 vary = ['nsn', 'zcomp']
-legy = ['N$_{SN}^{z\leq z_{complete}}$', '$z_{complete}$']
+legy = ['N$_{SN}^{z \leq z_{complete}}$', '$z_{complete}$']
 ls = ['dotted', 'dotted']
 ls = ['dashed', 'dashed']
 color = ['k', 'k']
@@ -272,9 +281,10 @@ if plot_level == 'pixels':
         idx &= res['fieldname'] == field
         idx &= res['season'] == season
         sel = res[idx]
+        print('total number of SN', np.sum(sel['nsn']))
         fig, ax = plt.subplots(figsize=(14, 8))
         figtitle = '{} - {} \n season {}'.format(dbName, field, season)
-        yleg = '$N_{SN}^{z\leq z_{complete}}$/pixel(0.21deg$^2$)'
+        yleg = '$N_{SN}^{z \leq z_{complete}}$/pixel(0.21deg$^2$)'
         plot_pixels(sel, yvar='nsn', yleg=yleg, fig=fig, ax=ax,
                     figtitle=figtitle, marker='s', color='k', showIt=False)
         axb = ax.twinx()
@@ -286,11 +296,21 @@ if plot_level == 'pixels':
         plotMollview(nside, sel, 'nsn', tit, np.sum, xmin, xmax)
         plt.show()
     else:
-        for dbName in metricTot['dbName'].unique():
-            idx = metricTot['dbName'] == dbName
-            sel = metricTot[idx]
-            xmin = np.min(sel['nsn'])
-            xmax = np.max(sel['nsn'])
-            tit = dbName + ' - N$_{SN}^{z\leq z_{complete}}$'
-            plotMollview(nside, sel, 'nsn', tit, np.sum, xmin, xmax)
+        dbName = 'draft_connected_v2.99_10yrs'
+        idx = metricTot['dbName'] == dbName
+        idx &= metricTot['season'] < 11
+        idx &= metricTot['zcomp'] > 0.
+        sel = metricTot[idx]
+        sel = sel.sort_values(by=['season'])
+        plotMollview_seasons(nside, sel, dbName, 'nsn',
+                             'N$_{SN}^{z \leq z_{complete}}$', np.sum, seasons)
+        plotMollview_seasons(nside, sel, dbName, 'zcomp',
+                             '$z_{complete}$', np.median, seasons)
+        plotMollview_seasons(nside, sel, dbName, 'cadence',
+                             'cadence [day]', np.median, seasons)
+
+        plot_xy(sel,  yvar='zcomp',
+                yleg='$z_{complete}^{mean}$', seasons=seasons)
+        plot_xy(sel, yvar='nsn', yleg='$\Sigma N_{SN}^{z \leq z_{complete}}$',
+                seasons=seasons, op='sum')
         plt.show()
