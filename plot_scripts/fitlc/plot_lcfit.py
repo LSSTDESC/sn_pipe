@@ -6,7 +6,8 @@ from sn_plotter_fitlc.fitlcPlot import FitPlots
 
 parser = OptionParser()
 
-parser.add_option("--prodids", type="str", default='input/plots/prodids_fit.csv',
+parser.add_option("--prodids", type="str",
+                  default='input/plots/prodids_fit.csv',
                   help="prodid [%default]")
 
 opts, args = parser.parse_args()
@@ -19,7 +20,7 @@ dictfiles = {}
 
 for indx, val in data.iterrows():
     dictfiles[val['nickname']
-              ] = '{}/Fit_{}.hdf5'.format(val['dirfile'], val['prodid'])
+              ] = '{}/{}'.format(val['dirfile'], val['filename'])
 
 print(data)
 fitplot = FitPlots(dictfiles)
