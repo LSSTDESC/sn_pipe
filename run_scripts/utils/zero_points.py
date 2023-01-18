@@ -10,7 +10,7 @@ from sn_tools.sn_telescope import Telescope
 import numpy as np
 
 r = []
-for airmass in np.arange(1., 2.501, 0.01):
+for airmass in np.arange(1., 2.51, 0.1):
     tel = Telescope(airmass=airmass)
     rb = [airmass]
     for b in 'ugrizy':
