@@ -11,14 +11,22 @@ import numpy as np
 
 r = []
 for airmass in np.arange(1., 2.51, 0.1):
-    tel = Telescope(airmass=airmass)
-    rb = [airmass]
-    for b in 'ugrizy':
-        #print(airmass, b, tel.zp(b))
-        rb.append(tel.zp(b))
-    r.append(rb)
+    # for airmass in [1.2]:
+    tel = Telescope(airmass=airmass, aerosol=True)
+    # tel.Plot_Throughputs()
+    #rb = [airmass]
 
-res = np.rec.fromrecords(r, names=['airmass', 'u', 'g', 'r', 'i', 'z', 'y'])
+    for b in 'ugrizy':
+        #b = 'g'
+        # print(airmass, b, tel.zp(b))
+        rb = [airmass]
+        rb.append(b)
+        rb.append(tel.zp(b))
+        rb.append(tel.counts_zp(b))
+        r.append(rb)
+
+print(r)
+res = np.rec.fromrecords(r, names=['airmass', 'band', 'zp', 'zp_pe'])
 
 print(res)
 np.save('zero_points_airmass.npy', res)
