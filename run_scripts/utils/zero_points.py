@@ -12,7 +12,7 @@ import numpy as np
 r = []
 for airmass in np.arange(1., 2.51, 0.1):
     # for airmass in [1.2]:
-    tel = Telescope(airmass=airmass, aerosol=True)
+    tel = Telescope(airmass=airmass, aerosol=False)
     # tel.Plot_Throughputs()
     #rb = [airmass]
 
