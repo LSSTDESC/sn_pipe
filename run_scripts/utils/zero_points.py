@@ -19,14 +19,17 @@ for airmass in np.arange(1., 2.51, 0.1):
     for b in 'ugrizy':
         #b = 'g'
         # print(airmass, b, tel.zp(b))
+        mean_wave = tel.mean_wavelength[b]
         rb = [airmass]
         rb.append(b)
         rb.append(tel.zp(b))
         rb.append(tel.counts_zp(b))
+        rb.append(mean_wave)
         r.append(rb)
 
 print(r)
-res = np.rec.fromrecords(r, names=['airmass', 'band', 'zp', 'zp_adu_sec'])
+res = np.rec.fromrecords(
+    r, names=['airmass', 'band', 'zp', 'zp_adu_sec', 'mean_wavelength'])
 
 print(res)
 np.save('zero_points_airmass.npy', res)
