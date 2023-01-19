@@ -12,7 +12,7 @@ import numpy as np
 r = []
 for airmass in np.arange(1., 2.51, 0.1):
     # for airmass in [1.2]:
-    tel = Telescope(airmass=airmass, aerosol=False)
+    tel = Telescope(airmass=airmass, aerosol=True)
     # tel.Plot_Throughputs()
     #rb = [airmass]
 
@@ -26,7 +26,7 @@ for airmass in np.arange(1., 2.51, 0.1):
         r.append(rb)
 
 print(r)
-res = np.rec.fromrecords(r, names=['airmass', 'band', 'zp', 'zp_pe'])
+res = np.rec.fromrecords(r, names=['airmass', 'band', 'zp', 'zp_adu_sec'])
 
 print(res)
 np.save('zero_points_airmass.npy', res)
