@@ -27,13 +27,18 @@ class MetricWrapper:
 
         metadata = dict(params)
 
-        self.name = '{}Metric_{}_nside_{}_coadd_{}_{}_{}_{}_{}_npixels_{}_ebvofMW_{}'.format(name,
-                                                                                             fieldType, nside, coadd, RAmin, RAmax, Decmin, Decmax, npixels, ebvofMW)
+        self.name = '{}Metric_{}_nside_{}_coadd_{}'.format(name, fieldType,
+                                                           nside, coadd)
+        self.name += '{}_{}_{}_{}_npixels_{}_ebvofMW_{}'.format(RAmin, RAmax,
+                                                                Decmin, Decmax,
+                                                                npixels,
+                                                                ebvofMW)
         # self.metadata = vars(metadata)
         self.metadata = metadata
         # select values to dump
         self.metaout = ['name', 'seasons', 'coadd', 'fieldType',
-                        'nside', 'RAmin', 'RAmax', 'Decmin', 'Decmax', 'metric', 'Output dir', 'remove_dithering', 'ebvofMW']
+                        'nside', 'RAmin', 'RAmax', 'Decmin', 'Decmax',
+                        'metric', 'Output dir', 'remove_dithering', 'ebvofMW']
 
         self.metadata['name'] = self.name
         # self.metadata['metric'] = name
@@ -192,7 +197,8 @@ class NSNMetricWrapper(MetricWrapper):
         nside = params['nside']
 
         lc_reference, dustcorr = load_reference(
-            error_model, 0.0, [(-2.0, 0.2), (0.0, 0.0)], bluecutoff, redcutoff, gammaName=gammaName)
+            error_model, 0.0, [(-2.0, 0.2), (0.0, 0.0)],
+            bluecutoff, redcutoff, gammaName=gammaName)
         pixArea = np.round(hp.nside2pixarea(nside, degrees=True), 3)
         templateLC = None
 
@@ -246,7 +252,8 @@ class NSNYMetricWrapper(MetricWrapper):
         nside = params['nside']
 
         lc_reference, dustcorr = load_reference(
-            error_model, 0.0, [(-2.0, 0.2), (0.0, 0.0)], bluecutoff, redcutoff, gammaName=gammaName)
+            error_model, 0.0, [(-2.0, 0.2), (0.0, 0.0)], bluecutoff, redcutoff,
+            gammaName=gammaName)
 
         print('Reference data loaded',
               lc_reference.keys(), params['fieldType'])
@@ -266,6 +273,17 @@ class NSNYMetricWrapper(MetricWrapper):
         params['lc_reference'] = lc_reference
         params['dustcorr'] = dustcorr
 
+        # loading zps
+        zp_airmass = load_zp(params['WebPathSimu'],
+                             params['zpDir'],
+                             params['zpFile'])
+        bands = zp_airmass['band'].tolist()
+        slope = zp_airmass['slope'].tolist()
+        intercept = zp_airmass['intercept'].tolist()
+
+        params['zp_slope'] = dict(zip(bands, slope))
+        params['zp_intercept'] = dict(zip(bands, intercept))
+
         # metric instance
         from sn_metrics.sn_nsn_yearly_metric import SNNSNYMetric
         self.metric = SNNSNYMetric(**params)
@@ -282,7 +300,8 @@ class SNRTimeMetricWrapper(MetricWrapper):
                  nside=64, RAmin=0., RAmax=360.,
                  Decmin=-1.0, Decmax=-1.0,
                  npixels=0,
-                 metadata={}, outDir='', ebvofMW=-1.0, bluecutoff=380.0, redcutoff=800.0, error_model=0):
+                 metadata={}, outDir='', ebvofMW=-1.0,
+                 bluecutoff=380.0, redcutoff=800.0, error_model=0):
         super(SNRTimeMetricWrapper, self).__init__(
             name=name, season=season, coadd=coadd, fieldType=fieldType,
             nside=nside, RAmin=RAmin, RAmax=RAmax,
@@ -589,7 +608,10 @@ def telescope_def():
     return telescope
 
 
-def load_reference(error_model=1, ebvofMW=-1, x1_colors=[(-2.0, 0.2), (0.0, 0.0)], bluecutoff=380., redcutoff=800., gammaName='gamma_WFD.hdf5'):
+def load_reference(error_model=1, ebvofMW=-1,
+                   x1_colors=[(-2.0, 0.2), (0.0, 0.0)],
+                   bluecutoff=380., redcutoff=800.,
+                   gammaName='gamma_WFD.hdf5'):
     """
     Method to load reference files (LC, ...)
 
@@ -638,7 +660,9 @@ def load_reference(error_model=1, ebvofMW=-1, x1_colors=[(-2.0, 0.2), (0.0, 0.0)
         else:
             dustcorr[x1_colors[j]] = None
         p = multiprocessing.Process(
-            name='Subprocess_main-'+str(j), target=loadFile, args=(templateDir, fname, gammaDir, gammaName, web_path, j, result_queue))
+            name='Subprocess_main-'+str(j), target=loadFile,
+            args=(templateDir, fname, gammaDir, gammaName, web_path,
+                  j, result_queue))
         p.start()
 
     resultdict = {}
@@ -655,7 +679,8 @@ def load_reference(error_model=1, ebvofMW=-1, x1_colors=[(-2.0, 0.2), (0.0, 0.0)
     return lc_reference, dustcorr
 
 
-def loadFile(templateDir, fname, gammaDir, gammaName, web_path, j=-1, output_q=None):
+def loadFile(templateDir, fname, gammaDir, gammaName, web_path,
+             j=-1, output_q=None):
 
     lc_ref = GetReference(templateDir,
                           fname, gammaDir, gammaName, web_path)
@@ -672,7 +697,8 @@ def load_x1_color_dist():
     fDir = 'reference_files'
     check_get_file(web_path, fDir, fName)
     x1_color_dist = np.genfromtxt('{}/{}'.format(fDir, fName), dtype=None,
-                                  names=('x1', 'color', 'weight_x1', 'weight_c', 'weight_tot'))
+                                  names=('x1', 'color', 'weight_x1',
+                                         'weight_c', 'weight_tot'))
 
     # print(x1_color_dist)
 
@@ -699,7 +725,9 @@ def load_x1_color_dist():
     return x1_color_dist
 
 
-def loadTemplateLC(error_model=1, ebvofMW=-1, x1_colors=[(-2.0, 0.2), (0.0, 0.0)], bluecutoff=380., redcutoff=800.):
+def loadTemplateLC(error_model=1, ebvofMW=-1,
+                   x1_colors=[(-2.0, 0.2), (0.0, 0.0)],
+                   bluecutoff=380., redcutoff=800.):
     """
     Method to load reference files (LC, ...)
 
@@ -745,3 +773,32 @@ def loadTemplateLC(error_model=1, ebvofMW=-1, x1_colors=[(-2.0, 0.2), (0.0, 0.0)
         templLC[(x1, color)] = Table.from_pandas(pd.read_hdf(lcFullName))
 
     return templLC
+
+
+def load_zp(web_path, templateDir, fName):
+    """
+    Function to load zp_airmass results
+
+    Parameters
+    ----------
+    web_path : str
+          web path of original files.
+    templateDir : str
+          location dir
+    fName : str
+          file name
+
+    Returns
+    -------
+    res : record array
+          array with data.
+
+    """
+
+    from sn_tools.sn_io import check_get_file
+    check_get_file(web_path, templateDir, fName)
+    fullName = '{}/{}'.format(templateDir, fName)
+
+    res = np.load(fullName)
+
+    return res
