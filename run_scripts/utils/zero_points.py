@@ -155,7 +155,7 @@ print(res)
 
 fitres = fit(res)
 
-np.save('zero_points_airmass.npy', fitres)
+np.save('zp_airmass.npy', fitres)
 
 plot(res, fitres)
 plot(res, yvar='zp_adu_sec', yleg='zp-> ADU/s')
