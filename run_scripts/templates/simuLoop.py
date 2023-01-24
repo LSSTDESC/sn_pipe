@@ -20,7 +20,7 @@ parser.add_option(
 parser.add_option(
     '--zstep', help='redshift step value [%default]', default=0.01, type=float)
 parser.add_option(
-    '--sn_model', help='SN model [%default]', default='salt2-extended', type=str)
+    '--sn_model', help='SN model [%default]', default='salt3', type=str)
 parser.add_option(
     '--sn_version', help='SN model version [%default]', default='1.0', type=str)
 parser.add_option(
@@ -38,10 +38,12 @@ x1 = opts.x1
 color = opts.color
 zmin = opts.zmin
 zmax = opts.zmax
+zstep = opts.zstep
 sn_model = opts.sn_model
 sn_version = opts.sn_version
 bluecutoff = opts.bluecutoff
 redcutoff = opts.redcutoff
+ebvofMW = opts.ebvofMW
 nproc = opts.nproc
 
 x1_color = [(x1, color)]

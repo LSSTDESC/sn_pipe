@@ -7,10 +7,12 @@ Created on Tue Jan 24 17:12:38 2023
 """
 import os
 from optparse import OptionParser
+import numpy as np
 
 
 class Simulation:
-    def __init__(self, x1, color, z, sn_model, sn_version, ebvofMW, **kwargs):
+    def __init__(self, x1, color, z, sn_model, sn_version, ebvofMW,
+                 maindir='.', **kwargs):
         """
         class to perform LC simulation
 
@@ -42,9 +44,25 @@ class Simulation:
         self.sn_version = sn_version
         self.ebvofMW = ebvofMW
 
+        # output infos
+        self.fake_dir = '{}/fake_obs'.format(maindir)
+        self.fake_name = 'Fakes_z_{}'.format(np.round(z, 2))
+
+        # generate fake obs
         self.gen_fakes()
 
+        # simulate LCs from these fakes
+        self.simu_lc()
+
     def gen_fakes(self):
+        """
+        Method to generate fake obs
+
+        Returns
+        -------
+        None.
+
+        """
 
         mjd_min = -30.*(1.+self.z)
         mjd_max = 90.*(1.+self.z)
@@ -55,12 +73,26 @@ class Simulation:
             par['cadence_{}'.format(b)] = cad
 
         par['saveData'] = 1
+        par['outDir'] = self.fake_dir
+        par['outName'] = self.fake_name
+
         cmd = 'python run_scripts/fakes/make_fake.py'
         for key, vals in par.items():
             cmd += ' --{} {}'.format(key, vals)
 
         print(cmd)
         os.system(cmd)
+
+    def simu_lc(self):
+        """
+        Methoe to simulate LCs
+
+        Returns
+        -------
+        None.
+
+        """
+        print('simulation here')
 
 
 parser = OptionParser()

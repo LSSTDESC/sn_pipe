@@ -99,7 +99,7 @@ class MakeYamlSimulation:
         self.ebvofMW = ebvofMW
         self.outDir = outDir
         self.config_orig = config_orig
-        if 'salt2' in sn_model:
+        if 'salt' in sn_model:
             self.config_out = 'params_fakes_{}_{}_{}.yaml'.format(x1, color, z)
         else:
             self.config_out = 'params_fakes_{}_{}_{}.yaml'.format(
