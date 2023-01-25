@@ -8,10 +8,83 @@ Created on Tue Jan 24 17:12:38 2023
 import os
 from optparse import OptionParser
 import numpy as np
+from sn_tools.sn_utils import multiproc
+
+
+def stack_lc(x1, color, ebvofMW, lcDir, outDir, sn_model,
+             sn_version, **kwargs):
+
+    pars = {}
+    pars['x1'] = x1
+    pars['color'] = color
+    pars['ebvofMW'] = ebvofMW
+    pars['lcDir'] = lcDir
+    pars['outDir'] = outDir
+    pars['sn_model'] = sn_model
+    pars['sn_version'] = sn_version
+
+    script = 'python run_scripts/templates/run_template_vstack.py'
+    go(script, pars)
+
+    """
+    pars = []
+    pars['x1'] = x1
+    # stack produced LCs
+   cmd = 'python run_scripts/templates/run_template_vstack.py'
+   cmd = addoption(cmd, 'x1', x1)
+   cmd = addoption(cmd, 'color', color)
+   cmd = addoption(cmd, 'bluecutoff', bluecutoff)
+   cmd = addoption(cmd, 'redcutoff', redcutoff)
+   cmd = addoption(cmd, 'ebvofMW', ebvofMW)
+   cmd = addoption(cmd, 'lcDir', '{}/fake_simu_data'.format(outDirLC))
+   cmd = addoption(cmd, 'outDir', outDirTemplates)
+   cmd = addoption(cmd, 'sn_model', sn_model)
+   cmd = addoption(cmd, 'sn_version', sn_version)
+   print(cmd)
+   os.system(cmd)
+   """
+
+
+def go(script, params):
+    """
+    Method to execute a strip
+
+    Parameters
+    ----------
+    script : str
+        script to launch.
+    params : dict
+        script parameters.
+
+    Returns
+    -------
+    None.
+
+    """
+
+    cmd = script
+    for key, vals in params.items():
+        cmd += ' --{} {}'.format(key, vals)
+
+    print('executing', cmd)
+    os.system(cmd)
+
+
+def multi_simu(zvals, params, j, output_q=None):
+
+    for z in zvals:
+        params['z'] = z
+        Simulation(**params)
+
+    if output_q is not None:
+        output_q.put({j: 0})
+    else:
+        return 0
 
 
 class Simulation:
-    def __init__(self, x1, color, z, sn_model, sn_version, ebvofMW,
+    def __init__(self, x1, color, z, sn_type, sn_model, sn_version, ebvofMW,
+                 error_model,
                  maindir='.', **kwargs):
         """
         class to perform LC simulation
@@ -39,14 +112,17 @@ class Simulation:
 
         self.x1 = x1
         self.color = color
-        self.z = z
+        self.z = np.round(z, 2)
+        self.sn_type = sn_type
         self.sn_model = sn_model
         self.sn_version = sn_version
         self.ebvofMW = ebvofMW
+        self.error_model = error_model
 
         # output infos
         self.fake_dir = '{}/fake_obs'.format(maindir)
         self.fake_name = 'Fakes_z_{}'.format(np.round(z, 2))
+        self.lc_dir = '{}/fake_simu'.format(maindir)
 
         # generate fake obs
         self.gen_fakes()
@@ -64,35 +140,74 @@ class Simulation:
 
         """
 
-        mjd_min = -30.*(1.+self.z)
-        mjd_max = 90.*(1.+self.z)
+        mjd_min = -21.*(1.+self.z)
+        mjd_max = 63.*(1.+self.z)
         cad = 0.1*(1.+self.z)
-        par = {}
-        par['seasonLength'] = int(mjd_max-mjd_min)
+        pars = {}
+        pars['seasonLength'] = int(mjd_max-mjd_min)
         for b in 'grizy':
-            par['cadence_{}'.format(b)] = cad
+            pars['cadence_{}'.format(b)] = cad
 
-        par['saveData'] = 1
-        par['outDir'] = self.fake_dir
-        par['outName'] = self.fake_name
+        pars['MJDmin'] = mjd_min
+        pars['saveData'] = 1
+        pars['outDir'] = self.fake_dir
+        pars['outName'] = self.fake_name
+        pars['shiftDays'] = 0.0
 
-        cmd = 'python run_scripts/fakes/make_fake.py'
-        for key, vals in par.items():
-            cmd += ' --{} {}'.format(key, vals)
-
-        print(cmd)
-        os.system(cmd)
+        script = 'python run_scripts/fakes/make_fake.py'
+        go(script, pars)
 
     def simu_lc(self):
         """
-        Methoe to simulate LCs
+        Methode to simulate LCs
 
         Returns
         -------
         None.
 
         """
+        pars = {}
+        pars['SN_ebvofMW'] = 0.0
+        pars['SN_z_type'] = 'unique'
+        pars['SN_z_min'] = self.z
+        pars['SN_daymax_type'] = 'unique'
+        pars['SN_x1_type'] = 'unique'
+        pars['SN_color_type'] = 'unique'
+        pars['SN_x1_min'] = self.x1
+        pars['SN_color_min'] = self.color
+        pars['SN_NSNabsolute'] = 1
+        pars['SN_differentialFlux'] = 1
+        pars['fieldType'] = 'Fake'
+        pars['dbName'] = self.fake_name
+        pars['dbExtens'] = 'npy'
+        pars['dbDir'] = self.fake_dir
+        pars['MultiprocessingSimu_nproc'] = 1
+        pars['OutputSimu_save'] = 1
+        pars['OutputSimu_directory'] = self.lc_dir
+        pars['nside'] = 128
+        pars['Simulator_model'] = self.sn_model
+        pars['Simulator_version'] = self.sn_version
+        pars['Simulator_errorModel'] = self.error_model
+        pars['Observations_coadd'] = 0
+        cutoff = 'cutoff'
+
+        if self.error_model:
+            cutoff = self.error_model
+
+        fname = '{}_{}'.format(self.sn_type, self.sn_model)
+        if 'salt' in self.sn_model:
+            fname = '{}_{}'.format(self.x1, self.color)
+
+        fname = '{}_{}_{}_{}_ebvofMW_{}'.format(
+            fname, cutoff, self.sn_model, self.sn_version, self.ebvofMW)
+        prodid = 'Fake_{}_{}'.format(fname, self.z)
+
+        pars['ProductionIDSimu'] = prodid
+
+        script = 'python run_scripts/simulation/run_simulation.py'
+
         print('simulation here')
+        go(script, pars)
 
 
 parser = OptionParser()
@@ -113,9 +228,14 @@ parser.add_option(
     '--sn_version', help='SN model version [%default]', default='1.0',
     type=str)
 parser.add_option(
+    '--sn_type', help='SN type [%default]', default='SNIa',
+    type=str)
+parser.add_option(
     '--ebvofMW', help='ebvofMW[%default]', default=0.0, type=float)
 parser.add_option(
     '--nproc', help='nproc for multiproc [%default]', default=8, type=int)
+parser.add_option(
+    '--error_model', help='error model flag [%default]', default=0, type=int)
 
 opts, args = parser.parse_args()
 
@@ -132,6 +252,22 @@ nproc = opts.nproc
 """
 opts_dict = vars(opts)
 
-opts_dict['z'] = 0.3
+outDirLC = 'fakes_for_templates_{}_{}_ebvofMW_{}'.format(
+    opts.x1, opts.color, opts.ebvofMW)
 
+opts_dict['maindir'] = outDirLC
+zvals = np.arange(opts.zmin, opts.zmax+opts.zstep, opts.zstep)
+
+"""
+opts_dict['z'] = 0.3
 Simulation(**opts_dict)
+"""
+multiproc(zvals, opts_dict, multi_simu, opts.nproc)
+
+outDirTemplates = 'Template_LC_{}_{}_ebvofMW_{}'.format(
+    opts.x1, opts.color, opts.ebvofMW)
+
+opts_dict['lcDir'] = '{}/fake_simu'.format(outDirLC)
+opts_dict['outDir'] = outDirTemplates
+
+stack_lc(**opts_dict)

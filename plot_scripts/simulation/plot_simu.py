@@ -27,13 +27,13 @@ splot = SimuPlot(opts.fileDir, opts.dbName, opts.tagName)
 # plt.show()
 # get the simulation parameters
 simupars = splot.simuPars
-simupars.round({'z':2,'daymax':1})
-vvals = ['SNID','z','daymax','x1','color']
-#print(simupars[vvals])
+simupars.round({'z': 2, 'daymax': 1})
+vvals = ['SNID', 'z', 'daymax', 'x1', 'color', 'epsilon_x1',
+         'epsilon_color', 'epsilon_x0', 'epsilon_daymax']
+# print(simupars[vvals])
 
 simupars.convert_bytestring_to_unicode()
 simupars[vvals].pprint_all()
-
 
 
 print('Number of simulated supernovae', len(simupars))
@@ -47,19 +47,19 @@ cols = simupars.columns
 # display LC loop
 if opts.save_fig:
     checkDir(opts.dir_fig)
-    
+
 while 1:
     answer = input('SN to plot? ')
 
     snids = answer.split(',')
-    print('snids',snids)
-    idx = np.in1d(simupars['SNID'],snids)
+    print('snids', snids)
+    idx = np.in1d(simupars['SNID'], snids)
     selpars = simupars[idx]
-    print('sel',selpars)
+    print('sel', selpars)
     splot.plotLoopLC(selpars,
-                 save_fig=opts.save_fig, dir_fig=opts.dir_fig)
+                     save_fig=opts.save_fig, dir_fig=opts.dir_fig)
 
 # splot.plotLoopLC_errmod()
-#plt.show()
+# plt.show()
 
 # splot.checkLC()

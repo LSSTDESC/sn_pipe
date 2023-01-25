@@ -22,7 +22,7 @@ fakeData = FakeObservations(config_fake).obs
 print('fake Data', len(fakeData))
 
 if opts.saveData:
-    #save script parameters
+    # save script parameters
     outDir = opts.outDir
     outName = opts.outName
     from sn_tools.sn_io import checkDir
@@ -32,13 +32,14 @@ if opts.saveData:
     with open(outputyaml, 'w') as file:
         documents = yaml.dump(config_fake, file)
     # save fake obs
-    path = '{}/{}.npy'.format(outDir,outName)
-    np.save(path,np.copy(fakeData))
+    path = '{}/{}.npy'.format(outDir, outName)
+    np.save(path, np.copy(fakeData))
 
 """
 parser = OptionParser()
 
-parser.add_option("--config", type="str", default='input/Fake_cadence/Fake_cadence_seqs.yaml',
+parser.add_option("--config", type="str",
+                  default='input/Fake_cadence/Fake_cadence_seqs.yaml',
                   help="config file name[%default]")
 parser.add_option("--output", type="str", default='Fake_DESC',
                   help="output file name[%default]")
