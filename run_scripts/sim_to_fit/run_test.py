@@ -1,6 +1,9 @@
-import subprocess
+import sn_script_input
 import os
 from dataclasses import dataclass
+from sn_tools.sn_io import make_dict_from_config
+from sn_tools.sn_fake_utils import add_option
+from optparse import OptionParser
 
 
 @dataclass
@@ -14,6 +17,22 @@ class CombiRun:
 
 
 def go(script, pars):
+    """
+    Function to buil the cmd line to run a script
+
+    Parameters
+    ----------
+    script : str
+        script name.
+    pars : dict
+        script parameters.
+
+    Returns
+    -------
+    cmd : str
+        cmd line.
+
+    """
     cmd = script
     for key, vals in pars.items():
         cmd += ' --{} {}'.format(key, vals)
@@ -21,6 +40,21 @@ def go(script, pars):
 
 
 def make_csv(fName, vprod):
+    """
+    Function to build a csv file used to plot the results
+
+    Parameters
+    ----------
+    fName : str
+        output name file.
+    vprod : list(list)
+        parameters to write in the csv file.
+
+    Returns
+    -------
+    None.
+
+    """
 
     tt = open(fName, "w")
     tt.write('nickname,dirfile,filename\n')
@@ -29,6 +63,19 @@ def make_csv(fName, vprod):
 
 
 def add_threads(tt):
+    """
+    Function to add info in the script file
+
+    Parameters
+    ----------
+    tt : file
+        where to write infos.
+
+    Returns
+    -------
+    None.
+
+    """
 
     ll = ['export MKL_NUM_THREADS=1 \n',
           'export NUMEXPR_NUM_THREADS=1 \n',
@@ -40,6 +87,15 @@ def add_threads(tt):
 
 
 def main_params():
+    """
+        Function to get the main parameters of the script run_to_sim.py
+
+    Returns
+    -------
+    pars : dict
+        parameters.
+
+    """
 
     pars = {}
     pars['dbName'] = 'Fakes'
@@ -72,6 +128,23 @@ def main_params():
 
 
 def add_combis(script, pars_combi, vprod):
+    """
+    Function to add the combination (simulator,fitter)
+
+    Parameters
+    ----------
+    script : file
+        where to write infos.
+    pars_combi : dict(dataclass)
+        combi dict
+    vprod : list(list)
+        parameters to produce the csv file
+
+    Returns
+    -------
+    None.
+
+    """
 
     cmd = 'python run_scripts/sim_to_fit/run_sim_to_fit.py'
     # get main
@@ -79,7 +152,6 @@ def add_combis(script, pars_combi, vprod):
     cmd = go(cmd, pars)
     for key, vals in pars_combi.items():
         script.write('\n \n')
-        print('jj', vals)
         cmd_ = cmd
         cmd_ += ' --ProductionIDSimu {}'.format(key)
         cmd_ += ' --Simulator_name sn_simulator.{}'.format(vals.simulator_name)
@@ -94,6 +166,21 @@ def add_combis(script, pars_combi, vprod):
 
 
 def add_plot(script, fName):
+    """
+    Function to add a line in the script for plot
+
+    Parameters
+    ----------
+    script : file
+        where to write infos.
+    fName : str
+        fileName for the plot (csv file).
+
+    Returns
+    -------
+    None.
+
+    """
 
     sc = 'python plot_scripts/fitlc/plot_lcfit.py'
     pars = {}
@@ -103,24 +190,134 @@ def add_plot(script, fName):
     script.write(go(sc, pars))
 
 
-def make_script(script):
+def start_script(script):
+    """
+    Function to write the start of the script file
+
+    Parameters
+    ----------
+    script : script file
+        where to write infos.
+
+    Returns
+    -------
+    None.
+
+    """
 
     script.write('#!/bin/bash \n')
     add_threads(script)
 
 
+def add_genfakes(script, dict_opt):
+    """
+    Function to add a line in the script to add obs gen
+
+    Parameters
+    ----------
+    script : script file
+        where to write infos.
+    dict_opt : dict
+        parameters of the script.
+
+    Returns
+    -------
+    None.
+
+    """
+
+    scr = 'python run_scripts/fakes/make_fake.py'
+    script.write('\n \n')
+    script.write(go(scr, dict_opt))
+
+
+def add_sequence(script, dict_opt, vprod):
+    """
+    Function to add a sequence gen obs+sim_to_fit
+
+    Parameters
+    ----------
+    script : script file
+        xhere to write infos.
+    dict_opt : dict
+        fake obs params.
+    vprod : list(list)
+        params for the plot (csv file).
+
+    Returns
+    -------
+    None.
+
+    """
+
+    add_genfakes(script, dict_opt)
+
+    nvisits = 0
+    for b in 'grizy':
+        nvisits += dict_opt['Nvisits_{}'.format(b)]
+
+    print('nvisits', nvisits)
+
+    combis = {}
+    combis['full_salt3_full_salt3_{}'.format(nvisits)] = CombiRun(
+        'sn_cosmo', 'salt3', '1.0', 'sn_cosmo', 'salt3', '1.0')
+    combis['fast_salt3_fast_salt3_{}'.format(nvisits)] = CombiRun(
+        'sn_fast', 'salt3', '1.0', 'sn_fast', 'salt3', '1.0')
+
+    add_combis(script, combis, vprod)
+
+
+def param_ana(dict_opt, parName='Nvisits'):
+
+    nl = []
+    vv = {}
+    for b in 'grizy':
+        ll = dict_opt['{}_{}'.format(parName, b)].split(',')
+        vv[b] = list(map(int, ll))
+        nl.append(len(vv[b]))
+
+    """
+    nmax = np.max(nl)
+
+    for b in 'grizy':
+        nref = len(vv[b])
+        if nref < nmax:
+            vv[b] += [vv[b]]*(nmax-nref)
+    """
+    return vv
+
+
+# this is to load option for fake cadence
+path = sn_script_input.__path__
+confDict_fake = make_dict_from_config(path[0], 'config_test_simtofit.txt')
+
+
+parser = OptionParser(description='Script to generate fake observations.')
+
+add_option(parser, confDict_fake)
+
+opts, args = parser.parse_args()
+
 scriptName = "mytest.sh"
 script = open(scriptName, "w")
-make_script(script)
 
-combis = {}
-combis['full_salt3_full_salt3'] = CombiRun(
-    'sn_cosmo', 'salt3', '1.0', 'sn_cosmo', 'salt3', '1.0')
-combis['fast_salt3_fast_salt3'] = CombiRun(
-    'sn_fast', 'salt3', '1.0', 'sn_fast', 'salt3', '1.0')
+# first lines of the script
+start_script(script)
+
+# Generation of Fake Observations
+dict_opt = vars(opts)
+
+dict_opt['saveData'] = 1
 
 vprod = []
-add_combis(script, combis, vprod)
+
+visits = param_ana(dict_opt, 'Nvisits')
+
+for i in range(len(visits['g'])):
+    for b in 'grizy':
+        dict_opt['Nvisits_{}'.format(b)] = visits[b][i]
+
+    add_sequence(script, dict_opt, vprod)
 
 # prepare outputFile for plot
 fName = 'plot_test.csv'
@@ -129,5 +326,6 @@ make_csv(fName, vprod)
 add_plot(script, fName)
 
 script.close()
+
+# now run the script
 os.system("sh "+scriptName)
-#os.system("sh run_scripts/sim_to_fit/run_test.sh")
