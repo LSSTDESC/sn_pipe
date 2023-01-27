@@ -27,6 +27,7 @@ fitplot = FitPlots(dictfiles)
 fitplot.plot2D(fitplot.SN_table, 'z', 'Cov_colorcolor',
                '$z$', '$\sigma_{C}$', compare=False, zmin=0.2)
 
-# fitplot.plot_snr_sigmaC(fitplot.SN_table)
+# SNR plot here
+fitplot.plot_snr_sigmaC(fitplot.SN_table)
 
 plt.show()
