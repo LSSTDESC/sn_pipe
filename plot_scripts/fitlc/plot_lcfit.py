@@ -19,12 +19,14 @@ data = pd.read_csv(thelist, delimiter=',', comment='#')
 dictfiles = {}
 
 for indx, val in data.iterrows():
-    dictfiles[val['nickname']
+    dictfiles[val['plotname']
               ] = '{}/{}'.format(val['dirfile'], val['filename'])
 
 print(data)
 fitplot = FitPlots(dictfiles)
 fitplot.plot2D(fitplot.SN_table, 'z', 'Cov_colorcolor',
-               '$z$', '$\sigma_{color}$', compare=False)
+               '$z$', '$\sigma_{C}$', compare=False, zmin=0.2)
+
+# fitplot.plot_snr_sigmaC(fitplot.SN_table)
 
 plt.show()
