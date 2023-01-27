@@ -1,3 +1,4 @@
+import pandas as pd
 import sn_script_input
 import os
 from dataclasses import dataclass
@@ -57,9 +58,9 @@ def make_csv(fName, vprod):
     """
 
     tt = open(fName, "w")
-    tt.write('nickname,dirfile,filename\n')
+    tt.write('nickname,dirfile,filename,plotname\n')
     for vv in vprod:
-        tt.write('{},{},{}\n'.format(vv[0], vv[1], vv[2]))
+        tt.write('{},{},{},{}\n'.format(vv[0], vv[1], vv[2], vv[3]))
 
 
 def add_threads(tt):
@@ -108,7 +109,7 @@ def main_params():
     pars['SN_color_type'] = 'unique'
     pars['SN_color_min'] = 0.2
     pars['SN_z_type'] = 'uniform'
-    pars['SN_z_min'] = 0.01
+    pars['SN_z_min'] = 0.2
     pars['SN_z_max'] = 1.1
     pars['SN_z_step'] = 0.02
     pars['SN_daymax_type'] = 'unique'
@@ -127,7 +128,7 @@ def main_params():
     return pars
 
 
-def add_combis(script, pars_combi, vprod):
+def add_combis(script, pars_combi, vprod, plotNames):
     """
     Function to add the combination (simulator,fitter)
 
@@ -139,6 +140,8 @@ def add_combis(script, pars_combi, vprod):
         combi dict
     vprod : list(list)
         parameters to produce the csv file
+    plotNames: dict
+      dict of plotNames
 
     Returns
     -------
@@ -161,7 +164,8 @@ def add_combis(script, pars_combi, vprod):
         cmd_ += ' --Fitter_model {}'.format(vals.fitter_model)
         cmd_ += ' --Fitter_version {}'.format(vals.fitter_version)
         script.write(cmd_)
-        va = [key, pars['OutputFit_directory'], 'SN_{}.hdf5'.format(key)]
+        va = [key, pars['OutputFit_directory'], 'SN_{}.hdf5'.format(key),
+              plotNames[key]]
         vprod.append(va)
 
 
@@ -231,7 +235,7 @@ def add_genfakes(script, dict_opt):
     script.write(go(scr, dict_opt))
 
 
-def add_sequence(script, dict_opt, vprod):
+def add_sequence(script, dict_opt, vprod, combis_simu, seqName, plotName):
     """
     Function to add a sequence gen obs+sim_to_fit
 
@@ -243,6 +247,12 @@ def add_sequence(script, dict_opt, vprod):
         fake obs params.
     vprod : list(list)
         params for the plot (csv file).
+    combis_simu: pandas df
+      simu+fit configs.
+    seqName: str
+        name of the seauence
+    plotName: str
+        plot name of the sequence
 
     Returns
     -------
@@ -259,12 +269,24 @@ def add_sequence(script, dict_opt, vprod):
     print('nvisits', nvisits)
 
     combis = {}
+    """
     combis['full_salt3_full_salt3_{}'.format(nvisits)] = CombiRun(
         'sn_cosmo', 'salt3', '1.0', 'sn_cosmo', 'salt3', '1.0')
     combis['fast_salt3_fast_salt3_{}'.format(nvisits)] = CombiRun(
         'sn_fast', 'salt3', '1.0', 'sn_fast', 'salt3', '1.0')
+    """
+    plotNames = {}
+    for i, row in combis_simu.iterrows():
+        combis[seqName] = CombiRun(
+            row['simulator_name'],
+            row['simulator_model'],
+            row['simulator_version'],
+            row['fitter_name'],
+            row['fitter_model'],
+            row['fitter_version'])
+        plotNames[seqName] = plotName
 
-    add_combis(script, combis, vprod)
+    add_combis(script, combis, vprod, plotNames)
 
 
 def param_ana(dict_opt, parName='Nvisits'):
@@ -292,9 +314,10 @@ path = sn_script_input.__path__
 confDict_fake = make_dict_from_config(path[0], 'config_test_simtofit.txt')
 
 
-parser = OptionParser(description='Script to generate fake observations.')
+parser = OptionParser(description='Script to generate fake obs, simu and fit')
 
 add_option(parser, confDict_fake)
+
 
 opts, args = parser.parse_args()
 
@@ -311,13 +334,27 @@ dict_opt['saveData'] = 1
 
 vprod = []
 
-visits = param_ana(dict_opt, 'Nvisits')
+# visits = param_ana(dict_opt, 'Nvisits')
 
-for i in range(len(visits['g'])):
-    for b in 'grizy':
-        dict_opt['Nvisits_{}'.format(b)] = visits[b][i]
+# read config files
+combis_obs = pd.read_csv(opts.config_obs, comment='#')
+combis_simu = pd.read_csv(opts.config_simu, comment='#')
 
-    add_sequence(script, dict_opt, vprod)
+ccols = list(combis_obs.columns)
+print(ccols)
+ccols.remove('tagName')
+ccols.remove('plotName')
+
+del dict_opt['config_obs']
+del dict_opt['config_simu']
+
+for j, row in combis_obs.iterrows():
+    for col in ccols:
+        dict_opt[col] = row[col]
+
+    seqName = row['tagName']
+    plotName = row['plotName']
+    add_sequence(script, dict_opt, vprod, combis_simu, seqName, plotName)
 
 # prepare outputFile for plot
 fName = 'plot_test.csv'
