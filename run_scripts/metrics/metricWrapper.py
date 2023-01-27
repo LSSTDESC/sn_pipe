@@ -2,7 +2,6 @@ import numpy as np
 from sn_tools.sn_cadence_tools import ReferenceData
 from sn_tools.sn_calcFast import GetReference, LoadDust
 from sn_tools.sn_io import check_get_file
-import os
 import multiprocessing
 import healpy as hp
 import yaml
@@ -49,7 +48,8 @@ class MetricWrapper:
         return self.metric.run(obs, imulti=imulti)
 
     def saveConfig(self, params={}):
-        #ti = dict(zip(self.metaout, [self.metadata[k] for k in self.metaout]))
+        # ti = dict(zip(self.metaout, [self.metadata[k]
+        # for k in self.metaout]))
         if params:
             nameOut = '{}/{}_conf.yaml'.format(self.outDir, self.name)
             print('Saving configuration file', nameOut)
@@ -63,11 +63,13 @@ class CadenceMetricWrapper(MetricWrapper):
                  RAmin=0., RAmax=360.,
                  Decmin=-1.0, Decmax=-1.0,
                  npixels=0,
-                 metadata={}, outDir='', ebvofMW=-1.0, bluecutoff=380.0, redcutoff=800.0):
+                 metadata={}, outDir='', ebvofMW=-1.0, bluecutoff=380.0,
+                 redcutoff=800.0):
         super(CadenceMetricWrapper, self).__init__(
             name=name, season=season, coadd=coadd, fieldType=fieldType,
             nside=nside, RAmin=RAmin, RAmax=RAmax,
-            Decmin=Decmin, Decmax=Decmax, npixels=npixels, metadata=metadata, outDir=outDir, ebvofMW=ebvofMW)
+            Decmin=Decmin, Decmax=Decmax, npixels=npixels, metadata=metadata,
+            outDir=outDir, ebvofMW=ebvofMW)
 
         from sn_metrics.sn_cadence_metric import SNCadenceMetric
         self.metric = SNCadenceMetric(
@@ -82,7 +84,8 @@ class SNRMetricWrapper(MetricWrapper):
                  RAmin=0., RAmax=360.,
                  Decmin=-1.0, Decmax=-1.0,
                  npixels=0,
-                 metadata={}, outDir='', ebvofMW=-1.0, bluecutoff=380.0, redcutoff=800.0):
+                 metadata={}, outDir='', ebvofMW=-1.0,
+                 bluecutoff=380.0, redcutoff=800.0):
         super(SNRMetricWrapper, self).__init__(
             name=name, season=season, coadd=coadd, fieldType=fieldType,
             nside=nside, RAmin=RAmin, RAmax=RAmax,
@@ -118,8 +121,11 @@ class SNRMetricWrapper(MetricWrapper):
             Li_files, mag_to_flux_files, metadata.band, metadata.z)
 
         from sn_metrics.sn_snr_metric import SNSNRMetric
-        self.metric = SNSNRMetric(lim_sn=lim_sn, fake_file=fake_file, coadd=coadd,
-                                  names_ref=[metadata.names_ref], shift=shift, season=season, z=metadata.z, verbose=metadata.verbose)
+        self.metric = SNSNRMetric(lim_sn=lim_sn, fake_file=fake_file,
+                                  coadd=coadd,
+                                  names_ref=[metadata.names_ref], shift=shift,
+                                  season=season, z=metadata.z,
+                                  verbose=metadata.verbose)
         self.saveConfig()
 
 
@@ -129,7 +135,8 @@ class ObsRateMetricWrapper(MetricWrapper):
                  RAmin=0., RAmax=360.,
                  Decmin=-1.0, Decmax=-1.0,
                  npixels=0,
-                 metadata={}, outDir='', ebvofMW=-1.0, bluecutoff=380.0, redcutoff=800.0):
+                 metadata={}, outDir='', ebvofMW=-1.0, bluecutoff=380.0,
+                 redcutoff=800.0):
         super(ObsRateMetricWrapper, self).__init__(
             name=name, season=season, coadd=coadd, fieldType=fieldType,
             nside=nside, RAmin=RAmin, RAmax=RAmax,
@@ -164,26 +171,14 @@ class ObsRateMetricWrapper(MetricWrapper):
         snr_ref = dict(zip(bands, SNR))
 
         from sn_metrics.sn_obsrate_metric import SNObsRateMetric
-        self.metric = SNObsRateMetric(lim_sn=lim_sn, names_ref=[metadata.names_ref],
-                                      coadd=coadd, season=season, z=metadata.z, bands=bands, snr_ref=snr_ref, verbose=metadata.verbose)
+        self.metric = SNObsRateMetric(lim_sn=lim_sn,
+                                      names_ref=[metadata.names_ref],
+                                      coadd=coadd, season=season,
+                                      z=metadata.z, bands=bands,
+                                      snr_ref=snr_ref,
+                                      verbose=metadata.verbose)
 
         self.saveConfig()
-
-
-"""
-class NSNMetricWrapper(MetricWrapper):
-    def __init__(self, name='NSN', season=-1, coadd=True, fieldType='DD',
-                 nside=64, RAmin=0., RAmax=360.,
-                 Decmin=-1.0, Decmax=-1.0,
-                 npixels=0,
-                 metadata={}, outDir='', ebvofMW=-1.0, bluecutoff=380.0, redcutoff=800.0, error_model=0):
-        super(NSNMetricWrapper, self).__init__(
-            name=name, season=season, coadd=coadd, fieldType=fieldType,
-            nside=nside, RAmin=RAmin, RAmax=RAmax,
-            Decmin=Decmin, Decmax=Decmax,
-            npixels=npixels,
-            metadata=metadata, outDir=outDir, ebvofMW=ebvofMW)
-"""
 
 
 class NSNMetricWrapper(MetricWrapper):
@@ -228,31 +223,19 @@ class NSNMetricWrapper(MetricWrapper):
         self.saveConfig(params)
 
 
-"""
-    def load(self, templateDir, fname, gammaDir, gammaName, web_path, j=-1, output_q=None):
-
-        lc_ref = GetReference(templateDir,
-                              fname, gammaDir, gammaName, web_path, self.telescope)
-
-        if output_q is not None:
-            output_q.put({j: lc_ref})
-        else:
-            return tab_tot
-"""
-
-
 class NSNYMetricWrapper(MetricWrapper):
     def __init__(self, **params):
         super(NSNYMetricWrapper, self).__init__(**params)
 
         gammaName = params['gamma_file']
-        bluecutoff = params['bluecutoff']
-        redcutoff = params['redcutoff']
         error_model = params['error_model']
+        sn_model = params['sn_model']
+        sn_version = params['sn_version']
         nside = params['nside']
 
         lc_reference, dustcorr = load_reference(
-            error_model, 0.0, [(-2.0, 0.2), (0.0, 0.0)], bluecutoff, redcutoff,
+            error_model, 0.0, [(-2.0, 0.2), (0.0, 0.0)],
+            sn_model, sn_version,
             gammaName=gammaName)
 
         print('Reference data loaded',
@@ -610,7 +593,7 @@ def telescope_def():
 
 def load_reference(error_model=1, ebvofMW=-1,
                    x1_colors=[(-2.0, 0.2), (0.0, 0.0)],
-                   bluecutoff=380., redcutoff=800.,
+                   sn_model='salt3', sn_version='1.0',
                    gammaName='gamma_WFD.hdf5'):
     """
     Method to load reference files (LC, ...)
@@ -644,14 +627,15 @@ def load_reference(error_model=1, ebvofMW=-1,
     wave_cutoff = 'error_model'
 
     if not error_model:
-        wave_cutoff = '{}_{}'.format(bluecutoff, redcutoff)
+        #wave_cutoff = '{}_{}'.format(bluecutoff, redcutoff)
+        wave_cutoff = 'cutoff'
 
     for j in range(len(x1_colors)):
         x1 = x1_colors[j][0]
         color = x1_colors[j][1]
 
-        fname = 'LC_{}_{}_{}_ebvofMW_0.0_vstack.hdf5'.format(
-            x1, color, wave_cutoff)
+        fname = 'LC_{}_{}_{}_{}_{}_ebvofMW_0.0_vstack.hdf5'.format(
+            x1, color, wave_cutoff, sn_model, sn_version)
         if ebvofMW < 0.:
             dustFile = 'Dust_{}_{}_{}.hdf5'.format(
                 x1, color, wave_cutoff)
