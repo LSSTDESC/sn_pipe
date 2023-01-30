@@ -52,7 +52,7 @@ class MetricWrapper:
         # for k in self.metaout]))
         if params:
             nameOut = '{}/{}_conf.yaml'.format(self.outDir, self.name)
-            print('Saving configuration file', nameOut)
+            #print('Saving configuration file', nameOut)
             with open(nameOut, 'w') as file:
                 yaml.dump(params, file)
 
@@ -232,14 +232,16 @@ class NSNYMetricWrapper(MetricWrapper):
         sn_model = params['sn_model']
         sn_version = params['sn_version']
         nside = params['nside']
+        verbose = params['verbose']
 
         lc_reference, dustcorr = load_reference(
             error_model, 0.0, [(-2.0, 0.2), (0.0, 0.0)],
             sn_model, sn_version,
             gammaName=gammaName)
 
-        print('Reference data loaded',
-              lc_reference.keys(), params['fieldType'])
+        if verbose:
+            print('Reference data loaded',
+                  lc_reference.keys(), params['fieldType'])
 
         errmodrel = -1.
         if error_model:
@@ -621,7 +623,7 @@ def load_reference(error_model=1, ebvofMW=-1,
     dustDir = 'Template_Dust'
     dustcorr = {}
 
-    print('Loading reference files')
+    #print('Loading reference files')
     result_queue = multiprocessing.Queue()
 
     wave_cutoff = 'error_model'

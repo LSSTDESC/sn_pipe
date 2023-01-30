@@ -18,7 +18,7 @@ def add_parser(parser, confDict):
 
 metric = sys.argv[1]
 
-print('metric', metric)
+#print('metric', metric)
 
 # get all possible simulation parameters and put in a dict
 path_metric_input = sn_metrics_input.__path__
@@ -50,9 +50,9 @@ metricDict['Decmax'] = opts.Decmax
 metricDict['npixels'] = opts.npixels
 
 
-print(metricDict)
+# print(metricDict)
 
-print('Start processing...', opts)
+#print('Start processing...', opts)
 
 # prepare outputDir
 nodither = ''
@@ -80,11 +80,11 @@ metricList = []
 exec('from metricWrapper import {}MetricWrapper'.format(metric))
 metricList.append(globals()[classname](**metricDict))
 
-print('seasons and metric', opts.seasons,
-      metric, opts.pixelmap_dir, opts.npixels)
+# print('seasons and metric', opts.seasons,
+#      metric, opts.pixelmap_dir, opts.npixels)
 
 metricProc['metricList'] = metricList
 metricProc['outDir'] = outputDir
 
-print('processing', metricProc)
+#print('processing', metricProc)
 process = Process(**metricProc)
