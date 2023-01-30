@@ -1,4 +1,5 @@
 import os
+from optparse import OptionParser
 
 def launch(src,dbList,outDir_main,fieldNames,sel):
     """
@@ -43,12 +44,19 @@ def launch(src,dbList,outDir_main,fieldNames,sel):
                     print(cmd)
                     os.system(cmd)
 
+parser = OptionParser()
+
+parser.add_option("--dbLists", type="str", default='DD_fbs_2.99.csv,DD_fbs_2.1.csv',
+                  help="main dir where the files are located [%default]")
+
+opts, args = parser.parse_args()
+
 src = 'python for_batch/scripts/nsn_metric_DD.py'
 
 outDir_main = '/sps/lsst/users/gris/MetricOutput_DD'
 fieldNames = 'COSMOS,XMM-LSS,ELAISS1,EDFSa,EDFSb,CDFS'
 sel = ' --select_epochs 1 --n_bef 4 --n_aft 10'
-dbLists = ['DD_fbs_2.99.csv','DD_fbs_2.1.csv']
+dbLists = opts.dbLists.split(',')
 
 for dbList in dbLists:
     launch(src,dbList,outDir_main,fieldNames,sel)

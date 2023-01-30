@@ -22,7 +22,14 @@ def count(grp, dirFiles, metric):
     number of corresponding files
 
     """
-    fi = glob.glob('{}/{}/{}/*.hdf5'.format(dirFiles, grp['dbName'], metric))
+    mm = metric
+    fieldName = grp['fieldName']
+    if fieldName != 'WFD':
+        mm = '{}_{}'.format(metric,fieldName)
+    search_path = '{}/{}/{}/*.hdf5'.format(dirFiles, grp['dbName'], mm)
+    print('searching',search_path)
+    fi = glob.glob(search_path)
+    print(grp['dbName'],len(fi))
     return len(fi)
 
 
@@ -36,6 +43,9 @@ parser.add_option("--metric", type="str", default='NSN',
                   help="name of the metric[%default]")
 parser.add_option("--outFile", type="str", default='missing_fbs14.csv',
                   help="name of output file[%default]")
+parser.add_option("--fieldType", type="str", default='WFD',
+                  help="field type - WFD or DD [%default]")
+parser.add_option('--fieldNames', type=str, default='COSMOS,CDFS,ELAISS1,XMM-LSS,EDFSa,EDFSb',help='DD fields to process [%default]')
 
 opts, args = parser.parse_args()
 
@@ -43,15 +53,38 @@ dirFiles = opts.dirFiles
 dbList = opts.dbList
 metric = opts.metric
 outFile = opts.outFile
+fieldNames = opts.fieldNames.split(',')
+fieldType = opts.fieldType
 
 # load the list
-toprocess = pd.read_csv('{}'.format(dbList))
+toprocess = pd.read_csv('{}'.format(dbList),comment='#')
+
+fields = pd.DataFrame(fieldNames,columns=['fieldName'])
+
+dbNames = toprocess['dbName'].unique()
+toprocess_all = pd.DataFrame()
+
+
+for dbName in dbNames:
+    fields['dbName'] = dbName
+    toprocess_all  = pd.concat((toprocess_all,fields))
+
 # get the number of files for each OS
-toprocess['nfiles'] = toprocess.apply(
+toprocess_all['nfiles'] = toprocess_all.apply(
     lambda x: count(x, dirFiles, metric), axis=1)
+    
+print(toprocess_all)
 
 # check for missing files
-idx = toprocess['nfiles'] < 80
-dfmiss = toprocess[idx]
-dfmiss = dfmiss.loc[:, dfmiss.columns != 'nfiles']
-dfmiss.to_csv(outFile, index=False)
+min_val = 80
+if fieldType == 'DD':
+    min_val = 8
+
+idx = toprocess_all['nfiles'] < min_val
+dfmiss = toprocess_all[idx]
+#dfmiss = dfmiss.loc[:, dfmiss.columns != 'nfiles']
+
+#dfmiss.drop(['nfiles','fieldName'])
+idb = toprocess['dbName'].isin(dfmiss['dbName'].unique())
+
+toprocess[idb].to_csv(outFile, index=False)
