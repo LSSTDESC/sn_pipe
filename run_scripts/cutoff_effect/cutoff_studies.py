@@ -3,7 +3,7 @@ from astropy.cosmology import w0waCDM
 import numpy as np
 import os
 from scipy.interpolate import griddata
-from sn_tools.sn_telescope import Telescope
+from sn_telmodel.sn_telescope import Telescope
 from rubin_sim.photUtils import Bandpass, Sed
 from astropy import units as u
 import pandas as pd

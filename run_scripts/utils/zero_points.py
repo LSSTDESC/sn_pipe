@@ -7,7 +7,7 @@ Created on Wed Jan 18 09:10:52 2023
 """
 
 import matplotlib.pyplot as plt
-from sn_tools.sn_telescope import Telescope
+from sn_telmodel.sn_telescope import Telescope
 import numpy as np
 
 

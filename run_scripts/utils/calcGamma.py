@@ -1,5 +1,5 @@
 from sn_tools.sn_utils import Gamma
-from sn_tools.sn_telescope import Telescope
+from sn_telmodel.sn_telescope import Telescope
 import numpy as np
 from optparse import OptionParser
 

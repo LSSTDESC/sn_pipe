@@ -1,4 +1,4 @@
-from sn_tools.sn_telescope import Telescope
+from sn_telmodel.sn_telescope import Telescope
 
 telescope = Telescope(airmass=1.2)
 

@@ -224,7 +224,7 @@ class Fit_Simu:
 
         import matplotlib.pyplot as plt
         import sncosmo
-        from sn_tools.sn_telescope import Telescope
+        from sn_telmodel.sn_telescope import Telescope
         import astropy.units as u
         prefix = 'LSST::'
         """

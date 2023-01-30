@@ -573,7 +573,7 @@ def telescope_def():
 
 
     """
-    from sn_tools.sn_telescope import Telescope
+    from sn_telmodel.sn_telescope import Telescope
     tel_par = {}
     tel_par['name'] = 'LSST'  # name of the telescope (internal)
     # dir of throughput
