@@ -265,9 +265,11 @@ class NSNYMetricWrapper(MetricWrapper):
         bands = zp_airmass['band'].tolist()
         slope = zp_airmass['slope'].tolist()
         intercept = zp_airmass['intercept'].tolist()
+        mean_wave = zp_airmass['mean_wavelength'].tolist()
 
         params['zp_slope'] = dict(zip(bands, slope))
         params['zp_intercept'] = dict(zip(bands, intercept))
+        params['mean_wavelength'] = dict(zip(bands, mean_wave))
 
         # metric instance
         from sn_metrics.sn_nsn_yearly_metric import SNNSNYMetric
