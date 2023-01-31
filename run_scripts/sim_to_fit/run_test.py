@@ -9,6 +9,7 @@ from optparse import OptionParser
 
 @dataclass
 class CombiRun:
+    conf_name: str
     simulator_name: str
     simulator_model: str
     simulator_version: str
@@ -277,14 +278,16 @@ def add_sequence(script, dict_opt, vprod, combis_simu, seqName, plotName):
     """
     plotNames = {}
     for i, row in combis_simu.iterrows():
-        combis[seqName] = CombiRun(
+        seqNameb = '{}_{}'.format(seqName, row['confName'])
+        combis[seqNameb] = CombiRun(
+            row['confName'],
             row['simulator_name'],
             row['simulator_model'],
             row['simulator_version'],
             row['fitter_name'],
             row['fitter_model'],
             row['fitter_version'])
-        plotNames[seqName] = plotName
+        plotNames[seqNameb] = '{}_{}'.format(plotName, row['confName'])
 
     add_combis(script, combis, vprod, plotNames)
 
