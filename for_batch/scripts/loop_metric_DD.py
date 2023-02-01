@@ -54,11 +54,13 @@ opts, args = parser.parse_args()
 src = 'python for_batch/scripts/nsn_metric_DD.py'
 
 outDir_main = '/sps/lsst/users/gris/MetricOutput_DD'
-fieldNames = 'COSMOS,XMM-LSS,ELAISS1,EDFSa,EDFSb,CDFS'
+fieldNames = ['COSMOS,XMM-LSS,ELAISS1','EDFSa,EDFSb,CDFS']
 sel = ' --select_epochs 1 --n_bef 4 --n_aft 10'
 dbLists = opts.dbLists.split(',')
+fields = ','.join(fieldNames)
 
 for dbList in dbLists:
-    launch(src,dbList,outDir_main,fieldNames,sel)
+    #for fields in fieldNames:
+    launch(src,dbList,outDir_main,fields,sel)
 
 
