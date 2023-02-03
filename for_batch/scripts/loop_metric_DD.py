@@ -1,7 +1,8 @@
 import os
 from optparse import OptionParser
 
-def launch(src,dbList,outDir_main,fieldNames,sel):
+
+def launch(src, dbList, outDir_main, fieldNames, sel):
     """
     Function to launch batches for DD studies
 
@@ -57,10 +58,10 @@ outDir_main = '/sps/lsst/users/gris/MetricOutput_DD'
 fieldNames = ['COSMOS,XMM-LSS,ELAISS1','EDFSa,EDFSb,CDFS']
 sel = ' --select_epochs 1 --n_bef 4 --n_aft 10'
 dbLists = opts.dbLists.split(',')
-fields = ','.join(fieldNames)
+#fields = ','.join(fieldNames)
 
 for dbList in dbLists:
-    #for fields in fieldNames:
-    launch(src,dbList,outDir_main,fields,sel)
+    for fields in fieldNames:
+        launch(src,dbList,outDir_main,fields,sel)
 
 
