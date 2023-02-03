@@ -9,9 +9,10 @@ def bbatch(scriptref,params,fieldNames,mem='20G'):
 
     processName = 'metric_DD_{}_{}_{}_{}'.format(params['dbName'],params['project_FP'],params['VRO_FP'],params['telrot'])
     mybatch = BatchIt(processName=processName,mem=mem)
-    #for fieldName in fieldNames:
-    params['fieldName'] = ','.join(fieldNames)
-    mybatch.add_batch(scriptref, params)
+    for fieldName in fieldNames:
+        #params['fieldName'] = ','.join(fieldNames)
+        params['fieldName'] = fieldName
+        mybatch.add_batch(scriptref, params)
 
     mybatch.go_batch()
     

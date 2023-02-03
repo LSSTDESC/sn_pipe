@@ -85,6 +85,7 @@ dfmiss = toprocess_all[idx]
 #dfmiss = dfmiss.loc[:, dfmiss.columns != 'nfiles']
 
 #dfmiss.drop(['nfiles','fieldName'])
+print(dfmiss[['dbName','fieldName','nfiles']])
 idb = toprocess['dbName'].isin(dfmiss['dbName'].unique())
 
-toprocess[idb].to_csv(outFile, index=False)
+#toprocess[idb].to_csv(outFile, index=False)
