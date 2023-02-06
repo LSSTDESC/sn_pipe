@@ -42,7 +42,7 @@ def launch(src, dbList, outDir_main, fieldNames, sel,itag):
                     cmd += ' --VRO_FP {}'.format(VRO_FP)
                     cmd += ' --telrot {}'.format(telrot)
                     cmd += ' --addInfo 1'
-                    cmd += ' --tag {}'.format(itag)
+                    cmd += ' --tagName {}'.format(itag)
                     print(cmd)
                     os.system(cmd)
 

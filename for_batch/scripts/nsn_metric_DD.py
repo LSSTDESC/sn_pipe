@@ -5,9 +5,9 @@ from sn_tools.sn_batchutils import BatchIt
 
 dict_filter = lambda x, y: dict([ (i,x[i]) for i in x if i in set(y) ])
 
-def bbatch(scriptref,params,fieldNames,mem='40G'):
+def bbatch(scriptref,params,fieldNames,tagName,mem='40G'):
 
-    processName = 'metric_DD_{}_{}_{}_{}_{}'.format(params['dbName'],params['project_FP'],params['VRO_FP'],params['telrot'],params['tagName'])
+    processName = 'metric_DD_{}_{}_{}_{}_{}'.format(params['dbName'],params['project_FP'],params['VRO_FP'],params['telrot'],tagName)
     mybatch = BatchIt(processName=processName,mem=mem)
     for fieldName in fieldNames:
         #params['fieldName'] = ','.join(fieldNames)
@@ -69,9 +69,9 @@ params['fieldType'] = 'DD'
 params['zmax'] = 1.1
 params['npixels'] = -1
 params['saveData'] = 1
-params['tagName'] = opts.tagName
+tagName = opts.tagName
 
 for i,row in toprocess.iterrows():
     for vv in ['dbDir','dbName','dbExtens']:
         params[vv] = row[vv]
-    bbatch(scriptref,params,fieldNames)
+    bbatch(scriptref,params,fieldNames,tagName)
