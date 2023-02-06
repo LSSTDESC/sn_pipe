@@ -5,9 +5,9 @@ from sn_tools.sn_batchutils import BatchIt
 
 dict_filter = lambda x, y: dict([ (i,x[i]) for i in x if i in set(y) ])
 
-def bbatch(scriptref,params,fieldNames,mem='20G'):
+def bbatch(scriptref,params,fieldNames,mem='40G'):
 
-    processName = 'metric_DD_{}_{}_{}_{}'.format(params['dbName'],params['project_FP'],params['VRO_FP'],params['telrot'])
+    processName = 'metric_DD_{}_{}_{}_{}_{}'.format(params['dbName'],params['project_FP'],params['VRO_FP'],params['telrot'],params['tagName'])
     mybatch = BatchIt(processName=processName,mem=mem)
     for fieldName in fieldNames:
         #params['fieldName'] = ','.join(fieldNames)
@@ -16,7 +16,7 @@ def bbatch(scriptref,params,fieldNames,mem='20G'):
 
     mybatch.go_batch()
     
-    
+
 parser = OptionParser()
 
 parser.add_option('--dbList', type='str', default='for_batch/input/List_Db_DD.csv',help='list of dbNames to process  [%default]')
@@ -51,6 +51,9 @@ parser.add_option("--telrot", type=int, default=0,
                   help="telescope rotation angle [%default]")
 parser.add_option("--addInfo", type=int, default=0,
                   help="to get additionnal infos from obs [%default]")
+parser.add_option("--tagName", type=int, default=0,
+                  help="to tag script name (avoid duplicates) [%default]")
+
 
 opts, args = parser.parse_args()
 
@@ -66,6 +69,7 @@ params['fieldType'] = 'DD'
 params['zmax'] = 1.1
 params['npixels'] = -1
 params['saveData'] = 1
+params['tagName'] = opts.tagName
 
 for i,row in toprocess.iterrows():
     for vv in ['dbDir','dbName','dbExtens']:

@@ -2,7 +2,7 @@ import os
 from optparse import OptionParser
 
 
-def launch(src, dbList, outDir_main, fieldNames, sel):
+def launch(src, dbList, outDir_main, fieldNames, sel,itag):
     """
     Function to launch batches for DD studies
 
@@ -42,6 +42,7 @@ def launch(src, dbList, outDir_main, fieldNames, sel):
                     cmd += ' --VRO_FP {}'.format(VRO_FP)
                     cmd += ' --telrot {}'.format(telrot)
                     cmd += ' --addInfo 1'
+                    cmd += ' --tag {}'.format(itag)
                     print(cmd)
                     os.system(cmd)
 
@@ -61,7 +62,7 @@ dbLists = opts.dbLists.split(',')
 #fields = ','.join(fieldNames)
 
 for dbList in dbLists:
-    for fields in fieldNames:
-        launch(src,dbList,outDir_main,fields,sel)
+    for itag,fields in enumerate(fieldNames):
+        launch(src,dbList,outDir_main,fields,sel,itag)
 
 
