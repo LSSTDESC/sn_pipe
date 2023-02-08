@@ -28,10 +28,10 @@ class MetricWrapper:
 
         self.name = '{}Metric_{}_nside_{}_coadd_{}'.format(name, fieldType,
                                                            nside, coadd)
-        self.name += '{}_{}_{}_{}_npixels_{}_ebvofMW_{}'.format(RAmin, RAmax,
-                                                                Decmin, Decmax,
-                                                                npixels,
-                                                                ebvofMW)
+        self.name += '_{}_{}_{}_{}_npixels_{}_ebvofMW_{}'.format(RAmin, RAmax,
+                                                                 Decmin, Decmax,
+                                                                 npixels,
+                                                                 ebvofMW)
         # self.metadata = vars(metadata)
         self.metadata = metadata
         # select values to dump
