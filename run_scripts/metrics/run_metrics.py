@@ -86,6 +86,7 @@ metricList.append(globals()[classname](**metricDict))
 
 metricProc['metricList'] = metricList
 metricProc['outDir'] = outputDir
+metricProc['seasons'] = opts.seasons
 
 #print('processing', metricProc)
 process = Process(**metricProc)
