@@ -252,7 +252,7 @@ if plot_level == 'global':
 
 if plot_level == 'fields':
     if fieldType == 'DD':
-        summary_season = zcomp_field_season(metricTot)
+        summary_season = zcomp_field_season(metricPlot)
         summary_field = zcomp_field(summary_season)
         summary_field['field'] = summary_field['fieldname']
         summary_field = merge(summary_field, forPlot)
@@ -260,7 +260,7 @@ if plot_level == 'fields':
 
 if plot_level == 'season':
     if fieldType == 'DD':
-        summary_season = zcomp_field_season(metricTot)
+        summary_season = zcomp_field_season(metricPlot)
         summary_season = merge(summary_season, forPlot)
 
         for field in fieldNames:
@@ -271,7 +271,7 @@ if plot_level == 'season':
 if plot_level == 'pixels':
     import matplotlib.pyplot as plt
     if fieldType == 'DD':
-        res = metricTot.groupby(['dbName', 'fieldname', 'season']).apply(
+        res = metricPlot.groupby(['dbName', 'fieldname', 'season']).apply(
             lambda x: add_dist(x))
         print(res.columns)
         dbName = 'draft_connected_v2.99_10yrs'
@@ -282,6 +282,7 @@ if plot_level == 'pixels':
         idx &= res['season'] == season
         sel = res[idx]
         print('total number of SN', np.sum(sel['nsn']))
+        print(sel)
         fig, ax = plt.subplots(figsize=(14, 8))
         figtitle = '{} - {} \n season {}'.format(dbName, field, season)
         yleg = '$N_{SN}^{z \leq z_{complete}}$/pixel(0.21deg$^2$)'
@@ -293,14 +294,15 @@ if plot_level == 'pixels':
         xmin = np.min(sel['nsn'])
         xmax = np.max(sel['nsn'])
         tit = 'DDF'
-        plotMollview(nside, sel, 'nsn', tit, np.sum, xmin, xmax)
+        fig, ax = plt.subplots()
+        plotMollview(nside, fig, sel, 'nsn', tit, np.sum, xmin, xmax)
         plt.show()
     else:
         dbName = 'draft_connected_v2.99_10yrs'
-        idx = metricTot['dbName'] == dbName
-        idx &= metricTot['season'] < 11
-        idx &= metricTot['zcomp'] > 0.
-        sel = metricTot[idx]
+        idx = metricPlot['dbName'] == dbName
+        idx &= metricPlot['season'] < 11
+        idx &= metricPlot['zcomp'] > 0.
+        sel = metricPlot[idx]
         sel = sel.sort_values(by=['season'])
         plotMollview_seasons(nside, sel, dbName, 'nsn',
                              'N$_{SN}^{z \leq z_{complete}}$', np.sum, seasons)
@@ -313,4 +315,22 @@ if plot_level == 'pixels':
                 yleg='$z_{complete}^{mean}$', seasons=seasons)
         plot_xy(sel, yvar='nsn', yleg='$\Sigma N_{SN}^{z \leq z_{complete}}$',
                 seasons=seasons, op='sum')
+        plt.show()
+
+if plot_level == 'dedicated_study':
+    import matplotlib.pyplot as plt
+    if fieldType == 'DD':
+        res = metricPlot.groupby(['dbName', 'fieldname', 'season']).apply(
+            lambda x: add_dist(x))
+        print(res.columns)
+        dbName = 'draft_connected_v2.99_10yrs'
+        field = 'COSMOS'
+        season = 3
+        idx = res['dbName'] == dbName
+        idx &= res['fieldname'] == field
+        idx &= res['season'] == season
+        sel = res[idx]
+        print(sel[['pixRA', 'pixDec', 'nsn', 'zcomp']])
+        fig, ax = plt.subplots()
+        ax.plot(sel['pixRA'], sel['pixDec'], 'ko')
         plt.show()
