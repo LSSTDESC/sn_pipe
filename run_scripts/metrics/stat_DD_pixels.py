@@ -1,13 +1,14 @@
 import pandas as pd
 from sn_tools.sn_cadence_tools import stat_DD_night_pixel, stat_DD_season_pixel
 from optparse import OptionParser
-from sn_tools.sn_io import make_dict_from_config,add_parser
+from sn_tools.sn_io import make_dict_from_config, add_parser
 from sn_tools.sn_process import FP2pixels
 from sn_tools.sn_obs import ProcessPixels
 
+
 def add_year(df):
     """
-    
+
 
     Parameters
     ----------
@@ -19,20 +20,20 @@ def add_year(df):
     original df plus year column
 
     """
-    
+
     res = pd.DataFrame(df)
-    
+
     res['year'] = 1
 
     for i in range(10):
         idx = res['night'] >= i*365.
         idx &= res['night'] < (i+1)*365.
-        res.loc[idx,'year'] = i+1
+        res.loc[idx, 'year'] = i+1
 
     return res
 
 
-def transform(pixels,obs):
+def transform(pixels, obs):
     """
     Function to transform the pixels df
 
@@ -40,25 +41,29 @@ def transform(pixels,obs):
     ----------
     pixels: pandas df
       data to transform
-    
+
 
     """
 
     # link pixels <-> observations
-    res = pixels.groupby(['healpixID','pixRA','pixDec','fieldName']).apply(lambda x: get_obsid(x)).reset_index()
+    res = pixels.groupby(['healpixID', 'pixRA', 'pixDec', 'fieldName']).apply(
+        lambda x: get_obsid(x)).reset_index()
 
     # get mean values for observations
     obsCol = ['observationStartMJD', 'fieldRA', 'fieldDec',
-                       'visitExposureTime', 'fiveSigmaDepth', 'numExposures', 'seeingFwhmEff']
+              'visitExposureTime', 'fiveSigmaDepth', 'numExposures',
+              'seeingFwhmEff']
 
-    obsm = pd.DataFrame(obs)
-    obsm = obsm.groupby(['observationId','filter','night'])[obsCol].mean().reset_index()
+    print(type(obs))
+    obsm = pd.DataFrame.from_records(obs)
+    obsm = obsm.groupby(['observationId', 'filter', 'night'])[
+        obsCol].mean().reset_index()
 
-    res = res.merge(obsm, left_on=['observationId'],right_on=['observationId'])
+    res = res.merge(obsm, left_on=['observationId'],
+                    right_on=['observationId'])
 
-        
-    
     return res
+
 
 def get_obsid(grp):
     """
@@ -75,19 +80,19 @@ def get_obsid(grp):
     """
 
     obsids = ProcessPixels.getList(grp)
-    
-        
-    tt = pd.DataFrame(obsids,columns=['observationId'])
+
+    tt = pd.DataFrame(obsids, columns=['observationId'])
 
     return tt
-    
 
-confDict_gen = make_dict_from_config('input/obs_pixelize', 'config_obs_pixelize.txt')
+
+confDict_gen = make_dict_from_config(
+    'input/obs_pixelize', 'config_obs_pixelize.txt')
 parser = OptionParser()
 
-#parser.add_option("--dbDir", type=str, default='../ObsPixelized_128',
+# parser.add_option("--dbDir", type=str, default='../ObsPixelized_128',
 #                  help="data location dir [%default]")
-#parser.add_option("--dbList", type=str, default='List_ObsPixels.csv',
+# parser.add_option("--dbList", type=str, default='List_ObsPixels.csv',
 #                  help="List of db to process [%default]")
 parser = OptionParser()
 # parser for simulation parameters : 'dynamical' generation
@@ -100,7 +105,7 @@ opts, args = parser.parse_args()
 #obsPixelDir = opts.dbDir
 #dbList = opts.dbList
 
-#dfdb = pd.read_csv(dbList, comment='#')
+# dfdb = pd.read_csv(dbList, comment='#')
 
 restot = pd.DataFrame()
 
@@ -110,19 +115,19 @@ dict_process = vars(opts)
 
 
 for fieldName in fieldNames:
-    dict_process['fieldName']=fieldName
+    dict_process['fieldName'] = fieldName
     obs2pixels = FP2pixels(**dict_process)
 
     observations = obs2pixels.obs
     pixels = obs2pixels()
     pixels['fieldName'] = fieldName
-    pixels = transform(pixels,observations)
-    resdf = stat_DD_night_pixel(pixels,opts.dbName,nproc=opts.nproc)
+    pixels = transform(pixels, observations)
+    resdf = stat_DD_night_pixel(pixels, opts.dbName, nproc=opts.nproc_pixels)
     resdf = add_year(resdf)
     #restot = pd.concat((restot, resdf))
-    restat = stat_DD_season_pixel(resdf,cols=['healpixID', 'field', 'pixRA', 'pixDec', 'year', 'dbName'])
+    restat = stat_DD_season_pixel(
+        resdf, cols=['healpixID', 'field', 'pixRA', 'pixDec', 'year', 'dbName'])
     restot = pd.concat((restot, restat))
-    
-    
+
 
 restot.to_hdf(opts.outName, key='summary')
