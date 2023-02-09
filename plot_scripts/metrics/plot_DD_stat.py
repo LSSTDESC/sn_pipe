@@ -2,8 +2,9 @@ import pandas as pd
 from sn_plotter_metrics import plt
 import numpy as np
 from sn_plotter_metrics.utils import get_dist
-from sn_plotter_metrics.plot4metric import plot_night,plot_series,plot_series_fields
-from sn_plotter_metrics.plot4metric import plot_field,plot_cumsum
+from sn_plotter_metrics.plot4metric import plot_night, plot_series
+from sn_plotter_metrics.plot4metric import plot_series_fields, plot_filter_alloc
+from sn_plotter_metrics.plot4metric import plot_field, plot_cumsum
 from optparse import OptionParser
 
 
@@ -167,10 +168,10 @@ def complete_pointing(df, dfgroup):
     modified merged df
 
     """
-    df = df.merge(dfgroup[['dbName', 'group', 'marker', 'color']],
+    df = df.merge(dfgroup[['dbName', 'family', 'marker', 'color']],
                   left_on=['dbName'], right_on=['dbName'])
 
-    df['family'] = df['group']
+    # df['family'] = df['group']
 
     # strip db Name
     df['family'] = df['family'].str.split('_v2.99_10yrs', expand=True)[0]
@@ -248,7 +249,8 @@ def flat_this(grp, cols=['filter_alloc', 'filter_frac']):
 
 
 parser = OptionParser(
-    description='Display correlation plots between (NSN,zlim) metric results for DD fields and the budget')
+    description='Display correlation plots between (NSN,zlim) \
+    metric results for DD fields and the budget')
 parser.add_option("--dirFile", type="str",
                   default='../MetricOutput_DD_new_128_gnomonic_circular',
                   help="file directory [%default]")
@@ -258,11 +260,13 @@ parser.add_option("--fieldType", type="str", default='DD',
                   help="field type - DD, WFD, Fake [%default]")
 parser.add_option("--dbList", type="str", default='List.csv',
                   help="list of cadences to display[%default]")
-parser.add_option("--fieldNames", type="str", default='COSMOS,CDFS,XMM-LSS,ELAISS1,EDFSa,EDFSb,EDFS',
+parser.add_option("--fieldNames", type="str", default='COSMOS,CDFS,\
+                  XMM-LSS,ELAISS1,EDFSa,EDFSb,EDFS',
                   help="fields to process [%default]")
 parser.add_option("--metric", type="str", default='NSNY',
                   help="metric name [%default]")
-parser.add_option("--pointingFile", type="str", default='Summary_DD_pointings.hdf5',
+parser.add_option("--pointingFile", type="str",
+                  default='Summary_DD_pointings.hdf5',
                   help="pointing file name [%default]")
 parser.add_option("--configGroup", type="str", default='DD_fbs_2.99_plot.csv',
                   help="pointing file name [%default]")
@@ -270,8 +274,10 @@ parser.add_option("--addMetric", type=int, default=0,
                   help="to add metric correlation plots [%default]")
 parser.add_option("--plotSummary", type=int, default=0,
                   help="to draw summary plots [%default]")
-
-
+parser.add_option("--dbName_night", type=str, default='baseline_v3.0_10yrs',
+                  help="dbName for night plot stat [%default]")
+parser.add_option("--fieldName_night", type=str, default='COSMOS',
+                  help="field for night plot stat [%default]")
 opts, args = parser.parse_args()
 # Load parameters
 dirFile = opts.dirFile
@@ -284,9 +290,13 @@ pointingFile = opts.pointingFile
 configGroup = opts.configGroup
 addMetric = opts.addMetric
 plotSummary = opts.plotSummary
+dbName_night = opts.dbName_night
+fieldName_night = opts.fieldName_night
 
 dfgroup = pd.read_csv(configGroup, comment='#')  # load list of db+plot infos
 df = pd.read_hdf(pointingFile)  # load pointing data
+print('hhh', df)
+print('bbb', dfgroup)
 df = complete_pointing(df, dfgroup)  # merge pointing data+plot data
 
 metric = pd.DataFrame()
@@ -333,11 +343,11 @@ for field in ['COSMOS']:
                    'Time budget [%]', 'N$_{SN}$ frac'], title='{} metrics'.format(field))
         
         """
-        
+
         idx = selm['zcomp'] > 0
         plot_cumsum(selm[idx], title=field, xvar='zcomp', xleg='$z_{complete}$',
                     yvar='nsn', yleg='$N_{SN}$ frac', ascending=False)
-        
+
 
 """
 print(metric['field'].unique())
@@ -363,20 +373,19 @@ plt.show()
 """
 
 # this is to plot fraction of filter alloc per night
-"""
+
 flat = df.groupby(['dbName', 'field', 'family', 'season']).apply(
     lambda x: flat_this(x, cols=['filter_alloc', 'filter_frac'])).reset_index()
 
 flat = flat.groupby(['dbName', 'field', 'family', 'filter_alloc', 'season'])[
     'filter_frac'].median().reset_index()
 
+print(flat)
+idx = dfgroup['dbName'] == dbName_night
+family = dfgroup[idx]['family'].to_list()[0]
+plot_filter_alloc(flat, family, fieldName_night)
 
-plot_filter_alloc(flat, 'dd6', 'COSMOS')
+# plot_night(
+#    df, dbName=dbName_night, field=fieldName_night)
+
 plt.show()
-"""
-
-plot_night(
-    df, dbName='dd6_v2.99_10yrs', field='COSMOS')
-
-plt.show()
-
