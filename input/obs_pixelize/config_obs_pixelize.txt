@@ -4,7 +4,7 @@ dbExtens npy str #db extension
 dbDir ../DB_Files str #db dir
 outDir ObsPixelized str #output dir
 nside 128 int #healpixnside
-nproc 8 int # number of procs
+nproc_pixels 8 int # number of procs
 fieldType DD str #field type DD or WFD
 remove_dithering 0 int #to remove dithering for DDF
 saveData 1 int #flag to dump data on disk
