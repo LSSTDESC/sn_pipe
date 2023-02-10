@@ -55,7 +55,8 @@ def plotMollview(nside, data, varName, leg, op, xmin, xmax):
     hp.graticule()
 
 
-def plot_Moll_season(nside, data, what='cadence_mean', leg='cadence [days]', minval=1, maxval=20):
+def plot_Moll_season(nside, data, what='cadence_mean',
+                     leg='cadence [days]', minval=1, maxval=20):
     """
     function to plot data using Mollview
 
@@ -105,7 +106,9 @@ def get_dist(data, pixRA_mean=-1, pixDec_mean=-1):
     return data
 
 
-def plot_2D(selfi, whatx='dist', legx='radius [deg]', whaty='cadence_mean', legy='Mean cadence [days]', figtitle='', fig=None, ax=None, color='k', marker='o', mfc='k', sort=True):
+def plot_2D(selfi, whatx='dist', legx='radius [deg]', whaty='cadence_mean',
+            legy='Mean cadence [days]', figtitle='',
+            fig=None, ax=None, color='k', marker='o', mfc='k', sort=True):
     """
     Method to plot 2D variables
 
@@ -161,7 +164,8 @@ def getVal(selfi, whatx='dist', whaty='nsn', frac=0.9):
     return np.min(selfi[idx][whatx])
 
 
-def plot_cumsum(selfi, whatx='dist', legx='radius [deg]', figtitle='', fig=None, ax=None, color='k', marker='o', mfc='k', sort=True):
+def plot_cumsum(selfi, whatx='dist', legx='radius [deg]', figtitle='',
+                fig=None, ax=None, color='k', marker='o', mfc='k', sort=True):
     """
     Method to plot 2D variables
 
@@ -216,7 +220,9 @@ def plot_cumsum(selfi, whatx='dist', legx='radius [deg]', figtitle='', fig=None,
     ax.grid()
 
 
-def plot_Hist(data, whatx='cadence_mean', bins=range(1, 20), density=True, legx='Mean cadence [days]', legy='Pixel fraction', figtitle='', fig=None, ax=None):
+def plot_Hist(data, whatx='cadence_mean', bins=range(1, 20), density=True,
+              legx='Mean cadence [days]', legy='Pixel fraction',
+              figtitle='', fig=None, ax=None):
     """
     Function to plot histogram
 
@@ -292,6 +298,39 @@ def plot_Molls(df):
     plot_Moll_season(nside, df)
 
 
+def plot_per_season_season(df, field):
+    """
+    Function to make plots per season
+
+    Parameters
+    ----------
+    df : pandas df
+        data to plot.
+    field : str
+        field to plot.
+
+    Returns
+    -------
+    None.
+
+    """
+    dbName = df['dbName'].unique()
+
+    for io, db in enumerate(dbName):
+        idx = df['dbName'] == db
+        idx &= df['field'] == field[io]
+        sel = df[idx]
+        for season in sel[timeCol].unique():
+            idxb = sel[timeCol] == int(season)
+            print('allo2', len(sel[idxb]))
+            # plot Mollview here
+            if season <= 10:
+                plot_Moll_season(nside, sel[idxb],
+                                 leg='{} {} \n cadence [days]'.format(
+                                     timeCol, season), maxval=20)
+                plot_Hist(sel[idxb], figtitle='{} {}'.format(timeCol, season))
+
+
 parser = OptionParser()
 
 
@@ -316,21 +355,13 @@ df = pd.read_hdf(fi)
 
 print(df.columns)
 print(df['dbName'].unique())
-dbName = df['dbName'].unique()
+
 pixArea = hp.nside2pixarea(nside, degrees=True)
 #fig, ax = plt.subplots(figsize=(12, 8))
 #figb, axb = plt.subplots(figsize=(12, 8))
 colors = ['b', 'r']
-for io, db in enumerate(dbName):
-    idx = df['dbName'] == db
-    idx &= df['field'] == field[io]
-    print('allo1', len(df[idx]))
-    sel = df[idx]
-    for season in sel[timeCol].unique():
-        idxb = sel[timeCol] == int(season)
-        print('allo2', len(sel[idxb]))
-        # plot Mollview here
-        if season<=10:
-            plot_Moll_season(nside,sel[idxb], leg='{} {} \n cadence [days]'.format(timeCol,season),maxval=10)
-            plot_Hist(sel[idxb],figtitle='{} {}'.format(timeCol,season))
+
+df['Nvisits'] = df['u']+df['g']+df['r']+df['i']+df['z']+df['y']
+
+plotMollview(nside, df, 'Nvisits', 'Nvisits', np.sum, 10, 100)
 plt.show()
