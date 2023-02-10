@@ -54,7 +54,6 @@ def transform(pixels, obs):
               'visitExposureTime', 'fiveSigmaDepth', 'numExposures',
               'seeingFwhmEff']
 
-    print(type(obs))
     obsm = pd.DataFrame.from_records(obs)
     obsm = obsm.groupby(['observationId', 'filter', 'night'])[
         obsCol].mean().reset_index()
@@ -124,10 +123,12 @@ for fieldName in fieldNames:
     pixels = transform(pixels, observations)
     resdf = stat_DD_night_pixel(pixels, opts.dbName, nproc=opts.nproc_pixels)
     resdf = add_year(resdf)
+
     #restot = pd.concat((restot, resdf))
     restat = stat_DD_season_pixel(
-        resdf, cols=['healpixID', 'field', 'pixRA', 'pixDec', 'year', 'dbName'])
+        resdf, cols=['healpixID', 'field', 'pixRA', 'pixDec', 'season', 'dbName'])
     restot = pd.concat((restot, restat))
 
 
+print(restot)
 restot.to_hdf(opts.outName, key='summary')
