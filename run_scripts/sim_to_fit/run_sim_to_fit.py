@@ -67,12 +67,11 @@ for key, vals in confDict_info.items():
 for key, vals in confDict_fit.items():
     newval = eval('opts.{}'.format(key))
     fitDict[key] = (vals[0], newval)
-    
+
 # new dict with configuration params
-print('simudict', simuDict)
 yaml_params = make_dict_from_optparse(simuDict)
 yaml_params_fit = make_dict_from_optparse(fitDict)
-print('polo',yaml_params_fit)
+
 # one modif: full dbName
 yaml_params['Observations']['filename'] = '{}/{}.{}'.format(
     opts.dbDir, opts.dbName, opts.dbExtens)
@@ -94,7 +93,7 @@ yaml_orig = 'input/simulation/param_simulation_gen.yaml'
 
 yaml_params = makeYaml.genYaml(yaml_orig)
 """
-print(yaml_params)
+# print(yaml_params)
 
 # save on disk
 
@@ -114,7 +113,7 @@ with open(yaml_name_fit, 'w') as f:
 
 # define what to process using simuWrapper
 
-metricList = [SimInfoFitWrapper(yaml_name,infoDict,yaml_name_fit)]
+metricList = [SimInfoFitWrapper(yaml_name, infoDict, yaml_name_fit)]
 fieldType = yaml_params['Observations']['fieldtype']
 fieldName = yaml_params['Observations']['fieldname']
 nside = yaml_params['Pixelisation']['nside']
@@ -123,8 +122,8 @@ outDir = yaml_params['OutputSimu']['directory']
 # now perform the processing
 
 
-print('seasons and metric', opts.Observations_season,
-      metricList, opts.pixelmap_dir, opts.npixels)
+# print('seasons and metric', opts.Observations_season,
+#      metricList, opts.pixelmap_dir, opts.npixels)
 
 procDict['fieldType'] = opts.fieldType
 procDict['metricList'] = metricList
@@ -133,7 +132,7 @@ procDict['outDir'] = outDir
 procDict['pixelList'] = opts.pixelList
 procDict['nside'] = opts.nside
 
-print('processing', procDict)
+# print('processing', procDict)
 process = Process(**procDict)
 
 """
