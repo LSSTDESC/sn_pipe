@@ -13,6 +13,33 @@ from sn_tools.sn_utils import multiproc
 
 def stack_lc(x1, color, ebvofMW, lcDir, outDir, sn_model,
              sn_version, **kwargs):
+    """
+    Method to stack light curves
+
+    Parameters
+    ----------
+    x1 : float
+        SN x1.
+    color : float
+        SN color.
+    ebvofMW : float
+        E(B-V) of MW.
+    lcDir : str
+        lc dir.
+    outDir : str
+        output dir.
+    sn_model : str
+        SN model (in sn_cosmo).
+    sn_version : str
+        SN model version (in sn_cosmo)
+    **kwargs : dict
+        potential additionnal params.
+
+    Returns
+    -------
+    None.
+
+    """
 
     pars = {}
     pars['x1'] = x1
@@ -71,6 +98,26 @@ def go(script, params):
 
 
 def multi_simu(zvals, params, j, output_q=None):
+    """
+    Method to perform simulations using multiprocessing
+
+    Parameters
+    ----------
+    zvals : list(float)
+        redshifts.
+    params : dict
+        parameters.
+    j : int
+        tag for multiproc.
+    output_q : multiprocessing queue, optional
+        output queue for multiprocessing output. The default is None.
+
+    Returns
+    -------
+    int
+        output of the script (required to finish multiprocessing properly).
+
+    """
 
     for z in zvals:
         params['z'] = z
@@ -225,7 +272,7 @@ parser.add_option(
 parser.add_option(
     '--sn_model', help='SN model [%default]', default='salt3', type=str)
 parser.add_option(
-    '--sn_version', help='SN model version [%default]', default='1.0',
+    '--sn_version', help='SN model version [%default]', default='2.0',
     type=str)
 parser.add_option(
     '--sn_type', help='SN type [%default]', default='SNIa',
@@ -262,7 +309,10 @@ zvals = np.arange(opts.zmin, opts.zmax+opts.zstep, opts.zstep)
 opts_dict['z'] = 0.3
 Simulation(**opts_dict)
 """
-multiproc(zvals, opts_dict, multi_simu, opts.nproc)
+
+nproc = opts.nproc
+multiproc(zvals, opts_dict, multi_simu, nproc)
+
 
 outDirTemplates = 'Template_LC_{}_{}_ebvofMW_{}'.format(
     opts.x1, opts.color, opts.ebvofMW)
