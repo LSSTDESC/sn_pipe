@@ -110,6 +110,7 @@ class LCStack:
 
         tab = Table.read(f, path=keys_f[0])
         table_new = Table(tab)
+
         col = [-1.0]
         for ii, kk in enumerate(keys):
             table_new.add_column(Column(col, name='d'+vals[ii]))
@@ -154,8 +155,13 @@ class LCStack:
         vals = ['daymax', 'color', 'x1', 'x0']
 
         corresp = {}
+
         for kk in keys_f:
+
             tab = Table.read(f, path=kk)
+            if not tab.meta:
+                continue
+
             iepsilon = False
             for ip, vv in enumerate(vals):
                 epsilon_val = tab.meta['epsilon_{}'.format(vv)]
