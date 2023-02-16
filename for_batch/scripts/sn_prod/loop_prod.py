@@ -24,7 +24,8 @@ parser = OptionParser()
 
 parser.add_option("--dbList", type="str", default='DD_fbs_2.99.csv',
                   help="db list to process[%default]")
-
+parser.add_option("--outputDir", type="str", default='/sps/lsst/users/gris/Output_SN',
+                  help="main output dir [%default]")
 
 opts, args = parser.parse_args()
 
@@ -42,4 +43,5 @@ for i, row in df.iterrows():
     procDict['dbName'] = row['dbName']
     procDict['fieldType'] = row['fieldType']
     procDict['nside'] = row['nside']
+    procDict['OutputSimu_directory'] = opts.outputDir
     go_batch(script, procDict)
