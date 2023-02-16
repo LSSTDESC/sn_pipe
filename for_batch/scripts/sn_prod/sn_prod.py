@@ -37,18 +37,21 @@ def batch_DDF(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
     procDict = copy.deepcopy(theDict)
 
     del procDict['DD_list']
-    procDict['nside'] = 128
-    procDict['fieldType'] = 'DD'
+
+    # procDict['nside'] = 128
+    # procDict['fieldType'] = 'DD'
+
     procDict['Fitter_parnames'] = 'z,t0,x1,c,x0'
     procDict['OutputSimu_directory'] = '{}/{}'.format(outDir, dbName)
     procDict['OutputFit_directory'] = procDict['OutputSimu_directory']
 
     for fieldName in DD_list:
         procDict['fieldName'] = fieldName
-        procDict['ProductionIDSimu'] = 'SN_DD_{}'.format(fieldName)
         procName = 'DD_{}_{}'.format(dbName, fieldName)
         mybatch = BatchIt(processName=procName, time=time, mem=mem)
         for season in range(1, 11):
+            procDict['ProductionIDSimu'] = 'SN_DD_{}_{}'.format(
+                fieldName, season)
             procDict['season'] = season
             mybatch.add_batch(scriptref, procDict)
 
@@ -85,8 +88,8 @@ def batch_WFD(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
     procDict = copy.deepcopy(theDict)
 
     del procDict['DD_list']
-    procDict['nside'] = 64
-    procDict['fieldType'] = 'WD'
+    # procDict['nside'] = 64
+    # procDict['fieldType'] = 'WD'
     procDict['Fitter_parnames'] = 'z,t0,x1,c,x0'
     procDict['OutputSimu_directory'] = '{}/{}'.format(outDir, dbName)
     procDict['OutputFit_directory'] = procDict['OutputSimu_directory']
@@ -128,7 +131,9 @@ for key, vals in confDict.items():
 
 
 # this is for DDFs
-batch_DDF(procDict)
+if opts.fieldType == 'DD':
+    batch_DDF(procDict)
 
 # this is for WFD
-batch_WFD(procDict)
+if opts.fieldType == 'WFD':
+    batch_WFD(procDict)
