@@ -1,5 +1,6 @@
 dbName draft_connected_v2.99_10yrs str # dbName to process
 dbDir ../DB_Files str # location dir OS
+dbExtens npy str # db extens format
 OutputSimu_save 0 int # to save/not save simu output
 OutputSimu_throwafterdump 0 int #to throw LC after dump in files
 SN_x1_type random str # x1 dist for LC prod
@@ -20,3 +21,5 @@ ebvofMW_pixel 0.25 float # E(B-V) selection for pixels
 DD_list COSMOS,CDFS,EDFSa,EDFSb,ELAISS1,XMM-LSS str # list of DDFs to process
 OutputSimu_directory Output_SN str # output dir for LC
 OutputFit_directory Output_SN str # output dir for SN
+fieldType DD str # field type to process - DD or WFD
+nside 128 int # nside parameter (healpix)
