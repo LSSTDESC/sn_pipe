@@ -238,6 +238,7 @@ mec = ['r', 'r']
 
 # now plot according to the plot_level
 if plot_level == 'global':
+    dumpcsv_medcad(metricPlot, prefix='metric_summary_{}'.format(fieldType))
     if fieldType == 'DD':
         idx = metricPlot['fieldname'].isin(fieldNames)
         summary = zcomp(metricPlot[idx])
