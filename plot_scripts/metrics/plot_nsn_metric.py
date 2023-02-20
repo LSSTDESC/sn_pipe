@@ -290,7 +290,9 @@ if plot_level == 'pixels':
         plot_pixels(sel, yvar='nsn', yleg=yleg, fig=fig, ax=ax,
                     figtitle=figtitle, marker='s', color='k', showIt=False)
         axb = ax.twinx()
-        plot_pixels(sel, yvar='cadence', fig=fig, ax=axb, figtitle=figtitle,
+        yleg = 'Cadence [night]'
+        plot_pixels(sel, yvar='cadence', yleg=yleg, fig=fig, ax=axb,
+                    figtitle=figtitle,
                     marker='s', color='b', showIt=True, ls='dotted')
         xmin = np.min(sel['nsn'])
         xmax = np.max(sel['nsn'])
