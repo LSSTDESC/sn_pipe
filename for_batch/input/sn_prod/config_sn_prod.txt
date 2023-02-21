@@ -6,6 +6,8 @@ OutputSimu_throwafterdump 0 int #to throw LC after dump in files
 SN_x1_type random str # x1 dist for LC prod
 SN_color_type random str # color dist for LC prod
 SN_z_type random str # z prod for LC prod
+SN_z_min 0.01 float # min z for LC prod
+SN_z_max 1.1 float # max z for LC prod
 SN_daymax_type random str # T0 dist for LC prod
 Simulator_model salt3 str # simulator model
 Simulator_version 2.0 str # simulator version
