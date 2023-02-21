@@ -56,7 +56,7 @@ def batch_DDF(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
             mybatch.add_batch(scriptref, procDict)
 
         # go for batch
-        # mybatch.go_batch()
+        mybatch.go_batch()
 
 
 def batch_WFD(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
@@ -110,7 +110,7 @@ def batch_WFD(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
             mybatch.add_batch(scriptref, procDict)
 
         # go for batch
-        # mybatch.go_batch()
+        mybatch.go_batch()
 
 
 # get script parameters and put in a dict
