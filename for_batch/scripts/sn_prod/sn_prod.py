@@ -56,7 +56,7 @@ def batch_DDF(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
             mybatch.add_batch(scriptref, procDict)
 
         # go for batch
-        mybatch.go_batch()
+        # mybatch.go_batch()
 
 
 def batch_WFD(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
@@ -94,7 +94,7 @@ def batch_WFD(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
     procDict['OutputSimu_directory'] = '{}/{}'.format(outDir, dbName)
     procDict['OutputFit_directory'] = procDict['OutputSimu_directory']
 
-    deltaRA = 10.
+    deltaRA = 36.
 
     RAs = np.arange(0., 360., deltaRA)
 
@@ -102,17 +102,15 @@ def batch_WFD(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
         RAmin = np.round(RA, 1)
         RAmax = RAmin+deltaRA
         RAmax = np.round(RAmax, 1)
-        for seas in range(1, 10):
-
-            procName = 'WFD_{}_{}_{}_season_{}'.format(dbName,
-                                                       RAmin, RAmax, seas)
-            procDict['ProductionIDSimu'] = 'SN_{}'.format(procName)
+        procName = 'WFD_{}_{}_{}'.format(dbName, RAmin, RAmax)
+        mybatch = BatchIt(processName=procName, time=time, mem=mem)
+        for seas in range(1, 11):
+            procDict['ProductionIDSimu'] = 'SN_{}_{}'.format(procName, seas)
             procDict['Observations_season'] = seas
-            mybatch = BatchIt(processName=procName, time=time, mem=mem)
             mybatch.add_batch(scriptref, procDict)
 
         # go for batch
-        mybatch.go_batch()
+        # mybatch.go_batch()
 
 
 # get script parameters and put in a dict
@@ -140,4 +138,5 @@ if opts.fieldType == 'DD':
 
 # this is for WFD
 if opts.fieldType == 'WFD':
+    procDict['SN_z_max'] = 0.6
     batch_WFD(procDict)
