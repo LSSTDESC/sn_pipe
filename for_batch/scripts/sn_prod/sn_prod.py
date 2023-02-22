@@ -94,7 +94,7 @@ def batch_WFD(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
     procDict['OutputSimu_directory'] = '{}/{}'.format(outDir, dbName)
     procDict['OutputFit_directory'] = procDict['OutputSimu_directory']
 
-    deltaRA = 36.
+    deltaRA = 10.
 
     RAs = np.arange(0., 360., deltaRA)
 
@@ -102,7 +102,7 @@ def batch_WFD(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
         RAmin = np.round(RA, 1)
         RAmax = RAmin+deltaRA
         RAmax = np.round(RAmax, 1)
-        procName = 'WFD_{}_{}_{}'.format(dbName, RAmin, RAmax)
+        procName = 'WFD_{}_{}'.format(RAmin, RAmax)
         mybatch = BatchIt(processName=procName, time=time, mem=mem)
         for seas in range(1, 11):
             procDict['ProductionIDSimu'] = 'SN_{}_{}'.format(procName, seas)
@@ -138,5 +138,5 @@ if opts.fieldType == 'DD':
 
 # this is for WFD
 if opts.fieldType == 'WFD':
-    procDict['SN_z_max'] = 0.6
+    procDict['SN_z_max'] = 0.7
     batch_WFD(procDict)
