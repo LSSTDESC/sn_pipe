@@ -41,13 +41,18 @@ def batch_DDF(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
     # procDict['nside'] = 128
     # procDict['fieldType'] = 'DD'
 
-    procDict['Fitter_parnames'] = 'z,t0,x1,c,x0'
-    procDict['OutputSimu_directory'] = '{}/{}'.format(outDir, dbName)
+    # procDict['Fitter_parnames'] = 'z,t0,x1,c,x0'
+    tag_dir = '_spectroz'
+    if 'z' in procDict['Fitter_parnames']:
+        tag_dir = '_photz'
+    procDict['OutputSimu_directory'] = '{}/{}/DDF'.format(outDir,
+                                                          dbName, tag_dir)
     procDict['OutputFit_directory'] = procDict['OutputSimu_directory']
+    procDict['SN_NSNfactor'] = 30
 
     for fieldName in DD_list:
         procDict['fieldName'] = fieldName
-        procName = 'DD_{}_{}'.format(dbName, fieldName)
+        procName = 'DD_{}_{}{}'.format(dbName, fieldName, tag_dir)
         mybatch = BatchIt(processName=procName, time=time, mem=mem)
         for season in range(1, 11):
             procDict['ProductionIDSimu'] = 'SN_DD_{}_{}'.format(
@@ -90,19 +95,24 @@ def batch_WFD(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
     del procDict['DD_list']
     # procDict['nside'] = 64
     # procDict['fieldType'] = 'WD'
-    procDict['Fitter_parnames'] = 'z,t0,x1,c,x0'
-    procDict['OutputSimu_directory'] = '{}/{}'.format(outDir, dbName)
+    # procDict['Fitter_parnames'] = 'z,t0,x1,c,x0'
+    tag_dir = '_spectroz'
+    if 'z' in procDict['Fitter_parnames']:
+        tag_dir = '_photz'
+    procDict['OutputSimu_directory'] = '{}/{}/WFD{}'.format(outDir,
+                                                            dbName, tag_dir)
     procDict['OutputFit_directory'] = procDict['OutputSimu_directory']
+    procDict['SN_NSNfactor'] = 30
 
-    deltaRA = 36.
+    deltaRA = 10.
 
-    RAs = np.arange(0., 360., deltaRA)
+    RAs = np.arange(0., 360.+deltaRA, deltaRA)
 
     for RA in RAs[:-1]:
         RAmin = np.round(RA, 1)
         RAmax = RAmin+deltaRA
         RAmax = np.round(RAmax, 1)
-        procName = 'WFD_{}_{}'.format(RAmin, RAmax)
+        procName = 'WFD_{}_{}_{}{}'.format(dbName, RAmin, RAmax, tag_dir)
         mybatch = BatchIt(processName=procName, time=time, mem=mem)
         procDict['RAmin'] = RAmin
         procDict['RAmax'] = RAmax
@@ -112,7 +122,7 @@ def batch_WFD(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
             mybatch.add_batch(scriptref, procDict)
 
         # go for batch
-        mybatch.go_batch()
+        # mybatch.go_batch()
 
 
 # get script parameters and put in a dict
