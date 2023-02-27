@@ -26,6 +26,8 @@ parser.add_option("--dbList", type="str", default='DD_fbs_2.99.csv',
                   help="db list to process[%default]")
 parser.add_option("--outputDir", type="str", default='/sps/lsst/users/gris/Output_SN',
                   help="main output dir [%default]")
+parser.add_option("--Fitter_parnames", type="str", default='t0,x1,c,x0',
+                  help="parameters to fit [%default]")
 
 opts, args = parser.parse_args()
 
@@ -44,4 +46,5 @@ for i, row in df.iterrows():
     procDict['fieldType'] = row['fieldType']
     procDict['nside'] = row['nside']
     procDict['OutputSimu_directory'] = opts.outputDir
+    procDict['Fitter_parnames'] = opts.Fitter_parnames
     go_batch(script, procDict)
