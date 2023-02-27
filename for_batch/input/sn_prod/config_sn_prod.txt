@@ -25,3 +25,4 @@ OutputSimu_directory Output_SN str # output dir for LC
 OutputFit_directory Output_SN str # output dir for SN
 fieldType DD str # field type to process - DD or WFD
 nside 128 int # nside parameter (healpix)
+Fitter parnames t0,x1,c,x0 str # parameters to fit
