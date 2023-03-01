@@ -5,7 +5,7 @@ import argparse
 import copy
 from sn_tools.sn_batchutils import BatchIt
 import numpy as np
-
+import pandas as pd
 
 def batch_DDF(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
               time='30:00:00', mem='40G'):
@@ -33,11 +33,16 @@ def batch_DDF(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
     DD_list = theDict['DD_list'].split(',')
     dbName = theDict['dbName']
     outDir = theDict['OutputSimu_directory']
+    reprocList = theDict['reprocList']
+
+    tag_list = pd.DataFrame()
+    if 'None' not in reprocList:
+        tag_list = pd.read_csv(reprocList)
 
     procDict = copy.deepcopy(theDict)
 
     del procDict['DD_list']
-
+    del procDict['reprocList']
     # procDict['nside'] = 128
     # procDict['fieldType'] = 'DD'
 
@@ -54,9 +59,17 @@ def batch_DDF(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
         procDict['fieldName'] = fieldName
         procName = 'DD_{}_{}{}'.format(dbName, fieldName, tag_dir)
         mybatch = BatchIt(processName=procName, time=time, mem=mem)
-        for season in range(1, 11):
-            procDict['ProductionIDSimu'] = 'SN_DD_{}_{}'.format(
-                fieldName, season)
+        seasons = range(1,11)
+        if not tag_list.empty:
+            idx = tag_list['ProductionID'] == sprocName
+            sel = tag_list[idx]
+            if len(sel) > 0:
+                season_max = sel['season_max'].max()
+                seasons = range(season_max,11)
+
+        for season in seasons:
+            procDict['ProductionIDSimu'] = 'SN_{}_{}'.format(
+                procName, season)
             procDict['Observations_season'] = season
             mybatch.add_batch(scriptref, procDict)
 
@@ -89,10 +102,16 @@ def batch_WFD(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
 
     dbName = theDict['dbName']
     outDir = theDict['OutputSimu_directory']
+    reprocList = theDict['reprocList']
+
+    tag_list = pd.DataFrame()
+    if 'None' not in reprocList:
+        tag_list = pd.read_csv(reprocList)
 
     procDict = copy.deepcopy(theDict)
 
     del procDict['DD_list']
+    del procDict['reprocList']
     # procDict['nside'] = 64
     # procDict['fieldType'] = 'WD'
     # procDict['Fitter_parnames'] = 'z,t0,x1,c,x0'
@@ -113,10 +132,20 @@ def batch_WFD(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
         RAmax = RAmin+deltaRA
         RAmax = np.round(RAmax, 1)
         procName = 'WFD_{}_{}_{}{}'.format(dbName, RAmin, RAmax, tag_dir)
+        sprocName = 'SN_WFD_{}_{}_{}{}'.format(dbName, RAmin, RAmax, tag_dir)
         mybatch = BatchIt(processName=procName, time=time, mem=mem)
         procDict['RAmin'] = RAmin
         procDict['RAmax'] = RAmax
-        for seas in range(1, 11):
+        seasons = range(1,11)
+        if not tag_list.empty:
+            idx = tag_list['ProductionID'] == sprocName
+            sel = tag_list[idx]
+            if len(sel) > 0:
+                season_max = sel['season_max'].max()
+                seasons = range(season_max,11)
+
+
+        for seas in seasons:
             procDict['ProductionIDSimu'] = 'SN_{}_{}'.format(procName, seas)
             procDict['Observations_season'] = seas
             mybatch.add_batch(scriptref, procDict)

@@ -28,6 +28,9 @@ parser.add_option("--outputDir", type="str", default='/sps/lsst/users/gris/Outpu
                   help="main output dir [%default]")
 parser.add_option("--Fitter_parnames", type="str", default='t0,x1,c,x0',
                   help="parameters to fit [%default]")
+parser.add_option("--reprocList", type="str", default='None.csv',
+                  help="to reproc some of the db files only [%default]")
+
 
 opts, args = parser.parse_args()
 
@@ -47,4 +50,5 @@ for i, row in df.iterrows():
     procDict['nside'] = row['nside']
     procDict['OutputSimu_directory'] = opts.outputDir
     procDict['Fitter_parnames'] = opts.Fitter_parnames
+    procDict['reprocList'] = opts.reprocList
     go_batch(script, procDict)
