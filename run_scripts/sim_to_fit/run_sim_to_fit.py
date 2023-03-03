@@ -2,7 +2,8 @@ from sn_simu_wrapper.sn_wrapper_for_simu import SimInfoFitWrapper
 import sn_simu_input as simu_input
 import sn_fit_input as simu_fit
 import sn_script_input
-from sn_tools.sn_io import make_dict_from_config, make_dict_from_optparse, add_parser
+from sn_tools.sn_io import make_dict_from_config, make_dict_from_optparse
+from sn_tools.sn_io import add_parser, checkDir
 from sn_tools.sn_process import Process
 from optparse import OptionParser
 import os
@@ -98,16 +99,16 @@ yaml_params = makeYaml.genYaml(yaml_orig)
 # save on disk
 
 # create outputdir if does not exist
-outDir = yaml_params['OutputSimu']['directory']
+outDir_simu = yaml_params['OutputSimu']['directory']
+outDir_fit = yaml_params_fit['OutputFit']['directory']
+checkDir(outDir_simu)
+checkDir(outDir_fit)
 prodid = yaml_params['ProductionIDSimu']
 
-if not os.path.isdir(outDir):
-    os.makedirs(outDir)
-
-yaml_name = '{}/{}_simu.yaml'.format(outDir, prodid)
+yaml_name = '{}/{}_simu.yaml'.format(outDir_simu, prodid)
 with open(yaml_name, 'w') as f:
     data = yaml.dump(yaml_params, f)
-yaml_name_fit = '{}/{}_fit.yaml'.format(outDir, prodid)
+yaml_name_fit = '{}/{}_fit.yaml'.format(outDir_fit, prodid)
 with open(yaml_name_fit, 'w') as f:
     data_fit = yaml.dump(yaml_params_fit, f)
 
