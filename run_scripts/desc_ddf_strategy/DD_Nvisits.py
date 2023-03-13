@@ -22,7 +22,7 @@ def plot(restot, varx='Nv_DD_night',
          legx='N$_{visits}^{DD}/obs. night}$',
          vary='Nv_UD_night',
          legy='N$_{visits}^{UD}/obs. night}$', ll={}, llb={},
-         scenario={}, figtitle=''):
+         scenario={}, figtitle='', ll_err={}, ll_zcomp={}):
 
     fig, ax = plt.subplots(figsize=(14, 8))
     fig.suptitle(figtitle)
@@ -55,6 +55,22 @@ def plot(restot, varx='Nv_DD_night',
     ymax = np.max(restot[vary])
     ax.set_xlim([xmin, xmax])
     ax.set_ylim([ymin, ymax])
+
+    if ll_err:
+        for key, vals in ll_err.items():
+            xminb = vals[0]
+            xmaxb = vals[1]
+            #poly = [(xmin,yminb),(xmax,yminb),(xmax,ymaxb),(xmin,ymaxb)]
+            ax.fill_between([xminb, xmaxb], ymin, ymax,
+                            color='yellow', alpha=0.2)
+    if ll_zcomp:
+        for key, vals in ll_zcomp.items():
+            yminb = vals[0]
+            ymaxb = vals[1]
+            print('alors', key, yminb, ymaxb)
+            #poly = [(xmin,yminb),(xmax,yminb),(xmax,ymaxb),(xmin,ymaxb)]
+            ax.fill_between([xmin, xmax], yminb, ymaxb,
+                            color='yellow', alpha=0.2)
 
     ax.set_xlabel(r'{}'.format(legx))
     ax.set_ylabel(r'{}'.format(legy))
@@ -207,10 +223,24 @@ for z in zcomp:
     nv = cad_UD*nvisits_zlim(float(z))
     ll[a] = [xaxis_leg[z], int(nv), int(nv)]
 
+N = 14852/9
+Nb = 13545/9
+Nc = 16285/9
 llb = dict(zip(['PZ_y1', 'PZ_y2_y10', 'WL_10xWFD'],
                [[85, 1070, 1070],
-               [85, 1740, 1740],
+               [85, N, N],
                [85, 800, 800]]))
+ll_err = {}
+ll_err['PZ_y2_y10'] = (Nb, Nc)
+
+ll_zcomp = {}
+
+for z in [0.75, 0.70]:
+    zmin = z-0.01
+    zmax = z+0.01
+    ll_zcomp['z_{}'.format(z)] = (
+        cad_UD*nvisits_zlim(zmin), cad_UD*nvisits_zlim(zmax))
+
 field_season = [(1, 3), (2, 2), (2, 3), (2, 4)]
 names = ['DDF_SCOC', 'DDF_DESC_0.80', 'DDF_DESC_0.75', 'DDF_DESC_0.70']
 zvals = [0.66, 0.80, 0.75, 0.70]
@@ -234,14 +264,17 @@ ll = dict(zip(['{}=0.80'.format(zc), '{}=0.75'.format(zc),
 """
 plot(restot, varx='Nv_DD',
      legx='N$_{visits}^{DD}/season}$',
-     ll=ll, llb=llb, scenario=scenario, figtitle=ffigb)
+     ll=ll, llb=llb, scenario=scenario, figtitle=ffigb,
+     ll_err=ll_err, ll_zcomp=ll_zcomp)
 
-
+"""
 ll = {}
 plot(restot, varx='Nv_DD',
      legx='N$_{visits}^{DD}/season}$', vary='Nv_UD',
      legy='N$_{visits}^{UD}/season}$',
      figtitle=ftit)
+"""
+
 ll = dict(zip(['k=3.333'], [[1500, 3.3, 3.3]]))
 """
 ll = {}
