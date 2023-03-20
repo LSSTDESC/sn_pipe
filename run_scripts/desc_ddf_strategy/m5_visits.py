@@ -557,6 +557,7 @@ class DD_Scenario:
                 # print('scenario', name, Nf_UD, Ns_UD, int(nv_UD), int(nv_DD))
                 for_res.append(
                     (name, zcomp, Nf_UD, Ns_UD, int(nv_UD), int(nv_DD)))
+
                 ax.plot([nv_DD], [nv_UD], marker='o', ms=15,
                         color='b', mfc='None', markeredgewidth=3.)
                 ax.plot([nv_DD], [nv_UD], marker='.', ms=5,
@@ -568,6 +569,7 @@ class DD_Scenario:
                     vy = np.abs(nv_UD-0.95*nv_UD)
                 ax.text(nv_DD-vx, nv_UD-vy, name, color='b', fontsize=12)
                 # print(name, int(nv_DD), int(nv_UD), vx, vy)
+
         xmin = np.min(restot[varx])
         xmax = np.max(restot[varx])
         ymin = np.min(restot[vary])
@@ -717,14 +719,21 @@ class DD_Scenario:
 
         fig, ax = plt.subplots(figsize=(14, 8))
 
-        for nn in np.unique(res['name']):
+        names = np.unique(res['name'])
+        ls = dict(zip([0, 1, 2], ['solid', 'dotted', 'dashed']))
+        colors = dict(zip([0, 1, 2], ['blue', 'k', 'red']))
+        for io, nn in enumerate(names):
             idx = res['name'] == nn
             sel = res[idx]
-            ax.plot(sel['year'], sel['budget_per'])
+            ax.plot(sel['year'], sel['budget_per'], linestyle=ls[io],
+                    color=colors[io], label=nn)
 
         ax.grid()
         ax.set_xlabel('Year')
         ax.set_ylabel('DDF budget [%]')
+        ax.legend(frameon=False)
+        ax.set_xlim(0, 10)
+        ax.set_ylim(0., 7.)
 
 
 m5class = FiveSigmaDepth_Nvisits()
@@ -784,6 +793,11 @@ ffig += '{}={} days, season length={} days'.format(cadud, myclass.cad_UD,
 myclass.plot(restot, varx='Nv_DD',
              legx='N$_{visits}^{DD}/season}$', figtitle=ffig)
 
+#zcomp_req = {}
+# zcomp_req_err = {}
+# pz_wl_req_err = {}
+# scenario = {}
+
 res = myclass.plot(restot, varx='Nv_DD',
                    legx='N$_{visits}^{DD}/season}$', scenario=scenario,
                    zcomp_req=zcomp_req, zcomp_req_err=zcomp_req_err,
@@ -791,16 +805,16 @@ res = myclass.plot(restot, varx='Nv_DD',
                    figtitle=ffig)
 
 df_res = myclass.finish(res)
-# myclass.plot_budget_time(df_res)
+myclass.plot_budget_time(df_res)
 
 
 toprint = ['name', 'Nf_UD', 'Ns_UD', 'nvisits_UD_night',
-           'nvisits_UD_night_recalc',
            'g', 'r', 'i', 'z', 'y', 'delta_z',
            'nvisits_DD_season', 'budget']
 
-
+df_res = df_res.round({'budget': 2})
 print(df_res[toprint])
+df_res[toprint].to_csv('ddf_res1.csv', index=False)
 
 m5_resu = pd.DataFrame()
 
@@ -835,7 +849,9 @@ m5_resu['Nvisits_night'] = m5_resu.apply(
 
 m5_resu['Nvisits_night'] = m5_resu['Nvisits_night'].astype(int)
 
-print(m5_resu[['name', 'band', 'Nvisits', 'm5', 'delta_m5', 'Nvisits_night']])
+topp = m5_resu[['name', 'band', 'Nvisits', 'm5', 'delta_m5', 'Nvisits_night']]
+
+topp.to_csv('DD_res2.csv', index=False)
 
 # now estimate the number of visits per night for y1
 
@@ -872,16 +888,24 @@ df_new['m5_UD_y1'] = df_new['m5_med_single']+1.25*np.log10(df_new['Nvisits'])
 df_new = df_new.merge(m5class.req, left_on='band', right_on='band')
 df_new['diff_m5_y1'] = df_new['m5_UD_y1']-df_new['m5_y1']
 
-print(df_new[['band', 'diff_m5_y1']])
+print(df_new[['name', 'band', 'diff_m5_y1']])
 
-
+df_new[['name', 'band', 'diff_m5_y1']].to_csv('ddf_res3.csv', index=False)
 vv = m5class.msingle_calc
 
 print(vv.columns)
 
 vv['Nvisits_y1'] = vv['Nvisits_y1'].astype(int)
 vv['Nvisits_y2_y10'] = vv['Nvisits_y2_y10'].astype(int)
-po = vv[['band', 'm5_y1', 'Nvisits_y1', 'm5_y2_y10', 'Nvisits_y2_y10']]
+cad = 4
+sl = 180
+vv['Nvisits_y1_night'] = vv['Nvisits_y1']*cad/sl
+vv['Nvisits_y2_y10_night'] = vv['Nvisits_y2_y10']*cad/sl
+vv['Nvisits_y1_night'] = vv['Nvisits_y1_night'].astype(int)
+vv['Nvisits_y2_y10_night'] = vv['Nvisits_y2_y10_night'].astype(int)
+
+po = vv[['band', 'm5_y1', 'Nvisits_y1', 'Nvisits_y1_night',
+         'm5_y2_y10', 'Nvisits_y2_y10', 'Nvisits_y2_y10_night']]
 
 po.to_csv('testons.csv', index=False)
 
