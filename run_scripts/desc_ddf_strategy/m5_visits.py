@@ -59,8 +59,6 @@ class FiveSigmaDepth_Nvisits:
         self.msingle_calc, self.summary = self.get_Nvisits(
             self.msingle, self.req)
 
-        print(self.summary)
-
     def load_req(self, requirements):
         """
         Method to load the requirements file
@@ -211,11 +209,13 @@ class FiveSigmaDepth_Nvisits:
         ccols = df_pz.columns.to_list()
         ccols.remove('band')
         ccols = list(map(lambda it: it.split('m5_')[1], ccols))
+        nseas = dict(zip(ccols, [1, 9, 9, 9]))
 
         for vv in ccols:
             diff = msingle['m5_{}'.format(vv)]-msingle['m5_med_single']
             Nv = 'Nvisits_{}'.format(vv)
             msingle[Nv] = 10**(0.8 * diff)
+            msingle['nseason_{}'.format(vv)] = nseas[vv]
             llv.append(Nv)
         if 'field' in msingle.columns:
             summary = msingle.groupby(['field'])[llv].sum().reset_index()
@@ -275,10 +275,76 @@ class FiveSigmaDepth_Nvisits:
         df = self.get_Nvisits_from_frac(Nvisits)
         df = df.merge(self.msingle, left_on=['band'], right_on=['band'])
         df = df.merge(self.req, left_on=['band'], right_on=['band'])
-        df['m5'] = df['m5_med_single']+1.25*np.log10(df['Nvisits'])
-        df['delta_m5'] = df['m5']-df['m5_y2_y10']
+        # df['m5'] = df['m5_med_single']+1.25*np.log10(df['Nvisits'])
+        # df['delta_m5'] = df['m5']-df['m5_y2_y10']
 
         return df
+
+    def m5_band_from_Nvisits(self, m5_resu_orig, sl_DD=180., cad_DD=4):
+
+        m5_resu = pd.DataFrame(m5_resu_orig)
+
+        # m5_resu['Nvisits'] = m5_resu['Nvisits'].astype(int)
+
+        m5_resu = self.visits_night_from_frac(m5_resu, sl=sl_DD,
+                                              cad=cad_DD, col='Nvisits')
+
+        topp = m5_resu[['name', 'band', 'Nvisits', 'Nvisits_night']]
+
+        topp.to_csv('DD_res2.csv', index=False)
+
+        # now estimate the number of visits per night for y1
+
+        m5single = m5class.msingle_calc
+
+        tt = m5single[['band', 'Nvisits_y1', 'm5_y1', 'm5_med_single']]
+        tt['Nseasons'] = 1
+
+        # tt['Nvisits_y1'] = tt['Nvisits_y1'].astype(int)
+
+        """
+        tt['Nvisits_y1_night'] = tt.apply(
+            lambda x: x['Nvisits_y1']/(fracs[x['band']]*Nnights_DD_season), axis=1)
+
+        tt['Nvisits_y1'] = tt['Nvisits_y1'].astype(int)
+        tt['Nvisits_y1_night'] = tt['Nvisits_y1_night'].astype(int)
+        """
+        tt = self.visits_night_from_frac(tt, sl=sl_DD,
+                                         cad=cad_DD, col='Nvisits_y1',
+                                         colb='m5_y1')
+
+        return m5_resu, tt
+
+    def visits_night_from_frac(self, tab, sl, cad, col='Nvisits',
+                               colb='m5_y2_y10', frac_moon=0.20):
+
+        nights_season = int(sl/cad)
+        bands = 'ugrizy'
+        frac_night = [frac_moon, 1., 1., 1., 1.-frac_moon, 1.]
+        fracs = dict(zip(bands, frac_night))
+        tab['{}_night'.format(col)] = tab.apply(
+            lambda x: x[col]/x['Nseasons'] /
+            (fracs[x['band']]*nights_season),
+            axis=1)
+
+        # tab['{}_night'.format(col)] = tab['{}_night'.format(col)].astype(int)
+        tab['cad'] = cad
+        tab['sl'] = sl
+        tab['nights_season'] = nights_season
+
+        frac_df = pd.DataFrame(list(bands), columns=['band'])
+        frac_df['frac_night'] = frac_night
+        tab['Nseasons'] = tab['Nseasons']
+        tab = tab.merge(frac_df, left_on=['band'], right_on=['band'])
+
+        tab = tab.round({'{}'.format(col): 0, '{}_night'.format(col): 0})
+        tab['{}_recalc'.format(col)] = tab['{}_night'.format(
+            col)]*tab['nights_season']*tab['frac_night']*tab['Nseasons']
+
+        tab['m5_recalc'] = 1.25 * \
+            np.log10(tab['{}_recalc'.format(col)])+tab['m5_med_single']
+        tab['diff_m5'] = tab['m5_recalc']-tab[colb]
+        return tab
 
 
 class DD_Scenario:
@@ -298,8 +364,8 @@ class DD_Scenario:
                  zcomp=[0.66, 0.80, 0.75, 0.70],  # correesponding zcomp
                  scen_names=['DDF_SCOC', 'DDF_DESC_0.80',
                              'DDF_DESC_0.75',
-                             'DDF_DESC_0.70']  # scenario name
-                 ):
+                             'DDF_DESC_0.70'],  # scenario name
+                 frac_moon=0.20):
 
         self.Nv_LSST = Nv_LSST
         self.budget_DD = budget_DD
@@ -557,7 +623,7 @@ class DD_Scenario:
 
                 # print('scenario', name, Nf_UD, Ns_UD, int(nv_UD), int(nv_DD))
                 for_res.append(
-                    (name, zcomp, Nf_UD, Ns_UD, int(nv_UD), int(nv_DD)))
+                    (name, zcomp, Nf_UD, Ns_UD, int(nv_UD), int(nv_DD), self.cad_UD, self.sl_UD))
 
                 ax.plot([nv_DD], [nv_UD], marker='o', ms=15,
                         color='b', mfc='None', markeredgewidth=3.)
@@ -632,7 +698,8 @@ class DD_Scenario:
             res = np.rec.fromrecords(for_res, names=['name', 'zcomp', 'Nf_UD',
                                                      'Ns_UD',
                                                      'nvisits_UD_night',
-                                                     'nvisits_DD_season'])
+                                                     'nvisits_DD_season',
+                                                     'cad', 'sl'])
         return res
 
     def finish(self, res):
@@ -739,12 +806,164 @@ class DD_Scenario:
         ax.set_ylim(0., 7.)
 
 
+def plot_budget_time(res):
+    """
+    Method to plot the budget vs time
+
+    Parameters
+    ----------
+    sel : TYPE
+        DESCRIPTION.
+    df : TYPE
+        DESCRIPTION.
+
+    Returns
+    -------
+    None.
+
+    """
+
+    fig, ax = plt.subplots(figsize=(14, 8))
+
+    names = np.unique(res['name'])
+    ls = dict(zip([0, 1, 2], ['solid', 'dotted', 'dashed']))
+    colors = dict(zip([0, 1, 2], ['blue', 'k', 'red']))
+    for io, nn in enumerate(names):
+        idx = res['name'] == nn
+        sel = res[idx]
+        ax.plot(sel['year'], sel['budget_per'], linestyle=ls[io],
+                color=colors[io], label=nn)
+
+    ax.grid()
+    ax.set_xlabel('Year')
+    ax.set_ylabel('DDF budget [%]')
+    ax.legend(frameon=False)
+    ax.set_xlim(0, 10)
+    ax.set_ylim(0., 7.)
+
+
+def check_m5(df_res, m5class):
+
+    r = []
+    for i, row in df_res.iterrows():
+        for b in bands:
+            r.append((b, row['{}_season'.format(b)], row['name']))
+
+    df_new = pd.DataFrame(r, columns=['band', 'Nvisits', 'name'])
+    print(df_new)
+
+    df_new = df_new.merge(m5class.msingle, left_on='band', right_on='band')
+
+    yrs = 'y2_y10'
+    df_new['m5_UD_{}'.format(yrs)] = df_new['m5_med_single'] + \
+        1.25*np.log10(df_new['Nvisits'])
+    df_new = df_new.merge(m5class.req, left_on='band', right_on='band')
+    df_new['diff_m5_{}'.format(yrs)] = df_new['m5_UD_{}'.format(
+        yrs)]-df_new['m5_{}'.format(yrs)]+np.log10(9)
+
+    print(df_new[['name', 'band', 'Nvisits', 'm5_med_single',
+          'm5_{}'.format(yrs), 'diff_m5_{}'.format(yrs)]])
+
+    df_new[['name', 'band', 'Nvisits', 'diff_m5_{}'.format(yrs)]].to_csv(
+        'ddf_res3.csv', index=False)
+
+
+def get_band_season(grp):
+
+    res = {}
+
+    for b in 'ugrizy':
+        idx = grp['band'] == b
+        selit = grp[idx]
+        res[b] = selit['nvisits_band_season'].mean()
+
+    return res
+
+
+def get_budget(grp, NDD, m5_resu, m5_nvisits_y1, Nv_LSST):
+
+    Nf_UD = grp['Nf_UD'].mean()
+    Ns_UD = grp['Ns_UD'].mean()
+
+    print(grp)
+    grp['nvisits_band_season'] = grp['n_night_season']*grp['nvisits_night']
+    n_UD_season = grp['nvisits_band_season'].sum()
+
+    n_UD_band_season = get_band_season(grp)
+
+    print('iiii', grp.name, n_UD_band_season)
+
+    idx = m5_resu['name'] == grp.name
+    sel_m5 = m5_resu[idx]
+
+    print(sel_m5.columns)
+    sel_m5['nvisits_band_season'] = sel_m5['Nvisits_night'] * \
+        sel_m5['frac_night']*sel_m5['nights_season']
+
+    n_DD_y2_y10 = sel_m5['nvisits_band_season'].sum()
+    n_DD_band_y2_y10_season = get_band_season(sel_m5)
+
+    print(m5_nvisits_y1)
+    m5_nvisits_y1['nvisits_band_season'] = m5_nvisits_y1['Nvisits_y1_recalc']
+    n_DD_y1 = m5_nvisits_y1['Nvisits_y1_recalc'].sum()
+    n_DD_band_y1_season = get_band_season(m5_nvisits_y1)
+
+    print('here', n_UD_season, n_DD_y2_y10, n_DD_y1)
+    print('hhb', n_DD_band_y2_y10_season, n_DD_band_y1_season)
+
+    years = range(0, 11)
+    budget = 0.
+    r = []
+    bands = 'ugrizy'
+    for year in years:
+        to = year <= Ns_UD+1
+        nn = to*1
+        n_UD = Nf_UD*nn*n_UD_season
+        n_DD = n_DD_y2_y10*(5-Nf_UD)
+        nvisits_band = dict(zip(bands, [0.]*len(bands)))
+
+        if year == 1:
+            n_DD = n_DD_y1
+            n_UD = 0
+            for b in 'ugrizy':
+                nvisits_band[b] = n_DD_band_y1_season[b]
+        else:
+            for b in 'ugrizy':
+                nvisits_band[b] = Nf_UD*nn*n_UD_band_season[b]
+                nvisits_band[b] += (NDD-Nf_UD*nn)*n_DD_band_y2_y10_season[b]
+        if year > 0:
+            budget_y = (n_UD+n_DD)/Nv_LSST
+            budget += budget_y
+            bb = 100*budget
+            add = [nvisits_band[b] for b in bands]
+            r.append([year, budget, bb, budget_y, Nf_UD, Ns_UD]+add)
+            print('helllo', year, n_DD, n_UD, budget, budget_y, Nf_UD, Ns_UD)
+        else:
+            r.append([year, 0.0, 0.0, 0.0, 0.0, 0., 0., 0., 0., 0., 0., 0.0])
+
+    res = np.rec.fromrecords(
+        r, names=['year', 'budget', 'budget_per', 'budget_yearly', 'Nf_UD', 'Ns_UD']+list(bands))
+
+    return pd.DataFrame.from_records(res)
+
+################################################
+##### get Nvisits from m5 req.          ########
+## m5_dict: total number of visits (PZ req.) ##
+###############################################
+
+
+bands = 'ugrizy'
+
 m5class = FiveSigmaDepth_Nvisits()
 
 m5_summary = m5class.summary
-
+m5_nvisits = m5class.msingle_calc
 m5_dict = m5_summary.to_dict()
 
+print(m5_dict)
+print(m5_nvisits)
+
+## get (Nvisits_UD vs N_visits_DD for (Kf_UD, Ns_UD) combinations ####
 
 corresp = dict(zip(['Nvisits_y1', 'Nvisits_y2_y10'], ['PZ_y1', 'PZ_y2_y10']))
 nseasons = dict(zip(['Nvisits_y1', 'Nvisits_y2_y10'], [1, 9]))
@@ -762,14 +981,20 @@ pz_wl_req_err['PZ_y2_y10'] = (m5_dict['Nvisits_y2_y10_m']/9.,
 Nf_DD_y1 = 3  # UD the first year
 f_DD_y1 = 5  # UD the second year
 Nv_DD_y1 = int(m5_dict['Nvisits_y1'])
-
+sl_UD = 180.
+cad_UD = 2.
+NDD = 5
+Nv_LSST = 2.1e6
+frac_moon = 0.20
 myclass = DD_Scenario(Nf_combi=[(2, 2), (2, 3), (2, 4)],
                       zcomp=[0.80, 0.75, 0.70],
                       scen_names=['DDF_DESC_0.80',
                                   'DDF_DESC_0.75',
                                   'DDF_DESC_0.70'],
                       Nf_DD_y1=Nf_DD_y1,
-                      Nv_DD_y1=Nv_DD_y1)
+                      Nv_DD_y1=Nv_DD_y1,
+                      sl_UD=sl_UD, cad_UD=cad_UD, NDD=NDD, Nv_LSST=Nv_LSST,
+                      frac_moon=frac_moon)
 
 restot = myclass.get_combis()
 zcomp_req = myclass.get_zcomp_req()
@@ -786,6 +1011,8 @@ pz_wl_req = dict(zip(['PZ_y1', 'PZ_y2_y10', 'WL_10xWFD'],
 pz_wl_req_err = {}
 pz_wl_req_err['PZ_y2_y10'] = (Nb, Nc)
 """
+
+### plot the result ######
 nvisits = '$N_{visits}^{LSST}$'
 cadud = '$cad^{UD}$'
 ftit = 'DD budget={}% - {}={} million'.format(int(100*myclass.budget_DD),
@@ -797,7 +1024,7 @@ ffig += '{}={} days, season length={} days'.format(cadud, myclass.cad_UD,
 myclass.plot(restot, varx='Nv_DD',
              legx='N$_{visits}^{DD}/season}$', figtitle=ffig)
 
-#zcomp_req = {}
+# zcomp_req = {}
 # zcomp_req_err = {}
 # pz_wl_req_err = {}
 # scenario = {}
@@ -809,8 +1036,7 @@ res = myclass.plot(restot, varx='Nv_DD',
                    figtitle=ffig)
 
 df_res = myclass.finish(res)
-myclass.plot_budget_time(df_res)
-
+# myclass.plot_budget_time(df_res)
 
 toprint = ['name', 'Nf_UD', 'Ns_UD', 'nvisits_UD_night',
            'g', 'r', 'i', 'z', 'y', 'delta_z',
@@ -819,6 +1045,9 @@ toprint = ['name', 'Nf_UD', 'Ns_UD', 'nvisits_UD_night',
 df_res = df_res.round({'budget': 2})
 print(df_res[toprint])
 df_res[toprint].to_csv('ddf_res1.csv', index=False)
+
+
+### m5_resu ###
 
 m5_resu = pd.DataFrame()
 
@@ -830,71 +1059,73 @@ for vv in res:
     res['Nseasons'] = Nseasons
     m5_resu = pd.concat((m5_resu, res))
 
+print('iii', m5_resu)
+
+"""
 idx = m5_resu['name'] != 'DDF_SCOC'
 m5_resu = m5_resu[idx]
 m5_resu = m5_resu.round({'m5': 2, 'delta_m5': 2})
 print(m5_resu.columns)
-
+"""
 
 # estimate the number of visits per obs night for DD
-
+# check impact on m5
 sl_DD = 180.
-cad_DD = 4
-Nnights_DD_season = int(sl_DD/cad_DD)
-frac = m5class.frac_moon
-bands = 'ugrizy'
-fracs = dict(zip(bands, [frac, 1., 1., 1., 1.-frac, 1.]))
+cad_DD = 3.
+resa, resb = m5class.m5_band_from_Nvisits(m5_resu, sl_DD=sl_DD, cad_DD=cad_DD)
 
-m5_resu['Nvisits'] = m5_resu['Nvisits'].astype(int)
-
-m5_resu['Nvisits_night'] = m5_resu.apply(
-    lambda x: x['Nvisits']/x['Nseasons']/(fracs[x['band']]*Nnights_DD_season),
-    axis=1)
-
-m5_resu['Nvisits_night'] = m5_resu['Nvisits_night'].astype(int)
-
-topp = m5_resu[['name', 'band', 'Nvisits', 'm5', 'delta_m5', 'Nvisits_night']]
-
-topp.to_csv('DD_res2.csv', index=False)
-
-# now estimate the number of visits per night for y1
-
-tt = m5class.msingle_calc[['band', 'Nvisits_y1']]
-
-tt['Nvisits_y1_night'] = tt.apply(
-    lambda x: x['Nvisits_y1']/(fracs[x['band']]*Nnights_DD_season), axis=1)
-
-tt['Nvisits_y1'] = tt['Nvisits_y1'].astype(int)
-tt['Nvisits_y1_night'] = tt['Nvisits_y1_night'].astype(int)
-
-print(tt['Nvisits_y1'].sum())
-
+print(resa)
+print(resa.columns)
+print(resb)
 
 # which m5 for UD fields? and comparison to y1 and y2_y10 requirements
 # grab scenarios
 
 print(df_res.columns)
 # get u-visits from z-visits
-df_res['u_season'] = m5class.frac_moon*df_res['z_season']
-df_res['z_season'] = (1.-m5class.frac_moon)*df_res['z_season']
+df_res['u_season'] = frac_moon*df_res['z_season']
+# df_res['z_season'] = (1.-frac_moon)*df_res['z_season']
+df_res['n_night_season'] = df_res['sl']/df_res['cad']
+df_res['u_recalc'] = df_res['u_season']/frac_moon/df_res['n_night_season']
+df_res['z_recalc'] = df_res['z_season']/(1.-frac_moon)/df_res['n_night_season']
+print(df_res[['g', 'r', 'i', 'z', 'y', 'u_recalc', 'z_recalc', 'z_season']])
+
+check_m5(df_res, m5class)
+# transform df_res
 
 r = []
-for i, row in df_res.iterrows():
-    for b in 'ugrizy':
-        r.append((b, row['{}_season'.format(b)], row['name']))
 
-df_new = pd.DataFrame(r, columns=['band', 'Nvisits', 'name'])
-print(df_new)
+bbval = ['name', 'zcomp', 'Nf_UD', 'Ns_UD', 'nvisits_UD_night',
+         'nvisits_DD_season', 'cad', 'sl', 'zcomp_new', 'Nvisits', 'delta_z',
+         'nvisits_UD_night_recalc', 'nvisits_UD_season', 'n_night_season']
 
-df_new = df_new.merge(m5class.msingle, left_on='band', right_on='band')
+"""
+'delta_z', 'g', 'r', 'i',
+       'z', 'y', 'nvisits_UD_night_recalc', 'nvisits_UD_season', 'g_season',
+       'r_season', 'i_season', 'z_season', 'y_season', 'Nvisits'
+"""
+for io, row in df_res.iterrows():
+    ra = []
+    for vv in bbval:
+        ra.append(row[vv])
+    for b in 'grizy':
+        r.append(ra + [b, row[b]])
+    # add a uband
+    name = row['name']
+    ipo = m5_resu['name'] == name
+    ipo &= m5_resu['band'] == 'u'
+    sel = m5_resu[ipo]
+    nu_night = sel['Nvisits']/sel['Nseasons']
+    n_nights = sl_UD/cad_UD
+    nu_night /= (frac_moon*n_nights)
+    r.append(ra+['u', np.round(nu_night[0], 0)])
 
-df_new['m5_UD_y1'] = df_new['m5_med_single']+1.25*np.log10(df_new['Nvisits'])
-df_new = df_new.merge(m5class.req, left_on='band', right_on='band')
-df_new['diff_m5_y1'] = df_new['m5_UD_y1']-df_new['m5_y1']
+print(r)
+df_resb = pd.DataFrame(r, columns=bbval+['band', 'nvisits_night'])
 
-print(df_new[['name', 'band', 'diff_m5_y1']])
+print(df_resb.columns)
 
-df_new[['name', 'band', 'diff_m5_y1']].to_csv('ddf_res3.csv', index=False)
+"""
 vv = m5class.msingle_calc
 
 print(vv.columns)
@@ -912,6 +1143,14 @@ po = vv[['band', 'm5_y1', 'Nvisits_y1', 'Nvisits_y1_night',
          'm5_y2_y10', 'Nvisits_y2_y10', 'Nvisits_y2_y10_night']]
 
 po.to_csv('testons.csv', index=False)
+"""
 
+# now re-estimate the budget vs time
 
+dfres = df_resb.groupby('name').apply(
+    lambda x: get_budget(x, NDD, resa, resb, Nv_LSST)).reset_index()
+
+print(dfres)
+
+plot_budget_time(dfres)
 plt.show()
