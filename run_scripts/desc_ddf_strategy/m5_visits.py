@@ -20,7 +20,7 @@ class DDF:
 class FiveSigmaDepth_Nvisits:
     def __init__(self, dbDir='../DB_Files',
                  dbName='draft_connected_v2.99_10yrs.npy',
-                 requirements='pz_requirements.csv'):
+                 requirements='input/DESC_cohesive_strategy/pz_requirements.csv'):
         """
         class to estimate Nvisits from m5 and m5 from Nvisits
 
@@ -292,7 +292,8 @@ class DD_Scenario:
                  sl_DD=180.,  # season length DD fields
                  Nf_DD_y1=3,  # number of DDF year 1
                  Nv_DD_y1=998,  # number of DD visits year 1
-                 nvisits_zcomp_file='Nvisits_zcomp_paper.csv',  # nvisits vs zcomp
+                 # nvisits vs zcomp
+                 nvisits_zcomp_file='input/DESC_cohesive_strategy/Nvisits_zcomp_paper.csv',
                  Nf_combi=[(1, 3), (2, 2), (2, 3), (2, 4)],  # UD combi
                  zcomp=[0.66, 0.80, 0.75, 0.70],  # correesponding zcomp
                  scen_names=['DDF_SCOC', 'DDF_DESC_0.80',
@@ -700,17 +701,19 @@ class DD_Scenario:
             Ns_UD = row['Ns_UD']
             budget = 0.
             for year in years:
-                to = year <= Ns_UD
+                to = year <= Ns_UD+1
                 nn = to*1
                 n_UD = Nf_UD*nn*row['nvisits_UD_night']*self.sl_UD/self.cad_UD
                 n_DD = (self.NDD-Nf_UD*nn)*row['nvisits_DD_season']
                 if year == 1:
                     n_DD = self.Nf_DD_y1*self.Nv_DD_y1
+                    n_UD = 0
                 if year > 0:
                     budget_y = (n_UD+n_DD)/self.Nv_LSST
                     budget += budget_y
                     bb = 100*budget
                     r.append((row['name'], year, budget, bb, budget_y))
+                    print('helllo', year, n_DD, n_UD)
                 else:
                     r.append((row['name'], year, 0.0, 0.0, 0.0))
 
@@ -756,7 +759,8 @@ pz_wl_req_err['PZ_y2_y10'] = (m5_dict['Nvisits_y2_y10_m']/9.,
                               m5_dict['Nvisits_y2_y10_p']/9.)
 
 # year 1 reqs are different -> take it into account
-Nf_DD_y1 = 3
+Nf_DD_y1 = 3  # UD the first year
+f_DD_y1 = 5  # UD the second year
 Nv_DD_y1 = int(m5_dict['Nvisits_y1'])
 
 myclass = DD_Scenario(Nf_combi=[(2, 2), (2, 3), (2, 4)],
