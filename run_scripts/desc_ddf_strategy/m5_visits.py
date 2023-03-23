@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from sn_plotter_metrics import plt
+from sn_plotter_metrics import plt, filtercolors
 from scipy.interpolate import interp1d
 from dataclasses import dataclass
 
@@ -884,26 +884,23 @@ def get_budget(grp, NDD, m5_resu, m5_nvisits_y1, Nv_LSST):
 
     Nf_UD = grp['Nf_UD'].mean()
     Ns_UD = grp['Ns_UD'].mean()
+    name = grp.name
 
-    print(grp)
     grp['nvisits_band_season'] = grp['n_night_season']*grp['nvisits_night']
     n_UD_season = grp['nvisits_band_season'].sum()
-
     n_UD_band_season = get_band_season(grp)
 
-    print('iiii', grp.name, n_UD_band_season)
+    # get m5 results
 
-    idx = m5_resu['name'] == grp.name
+    idx = m5_resu['name'] == name
     sel_m5 = m5_resu[idx]
-
-    print(sel_m5.columns)
     sel_m5['nvisits_band_season'] = sel_m5['Nvisits_night'] * \
         sel_m5['frac_night']*sel_m5['nights_season']
 
     n_DD_y2_y10 = sel_m5['nvisits_band_season'].sum()
     n_DD_band_y2_y10_season = get_band_season(sel_m5)
 
-    print(m5_nvisits_y1)
+    # get second m5 year 1 req
     m5_nvisits_y1['nvisits_band_season'] = m5_nvisits_y1['Nvisits_y1_recalc']
     n_DD_y1 = m5_nvisits_y1['Nvisits_y1_recalc'].sum()
     n_DD_band_y1_season = get_band_season(m5_nvisits_y1)
@@ -942,16 +939,286 @@ def get_budget(grp, NDD, m5_resu, m5_nvisits_y1, Nv_LSST):
             r.append([year, 0.0, 0.0, 0.0, 0.0, 0., 0., 0., 0., 0., 0., 0.0])
 
     res = np.rec.fromrecords(
-        r, names=['year', 'budget', 'budget_per', 'budget_yearly', 'Nf_UD', 'Ns_UD']+list(bands))
+        r, names=['year', 'budget', 'budget_per', 'budget_yearly',
+                  'Nf_UD', 'Ns_UD']+list(bands))
 
     return pd.DataFrame.from_records(res)
+
+
+def complete_df(dfa, fieldType='DD', Nfields=5, year=1):
+
+    df = pd.DataFrame(dfa)
+    df['fieldType'] = fieldType
+    df['Nfields'] = Nfields
+    df['year'] = year
+
+    return df
+
+
+def get_final_scenario(grp, NDD, m5_resu, m5_nvisits_y1):
+
+    Nf_UD = grp['Nf_UD'].mean()
+    Ns_UD = grp['Ns_UD'].mean()
+    name = grp.name
+
+    grp['nvisits_band_season'] = grp['frac_night'] * \
+        grp['n_night_season']*grp['nvisits_night']
+
+    print(grp, grp.columns)
+    cols = ['zcomp', 'n_night_season', 'band',
+            'nvisits_night', 'nvisits_band_season', 'cad', 'sl', 'frac_night']
+    config_UD = grp[cols]
+
+    """
+    n_UD_season = grp['nvisits_band_season'].sum()
+    n_UD_band_season = get_band_season(grp)
+    """
+    # get m5 results
+
+    idx = m5_resu['name'] == name
+    sel_m5 = m5_resu[idx]
+    sel_m5['nvisits_band_season'] = sel_m5['Nvisits_night'] * \
+        sel_m5['frac_night']*sel_m5['nights_season']
+
+    print(sel_m5.columns)
+    sel_m5 = sel_m5.rename(
+        columns={'nights_season': 'n_night_season',
+                 'Nvisits_night': 'nvisits_night'})
+    print(sel_m5.columns)
+    sel_m5['zcomp'] = 0.0
+    config_DD_y2_y10 = sel_m5[cols]
+
+    """
+    print(config_DD_y2_y10)
+
+    n_DD_y2_y10 = sel_m5['nvisits_band_season'].sum()
+    n_DD_band_y2_y10_season = get_band_season(sel_m5)
+    """
+
+    # get second m5 year 1 req
+
+    m5_nvisits_y1 = m5_nvisits_y1.rename(
+        columns={'nights_season': 'n_night_season',
+                 'Nvisits_y1_night': 'nvisits_night'})
+    m5_nvisits_y1['nvisits_band_season'] = m5_nvisits_y1['Nvisits_y1_recalc']
+    m5_nvisits_y1['zcomp'] = 0.
+    m5_nvisits_y1['name'] = name
+
+    """
+    n_DD_y1 = m5_nvisits_y1['Nvisits_y1_recalc'].sum()
+    n_DD_band_y1_season = get_band_season(m5_nvisits_y1)
+    """
+    config_DD_y1 = m5_nvisits_y1[cols]
+
+    """
+    print(config_DD_y1)
+
+    print('here', n_UD_season, n_DD_y2_y10, n_DD_y1)
+    print('hhb', n_DD_band_y2_y10_season, n_DD_band_y1_season)
+    """
+
+    years = range(1, 11)
+    # budget = 0.
+    # r = []
+    # bands = 'ugrizy'
+
+    df_res = pd.DataFrame()
+
+    for year in years:
+        to = year <= Ns_UD+1
+        nn = to*1
+        # n_UD = Nf_UD*nn*n_UD_season
+        # n_DD = n_DD_y2_y10*(5-Nf_UD)
+        # nvisits_band = dict(zip(bands, [0.]*len(bands)))
+
+        if year == 1:
+            # n_DD = n_DD_y1
+            df = complete_df(config_DD_y1, 'DD', NDD-Nf_UD, year)
+            df_res = pd.concat((df_res, df))
+            df = complete_df(config_DD_y1, 'UD', Nf_UD, year)
+            df_res = pd.concat((df_res, df))
+        else:
+
+            Nf_UD_seas = Nf_UD*nn
+            if Nf_UD_seas > 0:
+                df = complete_df(config_UD, 'UD', Nf_UD_seas, year)
+                df = pd.DataFrame(config_UD)
+                df_res = pd.concat((df_res, df))
+            else:
+                df = complete_df(config_DD_y2_y10, 'UD', Nf_UD, year)
+                df_res = pd.concat((df_res, df))
+
+            df = complete_df(config_DD_y2_y10, 'DD', NDD-Nf_UD, year)
+            df_res = pd.concat((df_res, df))
+
+    return df_res
+
+
+def analyze_scenario(df, m5_nvisits):
+
+    resa = df.groupby(['name', 'fieldType', 'Nfields', 'year'])[
+        'nvisits_band_season'].sum().reset_index()
+
+    print(resa)
+
+
+def delta_m5(df, m5_nvisits):
+
+    idx = df['year'] == 1
+    res_y1 = df[idx]
+    res_y2_y10 = df[~idx]
+
+    res_y1 = res_y1.groupby(['name', 'fieldType', 'Nfields', 'band'])[
+        'nvisits_band_season'].sum().reset_index()
+
+    m5_y1 = m5_nvisits[['band', 'm5_med_single', 'm5_y1']]
+
+    res_y1 = res_y1.merge(m5_y1, left_on=['band'], right_on=['band'])
+    res_y1['diff_m5'] = res_y1['m5_med_single']+1.25 * \
+        np.log10(res_y1['nvisits_band_season'])-res_y1['m5_y1']
+
+    res_y2_y10 = res_y2_y10.groupby(['name', 'fieldType', 'Nfields', 'band'])[
+        'nvisits_band_season'].sum().reset_index()
+    # print('hello', res_y2_y10)
+    # print(test)
+    m5_y2_y10 = m5_nvisits[['band', 'm5_med_single', 'm5_y2_y10']]
+
+    res_y2_y10 = res_y2_y10.merge(
+        m5_y2_y10, left_on=['band'], right_on=['band'])
+
+    res_y2_y10['diff_m5'] = res_y2_y10['m5_med_single']+1.25 * \
+        np.log10(res_y2_y10['nvisits_band_season'])-res_y2_y10['m5_y2_y10']
+
+    print(res_y1)
+    plot_deltam5(res_y1, figtitle='PZ requirements y1')
+    print(res_y2_y10)
+
+    plot_deltam5(res_y2_y10)
+
+
+def plot_deltam5(df, xvar='name', xlabel='', yvar='diff_m5',
+                 ylabel='$\Delta m_5=m_5^{DD}-m_5^{PZ}$',
+                 figtitle='PZ requirements y2_y10'):
+
+    fig, ax = plt.subplots(figsize=(14, 8))
+    fig.suptitle(figtitle)
+    bands = df['band'].unique()
+    ls = dict(zip(['UD', 'DD'], ['solid', 'dashed']))
+
+    for b in bands:
+        idx = df['band'] == b
+        sela = df[idx]
+        fieldTypes = sela['fieldType'].unique()
+        for ft in fieldTypes:
+            idxa = sela['fieldType'] == ft
+            selb = sela[idxa]
+
+            ax.plot(selb[xvar], selb[yvar], linestyle=ls[ft],
+                    color=filtercolors[b])
+
+    ax.grid()
+    ax.set_ylabel(ylabel)
+    ax.set_xlabel(xlabel)
+
+
+def budget_time(df, Nv_LSST):
+
+    budget = df.groupby('name').apply(
+        lambda x: budget_scenario(x, Nv_LSST)).reset_index()
+
+    print(budget)
+
+    budget['budget_per'] = 100.*budget['budget']
+    print(budget.columns)
+    budget = budget.sort_values(by=['year'])
+    plot_budget_time(budget)
+
+
+def budget_scenario(grp, Nv_LSST):
+
+    grp['nvisits_field'] = grp['nvisits_band_season']*grp['Nfields']
+
+    nv = grp.groupby(
+        ['year'])['nvisits_field'].sum().reset_index()
+
+    nv['budget'] = nv['nvisits_field'].cumsum()/Nv_LSST
+
+    # add year 0 with 0 budget
+    y0 = pd.DataFrame([(0, 0.0)], columns=['year', 'budget'])
+    nv = pd.concat((nv, y0))
+
+    return nv
+
+
+def scenario_time(df):
+
+    res = df.groupby(['name']).apply(
+        lambda x: scenario_fields(x)).reset_index()
+
+    print('finally', res)
+
+    plot_scenario(res)
+
+
+def scenario_fields(df):
+
+    rr = df.groupby(['fieldType', 'Nfields']).apply(
+        lambda x: scenario_years(x))
+
+    return rr
+
+
+def scenario_years(grp):
+
+    print(grp)
+
+    rr = grp.groupby('year').apply(
+        lambda x: visits_str(x))
+
+    return rr
+
+
+def visits_str(grp):
+
+    ff = dict(zip(grp['band'].to_list(), grp['nvisits_night'].to_list()))
+    #Nfields = int(grp['Nfields'].mean())
+
+    bands = 'ugrizy'
+    import copy
+    ff_moon = copy.deepcopy(ff)
+    ff_moon['z'] = 0
+    nv_moon = '/'.join(['{}'.format(int(ff_moon[key])) for key in bands])
+    nv_moon_night = np.sum([int(ff_moon[key]) for key in bands])
+
+    ff_nomoon = copy.deepcopy(ff)
+    ff_nomoon['u'] = 0
+    nv_nomoon = '/'.join(['{}'.format(int(ff_nomoon[key])) for key in bands])
+    nv_nomoon_night = np.sum([int(ff_nomoon[key]) for key in bands])
+
+    res = '{}||{}'.format(nv_moon, nv_nomoon)
+    resb = '{}||{}'.format(nv_moon_night, nv_nomoon_night)
+
+    return pd.DataFrame({'visits': [res], 'visits_night': [resb]})
+
+
+def plot_scenario(df):
+
+    names = df['name'].unique()
+
+    for name in names:
+        idx = df['name'] == name
+        sel = df[idx]
+        fig, ax = plt.subplots(figsize=(14, 8))
+        for ftype in sel['fieldType'].unique():
+            idxa = sel['fieldType'] == ftype
+            sela = sel[idxa]
+            ax.plot(sela['year'], sela['Nfields'])
+
 
 ################################################
 ##### get Nvisits from m5 req.          ########
 ## m5_dict: total number of visits (PZ req.) ##
 ###############################################
-
-
 bands = 'ugrizy'
 
 m5class = FiveSigmaDepth_Nvisits()
@@ -1122,6 +1389,10 @@ for io, row in df_res.iterrows():
 
 print(r)
 df_resb = pd.DataFrame(r, columns=bbval+['band', 'nvisits_night'])
+fracs = pd.DataFrame(list('ugrizy'), columns=['band'])
+fracs['frac_night'] = [frac_moon, 1., 1., 1., 1.-frac_moon, 1.]
+
+df_resb = df_resb.merge(fracs, left_on=['band'], right_on=['band'])
 
 print(df_resb.columns)
 
@@ -1147,10 +1418,20 @@ po.to_csv('testons.csv', index=False)
 
 # now re-estimate the budget vs time
 
-dfres = df_resb.groupby('name').apply(
-    lambda x: get_budget(x, NDD, resa, resb, Nv_LSST)).reset_index()
+# dfres = df_resb.groupby('name').apply(
+#    lambda x: get_budget(x, NDD, resa, resb, Nv_LSST)).reset_index()
 
+dfres = df_resb.groupby('name').apply(
+    lambda x: get_final_scenario(x, NDD, resa, resb)).reset_index()
 print(dfres)
 
-plot_budget_time(dfres)
+# delta_m5(dfres, m5_nvisits)
+
+# budget_time(dfres, Nv_LSST)
+
+scenario_time(dfres)
+
+
+print(m5_nvisits)
+# plot_budget_time(dfres)
 plt.show()
