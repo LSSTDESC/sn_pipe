@@ -1181,9 +1181,10 @@ def scenario_years(grp):
 def visits_str(grp):
 
     ff = dict(zip(grp['band'].to_list(), grp['nvisits_night'].to_list()))
-    #Nfields = int(grp['Nfields'].mean())
+    # Nfields = int(grp['Nfields'].mean())
 
     bands = 'ugrizy'
+    """
     import copy
     ff_moon = copy.deepcopy(ff)
     ff_moon['z'] = 0
@@ -1197,22 +1198,136 @@ def visits_str(grp):
 
     res = '{}||{}'.format(nv_moon, nv_nomoon)
     resb = '{}||{}'.format(nv_moon_night, nv_nomoon_night)
+    """
+    nv = '/'.join(['{}'.format(int(ff[key])) for key in bands])
+    nv_night = np.sum([int(ff[key]) for key in bands])
 
+    res = '{}'.format(nv)
+    resb = '{}'.format(nv_night)
     return pd.DataFrame({'visits': [res], 'visits_night': [resb]})
 
 
 def plot_scenario(df):
 
+    import matplotlib.patches as mpatches
     names = df['name'].unique()
 
-    for name in names:
+    ls = dict(zip(['UD', 'DD'], ['solid', 'dashed']))
+    corresp = dict(zip(['UD', 'DD'], ['Ultra-Deep Field', 'Deep Field']))
+
+    fig, axa = plt.subplots(nrows=3, figsize=(12, 10))
+    fig.subplots_adjust(hspace=0)
+    for io, name in enumerate(names):
+        ax = axa[io]
         idx = df['name'] == name
         sel = df[idx]
-        fig, ax = plt.subplots(figsize=(14, 8))
-        for ftype in sel['fieldType'].unique():
+
+        dict_pos = {}
+        fieldTypes = sorted(sel['fieldType'].unique())[::-1]
+        for ftype in fieldTypes:
             idxa = sel['fieldType'] == ftype
             sela = sel[idxa]
-            ax.plot(sela['year'], sela['Nfields'])
+
+            ya = sela['Nfields'].mean()
+            # complete line up to end of y10
+            ax.plot([10, 11], [ya]*2, linestyle=ls[ftype], color='k', lw=3)
+            ax.plot(sela['year'], sela['Nfields'],
+                    linestyle=ls[ftype], color='k', lw=3)
+
+            tt = sela.groupby('visits').apply(lambda x:
+                                              pd.DataFrame({'yearmin':
+                                                            [x['year'].min()],
+                                                            'yearmax':
+                                                            [x['year'].max()]})).reset_index()
+            # set ticks on lines
+            print(tt)
+
+            y = [ya-0.1, ya+0.1]
+            k = 1
+            shift = 0
+            if ftype == 'DD':
+                k = -1
+                shift = 1
+
+            for iu, row in tt.iterrows():
+                ccol = 'g'
+                yrmin = row['yearmin']
+                yrmax = row['yearmax']
+                xa = [yrmin]*2
+                xb = [yrmax+1]*2
+                xmean = np.mean(xa+xb)
+                xmeanarr = xmean
+
+                if xmean >= 2 and xmean <= 4:
+                    ccol = 'r'
+
+                if xmean < 2:
+                    ccol = 'b'
+
+                if yrmax == yrmin:
+                    xmean *= 0.7
+                if xmean == 3:
+                    xmean += 0.2
+
+                """
+                if yrmax == yrmin:
+                    xmean = yrmin
+                """
+                if io != 0:
+                    ax.plot(xa, y, linestyle=ls[ftype], color='k', lw=3)
+                else:
+                    if iu == 1:
+                        ax.plot(xa, y, linestyle=ls[ftype],
+                                color='k', lw=3, label=corresp[ftype])
+
+                ax.plot(xb, y, linestyle=ls[ftype], color='k', lw=3)
+                ax.arrow(yrmin, ya, yrmax+1-yrmin, 0.0, width=0.05,
+                         length_includes_head=True, fc='yellow', head_length=0.1)
+                ax.arrow(yrmin, ya, yrmax-2-yrmin, 0.0, width=0.05,
+                         length_includes_head=True, fc='blue', head_length=0.1)
+
+                """
+                arrow = mpatches.FancyArrowPatch(
+                    (yrmin, ya), (yrmax+1, ya), mutation_scale=100,
+                    arrowstyle='<->,head_length=0.4,head_width=0.4,tail_width=0.4', lw=8, color='yellow')
+                """
+                # ax.add_patch(arrow)
+
+                txt = row['visits']
+                props = dict(boxstyle='round',
+                             facecolor='wheat', alpha=0.5)
+                # ax.text(xmean, ya+0.5, txt, bbox=props)
+                if txt not in dict_pos.keys():
+                    dict_pos[txt] = [xmean, xmeanarr, ya]
+
+                xmean = dict_pos[txt][0]
+                xmeanarr = dict_pos[txt][1]
+                ya = dict_pos[txt][2]
+
+                arrowprops = dict(arrowstyle="->")
+                arrowprops = dict(
+                    facecolor=ccol, arrowstyle="simple", edgecolor=ccol)
+                ax.annotate(txt, xy=(xmeanarr, ya+shift),
+                            xytext=(xmean, ya+0.5),
+                            arrowprops=arrowprops, color=ccol)
+                """
+                ax.annotate(txt, xy=(xmean, ya+1), xytext=(xmean, ya+1.5),
+                                arrowprops=dict(arrowstyle="->"))
+                """
+
+        # break
+        axb = ax.twinx()
+        axb.set_ylabel(name, rotation=70., fontweight='bold',
+                       color='orange', labelpad=35)
+        axb.set_yticks([])
+        ax.grid()
+        if io == 2:
+            ax.set_xlabel('year', fontweight='bold')
+        if io == 1:
+            ax.set_ylabel('$N^{DDF}$')
+        ax.set_xlim([1, 11])
+        if io == 0:
+            ax.legend(ncol=2, bbox_to_anchor=(0.1, 0.95), frameon=False)
 
 
 ################################################
