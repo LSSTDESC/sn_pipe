@@ -280,14 +280,16 @@ class FiveSigmaDepth_Nvisits:
 
         return df
 
-    def m5_band_from_Nvisits(self, m5_resu_orig, sl_DD=180., cad_DD=4):
+    def m5_band_from_Nvisits(self, m5_resu_orig, sl_DD=180., cad_DD=4,
+                             frac_moon=0.20):
 
         m5_resu = pd.DataFrame(m5_resu_orig)
 
         # m5_resu['Nvisits'] = m5_resu['Nvisits'].astype(int)
 
         m5_resu = self.visits_night_from_frac(m5_resu, sl=sl_DD,
-                                              cad=cad_DD, col='Nvisits')
+                                              cad=cad_DD, col='Nvisits',
+                                              frac_moon=frac_moon)
 
         topp = m5_resu[['name', 'band', 'Nvisits', 'Nvisits_night']]
 
@@ -311,7 +313,7 @@ class FiveSigmaDepth_Nvisits:
         """
         tt = self.visits_night_from_frac(tt, sl=sl_DD,
                                          cad=cad_DD, col='Nvisits_y1',
-                                         colb='m5_y1')
+                                         colb='m5_y1', frac_moon=frac_moon)
 
         return m5_resu, tt
 
@@ -609,21 +611,36 @@ class DD_Scenario:
                 zcomp = tag[2]
                 interp = interp1d(sel[vary], sel[varx], bounds_error=False)
                 nv_DD = interp(nv_UD)
-                ax.plot([nv_DD], [nv_UD], marker='*', ms=20,
-                        color='g', mfc='None', markeredgewidth=2)
+                ax.plot([nv_DD], [nv_UD], marker='s', ms=20,
+                        color='b', mfc='None', markeredgewidth=2)
+                nameb = '{}_SN'.format(name)
+                for_res.append(
+                    (nameb, zcomp, Nf_UD, Ns_UD, int(nv_UD), int(nv_DD),
+                     self.cad_UD, self.sl_UD, 0))
+
+                ax.text(nv_DD-500, nv_UD-10, nameb, color='b', fontsize=12)
+
                 if pz_wl_req and Nf_UD >= 2:
                     nv_DD_n = pz_wl_req['PZ_y2_y10'][1]
                     interpb = interp1d(
                         sel[varx], sel[vary], bounds_error=False)
                     nv_UD_n = interpb(nv_DD_n)
                     ax.plot([nv_DD_n], [nv_UD_n], marker='*', ms=20,
-                            color='g', mfc='None', markeredgewidth=2)
+                            color='b', mfc='None', markeredgewidth=2)
+                    namec = '{}_WL'.format(name)
+                    ax.text(nv_DD_n+50, nv_UD_n, namec,
+                            color='b', fontsize=12)
+                    for_res.append(
+                        (namec, zcomp, Nf_UD, Ns_UD, int(nv_UD_n), int(nv_DD_n),
+                         self.cad_UD, self.sl_UD, 1))
                     nv_UD = np.mean([nv_UD, nv_UD_n])
                     nv_DD = np.mean([nv_DD, nv_DD_n])
 
                 # print('scenario', name, Nf_UD, Ns_UD, int(nv_UD), int(nv_DD))
+                namea = '{}_co'.format(name)
                 for_res.append(
-                    (name, zcomp, Nf_UD, Ns_UD, int(nv_UD), int(nv_DD), self.cad_UD, self.sl_UD))
+                    (namea, zcomp, Nf_UD, Ns_UD, int(nv_UD), int(nv_DD),
+                     self.cad_UD, self.sl_UD, 2))
 
                 ax.plot([nv_DD], [nv_UD], marker='o', ms=15,
                         color='b', mfc='None', markeredgewidth=3.)
@@ -699,7 +716,7 @@ class DD_Scenario:
                                                      'Ns_UD',
                                                      'nvisits_UD_night',
                                                      'nvisits_DD_season',
-                                                     'cad', 'sl'])
+                                                     'cad', 'sl', 'scen_type'])
         return res
 
     def finish(self, res):
@@ -744,7 +761,7 @@ class DD_Scenario:
 
         return df_res
 
-    def plot_budget_time(self, df):
+    def plot_budget_time_deprecated(self, df):
         """
         Method to plot the budget vs time
 
@@ -806,43 +823,7 @@ class DD_Scenario:
         ax.set_ylim(0., 7.)
 
 
-def plot_budget_time(res):
-    """
-    Method to plot the budget vs time
-
-    Parameters
-    ----------
-    sel : TYPE
-        DESCRIPTION.
-    df : TYPE
-        DESCRIPTION.
-
-    Returns
-    -------
-    None.
-
-    """
-
-    fig, ax = plt.subplots(figsize=(14, 8))
-
-    names = np.unique(res['name'])
-    ls = dict(zip([0, 1, 2], ['solid', 'dotted', 'dashed']))
-    colors = dict(zip([0, 1, 2], ['blue', 'k', 'red']))
-    for io, nn in enumerate(names):
-        idx = res['name'] == nn
-        sel = res[idx]
-        ax.plot(sel['year'], sel['budget_per'], linestyle=ls[io],
-                color=colors[io], label=nn)
-
-    ax.grid()
-    ax.set_xlabel('Year')
-    ax.set_ylabel('DDF budget [%]')
-    ax.legend(frameon=False)
-    ax.set_xlim(0, 10)
-    ax.set_ylim(0., 7.)
-
-
-def check_m5(df_res, m5class):
+def check_m5_deprecated(df_res, m5class):
 
     r = []
     for i, row in df_res.iterrows():
@@ -868,7 +849,7 @@ def check_m5(df_res, m5class):
         'ddf_res3.csv', index=False)
 
 
-def get_band_season(grp):
+def get_band_season_deprecated(grp):
 
     res = {}
 
@@ -880,7 +861,7 @@ def get_band_season(grp):
     return res
 
 
-def get_budget(grp, NDD, m5_resu, m5_nvisits_y1, Nv_LSST):
+def get_budget_deprecated(grp, NDD, m5_resu, m5_nvisits_y1, Nv_LSST):
 
     Nf_UD = grp['Nf_UD'].mean()
     Ns_UD = grp['Ns_UD'].mean()
@@ -956,6 +937,26 @@ def complete_df(dfa, fieldType='DD', Nfields=5, year=1):
 
 
 def get_final_scenario(grp, NDD, m5_resu, m5_nvisits_y1):
+    """
+    Function to get the final scenario
+
+    Parameters
+    ----------
+    grp : pandas group
+        Data to process.
+    NDD : int
+        total number of ddf.
+    m5_resu : pandas df
+        link m5 req / nvisits - y2 to y10
+    m5_nvisits_y1 : pandas df
+        link m5 req / nvisits - y1
+
+    Returns
+    -------
+    df_res : pandas df
+        final scenario.
+
+    """
 
     Nf_UD = grp['Nf_UD'].mean()
     Ns_UD = grp['Ns_UD'].mean()
@@ -1054,7 +1055,7 @@ def get_final_scenario(grp, NDD, m5_resu, m5_nvisits_y1):
     return df_res
 
 
-def analyze_scenario(df, m5_nvisits):
+def analyze_scenario_deprecated(df, m5_nvisits):
 
     resa = df.groupby(['name', 'fieldType', 'Nfields', 'year'])[
         'nvisits_band_season'].sum().reset_index()
@@ -1062,272 +1063,542 @@ def analyze_scenario(df, m5_nvisits):
     print(resa)
 
 
-def delta_m5(df, m5_nvisits):
+class Delta_m5:
+    def __init__(self, df, m5_nvisits):
+        """
+        class to estimate and plot delta_m5 wrt reqs.
 
-    idx = df['year'] == 1
-    res_y1 = df[idx]
-    res_y2_y10 = df[~idx]
+        Parameters
+        ----------
+        df : pandas df
+            Data to process.
+        m5_nvisits : pandas df
+            m5 vs nvisits vals.
 
-    res_y1 = res_y1.groupby(['name', 'fieldType', 'Nfields', 'band'])[
-        'nvisits_band_season'].sum().reset_index()
+        Returns
+        -------
+        None.
 
-    m5_y1 = m5_nvisits[['band', 'm5_med_single', 'm5_y1']]
+        """
 
-    res_y1 = res_y1.merge(m5_y1, left_on=['band'], right_on=['band'])
-    res_y1['diff_m5'] = res_y1['m5_med_single']+1.25 * \
-        np.log10(res_y1['nvisits_band_season'])-res_y1['m5_y1']
+        idx = df['year'] == 1
+        res_y1 = df[idx]
+        res_y2_y10 = df[~idx]
 
-    res_y2_y10 = res_y2_y10.groupby(['name', 'fieldType', 'Nfields', 'band'])[
-        'nvisits_band_season'].sum().reset_index()
-    # print('hello', res_y2_y10)
-    # print(test)
-    m5_y2_y10 = m5_nvisits[['band', 'm5_med_single', 'm5_y2_y10']]
+        res_y1 = res_y1.groupby(['name', 'fieldType', 'Nfields', 'band'])[
+            'nvisits_band_season'].sum().reset_index()
 
-    res_y2_y10 = res_y2_y10.merge(
-        m5_y2_y10, left_on=['band'], right_on=['band'])
+        m5_y1 = m5_nvisits[['band', 'm5_med_single', 'm5_y1']]
 
-    res_y2_y10['diff_m5'] = res_y2_y10['m5_med_single']+1.25 * \
-        np.log10(res_y2_y10['nvisits_band_season'])-res_y2_y10['m5_y2_y10']
+        res_y1 = res_y1.merge(m5_y1, left_on=['band'], right_on=['band'])
+        res_y1['diff_m5'] = res_y1['m5_med_single']+1.25 * \
+            np.log10(res_y1['nvisits_band_season'])-res_y1['m5_y1']
 
-    print(res_y1)
-    plot_deltam5(res_y1, figtitle='PZ requirements y1')
-    print(res_y2_y10)
+        res_y2_y10 = res_y2_y10.groupby(['name', 'fieldType', 'Nfields', 'band'])[
+            'nvisits_band_season'].sum().reset_index()
+        # print('hello', res_y2_y10)
+        # print(test)
+        m5_y2_y10 = m5_nvisits[['band', 'm5_med_single', 'm5_y2_y10']]
 
-    plot_deltam5(res_y2_y10)
+        res_y2_y10 = res_y2_y10.merge(
+            m5_y2_y10, left_on=['band'], right_on=['band'])
 
+        res_y2_y10['diff_m5'] = res_y2_y10['m5_med_single']+1.25 * \
+            np.log10(res_y2_y10['nvisits_band_season'])-res_y2_y10['m5_y2_y10']
 
-def plot_deltam5(df, xvar='name', xlabel='', yvar='diff_m5',
-                 ylabel='$\Delta m_5=m_5^{DD}-m_5^{PZ}$',
-                 figtitle='PZ requirements y2_y10'):
+        print(res_y1)
+        self.plot_deltam5(res_y1, figtitle='PZ requirements y1')
+        print(res_y2_y10)
 
-    fig, ax = plt.subplots(figsize=(14, 8))
-    fig.suptitle(figtitle)
-    bands = df['band'].unique()
-    ls = dict(zip(['UD', 'DD'], ['solid', 'dashed']))
+        self.plot_deltam5(res_y2_y10)
 
-    for b in bands:
-        idx = df['band'] == b
-        sela = df[idx]
-        fieldTypes = sela['fieldType'].unique()
-        for ft in fieldTypes:
-            idxa = sela['fieldType'] == ft
-            selb = sela[idxa]
+    def plot_deltam5(self, df, xvar='name', xlabel='', yvar='diff_m5',
+                     ylabel='$\Delta m_5=m_5^{DD}-m_5^{PZ}$',
+                     figtitle='PZ requirements y2_y10'):
+        """
+        Method to plot delta_m5 vs scenario
 
-            ax.plot(selb[xvar], selb[yvar], linestyle=ls[ft],
-                    color=filtercolors[b])
+        Parameters
+        ----------
+        df : pandas df
+            data to plot.
+        xvar : str, optional
+            x-axis val. The default is 'name'.
+        xlabel : str, optional
+            x-axis label. The default is ''.
+        yvar : str, optional
+            y-axis var. The default is 'diff_m5'.
+        ylabel : str, optional
+            y-axis label. The default is '$\Delta m_5=m_5^{DD}-m_5^{PZ}$'.
+        figtitle : str, optional
+            fig title. The default is 'PZ requirements y2_y10'.
 
-    ax.grid()
-    ax.set_ylabel(ylabel)
-    ax.set_xlabel(xlabel)
+        Returns
+        -------
+        None.
 
+        """
 
-def budget_time(df, Nv_LSST):
+        fig, ax = plt.subplots(figsize=(14, 8))
+        fig.suptitle(figtitle)
+        fig.subplots_adjust(bottom=0.2)
+        bands = df['band'].unique()
+        ls = dict(zip(['UD', 'DD'], ['solid', 'dashed']))
+        marker = dict(zip(['UD', 'DD'], ['o', 's']))
 
-    budget = df.groupby('name').apply(
-        lambda x: budget_scenario(x, Nv_LSST)).reset_index()
+        df['scen_type'] = df['name'].str.split('_').str.get(-1)
+        df = df.sort_values(by='scen_type')
 
-    print(budget)
-
-    budget['budget_per'] = 100.*budget['budget']
-    print(budget.columns)
-    budget = budget.sort_values(by=['year'])
-    plot_budget_time(budget)
-
-
-def budget_scenario(grp, Nv_LSST):
-
-    grp['nvisits_field'] = grp['nvisits_band_season']*grp['Nfields']
-
-    nv = grp.groupby(
-        ['year'])['nvisits_field'].sum().reset_index()
-
-    nv['budget'] = nv['nvisits_field'].cumsum()/Nv_LSST
-
-    # add year 0 with 0 budget
-    y0 = pd.DataFrame([(0, 0.0)], columns=['year', 'budget'])
-    nv = pd.concat((nv, y0))
-
-    return nv
-
-
-def scenario_time(df):
-
-    res = df.groupby(['name']).apply(
-        lambda x: scenario_fields(x)).reset_index()
-
-    print('finally', res)
-
-    plot_scenario(res)
-
-
-def scenario_fields(df):
-
-    rr = df.groupby(['fieldType', 'Nfields']).apply(
-        lambda x: scenario_years(x))
-
-    return rr
-
-
-def scenario_years(grp):
-
-    print(grp)
-
-    rr = grp.groupby('year').apply(
-        lambda x: visits_str(x))
-
-    return rr
-
-
-def visits_str(grp):
-
-    ff = dict(zip(grp['band'].to_list(), grp['nvisits_night'].to_list()))
-    # Nfields = int(grp['Nfields'].mean())
-
-    bands = 'ugrizy'
-    """
-    import copy
-    ff_moon = copy.deepcopy(ff)
-    ff_moon['z'] = 0
-    nv_moon = '/'.join(['{}'.format(int(ff_moon[key])) for key in bands])
-    nv_moon_night = np.sum([int(ff_moon[key]) for key in bands])
-
-    ff_nomoon = copy.deepcopy(ff)
-    ff_nomoon['u'] = 0
-    nv_nomoon = '/'.join(['{}'.format(int(ff_nomoon[key])) for key in bands])
-    nv_nomoon_night = np.sum([int(ff_nomoon[key]) for key in bands])
-
-    res = '{}||{}'.format(nv_moon, nv_nomoon)
-    resb = '{}||{}'.format(nv_moon_night, nv_nomoon_night)
-    """
-    nv = '/'.join(['{}'.format(int(ff[key])) for key in bands])
-    nv_night = np.sum([int(ff[key]) for key in bands])
-
-    res = '{}'.format(nv)
-    resb = '{}'.format(nv_night)
-    return pd.DataFrame({'visits': [res], 'visits_night': [resb]})
-
-
-def plot_scenario(df):
-
-    import matplotlib.patches as mpatches
-    names = df['name'].unique()
-
-    ls = dict(zip(['UD', 'DD'], ['solid', 'dashed']))
-    corresp = dict(zip(['UD', 'DD'], ['Ultra-Deep Field', 'Deep Field']))
-
-    fig, axa = plt.subplots(nrows=3, figsize=(12, 10))
-    fig.subplots_adjust(hspace=0)
-    for io, name in enumerate(names):
-        ax = axa[io]
-        idx = df['name'] == name
-        sel = df[idx]
-
-        dict_pos = {}
-        fieldTypes = sorted(sel['fieldType'].unique())[::-1]
-        for ftype in fieldTypes:
-            idxa = sel['fieldType'] == ftype
-            sela = sel[idxa]
-
-            ya = sela['Nfields'].mean()
-            # complete line up to end of y10
-            ax.plot([10, 11], [ya]*2, linestyle=ls[ftype], color='k', lw=3)
-            ax.plot(sela['year'], sela['Nfields'],
-                    linestyle=ls[ftype], color='k', lw=3)
-
-            tt = sela.groupby('visits').apply(lambda x:
-                                              pd.DataFrame({'yearmin':
-                                                            [x['year'].min()],
-                                                            'yearmax':
-                                                            [x['year'].max()]})).reset_index()
-            # set ticks on lines
-            print(tt)
-
-            y = [ya-0.1, ya+0.1]
-            k = 1
-            shift = 0
-            if ftype == 'DD':
-                k = -1
-                shift = 1
-
-            for iu, row in tt.iterrows():
-                ccol = 'g'
-                yrmin = row['yearmin']
-                yrmax = row['yearmax']
-                xa = [yrmin]*2
-                xb = [yrmax+1]*2
-                xmean = np.mean(xa+xb)
-                xmeanarr = xmean
-
-                if xmean >= 2 and xmean <= 4:
-                    ccol = 'r'
-
-                if xmean < 2:
-                    ccol = 'b'
-
-                if yrmax == yrmin:
-                    xmean *= 0.7
-                if xmean == 3:
-                    xmean += 0.2
-
+        for b in bands:
+            idx = df['band'] == b
+            sela = df[idx]
+            fieldTypes = sela['fieldType'].unique()
+            for ft in fieldTypes:
+                idxa = sela['fieldType'] == ft
+                selb = sela[idxa]
                 """
-                if yrmax == yrmin:
-                    xmean = yrmin
+                ax.plot(selb[xvar], selb[yvar], linestyle=ls[ft],
+                        color=filtercolors[b])
                 """
-                if io != 0:
-                    ax.plot(xa, y, linestyle=ls[ftype], color='k', lw=3)
-                else:
-                    if iu == 1:
-                        ax.plot(xa, y, linestyle=ls[ftype],
-                                color='k', lw=3, label=corresp[ftype])
+                ax.plot(selb[xvar], selb[yvar], linestyle='None',
+                        color=filtercolors[b], marker=marker[ft],
+                        mfc='None', ms=12, markeredgewidth=2)
 
-                ax.plot(xb, y, linestyle=ls[ftype], color='k', lw=3)
-                ax.arrow(yrmin, ya, yrmax+1-yrmin, 0.0, width=0.05,
-                         length_includes_head=True, fc='yellow', head_length=0.1)
-                ax.arrow(yrmin, ya, yrmax-2-yrmin, 0.0, width=0.05,
-                         length_includes_head=True, fc='blue', head_length=0.1)
-
-                """
-                arrow = mpatches.FancyArrowPatch(
-                    (yrmin, ya), (yrmax+1, ya), mutation_scale=100,
-                    arrowstyle='<->,head_length=0.4,head_width=0.4,tail_width=0.4', lw=8, color='yellow')
-                """
-                # ax.add_patch(arrow)
-
-                txt = row['visits']
-                props = dict(boxstyle='round',
-                             facecolor='wheat', alpha=0.5)
-                # ax.text(xmean, ya+0.5, txt, bbox=props)
-                if txt not in dict_pos.keys():
-                    dict_pos[txt] = [xmean, xmeanarr, ya]
-
-                xmean = dict_pos[txt][0]
-                xmeanarr = dict_pos[txt][1]
-                ya = dict_pos[txt][2]
-
-                arrowprops = dict(arrowstyle="->")
-                arrowprops = dict(
-                    facecolor=ccol, arrowstyle="simple", edgecolor=ccol)
-                ax.annotate(txt, xy=(xmeanarr, ya+shift),
-                            xytext=(xmean, ya+0.5),
-                            arrowprops=arrowprops, color=ccol)
-                """
-                ax.annotate(txt, xy=(xmean, ya+1), xytext=(xmean, ya+1.5),
-                                arrowprops=dict(arrowstyle="->"))
-                """
-
-        # break
-        axb = ax.twinx()
-        axb.set_ylabel(name, rotation=70., fontweight='bold',
-                       color='orange', labelpad=35)
-        axb.set_yticks([])
         ax.grid()
-        if io == 2:
-            ax.set_xlabel('year', fontweight='bold')
-        if io == 1:
-            ax.set_ylabel('$N^{DDF}$')
-        ax.set_xlim([1, 11])
-        if io == 0:
-            ax.legend(ncol=2, bbox_to_anchor=(0.1, 0.95), frameon=False)
+        ax.set_ylabel(ylabel)
+        ax.set_xlabel(xlabel)
+        ax.tick_params(axis='x', labelrotation=290, labelright=True,
+                       labelsize=12)
+        # Rotate the tick labels and set their alignment.
+        plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
+                 rotation_mode="anchor")
+
+
+class Budget_time:
+    def __init__(self, df, Nv_LSST):
+        """
+        class to estimate and plot the budget vs time
+
+        Parameters
+        ----------
+        df : pandas df
+            data to process.
+        Nv_LSST : int
+            total number of LSST visits (10 years).
+
+        Returns
+        -------
+        None.
+
+        """
+
+        self.Nv_LSST = Nv_LSST
+        budget = df.groupby('name').apply(
+            lambda x: self.budget_scenario(x)).reset_index()
+
+        print(budget)
+
+        budget['budget_per'] = 100.*budget['budget']
+        print(budget.columns)
+        budget = budget.sort_values(by=['year'])
+        self.plot_budget_time(budget)
+
+    def budget_scenario(self, grp):
+        """
+        Method to estimate the budget vs time per scenario
+
+        Parameters
+        ----------
+        grp : pandas df
+            Data to process.
+
+        Returns
+        -------
+        nv : pandas df
+            budget vs time.
+
+        """
+
+        grp['nvisits_field'] = grp['nvisits_band_season']*grp['Nfields']
+
+        nv = grp.groupby(
+            ['year'])['nvisits_field'].sum().reset_index()
+
+        nv['budget'] = nv['nvisits_field'].cumsum()/self.Nv_LSST
+
+        # add year 0 with 0 budget
+        y0 = pd.DataFrame([(0, 0.0)], columns=['year', 'budget'])
+        nv = pd.concat((nv, y0))
+
+        return nv
+
+    def plot_budget_time(self, res):
+        """
+        Method to plot the budget vs time
+
+        Parameters
+        ----------
+        sel : TYPE
+            DESCRIPTION.
+        df : TYPE
+            DESCRIPTION.
+
+        Returns
+        -------
+        None.
+
+        """
+
+        fig, ax = plt.subplots(figsize=(14, 8))
+
+        names = np.unique(res['name'])
+        ls = dict(zip(['0.70', '0.75', '0.80'], ['solid', 'dotted', 'dashed']))
+        colors = dict(zip(range(9), ['blue', 'k', 'red']*3))
+        res = res.sort_values(by=['name'])
+        for io, nn in enumerate(names):
+            lst = 'None'
+            for key, vals in ls.items():
+                if key in nn:
+                    lst = vals
+            idx = res['name'] == nn
+            sel = res[idx]
+            sel = sel.sort_values(by=['year'])
+            ax.plot(sel['year'], sel['budget_per'], linestyle=lst,
+                    color=colors[io], label=nn)
+
+        ax.grid()
+        ax.set_xlabel('Year')
+        ax.set_ylabel('DDF budget [%]')
+        ax.legend(frameon=False)
+        ax.set_xlim(0, 10)
+        ax.set_ylim(0., 7.)
+
+
+class Scenario_time:
+    def __init__(self, df):
+        """
+        class to plot scenario (ie nvisits/band/obs. night per year)
+
+        Parameters
+        ----------
+        df : pandas df
+            data to plot.
+
+        Returns
+        -------
+        None.
+
+        """
+
+        res = df.groupby(['name']).apply(
+            lambda x: self.scenario_fields(x)).reset_index()
+
+        res['scen_type'] = res['name'].str.split('_').str.get(-1)
+
+        # plot it please
+        for scen_type in res['scen_type'].unique():
+            idx = res['scen_type'] == scen_type
+            sel = res[idx]
+            self.plot_scenario(sel)
+
+    def scenario_fields(self, df):
+        """
+        method to estimate scenario per fieldtype (UD or DD)
+
+        Parameters
+        ----------
+        df : pandas df
+            Data to process.
+
+        Returns
+        -------
+        rr : pandas df
+            scenario per fieldtype
+
+        """
+
+        rr = df.groupby(['fieldType', 'Nfields']).apply(
+            lambda x: self.scenario_years(x))
+
+        return rr
+
+    def scenario_years(self, grp):
+        """
+        Method to estimlate scenario per year
+
+        Parameters
+        ----------
+        grp : pandas df
+            Data to process.
+
+        Returns
+        -------
+        rr : pandas df
+            scenario per year
+
+        """
+
+        rr = grp.groupby('year').apply(
+            lambda x: self.visits_str(x))
+
+        return rr
+
+    def visits_str(self, grp):
+        """
+        Method to estimate nvisits/band/obs night as a str
+
+        Parameters
+        ----------
+        grp : pandas df
+            Data to process.
+
+        Returns
+        -------
+        resfi: pandas df
+            filter allocation and total number of visits per obs. night.
+
+        """
+
+        ff = dict(zip(grp['band'].to_list(), grp['nvisits_night'].to_list()))
+        # Nfields = int(grp['Nfields'].mean())
+
+        bands = 'ugrizy'
+        """
+        import copy
+        ff_moon = copy.deepcopy(ff)
+        ff_moon['z'] = 0
+        nv_moon = '/'.join(['{}'.format(int(ff_moon[key])) for key in bands])
+        nv_moon_night = np.sum([int(ff_moon[key]) for key in bands])
+    
+        ff_nomoon = copy.deepcopy(ff)
+        ff_nomoon['u'] = 0
+        nv_nomoon = '/'.join(['{}'.format(int(ff_nomoon[key])) for key in bands])
+        nv_nomoon_night = np.sum([int(ff_nomoon[key]) for key in bands])
+    
+        res = '{}||{}'.format(nv_moon, nv_nomoon)
+        resb = '{}||{}'.format(nv_moon_night, nv_nomoon_night)
+        """
+        nv = '/'.join(['{}'.format(int(ff[key])) for key in bands])
+        nv_night = np.sum([int(ff[key]) for key in bands])
+
+        res = '{}'.format(nv)
+        resb = '{}'.format(nv_night)
+
+        resfi = pd.DataFrame({'visits': [res], 'visits_night': [resb]})
+
+        return resfi
+
+    def plot_scenario(self, df):
+        """
+        method to plot scenario
+
+        Parameters
+        ----------
+        df : pandas df
+            data to plot.
+
+        Returns
+        -------
+        None.
+
+        """
+
+        names = df['name'].unique()
+
+        ls = dict(zip(['UD', 'DD'], ['solid', 'dashed']))
+        corresp = dict(zip(['UD', 'DD'], ['Ultra-Deep Field', 'Deep Field']))
+
+        fig, axa = plt.subplots(nrows=3, figsize=(12, 10))
+        fig.subplots_adjust(hspace=0)
+        for io, name in enumerate(names):
+            ax = axa[io]
+            idx = df['name'] == name
+            sel = df[idx]
+
+            dict_pos = {}
+            fieldTypes = sorted(sel['fieldType'].unique())[::-1]
+            for ftype in fieldTypes:
+                idxa = sel['fieldType'] == ftype
+                sela = sel[idxa]
+
+                ya = sela['Nfields'].mean()
+                # complete line up to end of y10
+                ax.plot([10, 11], [ya]*2, linestyle=ls[ftype], color='k', lw=3)
+                ax.plot(sela['year'], sela['Nfields'],
+                        linestyle=ls[ftype], color='k', lw=3)
+
+                tt = sela.groupby('visits').apply(lambda x:
+                                                  pd.DataFrame({'yearmin':
+                                                                [x['year'].min()],
+                                                                'yearmax':
+                                                                [x['year'].max()]})).reset_index()
+
+                y = [ya-0.1, ya+0.1]
+                k = 1
+                shift = 0
+                if ftype == 'DD':
+                    # k = -1
+                    shift = 1
+
+                for iu, row in tt.iterrows():
+                    ccol = 'g'
+                    yrmin = row['yearmin']
+                    yrmax = row['yearmax']
+                    xa = [yrmin]*2
+                    xb = [yrmax+1]*2
+                    xmean = np.mean(xa+xb)
+                    xmeanarr = xmean
+
+                    if xmean >= 2 and xmean <= 4:
+                        ccol = 'r'
+
+                    if xmean < 2:
+                        ccol = 'b'
+
+                    if yrmax == yrmin:
+                        xmean *= 0.7
+                    if xmean == 3:
+                        xmean += 0.2
+
+                    """
+                    if yrmax == yrmin:
+                        xmean = yrmin
+                    """
+                    if io != 0:
+                        ax.plot(xa, y, linestyle=ls[ftype], color='k', lw=3)
+                    else:
+                        if iu == 1:
+                            ax.plot(xa, y, linestyle=ls[ftype],
+                                    color='k', lw=3, label=corresp[ftype])
+
+                    ax.plot(xb, y, linestyle=ls[ftype], color='k', lw=3)
+
+                    """
+                    ax.arrow(yrmin, ya, yrmax+1-yrmin, 0.0, width=0.05,
+                             length_includes_head=True, fc='yellow', head_length=0.1, ec='k', alpha=0.20)
+    
+                    ax.arrow(yrmin+1, ya, -1, 0.0, width=0.05,
+                             length_includes_head=True, fc='yellow', head_length=0.1, ec='k', alpha=0.20)
+                    """
+
+                    """
+                    ax.arrow(yrmin, ya, yrmax+1-yrmin, 0.0, width=0.03,
+                             length_includes_head=True, fc='k', head_length=0.2, ec='k')
+    
+                    ax.arrow(yrmin+1, ya, -1, 0.0, width=0.03,
+                             length_includes_head=True, fc='k', head_length=0.2, ec='k', ls=ls[ftype])
+                    """
+                    """
+                    arrow = mpatches.FancyArrowPatch(
+                        (yrmin, ya), (yrmax+1, ya), mutation_scale=100,
+                        arrowstyle='<->,head_length=0.4,head_width=0.4,tail_width=0.4', lw=8, color='yellow')
+                    """
+                    # ax.add_patch(arrow)
+
+                    txt = row['visits']
+                    props = dict(boxstyle='round',
+                                 facecolor='wheat', alpha=0.5)
+                    # ax.text(xmean, ya+0.5, txt, bbox=props)
+                    if txt not in dict_pos.keys():
+                        dict_pos[txt] = [xmean, xmeanarr, ya]
+
+                    xmean = dict_pos[txt][0]
+                    xmeanarr = dict_pos[txt][1]
+                    ya = dict_pos[txt][2]
+
+                    arrowprops = dict(arrowstyle="->")
+                    arrowprops = dict(
+                        facecolor=ccol, arrowstyle="simple", edgecolor=ccol)
+                    ax.annotate(txt, xy=(xmeanarr, ya+shift),
+                                xytext=(xmean, ya+0.5),
+                                arrowprops=arrowprops, color=ccol)
+                    """
+                    ax.annotate(txt, xy=(xmean, ya+1), xytext=(xmean, ya+1.5),
+                                    arrowprops=dict(arrowstyle="->"))
+                    """
+
+            # break
+            axb = ax.twinx()
+            axb.set_ylabel(name, rotation=270., fontweight='bold',
+                           color='orange', labelpad=35, fontsize=15)
+            axb.set_yticks([])
+            ax.grid()
+            if io == 2:
+                ax.set_xlabel('year', fontweight='bold')
+            if io == 1:
+                ax.set_ylabel('$N^{DDF}$')
+            ax.set_xlim([1, 11])
+            if io == 0:
+                ax.legend(ncol=2, bbox_to_anchor=(0.1, 0.95), frameon=False)
+
+
+def reshuffle(df_res, frac_moon):
+    """
+    Functio to write the input df in a more usable way
+
+    Parameters
+    ----------
+    df_res : pandas df
+        data to process
+    frac_moon : float
+        frac of nights with moon (moon phase <= xx%)
+
+    Returns
+    -------
+    df_resb : pandas df
+        reshuffled df
+
+    """
+    r = []
+    bbval = ['name', 'zcomp', 'Nf_UD', 'Ns_UD', 'nvisits_UD_night',
+             'nvisits_DD_season', 'cad', 'sl', 'zcomp_new', 'Nvisits',
+             'delta_z',
+             'nvisits_UD_night_recalc', 'nvisits_UD_season', 'n_night_season']
+
+    # get u-visits from z-visits
+    df_res['u_season'] = frac_moon*df_res['z_season']
+    # df_res['z_season'] = (1.-frac_moon)*df_res['z_season']
+    df_res['n_night_season'] = df_res['sl']/df_res['cad']
+    df_res['u_recalc'] = df_res['u_season']/frac_moon/df_res['n_night_season']
+    df_res['z_recalc'] = df_res['z_season'] / \
+        (1.-frac_moon)/df_res['n_night_season']
+    for io, row in df_res.iterrows():
+        ra = []
+        for vv in bbval:
+            ra.append(row[vv])
+        for b in 'grizy':
+            r.append(ra + [b, row[b]])
+        # add a uband
+        name = row['name']
+        ipo = m5_resu['name'] == name
+        ipo &= m5_resu['band'] == 'u'
+        sel = m5_resu[ipo]
+        nu_night = sel['Nvisits']/sel['Nseasons']
+        n_nights = sl_UD/cad_UD
+        nu_night /= (frac_moon*n_nights)
+        r.append(ra+['u', np.round(nu_night[0], 0)])
+
+    df_resb = pd.DataFrame(r, columns=bbval+['band', 'nvisits_night'])
+    fracs = pd.DataFrame(list('ugrizy'), columns=['band'])
+    fracs['frac_night'] = [frac_moon, 1., 1., 1., 1.-frac_moon, 1.]
+
+    df_resb = df_resb.merge(fracs, left_on=['band'], right_on=['band'])
+
+    return df_resb
+
+
+def nvisits_from_m5(res, m5class, Nseasons=9):
+
+    m5_resu = pd.DataFrame()
+
+    for vv in res:
+        Nvisits = vv['nvisits_DD_season']*Nseasons
+        res = m5class.m5_from_Nvisits(Nvisits=Nvisits)
+        res['name'] = vv['name']
+        res['Nseasons'] = Nseasons
+        m5_resu = pd.concat((m5_resu, res))
+
+    return m5_resu
 
 
 ################################################
@@ -1359,15 +1630,17 @@ pz_wl_req_err = {}
 pz_wl_req_err['PZ_y2_y10'] = (m5_dict['Nvisits_y2_y10_m']/9.,
                               m5_dict['Nvisits_y2_y10_p']/9.)
 
-# year 1 reqs are different -> take it into account
-Nf_DD_y1 = 3  # UD the first year
-f_DD_y1 = 5  # UD the second year
+# Parameters
+Nf_DD_y1 = 5  # UD the second year
 Nv_DD_y1 = int(m5_dict['Nvisits_y1'])
 sl_UD = 180.
 cad_UD = 2.
 NDD = 5
 Nv_LSST = 2.1e6
-frac_moon = 0.20
+frac_moon = 0.30
+sl_DD = 180.
+cad_DD = 3.
+
 myclass = DD_Scenario(Nf_combi=[(2, 2), (2, 3), (2, 4)],
                       zcomp=[0.80, 0.75, 0.70],
                       scen_names=['DDF_DESC_0.80',
@@ -1382,19 +1655,9 @@ restot = myclass.get_combis()
 zcomp_req = myclass.get_zcomp_req()
 zcomp_req_err = myclass.get_zcomp_req_err()
 scenario = myclass.get_scenario()
-"""
-N = 14852/9
-Nb = 13545/9
-Nc = 16285/9
-pz_wl_req = dict(zip(['PZ_y1', 'PZ_y2_y10', 'WL_10xWFD'],
-                     [[85, 1070],
-                     [85, N],
-                     [85, 800]]))
-pz_wl_req_err = {}
-pz_wl_req_err['PZ_y2_y10'] = (Nb, Nc)
-"""
 
-### plot the result ######
+### plot the result and get scenarios ######
+
 nvisits = '$N_{visits}^{LSST}$'
 cadud = '$cad^{UD}$'
 ftit = 'DD budget={}% - {}={} million'.format(int(100*myclass.budget_DD),
@@ -1417,8 +1680,13 @@ res = myclass.plot(restot, varx='Nv_DD',
                    pz_wl_req=pz_wl_req, pz_wl_req_err=pz_wl_req_err,
                    figtitle=ffig)
 
+### m5_resu ###
+
+m5_resu = nvisits_from_m5(res, m5class)
+
+# finish the data
+
 df_res = myclass.finish(res)
-# myclass.plot_budget_time(df_res)
 
 toprint = ['name', 'Nf_UD', 'Ns_UD', 'nvisits_UD_night',
            'g', 'r', 'i', 'z', 'y', 'delta_z',
@@ -1429,124 +1697,27 @@ print(df_res[toprint])
 df_res[toprint].to_csv('ddf_res1.csv', index=False)
 
 
-### m5_resu ###
-
-m5_resu = pd.DataFrame()
-
-Nseasons = 9
-for vv in res:
-    Nvisits = vv['nvisits_DD_season']*Nseasons
-    res = m5class.m5_from_Nvisits(Nvisits=Nvisits)
-    res['name'] = vv['name']
-    res['Nseasons'] = Nseasons
-    m5_resu = pd.concat((m5_resu, res))
-
-print('iii', m5_resu)
-
-"""
-idx = m5_resu['name'] != 'DDF_SCOC'
-m5_resu = m5_resu[idx]
-m5_resu = m5_resu.round({'m5': 2, 'delta_m5': 2})
-print(m5_resu.columns)
-"""
-
-# estimate the number of visits per obs night for DD
-# check impact on m5
-sl_DD = 180.
-cad_DD = 3.
-resa, resb = m5class.m5_band_from_Nvisits(m5_resu, sl_DD=sl_DD, cad_DD=cad_DD)
-
-print(resa)
-print(resa.columns)
-print(resb)
-
-# which m5 for UD fields? and comparison to y1 and y2_y10 requirements
-# grab scenarios
-
-print(df_res.columns)
-# get u-visits from z-visits
-df_res['u_season'] = frac_moon*df_res['z_season']
-# df_res['z_season'] = (1.-frac_moon)*df_res['z_season']
-df_res['n_night_season'] = df_res['sl']/df_res['cad']
-df_res['u_recalc'] = df_res['u_season']/frac_moon/df_res['n_night_season']
-df_res['z_recalc'] = df_res['z_season']/(1.-frac_moon)/df_res['n_night_season']
-print(df_res[['g', 'r', 'i', 'z', 'y', 'u_recalc', 'z_recalc', 'z_season']])
-
-check_m5(df_res, m5class)
 # transform df_res
-
-r = []
-
-bbval = ['name', 'zcomp', 'Nf_UD', 'Ns_UD', 'nvisits_UD_night',
-         'nvisits_DD_season', 'cad', 'sl', 'zcomp_new', 'Nvisits', 'delta_z',
-         'nvisits_UD_night_recalc', 'nvisits_UD_season', 'n_night_season']
-
-"""
-'delta_z', 'g', 'r', 'i',
-       'z', 'y', 'nvisits_UD_night_recalc', 'nvisits_UD_season', 'g_season',
-       'r_season', 'i_season', 'z_season', 'y_season', 'Nvisits'
-"""
-for io, row in df_res.iterrows():
-    ra = []
-    for vv in bbval:
-        ra.append(row[vv])
-    for b in 'grizy':
-        r.append(ra + [b, row[b]])
-    # add a uband
-    name = row['name']
-    ipo = m5_resu['name'] == name
-    ipo &= m5_resu['band'] == 'u'
-    sel = m5_resu[ipo]
-    nu_night = sel['Nvisits']/sel['Nseasons']
-    n_nights = sl_UD/cad_UD
-    nu_night /= (frac_moon*n_nights)
-    r.append(ra+['u', np.round(nu_night[0], 0)])
-
-print(r)
-df_resb = pd.DataFrame(r, columns=bbval+['band', 'nvisits_night'])
-fracs = pd.DataFrame(list('ugrizy'), columns=['band'])
-fracs['frac_night'] = [frac_moon, 1., 1., 1., 1.-frac_moon, 1.]
-
-df_resb = df_resb.merge(fracs, left_on=['band'], right_on=['band'])
-
+df_resb = reshuffle(df_res, frac_moon)
 print(df_resb.columns)
 
-"""
-vv = m5class.msingle_calc
-
-print(vv.columns)
-
-vv['Nvisits_y1'] = vv['Nvisits_y1'].astype(int)
-vv['Nvisits_y2_y10'] = vv['Nvisits_y2_y10'].astype(int)
-cad = 4
-sl = 180
-vv['Nvisits_y1_night'] = vv['Nvisits_y1']*cad/sl
-vv['Nvisits_y2_y10_night'] = vv['Nvisits_y2_y10']*cad/sl
-vv['Nvisits_y1_night'] = vv['Nvisits_y1_night'].astype(int)
-vv['Nvisits_y2_y10_night'] = vv['Nvisits_y2_y10_night'].astype(int)
-
-po = vv[['band', 'm5_y1', 'Nvisits_y1', 'Nvisits_y1_night',
-         'm5_y2_y10', 'Nvisits_y2_y10', 'Nvisits_y2_y10_night']]
-
-po.to_csv('testons.csv', index=False)
-"""
-
-# now re-estimate the budget vs time
-
-# dfres = df_resb.groupby('name').apply(
-#    lambda x: get_budget(x, NDD, resa, resb, Nv_LSST)).reset_index()
-
+# get the final scenario
+resa, resb = m5class.m5_band_from_Nvisits(m5_resu, sl_DD=sl_DD,
+                                          cad_DD=cad_DD, frac_moon=frac_moon)
 dfres = df_resb.groupby('name').apply(
     lambda x: get_final_scenario(x, NDD, resa, resb)).reset_index()
 print(dfres)
 
-# delta_m5(dfres, m5_nvisits)
+##### Final plots ####
 
-# budget_time(dfres, Nv_LSST)
+# estimate and plot delta_m5 for each scenario
+Delta_m5(dfres, m5_nvisits)
 
-scenario_time(dfres)
+# plot budget vs time for each scenario
+Budget_time(dfres, Nv_LSST)
 
 
-print(m5_nvisits)
-# plot_budget_time(dfres)
+# plot scenario vs time
+Scenario_time(dfres)
+
 plt.show()
