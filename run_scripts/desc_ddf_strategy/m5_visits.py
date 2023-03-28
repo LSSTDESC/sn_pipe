@@ -651,7 +651,7 @@ class DD_Scenario:
                     vx = np.abs(nv_DD-0.8*nv_DD)
                 if vy < 0:
                     vy = np.abs(nv_UD-0.95*nv_UD)
-                ax.text(nv_DD-vx, nv_UD-vy, name, color='b', fontsize=12)
+                ax.text(nv_DD-vx, nv_UD-vy, namea, color='b', fontsize=12)
                 # print(name, int(nv_DD), int(nv_UD), vx, vy)
 
         xmin = np.min(restot[varx])
@@ -1147,22 +1147,44 @@ class Delta_m5:
         marker = dict(zip(['UD', 'DD'], ['o', 's']))
 
         df['scen_type'] = df['name'].str.split('_').str.get(-1)
-        df = df.sort_values(by='scen_type')
+        df = df.sort_values(by='name')
 
         for b in bands:
             idx = df['band'] == b
             sela = df[idx]
+            sela = sela.sort_values(by='name')
             fieldTypes = sela['fieldType'].unique()
             for ft in fieldTypes:
                 idxa = sela['fieldType'] == ft
                 selb = sela[idxa]
+                selb = selb.sort_values(by='name')
                 """
                 ax.plot(selb[xvar], selb[yvar], linestyle=ls[ft],
                         color=filtercolors[b])
                 """
-                ax.plot(selb[xvar], selb[yvar], linestyle='None',
+
+                ax.plot(selb[xvar], selb[yvar],  # linestyle='None',
                         color=filtercolors[b], marker=marker[ft],
                         mfc='None', ms=12, markeredgewidth=2)
+
+        ax.text(0.3, 0.9, 'UD Field', horizontalalignment='center',
+                verticalalignment='center', transform=fig.transFigure)
+        ax.plot([0.23], [0.9], marker='o', linestyle='None', mfc='None', ms=12,
+                color='k', transform=fig.transFigure, clip_on=False, markeredgewidth=2)
+
+        ax.text(0.7, 0.9, 'DD Field', horizontalalignment='center',
+                verticalalignment='center', transform=fig.transFigure)
+        ax.plot([0.63], [0.9], marker='s', linestyle='None', mfc='None', ms=12,
+                color='k', transform=fig.transFigure, clip_on=False, markeredgewidth=2)
+
+        xdep = 0.92
+        ydep = 0.6
+        shift = 0.05
+        for ik, b in enumerate('ugrizy'):
+            ax.plot([xdep, xdep+0.02], [ydep-ik*shift]*2, linestyle='solid',
+                    color=filtercolors[b], transform=fig.transFigure, clip_on=False)
+            ax.text(xdep+0.030, ydep-ik*shift, b, horizontalalignment='center',
+                    verticalalignment='center', transform=fig.transFigure)
 
         ax.grid()
         ax.set_ylabel(ylabel)
@@ -1295,11 +1317,14 @@ class Scenario_time:
 
         res['scen_type'] = res['name'].str.split('_').str.get(-1)
 
+        print('akkkk', res.columns)
+
         # plot it please
         for scen_type in res['scen_type'].unique():
             idx = res['scen_type'] == scen_type
             sel = res[idx]
             self.plot_scenario(sel)
+            self.plot_scenario(sel, visitName='visits_night')
 
     def scenario_fields(self, df):
         """
@@ -1363,32 +1388,33 @@ class Scenario_time:
         # Nfields = int(grp['Nfields'].mean())
 
         bands = 'ugrizy'
-        """
+
         import copy
         ff_moon = copy.deepcopy(ff)
         ff_moon['z'] = 0
         nv_moon = '/'.join(['{}'.format(int(ff_moon[key])) for key in bands])
         nv_moon_night = np.sum([int(ff_moon[key]) for key in bands])
-    
+
         ff_nomoon = copy.deepcopy(ff)
         ff_nomoon['u'] = 0
-        nv_nomoon = '/'.join(['{}'.format(int(ff_nomoon[key])) for key in bands])
+        nv_nomoon = '/'.join(['{}'.format(int(ff_nomoon[key]))
+                             for key in bands])
         nv_nomoon_night = np.sum([int(ff_nomoon[key]) for key in bands])
-    
-        res = '{}||{}'.format(nv_moon, nv_nomoon)
-        resb = '{}||{}'.format(nv_moon_night, nv_nomoon_night)
-        """
+
+        # res = '{}||{}'.format(nv_moon, nv_nomoon)
+        resb = '{}/{}'.format(nv_moon_night, nv_nomoon_night)
+
         nv = '/'.join(['{}'.format(int(ff[key])) for key in bands])
-        nv_night = np.sum([int(ff[key]) for key in bands])
+        # nv_night = np.sum([int(ff[key]) for key in bands])
 
         res = '{}'.format(nv)
-        resb = '{}'.format(nv_night)
+        # resb = '{}'.format(nv_night)
 
         resfi = pd.DataFrame({'visits': [res], 'visits_night': [resb]})
 
         return resfi
 
-    def plot_scenario(self, df):
+    def plot_scenario(self, df, visitName='visits'):
         """
         method to plot scenario
 
@@ -1427,11 +1453,11 @@ class Scenario_time:
                 ax.plot(sela['year'], sela['Nfields'],
                         linestyle=ls[ftype], color='k', lw=3)
 
-                tt = sela.groupby('visits').apply(lambda x:
-                                                  pd.DataFrame({'yearmin':
+                tt = sela.groupby(visitName).apply(lambda x:
+                                                   pd.DataFrame({'yearmin':
                                                                 [x['year'].min()],
                                                                 'yearmax':
-                                                                [x['year'].max()]})).reset_index()
+                                                                 [x['year'].max()]})).reset_index()
 
                 y = [ya-0.1, ya+0.1]
                 k = 1
@@ -1476,7 +1502,7 @@ class Scenario_time:
                     """
                     ax.arrow(yrmin, ya, yrmax+1-yrmin, 0.0, width=0.05,
                              length_includes_head=True, fc='yellow', head_length=0.1, ec='k', alpha=0.20)
-    
+
                     ax.arrow(yrmin+1, ya, -1, 0.0, width=0.05,
                              length_includes_head=True, fc='yellow', head_length=0.1, ec='k', alpha=0.20)
                     """
@@ -1484,7 +1510,7 @@ class Scenario_time:
                     """
                     ax.arrow(yrmin, ya, yrmax+1-yrmin, 0.0, width=0.03,
                              length_includes_head=True, fc='k', head_length=0.2, ec='k')
-    
+
                     ax.arrow(yrmin+1, ya, -1, 0.0, width=0.03,
                              length_includes_head=True, fc='k', head_length=0.2, ec='k', ls=ls[ftype])
                     """
@@ -1495,7 +1521,7 @@ class Scenario_time:
                     """
                     # ax.add_patch(arrow)
 
-                    txt = row['visits']
+                    txt = row[visitName]
                     props = dict(boxstyle='round',
                                  facecolor='wheat', alpha=0.5)
                     # ax.text(xmean, ya+0.5, txt, bbox=props)
@@ -1601,6 +1627,108 @@ def nvisits_from_m5(res, m5class, Nseasons=9):
     return m5_resu
 
 
+class Delta_nvisits:
+    def __init__(self, dfres, m5_nvisits):
+        """
+        class to estimate and plot Delta Nvisits per band (scenario vs req)
+
+        Parameters
+        ----------
+        dfres : pandas df
+            DD scenarios.
+        m5_nvisits : pandas df
+            M5 and Nvisits req to reach these m5.
+
+        Returns
+        -------
+        None.
+
+        """
+
+        idx = dfres['year'] == 1
+        df_y1 = dfres[idx][['name', 'fieldType',
+                            'band', 'nvisits_band_season']]
+        m5_nvisits_y1 = m5_nvisits[['band', 'Nvisits_y1']]
+
+        df_y1 = df_y1.merge(m5_nvisits_y1, left_on=['band'], right_on=['band'])
+        df_y1['ratio_nvisits'] = df_y1['nvisits_band_season']/df_y1['Nvisits_y1']
+
+        df_y2_y10 = dfres[~idx]
+        m5_nvisits_y2_y10 = m5_nvisits[['band', 'Nvisits_y2_y10']]
+        df_y2_y10 = df_y2_y10.groupby(['name', 'band', 'fieldType'])[
+            'nvisits_band_season'].sum().reset_index()
+        df_y2_y10 = df_y2_y10.merge(m5_nvisits_y2_y10, left_on=['band'],
+                                    right_on=['band'])
+
+        df_y2_y10['ratio_nvisits'] = df_y2_y10['nvisits_band_season'] / \
+            df_y2_y10['Nvisits_y2_y10']
+
+        self.plot_delta_nvisits(df_y1, figtitle='PZ requirements y1')
+        self.plot_delta_nvisits(df_y2_y10)
+
+    def plot_delta_nvisits(self, df, xvar='name', xlabel='',
+                           yvar='ratio_nvisits',
+                           ylabel=r'$\frac{N_{visits}^{DD}}{N_{visits}^{PZ}}$',
+                           figtitle='PZ requirements y2_y10'):
+        """
+        Method to plot ratio of nvisits vs scenario
+
+        Parameters
+        ----------
+        df : pandas df
+            data to plot.
+        xvar : str, optional
+            x-axis val. The default is 'name'.
+        xlabel : str, optional
+            x-axis label. The default is ''.
+        yvar : str, optional
+            y-axis var. The default is 'diff_m5'.
+        ylabel : str, optional
+            y-axis label. The default is '$\Delta m_5=m_5^{DD}-m_5^{PZ}$'.
+        figtitle : str, optional
+            fig title. The default is 'PZ requirements y2_y10'.
+
+        Returns
+        -------
+        None.
+
+        """
+
+        fig, ax = plt.subplots(figsize=(14, 8))
+        fig.suptitle(figtitle)
+        fig.subplots_adjust(bottom=0.2)
+        bands = df['band'].unique()
+        ls = dict(zip(['UD', 'DD'], ['solid', 'dashed']))
+        marker = dict(zip(['UD', 'DD'], ['o', 's']))
+
+        df['scen_type'] = df['name'].str.split('_').str.get(-1)
+        df = df.sort_values(by='scen_type')
+
+        for b in bands:
+            idx = df['band'] == b
+            sela = df[idx]
+            fieldTypes = sela['fieldType'].unique()
+            for ft in fieldTypes:
+                idxa = sela['fieldType'] == ft
+                selb = sela[idxa]
+                """
+                ax.plot(selb[xvar], selb[yvar], linestyle=ls[ft],
+                        color=filtercolors[b])
+                """
+                ax.plot(selb[xvar], selb[yvar], linestyle='None',
+                        color=filtercolors[b], marker=marker[ft],
+                        mfc='None', ms=12, markeredgewidth=2)
+
+        ax.grid()
+        ax.set_ylabel(ylabel)
+        ax.set_xlabel(xlabel)
+        ax.tick_params(axis='x', labelrotation=290, labelright=True,
+                       labelsize=12)
+        # Rotate the tick labels and set their alignment.
+        plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
+                 rotation_mode="anchor")
+
+
 ################################################
 ##### get Nvisits from m5 req.          ########
 ## m5_dict: total number of visits (PZ req.) ##
@@ -1680,6 +1808,7 @@ res = myclass.plot(restot, varx='Nv_DD',
                    pz_wl_req=pz_wl_req, pz_wl_req_err=pz_wl_req_err,
                    figtitle=ffig)
 
+# plt.show()
 ### m5_resu ###
 
 m5_resu = nvisits_from_m5(res, m5class)
@@ -1710,14 +1839,20 @@ print(dfres)
 
 ##### Final plots ####
 
+
 # estimate and plot delta_m5 for each scenario
 Delta_m5(dfres, m5_nvisits)
 
+# estimate and plot visit ratio for each scenario
+# Delta_nvisits(dfres, m5_nvisits)
+
+"""
 # plot budget vs time for each scenario
 Budget_time(dfres, Nv_LSST)
 
 
 # plot scenario vs time
 Scenario_time(dfres)
+"""
 
 plt.show()
