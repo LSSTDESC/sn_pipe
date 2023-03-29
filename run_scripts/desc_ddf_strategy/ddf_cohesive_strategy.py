@@ -17,6 +17,7 @@ m5_summary = m5class.summary
 m5_nvisits = m5class.msingle_calc
 m5_dict = m5_summary.to_dict()
 
+print(m5_summary)
 print(m5_dict)
 print(m5_nvisits)
 
