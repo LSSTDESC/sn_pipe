@@ -85,7 +85,7 @@ res = myclass.plot(restot, varx='Nv_DD',
                    pz_wl_req=pz_wl_req, pz_wl_req_err=pz_wl_req_err,
                    figtitle=ffig)
 
-# plt.show()
+plt.show()
 ### m5_resu ###
 
 m5_resu = nvisits_from_m5(res, m5class)
