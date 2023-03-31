@@ -13,6 +13,7 @@ bands = 'ugrizy'
 
 m5class = FiveSigmaDepth_Nvisits()
 
+msingle = m5class.msingle
 m5_summary = m5class.summary
 m5_nvisits = m5class.msingle_calc
 m5_dict = m5_summary.to_dict()
@@ -25,19 +26,24 @@ print(m5_nvisits)
 
 corresp = dict(zip(['Nvisits_y1', 'Nvisits_y2_y10'], ['PZ_y1', 'PZ_y2_y10']))
 nseasons = dict(zip(['Nvisits_y1', 'Nvisits_y2_y10'], [1, 9]))
+corresp = dict(zip(['Nvisits_WL_PZ_y1', 'Nvisits_WL_PZ_y2_y10'], [
+               'WL_PZ_y1', 'WL_PZ_y2_y10']))
+nseasons = dict(zip(['Nvisits_WL_PZ_y1', 'Nvisits_WL_PZ_y2_y10'], [1, 9]))
 
 pz_wl_req = {}
 for key, vals in corresp.items():
     pz_wl_req[vals] = [85, int(m5_dict[key]/nseasons[key])]
 
-pz_wl_req['WL_10xWFD'] = [85, 800]
+#pz_wl_req['WL_10xWFD'] = [85, 800]
 pz_wl_req_err = {}
-pz_wl_req_err['PZ_y2_y10'] = (m5_dict['Nvisits_y2_y10_m']/9.,
-                              m5_dict['Nvisits_y2_y10_p']/9.)
-
+# pz_wl_req_err['PZ_y2_y10'] = (m5_dict['Nvisits_y2_y10_m']/9.,
+#                              m5_dict['Nvisits_y2_y10_p']/9.)
+pz_wl_req_err['WL_PZ_y2_y10'] = (m5_dict['Nvisits_WL_PZ_y2_y10_m']/9.,
+                                 m5_dict['Nvisits_WL_PZ_y2_y10_p']/9.)
 # Parameters
-Nf_DD_y1 = 5  # UD the second year
-Nv_DD_y1 = int(m5_dict['Nvisits_y1'])
+Nf_DD_y1 = 5  # UD starting the second year
+# Nv_DD_y1 = int(m5_dict['Nvisits_y1'])
+Nv_DD_y1 = int(m5_dict['Nvisits_WL_PZ_y1'])
 sl_UD = 180.
 cad_UD = 2.
 NDD = 5
@@ -51,6 +57,7 @@ myclass = DD_Scenario(Nf_combi=[(2, 2), (2, 3), (2, 4)],
                       scen_names=['DDF_DESC_0.80',
                                   'DDF_DESC_0.75',
                                   'DDF_DESC_0.70'],
+                      m5_single_OS=msingle,
                       Nf_DD_y1=Nf_DD_y1,
                       Nv_DD_y1=Nv_DD_y1,
                       sl_UD=sl_UD, cad_UD=cad_UD, NDD=NDD, Nv_LSST=Nv_LSST,
@@ -85,7 +92,7 @@ res = myclass.plot(restot, varx='Nv_DD',
                    pz_wl_req=pz_wl_req, pz_wl_req_err=pz_wl_req_err,
                    figtitle=ffig)
 
-plt.show()
+# plt.show()
 ### m5_resu ###
 
 m5_resu = nvisits_from_m5(res, m5class)
@@ -105,10 +112,12 @@ df_res[toprint].to_csv('ddf_res1.csv', index=False)
 
 # transform df_res
 df_resb = reshuffle(df_res, m5_resu, sl_UD, cad_UD, frac_moon)
-print(df_resb.columns)
 
-# get the final scenarioreshu
+
+# get the final scenario
 m5single = m5class.msingle_calc
+
+
 resa, resb = m5class.m5_band_from_Nvisits(m5_resu, m5single, sl_DD=sl_DD,
                                           cad_DD=cad_DD, frac_moon=frac_moon)
 dfres = df_resb.groupby('name').apply(
@@ -126,11 +135,11 @@ Delta_nvisits(dfres, m5_nvisits)
 
 
 # plot budget vs time for each scenario
-Budget_time(dfres, Nv_LSST)
+# Budget_time(dfres, Nv_LSST)
 
 
 # plot scenario vs time
-Scenario_time(dfres)
+# Scenario_time(dfres)
 
 
 plt.show()
