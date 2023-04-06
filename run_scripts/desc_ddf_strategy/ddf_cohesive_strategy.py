@@ -10,8 +10,8 @@ from sn_desc_ddf_strategy.dd_scenario import Budget_time, Scenario_time
 ## m5_dict: total number of visits (PZ req.) ##
 ###############################################
 bands = 'ugrizy'
-
-m5class = FiveSigmaDepth_Nvisits()
+Nvisits_WL_season = 2400
+m5class = FiveSigmaDepth_Nvisits(Nvisits_WL_season=Nvisits_WL_season)
 
 msingle = m5class.msingle
 m5_summary = m5class.summary
@@ -45,7 +45,7 @@ Nf_DD_y1 = 5  # UD starting the second year
 # Nv_DD_y1 = int(m5_dict['Nvisits_y1'])
 Nv_DD_y1 = int(m5_dict['Nvisits_WL_PZ_y1'])
 sl_UD = 180.
-cad_UD = 2.
+cad_UD = 1.5
 NDD = 5
 Nv_LSST = 2.1e6
 frac_moon = 0.30
@@ -92,7 +92,7 @@ res = myclass.plot(restot, varx='Nv_DD',
                    pz_wl_req=pz_wl_req, pz_wl_req_err=pz_wl_req_err,
                    figtitle=ffig)
 
-# plt.show()
+plt.show()
 ### m5_resu ###
 
 m5_resu = nvisits_from_m5(res, m5class)
