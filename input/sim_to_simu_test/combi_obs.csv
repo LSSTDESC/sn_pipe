@@ -1,7 +1,8 @@
 tagName,plotName,Nvisits_u,Nvisits_g,Nvisits_r,Nvisits_i,Nvisits_z,Nvisits_y,cadence_g,cadence_r,cadence_i,cadence_z,cadence_y,moonPhaseu,moonswapFilter
 # Nv_96_cad1,config$^{96}_{1}$,10,10,20,20,26,20,1,1,1,1,1,-1.,z
 #Nv_96_cad3,config$^{96}_{2}$,10,10,20,20,26,20,3,3,3,3,3,-1.,z
-# Nv_121_cad1,config$^{121}_{1}$,10,2,9,37,52,21,1,1,1,1,1,-1.,z
+Nv_121_cad1,config$^{121}_{1}$,10,2,9,37,52,21,1,1,1,1,1,-1.,z
 #Nv_121_cad2,config$^{121}_{2}$,10,2,9,37,52,21,2,2,2,2,2,-1.,z
-Nv_244_cad2,config$^{242}_{2}$,10,4,18,74,106,42,2,2,2,2,2,-1.,z
-Nv_244_cad2_moon,config$^{242}_{2}$,10,4,18,74,106,42,2,2,2,2,2,20.,z
+# Nv_244_cad2,config$^{242}_{2}$,10,4,18,74,106,42,2,2,2,2,2,-1.,z
+# Nv_244_cad2_moon,config$^{242}_{2}$,10,4,18,74,106,42,2,2,2,2,2,20.,z
+Nv_244_cad1_moon,configMoon$^{242}_{1}$,10,2,9,50,81,28,1,1,1,1,1,-1.0,z
