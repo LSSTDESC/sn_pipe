@@ -23,9 +23,9 @@ def plot_2D(res, varx='z', legx='$', vary='sigmaC',
     # plt.show()
 
 
-theDir = 'Output_SN/Fakes_nomoon'
-
-df = loadData_fakeSimu(theDir)
+theDir = 'Output_SN/Fakes'
+theFile = 'SN_conf_z_moon_-1_full_salt3.hdf5'
+df = loadData_fakeSimu(theDir, theFile)
 
 df['sigmaC'] = np.sqrt(df['Cov_colorcolor'])
 # simulation parameters

@@ -16,6 +16,8 @@ class CombiRun:
     fitter_name: str
     fitter_model: str
     fitter_version: str
+    sn_daymax_type: str
+    sn_daymax_step: int
 
 
 def go(script, pars):
@@ -113,8 +115,8 @@ def main_params():
     pars['SN_z_min'] = 0.2
     pars['SN_z_max'] = 1.1
     pars['SN_z_step'] = 0.02
-    pars['SN_daymax_type'] = 'unique'
-    pars['SN_daymax_step '] = 1
+    # pars['SN_daymax_type'] = 'unique'
+    # pars['SN_daymax_step '] = 1
     pars['MultiprocessingSimu_nproc '] = 1
     pars['fieldType'] = 'Fake'
     pars['OutputSimu_save'] = 0
@@ -164,6 +166,9 @@ def add_combis(script, pars_combi, vprod, plotNames):
         cmd_ += ' --Fitter_name sn_fitter.fit_{}'.format(vals.fitter_name)
         cmd_ += ' --Fitter_model {}'.format(vals.fitter_model)
         cmd_ += ' --Fitter_version {}'.format(vals.fitter_version)
+        cmd_ += ' --SN_daymax_type {}'.format(vals.sn_daymax_type)
+        cmd_ += ' --SN_daymax_step {}'.format(vals.sn_daymax_step)
+
         script.write(cmd_)
         va = [key, pars['OutputFit_directory'], 'SN_{}.hdf5'.format(key),
               plotNames[key]]
@@ -286,7 +291,9 @@ def add_sequence(script, dict_opt, vprod, combis_simu, seqName, plotName):
             row['simulator_version'],
             row['fitter_name'],
             row['fitter_model'],
-            row['fitter_version'])
+            row['fitter_version'],
+            row['sn_daymax_type'],
+            row['sn_daymax_step'])
         plotNames[seqNameb] = '{}_{}'.format(plotName, row['confName'])
 
     add_combis(script, combis, vprod, plotNames)
@@ -318,13 +325,19 @@ confDict_fake = make_dict_from_config(path[0], 'config_test_simtofit.txt')
 
 
 parser = OptionParser(description='Script to generate fake obs, simu and fit')
+parser.add_option('--scriptName', type=str, default='mytest.sh',
+                  help='script name [%default]')
+parser.add_option('--show_results', type=int, default=1,
+                  help='to display results[%default]')
 
 add_option(parser, confDict_fake)
 
 
 opts, args = parser.parse_args()
 
-scriptName = "mytest.sh"
+scriptName = opts.scriptName
+show_results = opts.show_results
+
 script = open(scriptName, "w")
 
 # first lines of the script
@@ -345,11 +358,15 @@ combis_simu = pd.read_csv(opts.config_simu, comment='#')
 
 ccols = list(combis_obs.columns)
 print(ccols)
+
 ccols.remove('tagName')
 ccols.remove('plotName')
 
 del dict_opt['config_obs']
 del dict_opt['config_simu']
+del dict_opt['scriptName']
+del dict_opt['show_results']
+
 
 for j, row in combis_obs.iterrows():
     for col in ccols:
@@ -357,13 +374,15 @@ for j, row in combis_obs.iterrows():
 
     seqName = row['tagName']
     plotName = row['plotName']
+
     add_sequence(script, dict_opt, vprod, combis_simu, seqName, plotName)
 
-# prepare outputFile for plot
-fName = 'plot_test.csv'
-make_csv(fName, vprod)
+if show_results:
+    # prepare outputFile for plot
+    fName = 'plot_test.csv'
+    make_csv(fName, vprod)
 
-add_plot(script, fName)
+    add_plot(script, fName)
 
 script.close()
 
