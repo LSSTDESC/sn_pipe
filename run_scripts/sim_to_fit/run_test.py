@@ -90,7 +90,7 @@ def add_threads(tt):
         tt.write(vv)
 
 
-def main_params():
+def main_params(dict_simu):
     """
         Function to get the main parameters of the script run_to_sim.py
 
@@ -105,8 +105,11 @@ def main_params():
     pars['dbName'] = 'Fakes'
     pars['dbDir '] = '../Fake_Observations'
     pars['nside'] = 128
-    pars['SN_NSNabsolute '] = 1
+
     pars['OutputSimu_throwafterdump'] = 0
+
+    """
+    pars['SN_NSNabsolute '] = 1
     pars['SN_x1_type'] = 'unique'
     pars['SN_x1_min '] = -2.0
     pars['SN_color_type'] = 'unique'
@@ -117,7 +120,9 @@ def main_params():
     pars['SN_z_step'] = 0.02
     # pars['SN_daymax_type'] = 'unique'
     # pars['SN_daymax_step '] = 1
+    """
     pars['MultiprocessingSimu_nproc '] = 1
+
     pars['fieldType'] = 'Fake'
     pars['OutputSimu_save'] = 0
     pars['OutputSimu_directory'] = 'Output_SN/Fakes'
@@ -128,10 +133,13 @@ def main_params():
     # pars['Simulator_model'] = 'salt3'
     pars['MultiprocessingFit_nproc'] = 8
 
+    for key in dict_simu.keys():
+        pars[key] = dict_simu[key]
+
     return pars
 
 
-def add_combis(script, pars_combi, vprod, plotNames):
+def add_combis(script, pars_combi, vprod, plotNames, dict_simu):
     """
     Function to add the combination (simulator,fitter)
 
@@ -145,6 +153,8 @@ def add_combis(script, pars_combi, vprod, plotNames):
         parameters to produce the csv file
     plotNames: dict
       dict of plotNames
+    dict_simu: dict
+        simulation params.
 
     Returns
     -------
@@ -154,7 +164,7 @@ def add_combis(script, pars_combi, vprod, plotNames):
 
     cmd = 'python run_scripts/sim_to_fit/run_sim_to_fit.py'
     # get main
-    pars = main_params()
+    pars = main_params(dict_simu)
     cmd = go(cmd, pars)
     for key, vals in pars_combi.items():
         script.write('\n \n')
@@ -241,7 +251,7 @@ def add_genfakes(script, dict_opt):
     script.write(go(scr, dict_opt))
 
 
-def add_sequence(script, dict_opt, vprod, combis_simu, seqName, plotName):
+def add_sequence(script, dict_simu, dict_opt, vprod, combis_simu, seqName, plotName):
     """
     Function to add a sequence gen obs+sim_to_fit
 
@@ -249,6 +259,8 @@ def add_sequence(script, dict_opt, vprod, combis_simu, seqName, plotName):
     ----------
     script : script file
         xhere to write infos.
+    dict_simu : dict
+        simu params.    
     dict_opt : dict
         fake obs params.
     vprod : list(list)
@@ -296,7 +308,7 @@ def add_sequence(script, dict_opt, vprod, combis_simu, seqName, plotName):
             row['sn_daymax_step'])
         plotNames[seqNameb] = '{}_{}'.format(plotName, row['confName'])
 
-    add_combis(script, combis, vprod, plotNames)
+    add_combis(script, combis, vprod, plotNames, dict_simu)
 
 
 def param_ana(dict_opt, parName='Nvisits'):
@@ -321,8 +333,8 @@ def param_ana(dict_opt, parName='Nvisits'):
 
 # this is to load option for fake cadence
 path = sn_script_input.__path__
-confDict_fake = make_dict_from_config(path[0], 'config_test_simtofit.txt')
-
+confDict_fake = make_dict_from_config(path[0], 'config_test_simtofit_obs.txt')
+confDict_simu = make_dict_from_config(path[0], 'config_test_simtofit_simu.txt')
 
 parser = OptionParser(description='Script to generate fake obs, simu and fit')
 parser.add_option('--scriptName', type=str, default='mytest.sh',
@@ -331,7 +343,7 @@ parser.add_option('--show_results', type=int, default=1,
                   help='to display results[%default]')
 
 add_option(parser, confDict_fake)
-
+add_option(parser, confDict_simu)
 
 opts, args = parser.parse_args()
 
@@ -344,7 +356,18 @@ script = open(scriptName, "w")
 start_script(script)
 
 # Generation of Fake Observations
-dict_opt = vars(opts)
+dict_all = vars(opts)
+
+dict_opt = {}
+for key in confDict_fake.keys():
+    dict_opt[key] = dict_all[key]
+
+dict_simu = {}
+for key in confDict_simu.keys():
+    dict_simu[key] = dict_all[key]
+
+print(dict_simu)
+
 
 dict_opt['saveData'] = 1
 
@@ -364,8 +387,8 @@ ccols.remove('plotName')
 
 del dict_opt['config_obs']
 del dict_opt['config_simu']
-del dict_opt['scriptName']
-del dict_opt['show_results']
+# del dict_opt['scriptName']
+# del dict_opt['show_results']
 
 
 for j, row in combis_obs.iterrows():
@@ -375,7 +398,8 @@ for j, row in combis_obs.iterrows():
     seqName = row['tagName']
     plotName = row['plotName']
 
-    add_sequence(script, dict_opt, vprod, combis_simu, seqName, plotName)
+    add_sequence(script, dict_simu, dict_opt, vprod,
+                 combis_simu, seqName, plotName)
 
 if show_results:
     # prepare outputFile for plot
