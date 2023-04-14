@@ -16,8 +16,6 @@ class CombiRun:
     fitter_name: str
     fitter_model: str
     fitter_version: str
-    sn_daymax_type: str
-    sn_daymax_step: int
 
 
 def go(script, pars):
@@ -176,8 +174,8 @@ def add_combis(script, pars_combi, vprod, plotNames, dict_simu):
         cmd_ += ' --Fitter_name sn_fitter.fit_{}'.format(vals.fitter_name)
         cmd_ += ' --Fitter_model {}'.format(vals.fitter_model)
         cmd_ += ' --Fitter_version {}'.format(vals.fitter_version)
-        cmd_ += ' --SN_daymax_type {}'.format(vals.sn_daymax_type)
-        cmd_ += ' --SN_daymax_step {}'.format(vals.sn_daymax_step)
+        #cmd_ += ' --SN_daymax_type {}'.format(vals.sn_daymax_type)
+        #cmd_ += ' --SN_daymax_step {}'.format(vals.sn_daymax_step)
 
         script.write(cmd_)
         va = [key, pars['OutputFit_directory'], 'SN_{}.hdf5'.format(key),
@@ -303,9 +301,9 @@ def add_sequence(script, dict_simu, dict_opt, vprod, combis_simu, seqName, plotN
             row['simulator_version'],
             row['fitter_name'],
             row['fitter_model'],
-            row['fitter_version'],
-            row['sn_daymax_type'],
-            row['sn_daymax_step'])
+            row['fitter_version'])
+        # row['sn_daymax_type'],
+        # row['sn_daymax_step'])
         plotNames[seqNameb] = '{}_{}'.format(plotName, row['confName'])
 
     add_combis(script, combis, vprod, plotNames, dict_simu)
@@ -341,6 +339,8 @@ parser.add_option('--scriptName', type=str, default='mytest.sh',
                   help='script name [%default]')
 parser.add_option('--show_results', type=int, default=1,
                   help='to display results[%default]')
+parser.add_option('--add_tag', type=str, default='None',
+                  help='to add a tag to the prodid [%default]')
 
 add_option(parser, confDict_fake)
 add_option(parser, confDict_simu)
@@ -349,6 +349,7 @@ opts, args = parser.parse_args()
 
 scriptName = opts.scriptName
 show_results = opts.show_results
+add_tag = opts.add_tag
 
 script = open(scriptName, "w")
 
@@ -387,6 +388,7 @@ ccols.remove('plotName')
 
 del dict_opt['config_obs']
 del dict_opt['config_simu']
+# del dict_opt['add_tag']
 # del dict_opt['scriptName']
 # del dict_opt['show_results']
 
@@ -396,6 +398,8 @@ for j, row in combis_obs.iterrows():
         dict_opt[col] = row[col]
 
     seqName = row['tagName']
+    if add_tag != 'None':
+        seqName += '_{}'.format(add_tag)
     plotName = row['plotName']
 
     add_sequence(script, dict_simu, dict_opt, vprod,
