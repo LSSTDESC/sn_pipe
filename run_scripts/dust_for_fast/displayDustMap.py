@@ -40,6 +40,7 @@ def getDustMap(nside=64):
     dustmap = pd.DataFrame(range(npixels), columns=['healpixID'])
     dustmap['RA'] = vec[0]
     dustmap['Dec'] = vec[1]
+    dustmap['pixSize'] = hp.nside2pixarea(nside, degrees=True)
 
     coords = SkyCoord(vec[0], vec[1], unit='deg')
     try:
@@ -58,7 +59,7 @@ def getDustMap(nside=64):
     return dustmap
 
 
-def plotDustMap(dustmap, ebvofMW_cut=0.25):
+def plotDustMap(dustmap, ebvofMW_cut=0.25, Dec_max=90., Dec_min=-80):
     """
     Function to plot the dustmap (ebvofMW) in Mollweid view
 
@@ -68,12 +69,22 @@ def plotDustMap(dustmap, ebvofMW_cut=0.25):
       data to display
     ebvofMW_cut: float, opt
        cut for the display (default: 0.25)
+    Dec_max : float, optional
+              Max declination. The default is 90..
+    Dec_min : float, optional
+              Min declination. The default is -80.
 
     """
     npixels = np.unique(dustmap['npixels'])
     if ebvofMW_cut > 0.:
         idx = dustmap['ebvofMW'] <= ebvofMW_cut
+        idx &= dustmap['Dec'] >= Dec_min
+        idx &= dustmap['Dec'] <= Dec_max
         dustmap = dustmap[idx]
+
+    pixSize = dustmap['pixSize'].unique()[0]
+    area = len(dustmap)*pixSize
+    print('total area [deg2]', int(area))
 
     xmin = 0.00001
     xmax = np.max(dustmap['ebvofMW'])
@@ -92,7 +103,7 @@ def plotDustMap(dustmap, ebvofMW_cut=0.25):
     hp.graticule()
 
 
-def plotDustHist(dustmap, ebvofMW_cut=0.25):
+def plotDustHist(dustmap, ebvofMW_cut=0.25, Dec_max=90., Dec_min=-80):
     """
     Function to plot the dustmap (ebvofMW) in Mollweid view
 
@@ -102,11 +113,17 @@ def plotDustHist(dustmap, ebvofMW_cut=0.25):
       data to display
     ebvofMW_cut: float, opt
        cut for the display (default: 0.25)
+    Dec_max : float, optional
+           Max declination. The default is 90..
+    Dec_min : float, optional
+           Min declination. The default is -80.
 
     """
     npixels = np.unique(dustmap['npixels'])
     if ebvofMW_cut > 0.:
         idx = dustmap['ebvofMW'] <= ebvofMW_cut
+        idx &= dustmap['Dec'] >= Dec_min
+        idx &= dustmap['Dec'] <= Dec_max
         dustmap = dustmap[idx]
 
     fig, ax = plt.subplots()
@@ -122,18 +139,26 @@ parser.add_option("--healpixID", type=int, default=27238,
                   help="healpixel ID to get info from [%default]")
 parser.add_option("--ebvofMW_max", type=float, default=0.25,
                   help="E(B-V) max [%default]")
+parser.add_option("--Dec_min", type=float, default=-80,
+                  help="Minimal declination (deg) [%default]")
+
+parser.add_option("--Dec_max", type=float, default=90,
+                  help="Maximal declination (deg) [%default]")
 
 opts, args = parser.parse_args()
 
 dustmap = getDustMap(nside=opts.nside)
 ebvofMW_max = opts.ebvofMW_max
+Dec_min = opts.Dec_min
+Dec_max = opts.Dec_max
 
 idx = dustmap['healpixID'] == opts.healpixID
 
 print(dustmap[idx])
 
-plotDustMap(dustmap, ebvofMW_cut=ebvofMW_max)
-plotDustHist(dustmap, ebvofMW_cut=ebvofMW_max)
+plotDustMap(dustmap, ebvofMW_cut=ebvofMW_max, Dec_min=Dec_min, Dec_max=Dec_max)
+plotDustHist(dustmap, ebvofMW_cut=ebvofMW_max,
+             Dec_min=Dec_min, Dec_max=Dec_max)
 
 #plt.plot(vec[0], vec[1], 'ko')
 plt.show()
