@@ -9,10 +9,25 @@ from sn_analysis.sn_tools import loadData_fakeSimu
 import matplotlib.pyplot as plt
 import operator
 import numpy as np
-from sn_analysis.sn_calc_plot import Calc_zlim, histSN_params, select, plot_effi, effi
+from sn_analysis.sn_calc_plot import Calc_zlim, histSN_params, select
+from sn_analysis.sn_calc_plot import plot_effi, effi
 import glob
 import pandas as pd
 from optparse import OptionParser
+
+
+filtercolors = dict(zip('ugrizy', ['b', 'c', 'g', 'y', 'r', 'm']))
+plt.rcParams['xtick.labelsize'] = 20
+plt.rcParams['ytick.labelsize'] = 20
+plt.rcParams['axes.labelsize'] = 20
+plt.rcParams['figure.titlesize'] = 20
+plt.rcParams['figure.titleweight'] = 'bold'
+plt.rcParams['legend.fontsize'] = 20
+plt.rcParams['font.size'] = 20
+plt.rcParams['font.weight'] = 'bold'
+plt.rcParams['font.family'] = 'Arial'
+# plt.rcParams['font.sans-serif'] = ['Helvetica']
+plt.rcParams['lines.markersize'] = 15
 
 
 def gime_zlim(df, dict_sel, selvar):
@@ -48,7 +63,7 @@ def plot_2D(res, varx='z', legx='$', vary='sigmaC',
     # plt.show()
 
 
-def plot_res(df, fig=None, ax=None):
+def plot_res(df, fig=None, ax=None, label='', color='b', lst='solid', mark='None', mfc='None'):
 
     if fig is None:
         fig, ax = plt.subplots(figsize=(11, 6))
@@ -63,7 +78,8 @@ def plot_res(df, fig=None, ax=None):
     idx = df['moon_frac'] > -0.5
     sel = df[idx]
     sel = sel.sort_values(by=['moon_frac'])
-    ax.plot(sel['moon_frac'], sel['delta_zlim'])
+    ax.plot(sel['moon_frac'], sel['delta_zlim'],
+            label=label, color=color, linestyle=lst, marker=mark, mfc=mfc)
     # ax.grid()
 
 
@@ -101,20 +117,30 @@ def plot_delta_zlim(df_dict, dict_sel, selvar):
     print(df)
 
     fig, ax = plt.subplots(figsize=(12, 7))
-    for b in 'rizy':
-        idx = df['band'] == b
-        plot_res(df[idx], fig=fig, ax=ax)
+    leg = {}
+    bands = 'rizy'
+    for b in bands:
+        leg[b] = 'u <-> '+b
 
-    ax.set_xlabel('Moon Phase [%]')
+    lst = dict(zip(bands, ['solid', 'dashed', 'dotted', 'dashdot']))
+    marks = dict(zip(bands, ['o', 's', '^', 'h']))
+    for b in bands:
+        idx = df['band'] == b
+        plot_res(df[idx], fig=fig, ax=ax, label=leg[b],
+                 color=filtercolors[b], lst=lst[b], mark=marks[b])
+
+    ax.set_xlabel('Moon Phase [%]', fontweight='bold')
     zcomp = '$z_{complete}$'
     ax.set_ylabel('$\Delta $ {}'.format(zcomp))
 
     ax.grid()
+    ax.legend()
 
 
 def plot_delta_nsn(df_dict, dict_sel, selvar):
 
     r = []
+    zmin = 0.9
     for key, df in df_dict.items():
         tt = key.split('_')
         bb = tt[0]
@@ -124,31 +150,50 @@ def plot_delta_nsn(df_dict, dict_sel, selvar):
         # r.append((bb, int(hname), zlim))
         df['sigmaC'] = np.sqrt(df['Cov_colorcolor'])
         # plt.plot(df['z'], df['sigmaC'], 'ko')
-        check_simuparams(df)
+        # check_simuparams(df)
         seldf = select(df, dict_sel[selvar])
-        idx = seldf['z'] >= 0.7
+        idx = seldf['z'] >= zmin
         print(key, len(seldf), len(seldf[idx]))
         nsn_tot = len(seldf)
         nsn_07 = len(seldf[idx])
         r.append((bb, int(hname), nsn_tot, nsn_07))
 
     df = pd.DataFrame.from_records(
-        r, columns=['band', 'moon_frac', 'nSN', 'nSN_07'])
+        r, columns=['band', 'moon_frac', 'nSN', 'nSN_0{}'.format(int(10*zmin))])
 
     fig, ax = plt.subplots(figsize=(12, 7))
-    # for b in 'rizy':
-    for b in 'rizy':
-        idx = df['band'] == b
-        plot_resb(df[idx], fig=fig, ax=ax, var='nSN')
+    leg = {}
+    bands = 'rizy'
+    for b in bands:
+        leg[b] = 'u <-> '+b
 
-    ax.set_xlabel('Moon Phase [%]')
+    lst = dict(zip(bands, ['solid', 'dashed', 'dotted', 'dashdot']))
+    marks = dict(zip(bands, ['o', 's', '^', 'h']))
+
+    vartoplot = 'nSN_0{}'.format(int(10*zmin))
+    for b in bands:
+        idx = df['band'] == b
+        plot_resb(df[idx], fig=fig, ax=ax, var=vartoplot, label=leg[b],
+                  color=filtercolors[b], lst=lst[b], mark=marks[b])
+
+    if vartoplot != 'nSN':
+        ttit = '$z\geq$'
+        ttit += '{}'.format(np.round(zmin, 1))
+        fig.suptitle(ttit)
+    ax.set_xlabel('Moon Phase [%]', fontweight='bold')
     zcomp = '$N_{SN}$'
     ax.set_ylabel('$\Delta $ {}'.format(zcomp))
+    ax.set_ylabel(
+        r'$\frac{\mathrm{N_{SN}}}{\mathrm{N_{SN}}^{\mathrm{Moon~Phase=0}}}$')
+    # ax.set_ylabel('{}'.format(legb))
+
+    ax.legend()
 
     ax.grid()
 
 
-def plot_resb(df, fig=None, ax=None, var='nSN'):
+def plot_resb(df, fig=None, ax=None, var='nSN', label='', color='b',
+              lst='solid', mark='None', mfc='None'):
 
     if fig is None:
         fig, ax = plt.subplots(figsize=(11, 6))
@@ -166,8 +211,10 @@ def plot_resb(df, fig=None, ax=None, var='nSN'):
     idx = df['moon_frac'] > -0.5
     sel = df[idx]
     sel = sel.sort_values(by=['moon_frac'])
-    #ax.plot(sel['moon_frac'], sel['delta_nSN'])
-    ax.errorbar(sel['moon_frac'], sel['delta_nSN'], yerr=sel['err_nSN'])
+    ax.plot(sel['moon_frac'], sel['delta_nSN'], label=label,
+            color=color, linestyle=lst, marker=mark, mfc=mfc)
+    # ax.errorbar(sel['moon_frac'], sel['delta_nSN'], yerr=sel['err_nSN'],
+    #            label=label, color=color, linestyle=lst, marker=mark, mfc=mfc)
     # ax.grid()
 
 
