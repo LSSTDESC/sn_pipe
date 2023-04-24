@@ -10,7 +10,7 @@ from sn_desc_ddf_strategy.dd_scenario import Budget_time, Scenario_time
 ## m5_dict: total number of visits (PZ req.) ##
 ###############################################
 bands = 'ugrizy'
-Nvisits_WL_season = 2400
+Nvisits_WL_season = 800
 m5class = FiveSigmaDepth_Nvisits(Nvisits_WL_season=Nvisits_WL_season)
 
 msingle = m5class.msingle
@@ -32,7 +32,7 @@ nseasons = dict(zip(['Nvisits_WL_PZ_y1', 'Nvisits_WL_PZ_y2_y10'], [1, 9]))
 
 pz_wl_req = {}
 for key, vals in corresp.items():
-    pz_wl_req[vals] = [85, int(m5_dict[key]/nseasons[key])]
+    pz_wl_req[vals] = [95, int(m5_dict[key]/nseasons[key])]
 
 #pz_wl_req['WL_10xWFD'] = [85, 800]
 pz_wl_req_err = {}
@@ -45,7 +45,7 @@ Nf_DD_y1 = 5  # UD starting the second year
 # Nv_DD_y1 = int(m5_dict['Nvisits_y1'])
 Nv_DD_y1 = int(m5_dict['Nvisits_WL_PZ_y1'])
 sl_UD = 180.
-cad_UD = 1.5
+cad_UD = 2.
 NDD = 5
 Nv_LSST = 2.1e6
 frac_moon = 0.30
@@ -135,11 +135,11 @@ Delta_nvisits(dfres, m5_nvisits)
 
 
 # plot budget vs time for each scenario
-# Budget_time(dfres, Nv_LSST)
+Budget_time(dfres, Nv_LSST)
 
 
 # plot scenario vs time
-# Scenario_time(dfres)
+Scenario_time(dfres)
 
 
 plt.show()
