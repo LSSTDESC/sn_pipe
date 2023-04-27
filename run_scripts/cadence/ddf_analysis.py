@@ -4,8 +4,22 @@ from sn_tools.sn_obs import season
 from sn_tools.sn_stacker import CoaddStacker
 import numpy.lib.recfunctions as rf
 import matplotlib.pyplot as plt
+from optparse import OptionParser
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
+
+filtercolors = dict(zip('ugrizy', ['b', 'c', 'g', 'y', 'r', 'm']))
+plt.rcParams['xtick.labelsize'] = 20
+plt.rcParams['ytick.labelsize'] = 20
+plt.rcParams['axes.labelsize'] = 20
+plt.rcParams['figure.titlesize'] = 20
+plt.rcParams['figure.titleweight'] = 'bold'
+plt.rcParams['legend.fontsize'] = 20
+plt.rcParams['font.size'] = 20
+plt.rcParams['font.weight'] = 'bold'
+plt.rcParams['font.family'] = 'Arial'
+# plt.rcParams['font.sans-serif'] = ['Helvetica']
+plt.rcParams['lines.markersize'] = 15
 
 
 def load_DDF(dbDir, dbName, DDList=['COSMOS', 'ECDFS',
@@ -188,8 +202,45 @@ def plot_cadence(df, varx, vary, fig=None, ax=None, label=''):
     ax.plot(df[varx], df[vary], label=label)
 
 
-dbDir = '../DB_Files'
-dbName = 'baseline_v2.0_10yrs.npy'
+def add_columns(data, dict_cols):
+
+    for key, vals in dict_cols.items():
+        if key not in data.dtype.names:
+            data = rf.append_fields(data, key, data[vals])
+
+    return data
+
+
+def plot_obs(data):
+
+    bands = np.unique(data['filter'])
+    for b in bands:
+        idx = data['filter'] == b
+        sel = data[idx]
+        fig, ax = plt.subplots(figsize=(12, 9))
+        fig.suptitle('{}-band'.format(b))
+        ax.plot(sel['mjd'], sel['moonPhase'],
+                marker='o', color=filtercolors[b])
+
+    plt.show()
+
+
+parser = OptionParser(
+    description='DDF analysis')
+parser.add_option("--dbDir", type="str",
+                  default='../DB_Files',
+                  help="file directory [%default]")
+parser.add_option("--dbName", type="str",
+                  default='baseline_v2.0_10yrs.npy',
+                  help="file directory [%default]")
+parser.add_option("--coadd", type=int,
+                  default=1,
+                  help="to coadd data (night/band) [%default]")
+opts, args = parser.parse_args()
+
+dbDir = opts.dbDir
+dbName = opts.dbName
+coadd = opts.coadd
 
 # load data
 data = load_DDF(dbDir, dbName)
@@ -206,11 +257,20 @@ for field in np.unique(data['note']):
     else:
         data_seas = np.concatenate((data_seas, selb))
 
-data_seas = rf.append_fields(data_seas, 'filter', data_seas['band'])
+dict_add_cols = dict(zip(['filter', 'exptime', 'mjd'], [
+                     'band', 'visitExposureTime', 'observationStartMJD']))
 
-data_season = stackIt(data_seas)
+data_seas = add_columns(data_seas, dict_add_cols)
 
-print(data_season)
+print(data_seas.dtype.names)
+
+if coadd:
+    data_season = stackIt(data_seas)
+else:
+    data_season = data_seas
+
+plot_obs(data_season)
+
 
 df = pd.DataFrame.from_records(data_season)
 
