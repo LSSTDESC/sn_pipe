@@ -392,10 +392,11 @@ del dict_opt['config_simu']
 # del dict_opt['scriptName']
 # del dict_opt['show_results']
 
-
+outName = dict_opt['outName']
 for j, row in combis_obs.iterrows():
     for col in ccols:
         dict_opt[col] = row[col]
+    dict_opt['outName'] = outName+'_'+row['tagName']
 
     seqName = row['tagName']
     if add_tag != 'None':
