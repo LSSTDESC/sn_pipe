@@ -127,7 +127,7 @@ def cadence(grp):
         idx = grp['filter'] == b
         sel = grp[idx]
         sel = sel.sort_values(by=['mjd'])
-        dictout[b] = [sel['mjd'].diff().median()]
+        dictout[b] = [sel['mjd'].diff().mean()]
 
     return pd.DataFrame.from_dict(dictout)
 
@@ -214,6 +214,7 @@ def add_columns(data, dict_cols):
 def plot_obs(data):
 
     bands = np.unique(data['filter'])
+    data.sort(order='mjd')
     for b in bands:
         idx = data['filter'] == b
         sel = data[idx]
@@ -269,7 +270,7 @@ if coadd:
 else:
     data_season = data_seas
 
-plot_obs(data_season)
+# plot_obs(data_season)
 
 
 df = pd.DataFrame.from_records(data_season)
