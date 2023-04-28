@@ -6,6 +6,7 @@ tagName,plotName,Nvisits_u,Nvisits_g,Nvisits_r,Nvisits_i,Nvisits_z,Nvisits_y,cad
 # Nv_244_cad2,config$^{242}_{2}$,10,4,18,74,106,42,2,2,2,2,2,-1.,z
 # Nv_244_cad2_moon,config$^{242}_{2}$,10,4,18,74,106,42,2,2,2,2,2,20.,z
 conf_z_moon_-1,configMoon_1,10,2,9,50,81,28,2,2,2,2,2,-1.0,z
+conf_z_moon_5,configMoon_2,10,2,9,50,81,28,2,2,2,2,2,5,z
 conf_z_moon_10,configMoon_2,10,2,9,50,81,28,2,2,2,2,2,10,z
 conf_z_moon_15,configMoon_3,10,2,9,50,81,28,2,2,2,2,2,15,z
 conf_z_moon_20,configMoon_4,10,2,9,50,81,28,2,2,2,2,2,20,z
@@ -14,6 +15,7 @@ conf_z_moon_30,configMoon_6,10,2,9,50,81,28,2,2,2,2,2,30,z
 conf_z_moon_35,configMoon_7,10,2,9,50,81,28,2,2,2,2,2,35,z
 conf_z_moon_40,configMoon_8,10,2,9,50,81,28,2,2,2,2,2,40,z
 conf_y_moon_-1,configMoon_1,10,2,9,50,81,28,2,2,2,2,2,-1.0,y
+conf_y_moon_5,configMoon_2,10,2,9,50,81,28,2,2,2,2,2,5,y
 conf_y_moon_10,configMoon_2,10,2,9,50,81,28,2,2,2,2,2,10,y
 conf_y_moon_15,configMoon_3,10,2,9,50,81,28,2,2,2,2,2,15,y
 conf_y_moon_20,configMoon_4,10,2,9,50,81,28,2,2,2,2,2,20,y
@@ -22,6 +24,7 @@ conf_y_moon_30,configMoon_6,10,2,9,50,81,28,2,2,2,2,2,30,y
 conf_y_moon_35,configMoon_7,10,2,9,50,81,28,2,2,2,2,2,35,y
 conf_y_moon_40,configMoon_8,10,2,9,50,81,28,2,2,2,2,2,40,y
 conf_i_moon_-1,configMoon_1,10,2,9,50,81,28,2,2,2,2,2,-1.0,i
+conf_i_moon_5,configMoon_2,10,2,9,50,81,28,2,2,2,2,2,5,i
 conf_i_moon_10,configMoon_2,10,2,9,50,81,28,2,2,2,2,2,10,i
 conf_i_moon_15,configMoon_3,10,2,9,50,81,28,2,2,2,2,2,15,i
 conf_i_moon_20,configMoon_4,10,2,9,50,81,28,2,2,2,2,2,20,i
@@ -30,6 +33,7 @@ conf_i_moon_30,configMoon_6,10,2,9,50,81,28,2,2,2,2,2,30,i
 conf_i_moon_35,configMoon_7,10,2,9,50,81,28,2,2,2,2,2,35,i
 conf_i_moon_40,configMoon_8,10,2,9,50,81,28,2,2,2,2,2,40,i
 conf_r_moon_-1,confrgMoon_1,10,2,9,50,81,28,2,2,2,2,2,-1.0,r
+conf_r_moon_5,confrgMoon_1,10,2,9,50,81,28,2,2,2,2,2,5,r
 conf_r_moon_10,confrgMoon_2,10,2,9,50,81,28,2,2,2,2,2,10,r
 conf_r_moon_15,confrgMoon_3,10,2,9,50,81,28,2,2,2,2,2,15,r
 conf_r_moon_20,confrgMoon_4,10,2,9,50,81,28,2,2,2,2,2,20,r
