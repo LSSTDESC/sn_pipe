@@ -136,13 +136,4 @@ procDict['nside'] = opts.nside
 # print('processing', procDict)
 process = Process(**procDict)
 
-"""
-Process(opts.dbDir, opts.dbName, opts.dbExtens,
-        fieldType, fieldName, nside,
-        opts.RAmin, opts.RAmax,
-        opts.Decmin, opts.Decmax,
-        saveData, opts.remove_dithering,
-        outDir, opts.nproc, metricList,
-        opts.pixelmap_dir, opts.npixels,
-        opts.nclusters, opts.radius)
-"""
+# print('Processed')
