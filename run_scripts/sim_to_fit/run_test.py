@@ -249,7 +249,8 @@ def add_genfakes(script, dict_opt):
     script.write(go(scr, dict_opt))
 
 
-def add_sequence(script, dict_simu, dict_opt, vprod, combis_simu, seqName, plotName):
+def add_sequence(script, dict_simu, dict_opt, vprod,
+                 combis_simu, seqName, plotName):
     """
     Function to add a sequence gen obs+sim_to_fit
 
@@ -367,8 +368,6 @@ dict_simu = {}
 for key in confDict_simu.keys():
     dict_simu[key] = dict_all[key]
 
-print(dict_simu)
-
 
 dict_opt['saveData'] = 1
 
@@ -381,7 +380,6 @@ combis_obs = pd.read_csv(opts.config_obs, comment='#')
 combis_simu = pd.read_csv(opts.config_simu, comment='#')
 
 ccols = list(combis_obs.columns)
-print(ccols)
 
 ccols.remove('tagName')
 ccols.remove('plotName')
@@ -397,6 +395,7 @@ for j, row in combis_obs.iterrows():
     for col in ccols:
         dict_opt[col] = row[col]
     dict_opt['outName'] = outName+'_'+row['tagName']
+    dict_simu['dbName'] = dict_opt['outName']
 
     seqName = row['tagName']
     if add_tag != 'None':
@@ -405,6 +404,7 @@ for j, row in combis_obs.iterrows():
 
     add_sequence(script, dict_simu, dict_opt, vprod,
                  combis_simu, seqName, plotName)
+
 
 if show_results:
     # prepare outputFile for plot
