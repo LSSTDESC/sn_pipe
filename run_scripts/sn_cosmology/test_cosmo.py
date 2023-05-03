@@ -1,6 +1,6 @@
 import h5py
 from astropy.table import Table, vstack
-from sn_cosmology.cosmo_fit import CosmoFit
+from sn_cosmology.cosmo_fit import CosmoFit, fom
 import numpy as np
 
 
@@ -82,25 +82,33 @@ fFile = h5py.File(fName, 'r')
 keys = list(fFile.keys())
 parNames = ['w0', 'wa', 'Om0']
 parNamesb = ['w0', 'wa', 'Om']
-
-#parNames = ['w0', 'Om0']
-#parNamesb = ['w0', 'Om']
-
 prior = dict(zip(['Om0'], [[0.3, 0.0073]]))
+
+# parNames = ['w0', 'Om0']
+# parNamesb = ['w0', 'Om']
+prior = {}
+
 corresp = dict(zip(parNames, parNamesb))
 for key in keys:
     data = Table.read(fFile, path=key)
     print('data', key)
     print(data)
     myfit = MyFit(data['z'], data['mu'], data['sigma'],
-                  parNames=parNames, prior=prior)
+                  parNames=parNames, prior=prior, par_protect_fit=[])
     params = []
     for pp in parNames:
         params.append(data.meta[corresp[pp]])
 
-    m = myfit.minuit_fit(params)
-    print(m.covariance)
-    print(params)
+    dict_fit = myfit.minuit_fit(params)
     fisher_cov = myfit.covariance_fisher(params)
-    print(fisher_cov)
+    dict_fit.update(fisher_cov)
+    print(dict_fit)
+
+    for vv in ['fit', 'fisher']:
+        cov_a = dict_fit['Cov_w0_w0_{}'.format(vv)]
+        cov_b = dict_fit['Cov_wa_wa_{}'.format(vv)]
+        cov_ab = dict_fit['Cov_wa_w0_{}'.format(vv)]
+        fom_val = fom(cov_a, cov_b, cov_ab)
+        print(vv, fom_val)
+
     break
