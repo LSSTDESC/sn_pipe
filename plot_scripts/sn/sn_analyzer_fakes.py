@@ -137,10 +137,10 @@ def plot_delta_zlim(df_dict, dict_sel, selvar):
     ax.legend()
 
 
-def plot_delta_nsn(df_dict, dict_sel, selvar):
+def plot_delta_nsn(df_dict, dict_sel, selvar, zmin=0.8):
 
     r = []
-    zmin = 0.9
+
     for key, df in df_dict.items():
         tt = key.split('_')
         bb = tt[0]
@@ -241,10 +241,13 @@ parser.add_option("--plot_delta_zlim", type=int, default=0,
                   help="to plot delta_zlim [%default]")
 parser.add_option("--plot_delta_nsn", type=int, default=1,
                   help="to plot delta_nsn [%default]")
+parser.add_option("--zmin", type=float, default=0.8,
+                  help="zmin to plot delta_nsn [%default]")
+
 opts, args = parser.parse_args()
 
 theDir = opts.inputDir
-
+zmin = opts.zmin
 
 fis = glob.glob('{}/SN_*.hdf5'.format(theDir))
 # theFile = 'SN_conf_z_moon_-1_full_salt3.hdf5'
@@ -274,6 +277,6 @@ if opts.plot_delta_zlim:
     plot_delta_zlim(df_dict, dict_sel, 'G10')
 
 if opts.plot_delta_nsn:
-    plot_delta_nsn(df_dict, dict_sel, 'G10')
+    plot_delta_nsn(df_dict, dict_sel, 'G10', zmin=zmin)
 
 plt.show()
