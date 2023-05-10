@@ -1,19 +1,135 @@
-from sn_desc_ddf_strategy.dd_scenario import FiveSigmaDepth_Nvisits, DD_Scenario
+from sn_desc_ddf_strategy.dd_scenario import DD_Scenario
 from sn_desc_ddf_strategy.dd_scenario import nvisits_from_m5, reshuffle
-from sn_desc_ddf_strategy.dd_scenario import get_final_scenario
+from sn_desc_ddf_strategy.dd_scenario import get_final_scenario, moon_recovery
 from sn_desc_ddf_strategy import plt
 from sn_desc_ddf_strategy.dd_scenario import Delta_m5, Delta_nvisits
 from sn_desc_ddf_strategy.dd_scenario import Budget_time, Scenario_time
+from sn_desc_ddf_strategy.dd_scenario import reverse_df
+from sn_desc_ddf_strategy.dd_scenario import FiveSigmaDepth_Nvisits
 
-################################################
-##### get Nvisits from m5 req.          ########
+import pandas as pd
+
+from optparse import OptionParser
+
+
+parser = OptionParser(
+    description='Design a cohesive DESC DDF Strategy')
+
+parser.add_option("--Nvisits_WL_season", type=int,
+                  default=800,
+                  help="Nvisits WL requirement [%default]")
+parser.add_option("--Nf_DD_y1", type=int,
+                  default=5,
+                  help="N DD fields Y1[%default]")
+parser.add_option("--sl_UD", type=int,
+                  default=180,
+                  help="season length UD fields [%default]")
+parser.add_option("--cad_UD", type=float,
+                  default=2.,
+                  help="cadence UD fields [%default]")
+parser.add_option("--NDD", type=int,
+                  default=5,
+                  help="number of DD fields[%default]")
+parser.add_option("--Nv_LSST", type=float,
+                  default=2.1e6,
+                  help="Total number of LSST visits(10 years) [%default]")
+parser.add_option("--frac_moon", type=float,
+                  default=0.30,
+                  help="Fraction of visits (in a season) \
+                  with the low-phase Moon [%default]")
+parser.add_option("--sl_DD", type=int,
+                  default=180,
+                  help="season length DD fields [%default]")
+parser.add_option("--cad_DD", type=float,
+                  default=3.,
+                  help="cadence DD fields [%default]")
+parser.add_option("--swap_filter_moon", type=str,
+                  default='y',
+                  help="Filter to remove when Moon at low phases [%default]")
+parser.add_option("--recover_from_moon", type=int,
+                  default=1,
+                  help="Modify Nvisits for the swap filter - high \
+                  moon phases. [%default]")
+parser.add_option("--m5_single_u", type=float,
+                  default=23.65,
+                  help="m5 single visit (u-band) [%default]")
+parser.add_option("--m5_single_g", type=float,
+                  default=24.38,
+                  help="m5 single visit (g-band) [%default]")
+parser.add_option("--m5_single_r", type=float,
+                  default=23.99,
+                  help="m5 single visit (r-band) [%default]")
+parser.add_option("--m5_single_i", type=float,
+                  default=23.55,
+                  help="m5 single visit (i-band) [%default]")
+parser.add_option("--m5_single_z", type=float,
+                  default=22.92,
+                  help="m5 single visit (z-band) [%default]")
+parser.add_option("--m5_single_y", type=float,
+                  default=22.16,
+                  help="m5 single visit (y-band) [%default]")
+parser.add_option("--frac_WFD_u", type=float,
+                  default=0.06,
+                  help="u-band filter allocation (WL req.) [%default]")
+parser.add_option("--frac_WFD_g", type=float,
+                  default=0.09,
+                  help="g-band filter allocation (WL req.) [%default]")
+parser.add_option("--frac_WFD_r", type=float,
+                  default=0.23,
+                  help="r-band filter allocation (WL req.) [%default]")
+parser.add_option("--frac_WFD_i", type=float,
+                  default=0.23,
+                  help="i-band filter allocation (WL req.) [%default]")
+parser.add_option("--frac_WFD_z", type=float,
+                  default=0.19,
+                  help="z-band filter allocation (WL req.) [%default]")
+parser.add_option("--frac_WFD_y", type=float,
+                  default=0.20,
+                  help="y-band filter allocation (WL req.) [%default]")
+parser.add_option("--m5_from_db", type=int,
+                  default=0,
+                  help="1 to grab m5 from db [%default]")
+parser.add_option("--dbDir", type=str,
+                  default='../DB_Files',
+                  help="OS location dir [%default]")
+parser.add_option("--dbName", type=str,
+                  default='draft_connected_v2.99_10yrs.npy',
+                  help="dbName to get DB infos [%default]")
+
+opts, args = parser.parse_args()
+
+pparams = vars(opts)
+bands = 'ugrizy'
+
+###############################################
+##### get Nvisits from m5 req.          #######
 ## m5_dict: total number of visits (PZ req.) ##
 ###############################################
-bands = 'ugrizy'
-Nvisits_WL_season = 800
-m5class = FiveSigmaDepth_Nvisits(Nvisits_WL_season=Nvisits_WL_season)
+
+if pparams['m5_from_db']:
+    # getting m5 single exposure from a simulated OS
+    from sn_desc_ddf_strategy.dd_scenario import DB_Infos
+    db_info = DB_Infos(pparams['dbDir'], pparams['dbName'])
+    m5_single_band = db_info.m5_single
+    frac_band = db_info.filter_alloc
+else:
+
+    frac_band = dict(zip(bands,
+                         [pparams['frac_WFD_{}'.format(b)] for b in bands]))
+    m5_single_band = dict(zip(bands,
+                              [pparams['m5_single_{}'.format(b)] for b in bands]))
+
+
+m5class = FiveSigmaDepth_Nvisits(
+    Nvisits_WL_season=pparams['Nvisits_WL_season'],
+    frac_band=frac_band,
+    m5_single=m5_single_band)
+
 
 msingle = m5class.msingle
+print('hello', msingle)
+
+
 m5_summary = m5class.summary
 m5_nvisits = m5class.msingle_calc
 m5_dict = m5_summary.to_dict()
@@ -34,23 +150,14 @@ pz_wl_req = {}
 for key, vals in corresp.items():
     pz_wl_req[vals] = [95, int(m5_dict[key]/nseasons[key])]
 
-#pz_wl_req['WL_10xWFD'] = [85, 800]
+# pz_wl_req['WL_10xWFD'] = [85, 800]
 pz_wl_req_err = {}
 # pz_wl_req_err['PZ_y2_y10'] = (m5_dict['Nvisits_y2_y10_m']/9.,
 #                              m5_dict['Nvisits_y2_y10_p']/9.)
 pz_wl_req_err['WL_PZ_y2_y10'] = (m5_dict['Nvisits_WL_PZ_y2_y10_m']/9.,
                                  m5_dict['Nvisits_WL_PZ_y2_y10_p']/9.)
 # Parameters
-Nf_DD_y1 = 5  # UD starting the second year
-# Nv_DD_y1 = int(m5_dict['Nvisits_y1'])
 Nv_DD_y1 = int(m5_dict['Nvisits_WL_PZ_y1'])
-sl_UD = 180.
-cad_UD = 2.
-NDD = 5
-Nv_LSST = 2.1e6
-frac_moon = 0.30
-sl_DD = 180.
-cad_DD = 3.
 
 myclass = DD_Scenario(Nf_combi=[(2, 2), (2, 3), (2, 4)],
                       zcomp=[0.80, 0.75, 0.70],
@@ -58,10 +165,11 @@ myclass = DD_Scenario(Nf_combi=[(2, 2), (2, 3), (2, 4)],
                                   'DDF_DESC_0.75',
                                   'DDF_DESC_0.70'],
                       m5_single_OS=msingle,
-                      Nf_DD_y1=Nf_DD_y1,
+                      Nf_DD_y1=pparams['Nf_DD_y1'],
                       Nv_DD_y1=Nv_DD_y1,
-                      sl_UD=sl_UD, cad_UD=cad_UD, NDD=NDD, Nv_LSST=Nv_LSST,
-                      frac_moon=frac_moon)
+                      sl_UD=pparams['sl_UD'], cad_UD=pparams['cad_UD'],
+                      NDD=pparams['NDD'], Nv_LSST=pparams['Nv_LSST'],
+                      frac_moon=pparams['frac_moon'])
 
 restot = myclass.get_combis()
 zcomp_req = myclass.get_zcomp_req()
@@ -92,7 +200,7 @@ res = myclass.plot(restot, varx='Nv_DD',
                    pz_wl_req=pz_wl_req, pz_wl_req_err=pz_wl_req_err,
                    figtitle=ffig)
 
-plt.show()
+# plt.show()
 ### m5_resu ###
 
 m5_resu = nvisits_from_m5(res, m5class)
@@ -111,18 +219,31 @@ df_res[toprint].to_csv('ddf_res1.csv', index=False)
 
 
 # transform df_res
-df_resb = reshuffle(df_res, m5_resu, sl_UD, cad_UD, frac_moon)
+df_resb = reshuffle(df_res, m5_resu,
+                    pparams['sl_UD'], pparams['cad_UD'], pparams['frac_moon'])
 
 
 # get the final scenario
 m5single = m5class.msingle_calc
 
 
-resa, resb = m5class.m5_band_from_Nvisits(m5_resu, m5single, sl_DD=sl_DD,
-                                          cad_DD=cad_DD, frac_moon=frac_moon)
+resa, resb = m5class.m5_band_from_Nvisits(m5_resu, m5single,
+                                          sl_DD=pparams['sl_DD'],
+                                          cad_DD=pparams['cad_DD'],
+                                          frac_moon=pparams['frac_moon'],
+                                          swap_filter_moon=pparams['swap_filter_moon'])
+
 dfres = df_resb.groupby('name').apply(
-    lambda x: get_final_scenario(x, NDD, resa, resb)).reset_index()
+    lambda x: get_final_scenario(x, pparams['NDD'], resa, resb)).reset_index()
+
+dfres['nvisits_night'] = dfres['nvisits_night'].astype(int)
 print(dfres)
+
+
+if pparams['recover_from_moon']:
+    dfres = moon_recovery(dfres, pparams['swap_filter_moon'])
+
+print('after recovery', dfres)
 
 ##### Final plots ####
 
@@ -135,11 +256,37 @@ Delta_nvisits(dfres, m5_nvisits)
 
 
 # plot budget vs time for each scenario
-Budget_time(dfres, Nv_LSST)
+Budget_time(dfres, pparams['Nv_LSST'])
 
 
 # plot scenario vs time
-Scenario_time(dfres)
+Scenario_time(dfres, swap_filter_moon=pparams['swap_filter_moon'])
 
 
+# check total number of visits
+print(dfres.columns)
+
+pp = ['name', 'year', 'fieldType']
+tt = dfres.groupby(pp).apply(lambda x: reverse_df(x)).reset_index()
+tt.to_csv('resfi.csv', index=False)
+
+sumCols = ['nvisits_band_season', 'nvisits_band_season_fields']
+dfres['nvisits_band_season_fields'] = dfres['nvisits_band_season']*dfres['Nfields']
+res = dfres.groupby(['name', 'fieldType', 'year', 'band'])[
+    sumCols].sum().reset_index()
+
+print(res)
+
+resb = res.groupby(['name', 'fieldType', 'year'])[sumCols].sum().reset_index()
+
+print(resb)
+
+resc = dfres.groupby(['name'])[sumCols].sum().reset_index()
+
+print(resc)
+
+print(m5_nvisits)
+
+print(m5_nvisits['Nvisits_y2_y10']/m5_nvisits['nseason_y2_y10'])
+m5_nvisits.to_csv('resc.csv', index=False)
 plt.show()
