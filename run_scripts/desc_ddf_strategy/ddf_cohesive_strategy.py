@@ -50,42 +50,12 @@ parser.add_option("--recover_from_moon", type=int,
                   default=1,
                   help="Modify Nvisits for the swap filter - high \
                   moon phases. [%default]")
-parser.add_option("--m5_single_u", type=float,
-                  default=23.65,
-                  help="m5 single visit (u-band) [%default]")
-parser.add_option("--m5_single_g", type=float,
-                  default=24.38,
-                  help="m5 single visit (g-band) [%default]")
-parser.add_option("--m5_single_r", type=float,
-                  default=23.99,
-                  help="m5 single visit (r-band) [%default]")
-parser.add_option("--m5_single_i", type=float,
-                  default=23.55,
-                  help="m5 single visit (i-band) [%default]")
-parser.add_option("--m5_single_z", type=float,
-                  default=22.92,
-                  help="m5 single visit (z-band) [%default]")
-parser.add_option("--m5_single_y", type=float,
-                  default=22.16,
-                  help="m5 single visit (y-band) [%default]")
-parser.add_option("--frac_WFD_u", type=float,
-                  default=0.06,
-                  help="u-band filter allocation (WL req.) [%default]")
-parser.add_option("--frac_WFD_g", type=float,
-                  default=0.09,
-                  help="g-band filter allocation (WL req.) [%default]")
-parser.add_option("--frac_WFD_r", type=float,
-                  default=0.23,
-                  help="r-band filter allocation (WL req.) [%default]")
-parser.add_option("--frac_WFD_i", type=float,
-                  default=0.23,
-                  help="i-band filter allocation (WL req.) [%default]")
-parser.add_option("--frac_WFD_z", type=float,
-                  default=0.19,
-                  help="z-band filter allocation (WL req.) [%default]")
-parser.add_option("--frac_WFD_y", type=float,
-                  default=0.20,
-                  help="y-band filter allocation (WL req.) [%default]")
+parser.add_option("--m5_single_file", type=str,
+                  default='input/DESC_cohesive_strategy/m5_single_med.csv',
+                  help="m5 single visit file (all bands) [%default]")
+parser.add_option("--filter_alloc_file", type=str,
+                  default='input/DESC_cohesive_strategy/filter_allocation.csv',
+                  help="filter allocation file (all bands) [%default]")
 parser.add_option("--m5_from_db", type=int,
                   default=0,
                   help="1 to grab m5 from db [%default]")
@@ -106,6 +76,9 @@ bands = 'ugrizy'
 ## m5_dict: total number of visits (PZ req.) ##
 ###############################################
 
+m5_single_band = {}
+frac_band = {}
+
 if pparams['m5_from_db']:
     # getting m5 single exposure from a simulated OS
     from sn_desc_ddf_strategy.dd_scenario import DB_Infos
@@ -113,11 +86,12 @@ if pparams['m5_from_db']:
     m5_single_band = db_info.m5_single
     frac_band = db_info.filter_alloc
 else:
-
-    frac_band = dict(zip(bands,
-                         [pparams['frac_WFD_{}'.format(b)] for b in bands]))
-    m5_single_band = dict(zip(bands,
-                              [pparams['m5_single_{}'.format(b)] for b in bands]))
+    m5_fi = pd.read_csv(pparams['m5_single_file'])
+    for i, row in m5_fi.iterrows():
+        m5_single_band[row['band']] = row['m5_single']
+    frac_fi = pd.read_csv(pparams['filter_alloc_file'])
+    for i, row in frac_fi.iterrows():
+        frac_band[row['band']] = row['frac_band']
 
 
 m5class = FiveSigmaDepth_Nvisits(
