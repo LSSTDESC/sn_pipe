@@ -37,8 +37,9 @@ class MyFit(CosmoFit):
 
         # change the parameters that have to be changes
 
-        for i, val in enumerate(self.fitparNames):
-            parDict[val] = parameters[i]
+        if len(parameters) > 0:
+            for i, val in enumerate(self.fitparNames):
+                parDict[val] = parameters[i]
 
         cosmo = eval(
             '{}(H0=70, Om0={}, Ode0=0.7,w0={}, wa={})'.format(self.cosmo_model,
@@ -130,6 +131,14 @@ def process_data_indiv(key, data, fitparNames, prior, par_protect_fit):
 
     time_ref = time.time()
     dict_fit = myfit.minuit_fit(params)
+
+    # get the Chisquare
+    fitpars = []
+    for pp in fitparNames:
+        fitpars.append(dict_fit['{}_fit'.format(pp)])
+    dict_fit['Chi2_fit'] = myfit.xi_square(*fitpars)
+    dict_fit['Chi2_fisher'] = myfit.xi_square(*[])
+    dict_fit['NDoF'] = len(data)-len(fitparNames)
     dict_fit['time_fit'] = time.time()-time_ref
     time_ref = time.time()
     fisher_cov = myfit.covariance_fisher(params)
