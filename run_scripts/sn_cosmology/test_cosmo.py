@@ -77,7 +77,8 @@ class MyFit(CosmoFit):
                 ref_val = row['refvalue']
                 sigma_val = row['sigma']
                 i = self.fitparNames.index(row['varname'])
-                X_mat += ((parameters[i] - ref_val)**2)/sigma_val**2
+                if len(parameters) > 0:
+                    X_mat += ((parameters[i] - ref_val)**2)/sigma_val**2
 
             """
             for i, name in enumerate(self.fitparNames):
@@ -221,7 +222,7 @@ nproc = opts.nproc
 
 fFile = h5py.File(fName, 'r')
 
-keys = list(fFile.keys())
+keys = list(fFile.keys())[:2]
 print('number of configs', len(keys))
 fitparNames = fitpars.split(',')
 
