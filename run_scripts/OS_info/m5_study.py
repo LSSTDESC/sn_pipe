@@ -92,21 +92,26 @@ def add_season(obs_DD):
     return obs_season
 
 
-def stat_m5(obs):
+def stat_m5(obs, airmass_cut=1.5):
 
     obs_c = pd.DataFrame.from_records(obs)
 
+    print(obs_c.columns)
     # plot_hist_band(obs_c, 'airmass')
     # plot_hist_band(obs_c, 'fiveSigmaDepth')
 
-    idx = obs_c['airmass'] <= 2.
+    npointings = len(obs_c)
+    idx = obs_c['airmass'] <= airmass_cut
     obs_c = obs_c[idx]
+
+    print('fraction of visits with airmass>', airmass_cut,
+          ':', (npointings-len(obs_c))/npointings)
     res = obs_c.groupby(['note', 'season', 'filter'])[[
         'fiveSigmaDepth', 'airmass']].median().reset_index()
 
-    plot(res)
-
     print(res)
+
+    plot(res)
 
     print(test)
 
@@ -229,6 +234,72 @@ def cadence_sl(obs):
     print(resb)
 
 
+def m5_coadd_study(df):
+
+    dfb = df.groupby(['note', 'filter', 'night', 'season']).apply(
+        lambda x: coadd_m5(x)).reset_index()
+
+    dfb['fiveSigmaDepth'] = dfb['m5_single_med']
+    dfb['airmass'] = dfb['airmass_med']
+    vv = ['note', 'filter', 'night', 'season', 'fiveSigmaDepth', 'airmass']
+    dfb[vv].to_csv('m5_night.csv', index=False)
+    print(dfb)
+
+    tp = ['DD:COSMOS']
+    r = []
+    for nn in tp:
+        idx = dfb['note'] == nn
+        sel = dfb[idx]
+        fig, ax = plt.subplots()
+        fig.suptitle(nn)
+        ax.hist(sel['Nvisits_airmass_1.8'])
+
+        for b in 'ugrizy':
+            figb, axb = plt.subplots()
+            figb.suptitle('{} - {}-band'.format(nn, b))
+            idxb = sel['filter'] == b
+            selb = sel[idxb]
+            axb.plot(selb['m5_single_med'], selb['airmass_med'], 'ko')
+            ii = selb['airmass_med'] <= 2
+            selc = selb[ii]
+            r.append((b, np.median(selc['m5_single_med'])))
+
+    tt = pd.DataFrame(r, columns=['band', 'm5_single'])
+    tt.to_csv('m5_XMM_LSS.csv', index=False)
+    plt.show()
+
+
+def coadd_m5(grp, m5Col='fiveSigmaDepth', airmass_max=1.8):
+
+    # get the number of visits
+    Nvisits = len(grp)
+
+    # coadd m5
+    m5_coadd_a = 1.25*np.log10(np.sum(10**(0.8*grp[m5Col])))
+
+    # coadded m5 - proxy
+
+    m5_med = grp[m5Col].median()
+    airmass_med = grp['airmass'].median()
+
+    m5_coadd_b = m5_med+1.25*np.log10(Nvisits)
+
+    idx = grp['airmass'] >= airmass_max
+    sel = grp[idx]
+
+    dict_out = {}
+    dict_out['m5_coadd'] = [m5_coadd_a]
+    dict_out['m5_single_med'] = [m5_med]
+    dict_out['airmass_med'] = [airmass_med]
+    dict_out['m5_coadd_proxy'] = [m5_coadd_b]
+    dict_out['Nvisits'] = [Nvisits]
+    dict_out['SNR_rat'] = [10**(0.4*(m5_coadd_a-m5_coadd_b))]
+    dict_out['Nvisits_airmass_{}'.format(np.round(airmass_max, 1))] = [
+        len(sel)/len(grp)]
+
+    return pd.DataFrame.from_dict(dict_out)
+
+
 dbDir = '../DB_Files'
 dbName = 'baseline_v3.0_10yrs'
 dbExtens = 'db'
@@ -238,15 +309,35 @@ dbName = 'draft_connected_v2.99_10yrs'
 dbName = 'ddf_early_deep_slf0.20_f10.60_f20.80_v2.1_10yrs'
 dbExtens = 'npy'
 """
+"""
+dbDir = 'Test_Fakes'
+dbName = 'Fakes'
+dbExtens = 'npy'
+"""
 
 # load observations
 observations = load_obs(dbDir, dbName, dbExtens)
 
+print(observations.dtype)
+for note in np.unique(observations['note']):
+    idx = observations['note'] == note
+    sel = observations[idx]
+    RA = np.median(sel['fieldRA'])
+    Dec = np.median(sel['fieldDec'])
+    print(note, np.round(RA, 2), np.round(Dec, 2))
+
+
 # select DDF and get seasons
 obs_season = add_season(get_DDF(observations))
 
+obs_season = pd.DataFrame.from_records(obs_season)
+
 # filter_allocation(observations)
 
-# get_m5(observations)
+# get_m5(obs_season)
 
-cadence_sl(obs_season)
+# cadence_sl(obs_season)
+
+# plot_hist_band(pd.DataFrame.from_records(obs_season), 'airmass')
+
+m5_coadd_study(obs_season)
