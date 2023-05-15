@@ -5,6 +5,132 @@ from sn_tools.sn_obs import season
 import matplotlib.pyplot as plt
 
 
+class m5_study:
+    def __init__(self, dbDir, dbName, dbExtens):
+
+        # load observations
+        observations = load_obs(dbDir, dbName, dbExtens)
+        self.dbName = dbName
+
+        print(observations.dtype)
+        for note in np.unique(observations['note']):
+            idx = observations['note'] == note
+            sel = observations[idx]
+            RA = np.median(sel['fieldRA'])
+            Dec = np.median(sel['fieldDec'])
+            print(note, np.round(RA, 2), np.round(Dec, 2))
+
+        # select DDF and get seasons
+        obs_season = self.add_season(self.get_DDF(observations))
+
+        obs_season = pd.DataFrame.from_records(obs_season)
+
+        # filter_allocation(observations)
+
+        self.stat_m5(obs_season, airmass_cut=1.8)
+
+        self.m5_single_night(obs_season)
+
+    def add_season(self, obs_DD):
+        """
+        method to estimate season on obs
+
+        Parameters
+        ----------
+        obs_DD : array
+            observations.
+
+        Returns
+        -------
+        obs_season : array
+            initial observations + season info (col).
+
+        """
+
+        obs_season = None
+        for dd in np.unique(obs_DD['note']):
+            idx = obs_DD['note'] == dd
+            sel = obs_DD[idx]
+            sel_DD = season(sel)
+            if obs_season is None:
+                obs_season = sel_DD
+            else:
+                obs_season = np.concatenate((sel_DD, obs_season))
+
+        return obs_season
+
+    def get_DDF(self, obs):
+        """
+        Function to grab DDFs
+
+        Parameters
+        ----------
+        obs : array
+            all observations.
+
+        Returns
+        -------
+        obs_DD : array
+            DDF observations.
+
+        """
+
+        ido = np.core.defchararray.find(
+            obs['note'].astype(str), 'DD')
+        idob = np.ma.asarray(list(map(lambda x: bool(x+1), ido)))
+        obs_DD = obs[idob]
+
+        return obs_DD
+
+    def stat_m5(self, obs, airmass_cut=1.5):
+        """
+        Method to get m5 median per field/season/filter
+
+        Parameters
+        ----------
+        obs : array
+            data to process.
+        airmass_cut : float, optional
+            airmass selection. The default is 1.5.
+
+        Returns
+        -------
+        None.
+
+        """
+
+        obs_c = pd.DataFrame.from_records(obs)
+
+        print(obs_c.columns)
+        # plot_hist_band(obs_c, 'airmass')
+        # plot_hist_band(obs_c, 'fiveSigmaDepth')
+
+        npointings = len(obs_c)
+        idx = obs_c['airmass'] <= airmass_cut
+        obs_c = obs_c[idx]
+
+        print('fraction of visits with airmass>', airmass_cut,
+              ':', (npointings-len(obs_c))/npointings)
+        res = obs_c.groupby(['note', 'season', 'filter'])[[
+            'fiveSigmaDepth', 'airmass']].median().reset_index()
+
+        print(res)
+
+        res.to_csv('m5_field_season_{}.csv'.format(dbName), index=False)
+
+    def m5_single_night(self, df):
+
+        dfb = df.groupby(['note', 'filter', 'night', 'season']).apply(
+            lambda x: coadd_m5(x)).reset_index()
+
+        dfb['fiveSigmaDepth'] = dfb['m5_single_med']
+        dfb['airmass'] = dfb['airmass_med']
+        vv = ['note', 'filter', 'night', 'season', 'fiveSigmaDepth', 'airmass']
+        dfb[vv].to_csv('m5_field_night_{}.csv'.format(
+            self.dbName), index=False)
+        print(dfb)
+
+
 def filter_allocation(obs, Nvisits=800, outName='WL_req.csv'):
     """
     Function to estimate filter allocation corresponding to obs
@@ -111,6 +237,9 @@ def stat_m5(obs, airmass_cut=1.5):
 
     print(res)
 
+    res.to_csv('m5_field_season.csv', index=False)
+
+    print(test)
     plot(res)
 
     print(test)
@@ -245,7 +374,8 @@ def m5_coadd_study(df):
     dfb[vv].to_csv('m5_night.csv', index=False)
     print(dfb)
 
-    tp = ['DD:COSMOS']
+    field = 'DD:XMM_LSS'
+    tp = [field]
     r = []
     for nn in tp:
         idx = dfb['note'] == nn
@@ -265,7 +395,7 @@ def m5_coadd_study(df):
             r.append((b, np.median(selc['m5_single_med'])))
 
     tt = pd.DataFrame(r, columns=['band', 'm5_single'])
-    tt.to_csv('m5_XMM_LSS.csv', index=False)
+    tt.to_csv('m5_{}.csv'.format(field.split(':')[-1]), index=False)
     plt.show()
 
 
@@ -315,6 +445,8 @@ dbName = 'Fakes'
 dbExtens = 'npy'
 """
 
+m5_study(dbDir, dbName, dbExtens)
+print(test)
 # load observations
 observations = load_obs(dbDir, dbName, dbExtens)
 
@@ -334,7 +466,7 @@ obs_season = pd.DataFrame.from_records(obs_season)
 
 # filter_allocation(observations)
 
-# get_m5(obs_season)
+get_m5(obs_season)
 
 # cadence_sl(obs_season)
 
