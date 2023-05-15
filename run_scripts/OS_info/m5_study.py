@@ -27,7 +27,7 @@ class m5_study:
 
         # filter_allocation(observations)
 
-        self.stat_m5(obs_season, airmass_cut=1.8)
+        self.stat_m5(obs_season, airmass_cut=1.6)
 
         self.m5_single_night(obs_season)
 

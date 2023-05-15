@@ -1,3 +1,3 @@
 confName,simulator_name,simulator_model,simulator_version,fitter_name,fitter_model,fitter_version,sn_daymax_type,sn_daymax_step
 full_salt3,sn_cosmo,salt3,2.0,sn_cosmo,salt3,2.0,unique,1
-fast_salt3,sn_fast,salt3,2.0,sn_fast,salt3,2.0,unique,1
+# fast_salt3,sn_fast,salt3,2.0,sn_fast,salt3,2.0,unique,1
