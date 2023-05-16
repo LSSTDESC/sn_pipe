@@ -2,6 +2,7 @@
 #!/bin/bash
 import os
 import pandas as pd
+import numpy as np
 from optparse import OptionParser
 
 
@@ -53,13 +54,20 @@ if run_mode == 'fast':
 
     cmd = 'python run_scripts/sim_to_fit/run_fake.py'
     cmd += ' --SN_NSNabsolute=1 --MultiprocessingSimu_nproc=8'
+    cmd += ' --MultiprocessingFit_nproc=8'
     cmd += ' --seasons={}'.format(seasons)
 
     for b in 'ugrizy':
         io = m5_field['filter'] == b
         sel = m5_field[io]
-        cmd += ' --m5_{}={}'.format(b, sel['fiveSigmaDepth'].values[0])
-
+        yy = ' --m5_{}='.format(b)
+        for i, val in enumerate(seasonb):
+            if i < len(seasonb)-1:
+                yy += '{},'.format(
+                    np.round(sel['fiveSigmaDepth'].values[i], 3))
+            else:
+                yy += '{}'.format(np.round(sel['fiveSigmaDepth'].values[i], 3))
+        cmd += yy
 
 if run_mode == 'slow':
     cmd = 'python run_scripts/sim_to_fit/run_fake.py'
