@@ -23,6 +23,13 @@ parser.add_option("--run_mode", type=str,
 parser.add_option("--airmass_max", type=float,
                   default=1.8,
                   help="max airmass for obs (for fast run_mode only) [%default]")
+parser.add_option("--config_obs", type=str,
+                  default='input/sim_to_simu_test/combi_obs.csv',
+                  help="config file for obs [%default]")
+parser.add_option("--show_results", type=int,
+                  default=1,
+                  help="to display results [%default]")
+
 opts, args = parser.parse_args()
 
 
@@ -34,6 +41,8 @@ seasonb = list(map(int, seasonb))
 field = opts.field
 run_mode = opts.run_mode
 airmass_max = opts.airmass_max
+config_obs = opts.config_obs
+show_results = opts.show_results
 
 if run_mode == 'fast':
     # get m5 values
@@ -56,6 +65,8 @@ if run_mode == 'fast':
     cmd += ' --SN_NSNabsolute=1 --MultiprocessingSimu_nproc=8'
     cmd += ' --MultiprocessingFit_nproc=8'
     cmd += ' --seasons={}'.format(seasons)
+    cmd += ' --config_obs={}'.format(config_obs)
+    cmd += ' --show_results={}'.format(show_results)
 
     for b in 'ugrizy':
         io = m5_field['filter'] == b
@@ -77,6 +88,8 @@ if run_mode == 'slow':
     cmd += ' --obsCondFile={}'.format(m5_file)
     cmd += ' --seasons={}'.format(seasons)
     cmd += ' --field={}'.format(field)
+    cmd += ' --config_obs={}'.format(config_obs)
+    cmd += ' --show_results={}'.format(show_results)
 
 print(cmd)
 os.system(cmd)
