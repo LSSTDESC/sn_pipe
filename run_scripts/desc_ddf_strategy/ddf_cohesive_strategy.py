@@ -167,14 +167,18 @@ myclass.plot(restot, varx='Nv_DD',
 # zcomp_req_err = {}
 # pz_wl_req_err = {}
 # scenario = {}
+deep_universal = {}
+deep_universal['Deep Universal'] = [myclass.budget_DD *
+                                    myclass.Nv_LSST/(10.*opts.NDD), 130]
 
 res = myclass.plot(restot, varx='Nv_DD',
                    legx='N$_{visits}^{DD}/season}$', scenario=scenario,
                    zcomp_req=zcomp_req, zcomp_req_err=zcomp_req_err,
                    pz_wl_req=pz_wl_req, pz_wl_req_err=pz_wl_req_err,
+                   deep_universal=deep_universal,
                    figtitle=ffig)
 
-# plt.show()
+plt.show()
 ### m5_resu ###
 
 m5_resu = nvisits_from_m5(res, m5class)
