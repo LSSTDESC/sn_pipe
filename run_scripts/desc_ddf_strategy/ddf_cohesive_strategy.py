@@ -27,9 +27,12 @@ parser.add_option("--sl_UD", type=int,
 parser.add_option("--cad_UD", type=float,
                   default=2.,
                   help="cadence UD fields [%default]")
-parser.add_option("--NDD", type=int,
+parser.add_option("--NDDF", type=int,
                   default=5,
-                  help="number of DD fields[%default]")
+                  help="total number of DDFs[%default]")
+parser.add_option("--Ns_DD", type=int,
+                  default=9,
+                  help="Number of season of of the DD fields [%default]")
 parser.add_option("--Nv_LSST", type=float,
                   default=2.1e6,
                   help="Total number of LSST visits(10 years) [%default]")
@@ -97,7 +100,7 @@ else:
 m5class = FiveSigmaDepth_Nvisits(
     Nvisits_WL_season=pparams['Nvisits_WL_season'],
     frac_band=frac_band,
-    m5_single=m5_single_band)
+    m5_single=m5_single_band, Ns_y2_y10=opts.Ns_DD)
 
 
 msingle = m5class.msingle
@@ -115,10 +118,11 @@ print(m5_nvisits)
 ## get (Nvisits_UD vs N_visits_DD for (Kf_UD, Ns_UD) combinations ####
 
 corresp = dict(zip(['Nvisits_y1', 'Nvisits_y2_y10'], ['PZ_y1', 'PZ_y2_y10']))
-nseasons = dict(zip(['Nvisits_y1', 'Nvisits_y2_y10'], [1, 9]))
+nseasons = dict(zip(['Nvisits_y1', 'Nvisits_y2_y10'], [1, opts.Ns_DD]))
 corresp = dict(zip(['Nvisits_WL_PZ_y1', 'Nvisits_WL_PZ_y2_y10'], [
                'WL_PZ_y1', 'WL_PZ_y2_y10']))
-nseasons = dict(zip(['Nvisits_WL_PZ_y1', 'Nvisits_WL_PZ_y2_y10'], [1, 9]))
+nseasons = dict(
+    zip(['Nvisits_WL_PZ_y1', 'Nvisits_WL_PZ_y2_y10'], [1, opts.Ns_DD]))
 
 pz_wl_req = {}
 for key, vals in corresp.items():
@@ -128,8 +132,8 @@ for key, vals in corresp.items():
 pz_wl_req_err = {}
 # pz_wl_req_err['PZ_y2_y10'] = (m5_dict['Nvisits_y2_y10_m']/9.,
 #                              m5_dict['Nvisits_y2_y10_p']/9.)
-pz_wl_req_err['WL_PZ_y2_y10'] = (m5_dict['Nvisits_WL_PZ_y2_y10_m']/9.,
-                                 m5_dict['Nvisits_WL_PZ_y2_y10_p']/9.)
+pz_wl_req_err['WL_PZ_y2_y10'] = (m5_dict['Nvisits_WL_PZ_y2_y10_m']/opts.Ns_DD,
+                                 m5_dict['Nvisits_WL_PZ_y2_y10_p']/opts.Ns_DD)
 # Parameters
 Nv_DD_y1 = int(m5_dict['Nvisits_WL_PZ_y1'])
 
@@ -142,7 +146,8 @@ myclass = DD_Scenario(Nf_combi=[(2, 2), (2, 3), (2, 4)],
                       Nf_DD_y1=pparams['Nf_DD_y1'],
                       Nv_DD_y1=Nv_DD_y1,
                       sl_UD=pparams['sl_UD'], cad_UD=pparams['cad_UD'],
-                      NDD=pparams['NDD'], Nv_LSST=pparams['Nv_LSST'],
+                      Ns_DD=pparams['Ns_DD'],
+                      NDDF=pparams['NDDF'], Nv_LSST=pparams['Nv_LSST'],
                       frac_moon=pparams['frac_moon'])
 
 restot = myclass.get_combis()
@@ -169,7 +174,7 @@ myclass.plot(restot, varx='Nv_DD',
 # scenario = {}
 deep_universal = {}
 deep_universal['Deep Universal'] = [myclass.budget_DD *
-                                    myclass.Nv_LSST/(10.*opts.NDD), 130]
+                                    myclass.Nv_LSST/((opts.Ns_DD+1)*opts.NDDF), 130]
 
 res = myclass.plot(restot, varx='Nv_DD',
                    legx='N$_{visits}^{DD}/season}$', scenario=scenario,
@@ -212,7 +217,7 @@ resa, resb = m5class.m5_band_from_Nvisits(m5_resu, m5single,
                                           swap_filter_moon=pparams['swap_filter_moon'])
 
 dfres = df_resb.groupby('name').apply(
-    lambda x: get_final_scenario(x, pparams['NDD'], resa, resb)).reset_index()
+    lambda x: get_final_scenario(x, pparams['NDDF'], resa, resb)).reset_index()
 
 dfres['nvisits_night'] = dfres['nvisits_night'].astype(int)
 print(dfres)
