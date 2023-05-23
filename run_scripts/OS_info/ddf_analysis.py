@@ -279,6 +279,8 @@ df = pd.DataFrame.from_records(data_season)
 dd = df.groupby(['note', 'night', 'season']).apply(
     lambda x: filter_alloc(x)).reset_index()
 
+print(dd)
+
 for bb in ['Nvisits_no_moon', 'Nvisits_moon']:
     idx = dd[bb] > 0
 
