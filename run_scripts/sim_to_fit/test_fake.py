@@ -29,6 +29,12 @@ parser.add_option("--config_obs", type=str,
 parser.add_option("--show_results", type=int,
                   default=1,
                   help="to display results [%default]")
+parser.add_option("--nproc_simu", type=int,
+                  default=8,
+                  help="nproc for simulation [%default]")
+parser.add_option("--nproc_fit", type=int,
+                  default=8,
+                  help="nproc for fit [%default]")
 
 opts, args = parser.parse_args()
 
@@ -43,6 +49,8 @@ run_mode = opts.run_mode
 airmass_max = opts.airmass_max
 config_obs = opts.config_obs
 show_results = opts.show_results
+nproc_simu = opts.nproc_simu
+nproc_fit = opts.nproc_fit
 
 if run_mode == 'fast':
     # get m5 values
@@ -62,8 +70,9 @@ if run_mode == 'fast':
     print(m5_field)
 
     cmd = 'python run_scripts/sim_to_fit/run_fake.py'
-    cmd += ' --SN_NSNabsolute=1 --MultiprocessingSimu_nproc=8'
-    cmd += ' --MultiprocessingFit_nproc=8'
+    cmd += ' --SN_NSNabsolute=1 --MultiprocessingSimu_nproc={}'.format(
+        nproc_simu)
+    cmd += ' --MultiprocessingFit_nproc={}'.format(nproc_fit)
     cmd += ' --seasons={}'.format(seasons)
     cmd += ' --config_obs={}'.format(config_obs)
     cmd += ' --show_results={}'.format(show_results)
@@ -84,7 +93,8 @@ if run_mode == 'slow':
     cmd = 'python run_scripts/sim_to_fit/run_fake.py'
     cmd += ' --SN_NSNabsolute=1 --obsFromSimu=1 --SN_daymax_type=uniform'
     cmd += ' --SN_daymax_step 3'
-    cmd += ' --MultiprocessingFit_nproc=8 --MultiprocessingSimu_nproc=8'
+    cmd += ' --MultiprocessingFit_nproc={}'.format(nproc_fit)
+    cmd += ' --MultiprocessingSimu_nproc={}'.format(nproc_simu)
     cmd += ' --obsCondFile={}'.format(m5_file)
     cmd += ' --seasons={}'.format(seasons)
     cmd += ' --field={}'.format(field)
