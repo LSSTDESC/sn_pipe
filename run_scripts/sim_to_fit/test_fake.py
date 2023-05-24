@@ -35,6 +35,9 @@ parser.add_option("--nproc_simu", type=int,
 parser.add_option("--nproc_fit", type=int,
                   default=8,
                   help="nproc for fit [%default]")
+parser.add_option("--outName", type='str',
+                  default='Fakes',
+                  help="output file name [%default]")
 
 opts, args = parser.parse_args()
 
@@ -51,6 +54,7 @@ config_obs = opts.config_obs
 show_results = opts.show_results
 nproc_simu = opts.nproc_simu
 nproc_fit = opts.nproc_fit
+outName = opts.outName
 
 if run_mode == 'fast':
     # get m5 values
@@ -76,6 +80,7 @@ if run_mode == 'fast':
     cmd += ' --seasons={}'.format(seasons)
     cmd += ' --config_obs={}'.format(config_obs)
     cmd += ' --show_results={}'.format(show_results)
+    cmd += ' --outName {}'.format(outName)
 
     for b in 'ugrizy':
         io = m5_field['filter'] == b
