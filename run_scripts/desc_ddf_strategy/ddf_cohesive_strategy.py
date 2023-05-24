@@ -18,6 +18,9 @@ parser = OptionParser(
 parser.add_option("--Nvisits_WL_season", type=int,
                   default=800,
                   help="Nvisits WL requirement [%default]")
+parser.add_option("--budget_DD", type=float,
+                  default=0.07,
+                  help="DD budget [%default]")
 parser.add_option("--Nf_DD_y1", type=int,
                   default=5,
                   help="N DD fields Y1[%default]")
@@ -33,6 +36,9 @@ parser.add_option("--NDDF", type=int,
 parser.add_option("--Ns_DD", type=int,
                   default=9,
                   help="Number of season of of the DD fields [%default]")
+parser.add_option("--obs_UD_DD", type=int,
+                  default=1,
+                  help="Observe UD fields as DD fields [%default]")
 parser.add_option("--Nv_LSST", type=float,
                   default=2.1e6,
                   help="Total number of LSST visits(10 years) [%default]")
@@ -68,6 +74,9 @@ parser.add_option("--dbDir", type=str,
 parser.add_option("--dbName", type=str,
                   default='draft_connected_v2.99_10yrs.npy',
                   help="dbName to get DB infos [%default]")
+parser.add_option("--Nv_DD_max", type=int,
+                  default=3500,
+                  help="max number of Nvisits per DD/season [%default]")
 
 opts, args = parser.parse_args()
 
@@ -137,7 +146,8 @@ pz_wl_req_err['WL_PZ_y2_y10'] = (m5_dict['Nvisits_WL_PZ_y2_y10_m']/opts.Ns_DD,
 # Parameters
 Nv_DD_y1 = int(m5_dict['Nvisits_WL_PZ_y1'])
 
-myclass = DD_Scenario(Nf_combi=[(2, 2), (2, 3), (2, 4)],
+myclass = DD_Scenario(budget_DD=pparams['budget_DD'],
+                      Nf_combi=[(2, 2), (2, 3), (2, 4)],
                       zcomp=[0.80, 0.75, 0.70],
                       scen_names=['DDF_DESC_0.80',
                                   'DDF_DESC_0.75',
@@ -148,7 +158,9 @@ myclass = DD_Scenario(Nf_combi=[(2, 2), (2, 3), (2, 4)],
                       sl_UD=pparams['sl_UD'], cad_UD=pparams['cad_UD'],
                       Ns_DD=pparams['Ns_DD'],
                       NDDF=pparams['NDDF'], Nv_LSST=pparams['Nv_LSST'],
-                      frac_moon=pparams['frac_moon'])
+                      frac_moon=pparams['frac_moon'],
+                      obs_UD_DD=pparams['obs_UD_DD'],
+                      Nv_DD_max=pparams['Nv_DD_max'])
 
 restot = myclass.get_combis()
 zcomp_req = myclass.get_zcomp_req()
@@ -173,14 +185,18 @@ myclass.plot(restot, varx='Nv_DD',
 # pz_wl_req_err = {}
 # scenario = {}
 deep_universal = {}
-deep_universal['Deep Universal'] = [myclass.budget_DD *
-                                    myclass.Nv_LSST/((opts.Ns_DD+1)*opts.NDDF), 130]
+Nvisits_avail = myclass.budget_DD*myclass.Nv_LSST-myclass.Nf_DD_y1*myclass.Nv_DD_y1
+deep_universal['Deep Universal'] = [Nvisits_avail/(opts.Ns_DD*opts.NDDF), 140]
+Nv_DD_SCOC_pII = Nvisits_avail/52.
+Nv_UD_SCOC_pII = (10*Nv_DD_SCOC_pII/3)*opts.cad_UD/opts.sl_UD
+scoc_pII = {}
+scoc_pII['SCOC_pII'] = [Nv_DD_SCOC_pII, Nv_UD_SCOC_pII]
 
 res = myclass.plot(restot, varx='Nv_DD',
                    legx='N$_{visits}^{DD}/season}$', scenario=scenario,
                    zcomp_req=zcomp_req, zcomp_req_err=zcomp_req_err,
                    pz_wl_req=pz_wl_req, pz_wl_req_err=pz_wl_req_err,
-                   deep_universal=deep_universal,
+                   deep_universal=deep_universal, scoc_pII=scoc_pII,
                    figtitle=ffig)
 
 plt.show()
@@ -232,14 +248,14 @@ print('after recovery', dfres)
 
 
 # estimate and plot delta_m5 for each scenario
-Delta_m5(dfres, m5_nvisits)
+# Delta_m5(dfres, m5_nvisits)
 
 # estimate and plot visit ratio for each scenario
-Delta_nvisits(dfres, m5_nvisits)
+# Delta_nvisits(dfres, m5_nvisits)
 
 
 # plot budget vs time for each scenario
-Budget_time(dfres, pparams['Nv_LSST'])
+# Budget_time(dfres, pparams['Nv_LSST'])
 
 
 # plot scenario vs time
@@ -251,7 +267,7 @@ print(dfres.columns)
 
 pp = ['name', 'year', 'fieldType']
 tt = dfres.groupby(pp).apply(lambda x: reverse_df(x)).reset_index()
-tt.to_csv('resfi.csv', index=False)
+tt.to_csv('scenarios.csv', index=False)
 
 sumCols = ['nvisits_band_season', 'nvisits_band_season_fields']
 dfres['nvisits_band_season_fields'] = dfres['nvisits_band_season']*dfres['Nfields']

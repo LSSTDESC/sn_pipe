@@ -1,6 +1,6 @@
 import numpy as np
 from optparse import OptionParser
-from sn_tools.sn_io import make_dict_from_config
+from sn_tools.sn_io import make_dict_from_config, checkDir
 from sn_tools.sn_fake_utils import FakeObservations, config, add_option
 import sn_script_input
 import pandas as pd
@@ -27,6 +27,8 @@ parser.add_option("--m5_file", type=str,
 parser.add_option("--airmass_max", type=float,
                   default=1.8,
                   help="max airmass for obs (for fast run_mode only) [%default]")
+parser.add_option('--outputDir', type='str', default='../DB_Files',
+                  help='output directory[%default]')
 
 opts, args = parser.parse_args()
 
@@ -34,6 +36,7 @@ config_fake = config(confDict_fake, opts)
 configFile = opts.configFile
 m5_file = opts.m5_file
 airmass_max = opts.airmass_max
+outputDir = opts.outputDir
 
 # get m5 values
 m5 = pd.read_csv(m5_file)
@@ -83,3 +86,9 @@ for i, row in df_conf.iterrows():
         fakeData = np.concatenate((fakeData, fakes))
 
 print('fake Data', len(fakeData), fakeData)
+
+outName = configFile.split('/')[-1].split('.csv')[0]
+outFile = '{}/{}.npy'.format(outputDir, outName)
+
+checkDir(outputDir)
+np.save(outFile, np.copy(fakeData))
