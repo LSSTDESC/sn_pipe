@@ -29,9 +29,9 @@ if zcomp == '0.75':
     Ny = 30
 
 if zcomp == '0.70':
-    Ni = 18
-    Nz = 66
-    Ny = 62
+    Ni = 66
+    Nz = 62
+    Ny = 12
 
 cadg = 2
 cadr = 2
