@@ -396,6 +396,8 @@ for j, row in combis_obs.iterrows():
         dict_opt[col] = row[col]
     dict_opt['outName'] = outName+'_'+row['tagName']
     dict_simu['dbName'] = dict_opt['outName']
+    dict_simu['OutputSimu_directory'] = 'Output_SN/{}'.format(outName)
+    dict_simu['OutputFit_directory'] = 'Output_SN/{}'.format(outName)
 
     seqName = row['tagName']
     if add_tag != 'None':
