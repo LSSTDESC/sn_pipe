@@ -122,8 +122,8 @@ print(df_scen['name'].unique())
 
 scenarios = df_scen['name'].unique()
 
-DD_names = ['DD:COSMOS', 'DD:XMM-LSS', 'DD:ECDFS',
-            'DD:ELAISS1', 'DD:EDFS, a', 'DD:EDFS, b']
+DD_names = ['DD:COSMOS', 'DD:XMM_LSS', 'DD:ECDFS',
+            'DD:ELAISS1', 'DD:EDFS_a', 'DD:EDFS_b']
 DD_types = ['UD', 'UD', 'DD', 'DD', 'DD', 'DD']
 cad = [2, 2, 3, 3, 3, 3, 3]
 sl = [180]*len(DD_names)
