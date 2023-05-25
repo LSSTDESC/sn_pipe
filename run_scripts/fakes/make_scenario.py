@@ -69,11 +69,11 @@ cols = df_conf.columns
 fakeData = None
 for i, row in df_conf.iterrows():
     for cc in cols:
-        if 'Nvisits' not in cc:
+        if 'Nvisits' not in cc and 'cadence' not in cc:
             config_fake[cc] = row[cc]
         else:
-            b = cc.split('_')[-1]
-            config_fake['Nvisits'][b] = row[cc]
+            kk = cc.split('_')
+            config_fake[kk[0]][kk[1]] = row[cc]
     # update m5 values
     seasonb = list(map(int, row['seasons']))
     idx = m5_med['note'] == row['field']
