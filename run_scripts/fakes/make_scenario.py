@@ -24,6 +24,9 @@ parser.add_option('--configFile', type='str', default='input/DESC_cohesive_strat
 parser.add_option("--m5_file", type=str,
                   default='input/m5_OS/m5_field_night_baseline_v3.0_10yrs.csv',
                   help="file to process [%default]")
+parser.add_option("--radec_file", type=str,
+                  default='input/DESC_cohesive_strategy/DD_ra_dec.csv',
+                  help="(ra,dec) file for DD [%default]")
 parser.add_option("--airmass_max", type=float,
                   default=1.8,
                   help="max airmass for obs (for fast run_mode only) [%default]")
@@ -35,6 +38,7 @@ opts, args = parser.parse_args()
 config_fake = config(confDict_fake, opts)
 configFile = opts.configFile
 m5_file = opts.m5_file
+radec_file = opts.radec_file
 airmass_max = opts.airmass_max
 outputDir = opts.outputDir
 
@@ -46,7 +50,9 @@ m5 = m5[idx]
 m5_med = m5.groupby(['note', 'season', 'filter'])[
     'fiveSigmaDepth', 'airmass'].median().reset_index()
 
-print(m5_med)
+# get ra,dec values
+dd_radec = pd.read_csv(radec_file)
+
 # load configs
 df_conf = pd.read_csv(configFile, comment='#')
 
@@ -78,6 +84,13 @@ for i, row in df_conf.iterrows():
         rr = selm5[io]
         config_fake['m5'][b] = str(rr['fiveSigmaDepth'].values[0])
 
+    # add "good" ra,dec
+    ido = dd_radec['field'] == config_fake['field']
+    ra = dd_radec[ido]['RA'].values[0]
+    dec = dd_radec[ido]['Dec'].values[0]
+    config_fake['RA'] = ra
+    config_fake['Dec'] = dec
+
     print(config_fake)
     fakes = FakeObservations(config_fake).obs
     if fakeData is None:
@@ -85,7 +98,7 @@ for i, row in df_conf.iterrows():
     else:
         fakeData = np.concatenate((fakeData, fakes))
 
-print('fake Data', len(fakeData), fakeData)
+# print('fake Data', len(fakeData), fakeData)
 
 outName = configFile.split('/')[-1].split('.csv')[0]
 outFile = '{}/{}.npy'.format(outputDir, outName)
