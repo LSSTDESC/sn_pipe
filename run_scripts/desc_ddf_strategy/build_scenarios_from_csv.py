@@ -92,7 +92,7 @@ def modif_UD_indiv(selb, cols, cad):
     seld = selb[~idxc]
 
     for b in bands:
-        selc['cad_{}'.format(b)] = cad
+        selc['cadence_{}'.format(b)] = cad
 
     seld = pd.concat((seld, selc))
 
@@ -102,6 +102,22 @@ def modif_UD_indiv(selb, cols, cad):
 
 
 def modif_Euclid(df, fields=['DD:EDFS_a', 'DD:EDFS_b']):
+    """
+    Function to modify cadences of Euclid fields
+
+    Parameters
+    ----------
+    df : pandas df
+        data to process.
+    fields : list(str), optional
+        List of fields to modify. The default is ['DD:EDFS_a', 'DD:EDFS_b'].
+
+    Returns
+    -------
+    dftot : pandas df
+        result.
+
+    """
 
     idx = df['field'].isin(fields)
 
@@ -112,7 +128,7 @@ def modif_Euclid(df, fields=['DD:EDFS_a', 'DD:EDFS_b']):
     bands = 'ugrizy'
 
     for b in bands:
-        sel['cad_{}'.format(b)] *= 2
+        sel['cadence_{}'.format(b)] *= 2
 
     print(sel)
 
@@ -158,7 +174,7 @@ for scen in scenarios:
         ido = sel_scen['fieldType'] == DD_types[i]
         dfa = pd.DataFrame(sel_scen[ido])
         for b in bands:
-            dfa['cad_{}'.format(b)] = cad[i]
+            dfa['cadence_{}'.format(b)] = cad[i]
             dfa = dfa.rename(columns={'{}'.format(b): 'Nvisits_{}'.format(b)})
         dfa = dfa.rename(columns={'year': 'seasons'})
         dfa['seasonLength'] = sl[i]
@@ -170,4 +186,4 @@ for scen in scenarios:
     print(dfa_scen)
     outName = '{}/{}.csv'.format(opts.outputDir, scen)
     dfa_scen.to_csv(outName, index=False)
-    break
+    # break
