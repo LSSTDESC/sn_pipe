@@ -18,10 +18,13 @@ zcomp = opts.zcomp
 Nu = 7
 Ng = 4
 Nr = 18
+pmin = 0.9
+pmax = 1.2
 if zcomp == '0.80':
     Ni = 90
     Nz = 128
     Ny = 38
+    pmax = 1.1
 
 if zcomp == '0.75':
     Ni = 88
@@ -44,9 +47,9 @@ moonswapFilter = 'y'
 
 r = []
 io = 0
-for NNi in range(int(0.9*Ni), int(1.2*Ni), 2):
-    for NNz in range(int(0.9*Nz), int(1.2*Nz), 2):
-        for NNy in range(int(0.9*Ny), int(1.2*Ny), 2):
+for NNi in range(int(pmin*Ni), int(pmax*Ni), 2):
+    for NNz in range(int(pmin*Nz), int(pmax*Nz), 2):
+        for NNy in range(int(pmin*Ny), int(pmax*Ny), 2):
             io += 1
             combi_name = 'combi_{}'.format(io)
             plot_name = 'plot_{}'.format(io)
