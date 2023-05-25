@@ -1,0 +1,13 @@
+Set of scripts to generate LSST-like OS for DDFs
+cookbook:
+- python run_scripts/desc_ddf_strategy/ddf_cohesive_strategy.py
+  -> to generate observing strategies (general) parameters+produces a set of plots
+  -> should produce (at least): scenarios.csv
+
+- python run_scripts/desc_ddf_strategy/build_scenarios_from_csv.py
+  -> uses scenarios.csv as input
+  -> output (by default in input/DESC_cohesive_strategy): for each scenario: cadence parameters (Nvisits/obs. night, cadence, ...)for each field
+
+- python run_scripts/fakes/make_scenario.py --configFile input/DESC_cohesive_strategy/DDF_DESC_0.80_SN.csv
+  -> will produce LSST-like OS with LSST pointings parameters
+  -> this file can be used as "usual" OS to generate and fit LCs
