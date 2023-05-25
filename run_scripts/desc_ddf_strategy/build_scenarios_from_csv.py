@@ -101,6 +101,26 @@ def modif_UD_indiv(selb, cols, cad):
     return seld
 
 
+def modif_Euclid(df, fields=['DD:EDFS_a', 'DD:EDFS_b']):
+
+    idx = df['field'].isin(fields)
+
+    dftot = df[~idx]
+
+    sel = df[idx]
+    # double the cadence for these fields
+    bands = 'ugrizy'
+
+    for b in bands:
+        sel['cad_{}'.format(b)] *= 2
+
+    print(sel)
+
+    dftot = pd.concat((dftot, sel))
+
+    return dftot
+
+
 parser = OptionParser(
     description='Script to generate fake scenarios (csv files).')
 
@@ -146,7 +166,8 @@ for scen in scenarios:
         dfa_scen = pd.concat((dfa_scen, dfa))
 
     dfa_scen = modif_UD(dfa_scen, cad[3])
+    dfa_scen = modif_Euclid(dfa_scen)
     print(dfa_scen)
     outName = '{}/{}.csv'.format(opts.outputDir, scen)
     dfa_scen.to_csv(outName, index=False)
-    # break
+    break
