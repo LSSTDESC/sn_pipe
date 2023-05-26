@@ -1,23 +1,44 @@
 from sn_analysis.sn_tools import *
-from sn_analysis.sn_calc_plot import Calc_zlim, histSN_params, select, plot_effi, effi
+from sn_analysis.sn_calc_plot import Calc_zlim, histSN_params, select
+from sn_analysis.sn_calc_plot import plot_effi, effi, plot_NSN
 
-dbName = 'draft_connected_v2.99_10yrs'
-dbName = 'dd6_v2.99_10yrs'
-res = load_complete_dbSimu('../Output_SN', dbName, 'DDF_photz')
+
+from optparse import OptionParser
+import numpy as np
+
+parser = OptionParser(description='Script to analyze SN prod')
+
+parser.add_option('--dbDir', type=str, default='../Output_SN',
+                  help='OS location dir[%default]')
+parser.add_option('--dbName', type=str, default='dd6_v2.99_10yrs',
+                  help='OS name[%default]')
+parser.add_option('--prodType', type=str, default='DDF_spectroz',
+                  help='type prod (DDF_spectroz/DDF_photoz) [%default]')
+parser.add_option('--norm_factor', type=float, default=50.,
+                  help='normalization factor on prod [%default]')
+opts, args = parser.parse_args()
+
+
+dbDir = opts.dbDir
+dbName = opts.dbName
+prodType = opts.prodType
+norm_factor = opts.norm_factor
+
+
 #res_fast = load_complete('Output_SN_fast', dbName)
 
 listDDF = 'COSMOS,CDFS,XMM-LSS,ELAISS1,EDFSa,EDFSb'
+# listDDF = 'COSMOS'
+res = load_complete_dbSimu(dbDir, dbName, prodType, listDDF=listDDF)
 fields = listDDF.split(',')
 
-for field in fields:
-    idx = res['field'] == field
-    print(field, len(res[idx]))
 
-
+"""
 print('aooo', len(res), res.columns, np.unique(res['healpixID']))
 histSN_params(res)
 plotSN_2D(res)
 print(res.columns)
+"""
 
 dict_sel = {}
 
@@ -35,16 +56,27 @@ dict_sel['metric'] = [('n_epochs_bef', operator.ge, 4),
                       ('sigmaC', operator.le, 0.04),
                       ]
 
-sel = select(res, dict_sel['metric'])
+sel = select(res, dict_sel['G10'])
+
+for field in fields:
+    idx = res['field'] == field
+    idxb = sel['field'] == field
+    print(field, len(res[idx])/norm_factor, len(sel[idxb])/norm_factor)
+
 
 for field in fields:
     idx = sel['field'] == field
-    print(field, len(sel[idx]))
-print(len(sel))
+    sela = sel[idx]
+    for season in np.unique(sela['season']):
+        idxb = sela['season'] == season
+        selb = sela[idxb]
+        print(field, season, len(selb)/norm_factor)
+
+print(len(sel)/norm_factor)
 
 histSN_params(sel)
 plotSN_2D(sel)
-
+plot_NSN(sel, norm_factor=norm_factor)
 plt.show()
 
 """
