@@ -1,3 +1,4 @@
+import matplotlib.pyplot as ply
 from sn_analysis.sn_tools import *
 from sn_analysis.sn_calc_plot import Calc_zlim, histSN_params, select
 from sn_analysis.sn_calc_plot import plot_effi, effi, plot_NSN
@@ -5,6 +6,105 @@ from sn_analysis.sn_calc_plot import plot_effi, effi, plot_NSN
 
 from optparse import OptionParser
 import numpy as np
+
+
+class sn_load_select:
+    def __init__(self, dbDir, dbName, prodType,
+                 listDDF='COSMOS,CDFS,XMM-LSS,ELAISS1,EDFSa,EDFSb'):
+        """
+        class to load and select sn data and make some stats
+
+        Parameters
+        ----------
+        dbDir : str
+            loc dir of the data to process.
+        dbName : str
+            db name.
+        prodType : str
+            production type (DDF_spectroz, DDF_photoz).
+        listDDF : str, optional
+            List of DDF to process.
+            The default is 'COSMOS,CDFS,XMM-LSS,ELAISS1,EDFSa,EDFSb'.
+
+        Returns
+        -------
+        None.
+
+        """
+
+        fields = listDDF.split(',')
+        # load the data
+        data = load_complete_dbSimu(dbDir, dbName, prodType, listDDF=listDDF)
+
+        # selectc only fitted LC
+        idx = data['fitstatus'] == 'fitok'
+        res = data[idx]
+
+        res['dbName'] = dbName
+        self.data = res
+
+    def sn_selection(self, dict_sel={}):
+        """
+        Method to select data
+
+        Parameters
+        ----------
+        dict_sel : dict, optional
+            Selection criteria. The default is {}.
+
+        Returns
+        -------
+        sel : dict
+            Selected data.
+
+        """
+
+        sel = {}
+        # select data here
+        for selvar in dict_sel.keys():
+            sel[selvar] = select(self.data, dict_sel[selvar])
+
+        return sel
+
+
+class sn_analyze(sn_load_select):
+    def __init__(self, dbDir, dbName, prodType,
+                 listDDF='COSMOS,CDFS,XMM-LSS,ELAISS1,EDFSa,EDFSb',
+                 dict_sel={}):
+
+        super().__init__(dbDir, dbName, prodType, listDDF)
+
+        # get selected data
+        self.data_dict = self.sn_selection(dict_sel)
+        # self.dbName = dbName
+
+    def get_nsn(self, grpby=['field'], norm_factor=1):
+        """
+        Method to get the number of SN
+
+        Parameters
+        ----------
+        grpby : list(str), optional
+            Used for the groupby df analysis. The default is ['field'].
+
+        Returns
+        -------
+        nsn_fields : pandas df
+            result with NSN col added (in addition to grpby).
+
+        """
+
+        nsn_fields = pd.DataFrame()
+        for key, vals in self.data_dict.items():
+            # dd['NSN'] = vals.groupby(['field']).transform('size').reset_index()
+            dd = vals.groupby(grpby).size().to_frame('NSN').reset_index()
+            dd['NSN'] /= norm_factor
+            dd['selconfig'] = key
+            nsn_fields = pd.concat((nsn_fields, dd))
+
+        # nsn_fields['dbName'] = self.dbName
+        return nsn_fields
+
 
 parser = OptionParser(description='Script to analyze SN prod')
 
@@ -25,9 +125,110 @@ prodType = opts.prodType
 norm_factor = opts.norm_factor
 
 
-#res_fast = load_complete('Output_SN_fast', dbName)
+# res_fast = load_complete('Output_SN_fast', dbName)
 
 listDDF = 'COSMOS,CDFS,XMM-LSS,ELAISS1,EDFSa,EDFSb'
+
+dict_sel = {}
+
+dict_sel['G10_sigmaC'] = [('n_epochs_m10_p35', operator.ge, 4),
+                          ('n_epochs_m10_p5', operator.ge, 1),
+                          ('n_epochs_p5_p20', operator.ge, 1),
+                          ('n_bands_m8_p10', operator.ge, 2),
+                          ('sigmaC', operator.le, 0.04)]
+
+dict_sel['G10_sigmaC_z0.7'] = [('n_epochs_m10_p35', operator.ge, 4),
+                               ('n_epochs_m10_p5', operator.ge, 1),
+                               ('n_epochs_p5_p20', operator.ge, 1),
+                               ('n_bands_m8_p10', operator.ge, 2),
+                               ('sigmaC', operator.le, 0.04),
+                               ('z', operator.ge, 0.7)]
+
+dict_sel['G10_JLA'] = [('n_epochs_m10_p35', operator.ge, 4),
+                       ('n_epochs_m10_p5', operator.ge, 1),
+                       ('n_epochs_p5_p20', operator.ge, 1),
+                       ('n_bands_m8_p10', operator.ge, 2),
+                       ('sigmat0', operator.le, 2.),
+                       ('sigmax1', operator.le, 1.)]
+
+dict_sel['G10_JLA_z0.7'] = [('n_epochs_m10_p35', operator.ge, 4),
+                            ('n_epochs_m10_p5', operator.ge, 1),
+                            ('n_epochs_p5_p20', operator.ge, 1),
+                            ('n_bands_m8_p10', operator.ge, 2),
+                            ('sigmat0', operator.le, 2.),
+                            ('sigmax1', operator.le, 1.),
+                            ('z', operator.ge, 0.7)]
+"""
+dict_sel['metric'] = [('n_epochs_bef', operator.ge, 4),
+                      ('n_epochs_aft', operator.ge, 10),
+                      ('n_epochs_phase_minus_10', operator.ge, 1),
+                      ('n_epochs_phase_plus_20', operator.ge, 1),
+                      ('sigmaC', operator.le, 0.04),
+                      ]
+"""
+
+# load the data
+if 'csv' in dbName:
+    dd = pd.read_csv(dbName, comment='#')
+    """
+    dbNames = glob.glob('{}/DDF*'.format(dbDir))
+    dbNames = list(map(lambda x: x.split('/')[-1], dbNames))
+    """
+    dbNames = dd['dbName'].to_list()
+else:
+    dbNames = dbName.split(',')
+
+"""
+sn_field = pd.DataFrame()
+sn_field_season = pd.DataFrame()
+
+for dbName in dbNames:
+    myclass = sn_analyze(dbDir, dbName, prodType, listDDF, dict_sel)
+
+    # estimate the number of SN
+    fa = myclass.get_nsn(grpby=['dbName', 'field'], norm_factor=norm_factor)
+    sn_field = pd.concat((sn_field, fa))
+    fb = myclass.get_nsn(grpby=['dbName', 'field', 'season'],
+                         norm_factor=norm_factor)
+
+    sn_field_season = pd.concat((sn_field_season, fb))
+
+# save in hdf5 files
+sn_field.to_hdf('sn_field.hdf5', key='sn')
+sn_field_season.to_hdf('sn_field_season.hdf5', key='sn')
+
+
+print(sn_field)
+print(sn_field_season)
+"""
+
+sn_field = pd.read_hdf('sn_field.hdf5')
+sn_field_season = pd.read_hdf('sn_field_season.hdf5')
+sn_tot = sn_field.groupby(['dbName', 'selconfig'])['NSN'].sum()
+sn_tot_season = sn_field_season.groupby(['dbName', 'selconfig', 'season'])[
+    'NSN'].sum().reset_index()
+print(sn_tot)
+print(sn_tot_season)
+
+dict_sel = {}
+
+dict_sel['select'] = [('selconfig', operator.eq, 'G10_sigmaC_z0.7')]
+
+plot_NSN(sn_tot_season,
+         xvar='season', xlabel='season',
+         yvar='NSN', ylabel='$N_{SN}$',
+         bins=None, norm_factor=1, loopvar='dbName', dict_sel=dict_sel)
+
+plot_NSN(sn_tot_season,
+         xvar='season', xlabel='season',
+         yvar='NSN', ylabel='$\Sigma N_{SN}$',
+         bins=None, norm_factor=1, loopvar='dbName', dict_sel=dict_sel, cumul=True)
+
+
+plt.show()
+print(test)
+
+
 # listDDF = 'COSMOS'
 res = load_complete_dbSimu(dbDir, dbName, prodType, listDDF=listDDF)
 fields = listDDF.split(',')
@@ -40,28 +241,38 @@ plotSN_2D(res)
 print(res.columns)
 """
 
-dict_sel = {}
 
-dict_sel['G10'] = [('n_epochs_m10_p35', operator.ge, 4),
-                   ('n_epochs_m10_p5', operator.ge, 1),
-                   ('n_epochs_p5_p20', operator.ge, 1),
-                   ('n_bands_m8_p10', operator.ge, 2),
-                   ('sigmaC', operator.le, 0.04),
-                   ]
+# selectc only fitted LC
+idx = res['fitstatus'] == 'fitok'
+res = res[idx]
 
-dict_sel['metric'] = [('n_epochs_bef', operator.ge, 4),
-                      ('n_epochs_aft', operator.ge, 10),
-                      ('n_epochs_phase_minus_10', operator.ge, 1),
-                      ('n_epochs_phase_plus_20', operator.ge, 1),
-                      ('sigmaC', operator.le, 0.04),
-                      ]
 
-sel = select(res, dict_sel['G10'])
+sel = {}
+# select data here
+sel['noCut'] = res
+for selvar in ['G10_sigmaC', 'G10_JLA']:
+    sel[selvar] = select(res, dict_sel[selvar])
 
+nsn_fields = pd.DataFrame()
+for key, vals in sel.items():
+    # dd['NSN'] = vals.groupby(['field']).transform('size').reset_index()
+    dd = vals.groupby(['field']).size().to_frame('NSN').reset_index()
+    dd['NSN'] /= norm_factor
+    dd['selconfig'] = key
+    nsn_fields = pd.concat((nsn_fields, dd))
+
+print(nsn_fields)
+print(test)
+
+# print the results
+pp = {}
 for field in fields:
     idx = res['field'] == field
+    pp['nSN_tot'] = len(res[idx])/norm_factor
     idxb = sel['field'] == field
-    print(field, len(res[idx])/norm_factor, len(sel[idxb])/norm_factor)
+    idxc = selb['field'] == field
+    print(field, len(res[idx])/norm_factor, len(sel[idxb]) /
+          norm_factor, len(selb[idxc])/norm_factor)
 
 
 for field in fields:
@@ -69,14 +280,18 @@ for field in fields:
     sela = sel[idx]
     for season in np.unique(sela['season']):
         idxb = sela['season'] == season
-        selb = sela[idxb]
-        print(field, season, len(selb)/norm_factor)
+        selc = sela[idxb]
+        print(field, season, len(selc)/norm_factor)
 
 print(len(sel)/norm_factor)
 
 histSN_params(sel)
 plotSN_2D(sel)
 plot_NSN(sel, norm_factor=norm_factor)
+idx = sel['z'] >= 0.7
+idxb = selb['z'] >= 0.7
+
+print('high-z', len(sel[idx])/norm_factor, len(selb[idxb])/norm_factor)
 plt.show()
 
 """
