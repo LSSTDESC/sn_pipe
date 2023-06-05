@@ -40,6 +40,7 @@ survey_area = opts.survey_area
 scale_factor = opts.scale_factor
 
 nsn_proc = NSN(H0, Om0, min_rf_phase, max_rf_phase)
-nsn_tot = nsn_proc(zmin, zmax, dz, season_length, survey_area, scale_factor)
+nsn_tot = nsn_proc(zmin, zmax, dz, season_length,
+                   survey_area, scale_factor=scale_factor)
 
 print('Number of supernovae', nsn_tot)
