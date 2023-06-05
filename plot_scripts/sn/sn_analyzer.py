@@ -114,7 +114,7 @@ parser.add_option('--dbList', type=str, default='config_ana.csv',
                   help='OS name[%default]')
 parser.add_option('--prodType', type=str, default='DDF_spectroz',
                   help='type prod (DDF_spectroz/DDF_photoz) [%default]')
-parser.add_option('--norm_factor', type=float, default=50.,
+parser.add_option('--norm_factor', type=float, default=30.,
                   help='normalization factor on prod [%default]')
 opts, args = parser.parse_args()
 
@@ -123,7 +123,6 @@ dbDir = opts.dbDir
 dbList = opts.dbList
 prodType = opts.prodType
 norm_factor = opts.norm_factor
-
 
 # res_fast = load_complete('Output_SN_fast', dbName)
 
@@ -169,7 +168,7 @@ dict_sel['metric'] = [('n_epochs_bef', operator.ge, 4),
 
 # load the data
 dd = pd.read_csv(dbList, comment='#')
-"""
+
 sn_field = pd.DataFrame()
 sn_field_season = pd.DataFrame()
 
@@ -193,7 +192,7 @@ sn_field_season.to_hdf('sn_field_season.hdf5', key='sn')
 
 print(sn_field)
 print(sn_field_season)
-"""
+
 
 sn_field = pd.read_hdf('sn_field.hdf5')
 sn_field_season = pd.read_hdf('sn_field_season.hdf5')
