@@ -24,7 +24,8 @@ parser.add_option("--survey_area", type=float, default=9.6,
                   help="survey area in deg2 [%default]")
 parser.add_option("--scale_factor", type=float, default=1.,
                   help="scale factor to apply to nsn [%default]")
-
+parser.add_option("--account_for_edges", type=int, default=1,
+                  help="to account for edges in nsn estimation [%default]")
 
 opts, args = parser.parse_args()
 
@@ -38,9 +39,10 @@ zmax = opts.zmax
 dz = opts.dz
 survey_area = opts.survey_area
 scale_factor = opts.scale_factor
+account_for_edges = opts.account_for_edges
 
 nsn_proc = NSN(H0, Om0, min_rf_phase, max_rf_phase)
 nsn_tot = nsn_proc(zmin, zmax, dz, season_length,
-                   survey_area, scale_factor=scale_factor)
+                   survey_area, account_for_edges, scale_factor=scale_factor)
 
 print('Number of supernovae', nsn_tot)
