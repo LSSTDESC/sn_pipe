@@ -110,7 +110,7 @@ parser = OptionParser(description='Script to analyze SN prod')
 
 parser.add_option('--dbDir', type=str, default='../Output_SN',
                   help='OS location dir[%default]')
-parser.add_option('--dbName', type=str, default='dd6_v2.99_10yrs',
+parser.add_option('--dbList', type=str, default='config_ana.csv',
                   help='OS name[%default]')
 parser.add_option('--prodType', type=str, default='DDF_spectroz',
                   help='type prod (DDF_spectroz/DDF_photoz) [%default]')
@@ -120,7 +120,7 @@ opts, args = parser.parse_args()
 
 
 dbDir = opts.dbDir
-dbName = opts.dbName
+dbList = opts.dbList
 prodType = opts.prodType
 norm_factor = opts.norm_factor
 
@@ -168,25 +168,19 @@ dict_sel['metric'] = [('n_epochs_bef', operator.ge, 4),
 """
 
 # load the data
-if 'csv' in dbName:
-    dd = pd.read_csv(dbName, comment='#')
-    """
-    dbNames = glob.glob('{}/DDF*'.format(dbDir))
-    dbNames = list(map(lambda x: x.split('/')[-1], dbNames))
-    """
-    dbNames = dd['dbName'].to_list()
-else:
-    dbNames = dbName.split(',')
-
+dd = pd.read_csv(dbList, comment='#')
 """
 sn_field = pd.DataFrame()
 sn_field_season = pd.DataFrame()
 
-for dbName in dbNames:
-    myclass = sn_analyze(dbDir, dbName, prodType, listDDF, dict_sel)
+for io, row in dd.iterrows():
+    dbName = row['dbName']
+    myclass = sn_analyze(dbDir, dbName,
+                         prodType, listDDF, dict_sel)
 
     # estimate the number of SN
-    fa = myclass.get_nsn(grpby=['dbName', 'field'], norm_factor=norm_factor)
+    fa = myclass.get_nsn(
+        grpby=['dbName', 'field'], norm_factor=norm_factor)
     sn_field = pd.concat((sn_field, fa))
     fb = myclass.get_nsn(grpby=['dbName', 'field', 'season'],
                          norm_factor=norm_factor)
@@ -197,22 +191,27 @@ for dbName in dbNames:
 sn_field.to_hdf('sn_field.hdf5', key='sn')
 sn_field_season.to_hdf('sn_field_season.hdf5', key='sn')
 
-
 print(sn_field)
 print(sn_field_season)
 """
 
 sn_field = pd.read_hdf('sn_field.hdf5')
 sn_field_season = pd.read_hdf('sn_field_season.hdf5')
-sn_tot = sn_field.groupby(['dbName', 'selconfig'])['NSN'].sum()
+sn_tot = sn_field.groupby(['dbName', 'selconfig'])['NSN'].sum().reset_index()
 sn_tot_season = sn_field_season.groupby(['dbName', 'selconfig', 'season'])[
     'NSN'].sum().reset_index()
+
+sn_tot = sn_tot.merge(dd, left_on=['dbName'], right_on=['dbName'])
+
+sn_tot_season = sn_tot_season.merge(
+    dd, left_on=['dbName'], right_on=['dbName'])
 print(sn_tot)
 print(sn_tot_season)
 
+
 dict_sel = {}
 
-dict_sel['select'] = [('selconfig', operator.eq, 'G10_sigmaC_z0.7')]
+dict_sel['select'] = [('selconfig', operator.eq, 'G10_sigmaC')]
 
 plot_NSN(sn_tot_season,
          xvar='season', xlabel='season',
