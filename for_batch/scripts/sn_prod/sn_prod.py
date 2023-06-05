@@ -7,6 +7,7 @@ from sn_tools.sn_batchutils import BatchIt
 import numpy as np
 import pandas as pd
 
+
 def batch_DDF(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
               time='30:00:00', mem='40G'):
     """
@@ -54,18 +55,19 @@ def batch_DDF(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
                                                             dbName, tag_dir)
     procDict['OutputFit_directory'] = procDict['OutputSimu_directory']
     procDict['SN_NSNfactor'] = 30
+    procDict['Pixelisation_nside'] = procDict['nside']
 
     for fieldName in DD_list:
         procDict['fieldName'] = fieldName
         procName = 'DD_{}_{}{}'.format(dbName, fieldName, tag_dir)
         mybatch = BatchIt(processName=procName, time=time, mem=mem)
-        seasons = range(1,11)
+        seasons = range(1, 11)
         if not tag_list.empty:
-            idx = tag_list['ProductionID'] == sprocName
+            idx = tag_list['ProductionID'] == procName
             sel = tag_list[idx]
             if len(sel) > 0:
                 season_max = sel['season_max'].max()
-                seasons = range(season_max,11)
+                seasons = range(season_max, 11)
 
         for season in seasons:
             procDict['ProductionIDSimu'] = 'SN_{}_{}'.format(
@@ -136,14 +138,13 @@ def batch_WFD(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
         mybatch = BatchIt(processName=procName, time=time, mem=mem)
         procDict['RAmin'] = RAmin
         procDict['RAmax'] = RAmax
-        seasons = range(1,11)
+        seasons = range(1, 11)
         if not tag_list.empty:
             idx = tag_list['ProductionID'] == sprocName
             sel = tag_list[idx]
             if len(sel) > 0:
                 season_max = sel['season_max'].max()
-                seasons = range(season_max,11)
-
+                seasons = range(season_max, 11)
 
         for seas in seasons:
             procDict['ProductionIDSimu'] = 'SN_{}_{}'.format(procName, seas)
