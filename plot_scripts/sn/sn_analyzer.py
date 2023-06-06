@@ -6,6 +6,7 @@ from sn_analysis.sn_calc_plot import plot_effi, effi, plot_NSN
 
 from optparse import OptionParser
 import numpy as np
+import pandas as pd
 
 
 class sn_load_select:
@@ -32,16 +33,54 @@ class sn_load_select:
 
         """
 
-        fields = listDDF.split(',')
         # load the data
         data = load_complete_dbSimu(dbDir, dbName, prodType, listDDF=listDDF)
 
         # selectc only fitted LC
-        idx = data['fitstatus'] == 'fitok'
-        res = data[idx]
+        # idx = data['fitstatus'] == 'fitok'
+        res = data
+        self.printRes(res)
 
         res['dbName'] = dbName
         self.data = res
+
+    def printRes(self, data):
+        """
+        Method to print results
+
+        Parameters
+        ----------
+        res : pandas df
+            data to print.
+
+        Returns
+        -------
+        None.
+
+        """
+
+        res = pd.DataFrame(data)
+        print(data['survey_area'].unique())
+        survey_area = data['survey_area'].mean()
+        res['NSN'] = res.groupby(['field', 'season', 'healpixID'])[
+            'field'].transform('size')
+
+        res['season'] = res['season'].astype(int)
+        res['healpixID'] = res['healpixID'].astype(int)
+
+        rr = res.groupby(['field', 'season']).apply(
+            lambda x: self.sn_stat(x, survey_area)).reset_index()
+        rr = rr.to_records(index=False)
+        print(rr[['field', 'season', 'NSN', 'survey_area']])
+
+    def sn_stat(self, grp, survey_area):
+
+        nsn = grp['NSN'].sum()
+        nheal = len(grp['healpixID'].unique())
+
+        print('hh', nsn, nheal, survey_area)
+
+        return pd.DataFrame({'NSN': [nsn], 'survey_area': [nheal*survey_area]})
 
     def sn_selection(self, dict_sel={}):
         """
@@ -106,16 +145,70 @@ class sn_analyze(sn_load_select):
         return nsn_fields
 
 
+def processData(dd, dbDir, prodType, listDDF, dict_sel):
+    """
+    Function to process Data
+
+    Parameters
+    ----------
+    dd : pandas df
+        list of DB to process.
+    dbDir : str
+        location dir of OS.
+    prodType : str
+        production type.
+    listDDF : str
+        list of DDF to process.
+    dict_sel : dict
+        Selection dict.
+
+    Returns
+    -------
+    None.
+
+    """
+    sn_field = pd.DataFrame()
+    sn_field_season = pd.DataFrame()
+
+    for io, row in dd.iterrows():
+        dbName = row['dbName']
+        myclass = sn_analyze(dbDir, dbName,
+                             prodType, listDDF, dict_sel)
+
+        # estimate the number of SN
+        fa = myclass.get_nsn(
+            grpby=['dbName', 'field'], norm_factor=norm_factor)
+        sn_field = pd.concat((sn_field, fa))
+        fb = myclass.get_nsn(grpby=['dbName', 'field', 'season'],
+                             norm_factor=norm_factor)
+
+        sn_field_season = pd.concat((sn_field_season, fb))
+
+    # save in hdf5 files
+    sn_field.to_hdf('sn_field.hdf5', key='sn')
+    sn_field_season.to_hdf('sn_field_season.hdf5', key='sn')
+
+    print(sn_field)
+    print(sn_field_season)
+
+
 parser = OptionParser(description='Script to analyze SN prod')
 
 parser.add_option('--dbDir', type=str, default='../Output_SN',
                   help='OS location dir[%default]')
-parser.add_option('--dbList', type=str, default='config_ana.csv',
+parser.add_option('--dbList', type=str,
+                  default='input/DESC_cohesive_strategy/config_ana.csv',
                   help='OS name[%default]')
 parser.add_option('--prodType', type=str, default='DDF_spectroz',
                   help='type prod (DDF_spectroz/DDF_photoz) [%default]')
 parser.add_option('--norm_factor', type=float, default=30.,
                   help='normalization factor on prod [%default]')
+parser.add_option('--process_data', type=int, default=1,
+                  help='to process data[%default]')
+parser.add_option('--listDDF', type=str,
+                  default='COSMOS,CDFS,XMM-LSS,ELAISS1,EDFSa,EDFSb',
+                  help='DDF list to process [%default]')
+
 opts, args = parser.parse_args()
 
 
@@ -123,12 +216,15 @@ dbDir = opts.dbDir
 dbList = opts.dbList
 prodType = opts.prodType
 norm_factor = opts.norm_factor
+process_data = opts.process_data
+listDDF = opts.listDDF
 
 # res_fast = load_complete('Output_SN_fast', dbName)
 
-listDDF = 'COSMOS,CDFS,XMM-LSS,ELAISS1,EDFSa,EDFSb'
 
 dict_sel = {}
+
+dict_sel['nosel'] = [('n_epochs_m10_p35', operator.ge, 0)]
 
 dict_sel['G10_sigmaC'] = [('n_epochs_m10_p35', operator.ge, 4),
                           ('n_epochs_m10_p5', operator.ge, 1),
@@ -169,33 +265,13 @@ dict_sel['metric'] = [('n_epochs_bef', operator.ge, 4),
 # load the data
 dd = pd.read_csv(dbList, comment='#')
 
-sn_field = pd.DataFrame()
-sn_field_season = pd.DataFrame()
-
-for io, row in dd.iterrows():
-    dbName = row['dbName']
-    myclass = sn_analyze(dbDir, dbName,
-                         prodType, listDDF, dict_sel)
-
-    # estimate the number of SN
-    fa = myclass.get_nsn(
-        grpby=['dbName', 'field'], norm_factor=norm_factor)
-    sn_field = pd.concat((sn_field, fa))
-    fb = myclass.get_nsn(grpby=['dbName', 'field', 'season'],
-                         norm_factor=norm_factor)
-
-    sn_field_season = pd.concat((sn_field_season, fb))
-
-# save in hdf5 files
-sn_field.to_hdf('sn_field.hdf5', key='sn')
-sn_field_season.to_hdf('sn_field_season.hdf5', key='sn')
-
-print(sn_field)
-print(sn_field_season)
+if process_data:
+    processData(dd, dbDir, prodType, listDDF, dict_sel)
 
 
 sn_field = pd.read_hdf('sn_field.hdf5')
 sn_field_season = pd.read_hdf('sn_field_season.hdf5')
+
 sn_tot = sn_field.groupby(['dbName', 'selconfig'])['NSN'].sum().reset_index()
 sn_tot_season = sn_field_season.groupby(['dbName', 'selconfig', 'season'])[
     'NSN'].sum().reset_index()
@@ -204,7 +280,9 @@ sn_tot = sn_tot.merge(dd, left_on=['dbName'], right_on=['dbName'])
 
 sn_tot_season = sn_tot_season.merge(
     dd, left_on=['dbName'], right_on=['dbName'])
-print(sn_tot)
+
+print(sn_field_season)
+print(sn_tot.columns)
 print(sn_tot_season)
 
 
@@ -212,6 +290,7 @@ dict_sel = {}
 
 dict_sel['select'] = [('selconfig', operator.eq, 'G10_sigmaC')]
 
+# dict_sel['select'] = [('selconfig', operator.eq, 'nosel')]
 plot_NSN(sn_tot_season,
          xvar='season', xlabel='season',
          yvar='NSN', ylabel='$N_{SN}$',
@@ -220,7 +299,8 @@ plot_NSN(sn_tot_season,
 plot_NSN(sn_tot_season,
          xvar='season', xlabel='season',
          yvar='NSN', ylabel='$\Sigma N_{SN}$',
-         bins=None, norm_factor=1, loopvar='dbName', dict_sel=dict_sel, cumul=True)
+         bins=None, norm_factor=1,
+         loopvar='dbName', dict_sel=dict_sel, cumul=True)
 
 
 plt.show()
