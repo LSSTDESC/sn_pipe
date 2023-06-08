@@ -2,155 +2,14 @@ import matplotlib.pyplot as plt
 from sn_analysis.sn_tools import *
 from sn_analysis.sn_calc_plot import Calc_zlim, histSN_params, select
 from sn_analysis.sn_calc_plot import plot_effi, effi, plot_NSN
-import os
+from sn_analysis.sn_analysis import sn_load_select, get_nsn
 
 from optparse import OptionParser
 import numpy as np
 import pandas as pd
 
 
-class sn_load_select:
-    def __init__(self, dbDir, dbName, prodType,
-                 listDDF='COSMOS,CDFS,XMM-LSS,ELAISS1,EDFSa,EDFSb',
-                 stackSave=True):
-        """
-        class to load and select sn data and make some stats
-
-        Parameters
-        ----------
-        dbDir : str
-            loc dir of the data to process.
-        dbName : str
-            db name.
-        prodType : str
-            production type (DDF_spectroz, DDF_photoz).
-        listDDF : str, optional
-            List of DDF to process.
-            The default is 'COSMOS,CDFS,XMM-LSS,ELAISS1,EDFSa,EDFSb'.
-
-        Returns
-        -------
-        None.
-
-        """
-
-        outName_stack = 'SN_{}.hdf5'.format(dbName)
-        # load the data
-        if not os.path.exists(outName_stack):
-            data = load_complete_dbSimu(
-                dbDir, dbName, prodType, listDDF=listDDF)
-            data.to_hdf(outName_stack, key='SN')
-        else:
-            data = pd.read_hdf(outName_stack, key='SN', mode='r')
-
-        # selectc only fitted LC
-        # idx = data['fitstatus'] == 'fitok'
-        res = data
-        self.printRes(res)
-
-        res['dbName'] = dbName
-        self.data = res
-
-    def printRes(self, data):
-        """
-        Method to print results
-
-        Parameters
-        ----------
-        res : pandas df
-            data to print.
-
-        Returns
-        -------
-        None.
-
-        """
-
-        res = pd.DataFrame(data)
-        print(data['survey_area'].unique())
-        survey_area = data['survey_area'].mean()
-        res['NSN'] = res.groupby(['field', 'season', 'healpixID'])[
-            'field'].transform('size')
-
-        res['season'] = res['season'].astype(int)
-        res['healpixID'] = res['healpixID'].astype(int)
-
-        rr = res.groupby(['field', 'season']).apply(
-            lambda x: self.sn_stat(x, survey_area)).reset_index()
-        rr = rr.to_records(index=False)
-        print(rr[['field', 'season', 'NSN', 'survey_area']])
-
-    def sn_stat(self, grp, survey_area):
-
-        nsn = grp['NSN'].sum()
-        nheal = len(grp['healpixID'].unique())
-
-        return pd.DataFrame({'NSN': [nsn], 'survey_area': [nheal*survey_area]})
-
-    def sn_selection(self, dict_sel={}):
-        """
-        Method to select data
-
-        Parameters
-        ----------
-        dict_sel : dict, optional
-            Selection criteria. The default is {}.
-
-        Returns
-        -------
-        sel : dict
-            Selected data.
-
-        """
-
-        sel = {}
-        # select data here
-        for selvar in dict_sel.keys():
-            sel[selvar] = select(self.data, dict_sel[selvar])
-
-        return sel
-
-
-class sn_analyze(sn_load_select):
-    def __init__(self, dbDir, dbName, prodType,
-                 listDDF='COSMOS,CDFS,XMM-LSS,ELAISS1,EDFSa,EDFSb',
-                 dict_sel={}):
-
-        super().__init__(dbDir, dbName, prodType, listDDF)
-
-        # get selected data
-        self.data_dict = self.sn_selection(dict_sel)
-        # self.dbName = dbName
-
-    def get_nsn(self, grpby=['field'], norm_factor=1):
-        """
-        Method to get the number of SN
-
-        Parameters
-        ----------
-        grpby : list(str), optional
-            Used for the groupby df analysis. The default is ['field'].
-
-        Returns
-        -------
-        nsn_fields : pandas df
-            result with NSN col added (in addition to grpby).
-
-        """
-
-        nsn_fields = pd.DataFrame()
-        for key, vals in self.data_dict.items():
-            # dd['NSN'] = vals.groupby(['field']).transform('size').reset_index()
-            dd = vals.groupby(grpby).size().to_frame('NSN').reset_index()
-            dd['NSN'] /= norm_factor
-            dd['selconfig'] = key
-            nsn_fields = pd.concat((nsn_fields, dd))
-
-        # nsn_fields['dbName'] = self.dbName
-        return nsn_fields
-
-
-def processData(dd, dbDir, prodType, listDDF, dict_sel):
+def processNSN(dd, dbDir, prodType, listDDF, dict_sel):
     """
     Function to process Data
 
@@ -177,15 +36,17 @@ def processData(dd, dbDir, prodType, listDDF, dict_sel):
 
     for io, row in dd.iterrows():
         dbName = row['dbName']
-        myclass = sn_analyze(dbDir, dbName,
-                             prodType, listDDF, dict_sel)
+
+        dd = sn_load_select(dbDir, dbName, prodType,
+                            listDDF='COSMOS,CDFS,XMM-LSS,ELAISS1,EDFSa,EDFSb')
+        data_dict = dd.sn_selection(dict_sel)
 
         # estimate the number of SN
-        fa = myclass.get_nsn(
-            grpby=['dbName', 'field'], norm_factor=norm_factor)
+        fa = get_nsn(data_dict,
+                     grpby=['dbName', 'field'], norm_factor=norm_factor)
         sn_field = pd.concat((sn_field, fa))
-        fb = myclass.get_nsn(grpby=['dbName', 'field', 'season'],
-                             norm_factor=norm_factor)
+        fb = get_nsn(data_dict, grpby=['dbName', 'field', 'season'],
+                     norm_factor=norm_factor)
 
         sn_field_season = pd.concat((sn_field_season, fb))
 
@@ -195,6 +56,77 @@ def processData(dd, dbDir, prodType, listDDF, dict_sel):
 
     print(sn_field)
     print(sn_field_season)
+
+
+class plotNSN:
+    def __init__(self, listDDF, dd, selfconfig, selconfig_ref,
+                 plotDir='../../Desktop/Plots_20230607'):
+
+        sn_field = pd.read_hdf('sn_field.hdf5')
+        sn_field_season = pd.read_hdf('sn_field_season.hdf5')
+
+        idx = sn_field_season['field'].isin(listDDF.split(','))
+
+        sn_field_season = sn_field_season[idx]
+        sn_tot = sn_field.groupby(['dbName', 'selconfig'])[
+            'NSN'].sum().reset_index()
+        sn_tot_season = sn_field_season.groupby(['dbName', 'selconfig', 'season'])[
+            'NSN'].sum().reset_index()
+
+        self.sn_tot = sn_tot.merge(dd, left_on=['dbName'], right_on=['dbName'])
+
+        self.sn_tot_season = sn_tot_season.merge(
+            dd, left_on=['dbName'], right_on=['dbName'])
+
+        self.dict_sel = {}
+        self.dict_sel['select'] = [('selconfig', operator.eq, selconfig)]
+        self.plotDir = plotDir
+        self.tit = '{} \n {}'.format(listDDF, selconfig)
+        self.llddf = '_'.join(listDDF.split(','))
+        self.selconfig = selconfig
+        self.selconfig_ref = selconfig_ref
+
+    def plot_NSN_season(self):
+
+        plotName = 'nsn_season_{}_{}.png'.format(self.llddf, self.selconfig)
+        plot_NSN(self.sn_tot_season,
+                 xvar='season', xlabel='season',
+                 yvar='NSN', ylabel='$N_{SN}$',
+                 bins=None, norm_factor=1, loopvar='dbName',
+                 dict_sel=self.dict_sel, title=self.tit, plotDir=self.plotDir, plotName=plotName)
+
+    def plot_NSN_season_cumul(self):
+        plotName = 'nsn_sum_season_{}_{}.png'.format(
+            self.llddf, self.selconfig)
+        plot_NSN(self.sn_tot_season,
+                 xvar='season', xlabel='season',
+                 yvar='NSN', ylabel='$\Sigma N_{SN}$',
+                 bins=None, norm_factor=1,
+                 loopvar='dbName', dict_sel=self.dict_sel, cumul=True,
+                 title=self.tit, plotDir=self.plotDir, plotName=plotName)
+
+    def plot_observing_efficiency(self):
+
+        # plot observing efficiency
+        idxa = self.sn_tot_season['selconfig'] == self.selconfig_ref
+        sela = self.sn_tot_season[idxa]
+        idxb = self.sn_tot_season['selconfig'] == self.selconfig
+        selb = self.sn_tot_season[idxb]
+
+        selc = selb.merge(sela, left_on=['season'],
+                          right_on=['season'], suffixes=['', '_nosel'])
+
+        print(selc.columns)
+
+        selc['NSN'] /= selc['NSN_nosel']
+        selc = selc.sort_values(by=['season'])
+        plotName = 'effi_season_{}_{}.png'.format(llddf, selconfig)
+        plot_NSN(selc,
+                 xvar='season', xlabel='season',
+                 yvar='NSN', ylabel='Observing Efficiency',
+                 bins=None, norm_factor=1, loopvar='dbName',
+                 dict_sel=self.dict_sel, title=self.tit, plotDir=self.plotDir,
+                 plotName=plotName)
 
 
 parser = OptionParser(description='Script to analyze SN prod')
@@ -275,78 +207,18 @@ dict_sel['metric'] = [('n_epochs_bef', operator.ge, 4),
                       ]
 """
 
-# load the data
+# load the dbName, etc, to process
 dd = pd.read_csv(dbList, comment='#')
 
 if process_data:
-    processData(dd, dbDir, prodType, listDDF, dict_sel)
+    processNSN(dd, dbDir, prodType, listDDF, dict_sel)
 
+plt_NSN = plotNSN(listDDF, dd, selconfig, selconfig_ref,
+                  plotDir='../../Desktop/Plots_20230607')
 
-sn_field = pd.read_hdf('sn_field.hdf5')
-sn_field_season = pd.read_hdf('sn_field_season.hdf5')
-
-
-idx = sn_field_season['field'].isin(listDDF.split(','))
-
-sn_field_season = sn_field_season[idx]
-sn_tot = sn_field.groupby(['dbName', 'selconfig'])['NSN'].sum().reset_index()
-sn_tot_season = sn_field_season.groupby(['dbName', 'selconfig', 'season'])[
-    'NSN'].sum().reset_index()
-
-sn_tot = sn_tot.merge(dd, left_on=['dbName'], right_on=['dbName'])
-
-sn_tot_season = sn_tot_season.merge(
-    dd, left_on=['dbName'], right_on=['dbName'])
-
-print(sn_field_season)
-print(sn_tot.columns)
-print(sn_tot_season)
-
-
-dict_sel = {}
-
-dict_sel['select'] = [('selconfig', operator.eq, selconfig)]
-
-# dict_sel['select'] = [('selconfig', operator.eq, 'nosel')]
-# plot NSN vs season
-plotDir = '../../Desktop/Plots_20230607'
-tit = '{} \n {}'.format(listDDF, selconfig)
-llddf = '_'.join(listDDF.split(','))
-plotName = 'nsn_season_{}_{}.png'.format(llddf, selconfig)
-plot_NSN(sn_tot_season,
-         xvar='season', xlabel='season',
-         yvar='NSN', ylabel='$N_{SN}$',
-         bins=None, norm_factor=1, loopvar='dbName',
-         dict_sel=dict_sel, title=tit, plotDir=plotDir, plotName=plotName)
-
-plotName = 'nsn_sum_season_{}_{}.png'.format(llddf, selconfig)
-plot_NSN(sn_tot_season,
-         xvar='season', xlabel='season',
-         yvar='NSN', ylabel='$\Sigma N_{SN}$',
-         bins=None, norm_factor=1,
-         loopvar='dbName', dict_sel=dict_sel, cumul=True,
-         title=tit, plotDir=plotDir, plotName=plotName)
-
-# plot observing efficiency
-idxa = sn_tot_season['selconfig'] == selconfig_ref
-sela = sn_tot_season[idxa]
-idxb = sn_tot_season['selconfig'] == selconfig
-selb = sn_tot_season[idxb]
-
-selc = selb.merge(sela, left_on=['season'],
-                  right_on=['season'], suffixes=['', '_nosel'])
-
-print(selc.columns)
-
-selc['NSN'] /= selc['NSN_nosel']
-selc = selc.sort_values(by=['season'])
-plotName = 'effi_season_{}_{}.png'.format(llddf, selconfig)
-plot_NSN(selc,
-         xvar='season', xlabel='season',
-         yvar='NSN', ylabel='Observing Efficiency',
-         bins=None, norm_factor=1, loopvar='dbName',
-         dict_sel=dict_sel, title=tit, plotDir=plotDir, plotName=plotName)
-
+plt_NSN.plot_NSN_season()
+plt_NSN.plot_NSN_season_cumul()
+# plt_NSN.plot_observing_efficiency()
 plt.show()
 print(test)
 
