@@ -16,7 +16,7 @@ parser.add_option("--season_length", type=float, default=180.,
                   help="season length[%default]")
 parser.add_option("--zmin", type=float, default=0.01,
                   help="zmin [%default]")
-parser.add_option("--zmax", type=float, default=1.0,
+parser.add_option("--zmax", type=float, default=1.1,
                   help="zmax [%default]")
 parser.add_option("--dz", type=float, default=0.01,
                   help="dz for z binning [%default]")
