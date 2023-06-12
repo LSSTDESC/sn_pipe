@@ -114,8 +114,9 @@ sela = pd.DataFrame(df[ida])
 idb = df['edges'] == 1
 selb = pd.DataFrame(df[idb])
 
+print(selb)
 effi_df = selb.groupby(['rate', 'min_rf_phase', 'max_rf_phase']).apply(
-    lambda x: effi(x, sela)).reset_index()
+    lambda x: effi(x, sela))
 
 print(effi_df)
 
