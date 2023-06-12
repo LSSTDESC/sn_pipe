@@ -3,6 +3,7 @@ from sn_analysis.sn_tools import *
 from sn_analysis.sn_calc_plot import Calc_zlim, histSN_params, select
 from sn_analysis.sn_calc_plot import plot_effi, effi, plot_NSN
 from sn_analysis.sn_analysis import sn_load_select, get_nsn
+from sn_tools.sn_io import checkDir
 
 from optparse import OptionParser
 import numpy as np
@@ -60,7 +61,7 @@ def processNSN(dd, dbDir, prodType, listDDF, dict_sel):
 
 class plotNSN:
     def __init__(self, listDDF, dd, selfconfig, selconfig_ref,
-                 plotDir='../../Desktop/Plots_20230607'):
+                 plotDir='Plots_20230607'):
 
         sn_field = pd.read_hdf('sn_field.hdf5')
         sn_field_season = pd.read_hdf('sn_field_season.hdf5')
@@ -85,6 +86,8 @@ class plotNSN:
         self.llddf = '_'.join(listDDF.split(','))
         self.selconfig = selconfig
         self.selconfig_ref = selconfig_ref
+
+        checkDir(self.plotDir)
 
     def plot_NSN_season(self):
 
@@ -151,6 +154,9 @@ parser.add_option('--selconfig', type=str,
 parser.add_option('--selconfig_ref', type=str,
                   default='nosel',
                   help='ref data for efficiency plot [%default]')
+parser.add_option('--plotDir', type=str,
+                  default='Plots_20230612',
+                  help='output directory for the plots [%default]')
 
 opts, args = parser.parse_args()
 
@@ -163,6 +169,9 @@ process_data = opts.process_data
 listDDF = opts.listDDF
 selconfig = opts.selconfig
 selconfig_ref = opts.selconfig_ref
+plotDir = opts.plotDir
+
+
 # res_fast = load_complete('Output_SN_fast', dbName)
 
 
@@ -214,7 +223,7 @@ if process_data:
     processNSN(dd, dbDir, prodType, listDDF, dict_sel)
 
 plt_NSN = plotNSN(listDDF, dd, selconfig, selconfig_ref,
-                  plotDir='../../Desktop/Plots_20230607')
+                  plotDir=plotDir)
 
 plt_NSN.plot_NSN_season()
 plt_NSN.plot_NSN_season_cumul()
