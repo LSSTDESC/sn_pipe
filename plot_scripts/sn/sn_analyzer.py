@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 from sn_analysis.sn_tools import *
 from sn_analysis.sn_calc_plot import Calc_zlim, histSN_params, select
 from sn_analysis.sn_calc_plot import effi
-from sn_analysis.sn_analysis import sn_load_select, get_nsn
+from sn_analysis.sn_analysis import sn_load_select, get_nsn, processNSN
 from sn_plotter_analysis.plotNSN import plotNSN
 from sn_tools.sn_io import checkDir
 
@@ -11,56 +11,78 @@ import numpy as np
 import pandas as pd
 
 
-def processNSN(dd, dbDir, prodType, listDDF, dict_sel, fDir):
+def plotNSN_please(process_data, dd, dbDir, prodType,
+                   listDDF, dict_sel, outDir, norm_factor):
     """
-    Function to process Data
+    Function to plot the number of SN
 
     Parameters
     ----------
+    process_data : int
+        To process data.
     dd : pandas df
-        list of DB to process.
+        list of DBname to process (plus plot params).
     dbDir : str
-        location dir of OS.
+        location dir of the dbs to process.
     prodType : str
-        production type.
-    listDDF : str
+        priduction type (DDF_spectroz/DDF_photoz).
+    listDDF : list(str)
         list of DDF to process.
     dict_sel : dict
         Selection dict.
-    fDir: str
-       location dir of the files
+    outDir : str
+        output dir for files+plot.
+    norm_factor : float
+        normalization factor.
 
     Returns
     -------
     None.
 
     """
-    sn_field = pd.DataFrame()
-    sn_field_season = pd.DataFrame()
 
+    if process_data:
+        processNSN(dd, dbDir, prodType, listDDF, dict_sel, outDir, norm_factor)
+
+    plt_NSN = plotNSN(listDDF, dd, selconfig, selconfig_ref,
+                      plotDir=plotDir, fDir=outDir)
+
+    plt_NSN.plot_NSN_season()
+    plt_NSN.plot_NSN_season_cumul()
+    plt_NSN.plot_observing_efficiency()
+
+
+def plot_simu_params(dd, dbDir, prodType,
+                     listDDF, dict_sel, fDir, norm_factor):
+
+    restot = pd.DataFrame()
     for io, row in dd.iterrows():
         dbName = row['dbName']
 
         dd = sn_load_select(dbDir, dbName, prodType,
                             listDDF='COSMOS,CDFS,XMM-LSS,ELAISS1,EDFSa,EDFSb',
-                            fDir=fDir)
-        data_dict = dd.sn_selection(dict_sel)
+                            fDir=fDir, norm_factor=norm_factor)
 
-        # estimate the number of SN
-        fa = get_nsn(data_dict,
-                     grpby=['dbName', 'field'], norm_factor=norm_factor)
-        sn_field = pd.concat((sn_field, fa))
-        fb = get_nsn(data_dict, grpby=['dbName', 'field', 'season'],
-                     norm_factor=norm_factor)
+        res = dd.data
+        restot = pd.concat((restot, res))
 
-        sn_field_season = pd.concat((sn_field_season, fb))
+    print(restot, len(restot))
 
-    # save in hdf5 files
-    sn_field.to_hdf('{}/sn_field.hdf5'.format(fDir), key='sn')
-    sn_field_season.to_hdf('{}/sn_field_season.hdf5'.format(fDir), key='sn')
+    stat = res.groupby(['dbName', 'field', 'season']).apply(
+        lambda x: pd.DataFrame({'nsn': [len(x)]})).reset_index()
 
-    print(sn_field)
-    print(sn_field_season)
+    print(stat)
+
+    for dbName in restot['dbName'].unique():
+        idx = restot['dbName'] == dbName
+        sel = restot[idx]
+
+        fig, ax = plt.subplots()
+        fig.suptitle(dbName)
+        ax.hist(sel['daymax'], histtype='step')
+        idx = sel['fitstatus'] == 'fitok'
+        ax.hist(sel[idx]['daymax'], histtype='step')
+        print('effi', len(sel[idx])/len(sel))
 
 
 parser = OptionParser(description='Script to analyze SN prod')
@@ -119,12 +141,14 @@ dict_sel['G10_sigmaC'] = [('n_epochs_m10_p35', operator.ge, 4),
                           ('n_epochs_m10_p5', operator.ge, 1),
                           ('n_epochs_p5_p20', operator.ge, 1),
                           ('n_bands_m8_p10', operator.ge, 2),
+                          ('fitstatus', operator.eq, 'fitok'),
                           ('sigmaC', operator.le, 0.04)]
 
 dict_sel['G10_sigmaC_z0.7'] = [('n_epochs_m10_p35', operator.ge, 4),
                                ('n_epochs_m10_p5', operator.ge, 1),
                                ('n_epochs_p5_p20', operator.ge, 1),
                                ('n_bands_m8_p10', operator.ge, 2),
+                               ('fitstatus', operator.eq, 'fitok'),
                                ('sigmaC', operator.le, 0.04),
                                ('z', operator.ge, 0.7)]
 
@@ -133,7 +157,8 @@ dict_sel['G10_JLA'] = [('n_epochs_m10_p35', operator.ge, 4),
                        ('n_epochs_p5_p20', operator.ge, 1),
                        ('n_bands_m8_p10', operator.ge, 2),
                        ('sigmat0', operator.le, 2.),
-                       ('sigmax1', operator.le, 1.)]
+                       ('sigmax1', operator.le, 1),
+                       ('fitstatus', operator.eq, 'fitok')]
 
 dict_sel['G10_JLA_z0.7'] = [('n_epochs_m10_p35', operator.ge, 4),
                             ('n_epochs_m10_p5', operator.ge, 1),
@@ -141,6 +166,7 @@ dict_sel['G10_JLA_z0.7'] = [('n_epochs_m10_p35', operator.ge, 4),
                             ('n_bands_m8_p10', operator.ge, 2),
                             ('sigmat0', operator.le, 2.),
                             ('sigmax1', operator.le, 1.),
+                            ('fitstatus', operator.eq, 'fitok'),
                             ('z', operator.ge, 0.7)]
 """
 dict_sel['metric'] = [('n_epochs_bef', operator.ge, 4),
@@ -154,22 +180,20 @@ dict_sel['metric'] = [('n_epochs_bef', operator.ge, 4),
 # load the dbName, etc, to process
 dd = pd.read_csv(dbList, comment='#')
 
-if process_data:
-    processNSN(dd, dbDir, prodType, listDDF, dict_sel, outDir)
+gime_simuParam = True
+gime_plotNSN = False
 
-plt_NSN = plotNSN(listDDF, dd, selconfig, selconfig_ref,
-                  plotDir=plotDir, fDir=outDir)
 
-plt_NSN.plot_NSN_season()
-plt_NSN.plot_NSN_season_cumul()
-plt_NSN.plot_observing_efficiency()
+if gime_simuParam:
+    plot_simu_params(dd, dbDir, prodType,
+                     listDDF, dict_sel, outDir, norm_factor)
+
+if gime_plotNSN:
+    plotNSN_please(process_data, dd, dbDir, prodType,
+                   listDDF, dict_sel, outDir, norm_factor)
+
 plt.show()
 print(test)
-
-
-# listDDF = 'COSMOS'
-res = load_complete_dbSimu(dbDir, dbName, prodType, listDDF=listDDF)
-fields = listDDF.split(',')
 
 
 """
