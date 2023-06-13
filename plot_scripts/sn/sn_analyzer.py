@@ -1,8 +1,9 @@
 import matplotlib.pyplot as plt
 from sn_analysis.sn_tools import *
 from sn_analysis.sn_calc_plot import Calc_zlim, histSN_params, select
-from sn_analysis.sn_calc_plot import plot_effi, effi, plot_NSN
+from sn_analysis.sn_calc_plot import effi
 from sn_analysis.sn_analysis import sn_load_select, get_nsn
+from sn_plotter_analysis.plotNSN import plotNSN
 from sn_tools.sn_io import checkDir
 
 from optparse import OptionParser
@@ -10,7 +11,7 @@ import numpy as np
 import pandas as pd
 
 
-def processNSN(dd, dbDir, prodType, listDDF, dict_sel):
+def processNSN(dd, dbDir, prodType, listDDF, dict_sel, fDir):
     """
     Function to process Data
 
@@ -26,6 +27,8 @@ def processNSN(dd, dbDir, prodType, listDDF, dict_sel):
         list of DDF to process.
     dict_sel : dict
         Selection dict.
+    fDir: str
+       location dir of the files
 
     Returns
     -------
@@ -39,7 +42,8 @@ def processNSN(dd, dbDir, prodType, listDDF, dict_sel):
         dbName = row['dbName']
 
         dd = sn_load_select(dbDir, dbName, prodType,
-                            listDDF='COSMOS,CDFS,XMM-LSS,ELAISS1,EDFSa,EDFSb')
+                            listDDF='COSMOS,CDFS,XMM-LSS,ELAISS1,EDFSa,EDFSb',
+                            fDir=fDir)
         data_dict = dd.sn_selection(dict_sel)
 
         # estimate the number of SN
@@ -52,84 +56,11 @@ def processNSN(dd, dbDir, prodType, listDDF, dict_sel):
         sn_field_season = pd.concat((sn_field_season, fb))
 
     # save in hdf5 files
-    sn_field.to_hdf('sn_field.hdf5', key='sn')
-    sn_field_season.to_hdf('sn_field_season.hdf5', key='sn')
+    sn_field.to_hdf('{}/sn_field.hdf5'.format(fDir), key='sn')
+    sn_field_season.to_hdf('{}/sn_field_season.hdf5'.format(fDir), key='sn')
 
     print(sn_field)
     print(sn_field_season)
-
-
-class plotNSN:
-    def __init__(self, listDDF, dd, selfconfig, selconfig_ref,
-                 plotDir='Plots_20230607'):
-
-        sn_field = pd.read_hdf('sn_field.hdf5')
-        sn_field_season = pd.read_hdf('sn_field_season.hdf5')
-
-        idx = sn_field_season['field'].isin(listDDF.split(','))
-
-        sn_field_season = sn_field_season[idx]
-        sn_tot = sn_field.groupby(['dbName', 'selconfig'])[
-            'NSN'].sum().reset_index()
-        sn_tot_season = sn_field_season.groupby(['dbName', 'selconfig', 'season'])[
-            'NSN'].sum().reset_index()
-
-        self.sn_tot = sn_tot.merge(dd, left_on=['dbName'], right_on=['dbName'])
-
-        self.sn_tot_season = sn_tot_season.merge(
-            dd, left_on=['dbName'], right_on=['dbName'])
-
-        self.dict_sel = {}
-        self.dict_sel['select'] = [('selconfig', operator.eq, selconfig)]
-        self.plotDir = plotDir
-        self.tit = '{} \n {}'.format(listDDF, selconfig)
-        self.llddf = '_'.join(listDDF.split(','))
-        self.selconfig = selconfig
-        self.selconfig_ref = selconfig_ref
-
-        checkDir(self.plotDir)
-
-    def plot_NSN_season(self):
-
-        plotName = 'nsn_season_{}_{}.png'.format(self.llddf, self.selconfig)
-        plot_NSN(self.sn_tot_season,
-                 xvar='season', xlabel='season',
-                 yvar='NSN', ylabel='$N_{SN}$',
-                 bins=None, norm_factor=1, loopvar='dbName',
-                 dict_sel=self.dict_sel, title=self.tit, plotDir=self.plotDir, plotName=plotName)
-
-    def plot_NSN_season_cumul(self):
-        plotName = 'nsn_sum_season_{}_{}.png'.format(
-            self.llddf, self.selconfig)
-        plot_NSN(self.sn_tot_season,
-                 xvar='season', xlabel='season',
-                 yvar='NSN', ylabel='$\Sigma N_{SN}$',
-                 bins=None, norm_factor=1,
-                 loopvar='dbName', dict_sel=self.dict_sel, cumul=True,
-                 title=self.tit, plotDir=self.plotDir, plotName=plotName)
-
-    def plot_observing_efficiency(self):
-
-        # plot observing efficiency
-        idxa = self.sn_tot_season['selconfig'] == self.selconfig_ref
-        sela = self.sn_tot_season[idxa]
-        idxb = self.sn_tot_season['selconfig'] == self.selconfig
-        selb = self.sn_tot_season[idxb]
-
-        selc = selb.merge(sela, left_on=['season'],
-                          right_on=['season'], suffixes=['', '_nosel'])
-
-        print(selc.columns)
-
-        selc['NSN'] /= selc['NSN_nosel']
-        selc = selc.sort_values(by=['season'])
-        plotName = 'effi_season_{}_{}.png'.format(llddf, selconfig)
-        plot_NSN(selc,
-                 xvar='season', xlabel='season',
-                 yvar='NSN', ylabel='Observing Efficiency',
-                 bins=None, norm_factor=1, loopvar='dbName',
-                 dict_sel=self.dict_sel, title=self.tit, plotDir=self.plotDir,
-                 plotName=plotName)
 
 
 parser = OptionParser(description='Script to analyze SN prod')
@@ -157,6 +88,9 @@ parser.add_option('--selconfig_ref', type=str,
 parser.add_option('--plotDir', type=str,
                   default='Plots_20230612',
                   help='output directory for the plots [%default]')
+parser.add_option('--outDir', type=str,
+                  default='SN_analysis',
+                  help='output directory for the produced files [%default]')
 
 opts, args = parser.parse_args()
 
@@ -170,8 +104,9 @@ listDDF = opts.listDDF
 selconfig = opts.selconfig
 selconfig_ref = opts.selconfig_ref
 plotDir = opts.plotDir
+outDir = opts.outDir
 
-
+checkDir(outDir)
 # res_fast = load_complete('Output_SN_fast', dbName)
 
 
@@ -220,14 +155,14 @@ dict_sel['metric'] = [('n_epochs_bef', operator.ge, 4),
 dd = pd.read_csv(dbList, comment='#')
 
 if process_data:
-    processNSN(dd, dbDir, prodType, listDDF, dict_sel)
+    processNSN(dd, dbDir, prodType, listDDF, dict_sel, outDir)
 
 plt_NSN = plotNSN(listDDF, dd, selconfig, selconfig_ref,
-                  plotDir=plotDir)
+                  plotDir=plotDir, fDir=outDir)
 
 plt_NSN.plot_NSN_season()
 plt_NSN.plot_NSN_season_cumul()
-# plt_NSN.plot_observing_efficiency()
+plt_NSN.plot_observing_efficiency()
 plt.show()
 print(test)
 
