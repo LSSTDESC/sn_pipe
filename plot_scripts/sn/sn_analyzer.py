@@ -9,6 +9,7 @@ from sn_tools.sn_io import checkDir
 from optparse import OptionParser
 import numpy as np
 import pandas as pd
+import operator
 
 
 def plotNSN_please(process_data, dd, dbDir, prodType,
@@ -52,37 +53,86 @@ def plotNSN_please(process_data, dd, dbDir, prodType,
     plt_NSN.plot_observing_efficiency()
 
 
-def plot_simu_params(dd, dbDir, prodType,
-                     listDDF, dict_sel, fDir, norm_factor):
+class Plot_simu_params:
+    def __init__(self, dd, dbDir, prodType,
+                 listDDF, dict_sel, fDir, norm_factor):
 
-    restot = pd.DataFrame()
-    for io, row in dd.iterrows():
-        dbName = row['dbName']
+        self.dd = dd
+        self.dbDir = dbDir
+        self.prodType = prodType
+        self.listDDF = listDDF
+        self.dict_sel = dict_sel
+        self.fDir = fDir
+        self.norm_factor = norm_factor
 
-        dd = sn_load_select(dbDir, dbName, prodType,
-                            listDDF='COSMOS,CDFS,XMM-LSS,ELAISS1,EDFSa,EDFSb',
-                            fDir=fDir, norm_factor=norm_factor)
+        data = self.loadData()
 
-        res = dd.data
-        restot = pd.concat((restot, res))
+        self.stat(data)
 
-    print(restot, len(restot))
+    def loadData(self):
 
-    stat = res.groupby(['dbName', 'field', 'season']).apply(
-        lambda x: pd.DataFrame({'nsn': [len(x)]})).reset_index()
+        restot = pd.DataFrame()
+        for io, row in self.dd.iterrows():
+            dbName = row['dbName']
 
-    print(stat)
+            dd = sn_load_select(self.dbDir, dbName, self.prodType,
+                                listDDF='COSMOS,CDFS,XMM-LSS,ELAISS1,EDFSa,EDFSb',
+                                fDir=self.fDir, norm_factor=self.norm_factor)
 
-    for dbName in restot['dbName'].unique():
-        idx = restot['dbName'] == dbName
-        sel = restot[idx]
+            res = dd.data
+            restot = pd.concat((restot, res))
 
-        fig, ax = plt.subplots()
-        fig.suptitle(dbName)
-        ax.hist(sel['daymax'], histtype='step')
-        idx = sel['fitstatus'] == 'fitok'
-        ax.hist(sel[idx]['daymax'], histtype='step')
-        print('effi', len(sel[idx])/len(sel))
+        print(restot, len(restot))
+
+        return restot
+
+    def stat(self, res):
+        stat = res.groupby(['dbName', 'field', 'season']).apply(
+            lambda x: pd.DataFrame({'nsn': [len(x)]})).reset_index()
+
+        print(stat)
+
+        res['chisq_ndof'] = res['chisq']/res['ndof']
+
+        selconfig = 'G10_JLA'
+        selconfig = 'G10_sigmaC'
+        data = select(res, self.dict_sel[selconfig])
+        dataref = select(res, self.dict_sel['nosel'])
+
+        idx = data['season'] == 2
+        sel = data[idx]
+        idxb = dataref['season'] == 2
+        selref = dataref[idxb]
+
+        idc = selref['SNID'].isin(sel['SNID'].to_list())
+        selnot = selref[~idc]
+        sel = sel.sort_values(by=['daymax'], ascending=False)
+        selnot = selnot.sort_values(by=['daymax'], ascending=False)
+
+        print(sel.columns)
+        vv = ['SNID', 'daymax', 'z', 'sigmat0', 'sigmax1', 'chisq_ndof']
+        print(sel[vv])
+        print('not selected', selnot[vv])
+
+        rr = data.groupby(['dbName', 'field', 'season']).apply(
+            lambda x: self.effi(x, dataref))
+
+        print(rr)
+
+    def effi(self, grp, data_ref):
+
+        nn = grp.name
+        idx = data_ref['dbName'] == nn[0]
+        idx &= data_ref['field'] == nn[1]
+        idx &= data_ref['season'] == nn[2]
+
+        sel_ref = data_ref[idx]
+
+        eff = len(grp)/len(sel_ref)
+
+        dd = pd.DataFrame({'nsn': [len(grp)], 'effi': [eff]})
+
+        return dd
 
 
 parser = OptionParser(description='Script to analyze SN prod')
@@ -137,37 +187,29 @@ dict_sel = {}
 dict_sel['nosel'] = [('daymax', operator.ge, 0)]
 dict_sel['nosel_z0.7'] = [('z', operator.ge, 0.7)]
 
-dict_sel['G10_sigmaC'] = [('n_epochs_m10_p35', operator.ge, 4),
-                          ('n_epochs_m10_p5', operator.ge, 1),
-                          ('n_epochs_p5_p20', operator.ge, 1),
-                          ('n_bands_m8_p10', operator.ge, 2),
-                          ('fitstatus', operator.eq, 'fitok'),
-                          ('sigmaC', operator.le, 0.04)]
+sdict = {}
+sdict['phases'] = [('n_epochs_phase_minus_10', operator.ge, 1),
+                   # ('n_epochs_bef', operator.ge, 2),
+                   ('n_epochs_phase_plus_20', operator.ge, 1)]
 
-dict_sel['G10_sigmaC_z0.7'] = [('n_epochs_m10_p35', operator.ge, 4),
-                               ('n_epochs_m10_p5', operator.ge, 1),
-                               ('n_epochs_p5_p20', operator.ge, 1),
-                               ('n_bands_m8_p10', operator.ge, 2),
-                               ('fitstatus', operator.eq, 'fitok'),
-                               ('sigmaC', operator.le, 0.04),
-                               ('z', operator.ge, 0.7)]
+sdict['G10'] = [('n_epochs_m10_p35', operator.ge, 4),
+                ('n_epochs_m10_p5', operator.ge, 1),
+                ('n_epochs_p5_p20', operator.ge, 1),
+                ('n_bands_m8_p10', operator.ge, 2),
+                ('fitstatus', operator.eq, 'fitok')]
 
-dict_sel['G10_JLA'] = [('n_epochs_m10_p35', operator.ge, 4),
-                       ('n_epochs_m10_p5', operator.ge, 1),
-                       ('n_epochs_p5_p20', operator.ge, 1),
-                       ('n_bands_m8_p10', operator.ge, 2),
-                       ('sigmat0', operator.le, 2.),
-                       ('sigmax1', operator.le, 1),
-                       ('fitstatus', operator.eq, 'fitok')]
+sdict['sigmaC'] = [('sigmaC', operator.le, 0.04)]
+sdict['z0.7'] = [('z', operator.ge, 0.7)]
+sdict['JLA'] = [('sigmat0', operator.le, 2.), ('sigmax1', operator.le, 1)]
 
-dict_sel['G10_JLA_z0.7'] = [('n_epochs_m10_p35', operator.ge, 4),
-                            ('n_epochs_m10_p5', operator.ge, 1),
-                            ('n_epochs_p5_p20', operator.ge, 1),
-                            ('n_bands_m8_p10', operator.ge, 2),
-                            ('sigmat0', operator.le, 2.),
-                            ('sigmax1', operator.le, 1.),
-                            ('fitstatus', operator.eq, 'fitok'),
-                            ('z', operator.ge, 0.7)]
+dict_sel['G10_sigmaC'] = sdict['phases'] + sdict['G10']+sdict['sigmaC']
+
+dict_sel['G10_sigmaC_z0.7'] = dict_sel['G10_sigmaC'] + sdict['z0.7']
+
+dict_sel['G10_JLA'] = sdict['phases']+sdict['G10']+sdict['JLA']
+
+dict_sel['G10_JLA_z0.7'] = dict_sel['G10_JLA']+sdict['z0.7']
+
 """
 dict_sel['metric'] = [('n_epochs_bef', operator.ge, 4),
                       ('n_epochs_aft', operator.ge, 10),
@@ -180,12 +222,12 @@ dict_sel['metric'] = [('n_epochs_bef', operator.ge, 4),
 # load the dbName, etc, to process
 dd = pd.read_csv(dbList, comment='#')
 
-gime_simuParam = True
-gime_plotNSN = False
+gime_simuParam = False
+gime_plotNSN = True
 
 
 if gime_simuParam:
-    plot_simu_params(dd, dbDir, prodType,
+    Plot_simu_params(dd, dbDir, prodType,
                      listDDF, dict_sel, outDir, norm_factor)
 
 if gime_plotNSN:
