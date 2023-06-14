@@ -156,6 +156,7 @@ myclass = DD_Scenario(budget_DD=pparams['budget_DD'],
                       Nf_DD_y1=pparams['Nf_DD_y1'],
                       Nv_DD_y1=Nv_DD_y1,
                       sl_UD=pparams['sl_UD'], cad_UD=pparams['cad_UD'],
+                      sl_DD=pparams['sl_DD'], cad_DD=pparams['cad_DD'],
                       Ns_DD=pparams['Ns_DD'],
                       NDDF=pparams['NDDF'], Nv_LSST=pparams['Nv_LSST'],
                       frac_moon=pparams['frac_moon'],
@@ -201,11 +202,17 @@ res = myclass.plot(restot, varx='Nv_DD',
                    deep_universal=deep_universal, scoc_pII=scoc_pII,
                    figtitle=ffig)
 
-plt.show()
+print(res)
+print(res.dtype)
+print(deep_universal)
+print(scoc_pII)
+print(Nvisits_avail)
 ### m5_resu ###
 
 m5_resu = nvisits_from_m5(res, m5class)
+print(m5_resu)
 
+plt.show()
 # finish the data
 
 df_res = myclass.finish(res)
@@ -238,7 +245,7 @@ dfres = df_resb.groupby('name').apply(
     lambda x: get_final_scenario(x, pparams['NDDF'], resa, resb)).reset_index()
 
 dfres['nvisits_night'] = dfres['nvisits_night'].astype(int)
-print(dfres)
+print('before recovery', dfres)
 
 
 if pparams['recover_from_moon']:
@@ -257,11 +264,11 @@ print('after recovery', dfres)
 
 
 # plot budget vs time for each scenario
-# Budget_time(dfres, pparams['Nv_LSST'])
+Budget_time(dfres, pparams['Nv_LSST'])
 
-
+plt.show()
 # plot scenario vs time
-Scenario_time(dfres, swap_filter_moon=pparams['swap_filter_moon'])
+# Scenario_time(dfres, swap_filter_moon=pparams['swap_filter_moon'])
 
 
 # check total number of visits
