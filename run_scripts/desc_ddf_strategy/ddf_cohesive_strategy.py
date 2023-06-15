@@ -4,7 +4,7 @@ from sn_desc_ddf_strategy.dd_scenario import get_final_scenario, moon_recovery
 from sn_desc_ddf_strategy import plt
 from sn_desc_ddf_strategy.dd_scenario import Delta_m5, Delta_nvisits
 from sn_desc_ddf_strategy.dd_scenario import Budget_time, Scenario_time
-from sn_desc_ddf_strategy.dd_scenario import reverse_df
+from sn_desc_ddf_strategy.dd_scenario import reverse_df, uniformize
 from sn_desc_ddf_strategy.dd_scenario import FiveSigmaDepth_Nvisits
 
 import pandas as pd
@@ -230,6 +230,12 @@ df_res[toprint].to_csv('ddf_res1.csv', index=False)
 df_resb = reshuffle(df_res, m5_resu,
                     pparams['sl_UD'], pparams['cad_UD'], pparams['frac_moon'])
 
+"""
+idx = df_resb['name'] == 'DDF_DESC_0.70_SN'
+
+print(df_resb[idx])
+print(test)
+"""
 
 # get the final scenario
 m5single = m5class.msingle_calc
@@ -249,9 +255,20 @@ print('before recovery', dfres)
 
 
 if pparams['recover_from_moon']:
+    """
+    idx = dfres['name'].str.contains('Univ_SN')
+    print('allo', dfres[idx]['name'].unique())
+    dfresa = dfres[idx]
+    dfresb = dfres[~idx]
+    dfresb = moon_recovery(dfresa, pparams['swap_filter_moon'])
+    dfres = pd.concat((dfresa, dfresb))
+    """
     dfres = moon_recovery(dfres, pparams['swap_filter_moon'])
 
+# print(test)
 print('after recovery', dfres)
+
+# dfres = uniformize(dfres, 'DDF_Univ_SN')
 
 ##### Final plots ####
 
