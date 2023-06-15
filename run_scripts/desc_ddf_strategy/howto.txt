@@ -11,3 +11,6 @@ cookbook:
 - python run_scripts/fakes/make_scenario.py --configFile input/DESC_cohesive_strategy/DDF_DESC_0.80_SN.csv
   -> will produce LSST-like OS with LSST pointings parameters
   -> this file can be used as "usual" OS to generate and fit LCs
+OR
+- python run_scripts/fakes/loop_scenarios.py
+  -> to loop on possible scenarios
