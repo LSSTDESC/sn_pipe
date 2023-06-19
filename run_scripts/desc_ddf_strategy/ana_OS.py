@@ -13,10 +13,12 @@ from brokenaxes import brokenaxes
 from sn_plotter_analysis import plt
 import matplotlib.ticker as ticker
 from matplotlib.ticker import AutoMinorLocator
+from sn_tools.sn_io import checkDir
+from sn_tools.sn_obs import season
 
 
 def coadd_night(grp, colsum=['numExposures'],
-                colmean=['season', 'observationStartMJD'],
+                colmean=['season', 'observationStartMJD', 'moonPhase'],
                 combi_filt=['ugriz', 'grizy']):
     """
     Function to coadd obs per night
@@ -135,19 +137,27 @@ def translate(grp):
 
     val = 'observationStartMJD'
     Tmax = grp[grp['season'] == 1][val].max()
+    night_max = grp[grp['night'] == 1][val].max()
     dfi = pd.DataFrame()
     for seas in seasons:
         idx = grp['season'] == seas
         sel = pd.DataFrame(grp[idx])
         Tmin = sel[val].min()
+        night_min = sel['night'].min()
         deltaT = Tmin-Tmax
+        deltaN = night_min-night_max
         if seas == 1:
             deltaT = 0.
+            deltaN = 0
         sel.loc[:, val] -= deltaT
+        sel.loc[:, 'night'] -= deltaN
 
         Tmax = sel[val].max()
+        night_max = sel['night'].max()
         TTmin = Tmin-deltaT
+        NNmin = night_min-deltaN
         sel['MJD_season'] = (sel[val]-TTmin)/(Tmax-TTmin)+(seas-1)
+        sel['night_season'] = (sel[val]-NNmin)/(night_max-NNmin)+(seas-1)
         dfi = pd.concat((dfi, sel))
 
     return dfi
@@ -193,25 +203,34 @@ def gime_combi(filter_alloc, nvisits_band):
 
     rf = []
     rb = []
+    combi1 = []
+    combi2 = []
     for b in 'ugrizy':
         idx = res['band'] == b
         rf.append(b)
-        rb.append(int(np.mean(res[idx]['visits_band'])))
+        nv = int(np.mean(res[idx]['visits_band']))
+        rb.append(nv)
+        if b == 'u' or b == 'g' or b == 'r':
+            combi1.append('{}{}'.format(nv, b))
+        else:
+            combi2.append('{}{}'.format(nv, b))
 
     sf = '/'.join(rf)
     nvis = '/'.join(map(str, rb))
+    combi1 = '/'.join(combi1)
+    combi2 = '/'.join(combi2)
 
-    return sf, nvis
+    return sf, nvis, combi1, combi2
 
 
-def plot_resu(df_all, df_coadd, dbName):
+def plot_resu(df_all, df_coadd, dbName, outDir):
 
     configs = df_coadd['note'].unique()
     vala = 'observationStartMJD'
     valb = 'numExposures'
     valc = 'MJD_season'
-    fig, ax = plt.subplots(nrows=len(configs), figsize=(12, 8))
-    fig.suptitle(dbName)
+    fig, ax = plt.subplots(nrows=len(configs), figsize=(16, 9))
+    fig.suptitle(dbName, fontweight='bold')
     fig.subplots_adjust(wspace=0., hspace=0.)
     configs = np.sort(configs)
     for i, conf in enumerate(configs):
@@ -224,7 +243,13 @@ def plot_resu(df_all, df_coadd, dbName):
         idxb = df_all['note'] == nn
         sel_all = df_all[idxb]
         sel_all = translate(sel_all)
-        ax[i].plot(sel_all[valc], sel_all[valb], 'ko', mfc='None')
+        print('hh', sel_all.columns)
+        idm = sel_all['moonPhase'] <= 20.
+        ax[i].plot(sel_all[idm][valc], sel_all[idm]
+                   [valb], 'ko', mfc='None', ms=4)
+        idm = sel_all['moonPhase'] > 20.
+        ax[i].plot(sel_all[idm][valc], sel_all[idm]
+                   [valb], 'k*', mfc='None', ms=4)
 
         ymin, ymax = ax[i].get_ylim()
         rymax = []
@@ -234,90 +259,163 @@ def plot_resu(df_all, df_coadd, dbName):
             cad = row['cadence']
             filter_alloc = row['filter_alloc'].split('_or_')
             visits_band = row['visits_band'].split('_or_')
+            cadence = row['cadence']
             print(filter_alloc)
             print(visits_band)
+            print(cadence)
             ymax = nmax(visits_band)
             rymax.append(ymax)
             ax[i].plot([seas_min]*2, [ymin, ymax],
                        linestyle='dashed', color='k')
             ax[i].plot([seas_max]*2, [ymin, ymax],
                        linestyle='dashed', color='k')
-            faloc, nvis = gime_combi(filter_alloc, visits_band)
+            faloc, nvis, combi1, combi2 = gime_combi(filter_alloc, visits_band)
             seas_mean = 0.5*(seas_min+seas_max)
-            ax[i].text(seas_mean, 0.5*(ymax-ymin)+ymin,
-                       faloc, color='b', fontsize=15)
-            ax[i].text(seas_mean, 0.4*(ymax-ymin)+ymin,
-                       nvis, color='b', fontsize=15)
+            yyy = 0.5*(ymax-ymin)+ymin
+            k = 0.08
 
-        ax[i].set_xticklabels([])
+            if seas_min == 0:
+                k = 0.01
+
+            ax[i].text(k*seas_mean, 0.65,
+                       combi1, color='b',
+                       fontsize=12, transform=ax[i].transAxes)
+
+            ax[i].text(k*seas_mean, 0.55,
+                       combi2, color='b',
+                       fontsize=12, transform=ax[i].transAxes)
+
+            ax[i].text(k*seas_mean, 0.45,
+                       'cadence = {}'.format(cadence), color='b',
+                       fontsize=12, transform=ax[i].transAxes)
+        ll = range(1, 11, 1)
+        ax[i].set_xticks(list(ll))
         if i == len(configs)-1:
-            ll = range(1, 11, 1)
-            # ax[i].set_xticks(list(ll))
             for it in ll:
-                ax[i].text(it-0.5, ymin-5, '{}'.format(it))
-            ax[i].set_xlabel('Season', labelpad=20)
+                ax[i].text(0.1*(it-0.5), -0.15, '{}'.format(it),
+                           transform=ax[i].transAxes)
+            #ax[i].set_xlabel('Season', labelpad=15)
+            ax[i].text(0.5, -0.30, 'Season',
+                       transform=ax[i].transAxes, ha='center')
 
         ax[i].set_ylabel('N$_{visits}$')
-        ax[i].grid()
         ax[i].set_xlim([0, 10])
-        yymax = np.max(rymax)
-        ax[i].text(6.5, 0.8*(yymax-ymin)+ymin, conf, color='r', fontsize=15)
+        ax[i].text(0.95, 0.8, conf, color='r',
+                   fontsize=15, transform=ax[i].transAxes, ha='right')
+        ax[i].grid()
+        ax[i].tick_params(axis='x', colors='white')
+
+    outName = '{}/cadence_{}.png'.format(outDir, dbName)
+    plt.savefig(outName)
+    plt.close(fig)
+
+
+def plot_cadence(dbDir, dbName, df_config_scen, outDir):
+
+    idx = df_config_scen['scen'] == dbName
+
+    dname = df_config_scen[idx][['field', 'fieldType']]
+    dname = dname.rename(columns={'field': 'note'})
+
+    data = np.load('{}/{}.npy'.format(dbDir, dbName))
+    df = pd.DataFrame.from_records(data)
+
+    df = df.merge(dname, left_on=['note'], right_on=['note'])
+
+    dfb = df.groupby(['note', 'fieldType', 'night']).apply(
+        lambda x: coadd_night(x)).reset_index()
+
+    dfb = doInt(dfb, ['season'])
+    print(dfb)
+
+    dfc = dfb.groupby(['note', 'fieldType', 'season']).apply(
+        lambda x: coadd_season(x)).reset_index()
+
+    dfc = doInt(dfc, ['season', 'cadence'])
+    print(dfc)
+
+    dfd = dfc.groupby(['fieldType', 'season', 'filter_alloc', 'visits_band',
+                       'cadence', 'Tmin', 'Tmax']).apply(lambda x: coadd_field(x)).reset_index()
+
+    dfd = doInt(dfd, ['season', 'cadence'])
+
+    print(dfd[['fieldType', 'season', 'filter_alloc', 'visits_band',
+              'cadence', 'note', 'Tmin', 'Tmax']])
+
+    dfe = dfd.groupby(['fieldType', 'note', 'filter_alloc', 'visits_band',
+                       'cadence']).apply(lambda x: coadd_final(x)).reset_index()
+    dfe = doInt(dfe, ['cadence'])
+
+    print(dfe[['fieldType', 'seas_min', 'seas_max', 'filter_alloc', 'visits_band',
+              'cadence', 'note']])
+
+    plot_resu(dfb, dfe, dbName.split('.npy')[0], outDir)
+
+
+def plot_budget(dbDir, df_config_scen, Nvisits_LSST):
+
+    dbNames = list(df_config_scen['scen'].unique())
+
+    vala = 'observationStartMJD'
+    valb = 'numExposures'
+    valc = 'MJD_season'
+    norm = Nvisits_LSST
+
+    fig, ax = plt.subplots()
+    for dbName in dbNames:
+        data = np.load('{}/{}.npy'.format(dbDir, dbName))
+        data = pd.DataFrame.from_records(data)
+
+        # sum numexposures by night
+        dt = data.groupby(['night']).apply(
+            lambda x: coadd_night(x)).reset_index()
+        print(dt['season'].unique())
+        dt = dt.sort_values(by=['night'])
+        dt[valb] /= norm
+        # re-estimate seasons
+        # dt = dt.drop(columns=['season'])
+        #dt = season(dt.to_records(index=False), mjdCol=vala)
+        selt = pd.DataFrame.from_records(dt)
+
+        selt = translate(selt)
+        selt = selt.sort_values(by=[valc])
+        ax.plot(selt[valc], np.cumsum(selt[valb]), label=dbName)
+
+    ax.legend()
 
 
 parser = OptionParser(description='Script to analyze Observing Strategy')
 
 parser.add_option('--dbDir', type=str, default='../DB_Files',
                   help='OS location dir [%default]')
-parser.add_option('--dbName', type=str, default='DDF_DESC_0.80_SN.npy',
-                  help='OS to analyze [%default]')
+parser.add_option('--configScenario', type='str',
+                  default='input/DESC_cohesive_strategy/config_scenarios.csv',
+                  help='config file to use[%default]')
+parser.add_option('--outDir', type=str, default='Plot_OS',
+                  help='Where to store the plots [%default]')
+parser.add_option('--Nvisits_LSST', type=float, default=2.1e6,
+                  help='Total number of LSST visits[%default]')
+
 
 opts, args = parser.parse_args()
 
 dbDir = opts.dbDir
-dbName = opts.dbName
-ff = ['DD:COSMOS', 'DD:XMM_LSS',
-      'DD:ECDFS', 'DD:EDFS_a',
-      'DD:EDFS_b', 'DD:ELAISS1']
-ftype = ['UD']*2+['DD']*4
+configScenario = opts.configScenario
+outDir = opts.outDir
+Nvisits_LSST = opts.Nvisits_LSST
 
-dname = pd.DataFrame(ff, columns=['note'])
-dname['fieldType'] = ftype
+checkDir(outDir)
+df_config_scen = pd.read_csv(configScenario, comment='#')
 
-data = np.load('{}/{}'.format(dbDir, dbName))
-df = pd.DataFrame.from_records(data)
+# plot cadence
+"""
+dbNames = df_config_scen['scen'].unique()
+for dbName in dbNames:
+    plot_cadence(dbDir, dbName, df_config_scen, outDir)
 
-df = df.merge(dname, left_on=['note'], right_on=['note'])
-
-dfb = df.groupby(['note', 'fieldType', 'night']).apply(
-    lambda x: coadd_night(x)).reset_index()
-
-dfb = doInt(dfb, ['season'])
-print(dfb)
-
-dfc = dfb.groupby(['note', 'fieldType', 'season']).apply(
-    lambda x: coadd_season(x)).reset_index()
-
-dfc = doInt(dfc, ['season', 'cadence'])
-print(dfc)
-
-dfd = dfc.groupby(['fieldType', 'season', 'filter_alloc', 'visits_band',
-                   'cadence', 'Tmin', 'Tmax']).apply(lambda x: coadd_field(x)).reset_index()
-
-dfd = doInt(dfd, ['season', 'cadence'])
-
-print(dfd[['fieldType', 'season', 'filter_alloc', 'visits_band',
-          'cadence', 'note', 'Tmin', 'Tmax']])
-
-
-dfe = dfd.groupby(['fieldType', 'note', 'filter_alloc', 'visits_band',
-                   'cadence']).apply(lambda x: coadd_final(x)).reset_index()
-dfe = doInt(dfe, ['cadence'])
-
-
-print(dfe[['fieldType', 'seas_min', 'seas_max', 'filter_alloc', 'visits_band',
-          'cadence', 'note']])
-
-plot_resu(dfb, dfe, dbName.split('.npy')[0])
+"""
+# plot budget vs season
+plot_budget(dbDir, df_config_scen, Nvisits_LSST)
 plt.show()
 print(test)
 fields = dfb['note'].unique()

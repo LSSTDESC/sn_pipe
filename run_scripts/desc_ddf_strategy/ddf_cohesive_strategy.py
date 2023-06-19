@@ -212,7 +212,7 @@ print(Nvisits_avail)
 m5_resu = nvisits_from_m5(res, m5class)
 print(m5_resu)
 
-plt.show()
+# plt.show()
 # finish the data
 
 df_res = myclass.finish(res)
@@ -229,13 +229,6 @@ df_res[toprint].to_csv('ddf_res1.csv', index=False)
 # transform df_res
 df_resb = reshuffle(df_res, m5_resu,
                     pparams['sl_UD'], pparams['cad_UD'], pparams['frac_moon'])
-
-"""
-idx = df_resb['name'] == 'DDF_DESC_0.70_SN'
-
-print(df_resb[idx])
-print(test)
-"""
 
 # get the final scenario
 m5single = m5class.msingle_calc
@@ -255,20 +248,12 @@ print('before recovery', dfres)
 
 
 if pparams['recover_from_moon']:
-    """
-    idx = dfres['name'].str.contains('Univ_SN')
-    print('allo', dfres[idx]['name'].unique())
-    dfresa = dfres[idx]
-    dfresb = dfres[~idx]
-    dfresb = moon_recovery(dfresa, pparams['swap_filter_moon'])
-    dfres = pd.concat((dfresa, dfresb))
-    """
     dfres = moon_recovery(dfres, pparams['swap_filter_moon'])
 
 # print(test)
 print('after recovery', dfres)
 
-# dfres = uniformize(dfres, 'DDF_Univ_SN')
+dfres = uniformize(dfres, 'DDF_Univ_SN')
 
 ##### Final plots ####
 
@@ -290,8 +275,8 @@ plt.show()
 
 # check total number of visits
 print(dfres.columns)
-
-pp = ['name', 'year', 'fieldType']
+dfres['cad'] = dfres['cad'].astype(int)
+pp = ['name', 'year', 'fieldType', 'cad', 'sl']
 tt = dfres.groupby(pp).apply(lambda x: reverse_df(x)).reset_index()
 tt.to_csv('scenarios.csv', index=False)
 

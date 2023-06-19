@@ -8,3 +8,6 @@ DDF_DESC_0.75_co,dashed,s,b
 DDF_DESC_0.70_WZ,dotted,o,r
 DDF_DESC_0.70_SN,dotted,*,r
 DDF_DESC_0.70_co,dotted,s,r
+DDF_SCOC_pII,dashed,o,k
+DDF_Univ_SN,solid,o,g
+DDF_Univ_WZ,solid,o,m

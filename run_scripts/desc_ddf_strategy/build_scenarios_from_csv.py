@@ -7,6 +7,7 @@ Created on Wed May 24 10:50:14 2023
 """
 import pandas as pd
 from optparse import OptionParser
+import numpy as np
 
 
 def modif_UD(df, cad):
@@ -142,6 +143,9 @@ parser = OptionParser(
 
 parser.add_option('--configFile', type='str', default='scenarios.csv',
                   help='config file to use[%default]')
+parser.add_option('--configScenario', type='str',
+                  default='input/DESC_cohesive_strategy/config_scenarios.csv',
+                  help='config file to use[%default]')
 parser.add_option('--outputDir', type='str',
                   default='input/DESC_cohesive_strategy',
                   help='output dir[%default]')
@@ -149,41 +153,48 @@ parser.add_option('--outputDir', type='str',
 opts, args = parser.parse_args()
 
 configFile = opts.configFile
+configScenario = opts.configScenario
 
 # load scenarios
 
-df_scen = pd.read_csv(configFile)
+df_scen = pd.read_csv(configFile, comment='#')
+
+df_config_scen = pd.read_csv(configScenario, comment='#')
 
 print(df_scen['name'].unique())
 
 scenarios = df_scen['name'].unique()
 
-DD_names = ['DD:COSMOS', 'DD:XMM_LSS', 'DD:ECDFS',
-            'DD:ELAISS1', 'DD:EDFS_a', 'DD:EDFS_b']
-DD_types = ['UD', 'UD', 'DD', 'DD', 'DD', 'DD']
-cad = [2, 2, 3, 3, 3, 3, 3]
-sl = [180]*len(DD_names)
 
 bands = 'ugrizy'
 
+cad = {}
 for scen in scenarios:
+
+    idc = df_config_scen['scen'] == scen
+    config_scen = df_config_scen[idc]
     idx = df_scen['name'] == scen
     sel_scen = df_scen[idx]
     dfa_scen = pd.DataFrame()
-    for i, ddn in enumerate(DD_names):
-        ido = sel_scen['fieldType'] == DD_types[i]
+
+    for i, row in config_scen.iterrows():
+        ido = sel_scen['fieldType'] == row['fieldType']
         dfa = pd.DataFrame(sel_scen[ido])
+        cadence = row['cad']
+        season_length = row['sl']
         for b in bands:
-            dfa['cadence_{}'.format(b)] = cad[i]
+            dfa['cadence_{}'.format(b)] = cadence
             dfa = dfa.rename(columns={'{}'.format(b): 'Nvisits_{}'.format(b)})
         dfa = dfa.rename(columns={'year': 'seasons'})
-        dfa['seasonLength'] = sl[i]
-        dfa['field'] = DD_names[i]
+        dfa['seasonLength'] = season_length
+        dfa['field'] = row['field']
+        dfa['fieldType'] = row['fieldType']
         dfa_scen = pd.concat((dfa_scen, dfa))
+        cad[row['fieldType']] = cadence
 
-    dfa_scen = modif_UD(dfa_scen, cad[3])
+    dfa_scen = modif_UD(dfa_scen, cad['DD'])
     dfa_scen = modif_Euclid(dfa_scen)
-    print(dfa_scen)
+
     outName = '{}/{}.csv'.format(opts.outputDir, scen)
     dfa_scen.to_csv(outName, index=False)
     # break
