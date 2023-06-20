@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 from optparse import OptionParser
 from brokenaxes import brokenaxes
-from sn_plotter_analysis import plt
+from sn_plotter_analysis import plt, filtercolors
 import matplotlib.ticker as ticker
 from matplotlib.ticker import AutoMinorLocator
 from sn_tools.sn_io import checkDir
@@ -294,7 +294,7 @@ def plot_resu(df_all, df_coadd, dbName, outDir):
             for it in ll:
                 ax[i].text(0.1*(it-0.5), -0.15, '{}'.format(it),
                            transform=ax[i].transAxes)
-            #ax[i].set_xlabel('Season', labelpad=15)
+            # ax[i].set_xlabel('Season', labelpad=15)
             ax[i].text(0.5, -0.30, 'Season',
                        transform=ax[i].transAxes, ha='center')
 
@@ -305,9 +305,10 @@ def plot_resu(df_all, df_coadd, dbName, outDir):
         ax[i].grid()
         ax[i].tick_params(axis='x', colors='white')
 
-    outName = '{}/cadence_{}.png'.format(outDir, dbName)
-    plt.savefig(outName)
-    plt.close(fig)
+    if outDir != '':
+        outName = '{}/cadence_{}.png'.format(outDir, dbName)
+        plt.savefig(outName)
+        plt.close(fig)
 
 
 def plot_cadence(dbDir, dbName, df_config_scen, outDir):
@@ -374,7 +375,7 @@ def plot_budget(dbDir, df_config_scen, Nvisits_LSST):
         dt[valb] /= norm
         # re-estimate seasons
         # dt = dt.drop(columns=['season'])
-        #dt = season(dt.to_records(index=False), mjdCol=vala)
+        # dt = season(dt.to_records(index=False), mjdCol=vala)
         selt = pd.DataFrame.from_records(dt)
 
         selt = translate(selt)
@@ -382,6 +383,189 @@ def plot_budget(dbDir, df_config_scen, Nvisits_LSST):
         ax.plot(selt[valc], np.cumsum(selt[valb]), label=dbName)
 
     ax.legend()
+
+
+def plot_NSN_season(dbDir, df_config_scen):
+
+    dbNames = list(df_config_scen['scen'].unique())
+
+    vala = 'observationStartMJD'
+    valb = 'numExposures'
+    valc = 'MJD_season'
+
+    # for dbName in dbNames:
+    rmoon = []
+    for dbName in ['DDF_Univ_SN', 'DDF_Univ_WZ']:
+        fig, ax = plt.subplots()
+        data = np.load('{}/{}.npy'.format(dbDir, dbName))
+        data = pd.DataFrame.from_records(data)
+
+        fields = data['note'].unique()
+
+        for field in fields:
+            idx = data['note'] == field
+            sela = data[idx]
+
+            seasons = sela['season'].unique()
+
+            for seas in seasons:
+                idxb = sela['season'] == seas
+                selb = sela[idxb]
+                selb = selb.sort_values(by=[valb])
+                tp = np.cumsum(selb[valb])
+                ax.plot(selb[vala], tp)
+                idxm = selb['moonPhase'] <= 20.
+                selm = selb[idxm]
+                print(dbName, field, seas, tp.to_list()
+                      [-1], len(selm)/len(selb))
+                rmoon.append((dbName, field, seas, tp.to_list()
+                              [-1], len(selm)/len(selb)))
+
+    resmoon = np.rec.fromrecords(
+        rmoon, names=['name', 'field', 'seas', 'Nvisits_season', 'moon_frac'])
+
+    figb, axb = plt.subplots()
+    axb.plot(resmoon['moon_frac'], resmoon['Nvisits_season'], 'ko')
+    print('moon frac', np.mean(resmoon['moon_frac']))
+
+
+def plot_m5_WL(dbDir, df_config_scen,
+               wl_req_file='input/DESC_cohesive_strategy/pz_requirements.csv'):
+
+    # loading pz requirements
+    wl_req = pd.read_csv(wl_req_file, comment='#')
+
+    dbNames = list(df_config_scen['scen'].unique())
+    bands = 'ugrizy'
+
+    restot = pd.DataFrame()
+    #dbNames = ['DDF_Univ_SN', 'DDF_Univ_WZ']
+    for dbName in dbNames:
+
+        data = np.load('{}/{}.npy'.format(dbDir, dbName))
+        data = pd.DataFrame.from_records(data)
+
+        # for each field: estimate m5 coadd per band
+
+        fields = data['note'].unique()
+
+        res = data.groupby('note').apply(
+            lambda x: m5_coadd_grp(x)).reset_index()
+        res['name'] = dbName
+        res = res.rename(columns={'filter': 'band'})
+        res = res.merge(wl_req, left_on=['band'], right_on=[
+                        'band'], suffixes=('', '_ref'))
+        res['diff_m5_y1'] = res['m5_y1']-res['m5_y1_ref']
+        res['diff_m5_y2_y10'] = res['m5_y2_y10']-res['m5_y2_y10_ref']
+        restot = pd.concat((restot, res))
+
+    vv = ['note', 'm5_y1', 'm5_y2_y10', 'm5_y1_ref', 'm5_y2_y10_ref',
+          'diff_m5_y1', 'diff_m5_y2_y10']
+    print(restot[vv])
+
+    plot_diff_m5_indiv(restot)
+    plt.show()
+
+
+def m5_coadd_grp(data, varx='dbName', vary='diff_m5_y2_y10'):
+
+    idx = data['season'] == 1
+    dd_y1 = data[idx].groupby('filter').apply(
+        lambda x: m5_coadd(x, m5Colout='m5_y1')).reset_index()
+    dd_y2_y10 = data[~idx].groupby('filter').apply(
+        lambda x: m5_coadd(x, m5Colout='m5_y2_y10')).reset_index()
+
+    dd = dd_y1.merge(dd_y2_y10, left_on=['filter'], right_on=['filter'])
+
+    return dd
+
+
+def m5_coadd(grp, m5Col='fiveSigmaDepth', m5Colout='m5'):
+
+    coadded = 1.25*np.log10(np.sum(10**(0.8*grp[m5Col])))
+
+    return pd.DataFrame({m5Colout: [coadded]})
+
+
+def plot_diff_m5(data, varx='name', vary='diff_m5_y2_y10'):
+
+    fig, ax = plt.subplots(ncols=2, nrows=3, figsize=(12, 8))
+    fig.subplots_adjust(wspace=0., hspace=0.)
+    list_fields = ['DD:COSMOS', 'DD:XMM_LSS', 'DD:ELAISS1',
+                   'DD:ECDFS', 'DD:EDFS_a', 'DD:EDFS_b']
+    list_posfields = [(0, 0), (0, 1), (1, 0), (1, 1), (2, 0), (2, 1)]
+
+    ipos = dict(zip(list_fields, list_posfields))
+
+    fields = data['note'].unique()
+
+    for field in fields:
+
+        i = ipos[field][0]
+        j = ipos[field][1]
+
+        idx = data['note'] == field
+
+        sela = data[idx]
+
+        bands = sela['band'].unique()
+
+        for b in bands:
+            idxa = sela['band'] == b
+            selb = sela[idxa]
+            color = filtercolors[b]
+            ax[i, j].plot(selb[varx], selb[vary],
+                          '{}o'.format(color), mfc='None')
+
+        ax[i, j].tick_params(axis='x', labelrotation=20.,
+                             labelsize=10, labelleft=1)
+        if i < 2:
+            ax[i, j].set_xticks([])
+        if j == 1:
+            ax[i, j].set_yticks([])
+
+
+def plot_diff_m5_indiv(data, varx='name', vary='diff_m5_y2_y10',
+                       ylabel='$\Delta m_5=m_5^{DD}-m_5^{PZ}$'):
+
+    fields = data['note'].unique()
+
+    for field in fields:
+
+        fig, ax = plt.subplots(figsize=(12, 8))
+        fig.suptitle('{}'.format(field), fontweight='bold')
+        fig.subplots_adjust(bottom=0.2)
+        idx = data['note'] == field
+
+        sela = data[idx]
+
+        bands = sela['band'].unique()
+
+        for b in bands:
+            idxa = sela['band'] == b
+            selb = sela[idxa]
+            color = filtercolors[b]
+            ax.plot(selb[varx], selb[vary], marker='o',
+                    color=color, mfc='None', markeredgewidth=2, ms=12)
+
+        # ax.tick_params(axis='x', labelrotation=20.,
+        #               labelsize=10, labelright=True)
+        # ax.set_xticklabels(ax.get_xticklabels(),
+        #                   rotation=20, ha="right")
+
+        ax.set_ylabel(ylabel)
+        ax.grid()
+        plt.setp(ax.get_xticklabels(), rotation=45,
+                 ha="right", va="top", fontsize=12)
+        # plt.tight_layout()
+        xdep = 0.92
+        ydep = 0.6
+        shift = 0.05
+        for ik, b in enumerate('ugrizy'):
+            ax.plot([xdep, xdep+0.02], [ydep-ik*shift]*2, linestyle='solid',
+                    color=filtercolors[b], transform=fig.transFigure, clip_on=False)
+            ax.text(xdep+0.030, ydep-ik*shift, b, horizontalalignment='center',
+                    verticalalignment='center', transform=fig.transFigure)
 
 
 parser = OptionParser(description='Script to analyze Observing Strategy')
@@ -412,10 +596,12 @@ df_config_scen = pd.read_csv(configScenario, comment='#')
 dbNames = df_config_scen['scen'].unique()
 for dbName in dbNames:
     plot_cadence(dbDir, dbName, df_config_scen, outDir)
-
 """
+
 # plot budget vs season
-plot_budget(dbDir, df_config_scen, Nvisits_LSST)
+# plot_budget(dbDir, df_config_scen, Nvisits_LSST)
+# plot_NSN_season(dbDir, df_config_scen)
+plot_m5_WL(dbDir, df_config_scen)
 plt.show()
 print(test)
 fields = dfb['note'].unique()
