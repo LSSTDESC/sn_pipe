@@ -17,3 +17,8 @@ OR
   -> to loop on possible scenarios
 
 - OS analysis with ana_OS.py
+
+******************************* OR ***************************
+to make all the previous stages at once:
+
+- python run_scripts/desc_ddf_strategy/strategy_to_db.py
