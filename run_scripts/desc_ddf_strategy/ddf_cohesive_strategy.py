@@ -77,6 +77,9 @@ parser.add_option("--dbName", type=str,
 parser.add_option("--Nv_DD_max", type=int,
                   default=3500,
                   help="max number of Nvisits per DD/season [%default]")
+parser.add_option("--showPlot", type=int,
+                  default=0,
+                  help="to show plot or not [%default]")
 
 opts, args = parser.parse_args()
 
@@ -214,7 +217,11 @@ print(m5_resu)
 
 # plt.show()
 # finish the data
-
+"""
+print('finishing')
+idx = res['name'] == 'DDF_Univ_SN'
+res = res[idx]
+"""
 df_res = myclass.finish(res)
 
 toprint = ['name', 'Nf_UD', 'Ns_UD', 'nvisits_UD_night',
@@ -228,7 +235,10 @@ df_res[toprint].to_csv('ddf_res1.csv', index=False)
 
 # transform df_res
 df_resb = reshuffle(df_res, m5_resu,
-                    pparams['sl_UD'], pparams['cad_UD'], pparams['frac_moon'])
+                    pparams['sl_UD'], pparams['cad_UD'],
+                    pparams['frac_moon'], pparams['swap_filter_moon'])
+
+print(df_resb)
 
 # get the final scenario
 m5single = m5class.msingle_calc
@@ -246,9 +256,13 @@ dfres = df_resb.groupby('name').apply(
 dfres['nvisits_night'] = dfres['nvisits_night'].astype(int)
 print('before recovery', dfres)
 
-
+ll_norecover = ['DDF_SCOC_pII', 'DDF_Univ_SN', 'DDF_Univ_WZ']
 if pparams['recover_from_moon']:
-    dfres = moon_recovery(dfres, pparams['swap_filter_moon'])
+    idx = dfres['year'] > 1
+    for db in ll_norecover:
+        idx &= dfres['name'] == db
+    dfresm = moon_recovery(dfres[idx], pparams['swap_filter_moon'])
+    dfres = pd.concat((dfres[~idx], dfresm))
 
 # print(test)
 print('after recovery', dfres)
@@ -259,7 +273,7 @@ dfres = uniformize(dfres, 'DDF_Univ_SN')
 
 
 # estimate and plot delta_m5 for each scenario
-# Delta_m5(dfres, m5_nvisits)
+Delta_m5(dfres, m5_nvisits)
 
 # estimate and plot visit ratio for each scenario
 # Delta_nvisits(dfres, m5_nvisits)
@@ -268,7 +282,9 @@ dfres = uniformize(dfres, 'DDF_Univ_SN')
 # plot budget vs time for each scenario
 Budget_time(dfres, pparams['Nv_LSST'])
 
-plt.show()
+if pparams['showPlot']:
+    plt.show()
+
 # plot scenario vs time
 # Scenario_time(dfres, swap_filter_moon=pparams['swap_filter_moon'])
 
