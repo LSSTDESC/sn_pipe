@@ -362,7 +362,9 @@ def plot_budget(dbDir, df_config_scen, Nvisits_LSST):
     valc = 'MJD_season'
     norm = Nvisits_LSST
 
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(12, 8))
+    fig.subplots_adjust(right=0.8)
+
     for dbName in dbNames:
         data = np.load('{}/{}.npy'.format(dbDir, dbName))
         data = pd.DataFrame.from_records(data)
@@ -373,6 +375,7 @@ def plot_budget(dbDir, df_config_scen, Nvisits_LSST):
         print(dt['season'].unique())
         dt = dt.sort_values(by=['night'])
         dt[valb] /= norm
+        dt[valb] *= 100.
         # re-estimate seasons
         # dt = dt.drop(columns=['season'])
         # dt = season(dt.to_records(index=False), mjdCol=vala)
@@ -382,7 +385,28 @@ def plot_budget(dbDir, df_config_scen, Nvisits_LSST):
         selt = selt.sort_values(by=[valc])
         ax.plot(selt[valc], np.cumsum(selt[valb]), label=dbName)
 
+    ll = range(1, 11, 1)
+    ax.set_xticks(list(ll))
+    # ax.set_xticks([])
+    for it in ll:
+        ax.text(0.1*(it-0.5), -0.05, '{}'.format(it),
+                transform=ax.transAxes)
+    # ax[i].set_xlabel('Season', labelpad=15)
+    ax.text(0.5, -0.10, 'Season',
+            transform=ax.transAxes, ha='center')
+    # plt.setp(ax.get_xticklabels(),
+    #         ha="right", va="top", fontsize=12)
     ax.legend()
+    ax.grid()
+    ax.set_xlim([0, 10])
+    ax.set_ylim([0, 7.5])
+    ax.legend(loc='best',
+              bbox_to_anchor=(1.15, 0.7),
+              ncol=1, fontsize=12, frameon=False)
+
+    ax.set_ylabel('DDF Budget [%]')
+    plt.xticks(color='w')
+    plt.tight_layout()
 
 
 def plot_NSN_season(dbDir, df_config_scen):
@@ -599,9 +623,9 @@ for dbName in dbNames:
 """
 
 # plot budget vs season
-# plot_budget(dbDir, df_config_scen, Nvisits_LSST)
+plot_budget(dbDir, df_config_scen, Nvisits_LSST)
 # plot_NSN_season(dbDir, df_config_scen)
-plot_m5_WL(dbDir, df_config_scen)
+# plot_m5_WL(dbDir, df_config_scen)
 plt.show()
 print(test)
 fields = dfb['note'].unique()
