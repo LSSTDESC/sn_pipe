@@ -234,6 +234,13 @@ df_res[toprint].to_csv('ddf_res1.csv', index=False)
 
 
 # transform df_res
+"""
+db_ref = 'DDF_Univ_SN'
+idx = df_res['name'] == db_ref
+
+print(m5_resu[m5_resu['name'] == db_ref])
+"""
+
 df_resb = reshuffle(df_res, m5_resu,
                     pparams['sl_UD'], pparams['cad_UD'],
                     pparams['frac_moon'], pparams['swap_filter_moon'])
@@ -243,12 +250,19 @@ print(df_resb)
 # get the final scenario
 m5single = m5class.msingle_calc
 
+vv = ['band', 'm5_med_single', 'Nvisits_WL_PZ_y1', 'Nvisits_WL_PZ_y2_y10',
+      'm5_WL_PZ_y1', 'm5_WL_PZ_y2_y10']
+
+print(m5single[vv])
+
 
 resa, resb = m5class.m5_band_from_Nvisits(m5_resu, m5single,
                                           sl_DD=pparams['sl_DD'],
                                           cad_DD=pparams['cad_DD'],
                                           frac_moon=pparams['frac_moon'],
                                           swap_filter_moon=pparams['swap_filter_moon'])
+print(resa[resa['name'] == 'DDF_Univ_SN'])
+print(resb)
 
 dfres = df_resb.groupby('name').apply(
     lambda x: get_final_scenario(x, pparams['NDDF'], resa, resb)).reset_index()
@@ -265,10 +279,14 @@ if pparams['recover_from_moon']:
     dfres = pd.concat((dfres[~idx], dfresm))
 
 # print(test)
-print('after recovery', dfres)
+print('after recovery', dfres[['name', 'year',
+      'band', 'nvisits_night']])
 
-dfres = uniformize(dfres, 'DDF_Univ_SN')
+dfres = uniformize(dfres, 'DDF_Univ_SN', Nv_LSST=pparams['Nv_LSST'])
 
+print('uniformize', dfres[['name', 'year',
+      'band', 'nvisits_night']])
+# print(test)
 ##### Final plots ####
 
 
@@ -276,7 +294,7 @@ dfres = uniformize(dfres, 'DDF_Univ_SN')
 Delta_m5(dfres, m5_nvisits)
 
 # estimate and plot visit ratio for each scenario
-# Delta_nvisits(dfres, m5_nvisits)
+Delta_nvisits(dfres, m5_nvisits)
 
 
 # plot budget vs time for each scenario
