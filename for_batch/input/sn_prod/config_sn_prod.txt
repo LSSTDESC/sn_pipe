@@ -8,6 +8,7 @@ SN_color_type random str # color dist for LC prod
 SN_z_type random str # z prod for LC prod
 SN_z_min 0.01 float # min z for LC prod
 SN_z_max 1.1 float # max z for LC prod
+SN_sigmaInt 0.0 float #SN intrinsic dispersion
 SN_daymax_type random str # T0 dist for LC prod
 Simulator_model salt3 str # simulator model
 Simulator_version 2.0 str # simulator version
@@ -18,7 +19,7 @@ MultiprocessingFit_nproc 8 int # nproc for LC fit
 nproc_pixels 8 int # nprocs for pixels to FP estim.
 nproc 1 int # nprocs for pixel processing
 SN_NSNfactor 50 int #nsn factor for LC prod
-fit_selected 1 int # to fit only selected LC
+fit_selected 0 int # to fit only selected LC
 ebvofMW_pixel 0.25 float # E(B-V) selection for pixels
 DD_list COSMOS,CDFS,EDFSa,EDFSb,ELAISS1,XMM-LSS str # list of DDFs to process
 OutputSimu_directory Output_SN str # output dir for LC
