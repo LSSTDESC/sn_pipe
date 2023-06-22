@@ -364,6 +364,15 @@ def plot_budget(dbDir, df_config_scen, Nvisits_LSST):
 
     fig, ax = plt.subplots(figsize=(12, 8))
     fig.subplots_adjust(right=0.8)
+    ll = ['DDF_DESC_0.80_WZ', 'DDF_DESC_0.80_SN', 'DDF_DESC_0.80_co',
+          'DDF_DESC_0.75_WZ', 'DDF_DESC_0.75_SN', 'DDF_DESC_0.75_co',
+          'DDF_DESC_0.70_WZ', 'DDF_DESC_0.70_SN', 'DDF_DESC_0.70_co',
+          'DDF_SCOC_pII', 'DDF_Univ_SN', 'DDF_Univ_WZ']
+    colors = ['r']*3+['b']*3+['k']*3+['g']+['m']+['orange']
+    ls = ['solid', 'dashed', 'dotted']*4
+
+    colors = dict(zip(ll, colors))
+    ls = dict(zip(ll, ls))
 
     for dbName in dbNames:
         data = np.load('{}/{}.npy'.format(dbDir, dbName))
@@ -383,7 +392,8 @@ def plot_budget(dbDir, df_config_scen, Nvisits_LSST):
 
         selt = translate(selt)
         selt = selt.sort_values(by=[valc])
-        ax.plot(selt[valc], np.cumsum(selt[valb]), label=dbName)
+        ax.plot(selt[valc], np.cumsum(selt[valb]), label=dbName,
+                color=colors[dbName], linestyle=ls[dbName])
 
     ll = range(1, 11, 1)
     ax.set_xticks(list(ll))
@@ -400,7 +410,7 @@ def plot_budget(dbDir, df_config_scen, Nvisits_LSST):
     ax.grid()
     ax.set_xlim([0, 10])
     ax.set_ylim([0, 7.5])
-    ax.legend(loc='best',
+    ax.legend(loc='upper center',
               bbox_to_anchor=(1.15, 0.7),
               ncol=1, fontsize=12, frameon=False)
 
@@ -453,8 +463,9 @@ def plot_NSN_season(dbDir, df_config_scen):
     print('moon frac', np.mean(resmoon['moon_frac']))
 
 
-def plot_m5_WL(dbDir, df_config_scen,
-               wl_req_file='input/DESC_cohesive_strategy/pz_requirements.csv'):
+def plot_m5_PZ(dbDir, df_config_scen,
+               wl_req_file='input/DESC_cohesive_strategy/pz_requirements.csv',
+               outDir=''):
 
     # loading pz requirements
     wl_req = pd.read_csv(wl_req_file, comment='#')
@@ -487,7 +498,11 @@ def plot_m5_WL(dbDir, df_config_scen,
           'diff_m5_y1', 'diff_m5_y2_y10']
     print(restot[vv])
 
-    plot_diff_m5_indiv(restot)
+    plot_diff_m5_indiv(restot, outDir=outDir)
+    plot_diff_m5_indiv(restot, vary='diff_m5_y1',
+                       ylabel='$\Delta m_5=m_5^{DD}-m_5^{PZ}$',
+                       title='y1', outDir=outDir)
+
     plt.show()
 
 
@@ -550,14 +565,15 @@ def plot_diff_m5(data, varx='name', vary='diff_m5_y2_y10'):
 
 
 def plot_diff_m5_indiv(data, varx='name', vary='diff_m5_y2_y10',
-                       ylabel='$\Delta m_5=m_5^{DD}-m_5^{PZ}$'):
+                       ylabel='$\Delta m_5=m_5^{DD}-m_5^{PZ}$',
+                       title='y2 to y10', outDir='', ybar=0.):
 
     fields = data['note'].unique()
 
     for field in fields:
 
         fig, ax = plt.subplots(figsize=(12, 8))
-        fig.suptitle('{}'.format(field), fontweight='bold')
+        fig.suptitle('{} - {}'.format(field, title), fontweight='bold')
         fig.subplots_adjust(bottom=0.2)
         idx = data['note'] == field
 
@@ -579,6 +595,9 @@ def plot_diff_m5_indiv(data, varx='name', vary='diff_m5_y2_y10',
 
         ax.set_ylabel(ylabel)
         ax.grid()
+        xmin, xmax = ax.get_xlim()
+
+        ax.plot([xmin, xmax], [ybar]*2, linestyle='dashed', lw=3, color='k')
         plt.setp(ax.get_xticklabels(), rotation=45,
                  ha="right", va="top", fontsize=12)
         # plt.tight_layout()
@@ -590,6 +609,51 @@ def plot_diff_m5_indiv(data, varx='name', vary='diff_m5_y2_y10',
                     color=filtercolors[b], transform=fig.transFigure, clip_on=False)
             ax.text(xdep+0.030, ydep-ik*shift, b, horizontalalignment='center',
                     verticalalignment='center', transform=fig.transFigure)
+        ax.set_xlim([xmin, xmax])
+        if outDir != '':
+            outName = '{}/{}_{}.png'.format(outDir, vary, field.split(':')[-1])
+            plt.savefig(outName)
+            plt.close(fig)
+
+
+def plot_Nvisits_WL(dbDir, df_config_scen,
+                    filter_alloc_req='input/DESC_cohesive_strategy/filter_allocation.csv',
+                    Nvisits_WL=8000,
+                    outDir=''):
+
+    # loading filter_alloc reqs.
+    Nv_WL = pd.read_csv(filter_alloc_req, comment='#')
+
+    Nv_WL['Nv_WL'] = Nv_WL['frac_band']*Nvisits_WL
+    Nv_WL['Nv_WL'] = Nv_WL['Nv_WL'].astype(int)
+    print('reference', Nv_WL)
+    # get the corresponding number of visits
+
+    dbNames = list(df_config_scen['scen'].unique())
+    bands = 'ugrizy'
+
+    restot = pd.DataFrame()
+    #dbNames = ['DDF_Univ_SN', 'DDF_Univ_WZ']
+    for dbName in dbNames:
+
+        data = np.load('{}/{}.npy'.format(dbDir, dbName))
+        data = pd.DataFrame.from_records(data)
+        # get the total number of visits per band and per field
+        df = data[['note', 'filter', 'numExposures']]
+        print(df)
+        sumdf = df.groupby(['note', 'filter']).apply(
+            lambda x: pd.DataFrame({'Nv_WL': [x['numExposures'].sum()]})).reset_index()
+        sumdf = sumdf.rename(columns={'filter': 'band'})
+        sumdf = sumdf.merge(Nv_WL, left_on=['band'], right_on=[
+                            'band'], suffixes=['', '_ref'])
+        sumdf['name'] = dbName
+        sumdf['ratio_Nv_WL'] = sumdf['Nv_WL']/sumdf['Nv_WL_ref']
+        restot = pd.concat((restot, sumdf))
+
+    plot_diff_m5_indiv(restot, varx='name', vary='ratio_Nv_WL',
+                       # ylabel='$\frac{N_visits}{N_{visits}^{WL}$',
+                       ylabel=r'$\frac{N_{visits}^{DD}}{N_{visits}^{WL}}$',
+                       title='WL reqs', outDir=outDir, ybar=1)
 
 
 parser = OptionParser(description='Script to analyze Observing Strategy')
@@ -623,9 +687,10 @@ for dbName in dbNames:
 """
 
 # plot budget vs season
-plot_budget(dbDir, df_config_scen, Nvisits_LSST)
+# plot_budget(dbDir, df_config_scen, Nvisits_LSST)
 # plot_NSN_season(dbDir, df_config_scen)
-# plot_m5_WL(dbDir, df_config_scen)
+# plot_m5_PZ(dbDir, df_config_scen, outDir=outDir)
+plot_Nvisits_WL(dbDir, df_config_scen, outDir=outDir)
 plt.show()
 print(test)
 fields = dfb['note'].unique()
