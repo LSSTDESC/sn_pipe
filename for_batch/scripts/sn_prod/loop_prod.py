@@ -30,7 +30,8 @@ parser.add_option("--Fitter_parnames", type="str", default='t0,x1,c,x0',
                   help="parameters to fit [%default]")
 parser.add_option("--reprocList", type="str", default='None.csv',
                   help="to reproc some of the db files only [%default]")
-
+parser.add_option("--SN_sigmaInt", type=float, default=0.0,
+                  help="SN intrinsic dispersion [%default]")
 
 opts, args = parser.parse_args()
 
@@ -51,4 +52,5 @@ for i, row in df.iterrows():
     procDict['OutputSimu_directory'] = opts.outputDir
     procDict['Fitter_parnames'] = opts.Fitter_parnames
     procDict['reprocList'] = opts.reprocList
+    procDict['SN_sigmaInt'] = opts.SN_sigmaInt
     go_batch(script, procDict)
