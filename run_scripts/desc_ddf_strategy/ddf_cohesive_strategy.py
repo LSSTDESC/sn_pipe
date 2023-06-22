@@ -186,17 +186,18 @@ myclass.plot(restot, varx='Nv_DD',
 
 # zcomp_req = {}
 # zcomp_req_err = {}
+# pz_wl_req = {}
 # pz_wl_req_err = {}
 # scenario = {}
-deep_universal = {}
-scoc_pII = {}
+
 
 Nvisits_avail = myclass.budget_DD*myclass.Nv_LSST-myclass.Nf_DD_y1*myclass.Nv_DD_y1
-deep_universal['Deep Universal'] = [Nvisits_avail/(opts.Ns_DD*opts.NDDF), 140]
 Nv_DD_SCOC_pII = Nvisits_avail/52.
 Nv_UD_SCOC_pII = (10*Nv_DD_SCOC_pII/3)*opts.cad_UD/opts.sl_UD
+deep_universal = {}
+scoc_pII = {}
+deep_universal['Deep Universal'] = [Nvisits_avail/(opts.Ns_DD*opts.NDDF), 140]
 scoc_pII['SCOC_pII'] = [Nv_DD_SCOC_pII, Nv_UD_SCOC_pII]
-
 
 res = myclass.plot(restot, varx='Nv_DD',
                    legx='N$_{visits}^{DD}/season}$', scenario=scenario,
@@ -204,6 +205,7 @@ res = myclass.plot(restot, varx='Nv_DD',
                    pz_wl_req=pz_wl_req, pz_wl_req_err=pz_wl_req_err,
                    deep_universal=deep_universal, scoc_pII=scoc_pII,
                    figtitle=ffig)
+# plt.show()
 
 print(res)
 print(res.dtype)
