@@ -45,6 +45,7 @@ def plotNSN_please(process_data, dd, dbDir, prodType,
     if process_data:
         processNSN(dd, dbDir, prodType, listDDF, dict_sel, outDir, norm_factor)
 
+    print('allo', outDir)
     plt_NSN = plotNSN(listDDF, dd, selconfig, selconfig_ref,
                       plotDir=plotDir, fDir=outDir)
 
@@ -56,6 +57,31 @@ def plotNSN_please(process_data, dd, dbDir, prodType,
 class Plot_simu_params:
     def __init__(self, dd, dbDir, prodType,
                  listDDF, dict_sel, fDir, norm_factor):
+        """
+        class to plot simulation params
+
+        Parameters
+        ----------
+        dd : pandas df
+            data to process.
+        dbDir : str
+            location dir of the files to process.
+        prodType : str
+            production type.
+        listDDF : list(str)
+            list of DDFs to consider.
+        dict_sel : dict
+            selection dict.
+        fDir : str
+            location dir of the files.
+        norm_factor : float
+            Normalization factor.
+
+        Returns
+        -------
+        None.
+
+        """
 
         self.dd = dd
         self.dbDir = dbDir
