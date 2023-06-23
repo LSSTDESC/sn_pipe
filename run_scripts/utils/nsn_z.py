@@ -89,7 +89,7 @@ account_for_edges = opts.account_for_edges
 # loop on rate types
 
 
-rates = ['Perrett', 'Ripoche', 'Dilday', 'combined']
+rates = ['Perrett', 'Ripoche', 'Dilday', 'combined', 'Hounsell']
 edges = [(-15, 25), (-15, 25), (-15, 30), (-15, 40)]
 account_edges = [0, 1, 1, 1]
 H0 = 70
@@ -131,6 +131,8 @@ for rate in sela['rate'].unique():
 ax.grid()
 ax.set_xlim(0.01, 1.1)
 ax.legend()
+
+"""
 figb, axb = plt.subplots(figsize=(10, 8))
 for rate in effi_df['rate'].unique():
     idx = effi_df['rate'] == rate
@@ -145,5 +147,5 @@ for rate in effi_df['rate'].unique():
 axb.grid()
 axb.set_xlim(0.01, 1.1)
 axb.legend()
-
+"""
 plt.show()
