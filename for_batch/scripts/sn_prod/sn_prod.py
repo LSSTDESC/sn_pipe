@@ -35,6 +35,7 @@ def batch_DDF(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
     dbName = theDict['dbName']
     outDir = theDict['OutputSimu_directory']
     reprocList = theDict['reprocList']
+    sigmaInt = theDict['SN_sigmaInt']
 
     tag_list = pd.DataFrame()
     if 'None' not in reprocList:
@@ -59,7 +60,8 @@ def batch_DDF(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
 
     for fieldName in DD_list:
         procDict['fieldName'] = fieldName
-        procName = 'DD_{}_{}{}'.format(dbName, fieldName, tag_dir)
+        procName = 'DD_{}_{}{}_{}'.format(
+            dbName, fieldName, tag_dir, np.round(sigmaInt, 2))
         mybatch = BatchIt(processName=procName, time=time, mem=mem)
         seasons = range(1, 11)
         if not tag_list.empty:
