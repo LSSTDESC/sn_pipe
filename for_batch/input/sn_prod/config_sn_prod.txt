@@ -9,6 +9,7 @@ SN_z_type random str # z prod for LC prod
 SN_z_min 0.01 float # min z for LC prod
 SN_z_max 1.1 float # max z for LC prod
 SN_sigmaInt 0.0 float #SN intrinsic dispersion
+SN_z_rate Hounsell str # SN production rate
 SN_daymax_type random str # T0 dist for LC prod
 Simulator_model salt3 str # simulator model
 Simulator_version 2.0 str # simulator version

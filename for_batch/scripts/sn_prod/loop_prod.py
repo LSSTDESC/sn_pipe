@@ -32,6 +32,8 @@ parser.add_option("--reprocList", type="str", default='None.csv',
                   help="to reproc some of the db files only [%default]")
 parser.add_option("--SN_sigmaInt", type=float, default=0.0,
                   help="SN intrinsic dispersion [%default]")
+parser.add_option("--SN_z_rate", type=str, default='Hounsell',
+                  help="SN production rate [%default]")
 
 
 opts, args = parser.parse_args()
@@ -55,5 +57,6 @@ for i, row in df.iterrows():
     procDict['Fitter_parnames'] = opts.Fitter_parnames
     procDict['reprocList'] = opts.reprocList
     procDict['SN_sigmaInt'] = opts.SN_sigmaInt
+    procDict['SN_z_rate'] = opts.SN_z_rate
 
     go_batch(script, procDict)
