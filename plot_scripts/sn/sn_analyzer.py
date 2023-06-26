@@ -1,10 +1,10 @@
 import matplotlib.pyplot as plt
 from sn_analysis.sn_tools import *
 from sn_analysis.sn_calc_plot import Calc_zlim, histSN_params, select
-from sn_analysis.sn_calc_plot import effi
-from sn_analysis.sn_analysis import sn_load_select, get_nsn, processNSN
-from sn_plotter_analysis.plotNSN import plotNSN
+from sn_analysis.sn_analysis import sn_load_select, get_nsn, nsn_vs_sel
+from sn_plotter_analysis.plotNSN import plotNSN, plot_NSN
 from sn_tools.sn_io import checkDir
+from sn_analysis.sn_analysis import processNSN, processNSN_z
 
 from optparse import OptionParser
 import numpy as np
@@ -45,7 +45,6 @@ def plotNSN_please(process_data, dd, dbDir, prodType,
     if process_data:
         processNSN(dd, dbDir, prodType, listDDF, dict_sel, outDir, norm_factor)
 
-    print('allo', outDir)
     plt_NSN = plotNSN(listDDF, dd, selconfig, selconfig_ref,
                       plotDir=plotDir, fDir=outDir)
 
@@ -161,6 +160,73 @@ class Plot_simu_params:
         return dd
 
 
+def plot_nsn_selcriteria(data, dd, selcriteria='G10_JLA'):
+
+    idx = data['seldict'] == selcriteria
+
+    df = pd.DataFrame(data[idx])
+
+    # df = df.merge(dd, left_on=['name'], right_on=['dbName'])
+
+    dbNames = df['name'].unique()
+
+    fig, ax = plt.subplots(figsize=(12, 9))
+    fig.subplots_adjust(top=0.9, right=0.8)
+    ccols = ['seldict', 'sel', 'cutnum', 'NSN', 'NSN_ref', 'err_NSN', 'name']
+
+    cols_orig = ['fitstatus', 'n_bands_m8_p10',
+                 'n_epochs_m10_p35',
+                 'n_epochs_m10_p5',
+                 'n_epochs_p5_p20',
+                 'n_epochs_phase_minus_10',
+                 'n_epochs_phase_plus_20',
+                 'sigmat0', 'sigmax1', 'nosel']
+    cols_new = ['fit ok', 'n$_{bands}^{-8\leq p \leq +10}\geq 2$',
+                'n$_{epochs}^{-10\leq p \leq +35}\geq 4$',
+                'n$_{epochs}^{-10\leq p \leq +5}\geq 1$',
+                'n$_{epochs}^{+5\leq p \leq +20}\geq 1$',
+                'n$_{epochs}^{p \leq -10}\geq 1$',
+                'n$_{epochs}^{p \geq +20}\geq 1$',
+                '$\sigma_{T_0} \leq$2',
+                '$\sigma_{x_1}\leq$1',
+                '']
+    newcols = pd.DataFrame(cols_orig, columns=['sel'])
+    newcols['selnew'] = cols_new
+
+    print('oo', newcols)
+
+    for dbName in dbNames:
+        idx = df['name'] == dbName
+        sel = df[idx]
+        idxb = dd['dbName'] == dbName
+        selconf = dd[idxb]
+
+        r = [(selcriteria, 'nosel', 0, sel['NSN_ref'].mean(),
+              sel['NSN_ref'].mean(), 0, dbName)]
+        df_ref = pd.DataFrame(r, columns=ccols)
+
+        sel = pd.concat((sel, df_ref))
+        sel = sel.merge(newcols, left_on=['sel'], right_on=['sel'])
+
+        sel = sel.sort_values(by=['cutnum'])
+        ls = selconf['ls'].unique()[0]
+        marker = selconf['marker'].unique()[0]
+        color = selconf['color'].unique()[0]
+
+        ax.errorbar(sel['selnew'], sel['NSN'], yerr=sel['err_NSN'],
+                    linestyle=ls, marker=marker,
+                    label=dbName, mfc='None', color=color)
+
+    ax.grid()
+    ax.tick_params(axis='x', labelrotation=20., labelsize=14)
+    ax.set_xlim([0, None])
+    ax.legend(loc='upper center',
+              bbox_to_anchor=(1.15, 0.7),
+              ncol=1, fontsize=12, frameon=False)
+    ax.set_ylabel('NSN')
+    # plt.tight_layout()
+
+
 parser = OptionParser(description='Script to analyze SN prod')
 
 parser.add_option('--dbDir', type=str, default='../Output_SN',
@@ -184,7 +250,7 @@ parser.add_option('--selconfig_ref', type=str,
                   default='nosel',
                   help='ref data for efficiency plot [%default]')
 parser.add_option('--plotDir', type=str,
-                  default='Plots_20230612',
+                  default='Plot_OS',
                   help='output directory for the plots [%default]')
 parser.add_option('--outDir', type=str,
                   default='SN_analysis',
@@ -210,31 +276,32 @@ checkDir(outDir)
 
 dict_sel = {}
 
-dict_sel['nosel'] = [('daymax', operator.ge, 0)]
-dict_sel['nosel_z0.7'] = [('z', operator.ge, 0.7)]
+dict_sel['nosel'] = [('daymax', operator.ge, 0, 1)]
+# dict_sel['nosel_z0.7'] = [('z', operator.ge, 0.7)]
 
 sdict = {}
-sdict['phases'] = [('n_epochs_phase_minus_10', operator.ge, 1),
+sdict['phases'] = [('n_epochs_phase_minus_10', operator.ge, 1, 1),
                    # ('n_epochs_bef', operator.ge, 2),
-                   ('n_epochs_phase_plus_20', operator.ge, 1)]
+                   ('n_epochs_phase_plus_20', operator.ge, 1, 2)]
 
-sdict['G10'] = [('n_epochs_m10_p35', operator.ge, 4),
-                ('n_epochs_m10_p5', operator.ge, 1),
-                ('n_epochs_p5_p20', operator.ge, 1),
-                ('n_bands_m8_p10', operator.ge, 2),
-                ('fitstatus', operator.eq, 'fitok')]
+sdict['G10'] = [('n_epochs_m10_p35', operator.ge, 4, 3),
+                ('n_epochs_m10_p5', operator.ge, 1, 4),
+                ('n_epochs_p5_p20', operator.ge, 1, 5),
+                ('n_bands_m8_p10', operator.ge, 2, 6),
+                ('fitstatus', operator.eq, 'fitok', 7)]
 
-sdict['sigmaC'] = [('sigmaC', operator.le, 0.04)]
-sdict['z0.7'] = [('z', operator.ge, 0.7)]
-sdict['JLA'] = [('sigmat0', operator.le, 2.), ('sigmax1', operator.le, 1)]
+sdict['sigmaC'] = [('sigmaC', operator.le, 0.04, 8)]
+# sdict['z0.7'] = [('z', operator.ge, 0.7)]
+sdict['JLA'] = [('sigmat0', operator.le, 2., 8),
+                ('sigmax1', operator.le, 1, 9)]
 
 dict_sel['G10_sigmaC'] = sdict['phases'] + sdict['G10']+sdict['sigmaC']
 
-dict_sel['G10_sigmaC_z0.7'] = dict_sel['G10_sigmaC'] + sdict['z0.7']
+# dict_sel['G10_sigmaC_z0.7'] = dict_sel['G10_sigmaC'] + sdict['z0.7']
 
 dict_sel['G10_JLA'] = sdict['phases']+sdict['G10']+sdict['JLA']
 
-dict_sel['G10_JLA_z0.7'] = dict_sel['G10_JLA']+sdict['z0.7']
+# dict_sel['G10_JLA_z0.7'] = dict_sel['G10_JLA']+sdict['z0.7']
 
 """
 dict_sel['metric'] = [('n_epochs_bef', operator.ge, 4),
@@ -249,7 +316,8 @@ dict_sel['metric'] = [('n_epochs_bef', operator.ge, 4),
 dd = pd.read_csv(dbList, comment='#')
 
 gime_simuParam = False
-gime_plotNSN = True
+gime_plotNSN = False
+gime_plotNSN_selcriteria = False
 
 
 if gime_simuParam:
@@ -259,6 +327,25 @@ if gime_simuParam:
 if gime_plotNSN:
     plotNSN_please(process_data, dd, dbDir, prodType,
                    listDDF, dict_sel, outDir, norm_factor)
+
+if gime_plotNSN_selcriteria:
+    res = nsn_vs_sel(dd, dbDir, prodType, listDDF,
+                     dict_sel, outDir, norm_factor)
+
+    plot_nsn_selcriteria(res, dd)
+
+ro = processNSN_z(dd, dbDir, prodType,
+                  listDDF, dict_sel, outDir, norm_factor, seldict=selconfig)
+
+ro = ro.merge(dd, left_on=['dbName'], right_on=['dbName'])
+
+title = '{} \n {}'.format(listDDF, selconfig)
+plot_NSN(ro,
+         xvar='z', xlabel='z',
+         yvar='NSN', ylabel='$N_{SN}$',
+         bins=None, norm_factor=1, loopvar='dbName',
+         dict_sel={},
+         title=title, plotDir='', plotName='')
 
 plt.show()
 print(test)
