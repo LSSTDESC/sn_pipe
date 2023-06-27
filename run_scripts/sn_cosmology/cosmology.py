@@ -43,9 +43,13 @@ class MyFit(CosmoFit):
 
         if len(parameters) > 0:
             # for i, val in enumerate(self.fitparNames):
-            parDict['w0'] = parameters[self.fitparNames.index('w0')]
-            parDict['wa'] = parameters[self.fitparNames.index('wa')]
-            parDict['Om0'] = parameters[self.fitparNames.index('Om0')]
+            for vv in ['wO', 'wa', 'Om0']:
+                try:
+                    ind = self.fitparNames.index(vv)
+                    print(vv, ind)
+                    parDict[vv] = parameters[ind]
+                except Exception:
+                    continue
 
         cosmo = eval(
             '{}(H0=70, Om0={}, Ode0=0.7,w0={}, wa={})'.format(self.cosmo_model,
@@ -77,17 +81,18 @@ class MyFit(CosmoFit):
         alpha = parameters[self.fitparNames.index('alpha')]
         beta = parameters[self.fitparNames.index('beta')]
         Mb = parameters[self.fitparNames.index('Mb')]
-        fitparams = parameters[:3]
-        # print('hello', fitparams)
-        mu = self.mb+alpha*self.x1-beta*self.color+Mb
-        sigma_mu = self.Cov_mbmb\
+        fitparams = parameters[:2]
+
+        mu = self.mb+alpha*self.x1-beta*self.color-Mb
+        var_mu = self.Cov_mbmb\
             + (alpha**2)*self.Cov_x1x1\
             + (beta**2)*self.Cov_colorcolor\
-            + 2*alpha*self.Cov_x1mb-2*beta*self.Cov_colormb\
+            + 2*alpha*self.Cov_x1mb\
+            - 2*beta*self.Cov_colormb\
             - 2*alpha*beta*self.Cov_x1color
         f = mu - self.fit_function(*fitparams)
         # Matrix calculation of Xisquare
-        X_mat = np.matmul(f * sigma_mu**-2, f)
+        X_mat = np.matmul(f * var_mu**-1, f)
         # prior to be set here
 
         if not self.prior.empty:
@@ -108,6 +113,7 @@ class MyFit(CosmoFit):
                     sigma_val = sel['sigma']
                     X_mat += ((parameters[i] - ref_val)**2)/sigma_val**2
             """
+        print('ppp', parameters, X_mat, self.fit_function(*fitparams))
         return X_mat
 
 
@@ -190,13 +196,22 @@ vardf = ['z', 'x1_fit', 'color_fit', 'mbfit', 'Cov_x1x1', 'Cov_x1color',
 dataValues = [data[key] for key in vardf]
 dataNames = ['z', 'x1', 'color', 'mb', 'Cov_x1x1', 'Cov_x1color', 'Cov_colorcolor',
              'Cov_mbmb', 'Cov_x1mb', 'Cov_colormb']
-fitparNames = ['w0', 'wa', 'Om0', 'alpha', 'beta', 'Mb']
+# fitparNames = ['w0', 'wa', 'Om0', 'alpha', 'beta', 'Mb']
+fitparNames = ['w0', 'Om0', 'alpha', 'beta', 'Mb']
 par_protect_fit = ['Om0']
-prior = pd.DataFrame()
+prior = pd.DataFrame([('Om0', 0.3, 0.07)],
+                     columns=['varname', 'refvalue', 'sigma'])
+#prior = pd.DataFrame()
 
 myfit = MyFit(dataValues, dataNames,
               fitparNames=fitparNames, prior=prior,
-              par_protect_fit=par_protect_fit)
+              par_protect_fit=[])
 
-params = [-1., 0., 0.3, 0.3, 3., -19.6]
+# params = [-1., 0., 0.3, 0.16, 3., -19.6]
+params = [-1, 0.3, 0.16, 3., -19.]
 dict_fit = myfit.minuit_fit(params)
+fitpars = []
+for pp in fitparNames:
+    fitpars.append(dict_fit['{}_fit'.format(pp)])
+
+print(fitpars)
