@@ -43,10 +43,9 @@ class MyFit(CosmoFit):
 
         if len(parameters) > 0:
             # for i, val in enumerate(self.fitparNames):
-            for vv in ['wO', 'wa', 'Om0']:
+            for vv in ['w0', 'wa', 'Om0']:
                 try:
                     ind = self.fitparNames.index(vv)
-                    print(vv, ind)
                     parDict[vv] = parameters[ind]
                 except Exception:
                     continue
@@ -58,7 +57,7 @@ class MyFit(CosmoFit):
                                                               parDict['wa']))
 
         f = cosmo.distmod(self.z.to_list()).value
-        self.h = np.max(f) * (10**-7)
+        self.h = np.max(f) * (10**-5)
 
         return f
 
@@ -90,9 +89,11 @@ class MyFit(CosmoFit):
             + 2*alpha*self.Cov_x1mb\
             - 2*beta*self.Cov_colormb\
             - 2*alpha*beta*self.Cov_x1color
+        sigmaInt = 0.0
+        # print(var_mu)
         f = mu - self.fit_function(*fitparams)
         # Matrix calculation of Xisquare
-        X_mat = np.matmul(f * var_mu**-1, f)
+        X_mat = np.matmul(f * f, var_mu**-1)
         # prior to be set here
 
         if not self.prior.empty:
@@ -113,7 +114,6 @@ class MyFit(CosmoFit):
                     sigma_val = sel['sigma']
                     X_mat += ((parameters[i] - ref_val)**2)/sigma_val**2
             """
-        print('ppp', parameters, X_mat, self.fit_function(*fitparams))
         return X_mat
 
 
@@ -201,17 +201,25 @@ fitparNames = ['w0', 'Om0', 'alpha', 'beta', 'Mb']
 par_protect_fit = ['Om0']
 prior = pd.DataFrame([('Om0', 0.3, 0.07)],
                      columns=['varname', 'refvalue', 'sigma'])
-#prior = pd.DataFrame()
+prior = pd.DataFrame()
 
 myfit = MyFit(dataValues, dataNames,
               fitparNames=fitparNames, prior=prior,
               par_protect_fit=[])
 
 # params = [-1., 0., 0.3, 0.16, 3., -19.6]
-params = [-1, 0.3, 0.16, 3., -19.]
+params = [-1, 0.3, 0.13, 3.1, -19.08]
 dict_fit = myfit.minuit_fit(params)
 fitpars = []
 for pp in fitparNames:
     fitpars.append(dict_fit['{}_fit'.format(pp)])
+dict_fit['Chi2_fit'] = myfit.xi_square(*fitpars)
+# fitpars = []
+# for pp in fitparNames:
+#     fitpars.append(dict_fit['{}_fit'.format(pp)])
+# dict_fit = {}
 
-print(fitpars)
+fisher_cov = myfit.covariance_fisher(params)
+dict_fit.update(fisher_cov)
+
+print(dict_fit)
