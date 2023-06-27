@@ -9,6 +9,7 @@ import pandas as pd
 from sn_analysis.sn_selection import selection_criteria
 from sn_analysis.sn_calc_plot import select
 from sn_cosmology.cosmo_fit import CosmoFit, fom
+import numpy as np
 
 
 class MyFit(CosmoFit):
@@ -41,15 +42,18 @@ class MyFit(CosmoFit):
         # change the parameters that have to be changes
 
         if len(parameters) > 0:
-            for i, val in enumerate(self.fitparNames):
-                parDict[val] = parameters[i]
+            # for i, val in enumerate(self.fitparNames):
+            parDict['w0'] = parameters[self.fitparNames.index('w0')]
+            parDict['wa'] = parameters[self.fitparNames.index('wa')]
+            parDict['Om0'] = parameters[self.fitparNames.index('Om0')]
 
         cosmo = eval(
             '{}(H0=70, Om0={}, Ode0=0.7,w0={}, wa={})'.format(self.cosmo_model,
                                                               parDict['Om0'],
                                                               parDict['w0'],
                                                               parDict['wa']))
-        f = cosmo.distmod(self.z).value
+
+        f = cosmo.distmod(self.z.to_list()).value
         self.h = np.max(f) * (10**-7)
 
         return f
@@ -74,6 +78,7 @@ class MyFit(CosmoFit):
         beta = parameters[self.fitparNames.index('beta')]
         Mb = parameters[self.fitparNames.index('Mb')]
         fitparams = parameters[:3]
+        # print('hello', fitparams)
         mu = self.mb+alpha*self.x1-beta*self.color+Mb
         sigma_mu = self.Cov_mbmb\
             + (alpha**2)*self.Cov_x1x1\
@@ -187,7 +192,7 @@ dataNames = ['z', 'x1', 'color', 'mb', 'Cov_x1x1', 'Cov_x1color', 'Cov_colorcolo
              'Cov_mbmb', 'Cov_x1mb', 'Cov_colormb']
 fitparNames = ['w0', 'wa', 'Om0', 'alpha', 'beta', 'Mb']
 par_protect_fit = ['Om0']
-prior = None
+prior = pd.DataFrame()
 
 myfit = MyFit(dataValues, dataNames,
               fitparNames=fitparNames, prior=prior,
