@@ -160,7 +160,24 @@ class Plot_simu_params:
         return dd
 
 
-def plot_nsn_selcriteria(data, dd, selcriteria='G10_JLA'):
+def plot_nsn_selcriteria(data, dd, listDDF, selcriteria='G10_JLA'):
+    """
+    Function to plot the number of SNe Ia as a function of the selection criteria
+
+    Parameters
+    ----------
+    data : pandas df
+        data to plot.
+    dd : pandas df
+        OS to process.
+    selcriteria : str, optional
+        Selection criteria chosen. The default is 'G10_JLA'.
+
+    Returns
+    -------
+    None.
+
+    """
 
     idx = data['seldict'] == selcriteria
 
@@ -172,6 +189,7 @@ def plot_nsn_selcriteria(data, dd, selcriteria='G10_JLA'):
 
     fig, ax = plt.subplots(figsize=(12, 9))
     fig.subplots_adjust(top=0.9, right=0.8)
+    fig.suptitle(listDDF)
     ccols = ['seldict', 'sel', 'cutnum', 'NSN', 'NSN_ref', 'err_NSN', 'name']
 
     cols_orig = ['fitstatus', 'n_bands_m8_p10',
@@ -180,7 +198,7 @@ def plot_nsn_selcriteria(data, dd, selcriteria='G10_JLA'):
                  'n_epochs_p5_p20',
                  'n_epochs_phase_minus_10',
                  'n_epochs_phase_plus_20',
-                 'sigmat0', 'sigmax1', 'nosel']
+                 'sigmat0', 'sigmax1', 'nosel', 'sigmaC']
     cols_new = ['fit ok', 'n$_{bands}^{-8\leq p \leq +10}\geq 2$',
                 'n$_{epochs}^{-10\leq p \leq +35}\geq 4$',
                 'n$_{epochs}^{-10\leq p \leq +5}\geq 1$',
@@ -189,7 +207,7 @@ def plot_nsn_selcriteria(data, dd, selcriteria='G10_JLA'):
                 'n$_{epochs}^{p \geq +20}\geq 1$',
                 '$\sigma_{T_0} \leq$2',
                 '$\sigma_{x_1}\leq$1',
-                '']
+                '', '$\sigma_C \leq 0.04$']
     newcols = pd.DataFrame(cols_orig, columns=['sel'])
     newcols['selnew'] = cols_new
 
@@ -293,7 +311,9 @@ sdict['G10'] = [('n_epochs_m10_p35', operator.ge, 4, 3),
 sdict['sigmaC'] = [('sigmaC', operator.le, 0.04, 8)]
 # sdict['z0.7'] = [('z', operator.ge, 0.7)]
 sdict['JLA'] = [('sigmat0', operator.le, 2., 8),
-                ('sigmax1', operator.le, 1, 9)]
+                ('sigmax1', operator.le, 1, 9),
+                # ('sigmaC', operator.le, 0.04, 10)
+                ]
 
 dict_sel['G10_sigmaC'] = sdict['phases'] + sdict['G10']+sdict['sigmaC']
 
@@ -316,8 +336,9 @@ dict_sel['metric'] = [('n_epochs_bef', operator.ge, 4),
 dd = pd.read_csv(dbList, comment='#')
 
 gime_simuParam = False
-gime_plotNSN = False
+gime_plotNSN = True
 gime_plotNSN_selcriteria = False
+gime_plotNSN_vs_z = False
 
 
 if gime_simuParam:
@@ -332,20 +353,21 @@ if gime_plotNSN_selcriteria:
     res = nsn_vs_sel(dd, dbDir, prodType, listDDF,
                      dict_sel, outDir, norm_factor)
 
-    plot_nsn_selcriteria(res, dd)
+    plot_nsn_selcriteria(res, dd, listDDF)
 
-ro = processNSN_z(dd, dbDir, prodType,
-                  listDDF, dict_sel, outDir, norm_factor, seldict=selconfig)
+if gime_plotNSN_vs_z:
+    ro = processNSN_z(dd, dbDir, prodType,
+                      listDDF, dict_sel, outDir, norm_factor, seldict=selconfig)
 
-ro = ro.merge(dd, left_on=['dbName'], right_on=['dbName'])
+    ro = ro.merge(dd, left_on=['dbName'], right_on=['dbName'])
 
-title = '{} \n {}'.format(listDDF, selconfig)
-plot_NSN(ro,
-         xvar='z', xlabel='z',
-         yvar='NSN', ylabel='$N_{SN}$',
-         bins=None, norm_factor=1, loopvar='dbName',
-         dict_sel={},
-         title=title, plotDir='', plotName='')
+    title = '{} \n {}'.format(listDDF, selconfig)
+    plot_NSN(ro,
+             xvar='z', xlabel='z',
+             yvar='NSN', ylabel='$N_{SN}$',
+             bins=None, norm_factor=1, loopvar='dbName',
+             dict_sel={},
+             title=title, plotDir='', plotName='')
 
 plt.show()
 print(test)
