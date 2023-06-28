@@ -64,8 +64,8 @@ if run_mode == 'fast':
     idx = m5['airmass'] <= airmass_max
     m5 = m5[idx]
 
-    m5_med = m5.groupby(['note', 'season', 'filter'])[
-        'fiveSigmaDepth', 'airmass'].median().reset_index()
+    m5_med = m5.groupby(['note', 'season', 'filter'])[[
+        'fiveSigmaDepth', 'airmass']].median().reset_index()
     idx = m5_med['note'] == field
     idxb = m5_med['season'].isin(seasonb)
     # idx &= m5_med['season'] == season
