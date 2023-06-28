@@ -10,6 +10,7 @@ from sn_analysis.sn_selection import selection_criteria
 from sn_analysis.sn_calc_plot import select
 from sn_cosmology.cosmo_fit import CosmoFit, fom
 import numpy as np
+from astropy.cosmology import w0waCDM
 
 
 class MyFit(CosmoFit):
@@ -136,13 +137,15 @@ def random_sample(nsn_field_season, sn_data):
     return df_res
 
 
-def random_survey(dataDir, dbName, statName, selconfig, seasons, dict_sel):
+def random_survey(dataDir, dbName, statName, selconfig, seasons,
+                  dict_sel, listDDF='COSMOS,XMM-LSS'):
 
     sndata = pd.read_hdf('{}/SN_{}.hdf5'.format(dataDir, dbName))
     idx = sndata['season'].isin(seasons)
+    idx &= sndata['field'].isin(listDDF.split(','))
     sndata = sndata[idx]
     sndata = select(sndata, dict_sel)
-    print(len(sndata))
+    print(len(sndata), np.unique(sndata['field']))
 
     # loading the number of expected SN/field/season
 
@@ -164,10 +167,20 @@ def plot_mu(data):
 
     import matplotlib.pyplot as plt
     fig, ax = plt.subplots()
-    ax.plot(data['z'], data['mu'], 'ko', mfc='None')
+    ax.plot(data['z'], data['mu'], 'ko', mfc='None', ms=5)
+    cosmology = w0waCDM(H0=0.70,
+                        Om0=0.3,
+                        Ode0=0.7,
+                        w0=-1., wa=0.0)
+    f = cosmology.distmod(data['z'].to_list()).value
+    ax.plot(data['z'], f, 'bs', ms=5)
+
     idx = data['sigmaC'] <= 0.04
     seldata = data[idx]
-    ax.plot(seldata['z'], seldata['mu'], 'r*')
+    ax.plot(seldata['z'], seldata['mu'], 'r*', ms=5)
+
+    figb, axb = plt.subplots()
+    axb.plot(data['z'], data['sigma_mu'], 'ko', mfc='None', ms=5)
 
     plt.show()
 
@@ -178,14 +191,14 @@ dbName = 'DDF_DESC_0.80_SN'
 statName = 'sn_field_season.hdf5'
 selconfig = 'G10_JLA'
 seasons = range(4)
-
+seasons = range(2, 4)
 dictsel = selection_criteria()[selconfig]
 
 data = random_survey(dataDir, dbName, statName,
                      selconfig, seasons, dictsel)
 
 print('nsn', len(data))
-# plot_mu(data)
+plot_mu(data)
 
 print(data.columns)
 # cosmology
