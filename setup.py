@@ -8,7 +8,7 @@ from pip._internal.req import parse_requirements
 import numpy as np
 
 
-class InstallCommand(install):
+class InstallCommand_deprecated(install):
     """A custom command to install requested package to run Survey Strategy Support Pipeline"""
 
     description = 'Script to install requested package to run Survey Strategy Support Pipeline'
@@ -77,6 +77,7 @@ pkg_vars = {}
 with open("version.py") as fp:
     exec(fp.read(), pkg_vars)
 
+
 setup(
     name='sn_pipe',
     version=pkg_vars['__version__'],
@@ -87,9 +88,9 @@ setup(
     license='BSD',
     python_requires='>=3.5',
     zip_safe=False,
-    cmdclass={
-        'install': InstallCommand,
-    },
+    # cmdclass={
+    #    'install': InstallCommand,
+    # },
     packages=[],
 
 )
