@@ -78,7 +78,9 @@ def cmd_install(package, verbose, available_packs, user):
     if not packs:
         return []
 
-    packs = swap(packs, 'sn_pipe')
+    if 'sn_pipe' in packs:
+        packs = swap(packs, 'sn_pipe')
+
     if 'all' in packs:
         packs = av_packs
         packs.remove('all')
