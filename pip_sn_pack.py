@@ -243,7 +243,9 @@ if action == 'list':
 
 if action == 'uninstall':
     if pack != 'all':
-        os.system(cmd_uninstall(pack))
+        pp = pack.split(',')
+        for pa in pp:
+            os.system(cmd_uninstall(pa))
     else:
         # this will uninstall the entire pipeline
         # get all the packages
