@@ -3,3 +3,4 @@ sn_metrics dev
 sn_simulation dev
 sn_fit_lc dev
 sn_plotters dev
+sn_tools dev
