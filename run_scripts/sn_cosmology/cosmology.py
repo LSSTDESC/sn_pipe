@@ -56,7 +56,6 @@ class MyFit(CosmoFit):
                                                               parDict['Om0'],
                                                               parDict['w0'],
                                                               parDict['wa']))
-        print('ppp', parDict)
 
         f = cosmo.distmod(self.z.to_list()).value
         self.h = np.max(f) * (10**-8)
@@ -133,10 +132,36 @@ class MyFit(CosmoFit):
         # Numerical calculations for each entry
         # X_mat = np.sum(((self.y-self.function(*parameters))**2)/self.sigma**2)
         # diag_sigma = np.linalg.inv(np.diag(self.sigma**2))
+        if 'alpha' in self.fitparNames:
+            alpha = parameters[self.fitparNames.index('alpha')]
+            beta = parameters[self.fitparNames.index('beta')]
+            Mb = parameters[self.fitparNames.index('Mb')]
 
-        mu = self.mu
-        mu_th = self.fit_function(*parameters)
-        sigma_mu = self.sigma_mu
+            mu = self.mb+alpha*self.x1-beta*self.color-Mb
+            var_mu = self.Cov_mbmb\
+                + (alpha**2)*self.Cov_x1x1\
+                + (beta**2)*self.Cov_colorcolor\
+                + 2*alpha*self.Cov_x1mb\
+                - 2*beta*self.Cov_colormb\
+                - 2*alpha*beta*self.Cov_x1color
+
+            sigma_mu = np.sqrt(var_mu)
+
+            rind = []
+            for vv in ['w0', 'wa', 'Om0']:
+                try:
+                    ind = self.fitparNames.index(vv)
+                    rind.append(ind)
+                except Exception:
+                    continue
+            idf = np.max(rind)+1
+            fitparams = parameters[:idf]
+            mu_th = self.fit_function(*fitparams)
+
+        else:
+            mu = self.mu
+            mu_th = self.fit_function(*parameters)
+            sigma_mu = self.sigma_mu
         sigmaInt = 0.0
         # print(var_mu)
         f = mu - mu_th
@@ -154,21 +179,28 @@ class MyFit(CosmoFit):
                 if len(parameters) > 0:
                     X_mat += ((parameters[i] - ref_val)**2)/sigma_val**2
 
-            """
-            for i, name in enumerate(self.fitparNames):
-                idx = self.prior['varname'] == name
-                sel = self.prior[idx]
-                if len(sel) > 0:
-                    ref_val = sel['refvalue']
-                    sigma_val = sel['sigma']
-                    X_mat += ((parameters[i] - ref_val)**2)/sigma_val**2
-            """
-
-        print('running', parameters, X_mat)
         return X_mat
 
 
-def random_sample(nsn_field_season, sn_data):
+def random_sample(nsn_field_season, sn_data, ddf):
+    """
+    Function to extract a random sample of SN
+
+    Parameters
+    ----------
+    nsn_field_season : pandas df
+        reference data with eg NSN.
+    sn_data : pandas df
+        original df where data are extracted from.
+    ddf : pandas df
+        list of ddf+zmac+sigmaC.
+
+    Returns
+    -------
+    df_res : pandas df
+        Resulting random sample.
+
+    """
 
     df_res = pd.DataFrame()
 
@@ -182,20 +214,58 @@ def random_sample(nsn_field_season, sn_data):
 
         res = sel_sn.sample(nsn)
 
-        df_res = pd.concat((df_res, res))
+        # filter here
+        idx = ddf['field'] == field
+        zmax = ddf[idx]['zmax'].values[0]
+        sigmaC = ddf[idx]['sigmaC'].values[0]
+
+        idb = res['z'] <= zmax
+        idb &= res['sigmaC'] <= sigmaC
+
+        df_res = pd.concat((df_res, res[idb]))
 
     return df_res
 
 
 def random_survey(dataDir, dbName, statName, selconfig, seasons,
-                  dict_sel, listDDF='COSMOS,XMM-LSS'):
+                  dict_sel,
+                  ddf=pd.DataFrame([('COSMOS', 1.1, 1.e8)],
+                                   columns=['field', 'zmax', 'sigmaC'])):
+    """
+    Function to build a random survey
+
+    Parameters
+    ----------
+    dataDir : str
+        Location dir of the data.
+    dbName : str
+        OS name.
+    statName : str
+        DESCRIPTION.
+    selconfig : str
+        configuration selection.
+    seasons : list(int)
+        list of seasons to consider.
+    dict_sel : str
+        selection dict.
+    ddf : pandas df, optional
+        List of fields to consider, zmax and sigmaC. 
+        The default is pd.DataFrame(['COSMOS', 1.1, 1.e8],
+                                   columns=['field', 'zmax', 'sigmaC'])
+
+    Returns
+    -------
+    sn_random : pandas df
+        Random sample of SN.
+
+    """
 
     sndata = pd.read_hdf('{}/SN_{}.hdf5'.format(dataDir, dbName))
     idx = sndata['season'].isin(seasons)
-    idx &= sndata['field'].isin(listDDF.split(','))
+    # idx &= sndata['field'].isin(listDDF.split(','))
     sndata = sndata[idx]
     sndata = select(sndata, dict_sel)
-    print(len(sndata), np.unique(sndata['field']))
+    # print(len(sndata), np.unique(sndata['field']))
 
     # loading the number of expected SN/field/season
 
@@ -206,9 +276,9 @@ def random_survey(dataDir, dbName, statName, selconfig, seasons,
     idx &= nsn_field_season['season'].isin(seasons)
     nsn_field_season = nsn_field_season[idx]
 
-    print(nsn_field_season)
+    # print(nsn_field_season)
 
-    sn_random = random_sample(nsn_field_season, sndata)
+    sn_random = random_sample(nsn_field_season, sndata, ddf)
 
     return sn_random
 
@@ -250,47 +320,114 @@ def plot_mu(data):
     plt.show()
 
 
+class HD_random:
+    def __init__(self,
+                 vardf=['z', 'x1_fit', 'color_fit', 'mbfit', 'Cov_x1x1',
+                        'Cov_x1color', 'Cov_colorcolor', 'Cov_mbmb',
+                        'Cov_x1mb', 'Cov_colormb', 'mu', 'sigma_mu'],
+                 dataNames=['z', 'x1', 'color', 'mb', 'Cov_x1x1',
+                            'Cov_x1color', 'Cov_colorcolor', 'Cov_mbmb',
+                            'Cov_x1mb', 'Cov_colormb', 'mu', 'sigma_mu'],
+                 fitconfig={}):
+
+        self.vardf = vardf
+        self.dataNames = dataNames
+        self.fitconfig = fitconfig
+
+    def __call__(self, data):
+
+        dataValues = [data[key] for key in self.vardf]
+        par_protect_fit = ['Om0']
+        prior = pd.DataFrame([('Om0', 0.3, 0.0073)],
+                             columns=['varname', 'refvalue', 'sigma'])
+
+        for key, vals in self.fitconfig.items():
+
+            fitparNames = list(vals.keys())
+            fitparams = list(vals.values())
+            print(key, fitparNames, fitparams)
+            myfit = MyFit(dataValues, self.dataNames,
+                          fitparNames=fitparNames, prior=prior,
+                          par_protect_fit=par_protect_fit)
+
+            dict_fit = myfit.minuit_fit(fitparams)
+            fitpars = []
+            for pp in fitparNames:
+                fitpars.append(dict_fit['{}_fit'.format(pp)])
+            dict_fit['Chi2_fit'] = myfit.xi_square(*fitpars)
+            print(dict_fit)
+            # fisher estimation
+            # fisher_cov = myfit.covariance_fisher(fitparams)
+            # print('Fisher', fisher_cov)
+            print('')
+
+
 # loading SN data
 dataDir = 'SN_analysis_sigmaInt_0.0_Hounsell'
 dbName = 'DDF_DESC_0.80_SN'
 # dbName = 'DDF_Univ_WZ'
 statName = 'sn_field_season.hdf5'
 selconfig = 'G10_JLA'
-seasons = range(4)
-seasons = range(2, 4)
+seasons = range(1, 11)
+# seasons = range(2, 4)
 dictsel = selection_criteria()[selconfig]
+listDDF = 'COSMOS,XMM-LSS,ELAISS1,CDFS,EDFSa,EDFSb'
+zmax = [1.1, 1.1, 0.6, 0.6, 0.6, 0.6]
+sigmaC = [1.e8]*len(zmax)
+
+ddf = pd.DataFrame(listDDF.split(','), columns=['field'])
+ddf['zmax'] = zmax
+ddf['sigmaC'] = sigmaC
 
 data = random_survey(dataDir, dbName, statName,
-                     selconfig, seasons, dictsel)
+                     selconfig, seasons, dictsel,
+                     ddf=ddf)
 
 print('nsn', len(data))
-plot_mu(data)
+# plot_mu(data)
 
+fitconfig = {}
+
+fitconfig['fita'] = dict(zip(['w0', 'Om0', 'alpha', 'beta', 'Mb'],
+                             [-1, 0.3, 0.13, 3.1, -19.08]))
+fitconfig['fitb'] = dict(zip(['w0', 'wa', 'Om0', 'alpha', 'beta', 'Mb'],
+                             [-1, 0.0, 0.3, 0.13, 3.1, -19.08]))
+"""
+
+
+fitconfig['fitc'] = dict(zip(['w0', 'Om0'],
+                             [-1, 0.3]))
+fitconfig['fitd'] = dict(zip(['w0', 'wa', 'Om0'],
+                             [-1, 0.0, 0.3]))
+"""
+hd_fit = HD_random(fitconfig=fitconfig)
+
+hd_fit(data)
+
+"""
 print(data.columns)
 # cosmology
 
 vardf = ['z', 'x1_fit', 'color_fit', 'mbfit', 'Cov_x1x1', 'Cov_x1color',
          'Cov_colorcolor',
-         'Cov_mbmb', 'Cov_x1mb', 'Cov_colormb']
+         'Cov_mbmb', 'Cov_x1mb', 'Cov_colormb', 'mu', 'sigma_mu']
 dataNames = ['z', 'x1', 'color', 'mb', 'Cov_x1x1', 'Cov_x1color', 'Cov_colorcolor',
-             'Cov_mbmb', 'Cov_x1mb', 'Cov_colormb']
+             'Cov_mbmb', 'Cov_x1mb', 'Cov_colormb', 'mu', 'sigma_mu']
+
+dataValues = [data[key] for key in vardf]
+
 # fitparNames = ['w0', 'wa', 'Om0', 'alpha', 'beta', 'Mb']
 fitparNames = ['w0', 'Om0', 'alpha', 'beta', 'Mb']
 # params = [-1., 0., 0.3, 0.16, 3., -19.6]
 params = [-1, 0.3, 0.13, 3.1, -19.08]
 
 
-vardf = ['z', 'mu', 'sigma_mu']
-dataValues = [data[key] for key in vardf]
-dataNames = ['z', 'mu', 'sigma_mu']
-fitparNames = ['w0', 'Om0']
-params = [-1.0, 0.3]
-
 par_protect_fit = ['Om0']
 # par_protect_fit = []
 prior = pd.DataFrame([('Om0', 0.3, 0.0073)],
                      columns=['varname', 'refvalue', 'sigma'])
-# prior = pd.DataFrame()
+prior = pd.DataFrame()
+
 
 myfit = MyFit(dataValues, dataNames,
               fitparNames=fitparNames, prior=prior,
@@ -311,3 +448,4 @@ fisher_cov = myfit.covariance_fisher(params)
 dict_fit.update(fisher_cov)
 # dict_fit['Chi2_fisher'] = myfit.xi_square(*[])
 print(dict_fit)
+"""
