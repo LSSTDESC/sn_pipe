@@ -62,61 +62,6 @@ class MyFit(CosmoFit):
 
         return f
 
-    def xi_square_old(self, *parameters):
-        '''
-        Calculate Xi_square for a data set of value x and y and a function.
-        Parameters
-        ----------
-        *parameters : tuple of differents types of entries.
-            see the definition in function()
-        Returns
-        -------
-        X : numerical value
-            The Xi_square value.
-        '''
-        # Numerical calculations for each entry
-        # X_mat = np.sum(((self.y-self.function(*parameters))**2)/self.sigma**2)
-        # diag_sigma = np.linalg.inv(np.diag(self.sigma**2))
-
-        alpha = parameters[self.fitparNames.index('alpha')]
-        beta = parameters[self.fitparNames.index('beta')]
-        Mb = parameters[self.fitparNames.index('Mb')]
-        fitparams = parameters[:2]
-
-        mu = self.mb+alpha*self.x1-beta*self.color-Mb
-        var_mu = self.Cov_mbmb\
-            + (alpha**2)*self.Cov_x1x1\
-            + (beta**2)*self.Cov_colorcolor\
-            + 2*alpha*self.Cov_x1mb\
-            - 2*beta*self.Cov_colormb\
-            - 2*alpha*beta*self.Cov_x1color
-        sigmaInt = 0.0
-        # print(var_mu)
-        f = mu - self.fit_function(*fitparams)
-        # Matrix calculation of Xisquare
-        X_mat = np.matmul(f * f, var_mu**-1)
-        # prior to be set here
-
-        if not self.prior.empty:
-            idx = self.prior['varname'].isin(self.fitparNames)
-            for io, row in self.prior[idx].iterrows():
-                ref_val = row['refvalue']
-                sigma_val = row['sigma']
-                i = self.fitparNames.index(row['varname'])
-                if len(parameters) > 0:
-                    X_mat += ((parameters[i] - ref_val)**2)/sigma_val**2
-
-            """
-            for i, name in enumerate(self.fitparNames):
-                idx = self.prior['varname'] == name
-                sel = self.prior[idx]
-                if len(sel) > 0:
-                    ref_val = sel['refvalue']
-                    sigma_val = sel['sigma']
-                    X_mat += ((parameters[i] - ref_val)**2)/sigma_val**2
-            """
-        return X_mat
-
     def xi_square(self, *parameters):
         '''
         Calculate Xi_square for a data set of value x and y and a function.
@@ -162,12 +107,18 @@ class MyFit(CosmoFit):
             mu = self.mu
             mu_th = self.fit_function(*parameters)
             sigma_mu = self.sigma_mu
-        sigmaInt = 0.0
+        denom = sigma_mu**2
+        """
+        if 'sigmaInt' in self.fitparNames:
+            sigmaInt = parameters[self.fitparNames.index('sigmaInt')]
+        """
+        sigmaInt = 0.12
+        denom += sigmaInt**2
         # print(var_mu)
         f = mu - mu_th
         # Matrix calculation of Xisquare
         # X_mat = np.matmul(f * f, sigma_mu**-2)
-        X_mat = np.sum(f**2/sigma_mu**2)
+        X_mat = np.sum(f**2/denom)
         # prior to be set here
 
         if not self.prior.empty:
@@ -182,105 +133,146 @@ class MyFit(CosmoFit):
         return X_mat
 
 
-def random_sample(nsn_field_season, sn_data, ddf):
+class Random_survey:
+    def __init__(self, dataDir, dbName, statName, selconfig, seasons,
+                 dict_sel,
+                 survey=pd.DataFrame([('COSMOS', 1.1, 1.e8, 1, 10)],
+                                     columns=['field', 'zmax', 'sigmaC',
+                                              'season_min', 'season_max'])):
+        """
+        class to build a random survey
+
+        Parameters
+        ----------
+        dataDir : str
+            Location dir of the data.
+        dbName : str
+            OS name.
+        statName : str
+            DESCRIPTION.
+        selconfig : str
+            configuration selection.
+        seasons : list(int)
+            list of seasons to consider.
+        dict_sel : str
+            selection dict.
+        survey : pandas df, optional
+            List of fields to consider, zmax and sigmaC, season_min, season_max 
+            The default is pd.DataFrame(['COSMOS', 1.1, 1.e8,1,10],
+                                       columns=['field', 'zmax', 'sigmaC',
+                                                'season_min','season_max'])
+
+        Returns
+        -------
+        None
+
+        """
+
+        # grab data corresponding to dbName
+        sndata = pd.read_hdf('{}/SN_{}.hdf5'.format(dataDir, dbName))
+        # select seasons
+        idx = sndata['season'].isin(seasons)
+        sndata = sndata[idx]
+
+        # select SN
+        sndata = select(sndata, dict_sel)
+        # print(len(sndata), np.unique(sndata['field']))
+
+        # loading the number of expected SN/field/season
+
+        nsn_field_season = pd.read_hdf('{}/{}'.format(dataDir, statName))
+        nsn_field_season['NSN'] = nsn_field_season['NSN'].astype(int)
+        idx = nsn_field_season['dbName'] == dbName
+        idx &= nsn_field_season['selconfig'] == selconfig
+        idx &= nsn_field_season['season'].isin(seasons)
+        nsn_field_season = nsn_field_season[idx]
+
+        print(nsn_field_season)
+
+        # get the random survey
+        self.data = self.random_sample(nsn_field_season, sndata, survey)
+
+    def random_sample(self, nsn_field_season, sn_data, survey):
+        """
+        Function to extract a random sample of SN
+
+        Parameters
+        ----------
+        nsn_field_season : pandas df
+            reference data with eg NSN.
+        sn_data : pandas df
+            original df where data are extracted from.
+        survey : pandas df
+            list of field+zmac+sigmaC+season_min+season_max.
+
+        Returns
+        -------
+        df_res : pandas df
+            Resulting random sample.
+
+        """
+
+        df_res = pd.DataFrame()
+
+        for i, row in nsn_field_season.iterrows():
+            field = row['field']
+            season = row['season']
+            nsn = row['NSN']
+            # get data
+            idx = sn_data['field'] == field
+            idx &= sn_data['season'] == season
+            sel_sn = sn_data[idx]
+
+            res = sel_sn.sample(n=nsn)
+
+            # filter here
+            idx = survey['field'] == field
+            zmax = survey[idx]['zmax'].values[0]
+            sigmaC = survey[idx]['sigmaC'].values[0]
+            season_min = survey[idx]['season_min'].values[0]
+            season_max = survey[idx]['season_max'].values[0]
+
+            idb = res['z'] <= zmax
+            idb &= res['sigmaC'] <= sigmaC
+            idb &= res['season'] >= season_min
+            idb &= res['season'] <= season_max
+
+            df_res = pd.concat((df_res, res[idb]))
+
+        return df_res
+
+
+def analyze_data(data):
     """
-    Function to extract a random sample of SN
+    Function to analyze data
 
     Parameters
     ----------
-    nsn_field_season : pandas df
-        reference data with eg NSN.
-    sn_data : pandas df
-        original df where data are extracted from.
-    ddf : pandas df
-        list of ddf+zmac+sigmaC.
+    data : pandas df
+        data to process.
 
     Returns
     -------
-    df_res : pandas df
-        Resulting random sample.
+    None.
 
     """
 
-    df_res = pd.DataFrame()
+    res = data.groupby(['field', 'season']).apply(
+        lambda x: pd.DataFrame({'NSN': [len(x)]})).reset_index()
 
-    for i, row in nsn_field_season.iterrows():
+    resb = res.groupby(['field']).apply(
+        lambda x: pd.DataFrame({'NSN': [x['NSN'].sum()]})).reset_index()
+
+    outdict = {}
+    nsn_tot = 0
+    for i, row in resb.iterrows():
         field = row['field']
-        season = row['season']
         nsn = row['NSN']
-        idx = sn_data['field'] == field
-        idx = sn_data['season'] == season
-        sel_sn = sn_data[idx]
+        outdict[field] = nsn
+        nsn_tot += nsn
 
-        res = sel_sn.sample(nsn)
-
-        # filter here
-        idx = ddf['field'] == field
-        zmax = ddf[idx]['zmax'].values[0]
-        sigmaC = ddf[idx]['sigmaC'].values[0]
-
-        idb = res['z'] <= zmax
-        idb &= res['sigmaC'] <= sigmaC
-
-        df_res = pd.concat((df_res, res[idb]))
-
-    return df_res
-
-
-def random_survey(dataDir, dbName, statName, selconfig, seasons,
-                  dict_sel,
-                  ddf=pd.DataFrame([('COSMOS', 1.1, 1.e8)],
-                                   columns=['field', 'zmax', 'sigmaC'])):
-    """
-    Function to build a random survey
-
-    Parameters
-    ----------
-    dataDir : str
-        Location dir of the data.
-    dbName : str
-        OS name.
-    statName : str
-        DESCRIPTION.
-    selconfig : str
-        configuration selection.
-    seasons : list(int)
-        list of seasons to consider.
-    dict_sel : str
-        selection dict.
-    ddf : pandas df, optional
-        List of fields to consider, zmax and sigmaC. 
-        The default is pd.DataFrame(['COSMOS', 1.1, 1.e8],
-                                   columns=['field', 'zmax', 'sigmaC'])
-
-    Returns
-    -------
-    sn_random : pandas df
-        Random sample of SN.
-
-    """
-
-    sndata = pd.read_hdf('{}/SN_{}.hdf5'.format(dataDir, dbName))
-    idx = sndata['season'].isin(seasons)
-    # idx &= sndata['field'].isin(listDDF.split(','))
-    sndata = sndata[idx]
-    sndata = select(sndata, dict_sel)
-    # print(len(sndata), np.unique(sndata['field']))
-
-    # loading the number of expected SN/field/season
-
-    nsn_field_season = pd.read_hdf('{}/{}'.format(dataDir, statName))
-    nsn_field_season['NSN'] = nsn_field_season['NSN'].astype(int)
-    idx = nsn_field_season['dbName'] == dbName
-    idx &= nsn_field_season['selconfig'] == selconfig
-    idx &= nsn_field_season['season'].isin(seasons)
-    nsn_field_season = nsn_field_season[idx]
-
-    # print(nsn_field_season)
-
-    sn_random = random_sample(nsn_field_season, sndata, ddf)
-
-    return sn_random
+    outdict['all_Fields'] = nsn_tot
+    return outdict
 
 
 def plot_mu(data):
@@ -338,9 +330,12 @@ class HD_random:
 
         dataValues = [data[key] for key in self.vardf]
         par_protect_fit = ['Om0']
-        prior = pd.DataFrame([('Om0', 0.3, 0.0073)],
-                             columns=['varname', 'refvalue', 'sigma'])
 
+        r = [('Om0', 0.3, 0.0073)]
+        r.append(('sigmaInt', 0.12, 0.01))
+        prior = pd.DataFrame(r, columns=['varname', 'refvalue', 'sigma'])
+
+        dict_fits = {}
         for key, vals in self.fitconfig.items():
 
             fitparNames = list(vals.keys())
@@ -360,17 +355,33 @@ class HD_random:
             # fisher_cov = myfit.covariance_fisher(fitparams)
             # print('Fisher', fisher_cov)
             print('')
+            dict_fits[key] = dict_fit
+
+        return dict_fits
+
+
+def transform(dicta):
+
+    dictb = {}
+
+    for key, vals in dicta.items():
+        dictb[key] = [vals]
+
+    return dictb
 
 
 # loading SN data
-dataDir = 'SN_analysis_sigmaInt_0.0_Hounsell'
-dbName = 'DDF_DESC_0.80_SN'
-# dbName = 'DDF_Univ_WZ'
+dataDir = 'SN_analysis_sigmaInt_0.12_Hounsell'
+dbName = 'DDF_DESC_0.70_SN'
+dbName = 'DDF_Univ_WZ'
 statName = 'sn_field_season.hdf5'
 selconfig = 'G10_JLA'
-seasons = range(1, 11)
+seasons = range(1, 6)
 # seasons = range(2, 4)
 dictsel = selection_criteria()[selconfig]
+survey = pd.read_csv('input/DESC_cohesive_strategy/survey_scenario.csv')
+
+"""
 listDDF = 'COSMOS,XMM-LSS,ELAISS1,CDFS,EDFSa,EDFSb'
 zmax = [1.1, 1.1, 0.6, 0.6, 0.6, 0.6]
 sigmaC = [1.e8]*len(zmax)
@@ -378,12 +389,9 @@ sigmaC = [1.e8]*len(zmax)
 ddf = pd.DataFrame(listDDF.split(','), columns=['field'])
 ddf['zmax'] = zmax
 ddf['sigmaC'] = sigmaC
+"""
 
-data = random_survey(dataDir, dbName, statName,
-                     selconfig, seasons, dictsel,
-                     ddf=ddf)
 
-print('nsn', len(data))
 # plot_mu(data)
 
 fitconfig = {}
@@ -402,7 +410,27 @@ fitconfig['fitd'] = dict(zip(['w0', 'wa', 'Om0'],
 """
 hd_fit = HD_random(fitconfig=fitconfig)
 
-hd_fit(data)
+dict_res = {}
+for i in range(10):
+    data = Random_survey(dataDir, dbName, statName,
+                         selconfig, seasons, dictsel,
+                         survey=survey).data
+
+    print('nsn', len(data))
+    dict_ana = analyze_data(data)
+    dict_ana['season'] = np.max(seasons)+1
+    print(dict_ana)
+
+    res = hd_fit(data)
+
+    for key, vals in res.items():
+        vals.update(dict_ana)
+        res = pd.DataFrame.from_dict(transform(vals))
+        if key not in dict_res.keys():
+            dict_res[key] = pd.DataFrame()
+        dict_res[key] = pd.concat((res, dict_res[key]))
+
+print(dict_res)
 
 """
 print(data.columns)
