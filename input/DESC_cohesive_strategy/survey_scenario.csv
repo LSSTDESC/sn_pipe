@@ -1,0 +1,7 @@
+field,zmax,sigmaC,season_min,season_max
+COSMOS,1.1,1.e8,1,10
+XMM-LSS,1.1,1.e8,1,10
+ELAISS1,0.6,1.e8,1,5
+CDFS,0.6,1.e8,1,5
+EDFsa,0.6,1.e8,1,5
+EDFsb,0.6,1.e8,1,5
