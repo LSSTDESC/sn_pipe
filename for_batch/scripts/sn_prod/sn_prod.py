@@ -56,7 +56,7 @@ def batch_DDF(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
     procDict['OutputSimu_directory'] = '{}/{}/DDF{}'.format(outDir,
                                                             dbName, tag_dir)
     procDict['OutputFit_directory'] = procDict['OutputSimu_directory']
-    procDict['SN_NSNfactor'] = 30
+    # procDict['SN_NSNfactor'] = 30
     procDict['Pixelisation_nside'] = procDict['nside']
 
     for fieldName in DD_list:
@@ -82,7 +82,7 @@ def batch_DDF(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
         mybatch.go_batch()
 
 
-def batch_WFD(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
+def batch_WFD(theDict, scriptref='',
               time='40:00:00', mem='40G'):
     """
     Function to launch sim_to_fit for WFD
@@ -108,6 +108,8 @@ def batch_WFD(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
     dbName = theDict['dbName']
     outDir = theDict['OutputSimu_directory']
     reprocList = theDict['reprocList']
+    sigmaInt = theDict['SN_sigmaInt']
+    snrate = theDict['SN_z_rate']
 
     tag_list = pd.DataFrame()
     if 'None' not in reprocList:
@@ -126,7 +128,7 @@ def batch_WFD(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
     procDict['OutputSimu_directory'] = '{}/{}/WFD{}'.format(outDir,
                                                             dbName, tag_dir)
     procDict['OutputFit_directory'] = procDict['OutputSimu_directory']
-    procDict['SN_NSNfactor'] = 30
+    # procDict['SN_NSNfactor'] = 30
 
     deltaRA = 10.
 
@@ -136,7 +138,8 @@ def batch_WFD(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
         RAmin = np.round(RA, 1)
         RAmax = RAmin+deltaRA
         RAmax = np.round(RAmax, 1)
-        procName = 'WFD_{}_{}_{}{}'.format(dbName, RAmin, RAmax, tag_dir)
+        procName = 'WFD_{}_{}_{}{}_{}_{}'.format(
+            dbName, RAmin, RAmax, tag_dir, np.round(sigmaInt, 2), snrate)
         sprocName = 'SN_WFD_{}_{}_{}{}'.format(dbName, RAmin, RAmax, tag_dir)
         mybatch = BatchIt(processName=procName, time=time, mem=mem)
         procDict['RAmin'] = RAmin

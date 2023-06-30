@@ -34,6 +34,8 @@ parser.add_option("--SN_sigmaInt", type=float, default=0.0,
                   help="SN intrinsic dispersion [%default]")
 parser.add_option("--SN_z_rate", type=str, default='Hounsell',
                   help="SN production rate [%default]")
+parser.add_option("--SN_NSNfactor", type=int, default=30,
+                  help="SN production scale factor [%default]")
 
 
 opts, args = parser.parse_args()
@@ -58,5 +60,6 @@ for i, row in df.iterrows():
     procDict['reprocList'] = opts.reprocList
     procDict['SN_sigmaInt'] = opts.SN_sigmaInt
     procDict['SN_z_rate'] = opts.SN_z_rate
+    procDict['SN_NSNfactor'] = opts.SN_NSNfactor
 
     go_batch(script, procDict)
