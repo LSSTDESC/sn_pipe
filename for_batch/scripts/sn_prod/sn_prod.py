@@ -82,7 +82,7 @@ def batch_DDF(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
         mybatch.go_batch()
 
 
-def batch_WFD(theDict, scriptref='',
+def batch_WFD(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
               time='40:00:00', mem='40G'):
     """
     Function to launch sim_to_fit for WFD
