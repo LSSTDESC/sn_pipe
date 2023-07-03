@@ -8,9 +8,12 @@ Created on Tue Jun 27 09:59:56 2023
 import pandas as pd
 from sn_analysis.sn_selection import selection_criteria
 from sn_analysis.sn_calc_plot import select, bin_it_mean
+from sn_analysis.sn_tools import load_complete_dbSimu
 from sn_cosmology.cosmo_fit import CosmoFit, fom
+from optparse import OptionParser
 import numpy as np
 from astropy.cosmology import w0waCDM
+import glob
 
 
 class MyFit(CosmoFit):
@@ -134,65 +137,126 @@ class MyFit(CosmoFit):
 
 
 class Random_survey:
-    def __init__(self, dataDir, dbName, statName, selconfig, seasons,
-                 dict_sel,
+    def __init__(self, dataDir_DD, dbName_DD,
+                 dataDir_WFD, dbName_WFD, sellist, seasons,
                  survey=pd.DataFrame([('COSMOS', 1.1, 1.e8, 1, 10)],
                                      columns=['field', 'zmax', 'sigmaC',
                                               'season_min', 'season_max'])):
+
+        # load data per season
+        self.data = self.grab_random_sample(dataDir_DD, dbName_DD,
+                                            dataDir_WFD, dbName_WFD,
+                                            sellist, seasons,
+                                            survey)
+
+    def grab_random_sample(self, dataDir_DD, dbName_DD,
+                           dataDir_WFD, dbName_WFD, sellist, seasons,
+                           survey):
+
+        nsn = pd.DataFrame()
+        sn_sample = pd.DataFrame()
+        for seas in seasons:
+            ddf = self.load_data(dataDir_DD, dbName_DD,
+                                 'DDF_spectroz', 'DDF', [seas])
+            nsn_ddf = self.load_nsn_summary(
+                dataDir_DD, dbName_DD, 'DDF_spectroz')
+            wfd = self.load_data(dataDir_WFD, dbName_WFD,
+                                 'WFD_spectroz', 'WFD', [seas])
+
+            nsn_wfd = self.load_nsn_summary(
+                dataDir_WFD, dbName_WFD, 'WFD_spectroz')
+            nsn = pd.concat((nsn_ddf, nsn_wfd))
+            nsn['nsn'] = nsn['nsn'].astype(int)
+            sn_data = pd.concat((ddf, wfd))
+
+            sn_samp = self.random_sample(nsn, sn_data, survey, [seas])
+            sn_sample = pd.concat((sn_sample, sn_samp))
+
+        # self.plot_nsn_z(sn_sample)
+
+        return sn_sample
+
+    def load_data(self, dataDir, dbName, runType, fieldType, seasons):
         """
-        class to build a random survey
+        Method to load data (SN)
 
         Parameters
         ----------
         dataDir : str
-            Location dir of the data.
+            Data directory.
         dbName : str
-            OS name.
-        statName : str
-            DESCRIPTION.
-        selconfig : str
-            configuration selection.
+            dbName.
+        runType : str
+            run type.
+        fieldType : str
+            fieldtype.
         seasons : list(int)
-            list of seasons to consider.
-        dict_sel : str
-            selection dict.
-        survey : pandas df, optional
-            List of fields to consider, zmax and sigmaC, season_min, season_max 
-            The default is pd.DataFrame(['COSMOS', 1.1, 1.e8,1,10],
-                                       columns=['field', 'zmax', 'sigmaC',
-                                                'season_min','season_max'])
+            list of seasons.
 
         Returns
         -------
-        None
+        df : pandas df
+            Data.
 
         """
 
-        # grab data corresponding to dbName
-        sndata = pd.read_hdf('{}/SN_{}.hdf5'.format(dataDir, dbName))
-        # select seasons
-        idx = sndata['season'].isin(seasons)
-        sndata = sndata[idx]
+        search_dir = '{}/{}/{}'.format(dataDir, dbName, runType)
 
-        # select SN
-        sndata = select(sndata, dict_sel)
-        # print(len(sndata), np.unique(sndata['field']))
+        files = []
+        df = pd.DataFrame()
+        for seas in seasons:
+            search_path = '{}/SN_{}_{}_{}.hdf5'.format(
+                search_dir, fieldType, dbName, seas)
+            print('searching for', search_path)
+            files += glob.glob(search_path)
 
-        # loading the number of expected SN/field/season
+            for fi in files:
+                da = pd.read_hdf(fi)
+                df = pd.concat((df, da))
 
-        nsn_field_season = pd.read_hdf('{}/{}'.format(dataDir, statName))
-        nsn_field_season['NSN'] = nsn_field_season['NSN'].astype(int)
-        idx = nsn_field_season['dbName'] == dbName
-        idx &= nsn_field_season['selconfig'] == selconfig
-        idx &= nsn_field_season['season'].isin(seasons)
-        nsn_field_season = nsn_field_season[idx]
+        return df
 
-        print(nsn_field_season)
+    def load_nsn_summary(self, dataDir, dbName, runType):
 
-        # get the random survey
-        self.data = self.random_sample(nsn_field_season, sndata, survey)
+        theDir = '{}/{}/{}'.format(dataDir, dbName, runType)
 
-    def random_sample(self, nsn_field_season, sn_data, survey):
+        theName = '{}/nsn_{}.hdf5'.format(theDir, dbName)
+
+        res = pd.read_hdf(theName)
+
+        return res
+
+    def plot_nsn_z(self, data):
+        """
+        Method to plot the number of supernovas vs z
+
+        Parameters
+        ----------
+        data : pandas df
+            Data to plot.
+
+        Returns
+        -------
+        None.
+
+        """
+
+        import matplotlib.pyplot as plt
+        from sn_analysis.sn_calc_plot import bin_it
+
+        fig, ax = plt.subplots()
+
+        fields = data['field'].unique()
+
+        for field in fields:
+            idx = data['field'] == field
+            sel = data[idx]
+            selbin = bin_it(sel)
+            ax.plot(selbin['z'], selbin['NSN'])
+
+        plt.show()
+
+    def random_sample(self, nsn_field_season, sn_data, survey, seasons):
         """
         Function to extract a random sample of SN
 
@@ -214,30 +278,45 @@ class Random_survey:
 
         df_res = pd.DataFrame()
 
-        for i, row in nsn_field_season.iterrows():
-            field = row['field']
-            season = row['season']
-            nsn = row['NSN']
-            # get data
-            idx = sn_data['field'] == field
-            idx &= sn_data['season'] == season
-            sel_sn = sn_data[idx]
+        for season in seasons:
+            # grab the fields according to the survey
+            idx = survey['season_min'] <= season
+            idx &= season <= survey['season_max']
+            fields = survey[idx]['field'].unique()
 
-            res = sel_sn.sample(n=nsn)
+            # loop on fields
+            for field in fields:
+                # grab the max allowed number of SN per season
+                idf = survey['field'] == field
+                nsn_max_season = int(survey[idf]['nsn_max_season'].mean())
 
-            # filter here
-            idx = survey['field'] == field
-            zmax = survey[idx]['zmax'].values[0]
-            sigmaC = survey[idx]['sigmaC'].values[0]
-            season_min = survey[idx]['season_min'].values[0]
-            season_max = survey[idx]['season_max'].values[0]
+                # grab the number of sn
+                ida = nsn_field_season['field'] == field
+                ida &= nsn_field_season['season'] == season
+                nsn = int(nsn_field_season[ida]['nsn'].mean())
 
-            idb = res['z'] <= zmax
-            idb &= res['sigmaC'] <= sigmaC
-            idb &= res['season'] >= season_min
-            idb &= res['season'] <= season_max
+                nsn = np.min([nsn, nsn_max_season])
+                # get data
+                idb = sn_data['field'] == field
+                idb &= sn_data['season'] == season
+                sel_sn = sn_data[idb]
 
-            df_res = pd.concat((df_res, res[idb]))
+                # grab the random sample
+                res = sel_sn.sample(n=nsn)
+
+                # filter here
+                idx = survey['field'] == field
+                zmax = survey[idx]['zmax'].values[0]
+                sigmaC = survey[idx]['sigmaC'].values[0]
+                season_min = survey[idx]['season_min'].values[0]
+                season_max = survey[idx]['season_max'].values[0]
+
+                idb = res['z'] <= zmax
+                idb &= res['sigmaC'] <= sigmaC
+                idb &= res['season'] >= season_min
+                idb &= res['season'] <= season_max
+
+                df_res = pd.concat((df_res, res[idb]))
 
         return df_res
 
@@ -332,8 +411,9 @@ class HD_random:
         par_protect_fit = ['Om0']
 
         r = [('Om0', 0.3, 0.0073)]
-        r.append(('sigmaInt', 0.12, 0.01))
+        # append(('sigmaInt', 0.12, 0.01))
         prior = pd.DataFrame(r, columns=['varname', 'refvalue', 'sigma'])
+        prior = pd.DataFrame()
 
         dict_fits = {}
         for key, vals in self.fitconfig.items():
@@ -361,6 +441,20 @@ class HD_random:
 
 
 def transform(dicta):
+    """
+    Function to transform a dict of var to a dict of list(var)
+
+    Parameters
+    ----------
+    dicta : dict
+        input dict.
+
+    Returns
+    -------
+    dictb : dict
+        output dict.
+
+    """
 
     dictb = {}
 
@@ -370,29 +464,36 @@ def transform(dicta):
     return dictb
 
 
+parser = OptionParser()
+
+parser.add_option("--dataDir_DD", type=str,
+                  default='Test',
+                  help="data dir[%default]")
+parser.add_option("--dbName_DD", type=str,
+                  default='DDF_Univ_WZ', help="db name [%default]")
+parser.add_option("--dataDir_WFD", type=str,
+                  default='Test',
+                  help="data dir[%default]")
+parser.add_option("--dbName_WFD", type=str,
+                  default='draft_connected_v2.99_10yrs',
+                  help="db name [%default]")
+parser.add_option("--selconfig", type=str,
+                  default='G10_JLA', help=" [%default]")
+
+opts, args = parser.parse_args()
+
 # loading SN data
-dataDir = 'SN_analysis_sigmaInt_0.12_Hounsell'
-dbName = 'DDF_DESC_0.70_SN'
-dbName = 'DDF_Univ_WZ'
-statName = 'sn_field_season.hdf5'
-selconfig = 'G10_JLA'
+dataDir_DD = opts.dataDir_DD
+dbName_DD = opts.dbName_DD
+dataDir_WFD = opts.dataDir_WFD
+dbName_WFD = opts.dbName_WFD
+selconfig = opts.selconfig
+
 seasons = range(1, 6)
 # seasons = range(2, 4)
 dictsel = selection_criteria()[selconfig]
-survey = pd.read_csv('input/DESC_cohesive_strategy/survey_scenario.csv')
-
-"""
-listDDF = 'COSMOS,XMM-LSS,ELAISS1,CDFS,EDFSa,EDFSb'
-zmax = [1.1, 1.1, 0.6, 0.6, 0.6, 0.6]
-sigmaC = [1.e8]*len(zmax)
-
-ddf = pd.DataFrame(listDDF.split(','), columns=['field'])
-ddf['zmax'] = zmax
-ddf['sigmaC'] = sigmaC
-"""
-
-
-# plot_mu(data)
+survey = pd.read_csv(
+    'input/DESC_cohesive_strategy/survey_scenario.csv', comment='#')
 
 fitconfig = {}
 
@@ -411,9 +512,11 @@ fitconfig['fitd'] = dict(zip(['w0', 'wa', 'Om0'],
 hd_fit = HD_random(fitconfig=fitconfig)
 
 dict_res = {}
-for i in range(10):
-    data = Random_survey(dataDir, dbName, statName,
-                         selconfig, seasons, dictsel,
+for i in range(1):
+
+    data = Random_survey(dataDir_DD, dbName_DD,
+                         dataDir_WFD, dbName_WFD,
+                         dictsel, seasons,
                          survey=survey).data
 
     print('nsn', len(data))
