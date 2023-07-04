@@ -86,7 +86,7 @@ def select_filt(dataDir, dbName, sellist, seasons,
 parser = OptionParser()
 
 parser.add_option("--dataDir", type=str,
-                  default='../Output_SN_sigmaInt_0.12_Hounsell',
+                  default='../Output_SN_sigmaInt_0.0_Hounsell',
                   help="data dir[%default]")
 parser.add_option("--dbName", type=str,
                   default='DDF_Univ_WZ', help="db name [%default]")
@@ -113,7 +113,7 @@ runType = opts.runType
 fieldType = opts.fieldType
 listFields = opts.listFields
 nsn_factor = opts.nsn_factor
-outDir = 'Test'
+outDir = '{}_{}'.format(dataDir, selconfig)
 
 
 seasons = range(1, 11)
