@@ -1,0 +1,18 @@
+
+Three steps to produce the cosmological metric (Metric of Merit or MoM)
+a) SN production
+b) SN selection
+c) Cosmological fits
+
+a) can be performed using the following script: run_script/sim_to_fit/run_sim_to_fit.py
+    -> see python run_script/sim_to_fit/run_sim_to_fit.py --help
+
+b) use the script run_scripts/sn_cosmology/sn_selection.py
+   -> see python run_scripts/sn_cosmology/sn_selection.py --help
+
+c) the files produced in b) are used as input to perform cosmological fits using the script run_scripts/sn_cosmology/cosmology.py
+
+  -> see python run_scripts/sn_cosmology/cosmology.py --help
+
+d) to make the various cosmological plots, use the script plot_scripts/sn_cosmology/plot_cosmo.py
+   
