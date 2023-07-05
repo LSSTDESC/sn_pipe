@@ -22,7 +22,7 @@ inputDir_WFD = opts.inputDir_WFD
 dbName_WFD = opts.dbName_WFD
 
 # load OS files to process
-fis = pd.read_csv(dbList)
+fis = pd.read_csv(dbList, comment='#')
 
 # loop on files and create batches
 
