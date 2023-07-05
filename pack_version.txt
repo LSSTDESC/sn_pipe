@@ -4,3 +4,4 @@ sn_simulation dev
 sn_fit_lc dev
 sn_plotters dev
 sn_tools dev
+sn_phys_tools dev
