@@ -8,84 +8,8 @@ Created on Tue Jun 27 09:59:56 2023
 import pandas as pd
 from sn_analysis.sn_selection import selection_criteria
 from optparse import OptionParser
-import numpy as np
-from sn_cosmology.random_hd import HD_random, Random_survey, analyze_data
-import time
-
-
-def run_sequence(fitconfig, dataDir_DD, dbName_DD,
-                 dataDir_WFD, dbName_WFD, dictsel, survey, prior):
-    dict_fi = {}
-    for seas_max in range(2, 12):
-        seasons = range(1, seas_max)
-
-        dict_res = fit_seasons(seasons, fitconfig, dataDir_DD, dbName_DD,
-                               dataDir_WFD, dbName_WFD, dictsel, survey, prior)
-        keys = dict_res.keys()
-        for key in keys:
-            if key not in dict_fi.keys():
-                dict_fi[key] = pd.DataFrame()
-            dict_fi[key] = pd.concat((dict_fi[key], dict_res[key]))
-
-    return dict_fi
-
-
-def fit_seasons(seasons, fitconfig, dataDir_DD, dbName_DD, dataDir_WFD,
-                dbName_WFD, dictsel, survey, prior):
-
-    hd_fit = HD_random(fitconfig=fitconfig, prior=prior)
-
-    dict_res = {}
-
-    for i in range(1):
-
-        time_ref = time.time()
-        data = Random_survey(dataDir_DD, dbName_DD,
-                             dataDir_WFD, dbName_WFD,
-                             dictsel, seasons,
-                             survey=survey).data
-
-        print('nsn', len(data))
-        dict_ana = analyze_data(data)
-        dict_ana['season'] = np.max(seasons)+1
-        print(dict_ana)
-
-        res = hd_fit(data)
-
-        for key, vals in res.items():
-            vals.update(dict_ana)
-            res = pd.DataFrame.from_dict(transform(vals))
-            if key not in dict_res.keys():
-                dict_res[key] = pd.DataFrame()
-            dict_res[key] = pd.concat((res, dict_res[key]))
-
-    print('sequence', time.time()-time_ref)
-
-    return dict_res
-
-
-def transform(dicta):
-    """
-    Function to transform a dict of var to a dict of list(var)
-
-    Parameters
-    ----------
-    dicta : dict
-        input dict.
-
-    Returns
-    -------
-    dictb : dict
-        output dict.
-
-    """
-
-    dictb = {}
-
-    for key, vals in dicta.items():
-        dictb[key] = [vals]
-
-    return dictb
+from sn_cosmology.fit_season import Fit_seasons
+from sn_tools.sn_io import checkDir
 
 
 parser = OptionParser()
@@ -103,6 +27,8 @@ parser.add_option("--dbName_WFD", type=str,
                   help="db name [%default]")
 parser.add_option("--selconfig", type=str,
                   default='G10_JLA', help=" [%default]")
+parser.add_option("--outDir", type=str,
+                  default='../cosmo_fit', help=" [%default]")
 
 opts, args = parser.parse_args()
 
@@ -112,7 +38,9 @@ dbName_DD = opts.dbName_DD
 dataDir_WFD = opts.dataDir_WFD
 dbName_WFD = opts.dbName_WFD
 selconfig = opts.selconfig
+outDir = opts.outDir
 
+checkDir(outDir)
 
 dictsel = selection_criteria()[selconfig]
 survey = pd.read_csv(
@@ -141,11 +69,25 @@ priors['noprior'] = pd.DataFrame()
 priors['prior'] = pd.DataFrame({'varname': ['Om0'],
                                 'refvalue': [0.3],
                                 'sigma': [0.0073]})
-outName = 'cosmo_{}'.format(dbName_DD)
+
+outName = '{}/cosmo_{}.hdf5'.format(outDir, dbName_DD)
+resfi = pd.DataFrame()
+
 for key, vals in priors.items():
-    dict_fi = run_sequence(fitconfig, dataDir_DD, dbName_DD,
-                           dataDir_WFD, dbName_WFD, dictsel, survey, vals)
+    cl = Fit_seasons(fitconfig, dataDir_DD, dbName_DD,
+                     dataDir_WFD, dbName_WFD, dictsel, survey, vals)
+    res = cl()
+    res['prior'] = key
+    resfi = pd.concat((resfi, res))
+    """
+    dict_fi = cl()
     for keyb, valb in dict_fi.items():
-        cosmopars = '_'.join(valb[0])
+        dd = fitconfig[keyb]
+        cosmopars = '_'.join(dd.keys())
         full_name = '{}_{}_{}.hdf5'.format(outName, cosmopars, key)
         valb.to_hdf(full_name, key='cosmo')
+    """
+resfi['dbName_DD'] == dbName_DD
+resfi['dbName_WFD'] == dbName_WFD
+
+resfi.to_hdf(outName, key='cosmo')
