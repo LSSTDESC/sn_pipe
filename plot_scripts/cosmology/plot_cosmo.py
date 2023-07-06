@@ -9,65 +9,90 @@ Created on Wed Jul  5 14:08:41 2023
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
+from sn_plotter_cosmology.cosmoplot import Process_OS, cosmo_plot, cosmo_four
+from optparse import OptionParser
 
 
-def get_mean_std(df):
+def load_data(dbDir, config):
+    """
+    Method to load data
 
-    idx = df['MoM'] > 0.
+    Parameters
+    ----------
+    dbDir : str
+        Data dir.
+    config : pandas df
+        config (dbName+OS params).
 
-    df_a = df[idx]
-    df_b = df[~idx]
+    Returns
+    -------
+    df : pandas df
+        output data.
 
-    df_a = calc(df_a, calcCol='MoM')
+    """
 
-    print(df_a)
+    df = pd.DataFrame()
 
-    df_b['sigma_w'] = 100.*np.sqrt(df_b['Cov_w0_w0_fit'])
-    df_b = calc(df_b)
-    print(df_b)
+    for i, row in config.iterrows():
+        fi = '{}/cosmo_{}.hdf5'.format(dbDir, row['dbName'])
+        dfa = pd.read_hdf(fi)
+        df = pd.concat((df, dfa))
 
-    return df_a, df_b
-
-
-def calc(df, grpCol='season', calcCol='sigma_w'):
-
-    var_mean = '{}_mean'.format(calcCol)
-    var_std = '{}_std'.format(calcCol)
-    df_b = df.groupby([grpCol]).apply(lambda x: pd.DataFrame(
-        {var_mean: [x[calcCol].mean()],
-         var_std: [x[calcCol].std()]})).reset_index()
-
-    return df_b
+    return df
 
 
-data = pd.read_hdf('cosmo_DDF_Univ_WZ.hdf5')
+def plot_allOS(resdf, config, prior='prior', vary='MoM', legy='$MoM$'):
 
-print(data)
+    fig, ax = plt.subplots(figsize=(12, 8))
+    fig.subplots_adjust(right=0.8)
+    dd = dict(zip(['noprior', 'prior'], ['no prior', 'with prior']))
+    fig.suptitle(dd[prior])
 
-idx = data['prior'] == 'noprior'
+    for i, row in config.iterrows():
+        idx = resdf['dbName_DD'] == row['dbName']
+        idx &= resdf['prior'] == prior
+        sel = resdf[idx]
+        cosmo_plot(sel, vary=vary, legy=legy, ax=ax, ls=row['ls'],
+                   marker=row['marker'], color=row['color'], leg=row['dbName'])
 
-data_noprior = data[idx]
-data_prior = data[~idx]
+    ax.grid()
+    ax.legend(loc='upper center',
+              bbox_to_anchor=(1.15, 0.7),
+              ncol=1, fontsize=12, frameon=False)
 
-mom_noprior, sigmaw_noprior = get_mean_std(data_noprior)
-mom_prior, sigmaw_prior = get_mean_std(data_prior)
 
-fig, ax = plt.subplots(nrows=2, ncols=2, figsize=(12, 8))
-fig.subplots_adjust(hspace=0., wspace=0.)
+parser = OptionParser(description='Script to analyze SN prod')
 
-ax[0, 0].errorbar(sigmaw_noprior['season'],
-                  sigmaw_noprior['sigma_w_mean'],
-                  yerr=sigmaw_noprior['sigma_w_std'])
-ax[0, 1].errorbar(sigmaw_prior['season'],
-                  sigmaw_prior['sigma_w_mean'],
-                  yerr=sigmaw_prior['sigma_w_std'])
-ax[1, 0].errorbar(mom_noprior['season'],
-                  mom_noprior['MoM_mean'],
-                  yerr=mom_noprior['MoM_std'])
-ax[1, 1].errorbar(mom_prior['season'],
-                  mom_prior['MoM_mean'],
-                  yerr=mom_prior['MoM_std'])
-for i in range(2):
-    for j in range(2):
-        ax[i, j].grid()
+parser.add_option('--dbDir', type=str, default='../cosmo_fit',
+                  help='OS location dir[%default]')
+parser.add_option('--dbList', type=str,
+                  default='input/DESC_cohesive_strategy/config_ana.csv',
+                  help='OS name[%default]')
+
+opts, args = parser.parse_args()
+
+dbDir = opts.dbDir
+dbList = opts.dbList
+
+
+config = pd.read_csv(dbList, comment='#')
+
+data = load_data(dbDir, config)
+# data['dbName_DD'] = 'DDF_Univ_WZ'
+grpCol = ['season', 'dbName_DD', 'prior']
+# resdf = process_OS(data, grpCol)
+resdf = Process_OS(data, grpCol).res
+
+print(resdf, config)
+
+vvars = ['MoM', 'sigma_w']
+leg = dict(zip(vvars, [r'$MoM$', r'$\sigma_w$[%]']))
+for vary in vvars:
+    for prior in ['prior', 'noprior']:
+        plot_allOS(resdf, config, vary=vary, legy=leg[vary], prior=prior)
+# ax.legend()
+# idx = resdf['prior'] == 'noprior'
+# cosmo_plot(resdf[idx])
+
+# cosmo_four(resdf)
 plt.show()
