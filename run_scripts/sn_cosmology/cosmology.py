@@ -87,7 +87,7 @@ for key, vals in priors.items():
         full_name = '{}_{}_{}.hdf5'.format(outName, cosmopars, key)
         valb.to_hdf(full_name, key='cosmo')
     """
-resfi['dbName_DD'] == dbName_DD
-resfi['dbName_WFD'] == dbName_WFD
+resfi['dbName_DD'] = dbName_DD
+resfi['dbName_WFD'] = dbName_WFD
 
 resfi.to_hdf(outName, key='cosmo')
