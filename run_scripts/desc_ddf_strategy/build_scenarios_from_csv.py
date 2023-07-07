@@ -164,7 +164,7 @@ df_config_scen = pd.read_csv(configScenario, comment='#')
 print(df_scen['name'].unique())
 
 scenarios = df_scen['name'].unique()
-
+budget_DD = np.round(df_scen['budget_DD'].mean(), 2)
 
 bands = 'ugrizy'
 
@@ -180,6 +180,7 @@ for scen in scenarios:
     for i, row in config_scen.iterrows():
         ido = sel_scen['fieldType'] == row['fieldType']
         dfa = pd.DataFrame(sel_scen[ido])
+        dfa['name'] = dfa['name']+'_{}'.format(budget_DD)
         cadence = row['cad']
         season_length = row['sl']
         for b in bands:
@@ -195,6 +196,6 @@ for scen in scenarios:
     dfa_scen = modif_UD(dfa_scen, cad['DD'])
     dfa_scen = modif_Euclid(dfa_scen)
 
-    outName = '{}/{}.csv'.format(opts.outputDir, scen)
+    outName = '{}/{}_{}.csv'.format(opts.outputDir, scen, budget_DD)
     dfa_scen.to_csv(outName, index=False)
     # break

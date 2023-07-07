@@ -320,6 +320,7 @@ print(dfres.columns)
 dfres['cad'] = dfres['cad'].astype(int)
 pp = ['name', 'year', 'fieldType', 'cad', 'sl']
 tt = dfres.groupby(pp).apply(lambda x: reverse_df(x)).reset_index()
+tt['budget_DD'] = pparams['budget_DD']
 tt.to_csv('scenarios_{}.csv'.format(pparams['budget_DD']), index=False)
 
 sumCols = ['nvisits_band_season', 'nvisits_band_season_fields']
