@@ -80,10 +80,15 @@ parser.add_option("--Nv_DD_max", type=int,
 parser.add_option("--showPlot", type=int,
                   default=0,
                   help="to show plot or not [%default]")
+parser.add_option("--Nf_combi", type=str,
+                  default='(2,2),(2,3),(2,4)',
+                  help="to show plot or not [%default]")
 
 opts, args = parser.parse_args()
 
 pparams = vars(opts)
+pparams['Nf_combi'] = eval('[{}]'.format(pparams['Nf_combi']))
+
 bands = 'ugrizy'
 
 ###############################################
@@ -132,7 +137,7 @@ print(m5_nvisits)
 corresp = dict(zip(['Nvisits_y1', 'Nvisits_y2_y10'], ['PZ_y1', 'PZ_y2_y10']))
 nseasons = dict(zip(['Nvisits_y1', 'Nvisits_y2_y10'], [1, opts.Ns_DD]))
 corresp = dict(zip(['Nvisits_WL_PZ_y1', 'Nvisits_WL_PZ_y2_y10'], [
-               'WL_PZ_y1', 'WL_PZ_y2_y10']))
+    'WL_PZ_y1', 'WL_PZ_y2_y10']))
 nseasons = dict(
     zip(['Nvisits_WL_PZ_y1', 'Nvisits_WL_PZ_y2_y10'], [1, opts.Ns_DD]))
 
@@ -150,7 +155,7 @@ pz_wl_req_err['WL_PZ_y2_y10'] = (m5_dict['Nvisits_WL_PZ_y2_y10_m']/opts.Ns_DD,
 Nv_DD_y1 = int(m5_dict['Nvisits_WL_PZ_y1'])
 
 myclass = DD_Scenario(budget_DD=pparams['budget_DD'],
-                      Nf_combi=[(2, 2), (2, 3), (2, 4)],
+                      Nf_combi=pparams['Nf_combi'],
                       zcomp=[0.80, 0.75, 0.70],
                       scen_names=['DDF_DESC_0.80',
                                   'DDF_DESC_0.75',
@@ -280,15 +285,16 @@ if pparams['recover_from_moon']:
     dfresm = moon_recovery(dfres[idx], pparams['swap_filter_moon'])
     dfres = pd.concat((dfres[~idx], dfresm))
 
-# print(test)
 print('after recovery', dfres[['name', 'year',
       'band', 'nvisits_night']])
 
-dfres = uniformize(dfres, 'DDF_Univ_SN', Nv_LSST=pparams['Nv_LSST'])
+dfres = uniformize(dfres, 'DDF_Univ_SN',
+                   Nv_LSST=pparams['Nv_LSST'], budget=pparams['budget_DD'])
+
 
 print('uniformize', dfres[['name', 'year',
       'band', 'nvisits_night']])
-# print(test)
+
 ##### Final plots ####
 
 
@@ -300,7 +306,7 @@ Delta_nvisits(dfres, m5_nvisits)
 
 
 # plot budget vs time for each scenario
-Budget_time(dfres, pparams['Nv_LSST'])
+Budget_time(dfres, pparams['Nv_LSST'], pparams['budget_DD'])
 
 if pparams['showPlot']:
     plt.show()
@@ -314,7 +320,7 @@ print(dfres.columns)
 dfres['cad'] = dfres['cad'].astype(int)
 pp = ['name', 'year', 'fieldType', 'cad', 'sl']
 tt = dfres.groupby(pp).apply(lambda x: reverse_df(x)).reset_index()
-tt.to_csv('scenarios.csv', index=False)
+tt.to_csv('scenarios_{}.csv'.format(pparams['budget_DD']), index=False)
 
 sumCols = ['nvisits_band_season', 'nvisits_band_season_fields']
 dfres['nvisits_band_season_fields'] = dfres['nvisits_band_season']*dfres['Nfields']
