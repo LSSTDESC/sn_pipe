@@ -9,6 +9,7 @@ a) can be performed using the following script: run_script/sim_to_fit/run_sim_to
 
 b) use the script run_scripts/sn_cosmology/sn_selection.py
    -> see python run_scripts/sn_cosmology/sn_selection.py --help
+   or use the script loop_selection.py in run_scripts/sn_cosmology
 
 c) the files produced in b) are used as input to perform cosmological fits using the script run_scripts/sn_cosmology/cosmology.py
 
