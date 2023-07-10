@@ -1,7 +1,7 @@
 import numpy as np
 import os
 
-scr_m = 'python run_scripts/sim_to_fit/run_test.py \
+scr_m = 'python run_scripts/sim_to_fit/run_fake.py \
     --scriptName moon_run_b.sh --show_results 0 \
     --config_obs=input/DESC_cohesive_strategy/combi_obs.csv \
     --config_simu=input/DESC_cohesive_strategy/combi_simufit.csv \
