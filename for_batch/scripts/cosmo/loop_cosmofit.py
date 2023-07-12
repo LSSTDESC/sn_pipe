@@ -26,7 +26,7 @@ fis = pd.read_csv(dbList, comment='#')
 
 # loop on files and create batches
 
-script = 'run_scripts/sn_cosmology/cosmology.py'
+script = 'run_scripts/cosmology/cosmology.py'
 for i, row in fis.iterrows():
     dbName = row['dbName']
     processName = 'cosmo_{}'.format(dbName)
