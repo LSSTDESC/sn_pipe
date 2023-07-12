@@ -274,6 +274,9 @@ parser.add_option('--plotDir', type=str,
 parser.add_option('--outDir', type=str,
                   default='SN_analysis',
                   help='output directory for the produced files [%default]')
+parser.add_option('--budget_DD', type=float,
+                  default=0.07,
+                  help='DD budget [%default]')
 
 opts, args = parser.parse_args()
 
@@ -288,6 +291,7 @@ selconfig = opts.selconfig
 selconfig_ref = opts.selconfig_ref
 plotDir = opts.plotDir
 outDir = opts.outDir
+budget = np.round(opts.budget_DD, 2)
 
 checkDir(outDir)
 # res_fast = load_complete('Output_SN_fast', dbName)
@@ -298,10 +302,13 @@ dict_sel = selection_criteria()
 # load the dbName, etc, to process
 dd = pd.read_csv(dbList, comment='#')
 
+if budget > 0.:
+    dd['dbName'] += '_{}'.format(budget)
+
 gime_simuParam = False
-gime_plotNSN = True
+gime_plotNSN = False
 gime_plotNSN_selcriteria = False
-gime_plotNSN_vs_z = False
+gime_plotNSN_vs_z = True
 
 
 if gime_simuParam:
