@@ -54,6 +54,33 @@ def load_OS(dbDir, dbName, runType, fieldType='DDF'):
 class Plot_nsn_vs:
     def __init__(self, data, norm_factor, bins=np.arange(0.005, 0.8, 0.01),
                  xvar='z', xleg='z', logy=False, cumul=False, xlim=[0.01, 0.8]):
+        """
+        class to plot ns vs z or season or ...
+
+        Parameters
+        ----------
+        data : pandas df
+            Data to plot.
+        norm_factor : float
+            Normalization factor.
+        bins : numpy array, optional
+            Bins for the plot. The default is np.arange(0.005, 0.8, 0.01).
+        xvar : str, optional
+            x-axis variable. The default is 'z'.
+        xleg : str, optional
+            x-axis label. The default is 'z'.
+        logy : bool, optional
+            To set the log scale for the y-axis. The default is False.
+        cumul : bool, optional
+            To plot cumulative plot. The default is False.
+        xlim : list(float), optional
+            x-axis limit. The default is [0.01, 0.8].
+
+        Returns
+        -------
+        None.
+
+        """
 
         self.data = data
         self.norm_factor = norm_factor
@@ -67,11 +94,27 @@ class Plot_nsn_vs:
         self.plot_nsn_versus_two()
 
     def plot_nsn_versus(self, data, label='', ax=None):
+        """
+        Method to plot nsn vs...
+
+        Parameters
+        ----------
+        data : pandas df
+            Data to plot.
+        label : str, optional
+            Curve label. The default is ''.
+        ax : matplotlib axis, optional
+            Axis for the plot. The default is None.
+
+        Returns
+        -------
+        None.
+
+        """
 
         if ax is None:
             fig, ax = plt.subplots(figsize=(14, 8))
 
-        print('bins', self.bins)
         res = bin_it(data, xvar=self.xvar, bins=self.bins,
                      norm_factor=self.norm_factor)
 
@@ -87,6 +130,14 @@ class Plot_nsn_vs:
         ax.set_xlim(self.xlim)
 
     def plot_nsn_versus_two(self):
+        """
+        Method to plot two curves sn vs ...
+
+        Returns
+        -------
+        None.
+
+        """
 
         fig, ax = plt.subplots(figsize=(14, 8))
         self.plot_nsn_versus(self.data, ax=ax)
