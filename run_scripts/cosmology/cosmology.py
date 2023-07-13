@@ -26,9 +26,12 @@ parser.add_option("--dbName_WFD", type=str,
                   default='draft_connected_v2.99_10yrs',
                   help="db name [%default]")
 parser.add_option("--selconfig", type=str,
-                  default='G10_JLA', help=" [%default]")
+                  default='G10_JLA', help="sel config [%default]")
 parser.add_option("--outDir", type=str,
-                  default='../cosmo_fit', help=" [%default]")
+                  default='../cosmo_fit', help="output dir [%default]")
+parser.add_option("--survey", type=str,
+                  default='input/DESC_cohesive_strategy/survey_scenario.csv',
+                  help=" survey to use[%default]")
 
 opts, args = parser.parse_args()
 
@@ -39,12 +42,17 @@ dataDir_WFD = opts.dataDir_WFD
 dbName_WFD = opts.dbName_WFD
 selconfig = opts.selconfig
 outDir = opts.outDir
+survey_file = opts.survey
 
 checkDir(outDir)
 
 dictsel = selection_criteria()[selconfig]
-survey = pd.read_csv(
-    'input/DESC_cohesive_strategy/survey_scenario.csv', comment='#')
+survey = pd.read_csv(survey_file, comment='#')
+
+# save the survey in outDir
+outName_survey = '{}/survey_{}.csv'.format(outDir, dbName_DD)
+survey.to_csv(outName_survey)
+
 
 fitconfig = {}
 """
