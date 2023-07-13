@@ -16,6 +16,26 @@ from sn_analysis.sn_calc_plot import bin_it
 
 
 def load_OS(dbDir, dbName, runType, fieldType='DDF'):
+    """
+    Function to load OS data
+
+    Parameters
+    ----------
+    dbDir : str
+        data location dir.
+    dbName : str
+        db name to process.
+    runType : str
+        run type (spectroz or photoz).
+    fieldType : str, optional
+        field type (DDF or WFD). The default is 'DDF'.
+
+    Returns
+    -------
+    df : pandas df
+        OS data.
+
+    """
 
     fullDir = '{}/{}/{}_{}'.format(dbDir, dbName, fieldType, runType)
 
@@ -31,21 +51,58 @@ def load_OS(dbDir, dbName, runType, fieldType='DDF'):
     return df
 
 
-def plot_nsn_z(df, xvar='z', xleg='z',
-               bins=np.arange(0.005, 0.8, 0.01),
-               norm_factor=30, ax=None, cumul=False):
+class Plot_nsn_vs:
+    def __init__(self, data, norm_factor, bins=np.arange(0.005, 0.8, 0.01),
+                 xvar='z', xleg='z', logy=False, cumul=False, xlim=[0.01, 0.8]):
 
-    if ax is None:
-        fig, ax = plt.subplots()
+        self.data = data
+        self.norm_factor = norm_factor
+        self.bins = bins
+        self.xvar = xvar
+        self.xleg = xleg
+        self.logy = logy
+        self.cumul = cumul
+        self.xlim = xlim
 
-    res = bin_it(df, xvar=xvar, bins=bins, norm_factor=norm_factor)
+        self.plot_nsn_versus_two()
 
-    print(res)
+    def plot_nsn_versus(self, data, label='', ax=None):
 
-    vv = res['NSN']
-    if cumul:
-        vv = np.cumsum(res['NSN'])
-    ax.plot(res[xvar], vv, 'ko')
+        if ax is None:
+            fig, ax = plt.subplots(figsize=(14, 8))
+
+        print('bins', self.bins)
+        res = bin_it(data, xvar=self.xvar, bins=self.bins,
+                     norm_factor=self.norm_factor)
+
+        print(res)
+
+        vv = res['NSN']
+        if self.cumul:
+            vv = np.cumsum(res['NSN'])
+        ax.plot(res[self.xvar], vv, label=label)
+
+        ax.set_xlabel(self.xleg)
+        ax.set_ylabel(r'$N_{SN}$')
+        ax.set_xlim(self.xlim)
+
+    def plot_nsn_versus_two(self):
+
+        fig, ax = plt.subplots(figsize=(14, 8))
+        self.plot_nsn_versus(self.data, ax=ax)
+        idx = self.data['sigmaC'] <= 0.04
+        label = '$\sigma_C \leq 0.04$'
+        self.plot_nsn_versus(self.data[idx], label=label, ax=ax)
+        if self.logy:
+            ax.set_yscale("log")
+
+        ax.set_xlabel(self.xleg)
+        ylabel = '$N_{SN}$'
+        if self.cumul:
+            ylabel = '$\sum N_{SN}$'
+        ax.set_ylabel(r'{}'.format(ylabel))
+        ax.legend()
+        ax.grid()
 
 
 parser = OptionParser(description='Script to analyze SN prod after selection')
@@ -89,19 +146,14 @@ runType = opts.runType
 
 wfd = load_OS(dbDir_WFD, OS_WFD, runType=runType, fieldType='WFD')
 
-print('alors', wfd.columns)
-fig, ax = plt.subplots()
-figb, axb = plt.subplots()
-plot_nsn_z(wfd, norm_factor=norm_factor_WFD, ax=ax, cumul=True)
-plot_nsn_z(wfd, xvar='season', xleg='season', bins=np.arange(
-    0.5, 11.5, 1), norm_factor=norm_factor_WFD, ax=axb)
-print('allo', len(wfd)/norm_factor_WFD)
-idx = wfd['sigmaC'] <= 0.04
-plot_nsn_z(wfd[idx], norm_factor=norm_factor_WFD, ax=ax)
-plot_nsn_z(wfd[idx], xvar='season', xleg='season', bins=np.arange(
-    0.5, 11.5, 1), norm_factor=norm_factor_WFD, ax=axb)
-print('allo', len(wfd[idx])/norm_factor_WFD)
-
-ax.grid()
-axb.grid()
+# Plot_nsn_vs(wfd, norm_factor_WFD, xvar='z', xleg='z',
+#            logy=True, cumul=True, xlim=[0.01, 0.7])
+Plot_nsn_vs(wfd, norm_factor_WFD, bins=np.arange(
+    0.5, 11.5, 1), xvar='season', xleg='season', logy=False, xlim=[1, 10])
+"""
+plot_nsn_two(wfd, norm_factor_WFD, xvar='z', xleg='z',
+             logy=True, cumul=True, xlim=[0.01, 0.7])
+plot_nsn_two(wfd, norm_factor_WFD, bins=np.arange(
+    0.5, 11.5, 1), xvar='season', xleg='season', logy=False, xlim=[1, 10])
+"""
 plt.show()
