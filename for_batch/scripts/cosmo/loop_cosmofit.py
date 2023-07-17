@@ -19,6 +19,9 @@ parser.add_option("--dbName_WFD", type="str",
 parser.add_option("--survey", type=str,
                   default='input/DESC_cohesive_strategy/survey_scenario.csv',
                   help=" survey to use[%default]")
+parser.add_option("--tag", type=str,
+                  default='-1.0',
+                  help="tag for job name [%default]")
 
 opts, args = parser.parse_args()
 
@@ -28,6 +31,7 @@ inputDir_DD = opts.inputDir_DD
 inputDir_WFD = opts.inputDir_WFD
 dbName_WFD = opts.dbName_WFD
 survey = opts.survey
+tag = opts.tag
 
 # load OS files to process
 fis = pd.read_csv(dbList, comment='#')
@@ -37,7 +41,7 @@ fis = pd.read_csv(dbList, comment='#')
 script = 'run_scripts/cosmology/cosmology.py'
 for i, row in fis.iterrows():
     dbName = row['dbName']
-    processName = 'cosmo_{}'.format(dbName)
+    processName = 'cosmo_{}_{}'.format(dbName,tag)
     mybatch = BatchIt(processName=processName)
     params = {}
     params['dataDir_DD'] = inputDir_DD
