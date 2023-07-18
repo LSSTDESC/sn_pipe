@@ -1,0 +1,9 @@
+dbDir,frac_sigmaC,marker,color,ls
+../cosmo_fit_WFD_sigmaC_1.0,1.0,o,r,solid
+../cosmo_fit_WFD_sigmaC_0.90,0.90,o,b,solid
+../cosmo_fit_WFD_sigmaC_0.80,0.80,o,k,solid
+../cosmo_fit_WFD_sigmaC_0.70,0.70,o,g,solid
+../cosmo_fit_WFD_sigmaC_0.60,0.60,s,r,dashed
+../cosmo_fit_WFD_sigmaC_0.50,0.50,s,b,dashed
+../cosmo_fit_WFD_sigmaC_0.40,0.40,s,k,dashed
+../cosmo_fit_WFD_sigmaC_0.30,0.30,s,g,dashed
