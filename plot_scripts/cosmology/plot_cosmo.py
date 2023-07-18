@@ -7,7 +7,7 @@ Created on Wed Jul  5 14:08:41 2023
 """
 
 import pandas as pd
-import matplotlib.pyplot as plt
+from sn_plotter_cosmology import plt
 import numpy as np
 from sn_plotter_cosmology.cosmoplot import Process_OS, plot_allOS
 from optparse import OptionParser
@@ -85,18 +85,22 @@ for tt in ['DDF', 'UD', 'DD', 'WFD']:
 print(resdf, config)
 print(resdf.columns)
 
-vvars = ['MoM', 'sigma_w']
-leg = dict(zip(vvars, [r'$MoM$', r'$\sigma_w$[%]']))
+vvars = ['MoM', 'sigma_w', 'sigma_w0', 'sigma_wa']
+leg = dict(zip(vvars, [r'$MoM$', r'$\sigma_w$[%]',
+           r'$\sigma_{w_0}$ [%]', r'$\sigma_{w_a}$ [%]']))
+priors = ['prior', 'noprior']
+dd = dict(zip(priors, ['with prior', 'no prior']))
 for vary in vvars:
-    for prior in ['prior', 'noprior']:
-        plot_allOS(resdf, config, vary=vary, legy=leg[vary], prior=prior)
+    for prior in priors[:1]:
+        plot_allOS(resdf, config, vary=vary,
+                   legy=leg[vary], prior=prior, figtitle=dd[prior])
 
 vvarsb = ['DDF', 'UD', 'DD', 'WFD']
 legb = [r'$N^{DDF}$', r'$N^{UD}$', r'$N^{DD}$', r'$N^{WFD}$']
 lleg = dict(zip(vvarsb, legb))
 for vary in vvarsb:
     plot_allOS(resdf, config, vary=vary,
-               legy=lleg[vary], prior='prior', figtitle=False)
+               legy=lleg[vary], prior='prior', figtitle='')
 
 
 # ax.legend()
