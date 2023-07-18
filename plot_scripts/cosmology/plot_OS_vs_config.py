@@ -13,6 +13,26 @@ import numpy as np
 
 
 def load_data(theDir, dbName, frac_sigmaC, budget):
+    """
+    Function to load data
+
+    Parameters
+    ----------
+    theDir : str
+        Data location dir.
+    dbName : str
+        OS to process.
+    frac_sigmaC : float
+        fraction of SN with sigma<= 0.04.
+    budget : float
+        DD budget.
+
+    Returns
+    -------
+    df : pandas df
+        Data.
+
+    """
 
     fullPath = '{}/cosmo_{}_{}.hdf5'.format(theDir, dbName, budget)
     df = pd.read_hdf(fullPath)
