@@ -82,8 +82,8 @@ grpCol = ['season', 'dbName_DD', 'prior', 'frac_sigmaC']
 resdf = Process_OS(df, grpCol).res
 print(resdf.columns)
 
-vvars = ['MoM_DETF', 'sigma_w', 'sigma_w0', 'sigma_wa']
-leg = dict(zip(vvars, [r'$MoM_{DETF}$', r'$\sigma_w$[%]',
+vvars = ['MoM', 'sigma_w', 'sigma_w0', 'sigma_wa']
+leg = dict(zip(vvars, [r'$SMoM$', r'$\sigma_w$[%]',
            r'$\sigma_{w_0}$ [%]', r'$\sigma_{w_a}$ [%]']))
 figtitle = '{} - with prior'.format(dbName)
 for vary in vvars:

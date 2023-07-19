@@ -86,7 +86,7 @@ print(resdf, config)
 print(resdf.columns)
 
 vvars = ['MoM', 'sigma_w', 'sigma_w0', 'sigma_wa']
-leg = dict(zip(vvars, [r'$MoM$', r'$\sigma_w$[%]',
+leg = dict(zip(vvars, [r'$SMoM$', r'$\sigma_w$[%]',
            r'$\sigma_{w_0}$ [%]', r'$\sigma_{w_a}$ [%]']))
 priors = ['prior', 'noprior']
 dd = dict(zip(priors, ['with prior', 'no prior']))
