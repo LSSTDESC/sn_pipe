@@ -70,7 +70,7 @@ for season in seasons:
         angle = np.rad2deg(row['angle'])
         print('all', x, y, a, b, angle, season)
         ell = Ellipse(xy=(x, y),
-                      width=a, height=b,
+                      width=b, height=a,
                       angle=angle, color='k')
         ell.set_facecolor('None')
         ax.add_artist(ell)
