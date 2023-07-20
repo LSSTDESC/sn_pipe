@@ -83,6 +83,12 @@ parser.add_option("--showPlot", type=int,
 parser.add_option("--Nf_combi", type=str,
                   default='(2,2),(2,3),(2,4)',
                   help="to show plot or not [%default]")
+parser.add_option("--zcomp", type=str,
+                  default='0.80,0.75,0.70',
+                  help="redshift completeness configuration [%default]")
+parser.add_option("--scen_names", type=str,
+                  default='DDF_DESC_0.75, DDF_DESC_0.70,DDF_DESC_0.65',
+                  help="scenario names corresponding to zcomp [%default]")
 
 opts, args = parser.parse_args()
 
@@ -156,10 +162,8 @@ Nv_DD_y1 = int(m5_dict['Nvisits_WL_PZ_y1'])
 
 myclass = DD_Scenario(budget_DD=pparams['budget_DD'],
                       Nf_combi=pparams['Nf_combi'],
-                      zcomp=[0.80, 0.75, 0.70],
-                      scen_names=['DDF_DESC_0.80',
-                                  'DDF_DESC_0.75',
-                                  'DDF_DESC_0.70'],
+                      zcomp=list(map(float, pparams['zcomp'].split(','))),
+                      scen_names=pparams['scen_names'].split(','),
                       m5_single_OS=msingle,
                       Nf_DD_y1=pparams['Nf_DD_y1'],
                       Nv_DD_y1=Nv_DD_y1,
@@ -201,7 +205,11 @@ Nv_DD_SCOC_pII = Nvisits_avail/52.
 Nv_UD_SCOC_pII = (10*Nv_DD_SCOC_pII/3)*opts.cad_UD/opts.sl_UD
 deep_universal = {}
 scoc_pII = {}
-deep_universal['Deep Universal'] = [Nvisits_avail/(opts.Ns_DD*opts.NDDF), 140]
+du_pos = 140
+if pparams['budget_DD'] < 0.06:
+    du_pos = 90
+deep_universal['Deep Universal'] = [
+    Nvisits_avail/(opts.Ns_DD*opts.NDDF), du_pos]
 scoc_pII['SCOC_pII'] = [Nv_DD_SCOC_pII, Nv_UD_SCOC_pII]
 
 res = myclass.plot(restot, varx='Nv_DD',
@@ -342,4 +350,6 @@ print(m5_nvisits)
 
 print(m5_nvisits['Nvisits_y2_y10']/m5_nvisits['nseason_y2_y10'])
 m5_nvisits.to_csv('resc.csv', index=False)
-plt.show()
+
+if pparams['showPlot']:
+    plt.show()
