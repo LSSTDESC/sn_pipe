@@ -19,7 +19,7 @@ dataDir = opts.dataDir
 
 db = pd.read_csv(dbList, comment='#')
 
-script = 'python run_scripts/sn_cosmology/sn_selection.py'
+script = 'python run_scripts/cosmology/sn_selection.py'
 
 for i, row in db.iterrows():
     cmd = '{} --dbName {} --dataDir {}'.format(script, row['dbName'], dataDir)
