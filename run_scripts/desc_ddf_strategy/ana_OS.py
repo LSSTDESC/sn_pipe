@@ -103,7 +103,7 @@ if outDir != '':
 
 
 # this is to plot the budget, PZ req and WL req
-"""
+
 config_db = pd.read_csv(configdB, comment='#')
 config_db['dbName'] += '_{}'.format(budget)
 pp = Anaplot_OS(dbDir, config_db, Nvisits_LSST, budget, outDir='',
@@ -114,13 +114,14 @@ pp.plot_budget()
 pp.plot_m5_PZ()
 pp.plot_Nvisits_WL()
 plt.show()
-"""
+
 
 # plot cadence
 
 df_config_scen = pd.read_csv(configScenario, comment='#')
 df_config_scen['scen'] = df_config_scen['scen']+'_{}'.format(budget)
-dbNames = df_config_scen['scen'].unique()
+#dbNames = df_config_scen['scen'].unique()
+dbNames = config_db['dbName'].unique()
 for dbName in dbNames:
     Plot_cadence(dbDir, dbName, df_config_scen, outDir='')
 plt.show()
