@@ -87,7 +87,7 @@ parser.add_option("--zcomp", type=str,
                   default='0.80,0.75,0.70',
                   help="redshift completeness configuration [%default]")
 parser.add_option("--scen_names", type=str,
-                  default='DDF_DESC_0.75, DDF_DESC_0.70,DDF_DESC_0.65',
+                  default='\'DDF_DESC_0.80,DDF_DESC_0.75,DDF_DESC_0.70\'',
                   help="scenario names corresponding to zcomp [%default]")
 
 opts, args = parser.parse_args()
