@@ -59,5 +59,7 @@ os.system(cmd_b)
 
 cmd_c = 'python run_scripts/fakes/loop_scenarios.py --budget={}'.format(
     params['budget_DD'])
+scenario = 'scenarios_{}.csv'.format(params['budget_DD'])
+cmd_c += ' --configFile={}'.format(scenario)
 
 os.system(cmd_c)

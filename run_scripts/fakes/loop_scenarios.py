@@ -3,6 +3,7 @@ import glob
 from sn_tools.sn_utils import multiproc
 from optparse import OptionParser
 import numpy as np
+import pandas as pd
 
 
 def loop_it(listDB, params, j=0, output_q=None):
@@ -51,18 +52,23 @@ parser.add_option('--dirScen', type='str',
 parser.add_option('--budget_DD', type=float,
                   default=0.07,
                   help='DD budget [%default]')
+parser.add_option('--configFile', type='str', default='scenarios.csv',
+                  help='config file to use[%default]')
 
 opts, args = parser.parse_args()
 
 
 dirScen = opts.dirScen
 budget = np.round(opts.budget_DD, 2)
+configFile = opts.configFile
 
-list_scen = glob.glob('{}/DDF_DESC*_{}.csv'.format(dirScen, budget))
+# load configs (ie scenarios)
+df_config = pd.read_csv(configFile, comment='#')
 
-list_scen += ['{}/DDF_SCOC_pII_{}.csv'.format(dirScen, budget),
-              '{}/DDF_Univ_SN_{}.csv'.format(dirScen, budget),
-              '{}/DDF_Univ_WZ_{}.csv'.format(dirScen, budget)]
+df_config['name'] = dirScen+'/'+df_config['name'] + '_{}'.format(budget)+'.csv'
+
+
+list_scen = df_config['name'].unique()
 
 params = {}
 params['dirScen'] = dirScen
