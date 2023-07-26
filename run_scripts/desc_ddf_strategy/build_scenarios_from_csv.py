@@ -161,8 +161,6 @@ df_scen = pd.read_csv(configFile, comment='#')
 
 df_config_scen = pd.read_csv(configScenario, comment='#')
 
-print(df_scen['name'].unique())
-
 scenarios = df_scen['name'].unique()
 budget_DD = np.round(df_scen['budget_DD'].mean(), 2)
 
