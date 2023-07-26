@@ -87,7 +87,7 @@ parser.add_option("--zcomp", type=str,
                   default='0.80,0.75,0.70',
                   help="redshift completeness configuration [%default]")
 parser.add_option("--scen_names", type=str,
-                  default='\'DDF_DESC_0.80,DDF_DESC_0.75,DDF_DESC_0.70\'',
+                  default='DDF_DESC_0.80,DDF_DESC_0.75,DDF_DESC_0.70',
                   help="scenario names corresponding to zcomp [%default]")
 
 opts, args = parser.parse_args()
@@ -228,7 +228,10 @@ print(Nvisits_avail)
 ### m5_resu ###
 
 m5_resu = nvisits_from_m5(res, m5class)
+print('m5_resu')
 print(m5_resu)
+print('res', res.dtype.names)
+print(res)
 
 # plt.show()
 # finish the data
@@ -259,8 +262,6 @@ print(m5_resu[m5_resu['name'] == db_ref])
 df_resb = reshuffle(df_res, m5_resu,
                     pparams['sl_UD'], pparams['cad_UD'],
                     pparams['frac_moon'], pparams['swap_filter_moon'])
-
-print(df_resb)
 
 # get the final scenario
 m5single = m5class.msingle_calc
