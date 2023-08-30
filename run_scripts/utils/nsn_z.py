@@ -16,7 +16,7 @@ def getNSN(rate='Perrett', H0=70, Om0=0.3,
                       max_rf_phase=max_rf_phase)
     zmax += dz/2
 
-    zz, rateb, err_rate, nsn, err_nsn = sn_rate(
+    zz, rateb, err_rate, nsn, err_nsn, age_universe = sn_rate(
         zmin=zmin, zmax=zmax, dz=dz,
         account_for_edges=account_for_edges,
         duration=season_length, survey_area=survey_area)
@@ -27,6 +27,7 @@ def getNSN(rate='Perrett', H0=70, Om0=0.3,
     res = pd.DataFrame(nsn_sum, columns=['nsn'])
     res['err_nsn'] = err_nsn_sum
     res['z'] = zz
+    res['age_universe'] = age_universe
     res['rate'] = rate
     res['edges'] = account_for_edges
     res['min_rf_phase'] = min_rf_phase
@@ -89,7 +90,7 @@ account_for_edges = opts.account_for_edges
 # loop on rate types
 
 
-rates = ['Perrett', 'Ripoche', 'Dilday', 'combined', 'Hounsell']
+rates = ['Perrett', 'Ripoche', 'Dilday', 'combined', 'Hounsell', 'Candels']
 edges = [(-15, 25), (-15, 25), (-15, 30), (-15, 40)]
 account_edges = [0, 1, 1, 1]
 H0 = 70
@@ -121,16 +122,25 @@ effi_df = selb.groupby(['rate', 'min_rf_phase', 'max_rf_phase']).apply(
 print(effi_df)
 
 fig, ax = plt.subplots(figsize=(10, 8))
+axb = ax.twiny()
+
 for rate in sela['rate'].unique():
     idx = sela['rate'] == rate
     sel = sela[idx]
     ax.errorbar(sel['z'], sel['nsn'], yerr=sel['err_nsn'], label=rate)
+    axb.errorbar(sel['age_universe'], sel['nsn'],
+                 yerr=sel['err_nsn'], color='white', alpha=0.)
     idxb = sel['z'] <= 1.1
-    print('total number of SN', rate, sel[idxb]['nsn'].max())
+    print('total number of SN up to 1.1', rate, sel[idxb]['nsn'].max())
 
 ax.grid()
+axb.invert_xaxis()
 ax.set_xlim(0.01, 1.1)
 ax.legend()
+ax.set_ylabel('$N_{SN}~(z<)$')
+ax.set_xlabel('$z$')
+axb.set_xlabel('Age of the Universe [Gy]')
+
 
 """
 figb, axb = plt.subplots(figsize=(10, 8))
