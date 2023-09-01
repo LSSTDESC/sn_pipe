@@ -59,11 +59,32 @@ def load_OS_table(dbDir, dbName, runType, season=1, fieldType='DDF'):
         dfa = multiproc(keys, params, load_os_table_multi, nproc=8)
 
         df = pd.concat((df, dfa))
+        break
 
     return df
 
 
 def load_os_table_multi(keys, params, j=0, output_q=None):
+    """
+    Function to load a set of SN in astropy table format
+
+    Parameters
+    ----------
+    keys : list(str)
+        hdf5 keys.
+    params : dict
+        Parameters.
+    j : int, optional
+        tag for multiprocessing. The default is 0.
+    output_q : multiprocessing queue, optional
+        Where to put the result (if not None). The default is None.
+
+    Returns
+    -------
+    dict or df
+        Output.
+
+    """
 
     df = pd.DataFrame()
 
@@ -425,6 +446,7 @@ dataType = opts.dataType
 
 wfd = eval('load_{}(\'{}\',\'{}\',\'{}\',{})'.format(
     dataType, dbDir_WFD, OS_WFD, runType, seasons))
+
 # Plot_nsn_vs(wfd, norm_factor_WFD, xvar='z', xleg='z',
 #            logy=True, cumul=True, xlim=[0.01, 0.7])
 Plot_nsn_vs(wfd, norm_factor_WFD, bins=np.arange(
