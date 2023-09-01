@@ -239,7 +239,6 @@ def stat_m5(obs, airmass_cut=1.5):
 
     res.to_csv('m5_field_season.csv', index=False)
 
-    print(test)
     plot(res)
 
     print(test)
