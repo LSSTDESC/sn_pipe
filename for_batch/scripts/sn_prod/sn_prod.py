@@ -1,6 +1,6 @@
 from optparse import OptionParser
 from sn_tools.sn_io import make_dict_from_config
-from sn_tools.sn_io import add_parser,checkDir
+from sn_tools.sn_io import add_parser, checkDir
 import argparse
 import copy
 from sn_tools.sn_batchutils import BatchIt
@@ -84,7 +84,7 @@ def batch_DDF(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
 
 
 def batch_WFD(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
-              time='40:00:00', mem='40G'):
+              time='60:00:00', mem='40G'):
     """
     Function to launch sim_to_fit for WFD
 
