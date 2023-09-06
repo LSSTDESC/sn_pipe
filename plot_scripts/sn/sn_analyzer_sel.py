@@ -18,7 +18,8 @@ from astropy.table import Table
 from sn_tools.sn_utils import multiproc
 
 
-def load_OS_table(dbDir, dbName, runType, season=1, fieldType='DDF'):
+def load_OS_table(dbDir, dbName, runType, season=1, fieldType='DDF',
+                  years=[1], LSSTStart=60312):
     """
     Function to load OS data
 
@@ -56,10 +57,20 @@ def load_OS_table(dbDir, dbName, runType, season=1, fieldType='DDF'):
         fFile = h5py.File(fi, 'r')
         keys = list(fFile.keys())
         params['fFile'] = fFile
-        dfa = multiproc(keys, params, load_os_table_multi, nproc=8)
+        dfa = multiproc(keys, params, load_os_table_multi, nproc=16)
+        # add a year column
+        dfa['year'] = (dfa['daymax']-LSSTStart)/365.+1.
+        dfa = dfa.sort_values(by=['daymax'])
 
+        dfa['year'] = dfa['year'].astype(int)
+
+        print(dfa[['year', 'daymax']], LSSTStart)
+
+        idx = dfa['year'].isin(years)
+        idx &= dfa['ebvofMW'] < 0.25
+        dfa = dfa[idx]
         df = pd.concat((df, dfa))
-        break
+        # break
 
     return df
 
@@ -139,7 +150,7 @@ def load_OS_df(dbDir, dbName, runType, season=1, fieldType='DDF'):
 
 
 def load_DataFrame(dbDir_WFD, OS_WFD, runType='spectroz',
-                   season=[1]):
+                   seasons=[1]):
     """
     Function to load data if pandas df
 
@@ -151,7 +162,7 @@ def load_DataFrame(dbDir_WFD, OS_WFD, runType='spectroz',
         WFD db name.
     runType : str, optional
         Run type. The default is spectroz.
-    season : list(int), optional
+    seasons : list(int), optional
         seasons to load. The default is [1].
 
     Returns
@@ -171,7 +182,7 @@ def load_DataFrame(dbDir_WFD, OS_WFD, runType='spectroz',
 
 
 def load_Table(dbDir_WFD, OS_WFD, runType='spectroz',
-               season=[1]):
+               years=[1], LSSTStart=60218):
     """
     Function to load data if pandas df
 
@@ -194,9 +205,16 @@ def load_Table(dbDir_WFD, OS_WFD, runType='spectroz',
     """
 
     wfd = pd.DataFrame()
+    year_min = np.min(years)
+    year_max = np.max(years)
+    seas_min = np.max([1, year_min-2])
+    seas_max = np.min([10, year_max+2])
+    seasons = range(seas_min, seas_max+1)
+
     for seas in seasons:
         wfd_seas = load_OS_table(dbDir_WFD, OS_WFD, runType=runType,
-                                 season=seas, fieldType='WFD')
+                                 season=seas, fieldType='WFD',
+                                 years=years, LSSTStart=LSSTStart)
         wfd = pd.concat((wfd, wfd_seas))
 
     return wfd
@@ -314,10 +332,10 @@ class Plot_nsn_vs:
 
     def plot_nsn_mollview(self):
 
-        seasons = self.data['season'].unique()
+        years = self.data['year'].unique()
 
-        for seas in seasons:
-            idx = self.data['season'] == seas
+        for year in years:
+            idx = self.data['year'] == year
             sel = self.data[idx]
 
             self.Mollview_sum(sel)
@@ -342,7 +360,7 @@ class Plot_nsn_vs:
         print(sums)
 
         xmin = xmax = np.min(sums[var])
-        xmin = 0.001
+        xmin = 0.1
         xmax = xmax = np.max(sums[var])
         self.plotMollview(sums, var, legvar, np.sum,
                           xmin=xmin, xmax=xmax)
@@ -374,6 +392,8 @@ class Plot_nsn_vs:
         hpxmap = np.full(hpxmap.shape, 0.)
         hpxmap[data['healpixID'].astype(
             int)] += data[varName]
+
+        print(np.where(hpxmap < 0.01))
 
         norm = plt.cm.colors.Normalize(xmin, xmax)
         cmap = plt.cm.jet
@@ -422,12 +442,21 @@ parser.add_option('--budget_DD', type=float,
 parser.add_option('--runType', type=str,
                   default='spectroz',
                   help='run type  [%default]')
+"""
 parser.add_option('--seasons', type=str,
                   default='1',
                   help='seasons to process [%default]')
+"""
+parser.add_option('--years', type=str,
+                  default='1',
+                  help='years to process [%default]')
 parser.add_option('--dataType', type=str,
                   default='DataFrame',
                   help='data type [%default]')
+parser.add_option('--LSSTStart', type=float,
+                  default=60218.0018056,
+                  help='Survey starting date [%default]')
+
 
 opts, args = parser.parse_args()
 
@@ -439,17 +468,22 @@ OS_WFD = opts.OS_WFD
 norm_factor_WFD = opts.norm_factor_WFD
 budget_DD = opts.budget_DD
 runType = opts.runType
+"""
 seasons = opts.seasons.split(',')
 seasons = list(map(int, seasons))
+"""
+years = opts.years.split(',')
+years = list(map(int, years))
 dataType = opts.dataType
+LSSTStart = opts.LSSTStart
 
 
-wfd = eval('load_{}(\'{}\',\'{}\',\'{}\',{})'.format(
-    dataType, dbDir_WFD, OS_WFD, runType, seasons))
+wfd = eval('load_{}(\'{}\',\'{}\',\'{}\',{},{})'.format(
+    dataType, dbDir_WFD, OS_WFD, runType, years, LSSTStart))
 
 # Plot_nsn_vs(wfd, norm_factor_WFD, xvar='z', xleg='z',
 #            logy=True, cumul=True, xlim=[0.01, 0.7])
 Plot_nsn_vs(wfd, norm_factor_WFD, bins=np.arange(
-    0.5, 11.5, 1), xvar='season', xleg='season', logy=False, xlim=[1, 10])
+    0.5, 11.5, 1), xvar='year', xleg='year', logy=False, xlim=[1, 10])
 
 plt.show()
