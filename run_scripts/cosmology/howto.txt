@@ -20,7 +20,7 @@ b) use the script run_scripts/cosmology/sn_selection.py
     
 c) the files produced in b) are used as input to perform cosmological fits using the script run_scripts/cosmology/cosmology.py
 
-  -> see python run_scripts/sn_cosmology/cosmology.py --help
+  -> see python run_scripts/cosmology/cosmology.py --help
 
 d) to make the various cosmological plots, use the script plot_scripts/cosmology/plot_cosmo.py
    
