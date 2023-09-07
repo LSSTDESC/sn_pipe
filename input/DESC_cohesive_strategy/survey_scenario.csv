@@ -1,8 +1,8 @@
-field,zmax,sigmaC,season_min,season_max,nsn_max_season,frac_sigmaC
-COSMOS,1.1,1.e8,1,10,1e10,-1.
-XMM-LSS,1.1,1.e8,1,10,1.e10,-1.
-ELAISS1,0.6,1.e8,1,5,1.e10,-1.
-CDFS,0.6,1.e8,1,5,1.e10,-1.
-EDFSa,0.6,1.e8,1,5,1.e10,-1.
-EDFSb,0.6,1.e8,1,5,1.e10,-1.
-WFD,0.7,1.e8,1,5,1.e4,-1.
+field,sigmaC,season_min,season_max,nsn_max_season,frac_sigmaC,zhost_effi
+COSMOS,1.e8,1,10,1e10,-1.,Subaru
+XMM-LSS,1.e8,1,10,1.e10,-1.,Subaru
+ELAISS1,1.e8,1,5,1.e10,-1.,4Most
+CDFS,1.e8,1,5,1.e10,-1.,4Most
+EDFSa,1.e8,1,5,1.e10,-1.,4Most
+EDFSb,1.e8,1,5,1.e10,-1.,4Most
+WFD,1.e8,1,5,1.e4,-1.,4Most
