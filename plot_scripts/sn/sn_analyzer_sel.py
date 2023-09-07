@@ -11,7 +11,7 @@ import glob
 from optparse import OptionParser
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
+from sn_analysis import plt
 from sn_analysis.sn_calc_plot import bin_it
 import h5py
 from astropy.table import Table
@@ -110,7 +110,34 @@ def load_os_table_multi(keys, params, j=0, output_q=None):
         return df
 
 
-def load_OS_df(dbDir, dbName, runType, season=1, fieldType='DDF'):
+def load_OS_df(dbDir, dbName, runType, season=1, fieldType='DDF',
+               years=[1], LSSTStart=60218):
+    """
+
+
+    Parameters
+    ----------
+    dbDir : TYPE
+        DESCRIPTION.
+    dbName : TYPE
+        DESCRIPTION.
+    runType : TYPE
+        DESCRIPTION.
+    season : TYPE, optional
+        DESCRIPTION. The default is 1.
+    fieldType : TYPE, optional
+        DESCRIPTION. The default is 'DDF'.
+    years : TYPE, optional
+        DESCRIPTION. The default is [1].
+    LSSTStart : TYPE, optional
+        DESCRIPTION. The default is 60218.
+
+    Returns
+    -------
+    df : TYPE
+        DESCRIPTION.
+
+    """
     """
     Function to load OS data
 
@@ -126,6 +153,10 @@ def load_OS_df(dbDir, dbName, runType, season=1, fieldType='DDF'):
       season to process. The default is 1.
     fieldType : str, optional
         field type (DDF or WFD). The default is 'DDF'.
+    years : list(int), optional
+        Years to draw. The default is [1].
+    LSSTStart : float, optional
+        Start of LSST survey. The default is 60218.
 
     Returns
     -------
@@ -142,15 +173,27 @@ def load_OS_df(dbDir, dbName, runType, season=1, fieldType='DDF'):
     df = pd.DataFrame()
 
     for fi in fis:
-        aa = pd.read_hdf(fi)
-        print('loading', fieldType, len(aa))
-        df = pd.concat((df, aa))
+        dfa = pd.read_hdf(fi)
+        print('loading', fieldType, len(dfa))
+        # add a year column
+        dfa['year'] = (dfa['daymax']-LSSTStart)/365.+1.
+        dfa = dfa.sort_values(by=['daymax'])
+
+        dfa['year'] = dfa['year'].astype(int)
+
+        print(dfa[['year', 'daymax']], LSSTStart)
+
+        idx = dfa['year'].isin(years)
+        idx &= dfa['ebvofMW'] < 0.25
+        dfa = dfa[idx]
+
+        df = pd.concat((df, dfa))
         # break
     return df
 
 
 def load_DataFrame(dbDir_WFD, OS_WFD, runType='spectroz',
-                   seasons=[1]):
+                   years=[1], LSSTStart=60218.):
     """
     Function to load data if pandas df
 
@@ -162,8 +205,10 @@ def load_DataFrame(dbDir_WFD, OS_WFD, runType='spectroz',
         WFD db name.
     runType : str, optional
         Run type. The default is spectroz.
-    seasons : list(int), optional
-        seasons to load. The default is [1].
+    years : list(int), optional
+        years to load. The default is [1].
+    LSSTStart: float, optional.
+      LSST start survey MJD. The default is 60218.
 
     Returns
     -------
@@ -172,10 +217,17 @@ def load_DataFrame(dbDir_WFD, OS_WFD, runType='spectroz',
 
     """
 
+    year_min = np.min(years)
+    year_max = np.max(years)
+    seas_min = np.max([1, year_min-2])
+    seas_max = np.min([10, year_max+2])
+    seasons = range(seas_min, seas_max+1)
+
     wfd = pd.DataFrame()
     for seas in seasons:
         wfd_seas = load_OS_df(dbDir_WFD, OS_WFD, runType=runType,
-                              season=seas, fieldType='WFD')
+                              season=seas, fieldType='WFD',
+                              years=years, LSSTStart=LSSTStart)
         wfd = pd.concat((wfd, wfd_seas))
 
     return wfd
@@ -264,8 +316,8 @@ class Plot_nsn_vs:
         self.xlim = xlim
         self.nside = nside
 
-        # self.plot_nsn_versus_two()
-        self.plot_nsn_mollview()
+        self.plot_nsn_versus_two()
+        # self.plot_nsn_mollview()
 
     def plot_nsn_versus(self, data, label='', ax=None):
         """
