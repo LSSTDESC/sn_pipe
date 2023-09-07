@@ -241,7 +241,7 @@ def stat_m5(obs, airmass_cut=1.5):
 
     plot(res)
 
-    print(test)
+    # print(test)
 
 
 def plot(res):
@@ -373,6 +373,12 @@ def m5_coadd_study(df):
     dfb[vv].to_csv('m5_night.csv', index=False)
     print(dfb)
 
+    for b in 'ugrizy':
+        ij = dfb['filter'] == b
+        sel = dfb[ij]
+        diff = sel['m5_coadd_proxy']-sel['m5_coadd']
+        print(b, np.mean(diff), np.median(diff))
+
     field = 'DD:XMM_LSS'
     tp = [field]
     r = []
@@ -388,7 +394,8 @@ def m5_coadd_study(df):
             figb.suptitle('{} - {}-band'.format(nn, b))
             idxb = sel['filter'] == b
             selb = sel[idxb]
-            axb.plot(selb['m5_single_med'], selb['airmass_med'], 'ko')
+            #axb.plot(selb['m5_single_med'], selb['airmass_med'], 'ko')
+            axb.plot(selb['m5_single_med'], selb['sky_med'], 'ko')
             ii = selb['airmass_med'] <= 2
             selc = selb[ii]
             r.append((b, np.median(selc['m5_single_med'])))
@@ -403,12 +410,17 @@ def coadd_m5(grp, m5Col='fiveSigmaDepth', airmass_max=1.8):
     # get the number of visits
     Nvisits = len(grp)
 
+    print('ahhh', grp.columns)
     # coadd m5
     m5_coadd_a = 1.25*np.log10(np.sum(10**(0.8*grp[m5Col])))
 
     # coadded m5 - proxy
 
     m5_med = grp[m5Col].median()
+    cloud = grp['cloud'].median()
+    sky = grp['skyBrightness'].median()
+    moon = grp['moonPhase'].median()
+
     airmass_med = grp['airmass'].median()
 
     m5_coadd_b = m5_med+1.25*np.log10(Nvisits)
@@ -417,6 +429,9 @@ def coadd_m5(grp, m5Col='fiveSigmaDepth', airmass_max=1.8):
     sel = grp[idx]
 
     dict_out = {}
+    dict_out['cloud_med'] = [cloud]
+    dict_out['sky_med'] = [sky]
+    dict_out['moon_med'] = [moon]
     dict_out['m5_coadd'] = [m5_coadd_a]
     dict_out['m5_single_med'] = [m5_med]
     dict_out['airmass_med'] = [airmass_med]
@@ -431,7 +446,7 @@ def coadd_m5(grp, m5Col='fiveSigmaDepth', airmass_max=1.8):
 
 dbDir = '../DB_Files'
 dbName = 'baseline_v3.0_10yrs'
-dbExtens = 'db'
+dbExtens = 'npy'
 
 """
 dbName = 'draft_connected_v2.99_10yrs'
@@ -445,7 +460,7 @@ dbExtens = 'npy'
 """
 
 m5_study(dbDir, dbName, dbExtens)
-print(test)
+# print(test)
 # load observations
 observations = load_obs(dbDir, dbName, dbExtens)
 
@@ -465,10 +480,11 @@ obs_season = pd.DataFrame.from_records(obs_season)
 
 # filter_allocation(observations)
 
-get_m5(obs_season)
+# get_m5(obs_season)
 
 # cadence_sl(obs_season)
 
 # plot_hist_band(pd.DataFrame.from_records(obs_season), 'airmass')
 
+print('last plot')
 m5_coadd_study(obs_season)
