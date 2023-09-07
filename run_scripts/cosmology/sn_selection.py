@@ -16,7 +16,7 @@ import pandas as pd
 def select_filt(dataDir, dbName, sellist, seasons,
                 runType='DDF_spectroz', nsn_factor=1,
                 listFields='COSMOS', fieldType='DD',
-                outDir='Test'):
+                outDir='Test', nproc=8):
     """
     Function to select and save selected SN data
     (per season)
@@ -41,6 +41,8 @@ def select_filt(dataDir, dbName, sellist, seasons,
         Type of fields. The default is 'DD'.
     outDir : str, optional
         Main output Dir. The default is 'Test'.
+    nproc: int, optional.
+      number of procs for multiprocessing. The default is 8.
 
     Returns
     -------
@@ -56,7 +58,8 @@ def select_filt(dataDir, dbName, sellist, seasons,
     for seas in seasons:
         # load DDFs
         data = load_complete_dbSimu(
-            dataDir, dbName, runType, listDDF=listFields, seasons=str(seas))
+            dataDir, dbName, runType, listDDF=listFields,
+            seasons=str(seas), nproc=nproc)
         print(seas, len(data))
 
         # apply selection on Data
@@ -102,6 +105,8 @@ parser.add_option("--fieldType", type=str,
                   help=" [%default]")
 parser.add_option("--nsn_factor", type=int,
                   default=30, help="MC normalisation factor [%default]")
+parser.add_option("--nproc", type=int,
+                  default=8, help="nproc for multiprocessing [%default]")
 
 opts, args = parser.parse_args()
 
@@ -114,6 +119,7 @@ fieldType = opts.fieldType
 listFields = opts.listFields
 nsn_factor = opts.nsn_factor
 outDir = '{}_{}'.format(dataDir, selconfig)
+nproc = opts.nproc
 
 
 seasons = range(1, 11)
@@ -121,4 +127,5 @@ sellist = selection_criteria()[selconfig]
 
 select_filt(dataDir, dbName, sellist, seasons=seasons,
             runType=runType, nsn_factor=nsn_factor,
-            listFields=listFields, fieldType=fieldType, outDir=outDir)
+            listFields=listFields, fieldType=fieldType,
+            outDir=outDir, nproc=nproc)
