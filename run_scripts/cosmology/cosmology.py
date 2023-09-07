@@ -12,6 +12,35 @@ from sn_cosmology.fit_season import Fit_seasons
 from sn_tools.sn_io import checkDir
 
 
+def host_effi_1D(lista, listb):
+    """
+    Function to build a dict of 1D interpolators
+
+    Parameters
+    ----------
+    lista : list(str)
+        List of csv files with z,effi as columns.
+    listb : list(str)
+        List of keys for the output dict.
+
+    Returns
+    -------
+    dict_out : dict
+        Output data.
+
+    """
+
+    from scipy.interpolate import interp1d
+    dict_out = {}
+    for i, vv in enumerate(lista):
+        dd = pd.read_csv(vv, comment='#')
+        nn = listb[i]
+        dict_out[nn] = interp1d(dd['z'], dd['effi'],
+                                bounds_error=False, fill_value=0.)
+
+    return dict_out
+
+
 parser = OptionParser()
 
 parser.add_option("--dataDir_DD", type=str,
@@ -32,6 +61,12 @@ parser.add_option("--outDir", type=str,
 parser.add_option("--survey", type=str,
                   default='input/DESC_cohesive_strategy/survey_scenario.csv',
                   help=" survey to use[%default]")
+parser.add_option("--host_effi_UD", type=str,
+                  default='input/DESC_cohesive_strategy/host_effi_Subaru.csv',
+                  help="host effi curve for UD fields [%default]")
+parser.add_option("--host_effi_DD", type=str,
+                  default='input/DESC_cohesive_strategy/host_effi_4Most.csv',
+                  help="host effi curve for DD+WFD fields [%default]")
 
 opts, args = parser.parse_args()
 
@@ -43,11 +78,19 @@ dbName_WFD = opts.dbName_WFD
 selconfig = opts.selconfig
 outDir = opts.outDir
 survey_file = opts.survey
+host_effi_UD = opts.host_effi_UD
+host_effi_DD = opts.host_effi_DD
 
 checkDir(outDir)
 
 dictsel = selection_criteria()[selconfig]
 survey = pd.read_csv(survey_file, comment='#')
+
+# make interp1d for host_effi
+
+host_effi = host_effi_1D([host_effi_UD, host_effi_DD], [
+    'host_effi_UD', 'host_effi_DD'])
+
 
 # save the survey in outDir
 outName_survey = '{}/survey_{}.csv'.format(outDir, dbName_DD)
@@ -83,7 +126,8 @@ resfi = pd.DataFrame()
 
 for key, vals in priors.items():
     cl = Fit_seasons(fitconfig, dataDir_DD, dbName_DD,
-                     dataDir_WFD, dbName_WFD, dictsel, survey, vals)
+                     dataDir_WFD, dbName_WFD, dictsel, survey,
+                     vals, host_effi)
     res = cl()
     res['prior'] = key
     resfi = pd.concat((resfi, res))
