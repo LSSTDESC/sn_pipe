@@ -15,13 +15,16 @@ parser.add_option("--inputDir_WFD", type="str",
                   default='/sps/lsst/users/gris/Output_SN_WFD_sigmaInt_0.0_Hounsell_G10_JLA',
                   help="input directory for WFD files[%default]")
 parser.add_option("--dbName_WFD", type="str",
-                  default='draft_connected_v2.99_10yrs', help="dbName for WFD data[%default]")
+                  default='baseline_v3.0_10yrs', help="dbName for WFD data[%default]")
 parser.add_option("--survey", type=str,
                   default='input/DESC_cohesive_strategy/survey_scenario.csv',
                   help=" survey to use[%default]")
 parser.add_option("--tag", type=str,
                   default='-1.0',
                   help="tag for job name [%default]")
+parser.add_option("--frac_WFD_low_sigmaC", type=float,
+                  default=0.3,
+                  help="fraction of SNe Ia WFD low sigmaC  [%default]")
 
 opts, args = parser.parse_args()
 
@@ -32,6 +35,7 @@ inputDir_WFD = opts.inputDir_WFD
 dbName_WFD = opts.dbName_WFD
 survey = opts.survey
 tag = opts.tag
+frac_WFD_low_sigmaC = opts.frac_WFD_low_sigmaC
 
 # load OS files to process
 fis = pd.read_csv(dbList, comment='#')
@@ -41,7 +45,7 @@ fis = pd.read_csv(dbList, comment='#')
 script = 'run_scripts/cosmology/cosmology.py'
 for i, row in fis.iterrows():
     dbName = row['dbName']
-    processName = 'cosmo_{}_{}'.format(dbName,tag)
+    processName = 'cosmo_{}_{}'.format(dbName, tag)
     mybatch = BatchIt(processName=processName)
     params = {}
     params['dataDir_DD'] = inputDir_DD
@@ -50,5 +54,6 @@ for i, row in fis.iterrows():
     params['dbName_WFD'] = dbName_WFD
     params['outDir'] = outDir
     params['survey'] = survey
+    params['frac_WFD_low_sigmaC'] = frac_WFD_low_sigmaC
     mybatch.add_batch(script, params)
     mybatch.go_batch()
