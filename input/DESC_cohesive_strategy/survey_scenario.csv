@@ -1,8 +1,8 @@
-field,sigmaC,season_min,season_max,nsn_max_season,frac_sigmaC,host_effi
-COSMOS,1.e8,1,10,1e10,-1.,host_effi_UD
-XMM-LSS,1.e8,1,10,1.e10,-1.,host_effi_UD
-ELAISS1,1.e8,1,5,1.e10,-1.,host_effi_DD
-CDFS,1.e8,1,5,1.e10,-1.,host_effi_DD
-EDFSa,1.e8,1,5,1.e10,-1.,host_effi_DD
-EDFSb,1.e8,1,5,1.e10,-1.,host_effi_DD
-WFD,1.e8,1,5,1.e4,-1.,host_effi_DD
+field,season_min,season_max,nsn_max_season,host_effi
+COSMOS,1,10,1e10,host_effi_UD
+XMM-LSS,1,10,1.e10,host_effi_UD
+ELAISS1,1,5,1.e10,host_effi_DD
+CDFS,1,5,1.e10,host_effi_DD
+EDFSa,1,5,1.e10,host_effi_DD
+EDFSb,1,5,1.e10,host_effi_DD
+WFD,1,5,1.e4,host_effi_DD
