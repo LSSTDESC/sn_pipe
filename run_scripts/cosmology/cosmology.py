@@ -73,7 +73,7 @@ parser.add_option("--frac_WFD_low_sigmaC", type=float,
 parser.add_option("--max_sigmaC", type=float,
                   default=0.04,
                   help="Max sigmaC defining low sigmaC sample [%default]")
-parser.add_option("--test_mode", type=str,
+parser.add_option("--test_mode", type=int,
                   default=0,
                   help="To run the test mode of the program [%default]")
 
@@ -154,5 +154,9 @@ for key, vals in priors.items():
     """
 resfi['dbName_DD'] = dbName_DD
 resfi['dbName_WFD'] = dbName_WFD
+
+if test_mode:
+    print('final result')
+    print(resfi)
 
 resfi.to_hdf(outName, key='cosmo')
