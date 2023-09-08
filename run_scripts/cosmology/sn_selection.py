@@ -11,6 +11,7 @@ from sn_tools.sn_io import checkDir
 from sn_analysis.sn_selection import selection_criteria
 from optparse import OptionParser
 import pandas as pd
+import numpy as np
 
 
 def select_filt(dataDir, dbName, sellist, seasons,
@@ -75,8 +76,10 @@ def select_filt(dataDir, dbName, sellist, seasons,
         sel_data.to_hdf(outName, key='SN')
 
         # get some stat
-        stat = sel_data.groupby(['field', 'season']).apply(
-            lambda x: pd.DataFrame({'nsn': [len(x)/nsn_factor]})).reset_index()
+        # stat = sel_data.groupby(['field', 'season']).apply(
+        #     lambda x: pd.DataFrame({'nsn': [len(x)/nsn_factor]})).reset_index()
+
+        stat = get_stat(sel_data, nsn_factor)
         stat_tot = pd.concat((stat_tot, stat))
 
     stat_tot['season'] = stat_tot['season'].astype(int)
@@ -84,6 +87,59 @@ def select_filt(dataDir, dbName, sellist, seasons,
     outName_stat = '{}/nsn_{}.hdf5'.format(outDir_full, dbName)
 
     stat_tot.to_hdf(outName_stat, key='SN')
+
+
+def get_stat(sel_data, nsn_factor):
+    """
+    Function to estimate nsn
+
+    Parameters
+    ----------
+    sel_data : pandas df
+        Data to process.
+    nsn_factor : float
+        Normalization factor.
+
+    Returns
+    -------
+    # stat_sn : pandas df
+        nsn results .
+
+    """
+
+    # get total nsn
+    stat_sn = sel_data.groupby(['field', 'season']).apply(
+        lambda x: nsn_estimate(x,
+                               zmax=1.1,
+                               nsn_factor=nsn_factor,
+                               varname='nsn')).reset_index()
+    stat_sn = stat_sn.drop(['level_2'], axis=1)
+
+    for zlim in [0.1, 0.2]:
+        nname = 'nsn_z_{}'.format(np.round(zlim, 1))
+        stat_sn_z = sel_data.groupby(['field', 'season']).apply(
+            lambda x: nsn_estimate(x,
+                                   zmax=zlim,
+                                   nsn_factor=nsn_factor,
+                                   varname=nname)).reset_index()
+        stat_sn_z = stat_sn_z.drop(['level_2'], axis=1)
+        # merge
+        stat_sn = stat_sn.merge(
+            stat_sn_z, left_on=['field', 'season'],
+            right_on=['field', 'season'], suffixes=['', ''])
+
+    return stat_sn
+
+
+def nsn_estimate(grp, zmax=1.1, nsn_factor=1, varname='nsn'):
+
+    idx = grp['z'] <= zmax
+
+    sel = grp[idx]
+
+    res = int(len(sel)/nsn_factor)
+
+    return pd.DataFrame({varname: [res]})
 
 
 parser = OptionParser()
