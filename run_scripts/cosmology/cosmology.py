@@ -67,6 +67,15 @@ parser.add_option("--host_effi_UD", type=str,
 parser.add_option("--host_effi_DD", type=str,
                   default='input/DESC_cohesive_strategy/host_effi_4Most.csv',
                   help="host effi curve for DD+WFD fields [%default]")
+parser.add_option("--frac_WFD_low_sigmaC", type=float,
+                  default=0.8,
+                  help="fraction of WFD SN with low sigmaC [%default]")
+parser.add_option("--max_sigmaC", type=float,
+                  default=0.04,
+                  help="Max sigmaC defining low sigmaC sample [%default]")
+parser.add_option("--test_mode", type=str,
+                  default=0,
+                  help="To run the test mode of the program [%default]")
 
 opts, args = parser.parse_args()
 
@@ -80,6 +89,9 @@ outDir = opts.outDir
 survey_file = opts.survey
 host_effi_UD = opts.host_effi_UD
 host_effi_DD = opts.host_effi_DD
+frac_WFD_low_sigmaC = opts.frac_WFD_low_sigmaC
+max_sigmaC = opts.max_sigmaC
+test_mode = opts.test_mode
 
 checkDir(outDir)
 
@@ -127,7 +139,8 @@ resfi = pd.DataFrame()
 for key, vals in priors.items():
     cl = Fit_seasons(fitconfig, dataDir_DD, dbName_DD,
                      dataDir_WFD, dbName_WFD, dictsel, survey,
-                     vals, host_effi)
+                     vals, host_effi, frac_WFD_low_sigmaC,
+                     max_sigmaC, test_mode)
     res = cl()
     res['prior'] = key
     resfi = pd.concat((resfi, res))
