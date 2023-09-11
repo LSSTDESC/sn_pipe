@@ -52,7 +52,7 @@ parser.add_option("--dataDir_WFD", type=str,
                   default='../Output_SN_WFD_sigmaInt_0.0_Hounsell_G10_JLA',
                   help="data dir[%default]")
 parser.add_option("--dbName_WFD", type=str,
-                  default='draft_connected_v2.99_10yrs',
+                  default='baseline_v3.0_10yrs',
                   help="db name [%default]")
 parser.add_option("--selconfig", type=str,
                   default='G10_JLA', help="sel config [%default]")
@@ -76,6 +76,9 @@ parser.add_option("--max_sigmaC", type=float,
 parser.add_option("--test_mode", type=int,
                   default=0,
                   help="To run the test mode of the program [%default]")
+parser.add_option("--lowz_optimize", type=float,
+                  default=0.1,
+                  help="To maximize the lowz sample [%default]")
 
 opts, args = parser.parse_args()
 
@@ -92,6 +95,7 @@ host_effi_DD = opts.host_effi_DD
 frac_WFD_low_sigmaC = opts.frac_WFD_low_sigmaC
 max_sigmaC = opts.max_sigmaC
 test_mode = opts.test_mode
+lowz_optimize = opts.lowz_optimize
 
 checkDir(outDir)
 
@@ -140,7 +144,7 @@ for key, vals in priors.items():
     cl = Fit_seasons(fitconfig, dataDir_DD, dbName_DD,
                      dataDir_WFD, dbName_WFD, dictsel, survey,
                      vals, host_effi, frac_WFD_low_sigmaC,
-                     max_sigmaC, test_mode)
+                     max_sigmaC, test_mode, lowz_optimize)
     res = cl()
     res['prior'] = key
     resfi = pd.concat((resfi, res))
