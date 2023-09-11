@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 from sn_tools.sn_obs import season
 import matplotlib.pyplot as plt
+from optparse import OptionParser
 
 
 class m5_study:
@@ -125,7 +126,8 @@ class m5_study:
 
         dfb['fiveSigmaDepth'] = dfb['m5_single_med']
         dfb['airmass'] = dfb['airmass_med']
-        vv = ['note', 'filter', 'night', 'season', 'fiveSigmaDepth', 'airmass']
+        vv = ['note', 'filter', 'night', 'season', 'fiveSigmaDepth',
+              'airmass', 'm5_coadd', 'm5_coadd_proxy']
         dfb[vv].to_csv('m5_field_night_{}.csv'.format(
             self.dbName), index=False)
         print(dfb)
@@ -370,6 +372,7 @@ def m5_coadd_study(df):
     dfb['fiveSigmaDepth'] = dfb['m5_single_med']
     dfb['airmass'] = dfb['airmass_med']
     vv = ['note', 'filter', 'night', 'season', 'fiveSigmaDepth', 'airmass']
+
     dfb[vv].to_csv('m5_night.csv', index=False)
     print(dfb)
 
@@ -409,8 +412,6 @@ def coadd_m5(grp, m5Col='fiveSigmaDepth', airmass_max=1.8):
 
     # get the number of visits
     Nvisits = len(grp)
-
-    print('ahhh', grp.columns)
     # coadd m5
     m5_coadd_a = 1.25*np.log10(np.sum(10**(0.8*grp[m5Col])))
 
@@ -444,20 +445,22 @@ def coadd_m5(grp, m5Col='fiveSigmaDepth', airmass_max=1.8):
     return pd.DataFrame.from_dict(dict_out)
 
 
-dbDir = '../DB_Files'
-dbName = 'baseline_v3.0_10yrs'
-dbExtens = 'npy'
+parser = OptionParser()
 
-"""
-dbName = 'draft_connected_v2.99_10yrs'
-dbName = 'ddf_early_deep_slf0.20_f10.60_f20.80_v2.1_10yrs'
-dbExtens = 'npy'
-"""
-"""
-dbDir = 'Test_Fakes'
-dbName = 'Fakes'
-dbExtens = 'npy'
-"""
+parser.add_option('--dbDir', type='str', default='../DB_Files',
+                  help='DB file location dir [%default]')
+
+parser.add_option('--dbName', type='str', default='baseline_v3.0_10yrs',
+                  help='DB file to process[%default]')
+
+parser.add_option('--dbExtent', type='str', default='npy',
+                  help='DB file extent [%default]')
+
+opts, args = parser.parse_args()
+
+dbDir = opts.dbDir
+dbName = opts.dbName
+dbExtens = opts.dbExtent
 
 m5_study(dbDir, dbName, dbExtens)
 # print(test)
