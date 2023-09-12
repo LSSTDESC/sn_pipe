@@ -12,7 +12,12 @@ cookbook:
 - python run_scripts/fakes/make_scenario.py --configFile input/DESC_cohesive_strategy/DDF_DESC_0.80_SN_bud.csv 
   -> will produce LSST-like OS with LSST pointings parameters
   -> this file can be used as "usual" OS to generate and fit LCs
-OR
+  
+*** with an external file with obs_conditions
+python run_scripts/fakes/make_scenario.py --configFile=input/DESC_cohesive_strategy/DDF_Univ_SN_bud.csv --obsFromSimu=1 --obsCondFile=input/m5_OS/m5_field_night_baseline_v3.0_10yrs.csv
+
+OR all at once
+
 - python run_scripts/fakes/loop_scenarios.py --budget_DD=bud
   -> to loop on possible scenarios
 
@@ -26,4 +31,4 @@ to make all the previous stages at once:
 
 
 ********************* Analysis ***************
-- OS analysis with ana_OS.py
+- OS analysis with run_scripts/desc_ddf_strategy/ana_OS.py
