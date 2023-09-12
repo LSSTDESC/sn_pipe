@@ -19,7 +19,8 @@ add_option(parser, confDict_fake)
 
 # parser = OptionParser()
 
-parser.add_option('--configFile', type='str', default='input/DESC_cohesive_strategy/scenario_1.csv',
+parser.add_option('--configFile', type='str',
+                  default='input/DESC_cohesive_strategy/scenario_1.csv',
                   help='config file to use[%default]')
 parser.add_option("--m5_file", type=str,
                   default='input/m5_OS/m5_field_night_baseline_v3.0_10yrs.csv',
@@ -31,7 +32,7 @@ parser.add_option("--airmass_max", type=float,
                   default=1.8,
                   help="max airmass for obs (for fast run_mode only) [%default]")
 parser.add_option('--outputDir', type='str', default='../DB_Files',
-                  help='output directory[%default]')
+                  help='output directory [%default]')
 
 opts, args = parser.parse_args()
 
@@ -91,7 +92,7 @@ for i, row in df_conf.iterrows():
     config_fake['RA'] = ra
     config_fake['Dec'] = dec
 
-    print(config_fake)
+    # print(config_fake)
     fakes = FakeObservations(config_fake).obs
     if fakeData is None:
         fakeData = np.copy(fakes)
