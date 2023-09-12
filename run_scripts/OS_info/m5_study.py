@@ -127,7 +127,7 @@ class m5_study:
         dfb['fiveSigmaDepth'] = dfb['m5_single_med']
         dfb['airmass'] = dfb['airmass_med']
         vv = ['note', 'filter', 'night', 'season', 'fiveSigmaDepth',
-              'airmass', 'm5_coadd', 'm5_coadd_proxy']
+              'airmass', 'm5_coadd', 'm5_coadd_proxy', 'mjd']
         dfb[vv].to_csv('m5_field_night_{}.csv'.format(
             self.dbName), index=False)
         print(dfb)
@@ -421,6 +421,7 @@ def coadd_m5(grp, m5Col='fiveSigmaDepth', airmass_max=1.8):
     cloud = grp['cloud'].median()
     sky = grp['skyBrightness'].median()
     moon = grp['moonPhase'].median()
+    mjd = grp['observationStartMJD'].median()
 
     airmass_med = grp['airmass'].median()
 
@@ -433,6 +434,7 @@ def coadd_m5(grp, m5Col='fiveSigmaDepth', airmass_max=1.8):
     dict_out['cloud_med'] = [cloud]
     dict_out['sky_med'] = [sky]
     dict_out['moon_med'] = [moon]
+    dict_out['mjd'] = [mjd]
     dict_out['m5_coadd'] = [m5_coadd_a]
     dict_out['m5_single_med'] = [m5_med]
     dict_out['airmass_med'] = [airmass_med]
