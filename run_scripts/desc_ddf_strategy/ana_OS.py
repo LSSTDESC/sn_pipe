@@ -110,9 +110,10 @@ pp = Anaplot_OS(dbDir, config_db, Nvisits_LSST, budget, outDir='',
                 pz_requirement=pz_requirement,
                 filter_alloc_req=filter_alloc_req, Nvisits_WL=Nvisits_WL)
 
-pp.plot_budget()
-pp.plot_m5_PZ()
-pp.plot_Nvisits_WL()
+# pp.plot_budget()
+# pp.plot_m5_PZ()
+# pp.plot_Nvisits_WL()
+pp.plot_cadence_mean()
 plt.show()
 
 
