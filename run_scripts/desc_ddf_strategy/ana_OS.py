@@ -105,7 +105,9 @@ if outDir != '':
 # this is to plot the budget, PZ req and WL req
 
 config_db = pd.read_csv(configdB, comment='#')
-config_db['dbName'] += '_{}'.format(budget)
+if budget > 0:
+    config_db['dbName'] += '_{}'.format(budget)
+
 pp = Anaplot_OS(dbDir, config_db, Nvisits_LSST, budget, outDir='',
                 pz_requirement=pz_requirement,
                 filter_alloc_req=filter_alloc_req, Nvisits_WL=Nvisits_WL)
