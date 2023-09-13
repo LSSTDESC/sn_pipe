@@ -51,6 +51,9 @@ m5 = m5[idx]
 m5_med = m5.groupby(['note', 'season', 'filter'])[
     'fiveSigmaDepth', 'airmass'].median().reset_index()
 
+print('m5_med', m5_med)
+# print(test)
+
 # get ra,dec values
 dd_radec = pd.read_csv(radec_file)
 
