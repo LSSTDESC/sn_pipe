@@ -47,7 +47,7 @@ def load_DDF(dbDir, dbName, DDList=['COSMOS', 'ECDFS',
     """
 
     fullPath = '{}/{}'.format(dbDir, dbName)
-    tt = np.load(fullPath)
+    tt = np.load(fullPath, allow_pickle=True)
 
     print(np.unique(tt['note']))
     data = None
