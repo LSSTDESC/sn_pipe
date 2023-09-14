@@ -124,10 +124,10 @@ class m5_study:
         dfb = df.groupby(['note', 'filter', 'night', 'season']).apply(
             lambda x: coadd_m5(x)).reset_index()
 
-        dfb['fiveSigmaDepth'] = dfb['m5_single_med']
-        dfb['airmass'] = dfb['airmass_med']
         vv = ['note', 'filter', 'night', 'season', 'fiveSigmaDepth',
-              'airmass', 'm5_coadd', 'm5_coadd_proxy', 'mjd']
+              'airmass', 'observationStartMJD',
+              'numExposures', 'visitExposureTime',
+              'seeingFwhmEff', 'seeingFwhmGeom']
         dfb[vv].to_csv('m5_field_night_{}.csv'.format(
             self.dbName), index=False)
         print(dfb)
@@ -369,8 +369,6 @@ def m5_coadd_study(df):
     dfb = df.groupby(['note', 'filter', 'night', 'season']).apply(
         lambda x: coadd_m5(x)).reset_index()
 
-    dfb['fiveSigmaDepth'] = dfb['m5_single_med']
-    dfb['airmass'] = dfb['airmass_med']
     vv = ['note', 'filter', 'night', 'season', 'fiveSigmaDepth', 'airmass']
 
     dfb[vv].to_csv('m5_night.csv', index=False)
@@ -398,10 +396,10 @@ def m5_coadd_study(df):
             idxb = sel['filter'] == b
             selb = sel[idxb]
             #axb.plot(selb['m5_single_med'], selb['airmass_med'], 'ko')
-            axb.plot(selb['m5_single_med'], selb['sky_med'], 'ko')
-            ii = selb['airmass_med'] <= 2
+            axb.plot(selb['fiveSigmaDepth'], selb['skyBrightness'], 'ko')
+            ii = selb['airmass'] <= 2
             selc = selb[ii]
-            r.append((b, np.median(selc['m5_single_med'])))
+            r.append((b, np.median(selc['fiveSigmaDepth'])))
 
     tt = pd.DataFrame(r, columns=['band', 'm5_single'])
     tt.to_csv('m5_{}.csv'.format(field.split(':')[-1]), index=False)
@@ -417,27 +415,36 @@ def coadd_m5(grp, m5Col='fiveSigmaDepth', airmass_max=1.8):
 
     # coadded m5 - proxy
 
+    """
     m5_med = grp[m5Col].median()
     cloud = grp['cloud'].median()
     sky = grp['skyBrightness'].median()
     moon = grp['moonPhase'].median()
     mjd = grp['observationStartMJD'].median()
-
-    airmass_med = grp['airmass'].median()
-
-    m5_coadd_b = m5_med+1.25*np.log10(Nvisits)
+    exptime = grp['visitExposureTime'].median()
+    numexp = grp['numExposures'].median()
+    """
 
     idx = grp['airmass'] >= airmass_max
     sel = grp[idx]
 
     dict_out = {}
+
+    for vv in ['airmass', 'fiveSigmaDepth', 'cloud', 'skyBrightness',
+               'moonPhase', 'observationStartMJD', 'visitExposureTime',
+               'numExposures', 'seeingFwhmEff', 'seeingFwhmGeom']:
+        dict_out[vv] = [grp[vv].median()]
+
+    """
     dict_out['cloud_med'] = [cloud]
+    dict_out['numExposures'] = [numexp]
+    dict_out['visitExposureTime'] = [exptime]
     dict_out['sky_med'] = [sky]
     dict_out['moon_med'] = [moon]
-    dict_out['mjd'] = [mjd]
+    """
+    m5_coadd_b = dict_out['fiveSigmaDepth']+1.25*np.log10(Nvisits)
+
     dict_out['m5_coadd'] = [m5_coadd_a]
-    dict_out['m5_single_med'] = [m5_med]
-    dict_out['airmass_med'] = [airmass_med]
     dict_out['m5_coadd_proxy'] = [m5_coadd_b]
     dict_out['Nvisits'] = [Nvisits]
     dict_out['SNR_rat'] = [10**(0.4*(m5_coadd_a-m5_coadd_b))]
