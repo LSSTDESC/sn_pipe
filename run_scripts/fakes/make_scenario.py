@@ -15,7 +15,7 @@ parser = OptionParser(description='Script to generate fake scenarios.')
 
 add_option(parser, confDict_fake)
 
-#opts, args = parser.parse_args()
+# opts, args = parser.parse_args()
 
 # parser = OptionParser()
 
@@ -48,8 +48,11 @@ m5 = pd.read_csv(m5_file)
 idx = m5['airmass'] <= airmass_max
 m5 = m5[idx]
 
-m5_med = m5.groupby(['note', 'season', 'filter'])[
-    'fiveSigmaDepth', 'airmass'].median().reset_index()
+col_grp = ['note', 'season', 'filter']
+cols_i = ['fiveSigmaDepth', 'airmass', 'numExposures', 'visitExposureTime']
+cols_i += ['seeingFwhmEff', 'seeingFwhmGeom']
+
+m5_med = m5.groupby(col_grp)[cols_i].median().reset_index()
 
 print('m5_med', m5_med)
 # print(test)
@@ -66,11 +69,13 @@ print(df_conf)
 
 config_fake = config(confDict_fake, opts)
 
+
 # generate fake obs
 
 cols = df_conf.columns
 
 fakeData = None
+shift = 1  # to get a unique obsId
 for i, row in df_conf.iterrows():
     for cc in cols:
         if 'Nvisits' not in cc and 'cadence' not in cc:
@@ -86,17 +91,20 @@ for i, row in df_conf.iterrows():
     for b in selm5['filter'].unique():
         io = selm5['filter'] == b
         rr = selm5[io]
-        config_fake['m5'][b] = str(rr['fiveSigmaDepth'].values[0])
+        for vv in cols_i:
+            config_fake[vv][b] = rr[vv].values[0]
 
     # add "good" ra,dec
     ido = dd_radec['field'] == config_fake['field']
     ra = dd_radec[ido]['RA'].values[0]
     dec = dd_radec[ido]['Dec'].values[0]
-    config_fake['RA'] = ra
-    config_fake['Dec'] = dec
+    config_fake['fieldRA'] = ra
+    config_fake['fieldDec'] = dec
 
     # print(config_fake)
-    fakes = FakeObservations(config_fake).obs
+    fake_proc = FakeObservations(config_fake, shift)
+    fakes = fake_proc.obs
+    shift = fake_proc.shift_obsId
     if fakeData is None:
         fakeData = np.copy(fakes)
     else:
