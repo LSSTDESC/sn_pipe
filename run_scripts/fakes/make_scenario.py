@@ -125,5 +125,8 @@ for i, row in df_conf.iterrows():
 outName = configFile.split('/')[-1].split('.csv')[0]
 outFile = '{}/{}.npy'.format(outputDir, outName)
 
+if opts.obsFromSimu:
+    outFile = '{}/{}_rand_m5.npy'.format(outputDir, outName)
+
 checkDir(outputDir)
 np.save(outFile, np.copy(fakeData))
