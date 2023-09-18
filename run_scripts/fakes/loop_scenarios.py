@@ -29,9 +29,12 @@ def loop_it(listDB, params, j=0, output_q=None):
     """
 
     dirScen = params['dirScen']
+    obsFromSimu = params['obsFromSimu']
 
-    cmd = 'python run_scripts/fakes/make_scenario.py --configFile {}'.format(
-        dirScen)
+    cmd = 'python run_scripts/fakes/make_scenario.py'
+    cmd += ' --obsFromSimu {}'.format(obsFromSimu)
+    cmd += ' --configFile {}'.format(dirScen)
+
     for scen in listDB:
         cmd_ = '{}/{}'.format(cmd, scen.split('/')[-1])
         print(cmd_)
@@ -54,14 +57,15 @@ parser.add_option('--budget_DD', type=float,
                   help='DD budget [%default]')
 parser.add_option('--configFile', type='str', default='scenarios.csv',
                   help='config file to use[%default]')
-
+parser.add_option('--obsFromSimu', type=int, default=0,
+                  help='To generate with more realistic m5 and airmass [%default]')
 opts, args = parser.parse_args()
 
 
 dirScen = opts.dirScen
 budget = np.round(opts.budget_DD, 2)
 configFile = opts.configFile
-
+obsFromSimu = opts.obsFromSimu
 # load configs (ie scenarios)
 df_config = pd.read_csv('{}/{}'.format(dirScen, configFile), comment='#')
 
@@ -72,7 +76,7 @@ list_scen = df_config['name'].unique()
 
 params = {}
 params['dirScen'] = dirScen
-
+params['obsFromSimu'] = obsFromSimu
 multiproc(list_scen, params, loop_it, 8)
 
 """
