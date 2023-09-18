@@ -63,7 +63,7 @@ budget = np.round(opts.budget_DD, 2)
 configFile = opts.configFile
 
 # load configs (ie scenarios)
-df_config = pd.read_csv(configFile, comment='#')
+df_config = pd.read_csv('{}/{}'.format(dirScen, configFile), comment='#')
 
 df_config['name'] = dirScen+'/'+df_config['name'] + '_{}'.format(budget)+'.csv'
 
