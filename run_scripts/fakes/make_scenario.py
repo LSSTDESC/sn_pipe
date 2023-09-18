@@ -2,6 +2,7 @@ import numpy as np
 from optparse import OptionParser
 from sn_tools.sn_io import make_dict_from_config, checkDir
 from sn_tools.sn_fake_utils import FakeObservations, config, add_option
+from sn_tools.sn_fake_utils import load_observing_conditions
 import sn_script_input
 import pandas as pd
 import copy
@@ -54,7 +55,12 @@ cols_i += ['seeingFwhmEff', 'seeingFwhmGeom']
 
 m5_med = m5.groupby(col_grp)[cols_i].median().reset_index()
 
-print('m5_med', m5_med)
+#print('m5_med', m5_med)
+
+obs_conditions = {}
+if opts.obsFromSimu:
+    obs_conditions, mjd_min = load_observing_conditions(opts.m5_file)
+
 # print(test)
 
 # get ra,dec values
@@ -65,7 +71,7 @@ df_conf = pd.read_csv(configFile, comment='#')
 
 df_conf['seasons'] = df_conf['seasons'].astype(str)
 df_conf['seasonLength'] = df_conf['seasonLength'].astype(str)
-print(df_conf)
+# print(df_conf)
 
 config_fake = config(confDict_fake, opts)
 
@@ -77,6 +83,7 @@ cols = df_conf.columns
 fakeData = None
 shift = 1  # to get a unique obsId
 for i, row in df_conf.iterrows():
+    print('processing', row['name'], '{}/{}'.format(i+1, len(df_conf)))
     for cc in cols:
         if 'Nvisits' not in cc and 'cadence' not in cc:
             config_fake[cc] = row[cc]
@@ -102,7 +109,10 @@ for i, row in df_conf.iterrows():
     config_fake['fieldDec'] = dec
 
     # print(config_fake)
-    fake_proc = FakeObservations(config_fake, shift)
+    obs_c = {}
+    if obs_conditions:
+        obs_c = obs_conditions[config_fake['field']]
+    fake_proc = FakeObservations(config_fake, shift, obs_conditions=obs_c)
     fakes = fake_proc.obs
     shift = fake_proc.shift_obsId
     if fakeData is None:
