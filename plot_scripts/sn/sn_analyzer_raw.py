@@ -340,8 +340,6 @@ if gime_plotNSN_vs_z:
              title=title, plotDir='', plotName='')
 
 plt.show()
-print(test)
-
 
 """
 print('aooo', len(res), res.columns, np.unique(res['healpixID']))
@@ -371,7 +369,6 @@ for key, vals in sel.items():
     nsn_fields = pd.concat((nsn_fields, dd))
 
 print(nsn_fields)
-print(test)
 
 # print the results
 pp = {}
