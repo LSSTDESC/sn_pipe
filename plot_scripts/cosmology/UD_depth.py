@@ -7,7 +7,7 @@ def load_field(dbDir, dbName, field):
 
     fullName = '{}/{}.npy'.format(dbDir, dbName)
 
-    tt = np.load(fullName)
+    tt = np.load(fullName, allow_pickle=True)
 
     return data_field(tt, field)
 
@@ -19,8 +19,10 @@ def data_field(tt, field):
     return tt[idx]
 
 
-def nvisits(data, season_min=1, season_max=10):
+def nvisits(datam, season_min=1, season_max=10):
 
+    from sn_tools.sn_obs import season
+    data = season(datam)
     idx = data['season'] >= season_min
     idx &= data['season'] <= season_max
 
@@ -28,7 +30,7 @@ def nvisits(data, season_min=1, season_max=10):
 
 
 dbDir = '../DB_Files'
-df = pd.read_csv('fich_DDF.csv')
+df = pd.read_csv('input/DESC_cohesive_strategy/fich_DDF.csv')
 
 
 r = []
