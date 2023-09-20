@@ -46,7 +46,7 @@ parser = OptionParser(description='Script to analyze SN prod')
 parser.add_option('--dbDir', type=str, default='../cosmo_fit',
                   help='OS location dir[%default]')
 parser.add_option('--dbList', type=str,
-                  default='input/DESC_cohesive_strategy/config_ana.csv',
+                  default='input/DESC_cohesive_strategy/config_ana_0.07.csv',
                   help='OS name[%default]')
 parser.add_option('--budget_DD', type=float,
                   default=0.07,
