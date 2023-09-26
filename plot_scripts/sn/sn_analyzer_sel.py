@@ -336,7 +336,7 @@ class Plot_nsn_vs:
         self.nside = nside
 
         self.plot_nsn_versus_two()
-        # self.plot_nsn_mollview()
+        self.plot_nsn_mollview()
 
     def plot_nsn_versus(self, data, label='', ax=None):
         """
@@ -405,12 +405,15 @@ class Plot_nsn_vs:
 
         years = self.data[what].unique()
 
+        self.Mollview_sum(self.data, addleg='all seasons')
+
+        """
         for year in years:
             idx = self.data[what] == year
             sel = self.data[idx]
 
             self.Mollview_sum(sel, addleg='{} {}'.format(what, int(year)))
-
+        """
         plt.show()
 
     def Mollview_sum(self, data, var='nsn', legvar='N$_{SN}$', addleg=''):
@@ -556,8 +559,8 @@ wfd = eval('load_{}(\'{}\',\'{}\',\'{}\',{},{})'.format(
 
 Plot_nsn_vs(wfd, norm_factor_WFD, xvar='z', xleg='z',
             logy=True, cumul=True, xlim=[0.01, 0.7])
-"""
+
 Plot_nsn_vs(wfd, norm_factor_WFD, bins=np.arange(
     0.5, 11.5, 1), xvar='season', xleg='season', logy=False, xlim=[1, 10])
-"""
+
 plt.show()
