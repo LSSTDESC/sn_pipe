@@ -57,7 +57,11 @@ simuVersion = opts.simuVersion
 dirFiles = opts.dirFiles
 dbExtens = opts.dbExtens
 
-files = sorted(glob.glob('{}/{}/*.{}'.format(dirFiles,dbExtens,dbExtens)))
+
+search_path = '{}/{}/*.{}'.format(dirFiles,dbExtens,dbExtens)
+print('search path',search_path)
+
+files = sorted(glob.glob(search_path))
 
 print(files)
 
