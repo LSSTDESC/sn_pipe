@@ -10,6 +10,8 @@ import pandas as pd
 import sqlite3
 import numpy as np
 from optparse import OptionParser
+from sn_tools.sn_obs import getObservations
+
 
 parser = OptionParser(description='Script to analyze SN prod after selection')
 
@@ -37,8 +39,16 @@ tableName = opts.tableName
 cnx = sqlite3.connect('{}/{}.db'.format(inputDir, dbName))
 
 # load in df
+"""
 df = pd.read_sql_query("SELECT * FROM {}".format(tableName), cnx)
-
+df['note'] = df['note'].astype('|S')
 print(df.columns)
+print(df.dtypes)
 # dump in npy
 np.save('{}/{}.npy'.format(outputDir, dbName), df.to_records(index=False))
+"""
+
+obs = getObservations(inputDir, dbName, 'db')
+
+print(obs.dtype)
+np.save('{}/{}.npy'.format(outputDir, dbName), obs)
