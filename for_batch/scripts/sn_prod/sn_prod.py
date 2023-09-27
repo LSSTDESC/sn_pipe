@@ -84,7 +84,7 @@ def batch_DDF(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
 
 
 def batch_WFD(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
-              time='60:00:00', mem='40G'):
+              time='60:00:00', mem='40G',seas_min=1,seas_max=10):
     """
     Function to launch sim_to_fit for WFD
 
@@ -99,6 +99,11 @@ def batch_WFD(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
         processing time per job. The default is '30:00:00'.
     mem : str, optional
         job mem. The default is '40G'.
+    seas_min: int, optional
+        min season of obs. The default is 1.
+    seas_max: int, optional
+        max season of obs. The default is 10.
+    
 
     Returns
     -------
@@ -135,17 +140,19 @@ def batch_WFD(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
 
     RAs = np.arange(0., 360.+deltaRA, deltaRA)
 
+    seasons = range(seas_min,seas_max+1)
     for RA in RAs[:-1]:
         RAmin = np.round(RA, 1)
         RAmax = RAmin+deltaRA
         RAmax = np.round(RAmax, 1)
         procName = 'WFD_{}_{}_{}{}_{}_{}'.format(
             dbName, RAmin, RAmax, tag_dir, np.round(sigmaInt, 2), snrate)
+        procNamea = '{}_{}_{}'.format(procName,seas_min,seas_max)
         sprocName = 'SN_WFD_{}_{}_{}{}'.format(dbName, RAmin, RAmax, tag_dir)
-        mybatch = BatchIt(processName=procName, time=time, mem=mem)
+        mybatch = BatchIt(processName=procNamea, time=time, mem=mem)
         procDict['RAmin'] = RAmin
         procDict['RAmax'] = RAmax
-        seasons = range(1, 11)
+
         if not tag_list.empty:
             idx = tag_list['ProductionID'] == sprocName
             sel = tag_list[idx]
@@ -186,6 +193,8 @@ if opts.fieldType == 'DD':
     batch_DDF(procDict)
 
 # this is for WFD
+seasons = [(1,5),(6,10)]
 if opts.fieldType == 'WFD':
     procDict['SN_z_max'] = 0.7
-    batch_WFD(procDict)
+    for seas in seasons:
+        batch_WFD(procDict,seas_min=seas[0],seas_max=seas[1])
