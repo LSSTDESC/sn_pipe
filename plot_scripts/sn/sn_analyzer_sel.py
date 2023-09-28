@@ -12,7 +12,7 @@ from optparse import OptionParser
 import pandas as pd
 import numpy as np
 from sn_analysis import plt
-from sn_analysis.sn_calc_plot import bin_it
+from sn_analysis.sn_calc_plot import bin_it, bin_it_mean
 import h5py
 from astropy.table import Table
 from sn_tools.sn_utils import multiproc
@@ -314,42 +314,44 @@ def plot_DDF(data, norm_factor, nside=128):
     """
 
     # estimate the number of sn for all the fields/season
-    """
+
     sums = data.groupby(['season', 'dbName', 'field']
                         ).size().to_frame('nsn').reset_index()
     sums['nsn'] /= norm_factor
 
+    pix = data.groupby(['season', 'dbName', 'field']).apply(
+        lambda x: pd.DataFrame({'npixels': [len(x['healpixID'].unique())]})).reset_index()
+
+    pix['pixArea'] = pixelSize(nside)*pix['npixels']
+
+    sums = sums.merge(pix, left_on=['season', 'dbName', 'field'],
+                      right_on=['season', 'dbName', 'field'])
+
     plot_field(sums, mypl)
+    plot_field(sums, mypl, xvar='season', xleg='season',
+               yvar='pixArea', yleg='Observed Area [deg$^{2}$]')
 
     # total number of SN per season/OS
-    sums = data.groupby(['season', 'dbName']
+    sumt = data.groupby(['season', 'dbName']
                         ).size().to_frame('nsn').reset_index()
-    sums['nsn'] /= norm_factor
-    sums['field'] = ','.join(data['field'].unique())
-
-    plot_field(sums, mypl)
-
-    # estimate the pixel area
-
-    pix = data.groupby(['season', 'dbName', 'field']).apply(
-        lambda x: pd.DataFrame({'pixArea': [len(x['healpixID'].unique())]})).reset_index()
-
-    print('allo,pix', pix)
-    pix['pixArea'] *= pixelSize(nside)
-
-    plot_field(pix, mypl, xvar='season', xleg='season',
-              yvar='pixArea', yleg='Observed Area [deg$^{2}$]')
+    sumt['nsn'] /= norm_factor
+    sumt['field'] = ','.join(data['field'].unique())
 
     pix = data.groupby(['season', 'dbName']).apply(
         lambda x: pd.DataFrame({'pixArea': [len(x['healpixID'].unique())]})).reset_index()
-    pix['field'] = ','.join(data['field'].unique())
-    print('allo,pix', pix)
+    #pix['field'] = ','.join(data['field'].unique())
     pix['pixArea'] *= pixelSize(nside)
-    plot_field(pix, mypl, xvar='season', xleg='season',
-               yvar='pixArea', yleg='Observed Area [deg$^{2}$]')
 
-    """
-    nsn_pixels = data.groupby(['season', 'dbName', 'field', 'healpixID', 'pixRA', 'pixDec']
+    sumt = sumt.merge(pix, left_on=['season', 'dbName'], right_on=[
+                      'season', 'dbName'])
+
+    plot_field(sumt, mypl)
+    plot_field(sumt, mypl, xvar='season', xleg='season',
+               yvar='pixArea', yleg='Observed Area [deg$^{2}$]')
+    plt.show()
+
+    nsn_pixels = data.groupby(['season', 'dbName', 'field',
+                               'healpixID', 'pixRA', 'pixDec']
                               ).size().to_frame('nsn').reset_index()
     nsn_pixels['nsn'] /= norm_factor
 
@@ -358,9 +360,22 @@ def plot_DDF(data, norm_factor, nside=128):
     nsn_pixels = nsn_pixels.groupby(['season', 'dbName', 'field']).apply(
         lambda x: get_dist(x)).reset_index()
 
-    plot_field(nsn_pixels, mypl, xvar='dist', xleg='dist',
-               yvar='nsn', yleg='$N_{SN}$')
-    print(nsn_pixels)
+    df_pixel = plot_field_season(nsn_pixels, mypl, xvar='dist', xleg='dist',
+                                 yvar='nsn', yleg='$N_{SN}$', ls='None')
+
+    npixels_FP = int(9.6 / pixelSize(nside))
+    df_pixel.loc[:, 'nsn_no_dithering'] = npixels_FP*df_pixel['nsn_center']
+
+    # merge wih sums to estimate the impact od the dithering
+    sums = sums.merge(df_pixel, left_on=['season', 'dbName', 'field'],
+                      right_on=['season', 'dbName', 'field'])
+
+    print(sums)
+
+    sums['nsn_loss_dither'] = 1. - (sums['nsn']/sums['nsn_no_dithering'])
+
+    plot_field(sums, mypl, xvar='season', xleg='season',
+               yvar='nsn_loss_dither', yleg='$N_{SN}$ loss [%]')
 
     plt.show()
 
@@ -389,6 +404,29 @@ def pixelSize(nside):
 
 def plot_field(data, mypl, xvar='season', xleg='season',
                yvar='nsn', yleg='$N_{SN}$'):
+    """
+    Function to plot a set of fields results
+
+    Parameters
+    ----------
+    data : array
+        Data to ptocess.
+    mypl : class instance
+        Plot_nsn_vs instance.
+    xvar : str, optional
+        x-axis variable. The default is 'season'.
+    xleg : str, optional
+        x-axis label. The default is 'season'.
+    yvar : str, optional
+        y-axis var. The default is 'nsn'.
+    yleg : str, optional
+        y-axis label. The default is '$N_{SN}$'.
+
+    Returns
+    -------
+    None.
+
+    """
 
     for field in data['field'].unique():
         idx = data['field'] == field
@@ -405,6 +443,68 @@ def plot_field(data, mypl, xvar='season', xleg='season',
         ax.grid()
         ax.set_xlabel(xleg)
         ax.set_ylabel(yleg)
+
+
+def plot_field_season(data, mypl, xvar='dist', xleg='dist',
+                      yvar='nsn', yleg='$N_{SN}$', ls='None'):
+    """
+    Function to plot a set of fields results
+
+    Parameters
+    ----------
+    data : array
+        Data to ptocess.
+    mypl : class instance
+        Plot_nsn_vs instance.
+    xvar : str, optional
+        x-axis variable. The default is 'season'.
+    xleg : str, optional
+        x-axis label. The default is 'season'.
+    yvar : str, optional
+        y-axis var. The default is 'nsn'.
+    yleg : str, optional
+        y-axis label. The default is '$N_{SN}$'.
+
+    Returns
+    -------
+    None.
+
+    """
+
+    bins = np.arange(0.15, 2.15, 0.15)
+    r = []
+
+    for field in data['field'].unique():
+        idx = data['field'] == field
+        sela = data[idx]
+        fig, ax = plt.subplots(figsize=(14, 8))
+        for dbName in sela['dbName'].unique():
+            idxb = sela['dbName'] == dbName
+            selb = sela[idxb]
+            for seas in selb['season'].unique():
+                idxc = selb['season'] == seas
+                selc = selb[idxc]
+                seld = bin_it_mean(selc, xvar=xvar, yvar=yvar, bins=bins)
+                seld = seld.fillna(-1.)
+                idd = seld['nsn'] >= 0
+                seld = seld[idd]
+                mypl.plot_versus(seld, xvar, xleg,
+                                 yvar, yleg,
+                                 figTitle=field, label=None,
+                                 fig=fig, ax=ax, xlim=None)
+
+                idg = seld['dist'] <= 0.5
+                nsn_mean = seld[idg]['nsn'].mean()
+                r.append((field, dbName, seas, nsn_mean))
+
+        ax.legend()
+        ax.grid()
+        ax.set_xlabel(xleg)
+        ax.set_ylabel(yleg)
+
+    res = pd.DataFrame(r, columns=['field', 'dbName', 'season', 'nsn_center'])
+
+    return res
 
 
 class Plot_nsn_vs:
@@ -433,17 +533,15 @@ class Plot_nsn_vs:
 
     def plot_versus(self, data, xvar='season', xleg='season',
                     yvar='nsn', yleg='$N_{SN}$', fig=None, ax=None,
-                    figTitle='', label='', xlim=[1, 10]):
+                    figTitle='', label=None, xlim=[1, 10], ls='solid'):
 
         if ax is None:
             fig, ax = plt.subplots(figsize=(14, 8))
 
         fig.suptitle(figTitle)
 
-        lab = None
-        if label != '':
-            lab = label
-        ax.plot(data[xvar], data[yvar], label=lab)
+        data = data.sort_values(by=[xvar])
+        ax.plot(data[xvar], data[yvar], label=label, linestyle=ls, marker='.')
         ax.grid()
         if xlim is not None:
             ax.set_xlim(xlim)
