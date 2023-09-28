@@ -305,7 +305,11 @@ def plot_DDF(data, norm_factor, nside=128):
         0.5, 11.5, 1), xvar='season', xleg='season',
         logy=False, xlim=[1, 10], nside=nside)
     """
-    mypl = Plot_nsn_vs(data, norm_factor, nside)
+    # plot_DDF_nsn(data, norm_factor, nside)
+
+    # plot_DDF_dither(data, norm_factor, nside)
+
+    plot_DDF_nsn_z(data, norm_factor, nside)
 
     """
     mypl.plot_nsn_versus_two(xvar='z', xleg='z', logy=True,
@@ -313,42 +317,47 @@ def plot_DDF(data, norm_factor, nside=128):
     mypl.plot_nsn_mollview()
     """
 
-    # estimate the number of sn for all the fields/season
 
-    sums = data.groupby(['season', 'dbName', 'field']
-                        ).size().to_frame('nsn').reset_index()
-    sums['nsn'] /= norm_factor
+def plot_DDF_nsn_z(data, norm_factor, nside):
 
-    pix = data.groupby(['season', 'dbName', 'field']).apply(
-        lambda x: pd.DataFrame({'npixels': [len(x['healpixID'].unique())]})).reset_index()
+    mypl = Plot_nsn_vs(data, norm_factor, nside)
 
-    pix['pixArea'] = pixelSize(nside)*pix['npixels']
+    for field in data['field'].unique():
+        idx = data['field'] == field
+        sela = data[idx]
+        fig, ax = plt.subplots(figsize=(14, 8))
+        for dbName in sela['dbName'].unique():
+            idxa = sela['dbName'] == dbName
+            selb = sela[idxa]
+            for season in selb['season'].unique():
+                idxb = selb['season'] == season
+                selc = selb[idxb]
+                plot_nsn_versus_two(selc, xvar='z', xleg='z', logy=True,
+                                    bins=np.arange(0.01, 1.15, 0.05),
+                                    cumul=False, xlim=[0.01, 1.1],
+                                    fig=fig, ax=ax, figtitle=field)
 
-    sums = sums.merge(pix, left_on=['season', 'dbName', 'field'],
-                      right_on=['season', 'dbName', 'field'])
 
-    plot_field(sums, mypl)
-    plot_field(sums, mypl, xvar='season', xleg='season',
-               yvar='pixArea', yleg='Observed Area [deg$^{2}$]')
+def plot_DDF_dither(data, norm_factor, nside):
+    """
+    Functio to plot and estimate dithering effects
 
-    # total number of SN per season/OS
-    sumt = data.groupby(['season', 'dbName']
-                        ).size().to_frame('nsn').reset_index()
-    sumt['nsn'] /= norm_factor
-    sumt['field'] = ','.join(data['field'].unique())
+    Parameters
+    ----------
+    data : pandas df
+        Data to process.
+    norm_factor : float
+        Normalisation factor.
+    nside : int
+        Healpix nside parameter.
 
-    pix = data.groupby(['season', 'dbName']).apply(
-        lambda x: pd.DataFrame({'pixArea': [len(x['healpixID'].unique())]})).reset_index()
-    #pix['field'] = ','.join(data['field'].unique())
-    pix['pixArea'] *= pixelSize(nside)
+    Returns
+    -------
+    None.
 
-    sumt = sumt.merge(pix, left_on=['season', 'dbName'], right_on=[
-                      'season', 'dbName'])
+    """
 
-    plot_field(sumt, mypl)
-    plot_field(sumt, mypl, xvar='season', xleg='season',
-               yvar='pixArea', yleg='Observed Area [deg$^{2}$]')
-    plt.show()
+    mypl = Plot_nsn_vs(data, norm_factor, nside)
 
     nsn_pixels = data.groupby(['season', 'dbName', 'field',
                                'healpixID', 'pixRA', 'pixDec']
@@ -366,6 +375,9 @@ def plot_DDF(data, norm_factor, nside=128):
     npixels_FP = int(9.6 / pixelSize(nside))
     df_pixel.loc[:, 'nsn_no_dithering'] = npixels_FP*df_pixel['nsn_center']
 
+    sums = get_sums_nsn(data, norm_factor, nside, cols=[
+                        'season', 'dbName', 'field'])
+
     # merge wih sums to estimate the impact od the dithering
     sums = sums.merge(df_pixel, left_on=['season', 'dbName', 'field'],
                       right_on=['season', 'dbName', 'field'])
@@ -378,6 +390,70 @@ def plot_DDF(data, norm_factor, nside=128):
                yvar='nsn_loss_dither', yleg='$N_{SN}$ loss [%]')
 
     plt.show()
+
+
+def plot_DDF_nsn(data, norm_factor, nside):
+
+    mypl = Plot_nsn_vs(data, norm_factor, nside)
+
+    """
+    mypl.plot_nsn_versus_two(xvar='z', xleg='z', logy=True,
+                             cumul=True, xlim=[0.01, 1.1])
+    mypl.plot_nsn_mollview()
+    """
+
+    # estimate the number of sn for all the fields/season
+
+    sums = get_sums_nsn(data, norm_factor, nside, cols=[
+                        'season', 'dbName', 'field'])
+    sumt = get_sums_nsn(data, norm_factor, nside, cols=['season', 'dbName'])
+
+    plot_field(sums, mypl)
+    plot_field(sums, mypl, xvar='season', xleg='season',
+               yvar='pixArea', yleg='Observed Area [deg$^{2}$]')
+
+    # total number of SN per season/OS
+    plot_field(sumt, mypl)
+    plot_field(sumt, mypl, xvar='season', xleg='season',
+               yvar='pixArea', yleg='Observed Area [deg$^{2}$]')
+    plt.show()
+
+
+def get_sums_nsn(data, norm_factor, nside, cols=['season', 'dbName', 'field']):
+    """
+    Function to estimate global parameters (nsn, pixArea, ...)
+
+    Parameters
+    ----------
+    data : pandas df
+        Data to process.
+    norm_factor : float
+        Normalization factor.
+    nside : int
+        healpix nside parameter.
+    cols : list(str), optional
+        Columns to make groups. The default is ['season', 'dbName', 'field'].
+
+    Returns
+    -------
+    sums : pandas df
+        Output data.
+
+    """
+
+    sums = data.groupby(cols).size().to_frame('nsn').reset_index()
+    sums['nsn'] /= norm_factor
+
+    if 'field' not in cols:
+        sums['field'] = ','.join(data['field'].unique())
+    pix = data.groupby(cols).apply(
+        lambda x: pd.DataFrame({'npixels': [len(x['healpixID'].unique())]})).reset_index()
+
+    pix['pixArea'] = pixelSize(nside)*pix['npixels']
+
+    sums = sums.merge(pix, left_on=cols, right_on=cols)
+
+    return sums
 
 
 def pixelSize(nside):
@@ -546,81 +622,6 @@ class Plot_nsn_vs:
         if xlim is not None:
             ax.set_xlim(xlim)
 
-    def plot_nsn_binned(self, data, bins=np.arange(0.005, 0.8, 0.01),
-                        xvar='z', xleg='z', logy=False,
-                        cumul=False, xlim=[0.01, 0.8],
-                        label='', ax=None):
-        """
-        Method to plot nsn vs...
-
-        Parameters
-        ----------
-        data : pandas df
-            Data to plot.
-        label : str, optional
-            Curve label. The default is ''.
-        ax : matplotlib axis, optional
-            Axis for the plot. The default is None.
-
-        Returns
-        -------
-        None.
-
-        """
-
-        if ax is None:
-            fig, ax = plt.subplots(figsize=(14, 8))
-
-        res = bin_it(data, xvar=xvar, bins=bins,
-                     norm_factor=self.norm_factor)
-
-        print(res)
-        print('total number of SN', np.sum(res['NSN']))
-
-        vv = res['NSN']
-        if cumul:
-            vv = np.cumsum(res['NSN'])
-        ax.plot(res[xvar], vv, label=label)
-
-        ax.set_xlabel(xleg)
-        ax.set_ylabel(r'$N_{SN}$')
-        ax.set_xlim(xlim)
-
-    def plot_nsn_versus_two(self, bins=np.arange(0.005, 0.8, 0.01),
-                            xvar='z', xleg='z', logy=False,
-                            cumul=False, xlim=[0.01, 0.8],
-                            label=''):
-        """
-        Method to plot two curves sn vs ...
-
-        Returns
-        -------
-        None.
-
-        """
-
-        fig, ax = plt.subplots(figsize=(14, 8))
-        self.plot_nsn_versus(self.data, bins=bins,
-                             xvar=xvar, xleg=xleg, logy=logy,
-                             cumul=cumul, xlim=xlim,
-                             label=label, ax=ax)
-        idx = self.data['sigmaC'] <= 0.04
-        label = '$\sigma_C \leq 0.04$'
-        self.plot_nsn_binned(self.data[idx], bins=bins,
-                             xvar=xvar, xleg=xleg, logy=logy,
-                             cumul=cumul, xlim=xlim,
-                             label=label, ax=ax)
-        if logy:
-            ax.set_yscale("log")
-
-        ax.set_xlabel(xleg)
-        ylabel = '$N_{SN}$'
-        if cumul:
-            ylabel = '$\sum N_{SN}$'
-        ax.set_ylabel(r'{}'.format(ylabel))
-        ax.legend()
-        ax.grid()
-
     def plot_nsn_mollview(self, what='season'):
         """
         Method to plot the number of SN in Mollweid view
@@ -670,6 +671,88 @@ class Plot_nsn_vs:
         xmax = xmax = np.max(sums[var])
         plotMollview(sums, var, legvar, addleg, np.sum,
                      xmin=xmin, xmax=xmax, nside=self.nside)
+
+
+def plot_nsn_versus_two(data, norm_factor=30,
+                        bins=np.arange(0.005, 0.8, 0.01),
+                        xvar='z', xleg='z', logy=False,
+                        cumul=False, xlim=[0.01, 0.8],
+                        label='', fig=None, ax=None, figtitle=''):
+    """
+    Method to plot two curves sn vs ...
+
+    Returns
+    -------
+    None.
+
+    """
+
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(14, 8))
+
+    fig.suptitle(figtitle)
+    plot_nsn_binned(data, bins=bins, norm_factor=norm_factor,
+                    xvar=xvar, xleg=xleg, logy=logy,
+                    cumul=cumul, xlim=xlim,
+                    label=label, fig=fig, ax=ax)
+    idx = data['sigmaC'] <= 0.04
+    label = '$\sigma_C \leq 0.04$'
+    plot_nsn_binned(data[idx], norm_factor=norm_factor, bins=bins,
+                    xvar=xvar, xleg=xleg, logy=logy,
+                    cumul=cumul, xlim=xlim,
+                    label=label, fig=fig, ax=ax)
+    if logy:
+        ax.set_yscale("log")
+
+    ax.set_xlabel(xleg)
+    ylabel = '$N_{SN}$'
+    if cumul:
+        ylabel = '$\sum N_{SN}$'
+    ax.set_ylabel(r'{}'.format(ylabel))
+    ax.legend()
+    ax.grid()
+
+
+def plot_nsn_binned(data, norm_factor=30,
+                    bins=np.arange(0.005, 0.8, 0.01),
+                    xvar='z', xleg='z', logy=False,
+                    cumul=False, xlim=[0.01, 0.8],
+                    label='', fig=None, ax=None):
+    """
+    Function to plot nsn vs...
+
+    Parameters
+    ----------
+    data : pandas df
+        Data to plot.
+    label : str, optional
+        Curve label. The default is ''.
+    ax : matplotlib axis, optional
+        Axis for the plot. The default is None.
+
+    Returns
+    -------
+    None.
+
+    """
+
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(14, 8))
+
+    res = bin_it(data, xvar=xvar, bins=bins,
+                 norm_factor=norm_factor)
+
+    print(res)
+    print('total number of SN', np.sum(res['NSN']))
+
+    vv = res['NSN']
+    if cumul:
+        vv = np.cumsum(res['NSN'])
+    ax.plot(res[xvar], vv, label=label)
+
+    ax.set_xlabel(xleg)
+    ax.set_ylabel(r'$N_{SN}$')
+    ax.set_xlim(xlim)
 
 
 def plotMollview(data, varName, leg, addleg, op, xmin, xmax, nside=128):
@@ -754,6 +837,83 @@ def get_val(var):
     return var
 
 
+def process_WFD(conf_df, dataType, dbDir_WFD, runType, seasons,
+                years, norm_factor):
+    """
+    Function to process WFD data
+
+    Parameters
+    ----------
+    conf_df : pandas df
+        Confituration file.
+    dataType : str
+        Data type.
+    dbDir_WFD : str
+        Location dir of WFD files.
+    runType : str
+        Type of run.
+    seasons : list(int)
+        Seasons to process.
+    years : list(int)
+        Years to process.
+    norm_factor : float
+        Normalization factor.
+
+    Returns
+    -------
+    None.
+
+    """
+
+    OS_WFDs = conf_df['dbName_WFD'].unique()
+
+    wfd = pd.DataFrame()
+    for OS_WFD in OS_WFDs:
+        idx = conf_df['dbName_WFD'] == OS_WFD
+        LSSTStart = np.mean(conf_df[idx]['LSSTStart'])
+        wfda = eval('load_{}(\'{}\',\'{}\',\'{}\',{},{},{})'.format(
+            dataType, dbDir_WFD, OS_WFD, runType,
+            seasons, years, LSSTStart))
+
+        wfd = pd.concat((wfd, wfda))
+
+    idx = wfd['ebvofMW'] < 0.25
+    wfd = wfd[idx]
+
+    plot_nsn_versus_two(wfd, xvar='season', xleg='season', logy=False,
+                        bins=np.arange(0.5, 11.5, 1), norm_factor=norm_factor,
+                        cumul=False, xlim=[1, 10])
+
+    plot_nsn_versus_two(wfd, xvar='z', xleg='y', logy=True,
+                        bins=np.arange(0.005, 0.805, 0.01), norm_factor=norm_factor,
+                        cumul=True, xlim=[0.01, 0.8])
+
+    """
+    mypl = Plot_nsn_vs(wfd, norm_factor, nside=64)
+
+    mypl.plot_nsn_mollview()
+    """
+    print(len(wfd))
+
+
+def process_DDF(conf_df, dataType, dbDir_DD, runType, seasons, years, norm_factor):
+
+    # load DDF
+    OS_DDFs = conf_df['dbName_DD'].unique()
+
+    ddf = pd.DataFrame()
+    for OS_DDF in OS_DDFs:
+        idx = conf_df['dbName_DD'] == OS_DDF
+        LSSTStart = np.mean(conf_df[idx]['LSSTStart'])
+        fieldType = 'DDF'
+        ddfa = eval('load_{}(\'{}\',\'{}\',\'{}\',{},{},{},\'{}\')'.format(
+            dataType, dbDir_DD, OS_DDF, runType,
+            seasons, years, LSSTStart, fieldType))
+        ddf = pd.concat((ddf, ddfa))
+
+    plot_DDF(ddf, norm_factor, nside=128)
+
+
 parser = OptionParser(description='Script to analyze SN prod after selection')
 
 parser.add_option('--dbDir_DD', type=str,
@@ -833,20 +993,12 @@ Plot_nsn_vs(wfd, norm_factor_DD, bins=np.arange(
     0.5, 11.5, 1), xvar='season', xleg='season', logy=False, xlim=[1, 10])
 
 """
-# load DDF
-OS_DDFs = conf_df['dbName_DD'].unique()
 
-ddf = pd.DataFrame()
-for OS_DDF in OS_DDFs:
-    idx = conf_df['dbName_DD'] == OS_DDF
-    LSSTStart = np.mean(conf_df[idx]['LSSTStart'])
-    fieldType = 'DDF'
-    ddfa = eval('load_{}(\'{}\',\'{}\',\'{}\',{},{},{},\'{}\')'.format(
-        dataType, dbDir_DD, OS_DDF, runType,
-        seasons, years, LSSTStart, fieldType))
-    ddf = pd.concat((ddf, ddfa))
+process_WFD(conf_df, dataType, dbDir_WFD, runType,
+            seasons, years, norm_factor_WFD)
 
-plot_DDF(ddf, norm_factor_DD, nside=128)
+# print(test)
 
+# process_DDF(conf_df, dataType, dbDir_DD, runType, seasons, years,norm_factor_DD)
 
 plt.show()
