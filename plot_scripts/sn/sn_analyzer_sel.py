@@ -18,8 +18,7 @@ from astropy.table import Table
 from sn_tools.sn_utils import multiproc
 
 
-def load_OS_table(dbDir, dbName, runType, season=1, fieldType='DDF',
-                  years=[1], LSSTStart=60312):
+def load_OS_table(dbDir, dbName, runType, season=1, fieldType='DDF'):
     """
     Function to load OS data
 
@@ -58,18 +57,6 @@ def load_OS_table(dbDir, dbName, runType, season=1, fieldType='DDF',
         keys = list(fFile.keys())
         params['fFile'] = fFile
         dfa = multiproc(keys, params, load_os_table_multi, nproc=16)
-
-        if years:
-            # add a year column
-            dfa['year'] = (dfa['daymax']-LSSTStart)/365.+1.
-            dfa = dfa.sort_values(by=['daymax'])
-
-            dfa['year'] = dfa['year'].astype(int)
-
-            # print(dfa[['year', 'daymax']], LSSTStart, years)
-
-            idxb = dfa['year'].isin(years)
-            dfa = dfa[idxb]
 
         # idx = dfa['ebvofMW'] < 0.25
         # dfa = dfa[idx]
@@ -114,8 +101,7 @@ def load_os_table_multi(keys, params, j=0, output_q=None):
         return df
 
 
-def load_OS_df(dbDir, dbName, runType, season=1, fieldType='DDF',
-               years=[1], LSSTStart=60218):
+def load_OS_df(dbDir, dbName, runType, season=1, fieldType='DDF'):
     """
 
 
@@ -172,7 +158,7 @@ def load_OS_df(dbDir, dbName, runType, season=1, fieldType='DDF',
     fullDir = '{}/{}/{}_{}'.format(dbDir, dbName, fieldType, runType)
     search_path = '{}/SN_{}_*_{}.hdf5'.format(fullDir, fieldType, season)
 
-    print('search path', search_path, LSSTStart)
+    print('search path', search_path)
 
     fis = glob.glob(search_path)
 
@@ -181,18 +167,6 @@ def load_OS_df(dbDir, dbName, runType, season=1, fieldType='DDF',
     for fi in fis:
         dfa = pd.read_hdf(fi)
         print('loading', fieldType, len(dfa))
-
-        if years:
-            # add a year column
-            dfa['year'] = (dfa['daymax']-LSSTStart)/365.+1.
-            dfa = dfa.sort_values(by=['daymax'])
-
-            dfa['year'] = dfa['year'].astype(int)
-
-            print(dfa[['year', 'daymax']], LSSTStart)
-
-            # idxb = dfa['year'].isin(years)
-            # dfa = dfa[idxb]
 
         # idx = dfa['ebvofMW'] < 0.25
         # dfa = dfa[idx]
@@ -203,8 +177,7 @@ def load_OS_df(dbDir, dbName, runType, season=1, fieldType='DDF',
 
 
 def load_DataFrame(dbDir_WFD, OS_WFD, runType='spectroz',
-                   seasons=[1],
-                   years=[1], LSSTStart=60218., fieldType='WFD'):
+                   seasons=[1], LSSTStart=60218., fieldType='WFD'):
     """
     Function to load data if pandas df
 
@@ -218,8 +191,6 @@ def load_DataFrame(dbDir_WFD, OS_WFD, runType='spectroz',
         Run type. The default is spectroz.
     seasons: list(int), optional
         seasons to load. The default is [1].
-    years : list(int), optional
-        years to load. The default is [1].
     LSSTStart: float, optional.
       LSST start survey MJD. The default is 60218.
 
@@ -230,29 +201,60 @@ def load_DataFrame(dbDir_WFD, OS_WFD, runType='spectroz',
 
     """
 
-    if years:
-        year_min = np.min(years)
-        year_max = np.max(years)
-        seas_min = np.max([1, year_min-2])
-        seas_max = np.min([10, year_max+2])
-        seasons = range(seas_min, seas_max+1)
-
     wfd = pd.DataFrame()
     for seas in seasons:
         print('loading season', seas, LSSTStart)
         wfd_seas = load_OS_df(dbDir_WFD, OS_WFD, runType=runType,
-                              season=seas, fieldType=fieldType,
-                              years=years, LSSTStart=LSSTStart)
+                              season=seas, fieldType=fieldType)
         wfd_seas['dbName'] = OS_WFD
         wfd = pd.concat((wfd, wfd_seas))
 
     print(len(wfd))
-    return wfd
+
+    # add a year column here
+    df_y = add_year(wfd, LSSTStart)
+
+    return df_y
+
+
+def add_year(wfd, LSSTStart):
+    """
+    Function to estimate the year SNe Ia have been observed
+
+    Parameters
+    ----------
+    wfd : pandas df
+        Data to process.
+    LSSTStart : float
+        LSST MJD start.
+
+    Returns
+    -------
+    df_y : pandas df
+        Original data + year col.
+
+    """
+
+    rf_phase = 35.
+    df_y = pd.DataFrame()
+    for y in range(1, 12):
+        mjd_min = LSSTStart+(y-1)*365.
+        mjd_max = LSSTStart+y*365.
+        wfd['mjd_min'] = mjd_min-rf_phase*(1.+wfd['z'])
+        wfd['mjd_max'] = mjd_max-rf_phase*(1.+wfd['z'])
+        idx = wfd['daymax'] >= wfd['mjd_min']
+        idx &= wfd['daymax'] < wfd['mjd_max']
+        sel = pd.DataFrame(wfd[idx])
+        sel['year'] = y
+        df_y = pd.concat((df_y, sel))
+
+    df_y = df_y.drop(columns=['mjd_min', 'mjd_max'])
+
+    return df_y
 
 
 def load_Table(dbDir_WFD, OS_WFD, runType='spectroz',
-               seasons=[1],
-               years=[1], LSSTStart=60218, fieldType='WFD'):
+               seasons=[1], LSSTStart=60218, fieldType='WFD'):
     """
     Function to load data if pandas df
 
@@ -278,22 +280,18 @@ def load_Table(dbDir_WFD, OS_WFD, runType='spectroz',
 
     """
 
-    if years:
-        year_min = np.min(years)
-        year_max = np.max(years)
-        seas_min = np.max([1, year_min-2])
-        seas_max = np.min([10, year_max+2])
-        seasons = range(seas_min, seas_max+1)
-
     wfd = pd.DataFrame()
     for seas in seasons:
         print('loading season', seas)
         wfd_seas = load_OS_table(dbDir_WFD, OS_WFD, runType=runType,
-                                 season=seas, fieldType=fieldType,
-                                 years=years, LSSTStart=LSSTStart)
+                                 season=seas, fieldType=fieldType)
+
         wfd = pd.concat((wfd, wfd_seas))
 
-    return wfd
+    # add a year column here
+    df_y = add_year(wfd, LSSTStart)
+
+    return df_y
 
 
 def plot_DDF(data, norm_factor, nside=128):
@@ -837,8 +835,7 @@ def get_val(var):
     return var
 
 
-def process_WFD(conf_df, dataType, dbDir_WFD, runType, seasons,
-                years, norm_factor):
+def process_WFD(conf_df, dataType, dbDir_WFD, runType, seasons, norm_factor):
     """
     Function to process WFD data
 
@@ -854,8 +851,6 @@ def process_WFD(conf_df, dataType, dbDir_WFD, runType, seasons,
         Type of run.
     seasons : list(int)
         Seasons to process.
-    years : list(int)
-        Years to process.
     norm_factor : float
         Normalization factor.
 
@@ -871,32 +866,33 @@ def process_WFD(conf_df, dataType, dbDir_WFD, runType, seasons,
     for OS_WFD in OS_WFDs:
         idx = conf_df['dbName_WFD'] == OS_WFD
         LSSTStart = np.mean(conf_df[idx]['LSSTStart'])
-        wfda = eval('load_{}(\'{}\',\'{}\',\'{}\',{},{},{})'.format(
+        wfda = eval('load_{}(\'{}\',\'{}\',\'{}\',{},{})'.format(
             dataType, dbDir_WFD, OS_WFD, runType,
-            seasons, years, LSSTStart))
+            seasons, LSSTStart))
 
         wfd = pd.concat((wfd, wfda))
 
     idx = wfd['ebvofMW'] < 0.25
     wfd = wfd[idx]
 
-    plot_nsn_versus_two(wfd, xvar='season', xleg='season', logy=False,
+    """
+    plot_nsn_versus_two(wfd, xvar='year', xleg='year', logy=False,
                         bins=np.arange(0.5, 11.5, 1), norm_factor=norm_factor,
                         cumul=False, xlim=[1, 10])
 
-    plot_nsn_versus_two(wfd, xvar='z', xleg='y', logy=True,
+    plot_nsn_versus_two(wfd, xvar='z', xleg='z', logy=True,
                         bins=np.arange(0.005, 0.805, 0.01), norm_factor=norm_factor,
                         cumul=True, xlim=[0.01, 0.8])
-
     """
+
     mypl = Plot_nsn_vs(wfd, norm_factor, nside=64)
 
-    mypl.plot_nsn_mollview()
-    """
+    mypl.plot_nsn_mollview(what='year')
+
     print(len(wfd))
 
 
-def process_DDF(conf_df, dataType, dbDir_DD, runType, seasons, years, norm_factor):
+def process_DDF(conf_df, dataType, dbDir_DD, runType, seasons, norm_factor):
 
     # load DDF
     OS_DDFs = conf_df['dbName_DD'].unique()
@@ -906,9 +902,9 @@ def process_DDF(conf_df, dataType, dbDir_DD, runType, seasons, years, norm_facto
         idx = conf_df['dbName_DD'] == OS_DDF
         LSSTStart = np.mean(conf_df[idx]['LSSTStart'])
         fieldType = 'DDF'
-        ddfa = eval('load_{}(\'{}\',\'{}\',\'{}\',{},{},{},\'{}\')'.format(
+        ddfa = eval('load_{}(\'{}\',\'{}\',\'{}\',{},{},\'{}\')'.format(
             dataType, dbDir_DD, OS_DDF, runType,
-            seasons, years, LSSTStart, fieldType))
+            seasons, LSSTStart, fieldType))
         ddf = pd.concat((ddf, ddfa))
 
     plot_DDF(ddf, norm_factor, nside=128)
@@ -938,11 +934,8 @@ parser.add_option('--runType', type=str,
                   default='spectroz',
                   help='run type  [%default]')
 parser.add_option('--seasons', type=str,
-                  default='1',
+                  default='1-10',
                   help='seasons to process [%default]')
-parser.add_option('--years', type=str,
-                  default='1',
-                  help='years to process [%default]')
 parser.add_option('--dataType', type=str,
                   default='DataFrame',
                   help='data type [%default]')
@@ -963,12 +956,6 @@ config = opts.config
 seasons = opts.seasons
 
 seasons = get_val(seasons)
-
-years = opts.years
-if years == 'None':
-    years = []
-else:
-    years = get_val(years)
 
 dataType = opts.dataType
 
@@ -994,11 +981,10 @@ Plot_nsn_vs(wfd, norm_factor_DD, bins=np.arange(
 
 """
 
-process_WFD(conf_df, dataType, dbDir_WFD, runType,
-            seasons, years, norm_factor_WFD)
+process_WFD(conf_df, dataType, dbDir_WFD, runType, seasons, norm_factor_WFD)
 
 # print(test)
 
-# process_DDF(conf_df, dataType, dbDir_DD, runType, seasons, years,norm_factor_DD)
+# process_DDF(conf_df, dataType, dbDir_DD, runType, seasons, norm_factor_DD)
 
 plt.show()
