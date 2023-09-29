@@ -36,7 +36,7 @@ dbName = opts.dbName
 tableName = opts.tableName
 
 # open sqlite connexion
-cnx = sqlite3.connect('{}/{}.db'.format(inputDir, dbName))
+# cnx = sqlite3.connect('{}/{}.db'.format(inputDir, dbName))
 
 # load in df
 """
