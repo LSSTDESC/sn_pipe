@@ -45,7 +45,7 @@ parser = OptionParser()
 
 parser.add_option("--simuVersion", type=str, default='fbs_14',
                   help="simulation version[%default]")
-parser.add_option("--dirFiles", type=str, default='/sps/lsst/cadence/LSST_SN_PhG/cadence_db/fbs_1.4',
+parser.add_option("--dirFiles", type=str, default='/sps/lsst/groups/cadence/LSST_SN_PhG/cadence_db/fbs_fakes',
                   help="dir where the files are [%default]")
 parser.add_option("--dbExtens", type=str, default='db',
                   help="db extens (db or npy)  [%default]")
