@@ -43,16 +43,18 @@ fis = pd.read_csv(dbList, comment='#')
 
 script = 'run_scripts/cosmology/cosmology.py'
 for i, row in fis.iterrows():
-    dbName = row['dbName_DD']
-    processName = 'cosmo_{}_{}'.format(dbName, tag)
+    print('alors', row)
+    dbName_DD = row['dbName_DD']
+    dbName_WFD = row['dbName_DD']
+    processName = 'cosmo_{}_{}'.format(dbName_DD, tag)
     mybatch = BatchIt(processName=processName)
     params = {}
     params['dataDir_DD'] = inputDir_DD
-    params['dbName_DD'] = dbName
+    params['dbName_DD'] = dbName_DD
     params['dataDir_WFD'] = inputDir_WFD
-    params['dbName_WFD'] = row['dbName_WFD']
+    params['dbName_WFD'] = dbName_WFD
     params['outDir'] = outDir
     params['survey'] = survey
     params['frac_WFD_low_sigmaC'] = frac_WFD_low_sigmaC
     mybatch.add_batch(script, params)
-    mybatch.go_batch()
+    # mybatch.go_batch()
