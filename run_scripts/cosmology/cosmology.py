@@ -114,28 +114,30 @@ survey.to_csv(outName_survey)
 
 
 fitconfig = {}
+
 """
 fitconfig['fita'] = dict(zip(['w0', 'Om0', 'alpha', 'beta', 'Mb'],
                              [-1, 0.3, 0.13, 3.1, -19.08]))
+
 fitconfig['fitb'] = dict(zip(['w0', 'wa', 'Om0', 'alpha', 'beta', 'Mb'],
                              [-1, 0.0, 0.3, 0.13, 3.1, -19.08]))
-"""
 
+"""
 # fitconfig['fitc'] = dict(zip(['sigmaInt'],
 #                              [0.12]))
+
 
 fitconfig['fitc'] = dict(zip(['w0', 'Om0'],
                              [-1, 0.3]))
 fitconfig['fitd'] = dict(zip(['w0', 'wa', 'Om0'],
                              [-1, 0.0, 0.3]))
 
-
 priors = {}
 
 priors['noprior'] = pd.DataFrame()
 priors['prior'] = pd.DataFrame({'varname': ['Om0'],
                                 'refvalue': [0.3],
-                                'sigma': [0.0073]})
+                               'sigma': [0.0073]})
 
 outName = '{}/cosmo_{}.hdf5'.format(outDir, dbName_DD)
 resfi = pd.DataFrame()
