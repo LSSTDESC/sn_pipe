@@ -1,0 +1,4 @@
+dbName_DD,dbName_WFD,LSSTStart,ls,marker,color
+#baseline_v3.2_10yrs,baseline_v3.2_10yrs,60796.00,solid,o,k
+baseline_v3.0_10yrs,baseline_v3.0_10yrs,60218.00,solid,*,r
+# DDF_DESC_0.80_SN_0.07,baseline_v3.0_10yrs,60796.00,solid,*,r
