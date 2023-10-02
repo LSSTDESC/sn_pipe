@@ -118,7 +118,8 @@ fitconfig = {}
 """
 fitconfig['fita'] = dict(zip(['w0', 'Om0', 'alpha', 'beta', 'Mb'],
                              [-1, 0.3, 0.13, 3.1, -19.08]))
-
+"""
+"""
 fitconfig['fitb'] = dict(zip(['w0', 'wa', 'Om0', 'alpha', 'beta', 'Mb'],
                              [-1, 0.0, 0.3, 0.13, 3.1, -19.08]))
 
