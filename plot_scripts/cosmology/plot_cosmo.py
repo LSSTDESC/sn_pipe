@@ -46,11 +46,8 @@ parser = OptionParser(description='Script to analyze SN prod')
 parser.add_option('--dbDir', type=str, default='../cosmo_fit',
                   help='OS location dir[%default]')
 parser.add_option('--dbList', type=str,
-                  default='input/DESC_cohesive_strategy/config_ana_0.07.csv',
+                  default='input/DESC_cohesive_strategy/config_ana.csv',
                   help='OS name[%default]')
-parser.add_option('--budget_DD', type=float,
-                  default=0.07,
-                  help='DD budget[%default]')
 opts, args = parser.parse_args()
 
 dbDir = opts.dbDir
@@ -58,7 +55,7 @@ dbList = opts.dbList
 budget = np.round(opts.budget_DD, 2)
 
 config = pd.read_csv(dbList, comment='#')
-config['dbName'] += '_{}'.format(budget)
+# config['dbName'] += '_{}'.format(budget)
 data = load_data(dbDir, config)
 print(data.columns)
 # data['dbName_DD'] += '_{}'.format(budget)
