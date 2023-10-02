@@ -44,7 +44,7 @@ fis = pd.read_csv(dbList, comment='#')
 script = 'run_scripts/cosmology/cosmology.py'
 for i, row in fis.iterrows():
     dbName_DD = row['dbName_DD']
-    dbName_WFD = row['dbName_DD']
+    dbName_WFD = row['dbName_WFD']
     processName = 'cosmo_{}_{}'.format(dbName_DD, tag)
     mybatch = BatchIt(processName=processName)
     params = {}
