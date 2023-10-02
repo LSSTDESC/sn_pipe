@@ -52,10 +52,9 @@ opts, args = parser.parse_args()
 
 dbDir = opts.dbDir
 dbList = opts.dbList
-budget = np.round(opts.budget_DD, 2)
 
 config = pd.read_csv(dbList, comment='#')
-# config['dbName'] += '_{}'.format(budget)
+
 data = load_data(dbDir, config)
 print(data.columns)
 # data['dbName_DD'] += '_{}'.format(budget)
