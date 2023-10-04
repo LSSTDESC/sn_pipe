@@ -79,6 +79,9 @@ parser.add_option("--test_mode", type=int,
 parser.add_option("--lowz_optimize", type=float,
                   default=0.1,
                   help="To maximize the lowz sample [%default]")
+parser.add_option("--sigmaInt", type=float,
+                  default=0.12,
+                  help="sigmaInt for SN [%default]")
 
 opts, args = parser.parse_args()
 
@@ -96,6 +99,7 @@ frac_WFD_low_sigmaC = opts.frac_WFD_low_sigmaC
 max_sigmaC = opts.max_sigmaC
 test_mode = opts.test_mode
 lowz_optimize = opts.lowz_optimize
+sigmaInt = opts.sigmaInt
 
 checkDir(outDir)
 
@@ -143,7 +147,7 @@ priors['prior'] = pd.DataFrame({'varname': ['Om0'],
 
 outName = '{}/cosmo_{}.hdf5'.format(outDir, dbName_DD)
 resfi = pd.DataFrame()
-sigmaInt = 0.12
+
 for key, vals in priors.items():
     cl = Fit_seasons(fitconfig, dataDir_DD, dbName_DD,
                      dataDir_WFD, dbName_WFD, dictsel, survey,
