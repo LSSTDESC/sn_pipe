@@ -118,12 +118,13 @@ fitconfig = {}
 """
 fitconfig['fita'] = dict(zip(['w0', 'Om0', 'alpha', 'beta', 'Mb'],
                              [-1, 0.3, 0.13, 3.1, -19.08]))
+
 """
 """
 fitconfig['fitb'] = dict(zip(['w0', 'wa', 'Om0', 'alpha', 'beta', 'Mb'],
                              [-1, 0.0, 0.3, 0.13, 3.1, -19.08]))
-
 """
+
 # fitconfig['fitc'] = dict(zip(['sigmaInt'],
 #                              [0.12]))
 
@@ -142,12 +143,12 @@ priors['prior'] = pd.DataFrame({'varname': ['Om0'],
 
 outName = '{}/cosmo_{}.hdf5'.format(outDir, dbName_DD)
 resfi = pd.DataFrame()
-
+sigmaInt = 0.12
 for key, vals in priors.items():
     cl = Fit_seasons(fitconfig, dataDir_DD, dbName_DD,
                      dataDir_WFD, dbName_WFD, dictsel, survey,
                      vals, host_effi, frac_WFD_low_sigmaC,
-                     max_sigmaC, test_mode, lowz_optimize)
+                     max_sigmaC, test_mode, lowz_optimize, sigmaInt)
     res = cl()
     res['prior'] = key
     resfi = pd.concat((resfi, res))
