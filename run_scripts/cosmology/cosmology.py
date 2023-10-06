@@ -82,7 +82,9 @@ parser.add_option("--lowz_optimize", type=float,
 parser.add_option("--sigmaInt", type=float,
                   default=0.12,
                   help="sigmaInt for SN [%default]")
-
+parser.add_option("--dump_data", type=int,
+                  default=0,
+                  help="to dump SN on disk [%default]")
 opts, args = parser.parse_args()
 
 # loading SN data
@@ -100,6 +102,7 @@ max_sigmaC = opts.max_sigmaC
 test_mode = opts.test_mode
 lowz_optimize = opts.lowz_optimize
 sigmaInt = opts.sigmaInt
+dump_data = opts.dump_data
 
 checkDir(outDir)
 
@@ -152,7 +155,8 @@ for key, vals in priors.items():
     cl = Fit_seasons(fitconfig, dataDir_DD, dbName_DD,
                      dataDir_WFD, dbName_WFD, dictsel, survey,
                      vals, host_effi, frac_WFD_low_sigmaC,
-                     max_sigmaC, test_mode, lowz_optimize, sigmaInt)
+                     max_sigmaC, test_mode, lowz_optimize,
+                     sigmaInt, dump_data)
     res = cl()
     res['prior'] = key
     resfi = pd.concat((resfi, res))
