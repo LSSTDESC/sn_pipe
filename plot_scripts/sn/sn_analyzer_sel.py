@@ -671,7 +671,7 @@ class Plot_nsn_vs:
                      xmin=xmin, xmax=xmax, nside=self.nside)
 
 
-def plot_nsn_versus_two(data, norm_factor=30,
+def plot_nsn_versus_two(data, norm_factor=30, nside=128,
                         bins=np.arange(0.005, 0.8, 0.01),
                         xvar='z', xleg='z', logy=False,
                         cumul=False, xlim=[0.01, 0.8],
@@ -689,7 +689,12 @@ def plot_nsn_versus_two(data, norm_factor=30,
         fig, ax = plt.subplots(figsize=(14, 8))
 
     fig.suptitle(figtitle)
+
+    #idxa = data['z'] <= 0.1
+    #data = data[idxa]
+
     plot_nsn_binned(data, bins=bins, norm_factor=norm_factor,
+                    nside=nside,
                     xvar=xvar, xleg=xleg, logy=logy,
                     cumul=cumul, xlim=xlim,
                     label=label, fig=fig, ax=ax)
@@ -711,7 +716,7 @@ def plot_nsn_versus_two(data, norm_factor=30,
     ax.grid()
 
 
-def plot_nsn_binned(data, norm_factor=30,
+def plot_nsn_binned(data, norm_factor=30, nside=128,
                     bins=np.arange(0.005, 0.8, 0.01),
                     xvar='z', xleg='z', logy=False,
                     cumul=False, xlim=[0.01, 0.8],
@@ -741,7 +746,14 @@ def plot_nsn_binned(data, norm_factor=30,
                  norm_factor=norm_factor)
 
     print(res)
-    print('total number of SN', np.sum(res['NSN']))
+    nsn_tot = np.sum(res['NSN'])
+    print('total number of SN', nsn_tot)
+
+    npixels = len(data['healpixID'].unique())
+    import healpy as hp
+    pixArea = hp.nside2pixarea(nside, degrees=True)
+
+    print('density', nsn_tot/(npixels*pixArea))
 
     vv = res['NSN']
     if cumul:
@@ -835,7 +847,8 @@ def get_val(var):
     return var
 
 
-def process_WFD(conf_df, dataType, dbDir_WFD, runType, seasons, norm_factor):
+def process_WFD(conf_df, dataType, dbDir_WFD, runType,
+                seasons, norm_factor, nside=64):
     """
     Function to process WFD data
 
@@ -875,10 +888,11 @@ def process_WFD(conf_df, dataType, dbDir_WFD, runType, seasons, norm_factor):
     idx = wfd['ebvofMW'] < 0.25
     wfd = wfd[idx]
 
-    """
     plot_nsn_versus_two(wfd, xvar='year', xleg='year', logy=False,
                         bins=np.arange(0.5, 11.5, 1), norm_factor=norm_factor,
-                        cumul=False, xlim=[1, 10])
+                        nside=nside,
+                        cumul=False, xlim=[1, 10], figtitle=OS_WFDs[0])
+    """
 
     plot_nsn_versus_two(wfd, xvar='z', xleg='z', logy=True,
                         bins=np.arange(0.005, 0.805, 0.01), norm_factor=norm_factor,
@@ -892,7 +906,7 @@ def process_WFD(conf_df, dataType, dbDir_WFD, runType, seasons, norm_factor):
     print(len(wfd))
 
 
-def process_DDF(conf_df, dataType, dbDir_DD, runType, seasons, norm_factor):
+def process_DDF(conf_df, dataType, dbDir_DD, runType, seasons, norm_factor, nside=128):
 
     # load DDF
     OS_DDFs = conf_df['dbName_DD'].unique()
@@ -981,7 +995,8 @@ Plot_nsn_vs(wfd, norm_factor_DD, bins=np.arange(
 
 """
 
-process_WFD(conf_df, dataType, dbDir_WFD, runType, seasons, norm_factor_WFD)
+process_WFD(conf_df, dataType, dbDir_WFD, runType,
+            seasons, norm_factor_WFD, nside=64)
 
 # print(test)
 
