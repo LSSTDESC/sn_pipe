@@ -92,7 +92,8 @@ for vary in vvars:
                    legy=leg[vary], prior=prior, figtitle=dd[prior])
 
 vvarsb = ['DDF', 'UD', 'DD', 'WFD']
-legb = [r'$N^{DDF}$', r'$N^{UD}$', r'$N^{DD}$', r'$N^{WFD}$']
+legb = [r'$N^{DDF}_{SN}$', r'$N^{UD}_{SN}$',
+        r'$N^{DD}_{SN}$', r'$N^{WFD}_{SN}$']
 lleg = dict(zip(vvarsb, legb))
 for vary in vvarsb:
     plot_allOS(resdf, config, vary=vary,
