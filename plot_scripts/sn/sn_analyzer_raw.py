@@ -228,6 +228,7 @@ def plot_nsn_selcriteria(data, dd, listDDF, selcriteria='G10_JLA'):
         sel = sel.merge(newcols, left_on=['sel'], right_on=['sel'])
 
         sel = sel.sort_values(by=['cutnum'])
+
         ls = selconf['ls'].unique()[0]
         marker = selconf['marker'].unique()[0]
         color = selconf['color'].unique()[0]
@@ -242,7 +243,7 @@ def plot_nsn_selcriteria(data, dd, listDDF, selcriteria='G10_JLA'):
     ax.legend(loc='upper center',
               bbox_to_anchor=(1.15, 0.7),
               ncol=1, fontsize=12, frameon=False)
-    ax.set_ylabel('NSN')
+    ax.set_ylabel('N$_{SN}$')
     # plt.tight_layout()
 
 
@@ -274,9 +275,6 @@ parser.add_option('--plotDir', type=str,
 parser.add_option('--outDir', type=str,
                   default='SN_analysis',
                   help='output directory for the produced files [%default]')
-parser.add_option('--budget_DD', type=float,
-                  default=0.07,
-                  help='DD budget [%default]')
 
 opts, args = parser.parse_args()
 
@@ -291,7 +289,6 @@ selconfig = opts.selconfig
 selconfig_ref = opts.selconfig_ref
 plotDir = opts.plotDir
 outDir = opts.outDir
-budget = np.round(opts.budget_DD, 2)
 
 checkDir(outDir)
 # res_fast = load_complete('Output_SN_fast', dbName)
@@ -302,13 +299,10 @@ dict_sel = selection_criteria()
 # load the dbName, etc, to process
 dd = pd.read_csv(dbList, comment='#')
 
-if budget > 0.:
-    dd['dbName'] += '_{}'.format(budget)
-
 gime_simuParam = False
 gime_plotNSN = False
-gime_plotNSN_selcriteria = False
-gime_plotNSN_vs_z = True
+gime_plotNSN_selcriteria = True
+gime_plotNSN_vs_z = False
 
 
 if gime_simuParam:
@@ -320,6 +314,7 @@ if gime_plotNSN:
                    listDDF, dict_sel, outDir, norm_factor)
 
 if gime_plotNSN_selcriteria:
+    print('aooo', dd)
     res = nsn_vs_sel(dd, dbDir, prodType, listDDF,
                      dict_sel, outDir, norm_factor)
 
