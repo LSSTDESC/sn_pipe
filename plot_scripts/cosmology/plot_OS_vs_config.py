@@ -12,7 +12,7 @@ from sn_plotter_cosmology import plt
 import numpy as np
 
 
-def load_data(theDir, dbName, frac_sigmaC, budget):
+def load_data(theDir, dbName, frac_sigmaC):
     """
     Function to load data
 
@@ -24,8 +24,6 @@ def load_data(theDir, dbName, frac_sigmaC, budget):
         OS to process.
     frac_sigmaC : float
         fraction of SN with sigma<= 0.04.
-    budget : float
-        DD budget.
 
     Returns
     -------
@@ -34,7 +32,7 @@ def load_data(theDir, dbName, frac_sigmaC, budget):
 
     """
 
-    fullPath = '{}/cosmo_{}_{}.hdf5'.format(theDir, dbName, budget)
+    fullPath = '{}/cosmo_{}.hdf5'.format(theDir, dbName)
     df = pd.read_hdf(fullPath)
     df['frac_sigmaC'] = frac_sigmaC
     df = df.round({'frac_sigmaC': 2})
@@ -50,14 +48,11 @@ parser.add_option('--dbList', type=str,
                   help='List of dirs for cosmo results [%default]')
 parser.add_option('--dbName', type=str, default='DDF_DESC_0.80_SN',
                   help='OS to process [%default]')
-parser.add_option('--budget_DD', type=str, default='0.07',
-                  help='DD budget [%default]')
 
 opts, args = parser.parse_args()
 
 dbList = opts.dbList
 dbName = opts.dbName
-budget = opts.budget_DD
 
 # read config file
 toproc = pd.read_csv(dbList, comment='#')
@@ -68,7 +63,7 @@ print(toproc)
 
 df = pd.DataFrame()
 for i, row in toproc.iterrows():
-    dfa = load_data(row['dbDir'], dbName, row['frac_sigmaC'], budget)
+    dfa = load_data(row['dbDir'], dbName, row['frac_sigmaC'])
     df = pd.concat((df, dfa))
 
 print(df.columns)
