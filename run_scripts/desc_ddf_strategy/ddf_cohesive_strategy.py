@@ -1,3 +1,4 @@
+import numpy.lib.recfunctions as rf
 from sn_desc_ddf_strategy.dd_scenario import DD_Scenario
 from sn_desc_ddf_strategy.dd_scenario import nvisits_from_m5, reshuffle
 from sn_desc_ddf_strategy.dd_scenario import get_final_scenario, moon_recovery
@@ -187,11 +188,20 @@ cadud = '$cad^{UD}$'
 ftit = 'DD budget={}% - {}={} million'.format(int(100*myclass.budget_DD),
                                               nvisits, myclass.Nv_LSST/1.e6)
 ffig = '{} \n'.format(ftit)
+ffiga = '{} \n'.format(ftit)
 ffig += '{}={} days, season length={} days'.format(cadud, myclass.cad_UD,
                                                    int(myclass.sl_UD))
+#ffiga += 'season length={} days'.format(int(myclass.sl_UD))
 
+"""
+restot = rf.append_fields(restot, 'Nv_UD_season',
+                          restot['Nv_UD']/restot['Ns_UD'])
+"""
 myclass.plot(restot, varx='Nv_DD',
-             legx='N$_{visits}^{DD}/season}$', figtitle=ffig)
+             legx='N$_{v}^{DD}/season}$',
+             vary='Nv_UD',
+             legy='N$_{v}^{UD}/season}$', figtitle=ffiga)
+
 
 # zcomp_req = {}
 # zcomp_req_err = {}
@@ -212,13 +222,13 @@ deep_universal['Deep Universal'] = [
     Nvisits_avail/(opts.Ns_DD*opts.NDDF), du_pos]
 scoc_pII['SCOC_pII'] = [Nv_DD_SCOC_pII, Nv_UD_SCOC_pII]
 
+
 res = myclass.plot(restot, varx='Nv_DD',
                    legx='N$_{visits}^{DD}/season}$', scenario=scenario,
                    zcomp_req=zcomp_req, zcomp_req_err=zcomp_req_err,
                    pz_wl_req=pz_wl_req, pz_wl_req_err=pz_wl_req_err,
                    deep_universal=deep_universal, scoc_pII=scoc_pII,
                    figtitle=ffig)
-# plt.show()
 
 print(res)
 print(res.dtype)
