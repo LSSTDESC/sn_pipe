@@ -84,7 +84,7 @@ for key, vals in confDict_gen.items():
     procDict[key] = eval('opts.{}'.format(key))
 
 # new dict with configuration params
-print('simudict', simuDict)
+#print('simudict', simuDict)
 yaml_params = make_dict_from_optparse(simuDict)
 
 # one modif: full dbName
@@ -108,7 +108,7 @@ yaml_orig = 'input/simulation/param_simulation_gen.yaml'
 
 yaml_params = makeYaml.genYaml(yaml_orig)
 """
-print(yaml_params)
+# print(yaml_params)
 
 # save on disk
 
@@ -134,8 +134,8 @@ outDir = yaml_params['OutputSimu']['directory']
 # now perform the processing
 
 
-print('seasons and metric', opts.Observations_season,
-      metricList, opts.pixelmap_dir, opts.npixels)
+# print('seasons and metric', opts.Observations_season,
+#      metricList, opts.pixelmap_dir, opts.npixels)
 
 procDict['fieldType'] = opts.fieldType
 procDict['metricList'] = metricList
@@ -144,7 +144,7 @@ procDict['outDir'] = outDir
 procDict['pixelList'] = opts.pixelList
 procDict['nside'] = opts.nside
 
-print('processing', procDict)
+# print('processing', procDict)
 process = Process(**procDict)
 
 """
