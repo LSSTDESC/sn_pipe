@@ -184,7 +184,7 @@ scenario = myclass.get_scenario()
 ### plot the result and get scenarios ######
 
 nvisits = '$N_{visits}^{LSST}$'
-cadud = '$cad^{UD}$'
+cadud = '$cad^{UDF}$'
 ftit = 'DD budget={}% - {}={} million'.format(int(100*myclass.budget_DD),
                                               nvisits, myclass.Nv_LSST/1.e6)
 ffig = '{} \n'.format(ftit)
@@ -198,9 +198,9 @@ restot = rf.append_fields(restot, 'Nv_UD_season',
                           restot['Nv_UD']/restot['Ns_UD'])
 """
 myclass.plot(restot, varx='Nv_DD',
-             legx='N$_{v}^{DD}/season}$',
+             legx='N$_{v}^{DF}/season}$',
              vary='Nv_UD',
-             legy='N$_{v}^{UD}/season}$', figtitle=ffiga)
+             legy='N$_{v}^{UDF}/season}$', figtitle=ffiga)
 
 
 # zcomp_req = {}
@@ -224,7 +224,9 @@ scoc_pII['SCOC_pII'] = [Nv_DD_SCOC_pII, Nv_UD_SCOC_pII]
 
 
 res = myclass.plot(restot, varx='Nv_DD',
-                   legx='N$_{visits}^{DD}/season}$', scenario=scenario,
+                   legx='N$_{visits}^{DF}/season}$',
+                   vary='Nv_UD_night',
+                   legy='N$_{v}^{UDF}/obs.~night$', scenario=scenario,
                    zcomp_req=zcomp_req, zcomp_req_err=zcomp_req_err,
                    pz_wl_req=pz_wl_req, pz_wl_req_err=pz_wl_req_err,
                    deep_universal=deep_universal, scoc_pII=scoc_pII,
