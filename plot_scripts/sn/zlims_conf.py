@@ -76,7 +76,7 @@ dict_sel['G10'] = [('n_epochs_m10_p35', operator.ge, 4),
                    ('sigmaC', operator.le, 0.04),
                    ]
 
-combis = pd.read_csv(combiFile)
+combis = pd.read_csv(combiFile, comment='#')
 ccols = []
 for b in 'grizy':
     ccols.append('Nvisits_{}'.format(b))

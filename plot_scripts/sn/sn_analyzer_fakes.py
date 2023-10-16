@@ -32,7 +32,7 @@ fis = glob.glob('{}/SN_*.hdf5'.format(theDir))
 # theFile = 'SN_conf_z_moon_-1_full_salt3.hdf5'
 
 
-df_dict = get_data(theDir, fis)
+df_dict = get_data(theDir, fis, nproc=1)
 print(df_dict.keys())
 
 dict_sel = {}
@@ -53,9 +53,9 @@ dict_sel['metric'] = [('n_epochs_bef', operator.ge, 4),
 
 
 if opts.plot_delta_zlim:
-    plot_delta_zlim(df_dict, dict_sel, 'G10')
+    plot_delta_zlim(df_dict, dict_sel, 'metric')
 
 if opts.plot_delta_nsn:
-    plot_delta_nsn(df_dict, dict_sel, 'G10', zmin=zmin)
+    plot_delta_nsn(df_dict, dict_sel, 'metric', zmin=zmin)
 
 plt.show()
