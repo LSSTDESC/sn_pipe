@@ -108,6 +108,7 @@ config_db = pd.read_csv(configdB, comment='#')
 if budget > 0:
     config_db['dbName'] += '_{}'.format(budget)
 
+"""
 pp = Anaplot_OS(dbDir, config_db, Nvisits_LSST, budget, outDir='',
                 pz_requirement=pz_requirement,
                 filter_alloc_req=filter_alloc_req, Nvisits_WL=Nvisits_WL)
@@ -115,9 +116,9 @@ pp = Anaplot_OS(dbDir, config_db, Nvisits_LSST, budget, outDir='',
 # pp.plot_budget()
 # pp.plot_m5_PZ()
 # pp.plot_Nvisits_WL()
-pp.plot_cadence_mean()
-plt.show()
-
+# pp.plot_cadence_mean()
+#plt.show()
+"""
 
 # plot cadence
 
@@ -126,5 +127,5 @@ df_config_scen['scen'] = df_config_scen['scen']+'_{}'.format(budget)
 #dbNames = df_config_scen['scen'].unique()
 dbNames = config_db['dbName'].unique()
 for dbName in dbNames:
-    Plot_cadence(dbDir, dbName, df_config_scen, outDir='')
+    Plot_cadence(dbDir, dbName, df_config_scen, outDir=outDir)
 plt.show()
