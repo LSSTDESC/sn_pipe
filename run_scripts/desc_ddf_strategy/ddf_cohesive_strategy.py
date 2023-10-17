@@ -320,21 +320,23 @@ print('uniformize', dfres[['name', 'year',
 
 
 # estimate and plot delta_m5 for each scenario
-Delta_m5(dfres, m5_nvisits)
+# Delta_m5(dfres, m5_nvisits)
 
 # estimate and plot visit ratio for each scenario
-Delta_nvisits(dfres, m5_nvisits)
+# Delta_nvisits(dfres, m5_nvisits)
 
 
 # plot budget vs time for each scenario
-Budget_time(dfres, pparams['Nv_LSST'], pparams['budget_DD'])
+# Budget_time(dfres, pparams['Nv_LSST'], pparams['budget_DD'])
+
+
+# plot scenario vs time - does not work any more
+#Scenario_time(dfres, swap_filter_moon=pparams['swap_filter_moon'])
+# see run_scripts/desc_ddf_strategy/ana_OS.py for this
+
 
 if pparams['showPlot']:
     plt.show()
-
-# plot scenario vs time
-# Scenario_time(dfres, swap_filter_moon=pparams['swap_filter_moon'])
-
 
 # check total number of visits
 print(dfres.columns)
