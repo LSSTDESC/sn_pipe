@@ -125,7 +125,11 @@ pp = Anaplot_OS(dbDir, config_db, Nvisits_LSST, budget, outDir='',
 df_config_scen = pd.read_csv(configScenario, comment='#')
 df_config_scen['scen'] = df_config_scen['scen']+'_{}'.format(budget)
 #dbNames = df_config_scen['scen'].unique()
-dbNames = config_db['dbName'].unique()
+dbNames = np.asarray(config_db['dbName'].unique())
+# dbNames = ['DDF_DESC_0.70_co_0.07']
+# dbNames = ['DDF_SCOC_pII_0.07']
+# dbNames = ['DDF_Univ_SN_0.07']
 for dbName in dbNames:
+    print('processing', dbName)
     Plot_cadence(dbDir, dbName, df_config_scen, outDir=outDir)
 plt.show()
