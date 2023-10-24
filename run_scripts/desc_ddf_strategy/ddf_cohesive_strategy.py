@@ -66,6 +66,9 @@ parser.add_option("--m5_single_file", type=str,
 parser.add_option("--filter_alloc_file", type=str,
                   default='input/DESC_cohesive_strategy/filter_allocation.csv',
                   help="filter allocation file (all bands) [%default]")
+parser.add_option("--pz_requirements", type=str,
+                  default='input/DESC_cohesive_strategy/pz_requirements.csv',
+                  help="m5 pz requirements [%default]")
 parser.add_option("--m5_from_db", type=int,
                   default=0,
                   help="1 to grab m5 from db [%default]")
@@ -122,22 +125,24 @@ else:
 
 
 m5class = FiveSigmaDepth_Nvisits(
+    requirements=pparams['pz_requirements'],
     Nvisits_WL_season=pparams['Nvisits_WL_season'],
     frac_band=frac_band,
     m5_single=m5_single_band, Ns_y2_y10=opts.Ns_DD)
 
 
 msingle = m5class.msingle
-print('hello', msingle)
+print('msingle', msingle)
 
 
 m5_summary = m5class.summary
 m5_nvisits = m5class.msingle_calc
 m5_dict = m5_summary.to_dict()
 
-print(m5_summary)
+print('m5_summary', m5_summary)
 print(m5_dict)
-print(m5_nvisits)
+vv = ['band', 'm5_med_single', 'Nvisits_y1', 'Nvisits_y2_y10']
+print('m5_nvisits', m5_nvisits[vv])
 
 ## get (Nvisits_UD vs N_visits_DD for (Kf_UD, Ns_UD) combinations ####
 
