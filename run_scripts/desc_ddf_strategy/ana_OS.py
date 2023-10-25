@@ -12,7 +12,7 @@ from optparse import OptionParser
 from sn_plotter_analysis import plt, filtercolors
 from sn_tools.sn_io import checkDir
 from sn_desc_ddf_strategy.ana_os_reqs import Anaplot_OS
-from sn_desc_ddf_strategy.ana_OS_class import Plot_cadence
+from sn_desc_ddf_strategy.ana_os_class import Plot_cadence
 
 
 def plot_NSN_season(dbDir, df_config_scen):
@@ -108,28 +108,29 @@ config_db = pd.read_csv(configdB, comment='#')
 if budget > 0:
     config_db['dbName'] += '_{}'.format(budget)
 
-"""
+
 pp = Anaplot_OS(dbDir, config_db, Nvisits_LSST, budget, outDir='',
                 pz_requirement=pz_requirement,
                 filter_alloc_req=filter_alloc_req, Nvisits_WL=Nvisits_WL)
 
-# pp.plot_budget()
+pp.plot_budget()
 # pp.plot_m5_PZ()
 # pp.plot_Nvisits_WL()
 # pp.plot_cadence_mean()
-#plt.show()
-"""
+plt.show()
 
+"""
 # plot cadence
 
 df_config_scen = pd.read_csv(configScenario, comment='#')
 df_config_scen['scen'] = df_config_scen['scen']+'_{}'.format(budget)
 #dbNames = df_config_scen['scen'].unique()
 dbNames = np.asarray(config_db['dbName'].unique())
-# dbNames = ['DDF_DESC_0.70_co_0.07']
+# dbNames = ['DDF_DESC_0.80_SN_0.07']
 # dbNames = ['DDF_SCOC_pII_0.07']
 # dbNames = ['DDF_Univ_SN_0.07']
 for dbName in dbNames:
     print('processing', dbName)
     Plot_cadence(dbDir, dbName, df_config_scen, outDir=outDir)
 plt.show()
+"""
