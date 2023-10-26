@@ -84,6 +84,9 @@ parser.add_option('--filter_alloc_req', type=str,
 parser.add_option('--Nvisits_WL', type=int,
                   default=8000,
                   help='Number of visits after ten years [%default]')
+parser.add_option('--plots', type=str,
+                  default='budget,PZ_req',
+                  help='Plots to draw[%default]')
 
 opts, args = parser.parse_args()
 
@@ -95,6 +98,7 @@ Nvisits_LSST = opts.Nvisits_LSST
 pz_requirement = opts.pz_requirement
 filter_alloc_req = opts.filter_alloc_req
 Nvisits_WL = opts.Nvisits_WL
+plots = opts.plots.split(',')
 
 budget = np.round(opts.budget_DD, 2)
 
@@ -109,13 +113,16 @@ if budget > 0:
     config_db['dbName'] += '_{}'.format(budget)
 
 
-pp = Anaplot_OS(dbDir, config_db, Nvisits_LSST, budget, outDir='',
+pp = Anaplot_OS(dbDir, config_db[:1], Nvisits_LSST, budget, outDir=outDir,
                 pz_requirement=pz_requirement,
                 filter_alloc_req=filter_alloc_req, Nvisits_WL=Nvisits_WL)
 
-pp.plot_budget()
-# pp.plot_m5_PZ()
-# pp.plot_Nvisits_WL()
+if 'budget' in plots:
+    pp.plot_budget()
+if 'PZ_req' in plots:
+    pp.plot_m5_PZ()
+if 'WL_req' in plots:
+    pp.plot_Nvisits_WL()
 # pp.plot_cadence_mean()
 plt.show()
 
