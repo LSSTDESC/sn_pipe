@@ -14,6 +14,24 @@ warnings.filterwarnings("ignore", category=Warning)
 
 
 def get_info(grp, DDlist, col='fiveSigmaDepth'):
+    """
+    Method to get and format grp info
+
+    Parameters
+    ----------
+    grp : pandas df
+        Data to process.
+    DDlist : list(str)
+        List of DDFs.
+    col : str, optional
+        Column to get info from. The default is 'fiveSigmaDepth'.
+
+    Returns
+    -------
+    pandas df
+        ste of m5 values as str.
+
+    """
 
     r = []
     for dd in DDlist:
@@ -30,6 +48,21 @@ def get_info(grp, DDlist, col='fiveSigmaDepth'):
 
 
 def print_latex(grp, bands='ugrizy'):
+    """
+    To print results in latex form
+
+    Parameters
+    ----------
+    grp : pandas df
+        Data to process.
+    bands : str, optional
+        List of bands. The default is 'ugrizy'.
+
+    Returns
+    -------
+    None.
+
+    """
 
     seas = grp.name
     for io, b in enumerate(bands):
@@ -41,6 +74,40 @@ def print_latex(grp, bands='ugrizy'):
 
         print(tp)
     print('\\hline')
+
+
+def print_table(tt):
+    """
+    To print the complete latex table
+
+    Parameters
+    ----------
+    tt : pandas df
+        Data to process.
+
+    Returns
+    -------
+    None.
+
+    """
+
+    caption = '\\fivesig~values used in the simulations.'
+    caption += ' These values are extracted from the LSST simulation baseline\\_v3.0\\_10yrs.'
+    label = 'tab:fivesigmasim'
+    print('\\begin{table}[!htbp]')
+    print('\\begin{center}')
+    print('\\caption{}\\label{}'.format('{'+caption+'}', '{'+label+'}'))
+    print('\\begin{tabular}{c|c|c}')
+    print('\\hline')
+    print('\\hline')
+    print('season & band & \\fivesig~single exposure\\\\')
+    print('\\hline')
+
+    bb = tt.groupby(['season']).apply(lambda x: print_latex(x))
+    print('\\hline')
+    print('\\end{tabular}')
+    print('\\end{center}')
+    print('\\end{table}')
 
 
 parser = OptionParser(description='Script to analyze Observing Strategy')
@@ -77,32 +144,18 @@ for ddf in DDlist:
     else:
         data_seas = np.concatenate((data_seas, seas_sel))
 
-
+# move to a pandas df
 df = pd.DataFrame.from_records(data_seas)
 
+# get median m5 per field/season/filter
 dfres = df.groupby(['note', 'filter', 'season'])[
     'fiveSigmaDepth'].median().reset_index()
 
 dfres = dfres.round({'fiveSigmaDepth': 2})
 
+# reformat dfres - prepare for latex output
 tt = dfres.groupby(['season', 'filter']).apply(
     lambda x: get_info(x, DDlist)).reset_index()
 
-
-caption = '\\fivesig~values used in the simulations.'
-caption += ' These values are extracted from the LSST simulation baseline\\_v3.0\\_10yrs.'
-label = 'tab:fivesigmasim'
-print('\\begin{table}[!htbp]')
-print('\\begin{center}')
-print('\\caption{}\\label{}'.format('{'+caption+'}', '{'+label+'}'))
-print('\\begin{tabular}{c|c|c}')
-print('\\hline')
-print('\\hline')
-print('season & band & \\fivesig~single exposure\\\\')
-print('\\hline')
-
-bb = tt.groupby(['season']).apply(lambda x: print_latex(x))
-print('\\hline')
-print('\\end{tabular}')
-print('\\end{center}')
-print('\\end{table}')
+# print table in latex format
+print_table(tt)
