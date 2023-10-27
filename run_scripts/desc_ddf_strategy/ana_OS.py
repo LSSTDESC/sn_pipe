@@ -106,38 +106,48 @@ if outDir != '':
     checkDir(outDir)
 
 
-# this is to plot the budget, PZ req and WL req
-
 config_db = pd.read_csv(configdB, comment='#')
 if budget > 0:
     config_db['dbName'] += '_{}'.format(budget)
 
+# change field names for plot
+init_dd = ['DD:COSMOS', 'DD:ECDFS', 'DD:EDFS_a',
+           'DD:EDFS_b', 'DD:ELAISS1', 'DD:XMM_LSS']
+new_dd = ['COSMOS', 'CDF-S', 'EDFS-A', 'EDFS-B', 'ELAIS-S1', 'XMM-LSS']
+corresp_dd_names = dict(zip(init_dd, new_dd))
 
-pp = Anaplot_OS(dbDir, config_db[:1], Nvisits_LSST, budget, outDir=outDir,
-                pz_requirement=pz_requirement,
-                filter_alloc_req=filter_alloc_req, Nvisits_WL=Nvisits_WL)
 
-if 'budget' in plots:
-    pp.plot_budget()
-if 'PZ_req' in plots:
-    pp.plot_m5_PZ()
-if 'WL_req' in plots:
-    pp.plot_Nvisits_WL()
+# this is to plot the budget, PZ req and WL req
+
+if 'budget' in plots or 'PZ_req' in plots or 'WL_req' in plots:
+
+    pp = Anaplot_OS(dbDir, config_db, Nvisits_LSST, budget, outDir=outDir,
+                    pz_requirement=pz_requirement,
+                    filter_alloc_req=filter_alloc_req, Nvisits_WL=Nvisits_WL,
+                    corresp_dd_names=corresp_dd_names)
+
+    if 'budget' in plots:
+        pp.plot_budget()
+    if 'PZ_req' in plots:
+        pp.plot_m5_PZ()
+    if 'WL_req' in plots:
+        pp.plot_Nvisits_WL()
+
 # pp.plot_cadence_mean()
-plt.show()
 
-"""
+
 # plot cadence
 
-df_config_scen = pd.read_csv(configScenario, comment='#')
-df_config_scen['scen'] = df_config_scen['scen']+'_{}'.format(budget)
-#dbNames = df_config_scen['scen'].unique()
-dbNames = np.asarray(config_db['dbName'].unique())
-# dbNames = ['DDF_DESC_0.80_SN_0.07']
-# dbNames = ['DDF_SCOC_pII_0.07']
-# dbNames = ['DDF_Univ_SN_0.07']
-for dbName in dbNames:
-    print('processing', dbName)
-    Plot_cadence(dbDir, dbName, df_config_scen, outDir=outDir)
+if 'cadence' in plots:
+    df_config_scen = pd.read_csv(configScenario, comment='#')
+    df_config_scen['scen'] = df_config_scen['scen']+'_{}'.format(budget)
+    #dbNames = df_config_scen['scen'].unique()
+    dbNames = np.asarray(config_db['dbName'].unique())
+    # dbNames = ['DDF_DESC_0.80_SN_0.07']
+    # dbNames = ['DDF_SCOC_pII_0.07']
+    # dbNames = ['DDF_Univ_SN_0.07']
+    for dbName in dbNames:
+        print('processing', dbName)
+        Plot_cadence(dbDir, dbName, df_config_scen, outDir=outDir,
+                     corresp_dd_names=corresp_dd_names)
 plt.show()
-"""
