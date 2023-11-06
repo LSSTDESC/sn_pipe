@@ -551,7 +551,7 @@ def plot_field_season(data, mypl, xvar='dist', xleg='dist',
     for field in data['field'].unique():
         idx = data['field'] == field
         sela = data[idx]
-        fig, ax = plt.subplots(figsize=(14, 8))
+        fig, ax = plt.subplots(figsize=(14, 9))
         for dbName in sela['dbName'].unique():
             idxb = sela['dbName'] == dbName
             selb = sela[idxb]
@@ -610,7 +610,7 @@ class Plot_nsn_vs:
                     figTitle='', label=None, xlim=[1, 10], ls='solid'):
 
         if ax is None:
-            fig, ax = plt.subplots(figsize=(14, 8))
+            fig, ax = plt.subplots(figsize=(14, 9))
 
         fig.suptitle(figTitle)
 
@@ -637,7 +637,7 @@ class Plot_nsn_vs:
 
         years = self.data[what].unique()
 
-        self.Mollview_sum(self.data, addleg='all seasons')
+        self.Mollview_sum(self.data, addleg='')
 
         for year in years:
             idx = self.data[what] == year
@@ -693,25 +693,26 @@ def plot_nsn_versus_two(data, norm_factor=30, nside=128,
     #idxa = data['z'] <= 0.1
     #data = data[idxa]
 
+    label = 'no selection'
     plot_nsn_binned(data, bins=bins, norm_factor=norm_factor,
                     nside=nside,
                     xvar=xvar, xleg=xleg, logy=logy,
                     cumul=cumul, xlim=xlim,
-                    label=label, fig=fig, ax=ax)
+                    label=label, fig=fig, ax=ax,)
     idx = data['sigmaC'] <= 0.04
     label = '$\sigma_C \leq 0.04$'
     plot_nsn_binned(data[idx], norm_factor=norm_factor, bins=bins,
                     xvar=xvar, xleg=xleg, logy=logy,
                     cumul=cumul, xlim=xlim,
-                    label=label, fig=fig, ax=ax)
+                    label=label, fig=fig, ax=ax, ls='dotted')
     if logy:
         ax.set_yscale("log")
 
-    ax.set_xlabel(xleg)
+    ax.set_xlabel(xleg, fontweight='bold')
     ylabel = '$N_{SN}$'
     if cumul:
         ylabel = '$\sum N_{SN}$'
-    ax.set_ylabel(r'{}'.format(ylabel))
+    ax.set_ylabel(r'{}'.format(ylabel), fontweight='bold')
     ax.legend()
     ax.grid()
 
@@ -720,7 +721,7 @@ def plot_nsn_binned(data, norm_factor=30, nside=128,
                     bins=np.arange(0.005, 0.8, 0.01),
                     xvar='z', xleg='z', logy=False,
                     cumul=False, xlim=[0.01, 0.8],
-                    label='', fig=None, ax=None):
+                    label='', fig=None, ax=None, color='k', ls='solid'):
     """
     Function to plot nsn vs...
 
@@ -758,10 +759,10 @@ def plot_nsn_binned(data, norm_factor=30, nside=128,
     vv = res['NSN']
     if cumul:
         vv = np.cumsum(res['NSN'])
-    ax.plot(res[xvar], vv, label=label)
+    ax.plot(res[xvar], vv, label=label, color=color, linestyle=ls)
 
     ax.set_xlabel(xleg)
-    ax.set_ylabel(r'$N_{SN}$')
+    ax.set_ylabel(r'$N_{SN}$', fontweight='bold')
     ax.set_xlim(xlim)
 
 
@@ -790,6 +791,8 @@ def plotMollview(data, varName, leg, addleg, op, xmin, xmax, nside=128):
     import healpy as hp
     npix = hp.nside2npix(nside)
 
+    fig = plt.figure(figsize=(8, 6))
+
     hpxmap = np.zeros(npix, dtype=np.float)
     hpxmap = np.full(hpxmap.shape, 0.)
     hpxmap[data['healpixID'].astype(
@@ -809,7 +812,7 @@ def plotMollview(data, varName, leg, addleg, op, xmin, xmax, nside=128):
     if addleg != '':
         title = '{} - {}'.format(addleg, title)
 
-    hp.mollview(hpxmap, min=xmin, max=xmax, cmap=cmap,
+    hp.mollview(hpxmap, fig=fig, min=xmin, max=xmax, cmap=cmap,
                 title=title, nest=True, norm=norm)
     hp.graticule()
 
