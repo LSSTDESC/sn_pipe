@@ -81,16 +81,29 @@ for tt in ['DDF', 'UD', 'DD', 'WFD']:
 print(resdf, config)
 print(resdf.columns)
 
+"""
 vvars = ['MoM', 'sigma_w', 'sigma_w0', 'sigma_wa']
 leg = dict(zip(vvars, [r'$SMoM$', r'$\sigma_w$[%]',
            r'$\sigma_{w_0}$ [%]', r'$\sigma_{w_a}$ [%]']))
+
 priors = ['prior', 'noprior']
+
 dd = dict(zip(priors, ['with prior', 'no prior']))
+"""
+vvars = ['MoM']
+leg = dict(zip(vvars, [r'$SMoM$']))
+
+priors = ['prior']
+
+dd = dict(zip(priors, ['with prior']))
+
+
 for vary in vvars:
     for prior in priors[:1]:
         plot_allOS(resdf, config, vary=vary,
                    legy=leg[vary], prior=prior, figtitle=dd[prior])
 
+"""
 vvarsb = ['DDF', 'UD', 'DD', 'WFD']
 legb = [r'$N^{DDF}_{SN}$', r'$N^{UD}_{SN}$',
         r'$N^{DD}_{SN}$', r'$N^{WFD}_{SN}$']
@@ -98,7 +111,7 @@ lleg = dict(zip(vvarsb, legb))
 for vary in vvarsb:
     plot_allOS(resdf, config, vary=vary,
                legy=lleg[vary], prior='prior', figtitle='')
-
+"""
 
 # ax.legend()
 # idx = resdf['prior'] == 'noprior'
