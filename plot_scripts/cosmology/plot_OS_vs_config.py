@@ -78,11 +78,13 @@ resdf = Process_OS(df, grpCol).res
 print(resdf.columns)
 
 vvars = ['MoM', 'sigma_w', 'sigma_w0', 'sigma_wa']
-leg = dict(zip(vvars, [r'$SMoM$', r'$\sigma_w$[%]',
+leg = dict(zip(vvars, [r'Relative $SMoM$', r'$\sigma_w$[%]',
            r'$\sigma_{w_0}$ [%]', r'$\sigma_{w_a}$ [%]']))
-figtitle = '{} - with prior'.format(dbName)
+dbNameb = '_'.join(dbName.split('_')[:-1])
+figtitle = '{} - with prior'.format(dbNameb)
+leg_prefix = 'frac$^{WFD}_{\sigma_{C} \leq 0.04} = $'
 for vary in vvars:
     plot_allOS(resdf, toproc, dataCol='frac_sigmaC', configCol='frac_sigmaC',
-               vary=vary, legy=leg[vary], prior='prior', figtitle=figtitle)
+               vary=vary, legy=leg[vary], prior='prior', figtitle=figtitle, leg_prefix=leg_prefix)
 
 plt.show()
