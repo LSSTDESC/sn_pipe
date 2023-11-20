@@ -81,7 +81,7 @@ vvars = ['MoM', 'sigma_w', 'sigma_w0', 'sigma_wa']
 leg = dict(zip(vvars, [r'Relative $SMoM$', r'$\sigma_w$[%]',
            r'$\sigma_{w_0}$ [%]', r'$\sigma_{w_a}$ [%]']))
 dbNameb = '_'.join(dbName.split('_')[:-1])
-figtitle = '{} - with prior'.format(dbNameb)
+figtitle = '{}'.format(dbNameb)
 leg_prefix = 'frac$^{WFD}_{\sigma_{C} \leq 0.04} = $'
 for vary in vvars:
     plot_allOS(resdf, toproc, dataCol='frac_sigmaC', configCol='frac_sigmaC',

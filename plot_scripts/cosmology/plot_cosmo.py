@@ -95,13 +95,13 @@ leg = dict(zip(vvars, [r'$SMoM$']))
 
 priors = ['prior']
 
-dd = dict(zip(priors, ['with prior']))
+dd = dict(zip(priors, ['']))
 
 
 for vary in vvars:
-    for prior in priors[:1]:
+    for prior in priors:
         plot_allOS(resdf, config, vary=vary,
-                   legy=leg[vary], prior=prior, figtitle=dd[prior])
+                   legy=leg[vary], prior=prior, figtitle=dd[prior], dbNorm='')
 
 """
 vvarsb = ['DDF', 'UD', 'DD', 'WFD']
