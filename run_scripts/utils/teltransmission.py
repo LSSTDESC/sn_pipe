@@ -1,4 +1,4 @@
-from sn_telmodel.sn_telescope import Telescope
+from sn_telmodel.sn_telescope import get_telescope
 from sn_telmodel import plt
 import os
 from optparse import OptionParser
@@ -160,46 +160,10 @@ def plot_single(tel, fig=None, ax=None,
             label=label, lw=lw)
 
 
-def get_telescope(through_dir='throughputs/baseline',
-                  atmos_dir='throughputs/atmos',
-                  tag='1.9', airmass=1.2, load_components=False):
-    """
-    Function to grab telescope version
-
-    Parameters
-    ----------
-    through_dir : str, optional
-        Throughput directory. The default is 'throughputs/baseline'.
-    atmos_dir : str, optional
-        Atmosphere directory. The default is 'throughputs/atmos'.
-    tag : str, optional
-        Tag version. The default is '1.9'.
-    load_components : bool, optional
-        To load all the components (one by one). The default is False.
-
-    Returns
-    -------
-    tela : TYPE
-        DESCRIPTION.
-
-    """
-
-    path = os.getcwd()
-
-    os.chdir(through_dir)
-    cmd = 'git checkout tags/{}'.format(tag)
-    os.system(cmd)
-    os.chdir(path)
-
-    tela = Telescope(
-        airmass=airmass, through_dir=through_dir,
-        atmos_dir=atmos_dir, load_components=load_components)
-
-    return tela
-
-
 parser = OptionParser(description='Script to plot telescope throughputs')
 
+parser.add_option('--tel_dir', type=str, default='throughputs',
+                  help='main throughputs location dir [%default]')
 parser.add_option('--throughputsDir', type=str, default='throughputs/baseline',
                   help='throughputs location dir [%default]')
 parser.add_option('--atmosDir', type=str, default='throughputs/atmos',
@@ -211,6 +175,7 @@ opts, args = parser.parse_args()
 
 # config = dict(zip(['tag','label'],[['1.5','1.9'],['Al_Ag_Al','Ag_Ag_Ag']]))
 
+tel_dir = opts.tel_dir
 throughputsDir = opts.throughputsDir
 atmosDir = opts.atmosDir
 
@@ -223,7 +188,8 @@ ls = dict(zip(tags, ['solid', 'dotted']))
 tel = {}
 
 for tag in tags:
-    tel[tag] = get_telescope(through_dir=throughputsDir,
+    tel[tag] = get_telescope(tel_dir=tel_dir,
+                             through_dir=throughputsDir,
                              atmos_dir=atmosDir,
                              tag=tag, load_components=True)
 

@@ -7,49 +7,14 @@ Created on Wed Jan 18 09:10:52 2023
 """
 
 from sn_telmodel import plt, filtercolors
-from sn_telmodel.sn_telescope import Telescope
+from sn_telmodel.sn_telescope import get_telescope
 import numpy as np
 from optparse import OptionParser
 import os
 
 
-def get_telescope(through_dir='throughputs/baseline',
-                  atmos_dir='throughputs/atmos',
-                  tag='1.9', airmass=1.2, aerosol=True):
-    """
-    Function to grab telescope version
-
-    Parameters
-    ----------
-    through_dir : str, optional
-        Throughput directory. The default is 'throughputs/baseline'.
-    atmos_dir : str, optional
-        Atmosphere directory. The default is 'throughputs/atmos'.
-    tag : str, optional
-        Tag version. The default is '1.9'.
-
-    Returns
-    -------
-    tela : TYPE
-        DESCRIPTION.
-
-    """
-
-    path = os.getcwd()
-
-    os.chdir(through_dir)
-    cmd = 'git checkout tags/{}'.format(tag)
-    os.system(cmd)
-    os.chdir(path)
-
-    tela = Telescope(
-        airmass=airmass, through_dir=through_dir,
-        atmos_dir=atmos_dir, aerosol=aerosol)
-
-    return tela
-
-
-def get_data(through_dir='throughputs/baseline',
+def get_data(tel_dir='throughputs',
+             through_dir='throughputs/baseline',
              atmos_dir='throughputs/atmos',
              tag='1.9'):
     """
@@ -64,7 +29,8 @@ def get_data(through_dir='throughputs/baseline',
 
     r = []
     for airmass in np.arange(1., 2.51, 0.1):
-        tel = get_telescope(through_dir=through_dir, atmos_dir=atmos_dir,
+        tel = get_telescope(tel_dir=tel_dir,
+                            through_dir=through_dir, atmos_dir=atmos_dir,
                             tag=tag, airmass=airmass, aerosol=True)
         for b in 'ugrizy':
             # b = 'g'
@@ -201,6 +167,8 @@ def plot(res, fitres=None, xvar='airmass', xleg='airmass',
 
 parser = OptionParser(description='Script to estimate zp vs airmass')
 
+parser.add_option('--telDir', type=str, default='throughputs',
+                  help='main throughputs location dir [%default]')
 parser.add_option('--throughputsDir', type=str, default='throughputs/baseline',
                   help='throughputs location dir [%default]')
 parser.add_option('--atmosDir', type=str, default='throughputs/atmos',
@@ -210,6 +178,7 @@ parser.add_option('--tag', type=str, default='1.9',
 
 opts, args = parser.parse_args()
 
+telDir = opts.telDir
 throughputsDir = opts.throughputsDir
 atmosDir = opts.atmosDir
 tag = opts.tag
@@ -218,7 +187,9 @@ tag = opts.tag
 outName = 'zp_airmass_v{}.npy'.format(tag)
 
 if not os.path.isfile(outName):
-    res = get_data(through_dir=throughputsDir, atmos_dir=atmosDir, tag=tag)
+    res = get_data(tel_dir=telDir,
+                   through_dir=throughputsDir,
+                   atmos_dir=atmosDir, tag=tag)
 
     print(res)
     np.save('data_{}'.format(outName), res)
