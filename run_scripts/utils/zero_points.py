@@ -7,110 +7,13 @@ Created on Wed Jan 18 09:10:52 2023
 """
 
 from sn_telmodel import plt, filtercolors
-from sn_telmodel.sn_telescope import get_telescope
+from sn_telmodel.sn_telescope import Zeropoint_airmass
 import numpy as np
 from optparse import OptionParser
 import os
 
 
-def get_data(tel_dir='throughputs',
-             through_dir='throughputs/baseline',
-             atmos_dir='throughputs/atmos',
-             tag='1.9'):
-    """
-    Function to estimate zp evolution as a function of airmass
-
-    Returns
-    -------
-    res : record array
-        array with the following cols:
-       'airmass', 'band', 'zp', 'zp_adu_sec', 'mean_wavelength']
-    """
-
-    r = []
-    for airmass in np.arange(1., 2.51, 0.1):
-        tel = get_telescope(tel_dir=tel_dir,
-                            through_dir=through_dir, atmos_dir=atmos_dir,
-                            tag=tag, airmass=airmass, aerosol=True)
-        for b in 'ugrizy':
-            # b = 'g'
-            # print(airmass, b, tel.zp(b))
-            mean_wave = tel.mean_wavelength[b]
-            rb = [airmass]
-            rb.append(b)
-            rb.append(tel.zp(b))
-            rb.append(tel.counts_zp(b))
-            rb.append(mean_wave)
-            r.append(rb)
-
-    res = np.rec.fromrecords(
-        r, names=['airmass', 'band', 'zp', 'zp_adu_sec', 'mean_wavelength'])
-
-    return res
-
-
-def func(x, a, b):
-    """
-    Function used for fitting
-
-    Parameters
-    ----------
-    x : array(float)
-        x-axis var.
-    a : float
-        slope.
-    b : float
-        intercept.
-
-    Returns
-    -------
-    array
-        list of values.
-
-    """
-
-    return a*x+b
-
-
-def fit(res, xvar='airmass', yvar='zp'):
-    """
-    Function to fit yvar vs xvar for all bands.
-
-    Parameters
-    ----------
-    res : array
-        data to fit.
-    xvar : str, optional
-        x-axis var. The default is 'airmass'.
-    yvar : str, optional
-        y-axis var. The default is 'zp'.
-
-    Returns
-    -------
-    res : array
-        slop and intercep from the fit per band.
-        added mean_wavelength.
-
-    """
-
-    from scipy.optimize import curve_fit
-    r = []
-    for b in 'ugrizy':
-        idx = res['band'] == b
-        sel = res[idx]
-        xdata = sel[xvar]
-        ydata = sel[yvar]
-        popt, pcov = curve_fit(func, xdata, ydata)
-        mean_wave = np.mean(sel['mean_wavelength'])
-        r.append((b, popt[0], popt[1], mean_wave))
-
-    res = np.rec.fromrecords(
-        r, names=['band', 'slope', 'intercept', 'mean_wavelength'])
-
-    return res
-
-
-def plot(res, fitres=None, xvar='airmass', xleg='airmass',
+def plot(res, fitfunc, fitres=None, xvar='airmass', xleg='airmass',
          yvar='zp', yleg='zp [mag]', figtitle=''):
     """
     Function to plot results
@@ -155,7 +58,7 @@ def plot(res, fitres=None, xvar='airmass', xleg='airmass',
         if fitres is not None:
             idxb = fitres['band'] == b
             selfit = fitres[idxb]
-            ax.plot(xdata, func(
+            ax.plot(xdata, fitfunc(
                 xdata, selfit['slope'], selfit['intercept']),
                 color=filtercolors[b])
 
@@ -186,22 +89,24 @@ tag = opts.tag
 
 outName = 'zp_airmass_v{}.npy'.format(tag)
 
-if not os.path.isfile(outName):
-    res = get_data(tel_dir=telDir,
-                   through_dir=throughputsDir,
-                   atmos_dir=atmosDir, tag=tag)
+zp = Zeropoint_airmass(tel_dir=telDir,
+                       through_dir=throughputsDir,
+                       atmos_dir=atmosDir, tag=tag, aerosol=True)
+res = zp.get_data()
+np.save('data_{}'.format(outName), res)
 
-    print(res)
-    np.save('data_{}'.format(outName), res)
+fitres = zp.fit(res)
 
-    fitres = fit(res)
+print(fitres)
 
-    np.save(outName, fitres)
+print(zp.get_fit_params())
+np.save(outName, fitres)
 
 fitres = np.load(outName)
 res = np.load('data_{}'.format(outName))
 
 tit = 'v{}'.format(tag)
-plot(res, fitres, figtitle=tit)
-plot(res, yvar='zp_adu_sec', yleg='zp [ADU/s]', figtitle=tit)
+plot(res, zp.fitfunc, fitres, figtitle=tit)
+plot(res, zp.fitfunc, yvar='zp_adu_sec',
+     yleg='zp [ADU/s]', figtitle=tit)
 plt.show()
