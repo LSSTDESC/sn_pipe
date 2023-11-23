@@ -6,12 +6,52 @@ Created on Wed Jan 18 09:10:52 2023
 @author: gris
 """
 
-import matplotlib.pyplot as plt
+from sn_telmodel import plt, filtercolors
 from sn_telmodel.sn_telescope import Telescope
 import numpy as np
+from optparse import OptionParser
+import os
 
 
-def get_data():
+def get_telescope(through_dir='throughputs/baseline',
+                  atmos_dir='throughputs/atmos',
+                  tag='1.9', airmass=1.2, aerosol=True):
+    """
+    Function to grab telescope version
+
+    Parameters
+    ----------
+    through_dir : str, optional
+        Throughput directory. The default is 'throughputs/baseline'.
+    atmos_dir : str, optional
+        Atmosphere directory. The default is 'throughputs/atmos'.
+    tag : str, optional
+        Tag version. The default is '1.9'.
+
+    Returns
+    -------
+    tela : TYPE
+        DESCRIPTION.
+
+    """
+
+    path = os.getcwd()
+
+    os.chdir(through_dir)
+    cmd = 'git checkout tags/{}'.format(tag)
+    os.system(cmd)
+    os.chdir(path)
+
+    tela = Telescope(
+        airmass=airmass, through_dir=through_dir,
+        atmos_dir=atmos_dir, aerosol=aerosol)
+
+    return tela
+
+
+def get_data(through_dir='throughputs/baseline',
+             atmos_dir='throughputs/atmos',
+             tag='1.9'):
     """
     Function to estimate zp evolution as a function of airmass
 
@@ -24,7 +64,8 @@ def get_data():
 
     r = []
     for airmass in np.arange(1., 2.51, 0.1):
-        tel = Telescope(airmass=airmass, aerosol=True)
+        tel = get_telescope(through_dir=through_dir, atmos_dir=atmos_dir,
+                            tag=tag, airmass=airmass, aerosol=True)
         for b in 'ugrizy':
             # b = 'g'
             # print(airmass, b, tel.zp(b))
@@ -104,7 +145,7 @@ def fit(res, xvar='airmass', yvar='zp'):
 
 
 def plot(res, fitres=None, xvar='airmass', xleg='airmass',
-         yvar='zp', yleg='zp [mag]'):
+         yvar='zp', yleg='zp [mag]', figtitle=''):
     """
     Function to plot results
 
@@ -122,6 +163,8 @@ def plot(res, fitres=None, xvar='airmass', xleg='airmass',
         y-axis var. The default is 'zp'.
     yleg : str, optional
         y-axis label. The default is 'zp [mag]'.
+    figtitle: str, opt
+       figure suptitle. The default is ''.
 
     Returns
     -------
@@ -130,33 +173,64 @@ def plot(res, fitres=None, xvar='airmass', xleg='airmass',
     """
 
     fig, ax = plt.subplots(figsize=(12, 8))
+    fig.subplots_adjust(right=0.85)
+    fig.suptitle(figtitle)
 
-    for b in 'ugrizy':
+    bands = 'ugrizy'
+    marker = dict(zip(bands, ['o', 's', '*', '.', 'v', 'h']))
+    for b in bands:
         idx = res['band'] == b
         sel = res[idx]
 
         xdata = sel[xvar]
         ydata = sel[yvar]
-        ax.plot(xdata, ydata, 'k.')
+        ax.plot(xdata, ydata, label=b,
+                marker=marker[b], color=filtercolors[b], mfc='None', ms=15)
         if fitres is not None:
             idxb = fitres['band'] == b
             selfit = fitres[idxb]
             ax.plot(xdata, func(
-                xdata, selfit['slope'], selfit['intercept']), 'r-')
+                xdata, selfit['slope'], selfit['intercept']),
+                color=filtercolors[b])
 
     ax.set_xlabel('airmass')
     ax.set_ylabel(yleg)
     ax.grid()
+    ax.legend(bbox_to_anchor=(1.0, 0.5), ncol=1, frameon=False)
 
 
-res = get_data()
+parser = OptionParser(description='Script to estimate zp vs airmass')
 
-print(res)
+parser.add_option('--throughputsDir', type=str, default='throughputs/baseline',
+                  help='throughputs location dir [%default]')
+parser.add_option('--atmosDir', type=str, default='throughputs/atmos',
+                  help='atmosphere location dir [%default]')
+parser.add_option('--tag', type=str, default='1.9',
+                  help='tag versions of the throughputs [%default]')
 
-fitres = fit(res)
+opts, args = parser.parse_args()
 
-np.save('zp_airmass.npy', fitres)
+throughputsDir = opts.throughputsDir
+atmosDir = opts.atmosDir
+tag = opts.tag
 
-plot(res, fitres)
-plot(res, yvar='zp_adu_sec', yleg='zp-> ADU/s')
+
+outName = 'zp_airmass_v{}.npy'.format(tag)
+
+if not os.path.isfile(outName):
+    res = get_data(through_dir=throughputsDir, atmos_dir=atmosDir, tag=tag)
+
+    print(res)
+    np.save('data_{}'.format(outName), res)
+
+    fitres = fit(res)
+
+    np.save(outName, fitres)
+
+fitres = np.load(outName)
+res = np.load('data_{}'.format(outName))
+
+tit = 'v{}'.format(tag)
+plot(res, fitres, figtitle=tit)
+plot(res, yvar='zp_adu_sec', yleg='zp [ADU/s]', figtitle=tit)
 plt.show()
