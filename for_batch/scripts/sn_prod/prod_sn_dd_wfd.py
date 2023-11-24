@@ -7,6 +7,7 @@ Created on Fri Nov 24 14:11:56 2023
 """
 
 from optparse import OptionParser
+import os
 
 parser = OptionParser()
 
@@ -30,14 +31,19 @@ cmd_scr = 'python for_batch/scripts/sn_prod/loop_prod.py'
 cmd_scr += ' --SN_sigmaInt=0.0'
 
 # DDF production
-cmd_ddf = '{} --dbList={}'.format(cmd_scr, dbList_DD)
-cmd_ddf += ' --outputDir={}'.format(outDir_DD)
+if dbList_DD != '':
+    cmd_ddf = '{} --dbList={}'.format(cmd_scr, dbList_DD)
+    cmd_ddf += ' --outputDir={}'.format(outDir_DD)
 
-print(cmd_ddf)
+    print(cmd_ddf)
+    os.system(cmd_ddf)
 
-# DDF production
-cmd_wfd = '{} --dbList={}'.format(cmd_scr, dbList_WFD)
-cmd_wfd += ' --outputDir={}'.format(outDir_WFD)
-cmd_wfd += ' --SN_NSNfactor=10'
 
-print(cmd_wfd)
+# WFD production
+if dbList_WFD != '':
+    cmd_wfd = '{} --dbList={}'.format(cmd_scr, dbList_WFD)
+    cmd_wfd += ' --outputDir={}'.format(outDir_WFD)
+    cmd_wfd += ' --SN_NSNfactor=10'
+
+    print(cmd_wfd)
+    os.system(cmd_wfd)
