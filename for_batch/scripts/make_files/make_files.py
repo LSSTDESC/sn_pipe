@@ -59,7 +59,7 @@ dirFiles = opts.dirFiles
 dbExtens = opts.dbExtens
 teltag = opts.teltag
 
-
+dirFilesb = '{}/{}'.format(dirFiles,simuVersion)
 search_path = '{}/{}/{}/*.{}'.format(dirFiles,simuVersion,dbExtens,dbExtens)
 print('search path',search_path)
 
@@ -74,5 +74,5 @@ DD_postfix = '1,128,1,DD,6'
 WFD_postfix = '0,64,1,WFD,8'
 
 print(DD_postfix)
-genFile(files,'DD_{}.csv'.format(simuVersion),DD_postfix,dirFiles,dbExtens,teltag)
-genFile(files,'WFD_{}.csv'.format(simuVersion),WFD_postfix,dirFiles,dbExtens,teltag)
+genFile(files,'DD_{}.csv'.format(simuVersion),DD_postfix,dirFilesb,dbExtens,teltag)
+genFile(files,'WFD_{}.csv'.format(simuVersion),WFD_postfix,dirFilesb,dbExtens,teltag)
