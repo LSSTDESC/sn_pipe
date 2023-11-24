@@ -5,3 +5,4 @@ sn_fit_lc dev
 sn_plotters dev
 sn_tools dev
 sn_phystools dev
+sn_telmodel dev

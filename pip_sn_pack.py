@@ -24,7 +24,8 @@ def cmd_uninstall(pack):
 
 def cmd_list():
     """
-    Function to to generate the command giving the list of  packages installed with pip
+    Function to to generate the command giving the list of
+    packages installed with pip
 
     Returns
     -----------
@@ -148,10 +149,15 @@ def get_install_list(package, user):
     if package == 'sn_pipe':
         cmd = 'pip install{}-r requirements.txt --no-deps'.format(add_user)
         cmdlist.append(cmd)
+        # sn_tools to install by default
         version = get_version('sn_tools', available_packs)
         cmd = cmd_install_pack('sn_tools', version, add_user)
         cmdlist.append(cmd)
-        # get sn_tools version
+        # sn_telmodel to install by default
+        version = get_version('sn_telmodel', available_packs)
+        cmd = cmd_install_pack('sn_telmodel', version, add_user)
+        cmdlist.append(cmd)
+
     else:
         version = get_version(package, available_packs)
         cmd = cmd_install_pack(package, version, add_user)
