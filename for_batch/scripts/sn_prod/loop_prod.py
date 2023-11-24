@@ -63,5 +63,7 @@ for i, row in df.iterrows():
     procDict['SN_z_rate'] = opts.SN_z_rate
     procDict['SN_NSNfactor'] = opts.SN_NSNfactor
     procDict['Observations_coadd'] = opts.Observations_coadd
+    procDict['InstrumentSimu_telescope_tag'] = row['teltag']
+    procDict['InstrumentFit_telescope_tag'] = row['teltag']
 
     go_batch(script, procDict)

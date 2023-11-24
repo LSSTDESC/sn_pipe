@@ -30,3 +30,5 @@ nside 128 int # nside parameter (healpix)
 Fitter_parnames t0,x1,c,x0 str # parameters to fit
 reprocList None.csv str # reproc file 
 Observations coadd 1 int #observations coaddition per night
+InstrumentSimu telescope_tag 1.9 str #throughputs tag version
+InstrumentFit telescope_tag 1.9 str #throughputs tag version
