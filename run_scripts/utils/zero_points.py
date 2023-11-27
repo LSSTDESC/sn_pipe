@@ -5,12 +5,11 @@ Created on Wed Jan 18 09:10:52 2023
 
 @author: gris
 """
-
 from sn_telmodel import plt, filtercolors
 from sn_telmodel.sn_telescope import Zeropoint_airmass
 import numpy as np
 from optparse import OptionParser
-import os
+# import os
 
 
 def plot(res, fitfunc, fitres=None, xvar='airmass', xleg='airmass',
@@ -72,9 +71,9 @@ parser = OptionParser(description='Script to estimate zp vs airmass')
 
 parser.add_option('--telDir', type=str, default='throughputs',
                   help='main throughputs location dir [%default]')
-parser.add_option('--throughputsDir', type=str, default='throughputs/baseline',
+parser.add_option('--throughputsDir', type=str, default='baseline',
                   help='throughputs location dir [%default]')
-parser.add_option('--atmosDir', type=str, default='throughputs/atmos',
+parser.add_option('--atmosDir', type=str, default='atmos',
                   help='atmosphere location dir [%default]')
 parser.add_option('--tag', type=str, default='1.9',
                   help='tag versions of the throughputs [%default]')
@@ -86,12 +85,12 @@ throughputsDir = opts.throughputsDir
 atmosDir = opts.atmosDir
 tag = opts.tag
 
-
 outName = 'zp_airmass_v{}.npy'.format(tag)
 
 zp = Zeropoint_airmass(tel_dir=telDir,
                        through_dir=throughputsDir,
                        atmos_dir=atmosDir, tag=tag, aerosol=True)
+
 res = zp.get_data()
 np.save('data_{}'.format(outName), res)
 
