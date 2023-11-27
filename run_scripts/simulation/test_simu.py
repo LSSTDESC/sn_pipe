@@ -42,7 +42,7 @@ cmd += ' --dbName {}'.format(dbName)
 cmd += ' --dbDir {} --dbExtens npy --OutputSimu_save 1'.format(dbDir)
 cmd += ' --OutputSimu_throwafterdump 0 --SN_x1_type=unique --SN_x1_min=0.0'
 cmd += ' --SN_color_type=unique --SN_color_min=0.0 --SN_z_type=uniform'
-cmd += ' --SN_z_min 0.7 --SN_z_max 1.1 --SN_daymax_type=unique'
+cmd += ' --SN_z_min 0.01 --SN_z_max 1.1 --SN_daymax_type=unique'
 # cmd += ' --SN_z_type unique'
 cmd += ' --Simulator_model salt3 --Simulator_version 2.0'
 cmd += ' --MultiprocessingSimu_nproc 6'
