@@ -13,7 +13,7 @@ from optparse import OptionParser
 from sn_tools.sn_obs import getObservations
 
 
-parser = OptionParser(description='Script to analyze SN prod after selection')
+parser = OptionParser(description='Script to convert db file to npy')
 
 parser.add_option('--inputDir', type=str,
                   default='../DB_Files',
