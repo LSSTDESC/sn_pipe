@@ -119,8 +119,6 @@ def load_OS_df(dbDir, dbName, runType, season=1, fieldType='DDF'):
         DESCRIPTION. The default is 'DDF'.
     years : TYPE, optional
         DESCRIPTION. The default is [1].
-    LSSTStart : TYPE, optional
-        DESCRIPTION. The default is 60218.
 
     Returns
     -------
@@ -145,8 +143,6 @@ def load_OS_df(dbDir, dbName, runType, season=1, fieldType='DDF'):
         field type (DDF or WFD). The default is 'DDF'.
     years : list(int), optional
         Years to draw. The default is [1].
-    LSSTStart : float, optional
-        Start of LSST survey. The default is 60218.
 
     Returns
     -------
@@ -177,7 +173,7 @@ def load_OS_df(dbDir, dbName, runType, season=1, fieldType='DDF'):
 
 
 def load_DataFrame(dbDir_WFD, OS_WFD, runType='spectroz',
-                   seasons=[1], LSSTStart=60218., fieldType='WFD'):
+                   seasons=[1], fieldType='WFD'):
     """
     Function to load data if pandas df
 
@@ -191,8 +187,6 @@ def load_DataFrame(dbDir_WFD, OS_WFD, runType='spectroz',
         Run type. The default is spectroz.
     seasons: list(int), optional
         seasons to load. The default is [1].
-    LSSTStart: float, optional.
-      LSST start survey MJD. The default is 60218.
 
     Returns
     -------
@@ -203,7 +197,7 @@ def load_DataFrame(dbDir_WFD, OS_WFD, runType='spectroz',
 
     wfd = pd.DataFrame()
     for seas in seasons:
-        print('loading season', seas, LSSTStart)
+        print('loading season', seas)
         wfd_seas = load_OS_df(dbDir_WFD, OS_WFD, runType=runType,
                               season=seas, fieldType=fieldType)
         wfd_seas['dbName'] = OS_WFD
@@ -212,9 +206,9 @@ def load_DataFrame(dbDir_WFD, OS_WFD, runType='spectroz',
     print(len(wfd))
 
     # add a year column here
-    df_y = add_year(wfd, LSSTStart)
+    # df_y = add_year(wfd, LSSTStart)
 
-    return df_y
+    return wfd
 
 
 def add_year(wfd, LSSTStart):
@@ -254,7 +248,7 @@ def add_year(wfd, LSSTStart):
 
 
 def load_Table(dbDir_WFD, OS_WFD, runType='spectroz',
-               seasons=[1], LSSTStart=60218, fieldType='WFD'):
+               seasons=[1], fieldType='WFD'):
     """
     Function to load data if pandas df
 
@@ -270,8 +264,6 @@ def load_Table(dbDir_WFD, OS_WFD, runType='spectroz',
         seasons to load. The default is [1].
     years : list(int), optional
         years to load. The default is [1].
-    LSSTStart : float, optional
-        LSST MJD start. The default is 60218.
 
     Returns
     -------
@@ -289,9 +281,9 @@ def load_Table(dbDir_WFD, OS_WFD, runType='spectroz',
         wfd = pd.concat((wfd, wfd_seas))
 
     # add a year column here
-    df_y = add_year(wfd, LSSTStart)
+    # df_y = add_year(wfd, LSSTStart)
 
-    return df_y
+    return wfd
 
 
 def plot_DDF(data, norm_factor, nside=128):
@@ -303,11 +295,11 @@ def plot_DDF(data, norm_factor, nside=128):
         0.5, 11.5, 1), xvar='season', xleg='season',
         logy=False, xlim=[1, 10], nside=nside)
     """
-    # plot_DDF_nsn(data, norm_factor, nside)
+    plot_DDF_nsn(data, norm_factor, nside)
 
-    # plot_DDF_dither(data, norm_factor, nside)
+    plot_DDF_dither(data, norm_factor, nside)
 
-    plot_DDF_nsn_z(data, norm_factor, nside)
+    # plot_DDF_nsn_z(data, norm_factor, nside)
 
     """
     mypl.plot_nsn_versus_two(xvar='z', xleg='z', logy=True,
@@ -336,7 +328,7 @@ def plot_DDF_nsn_z(data, norm_factor, nside):
                                     fig=fig, ax=ax, figtitle=field)
 
 
-def plot_DDF_dither(data, norm_factor, nside):
+def plot_DDF_dither(data, norm_factor, nside, timescale='year'):
     """
     Functio to plot and estimate dithering effects
 
@@ -384,7 +376,7 @@ def plot_DDF_dither(data, norm_factor, nside):
 
     sums['nsn_loss_dither'] = 1. - (sums['nsn']/sums['nsn_no_dithering'])
 
-    plot_field(sums, mypl, xvar='season', xleg='season',
+    plot_field(sums, mypl, xvar=timescale, xleg=timescale,
                yvar='nsn_loss_dither', yleg='$N_{SN}$ loss [%]')
 
     plt.show()
@@ -392,28 +384,33 @@ def plot_DDF_dither(data, norm_factor, nside):
 
 def plot_DDF_nsn(data, norm_factor, nside):
 
+    #idx = data['sigmaC'] <= 0.04
+
+    #data = data[idx]
+
     mypl = Plot_nsn_vs(data, norm_factor, nside)
 
     """
-    mypl.plot_nsn_versus_two(xvar='z', xleg='z', logy=True,
-                             cumul=True, xlim=[0.01, 1.1])
+    # mypl.plot_nsn_versus_two(xvar='z', xleg='z', logy=True,
+    #                         cumul=True, xlim=[0.01, 1.1])
     mypl.plot_nsn_mollview()
     """
 
     # estimate the number of sn for all the fields/season
 
+    timescale = 'season'
     sums = get_sums_nsn(data, norm_factor, nside, cols=[
-                        'season', 'dbName', 'field'])
-    sumt = get_sums_nsn(data, norm_factor, nside, cols=['season', 'dbName'])
+                        timescale, 'dbName', 'field'])
+    sumt = get_sums_nsn(data, norm_factor, nside, cols=[timescale, 'dbName'])
 
-    plot_field(sums, mypl)
-    plot_field(sums, mypl, xvar='season', xleg='season',
-               yvar='pixArea', yleg='Observed Area [deg$^{2}$]')
+    plot_field(sums, mypl, xvar=timescale, xleg=timescale)
+    # plot_field(sums, mypl, xvar=timescale, xleg=timescale,
+    #           yvar='pixArea', yleg='Observed Area [deg$^{2}$]')
 
     # total number of SN per season/OS
-    plot_field(sumt, mypl)
-    plot_field(sumt, mypl, xvar='season', xleg='season',
-               yvar='pixArea', yleg='Observed Area [deg$^{2}$]')
+    plot_field(sumt, mypl, xvar=timescale, xleg=timescale, cumul=False)
+    # plot_field(sumt, mypl, xvar=timescale, xleg=timescale,
+    #           yvar='pixArea', yleg='Observed Area [deg$^{2}$]')
     plt.show()
 
 
@@ -477,7 +474,7 @@ def pixelSize(nside):
 
 
 def plot_field(data, mypl, xvar='season', xleg='season',
-               yvar='nsn', yleg='$N_{SN}$'):
+               yvar='nsn', yleg='$N_{SN}$', cumul=False):
     """
     Function to plot a set of fields results
 
@@ -495,7 +492,8 @@ def plot_field(data, mypl, xvar='season', xleg='season',
         y-axis var. The default is 'nsn'.
     yleg : str, optional
         y-axis label. The default is '$N_{SN}$'.
-
+    cumul : bool, optional
+        for cumulative plot. The default is False.
     Returns
     -------
     None.
@@ -511,16 +509,18 @@ def plot_field(data, mypl, xvar='season', xleg='season',
             selb = sela[idxb]
             mypl.plot_versus(selb, xvar, xleg,
                              yvar, yleg,
-                             figTitle=field, label=dbName, fig=fig, ax=ax, xlim=None)
+                             figTitle=field, label=dbName,
+                             fig=fig, ax=ax, xlim=None, cumul=cumul)
 
         ax.legend()
-        ax.grid()
-        ax.set_xlabel(xleg)
-        ax.set_ylabel(yleg)
+        # ax.grid()
+        ax.set_xlabel(xleg, fontweight='bold')
+        ax.set_ylabel(yleg, fontweight='bold')
+        ax.grid(visible=True)
 
 
-def plot_field_season(data, mypl, xvar='dist', xleg='dist',
-                      yvar='nsn', yleg='$N_{SN}$', ls='None'):
+def plot_field_time(data, mypl, xvar='dist', xleg='dist',
+                    yvar='nsn', yleg='$N_{SN}$', ls='None', timescale='year'):
     """
     Function to plot a set of fields results
 
@@ -555,8 +555,8 @@ def plot_field_season(data, mypl, xvar='dist', xleg='dist',
         for dbName in sela['dbName'].unique():
             idxb = sela['dbName'] == dbName
             selb = sela[idxb]
-            for seas in selb['season'].unique():
-                idxc = selb['season'] == seas
+            for seas in selb[timescale].unique():
+                idxc = selb[timescale] == seas
                 selc = selb[idxc]
                 seld = bin_it_mean(selc, xvar=xvar, yvar=yvar, bins=bins)
                 seld = seld.fillna(-1.)
@@ -576,7 +576,7 @@ def plot_field_season(data, mypl, xvar='dist', xleg='dist',
         ax.set_xlabel(xleg)
         ax.set_ylabel(yleg)
 
-    res = pd.DataFrame(r, columns=['field', 'dbName', 'season', 'nsn_center'])
+    res = pd.DataFrame(r, columns=['field', 'dbName', timescale, 'nsn_center'])
 
     return res
 
@@ -607,7 +607,8 @@ class Plot_nsn_vs:
 
     def plot_versus(self, data, xvar='season', xleg='season',
                     yvar='nsn', yleg='$N_{SN}$', fig=None, ax=None,
-                    figTitle='', label=None, xlim=[1, 10], ls='solid'):
+                    figTitle='', label=None, xlim=[1, 10],
+                    ls='solid', cumul=False):
 
         if ax is None:
             fig, ax = plt.subplots(figsize=(14, 9))
@@ -615,7 +616,10 @@ class Plot_nsn_vs:
         fig.suptitle(figTitle)
 
         data = data.sort_values(by=[xvar])
-        ax.plot(data[xvar], data[yvar], label=label, linestyle=ls, marker='.')
+        datab = data[yvar]
+        if cumul:
+            datab = np.cumsum(datab)
+        ax.plot(data[xvar], datab, label=label, linestyle=ls, marker='.')
         ax.grid()
         if xlim is not None:
             ax.set_xlim(xlim)
@@ -881,10 +885,9 @@ def process_WFD(conf_df, dataType, dbDir_WFD, runType,
     wfd = pd.DataFrame()
     for OS_WFD in OS_WFDs:
         idx = conf_df['dbName_WFD'] == OS_WFD
-        LSSTStart = np.mean(conf_df[idx]['LSSTStart'])
-        wfda = eval('load_{}(\'{}\',\'{}\',\'{}\',{},{})'.format(
+        wfda = eval('load_{}(\'{}\',\'{}\',\'{}\',{})'.format(
             dataType, dbDir_WFD, OS_WFD, runType,
-            seasons, LSSTStart))
+            seasons))
 
         wfd = pd.concat((wfd, wfda))
 
@@ -909,7 +912,8 @@ def process_WFD(conf_df, dataType, dbDir_WFD, runType,
     print(len(wfd))
 
 
-def process_DDF(conf_df, dataType, dbDir_DD, runType, seasons, norm_factor, nside=128):
+def process_DDF(conf_df, dataType, dbDir_DD, runType, seasons,
+                norm_factor, nside=128):
 
     # load DDF
     OS_DDFs = conf_df['dbName_DD'].unique()
@@ -917,11 +921,10 @@ def process_DDF(conf_df, dataType, dbDir_DD, runType, seasons, norm_factor, nsid
     ddf = pd.DataFrame()
     for OS_DDF in OS_DDFs:
         idx = conf_df['dbName_DD'] == OS_DDF
-        LSSTStart = np.mean(conf_df[idx]['LSSTStart'])
         fieldType = 'DDF'
-        ddfa = eval('load_{}(\'{}\',\'{}\',\'{}\',{},{},\'{}\')'.format(
+        ddfa = eval('load_{}(\'{}\',\'{}\',\'{}\',{},\'{}\')'.format(
             dataType, dbDir_DD, OS_DDF, runType,
-            seasons, LSSTStart, fieldType))
+            seasons, fieldType))
         ddf = pd.concat((ddf, ddfa))
 
     plot_DDF(ddf, norm_factor, nside=128)
@@ -956,9 +959,6 @@ parser.add_option('--seasons', type=str,
 parser.add_option('--dataType', type=str,
                   default='DataFrame',
                   help='data type [%default]')
-# parser.add_option('--LSSTStart', type=float,
-#                  default=60218.0018056,
-#                  help='Survey starting date [%default]')
 
 
 opts, args = parser.parse_args()
@@ -998,11 +998,11 @@ Plot_nsn_vs(wfd, norm_factor_DD, bins=np.arange(
 
 """
 
-process_WFD(conf_df, dataType, dbDir_WFD, runType,
-            seasons, norm_factor_WFD, nside=64)
+# process_WFD(conf_df, dataType, dbDir_WFD, runType,
+#            seasons, norm_factor_WFD, nside=64)
 
 # print(test)
 
-# process_DDF(conf_df, dataType, dbDir_DD, runType, seasons, norm_factor_DD)
+process_DDF(conf_df, dataType, dbDir_DD, runType, seasons, norm_factor_DD)
 
 plt.show()
