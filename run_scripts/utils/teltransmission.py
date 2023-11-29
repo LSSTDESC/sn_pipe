@@ -2,6 +2,7 @@ from sn_telmodel.sn_telescope import get_telescope
 from sn_telmodel import plt
 import os
 from optparse import OptionParser
+import numpy as np
 
 
 def plot_throughputs(tela, what, fig=None, ax=None,
@@ -87,17 +88,22 @@ def plot_optical(tel, fig=None, ax=None, ls='solid', label='',
     ipos = [(0, 0), (1, 0), (2, 0), (0, 1), (1, 1), (2, 1)]
     pos = dict(zip(vars, ipos))
 
+    import numpy as np
     for vv in vars:
         axb = ax[pos[vv]]
+        telb = tel.optical[vv]
+        idx = telb.wavelen >= 860
+        idx &= telb.wavelen < 861
+        print(vv, np.mean(telb.wavelen[idx]), np.mean(telb.sb[idx]))
 
         if vv != 'lens1':
-            axb.plot(tel.optical[vv].wavelen,
-                     tel.optical[vv].sb,
+            axb.plot(telb.wavelen,
+                     telb.sb,
                      linestyle=ls, color='k',
                      label=None, lw=lw)
         else:
-            axb.plot(tel.optical[vv].wavelen,
-                     tel.optical[vv].sb,
+            axb.plot(telb.wavelen,
+                     telb.sb,
                      linestyle=ls, color='k',
                      label=label, lw=lw)
         axb.text(0.3, 0.1, vv, color='dimgrey',
@@ -164,13 +170,14 @@ parser = OptionParser(description='Script to plot telescope throughputs')
 
 parser.add_option('--tel_dir', type=str, default='throughputs',
                   help='main throughputs location dir [%default]')
-parser.add_option('--throughputsDir', type=str, default='throughputs/baseline',
+parser.add_option('--throughputsDir', type=str, default='baseline',
                   help='throughputs location dir [%default]')
-parser.add_option('--atmosDir', type=str, default='throughputs/atmos',
+parser.add_option('--atmosDir', type=str, default='atmos',
                   help='atmosphere location dir [%default]')
 parser.add_option('--tags', type=str, default='1.9,1.5',
                   help='tag versions of the throughputs [%default]')
-
+parser.add_option('--airmass', type=float, default=1.2,
+                  help='airmass value [%default]')
 opts, args = parser.parse_args()
 
 # config = dict(zip(['tag','label'],[['1.5','1.9'],['Al_Ag_Al','Ag_Ag_Ag']]))
@@ -178,6 +185,8 @@ opts, args = parser.parse_args()
 tel_dir = opts.tel_dir
 throughputsDir = opts.throughputsDir
 atmosDir = opts.atmosDir
+airmass = opts.airmass
+
 
 tags = opts.tags.split(',')
 
@@ -187,11 +196,19 @@ ls = dict(zip(tags, ['solid', 'dotted']))
 
 tel = {}
 
+aerosol = False
+if airmass >= 1.:
+    aerosol = True
+
 for tag in tags:
-    tel[tag] = get_telescope(tel_dir=tel_dir,
-                             through_dir=throughputsDir,
-                             atmos_dir=atmosDir,
-                             tag=tag, load_components=True)
+    telb = '{}_{}'.format(tel_dir, tag)
+    through_dir = '{}/{}'.format(telb, throughputsDir)
+    atmos_dir = '{}/{}'.format(telb, atmosDir)
+    tel[tag] = get_telescope(tel_dir=telb,
+                             through_dir=through_dir,
+                             atmos_dir=atmos_dir,
+                             tag=tag, load_components=True,
+                             airmass=airmass, aerosol=aerosol)
 
 
 fig, ax = plt.subplots(figsize=(12, 8))
@@ -214,7 +231,10 @@ ax.grid()
 ax.legend(bbox_to_anchor=(0.6, 1.08), ncol=2, fontsize=15, frameon=False)
 ax.set_xlabel('Wavelength (nm)', fontweight='bold')
 ax.set_ylabel('Throughput(0-1)')
-fig.suptitle('Telescope+airmass (1.2)+aerosol')
+tit = 'Telescope+airmass ({})+aerosol'.format(np.round(airmass, 1))
+if airmass <= 0.1:
+    tit = 'Telescope'
+fig.suptitle(tit)
 ax.set_ylim([0, None])
 
 # second plot
