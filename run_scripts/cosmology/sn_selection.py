@@ -61,15 +61,18 @@ def select_filt(dataDir, dbName, sellist, seasons,
 
     # remove files if necessary
     import os
+    store = {}
     for seas in seasons:
         outName = '{}/SN_{}_{}_{}_{}.hdf5'.format(
             outDir_full, fieldType, dbName, timescale, seas)
-
+        """
         if os.path.isfile(outName):
             os.remove(outName)
+        """
+        store[seas] = pd.HDFStore(outName, 'w')
 
     stat_tot = pd.DataFrame()
-    sel_tot = pd.DataFrame()
+    # sel_tot = pd.DataFrame()
 
     for seas in seasons:
         # load DDFs
@@ -96,24 +99,23 @@ def select_filt(dataDir, dbName, sellist, seasons,
         sel_data['year'] += 1.
         sel_data['year'] = sel_data['year'].astype(int)
 
-        sel_tot = pd.concat((sel_data, sel_tot))
+        # sel_tot = pd.concat((sel_data, sel_tot))
 
         # save output data in pandas df
         if timescale == 'season':
+            store[seas].put('SN', sel_data)
+            """
             outName = '{}/SN_{}_{}_{}_{}.hdf5'.format(
                 outDir_full, fieldType, dbName, timescale, seas)
 
             sel_data.to_hdf(outName, key='SN')
-
+            """
         else:
             years = sel_data[timescale].unique()
             for vv in years:
                 idx = sel_data[timescale] == vv
                 selb = sel_data[idx]
-                outName = '{}/SN_{}_{}_{}_{}.hdf5'.format(
-                    outDir_full, fieldType, dbName, timescale, vv)
-
-                selb.to_hdf(outName, key='SN', append=True)
+                store[vv].put('SN', selb)
 
         """
         # sel_tot = pd.concat((sel_data, sel_tot))
@@ -150,8 +152,10 @@ def select_filt(dataDir, dbName, sellist, seasons,
     stat_tot[timescale] = stat_tot[timescale].astype(int)
     stat_tot['nsn'] = stat_tot['nsn'].astype(int)
     outName_stat = '{}/nsn_{}_{}.hdf5'.format(outDir_full, dbName, timescale)
+    store = pd.HDFStore(outName_stat, 'w')
+    store.put('SN', stat_tot)
 
-    stat_tot.to_hdf(outName_stat, key='SN')
+    #stat_tot.to_hdf(outName_stat, key='SN')
 
 
 def get_stat(sel_data, nsn_factor, timescale='year'):
