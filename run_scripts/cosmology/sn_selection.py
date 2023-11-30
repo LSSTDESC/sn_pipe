@@ -59,6 +59,15 @@ def select_filt(dataDir, dbName, sellist, seasons,
     outDir_full = '{}/{}/{}'.format(outDir, dbName, runType)
     checkDir(outDir_full)
 
+    # remove files if necessary
+    import os
+    for seas in seasons:
+        outName = '{}/SN_{}_{}_{}_{}.hdf5'.format(
+            outDir_full, fieldType, dbName, timescale, seas)
+
+        if os.path.isfile(outName):
+            os.remove(outName)
+
     stat_tot = pd.DataFrame()
     sel_tot = pd.DataFrame()
 
@@ -90,11 +99,22 @@ def select_filt(dataDir, dbName, sellist, seasons,
         sel_tot = pd.concat((sel_data, sel_tot))
 
         # save output data in pandas df
-        """
-        outName = '{}/SN_{}_{}_{}.hdf5'.format(
-            outDir_full, fieldType, dbName, seas)
+        if timescale == 'season':
+            outName = '{}/SN_{}_{}_{}_{}.hdf5'.format(
+                outDir_full, fieldType, dbName, timescale, seas)
 
-        sel_data.to_hdf(outName, key='SN')
+            sel_data.to_hdf(outName, key='SN')
+
+        else:
+            years = sel_data[timescale].unique()
+            for vv in years:
+                idx = sel_data[timescale] == vv
+                selb = sel_data[idx]
+                outName = '{}/SN_{}_{}_{}_{}.hdf5'.format(
+                    outDir_full, fieldType, dbName, timescale, vv)
+
+                selb.to_hdf(outName, key='SN', append=True)
+
         """
         # sel_tot = pd.concat((sel_data, sel_tot))
         # get some stat
@@ -103,14 +123,16 @@ def select_filt(dataDir, dbName, sellist, seasons,
         """
         stat = get_stat(sel_data, nsn_factor, timescale=timescale)
         stat_tot = pd.concat((stat_tot, stat))
-        """
 
+    if timescale == 'year':
+        stat_tot = stat_tot.groupby([['field', timescale]])[
+            'nsn', 'nsn_z_0.1', 'nsn_z_0.2'].sum().reset_index()
+    """
     if sel_tot.empty:
         return -1
 
     timescales = sel_tot[timescale].unique()
 
-    print('hello timescales', timescale, timescales)
     for timescalev in timescales:
         idx = sel_tot[timescale] == timescalev
         sel_data = sel_tot[idx]
@@ -123,10 +145,11 @@ def select_filt(dataDir, dbName, sellist, seasons,
         stat_tot = pd.concat((stat_tot, stat))
 
     # stat_tot = get_stat(sel_tot, nsn_factor, timescale=timescale)
+    """
 
     stat_tot[timescale] = stat_tot[timescale].astype(int)
     stat_tot['nsn'] = stat_tot['nsn'].astype(int)
-    outName_stat = '{}/nsn_{}.hdf5'.format(outDir_full, dbName)
+    outName_stat = '{}/nsn_{}_{}.hdf5'.format(outDir_full, dbName, timescale)
 
     stat_tot.to_hdf(outName_stat, key='SN')
 
@@ -181,7 +204,7 @@ def nsn_estimate(grp, zmax=1.1, nsn_factor=1, varname='nsn'):
 
     sel = grp[idx]
 
-    res = int(len(sel)/nsn_factor)
+    res = np.rint(len(sel)/nsn_factor)
 
     return pd.DataFrame({varname: [res]})
 
