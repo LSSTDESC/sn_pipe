@@ -890,7 +890,7 @@ def get_val(var):
 
 
 def process_WFD(conf_df, dataType, dbDir_WFD, runType,
-                seasons, norm_factor, nside=64):
+                timescale_file, timeslots, norm_factor, nside=64):
     """
     Function to process WFD data
 
@@ -920,9 +920,11 @@ def process_WFD(conf_df, dataType, dbDir_WFD, runType,
     wfd = pd.DataFrame()
     for OS_WFD in OS_WFDs:
         idx = conf_df['dbName_WFD'] == OS_WFD
-        wfda = eval('load_{}(\'{}\',\'{}\',\'{}\',{})'.format(
+        tt = 'load_{}(\'{}\',\'{}\',\'{}\',\'{}\',{})'.format(
             dataType, dbDir_WFD, OS_WFD, runType,
-            seasons))
+            timescale_file, timeslots)
+        print('allo', tt)
+        wfda = eval(tt)
 
         wfd = pd.concat((wfd, wfda))
 
@@ -1036,13 +1038,15 @@ Plot_nsn_vs(wfd, norm_factor_DD, bins=np.arange(
     0.5, 11.5, 1), xvar='season', xleg='season', logy=False, xlim=[1, 10])
 
 """
+if dbDir_WFD != '':
 
-# process_WFD(conf_df, dataType, dbDir_WFD, runType,
-#            seasons, norm_factor_WFD, nside=64)
+    process_WFD(conf_df, dataType, dbDir_WFD, runType,
+                timescale_file, timeslots, norm_factor_WFD, nside=64)
 
 # print(test)
 
-process_DDF(conf_df, dataType, dbDir_DD, runType,
-            timescale_file, timeslots, norm_factor_DD)
+if dbDir_DD != '':
+    process_DDF(conf_df, dataType, dbDir_DD, runType,
+                timescale_file, timeslots, norm_factor_DD)
 
 plt.show()
