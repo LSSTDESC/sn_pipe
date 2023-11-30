@@ -85,6 +85,9 @@ parser.add_option("--sigmaInt", type=float,
 parser.add_option("--dump_data", type=int,
                   default=0,
                   help="to dump SN on disk [%default]")
+parser.add_option('--timescale', type=str, default='year',
+                  help='timescale for the cosmology (year or season)[%default]')
+
 opts, args = parser.parse_args()
 
 # loading SN data
@@ -103,6 +106,7 @@ test_mode = opts.test_mode
 lowz_optimize = opts.lowz_optimize
 sigmaInt = opts.sigmaInt
 dump_data = opts.dump_data
+timescale = opts.timescale
 
 checkDir(outDir)
 
@@ -136,14 +140,14 @@ fitconfig['fitb'] = dict(zip(['w0', 'wa', 'Om0', 'alpha', 'beta', 'Mb'],
 #                              [0.12]))
 
 
-fitconfig['fitc'] = dict(zip(['w0', 'Om0'],
-                             [-1, 0.3]))
+# fitconfig['fitc'] = dict(zip(['w0', 'Om0'],
+#                             [-1, 0.3]))
 fitconfig['fitd'] = dict(zip(['w0', 'wa', 'Om0'],
                              [-1, 0.0, 0.3]))
 
 priors = {}
 
-priors['noprior'] = pd.DataFrame()
+#priors['noprior'] = pd.DataFrame()
 priors['prior'] = pd.DataFrame({'varname': ['Om0'],
                                 'refvalue': [0.3],
                                'sigma': [0.0073]})
@@ -156,7 +160,7 @@ for key, vals in priors.items():
                      dataDir_WFD, dbName_WFD, dictsel, survey,
                      vals, host_effi, frac_WFD_low_sigmaC,
                      max_sigmaC, test_mode, lowz_optimize,
-                     sigmaInt, dump_data)
+                     sigmaInt, dump_data, timescale)
     res = cl()
     res['prior'] = key
     resfi = pd.concat((resfi, res))
@@ -173,6 +177,7 @@ resfi['dbName_WFD'] = dbName_WFD
 
 if test_mode:
     print('final result')
-    print(resfi)
+    cols = ['w0_fit', 'Om0_fit', 'MoM', 'prior', 'dbName_DD', 'dbName_WFD']
+    print(resfi[cols])
 
 resfi.to_hdf(outName, key='cosmo')
