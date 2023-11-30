@@ -101,31 +101,8 @@ def load_os_table_multi(keys, params, j=0, output_q=None):
         return df
 
 
-def load_OS_df(dbDir, dbName, runType, season=1, fieldType='DDF'):
-    """
-
-
-    Parameters
-    ----------
-    dbDir : TYPE
-        DESCRIPTION.
-    dbName : TYPE
-        DESCRIPTION.
-    runType : TYPE
-        DESCRIPTION.
-    season : TYPE, optional
-        DESCRIPTION. The default is 1.
-    fieldType : TYPE, optional
-        DESCRIPTION. The default is 'DDF'.
-    years : TYPE, optional
-        DESCRIPTION. The default is [1].
-
-    Returns
-    -------
-    df : TYPE
-        DESCRIPTION.
-
-    """
+def load_OS_df(dbDir, dbName, runType, timescale_file='year',
+               timeslot=1, fieldType='DDF'):
     """
     Function to load OS data
 
@@ -136,13 +113,14 @@ def load_OS_df(dbDir, dbName, runType, season=1, fieldType='DDF'):
     dbName : str
         db name to process.
     runType : str
-        run type (spectroz or photoz).
-    season: int, optional
-      season to process. The default is 1.
+       run type (spectroz or photoz).
+    timescale_file : str, optional
+        Time scle of the files to load. The default is 'year'.
+    timeslot : list(int), optional
+        Time slots to process. The default is 1.
     fieldType : str, optional
-        field type (DDF or WFD). The default is 'DDF'.
-    years : list(int), optional
-        Years to draw. The default is [1].
+        Field type to process. The default is 'DDF'.
+
 
     Returns
     -------
@@ -152,7 +130,8 @@ def load_OS_df(dbDir, dbName, runType, season=1, fieldType='DDF'):
     """
 
     fullDir = '{}/{}/{}_{}'.format(dbDir, dbName, fieldType, runType)
-    search_path = '{}/SN_{}_*_{}.hdf5'.format(fullDir, fieldType, season)
+    search_path = '{}/SN_{}_*_{}_{}.hdf5'.format(
+        fullDir, fieldType, timescale_file, timeslot)
 
     print('search path', search_path)
 
@@ -173,7 +152,7 @@ def load_OS_df(dbDir, dbName, runType, season=1, fieldType='DDF'):
 
 
 def load_DataFrame(dbDir_WFD, OS_WFD, runType='spectroz',
-                   seasons=[1], fieldType='WFD'):
+                   timescale_file='year', timeslots=[1], fieldType='WFD'):
     """
     Function to load data if pandas df
 
@@ -185,8 +164,12 @@ def load_DataFrame(dbDir_WFD, OS_WFD, runType='spectroz',
         WFD db name.
     runType : str, optional
         Run type. The default is spectroz.
-    seasons: list(int), optional
-        seasons to load. The default is [1].
+    timescale_file : str, optional
+       Time scale of the files to process. The default is 'year'.
+    timeslots : list(int), optional
+       Time slots to process. The default is [1].
+    fieldType : str, optional
+       Field type to process. The default is 'WFD'.       
 
     Returns
     -------
@@ -196,10 +179,11 @@ def load_DataFrame(dbDir_WFD, OS_WFD, runType='spectroz',
     """
 
     wfd = pd.DataFrame()
-    for seas in seasons:
+    for seas in timeslots:
         print('loading season', seas)
         wfd_seas = load_OS_df(dbDir_WFD, OS_WFD, runType=runType,
-                              season=seas, fieldType=fieldType)
+                              timescale_file=timescale_file,
+                              timeslot=seas, fieldType=fieldType)
         wfd_seas['dbName'] = OS_WFD
         wfd = pd.concat((wfd, wfd_seas))
 
@@ -262,8 +246,8 @@ def load_Table(dbDir_WFD, OS_WFD, runType='spectroz',
         Run type. The default is spectroz.
     seasons : list(int), optional
         seasons to load. The default is [1].
-    years : list(int), optional
-        years to load. The default is [1].
+    fieldType : str, optional
+        Type of field to process. The default is 'WFD'.
 
     Returns
     -------
@@ -288,6 +272,23 @@ def load_Table(dbDir_WFD, OS_WFD, runType='spectroz',
 
 def plot_DDF(data, norm_factor, nside=128):
     """
+
+
+    Parameters
+    ----------
+    data : pandas df
+        Data to process.
+    norm_factor : float
+        Normalization factor.
+    nside : int, optional
+        Healpix nside parameter. The default is 128.
+
+    Returns
+    -------
+    None.
+
+    """
+    """
     Plot_nsn_vs(data, norm_factor, xvar='z', xleg='z',
                 logy=True, cumul=True, xlim=[0.01, 1.1], nside=nside)
 
@@ -309,6 +310,21 @@ def plot_DDF(data, norm_factor, nside=128):
 
 
 def plot_DDF_nsn_z(data, norm_factor, nside):
+    """
+    Parameters
+    ----------
+    data : pandas df
+      Data to process.
+    norm_factor : float
+      Normalisation factor.
+    nside : int
+      Healpix nside parameter.
+
+    Returns
+    -------
+    None.
+
+    """
 
     mypl = Plot_nsn_vs(data, norm_factor, nside)
 
@@ -340,6 +356,8 @@ def plot_DDF_dither(data, norm_factor, nside, timescale='year'):
         Normalisation factor.
     nside : int
         Healpix nside parameter.
+    timescale: str, optional.
+    Time scale for estimation. The default is 'year'
 
     Returns
     -------
@@ -383,6 +401,23 @@ def plot_DDF_dither(data, norm_factor, nside, timescale='year'):
 
 
 def plot_DDF_nsn(data, norm_factor, nside):
+    """
+
+
+    Parameters
+    ----------
+    data : pandas df
+        Data to process.
+    norm_factor : float
+        Normalization factor
+    nside : int
+        Healpix nside parameter.
+
+    Returns
+    -------
+    None.
+
+    """
 
     #idx = data['sigmaC'] <= 0.04
 
@@ -398,7 +433,7 @@ def plot_DDF_nsn(data, norm_factor, nside):
 
     # estimate the number of sn for all the fields/season
 
-    timescale = 'season'
+    timescale = 'year'
     sums = get_sums_nsn(data, norm_factor, nside, cols=[
                         timescale, 'dbName', 'field'])
     sumt = get_sums_nsn(data, norm_factor, nside, cols=[timescale, 'dbName'])
@@ -912,7 +947,7 @@ def process_WFD(conf_df, dataType, dbDir_WFD, runType,
     print(len(wfd))
 
 
-def process_DDF(conf_df, dataType, dbDir_DD, runType, seasons,
+def process_DDF(conf_df, dataType, dbDir_DD, runType, timescale_file, timeslots,
                 norm_factor, nside=128):
 
     # load DDF
@@ -922,9 +957,10 @@ def process_DDF(conf_df, dataType, dbDir_DD, runType, seasons,
     for OS_DDF in OS_DDFs:
         idx = conf_df['dbName_DD'] == OS_DDF
         fieldType = 'DDF'
-        ddfa = eval('load_{}(\'{}\',\'{}\',\'{}\',{},\'{}\')'.format(
+        tt = 'load_{}(\'{}\',\'{}\',\'{}\',\'{}\',{},\'{}\')'.format(
             dataType, dbDir_DD, OS_DDF, runType,
-            seasons, fieldType))
+            timescale_file, timeslots, fieldType)
+        ddfa = eval(tt)
         ddf = pd.concat((ddf, ddfa))
 
     plot_DDF(ddf, norm_factor, nside=128)
@@ -953,9 +989,12 @@ parser.add_option('--budget_DD', type=float,
 parser.add_option('--runType', type=str,
                   default='spectroz',
                   help='run type  [%default]')
-parser.add_option('--seasons', type=str,
+parser.add_option('--timescale_file', type=str,
+                  default='year',
+                  help='timescale of the files to process [%default]')
+parser.add_option('--timeslots', type=str,
                   default='1-10',
-                  help='seasons to process [%default]')
+                  help='time slot (season or year) to process [%default]')
 parser.add_option('--dataType', type=str,
                   default='DataFrame',
                   help='data type [%default]')
@@ -970,9 +1009,9 @@ norm_factor_WFD = opts.norm_factor_WFD
 budget_DD = opts.budget_DD
 runType = opts.runType
 config = opts.config
-seasons = opts.seasons
-
-seasons = get_val(seasons)
+timeslots = opts.timeslots
+timescale_file = opts.timescale_file
+timeslots = get_val(timeslots)
 
 dataType = opts.dataType
 
@@ -1003,6 +1042,7 @@ Plot_nsn_vs(wfd, norm_factor_DD, bins=np.arange(
 
 # print(test)
 
-process_DDF(conf_df, dataType, dbDir_DD, runType, seasons, norm_factor_DD)
+process_DDF(conf_df, dataType, dbDir_DD, runType,
+            timescale_file, timeslots, norm_factor_DD)
 
 plt.show()
