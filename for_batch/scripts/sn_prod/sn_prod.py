@@ -65,7 +65,7 @@ def batch_DDF(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
         procName = 'DD_{}_{}{}_{}_{}'.format(
             dbName, fieldName, tag_dir, np.round(sigmaInt, 2), snrate)
         mybatch = BatchIt(processName=procName, time=time, mem=mem)
-        seasons = range(1, 11)
+        seasons = range(1, 14)
         if not tag_list.empty:
             idx = tag_list['ProductionID'] == procName
             sel = tag_list[idx]
@@ -193,7 +193,7 @@ if opts.fieldType == 'DD':
     batch_DDF(procDict)
 
 # this is for WFD
-seasons = [(1, 5), (6, 10)]
+seasons = [(1, 5), (6, 10), (11, 14)]
 if opts.fieldType == 'WFD':
     procDict['SN_z_max'] = 0.7
     for seas in seasons:
