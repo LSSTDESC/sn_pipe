@@ -125,7 +125,7 @@ def select_filt(dataDir, dbName, sellist, seasons,
         stat_tot = pd.concat((stat_tot, stat))
 
     if timescale == 'year':
-        stat_tot = stat_tot.groupby([['field', timescale]])[
+        stat_tot = stat_tot.groupby(['field', timescale])[
             'nsn', 'nsn_z_0.1', 'nsn_z_0.2'].sum().reset_index()
     """
     if sel_tot.empty:

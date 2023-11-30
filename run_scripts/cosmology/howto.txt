@@ -13,6 +13,11 @@ b) use the script run_scripts/cosmology/sn_selection.py
 
     example for WFD
     
+    python run_scripts/cosmology/loop_selection.py\ 
+    --dataDir=../Output_SN_WFD_sigmaInt_0.0_Hounsell_new \
+    --fieldType=WFD --listFields=WFD --nsn_factor=10 --runType=WFD_spectroz
+    
+    or indivudually
     python run_scripts/cosmology/sn_selection.py\ 
     --dataDir=../Output_SN_WFD_sigmaInt_0.0_Hounsell\  
     --dbName=baseline_v3.0_10yrs --runType=WFD_spectroz\  
