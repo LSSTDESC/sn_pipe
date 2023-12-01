@@ -50,6 +50,6 @@ for i, row in db.iterrows():
     cmd += ' --fieldType={}'.format(fieldType)
     cmd += ' --listFields={}'.format(listFields)
     cmd += ' --nsn_factor={}'.format(nsn_factor)
-    cmd += ' --nproc{}'.format(nproc)
+    cmd += ' --nproc={}'.format(nproc)
     print(cmd)
     os.system(cmd)
