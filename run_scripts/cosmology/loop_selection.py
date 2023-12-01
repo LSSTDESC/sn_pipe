@@ -23,6 +23,9 @@ parser.add_option("--fieldType", type=str,
                   help=" [%default]")
 parser.add_option("--nsn_factor", type=int,
                   default=30, help="MC normalisation factor [%default]")
+parser.add_option("--nproc", type=int,
+                  default=8,
+                  help="Number of procs for multiprocessing [%default]")
 
 opts, args = parser.parse_args()
 
@@ -33,6 +36,7 @@ runType = opts.runType
 listFields = opts.listFields
 fieldType = opts.fieldType
 nsn_factor = opts.nsn_factor
+nproc = opts.nproc
 
 
 db = pd.read_csv(dbList, comment='#')
@@ -46,5 +50,6 @@ for i, row in db.iterrows():
     cmd += ' --fieldType={}'.format(fieldType)
     cmd += ' --listFields={}'.format(listFields)
     cmd += ' --nsn_factor={}'.format(nsn_factor)
+    cmd += ' --nproc{}'.format(nproc)
     print(cmd)
     os.system(cmd)
