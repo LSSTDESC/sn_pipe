@@ -272,7 +272,7 @@ outDir = '{}_{}'.format(dataDir, selconfig)
 nproc = opts.nproc
 
 
-seasons = range(1, 12)
+seasons = range(1, 13)
 
 sellist = selection_criteria()[selconfig]
 
