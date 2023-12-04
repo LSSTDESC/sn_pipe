@@ -62,12 +62,14 @@ def select_filt(dataDir, dbName, sellist, seasons,
     # remove files if necessary
     import os
     store = {}
+    mydt = {}
     for seas in seasons:
         outName = '{}/SN_{}_{}_{}_{}.hdf5'.format(
             outDir_full, fieldType, dbName, timescale, seas)
 
         if os.path.isfile(outName):
             os.remove(outName)
+        mydt[seas] = pd.DataFrame()
 
         #store[seas] = pd.HDFStore(outName, 'w')
 
@@ -98,7 +100,15 @@ def select_filt(dataDir, dbName, sellist, seasons,
         sel_data['year'] /= 365.
         sel_data['year'] += 1.
         sel_data['year'] = sel_data['year'].astype(int)
+        sel_data['chisq'] = sel_data['chisq'].astype(float)
 
+        """
+        misscols = ['x1', 'color']
+        for mcol in misscols:
+            if 'Cov_{}x0'.format(mcol) not in sel_data.columns:
+                sel_data['Cov_{}x0'.format(
+                    mcol)] = sel_data['Cov_x0{}'.format(mcol)]
+        """
         # sel_tot = pd.concat((sel_data, sel_tot))
 
         # save output data in pandas df
@@ -115,6 +125,7 @@ def select_filt(dataDir, dbName, sellist, seasons,
             for vv in years:
                 idx = sel_data[timescale] == vv
                 selb = sel_data[idx]
+
                 outName = '{}/SN_{}_{}_{}_{}.hdf5'.format(
                     outDir_full, fieldType, dbName, timescale, vv)
                 selb.to_hdf(outName, key='SN', append=True)
