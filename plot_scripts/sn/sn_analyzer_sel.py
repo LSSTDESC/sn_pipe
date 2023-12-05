@@ -270,7 +270,7 @@ def load_Table(dbDir_WFD, OS_WFD, runType='spectroz',
     return wfd
 
 
-def plot_DDF(data, norm_factor, nside=128):
+def plot_DDF(data, norm_factor, config, nside=128):
     """
 
 
@@ -280,6 +280,8 @@ def plot_DDF(data, norm_factor, nside=128):
         Data to process.
     norm_factor : float
         Normalization factor.
+    config: pandas df
+      config for plot
     nside : int, optional
         Healpix nside parameter. The default is 128.
 
@@ -296,9 +298,9 @@ def plot_DDF(data, norm_factor, nside=128):
         0.5, 11.5, 1), xvar='season', xleg='season',
         logy=False, xlim=[1, 10], nside=nside)
     """
-    plot_DDF_nsn(data, norm_factor, nside)
+    plot_DDF_nsn(data, norm_factor, config, nside)
 
-    plot_DDF_dither(data, norm_factor, nside)
+    plot_DDF_dither(data, norm_factor, config, nside)
 
     # plot_DDF_nsn_z(data, norm_factor, nside)
 
@@ -344,7 +346,7 @@ def plot_DDF_nsn_z(data, norm_factor, nside):
                                     fig=fig, ax=ax, figtitle=field)
 
 
-def plot_DDF_dither(data, norm_factor, nside, timescale='year'):
+def plot_DDF_dither(data, norm_factor, config, nside, timescale='year'):
     """
     Functio to plot and estimate dithering effects
 
@@ -354,6 +356,8 @@ def plot_DDF_dither(data, norm_factor, nside, timescale='year'):
         Data to process.
     norm_factor : float
         Normalisation factor.
+    config: pandas df
+       config for plot.
     nside : int
         Healpix nside parameter.
     timescale: str, optional.
@@ -400,7 +404,7 @@ def plot_DDF_dither(data, norm_factor, nside, timescale='year'):
     plt.show()
 
 
-def plot_DDF_nsn(data, norm_factor, nside):
+def plot_DDF_nsn(data, norm_factor, config, nside, sigmaC=1.e6):
     """
 
 
@@ -410,8 +414,12 @@ def plot_DDF_nsn(data, norm_factor, nside):
         Data to process.
     norm_factor : float
         Normalization factor
+    config: pandas df
+      config for plots.
     nside : int
         Healpix nside parameter.
+    sigmaC: float, optional.
+     sigmaC selection cut. The default is 1.e6
 
     Returns
     -------
@@ -419,9 +427,9 @@ def plot_DDF_nsn(data, norm_factor, nside):
 
     """
 
-    #idx = data['sigmaC'] <= 0.04
+    idx = data['sigmaC'] <= sigmaC
 
-    #data = data[idx]
+    data = data[idx]
 
     mypl = Plot_nsn_vs(data, norm_factor, nside)
 
@@ -438,12 +446,14 @@ def plot_DDF_nsn(data, norm_factor, nside):
                         timescale, 'dbName', 'field'])
     sumt = get_sums_nsn(data, norm_factor, nside, cols=[timescale, 'dbName'])
 
-    plot_field(sums, mypl, xvar=timescale, xleg=timescale)
+    plot_field(sums, mypl, config, xvar=timescale,
+               xleg=timescale)
     # plot_field(sums, mypl, xvar=timescale, xleg=timescale,
     #           yvar='pixArea', yleg='Observed Area [deg$^{2}$]')
 
     # total number of SN per season/OS
-    plot_field(sumt, mypl, xvar=timescale, xleg=timescale, cumul=False)
+    plot_field(sumt, mypl, config, xvar=timescale, xleg=timescale,
+               cumul=True)
     # plot_field(sumt, mypl, xvar=timescale, xleg=timescale,
     #           yvar='pixArea', yleg='Observed Area [deg$^{2}$]')
     plt.show()
@@ -508,8 +518,8 @@ def pixelSize(nside):
     return pixSize
 
 
-def plot_field(data, mypl, xvar='season', xleg='season',
-               yvar='nsn', yleg='$N_{SN}$', cumul=False):
+def plot_field(data, mypl, config, xvar='season', xleg='season',
+               yvar='nsn', yleg='$N_{SN}$', cumul=False, norm='', logy=False):
     """
     Function to plot a set of fields results
 
@@ -519,6 +529,8 @@ def plot_field(data, mypl, xvar='season', xleg='season',
         Data to ptocess.
     mypl : class instance
         Plot_nsn_vs instance.
+    config: pandas df
+      config for plots
     xvar : str, optional
         x-axis variable. The default is 'season'.
     xleg : str, optional
@@ -535,6 +547,16 @@ def plot_field(data, mypl, xvar='season', xleg='season',
 
     """
 
+    if norm != '':
+        # normalize the results here
+        idx = data['dbName'] == norm
+        selnorm = data[idx]
+        vmerge = ['field', xvar]
+        df = data.merge(selnorm, left_on=vmerge, right_on=vmerge)
+        df['{}'.format(yvar)] = df['{}_x'.format(yvar)]/df['{}_y'.format(yvar)]
+        df['dbName'] = df['dbName_x']
+        data = pd.DataFrame(df)
+
     for field in data['field'].unique():
         idx = data['field'] == field
         sela = data[idx]
@@ -542,19 +564,28 @@ def plot_field(data, mypl, xvar='season', xleg='season',
         for dbName in sela['dbName'].unique():
             idxb = sela['dbName'] == dbName
             selb = sela[idxb]
+            idxc = config['dbName_DD'] == dbName
+            conf = config[idxc]
+            ls = conf['ls'].to_list()[0]
+            color = conf['color'].to_list()[0]
+            marker = conf['marker'].to_list()[0]
             mypl.plot_versus(selb, xvar, xleg,
                              yvar, yleg,
                              figTitle=field, label=dbName,
-                             fig=fig, ax=ax, xlim=None, cumul=cumul)
+                             fig=fig, ax=ax, xlim=None, cumul=cumul,
+                             ls=ls, color=color,
+                             marker=marker)
 
         ax.legend()
         # ax.grid()
         ax.set_xlabel(xleg, fontweight='bold')
         ax.set_ylabel(yleg, fontweight='bold')
         ax.grid(visible=True)
+        if logy:
+            ax.set_yscale("log")
 
 
-def plot_field_time(data, mypl, xvar='dist', xleg='dist',
+def plot_field_time(data, mypl, config, xvar='dist', xleg='dist',
                     yvar='nsn', yleg='$N_{SN}$', ls='None', timescale='year'):
     """
     Function to plot a set of fields results
@@ -565,6 +596,8 @@ def plot_field_time(data, mypl, xvar='dist', xleg='dist',
         Data to ptocess.
     mypl : class instance
         Plot_nsn_vs instance.
+    config: pandas df
+      config for plots
     xvar : str, optional
         x-axis variable. The default is 'season'.
     xleg : str, optional
@@ -590,6 +623,11 @@ def plot_field_time(data, mypl, xvar='dist', xleg='dist',
         for dbName in sela['dbName'].unique():
             idxb = sela['dbName'] == dbName
             selb = sela[idxb]
+            idxcc = config['dbName_DD'] == dbName
+            conf = config[idxcc]
+            ls = conf['ls'].to_list()[0]
+            color = conf['color'].to_list()[0]
+            marker = conf['marker'].to_list()[0]
             for seas in selb[timescale].unique():
                 idxc = selb[timescale] == seas
                 selc = selb[idxc]
@@ -600,7 +638,9 @@ def plot_field_time(data, mypl, xvar='dist', xleg='dist',
                 mypl.plot_versus(seld, xvar, xleg,
                                  yvar, yleg,
                                  figTitle=field, label=None,
-                                 fig=fig, ax=ax, xlim=None)
+                                 fig=fig, ax=ax, xlim=None,
+                                 ls=ls, color=color,
+                                 marker=marker)
 
                 idg = seld['dist'] <= 0.5
                 nsn_mean = seld[idg]['nsn'].mean()
@@ -643,7 +683,7 @@ class Plot_nsn_vs:
     def plot_versus(self, data, xvar='season', xleg='season',
                     yvar='nsn', yleg='$N_{SN}$', fig=None, ax=None,
                     figTitle='', label=None, xlim=[1, 10],
-                    ls='solid', cumul=False):
+                    ls='solid', cumul=False, color='k', marker='o'):
 
         if ax is None:
             fig, ax = plt.subplots(figsize=(14, 9))
@@ -654,7 +694,8 @@ class Plot_nsn_vs:
         datab = data[yvar]
         if cumul:
             datab = np.cumsum(datab)
-        ax.plot(data[xvar], datab, label=label, linestyle=ls, marker='.')
+        ax.plot(data[xvar], datab, label=label,
+                linestyle=ls, marker=marker, color=color, mfc='None', lw=3)
         ax.grid()
         if xlim is not None:
             ax.set_xlim(xlim)
@@ -949,7 +990,8 @@ def process_WFD(conf_df, dataType, dbDir_WFD, runType,
     print(len(wfd))
 
 
-def process_DDF(conf_df, dataType, dbDir_DD, runType, timescale_file, timeslots,
+def process_DDF(conf_df, dataType, dbDir_DD, runType,
+                timescale_file, timeslots,
                 norm_factor, nside=128):
 
     # load DDF
@@ -965,7 +1007,7 @@ def process_DDF(conf_df, dataType, dbDir_DD, runType, timescale_file, timeslots,
         ddfa = eval(tt)
         ddf = pd.concat((ddf, ddfa))
 
-    plot_DDF(ddf, norm_factor, nside=128)
+    plot_DDF(ddf, norm_factor, nside=128, config=conf_df)
 
 
 parser = OptionParser(description='Script to analyze SN prod after selection')
