@@ -700,7 +700,7 @@ class Plot_nsn_vs:
         if xlim is not None:
             ax.set_xlim(xlim)
 
-    def plot_nsn_mollview(self, what='season'):
+    def plot_nsn_mollview(self, what='season', dbName=''):
         """
         Method to plot the number of SN in Mollweid view
 
@@ -708,6 +708,8 @@ class Plot_nsn_vs:
         ----------
         what : TYPE, optional
             DESCRIPTION. The default is 'season'.
+        dbName: str, optional
+          dbName to display. The default is ''
 
         Returns
         -------
@@ -717,26 +719,40 @@ class Plot_nsn_vs:
 
         years = self.data[what].unique()
 
-        self.Mollview_sum(self.data, addleg='')
+        saveName = '{}_moll'.format(dbName)
+        self.Mollview_sum(self.data, addleg='{}'.format(
+            dbName), saveName=saveName)
 
         for year in years:
             idx = self.data[what] == year
             sel = self.data[idx]
 
-            self.Mollview_sum(sel, addleg='{} {}'.format(what, int(year)))
+            saveName = '{}_moll_{}'.format(dbName, year)
+            self.Mollview_sum(sel, addleg='{} \n {} {}'.format(dbName, what, int(year)),
+                              saveName=saveName)
 
         plt.show()
 
-    def Mollview_sum(self, data, var='nsn', legvar='N$_{SN}$', addleg=''):
+    def Mollview_sum(self, data, var='nsn',
+                     legvar='N$_{SN}$', addleg='', saveName=''):
         """
         Method to plot a Mollweid view for the sum of a variable
-
         Parameters
-        --------------
-        var: str,opt
-          variable to show (default: nsn_zlim)
-        legvar: str, opt
-           name for title of the plot (default: NSN)
+        ----------
+        data : pandas df
+            Data to plot.
+        var : str, optional
+            Variable to display. The default is 'nsn'.
+        legvar : str, optional
+            plot legend. The default is 'N$_{SN}$'.
+        addleg : str, optional
+            Additionnal info for legend. The default is ''.
+        saveName : str, optional
+            name for the jpeg file. The default is ''.
+
+        Returns
+        -------
+        None.
 
         """
 
@@ -748,7 +764,8 @@ class Plot_nsn_vs:
         xmin = 0.1
         xmax = xmax = np.max(sums[var])
         plotMollview(sums, var, legvar, addleg, np.sum,
-                     xmin=xmin, xmax=xmax, nside=self.nside)
+                     xmin=xmin, xmax=xmax,
+                     nside=self.nside, saveName=saveName)
 
 
 def plot_nsn_versus_two(data, norm_factor=30, nside=128,
@@ -795,6 +812,21 @@ def plot_nsn_versus_two(data, norm_factor=30, nside=128,
     ax.set_ylabel(r'{}'.format(ylabel), fontweight='bold')
     ax.legend()
     ax.grid()
+
+
+def plot_versus(df, xvar='year', xlabel='year',
+                yvar='nsn', ylabel='$N_{SN}$', fig=None, ax=None,
+                label='', ls='solid', marker='o', color='k', cumul=False, mfc='k'):
+
+    if fig is None:
+        fig, ax = plt.subplots(figsize=(12, 8))
+
+    ypl = df[yvar]
+    if cumul:
+        ypl = np.cumsum(ypl)
+
+    ax.plot(df[xvar], ypl, ls=ls, marker=marker,
+            color=color, label=label, mfc=mfc, markersize=9, lw=2)
 
 
 def plot_nsn_binned(data, norm_factor=30, nside=128,
@@ -846,7 +878,8 @@ def plot_nsn_binned(data, norm_factor=30, nside=128,
     ax.set_xlim(xlim)
 
 
-def plotMollview(data, varName, leg, addleg, op, xmin, xmax, nside=128):
+def plotMollview(data, varName, leg, addleg, op, xmin, xmax,
+                 nside=128, saveName=''):
     """
     Function to display results as a Mollweid map
 
@@ -866,6 +899,8 @@ def plotMollview(data, varName, leg, addleg, op, xmin, xmax, nside=128):
      max value for the display
     nside: int, optional
         nside parameter for healpix. The default is 128
+    saveName:str, optional.
+       output name for the jpeg. The default is ''
 
     """
     import healpy as hp
@@ -900,7 +935,8 @@ def plotMollview(data, varName, leg, addleg, op, xmin, xmax, nside=128):
     name = leg.replace(' - ', '_')
     name = name.replace(' ', '_')
 
-    # plt.savefig('Plots_pixels/Moll_{}.png'.format(name))
+    if saveName != '':
+        plt.savefig('Plots_pixels/{}.png'.format(saveName))
 
 
 def get_val(var):
@@ -956,8 +992,9 @@ def process_WFD(conf_df, dataType, dbDir_WFD, runType,
 
     """
 
+    outName = 'nsn_WFD_v3.csv'
+    """
     OS_WFDs = conf_df['dbName_WFD'].unique()
-
     wfd = pd.DataFrame()
     for OS_WFD in OS_WFDs:
         idx = conf_df['dbName_WFD'] == OS_WFD
@@ -966,28 +1003,91 @@ def process_WFD(conf_df, dataType, dbDir_WFD, runType,
             timescale_file, timeslots)
         print('allo', tt)
         wfda = eval(tt)
-
+        idx = wfda['ebvofMW'] < 0.25
+        wfda = wfda[idx]
+        #mypl = Plot_nsn_vs(wfda, norm_factor, nside=64)
+        #mypl.plot_nsn_mollview(what='year', dbName=OS_WFD)
+        # wfd = pd.concat((wfd, wfda))
+        # get some stat
+        wfda = wfda.groupby(['dbName', 'year']).apply(
+            lambda x: get_stat(x, norm_factor)).reset_index()
         wfd = pd.concat((wfd, wfda))
 
-    idx = wfd['ebvofMW'] < 0.25
-    wfd = wfd[idx]
+    print(wfd)
 
+    
+    wfd.to_csv(outName, index=False)
+    """
+    wfd = pd.read_csv(outName)
+    fig, ax = plt.subplots(figsize=(12, 8))
+
+    for dbName in wfd['dbName'].unique():
+        idx = wfd['dbName'] == dbName
+        sel = wfd[idx]
+        idc = conf_df['dbName_WFD'] == dbName
+        selp = conf_df[idc]
+        ls = selp['ls'].values[0]
+        marker = selp['marker'].values[0]
+        color = selp['color'].values[0]
+        plot_versus(sel, fig=fig, ax=ax, cumul=True,
+                    ls=ls, marker=marker, color=color, mfc=color, label=dbName)
+        labelb = dbName+'-'+'$\sigma_C\leq 0.04$'
+        plot_versus(sel, yvar='nsn_sigmaC', fig=fig, ax=ax, cumul=True,
+                    ls=ls, marker=marker, color=color,
+                    mfc='None', label=labelb)
+
+    ax.grid()
+    ax.set_xlim([0.95, 10.05])
+    ax.set_xlabel('year', fontweight='bold')
+    ax.set_ylabel('$\Sigma N_{SN}$')
+    ax.legend(loc='upper left', bbox_to_anchor=(
+        0.0, 1.15), ncol=3, fontsize=11, frameon=False)
+
+    xmin, xmax = ax.get_xlim()
+
+    nsn = 1.e6
+    ax.plot([xmin, xmax], [nsn, nsn], color='dimgrey', lw=2, linestyle='solid')
+    ax.text(5, 1.02e6, '1 million SNe Ia', color='dimgrey', fontsize=12)
+    nsn = 300000
+    ax.plot([xmin, xmax], [nsn, nsn], color='dimgrey', lw=2, linestyle='solid')
+    ax.text(5, 0.32e6, '300k SNe Ia', color='dimgrey', fontsize=12)
+    plt.show()
+
+    """
     plot_nsn_versus_two(wfd, xvar='year', xleg='year', logy=False,
                         bins=np.arange(0.5, 11.5, 1), norm_factor=norm_factor,
                         nside=nside,
                         cumul=False, xlim=[1, 10], figtitle=OS_WFDs[0])
+    """
     """
 
     plot_nsn_versus_two(wfd, xvar='z', xleg='z', logy=True,
                         bins=np.arange(0.005, 0.805, 0.01), norm_factor=norm_factor,
                         cumul=True, xlim=[0.01, 0.8])
     """
+    """
+    for dbName in wfd['dbName'].unique():
+        idx = wfd['dbName'] == dbName
+        selwfd = wfd[idx]
+        mypl = Plot_nsn_vs(selwfd, norm_factor, nside=64)
 
-    mypl = Plot_nsn_vs(wfd, norm_factor, nside=64)
-
-    mypl.plot_nsn_mollview(what='year')
+        mypl.plot_nsn_mollview(what='year', dbName=dbName)
 
     print(len(wfd))
+    """
+
+
+def get_stat(grp, norm_factor, sigmaC=0.04):
+
+    nsn = len(grp)/norm_factor
+
+    idx = grp['sigmaC'] <= sigmaC
+
+    nsn_sel = len(grp[idx])/norm_factor
+
+    dictout = dict(zip(['nsn', 'nsn_sigmaC'], [[nsn], [nsn_sel]]))
+
+    return pd.DataFrame.from_dict(dictout)
 
 
 def process_DDF(conf_df, dataType, dbDir_DD, runType,
