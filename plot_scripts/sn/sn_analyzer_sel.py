@@ -966,6 +966,33 @@ def get_val(var):
     return var
 
 
+def process_WFD_OS(conf_df, dataType, dbDir_WFD, runType,
+                   timescale_file, timeslots, norm_factor, nside, outName):
+
+    OS_WFDs = conf_df['dbName_WFD'].unique()
+    wfd = pd.DataFrame()
+    for OS_WFD in OS_WFDs:
+        idx = conf_df['dbName_WFD'] == OS_WFD
+        tt = 'load_{}(\'{}\',\'{}\',\'{}\',\'{}\',{})'.format(
+            dataType, dbDir_WFD, OS_WFD, runType,
+            timescale_file, timeslots)
+        print('allo', tt)
+        wfda = eval(tt)
+        idx = wfda['ebvofMW'] < 0.25
+        wfda = wfda[idx]
+        #mypl = Plot_nsn_vs(wfda, norm_factor, nside=64)
+        #mypl.plot_nsn_mollview(what='year', dbName=OS_WFD)
+        # wfd = pd.concat((wfd, wfda))
+        # get some stat
+        wfda = wfda.groupby(['dbName', 'year']).apply(
+            lambda x: get_stat(x, norm_factor)).reset_index()
+        wfd = pd.concat((wfd, wfda))
+
+    print(wfd)
+
+    wfd.to_csv(outName, index=False)
+
+
 def process_WFD(conf_df, dataType, dbDir_WFD, runType,
                 timescale_file, timeslots, norm_factor, nside=64):
     """
@@ -993,31 +1020,11 @@ def process_WFD(conf_df, dataType, dbDir_WFD, runType,
     """
 
     outName = 'nsn_WFD_v3.csv'
-    """
-    OS_WFDs = conf_df['dbName_WFD'].unique()
-    wfd = pd.DataFrame()
-    for OS_WFD in OS_WFDs:
-        idx = conf_df['dbName_WFD'] == OS_WFD
-        tt = 'load_{}(\'{}\',\'{}\',\'{}\',\'{}\',{})'.format(
-            dataType, dbDir_WFD, OS_WFD, runType,
-            timescale_file, timeslots)
-        print('allo', tt)
-        wfda = eval(tt)
-        idx = wfda['ebvofMW'] < 0.25
-        wfda = wfda[idx]
-        #mypl = Plot_nsn_vs(wfda, norm_factor, nside=64)
-        #mypl.plot_nsn_mollview(what='year', dbName=OS_WFD)
-        # wfd = pd.concat((wfd, wfda))
-        # get some stat
-        wfda = wfda.groupby(['dbName', 'year']).apply(
-            lambda x: get_stat(x, norm_factor)).reset_index()
-        wfd = pd.concat((wfd, wfda))
+    import os
+    if not os.path.isfile(outName):
+        process_WFD_OS(conf_df, dataType, dbDir_WFD, runType,
+                       timescale_file, timeslots, norm_factor, nside, outName)
 
-    print(wfd)
-
-    
-    wfd.to_csv(outName, index=False)
-    """
     wfd = pd.read_csv(outName)
     fig, ax = plt.subplots(figsize=(12, 8))
 
