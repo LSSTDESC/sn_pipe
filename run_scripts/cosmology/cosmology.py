@@ -155,29 +155,9 @@ priors['prior'] = pd.DataFrame({'varname': ['Om0'],
 outName = '{}/cosmo_{}.hdf5'.format(outDir, dbName_DD)
 resfi = pd.DataFrame()
 
-for key, vals in priors.items():
-    cl = Fit_seasons(fitconfig, dataDir_DD, dbName_DD,
-                     dataDir_WFD, dbName_WFD, dictsel, survey,
-                     vals, host_effi, frac_WFD_low_sigmaC,
-                     max_sigmaC, test_mode, lowz_optimize,
-                     sigmaInt, dump_data, timescale)
-    res = cl()
-    res['prior'] = key
-    resfi = pd.concat((resfi, res))
-    """
-    dict_fi = cl()
-    for keyb, valb in dict_fi.items():
-        dd = fitconfig[keyb]
-        cosmopars = '_'.join(dd.keys())
-        full_name = '{}_{}_{}.hdf5'.format(outName, cosmopars, key)
-        valb.to_hdf(full_name, key='cosmo')
-    """
-resfi['dbName_DD'] = dbName_DD
-resfi['dbName_WFD'] = dbName_WFD
-
-if test_mode:
-    print('final result')
-    cols = ['w0_fit', 'Om0_fit', 'MoM', 'prior', 'dbName_DD', 'dbName_WFD']
-    print(resfi[cols])
-
-resfi.to_hdf(outName, key='cosmo')
+cl = Fit_seasons(fitconfig, dataDir_DD, dbName_DD,
+                 dataDir_WFD, dbName_WFD, dictsel, survey,
+                 priors, host_effi, frac_WFD_low_sigmaC,
+                 max_sigmaC, test_mode, lowz_optimize,
+                 sigmaInt, dump_data, timescale, outName)
+res = cl()
