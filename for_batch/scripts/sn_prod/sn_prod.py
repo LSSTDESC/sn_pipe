@@ -195,6 +195,6 @@ if opts.fieldType == 'DD':
 # this is for WFD
 seasons = [(1, 5), (6, 10), (11, 14)]
 if opts.fieldType == 'WFD':
-    procDict['SN_z_max'] = 0.7
+    procDict['SN_z_max'] = 1.0
     for seas in seasons:
         batch_WFD(procDict, seas_min=seas[0], seas_max=seas[1])
