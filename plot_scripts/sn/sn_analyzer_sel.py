@@ -169,7 +169,7 @@ def load_DataFrame(dbDir_WFD, OS_WFD, runType='spectroz',
     timeslots : list(int), optional
        Time slots to process. The default is [1].
     fieldType : str, optional
-       Field type to process. The default is 'WFD'.       
+       Field type to process. The default is 'WFD'.
 
     Returns
     -------
@@ -298,11 +298,11 @@ def plot_DDF(data, norm_factor, config, nside=128):
         0.5, 11.5, 1), xvar='season', xleg='season',
         logy=False, xlim=[1, 10], nside=nside)
     """
-    plot_DDF_nsn(data, norm_factor, config, nside)
+    # plot_DDF_nsn(data, norm_factor, config, nside)
 
-    plot_DDF_dither(data, norm_factor, config, nside)
+    # plot_DDF_dither(data, norm_factor, config, nside)
 
-    # plot_DDF_nsn_z(data, norm_factor, nside)
+    plot_DDF_nsn_z(data, norm_factor, nside)
 
     """
     mypl.plot_nsn_versus_two(xvar='z', xleg='z', logy=True,
@@ -311,7 +311,7 @@ def plot_DDF(data, norm_factor, config, nside=128):
     """
 
 
-def plot_DDF_nsn_z(data, norm_factor, nside):
+def plot_DDF_nsn_z(data, norm_factor, nside, timescale='year'):
     """
     Parameters
     ----------
@@ -328,22 +328,26 @@ def plot_DDF_nsn_z(data, norm_factor, nside):
 
     """
 
-    mypl = Plot_nsn_vs(data, norm_factor, nside)
+    #mypl = Plot_nsn_vs(data, norm_factor, nside)
 
     for field in data['field'].unique():
         idx = data['field'] == field
         sela = data[idx]
-        fig, ax = plt.subplots(figsize=(14, 8))
+
         for dbName in sela['dbName'].unique():
             idxa = sela['dbName'] == dbName
             selb = sela[idxa]
-            for season in selb['season'].unique():
-                idxb = selb['season'] == season
+            fig, ax = plt.subplots(figsize=(14, 8))
+            for season in selb[timescale].unique():
+                idxb = selb[timescale] == season
+                idxb &= selb['sigmaC'] <= 0.04
                 selc = selb[idxb]
-                plot_nsn_versus_two(selc, xvar='z', xleg='z', logy=True,
-                                    bins=np.arange(0.01, 1.15, 0.05),
-                                    cumul=False, xlim=[0.01, 1.1],
-                                    fig=fig, ax=ax, figtitle=field)
+
+                plot_nsn_binned(selc, xvar='z', xleg='z', logy=True,
+                                bins=np.arange(0.01, 1.15, 0.1),
+                                cumul=False, xlim=[0.01, 1.1],
+                                fig=fig, ax=ax, figtitle='{} - {}'.format(
+                                    dbName, field))
 
 
 def plot_DDF_dither(data, norm_factor, config, nside, timescale='year'):
@@ -388,7 +392,7 @@ def plot_DDF_dither(data, norm_factor, config, nside, timescale='year'):
     df_pixel.loc[:, 'nsn_no_dithering'] = npixels_FP*df_pixel['nsn_center']
 
     sums = get_sums_nsn(data, norm_factor, nside, cols=[
-                        'season', 'dbName', 'field'])
+        'season', 'dbName', 'field'])
 
     # merge wih sums to estimate the impact od the dithering
     sums = sums.merge(df_pixel, left_on=['season', 'dbName', 'field'],
@@ -443,11 +447,11 @@ def plot_DDF_nsn(data, norm_factor, config, nside, sigmaC=1.e6):
 
     timescale = 'year'
     sums = get_sums_nsn(data, norm_factor, nside, cols=[
-                        timescale, 'dbName', 'field'])
+        timescale, 'dbName', 'field'])
     sumt = get_sums_nsn(data, norm_factor, nside, cols=[timescale, 'dbName'])
 
     plot_field(sums, mypl, config, xvar=timescale,
-               xleg=timescale)
+               xleg=timescale, cumul=True)
     # plot_field(sums, mypl, xvar=timescale, xleg=timescale,
     #           yvar='pixArea', yleg='Observed Area [deg$^{2}$]')
 
@@ -787,8 +791,8 @@ def plot_nsn_versus_two(data, norm_factor=30, nside=128,
 
     fig.suptitle(figtitle)
 
-    #idxa = data['z'] <= 0.1
-    #data = data[idxa]
+    # idxa = data['z'] <= 0.1
+    # data = data[idxa]
 
     label = 'no selection'
     plot_nsn_binned(data, bins=bins, norm_factor=norm_factor,
@@ -833,7 +837,7 @@ def plot_nsn_binned(data, norm_factor=30, nside=128,
                     bins=np.arange(0.005, 0.8, 0.01),
                     xvar='z', xleg='z', logy=False,
                     cumul=False, xlim=[0.01, 0.8],
-                    label='', fig=None, ax=None, color='k', ls='solid'):
+                    label='', fig=None, ax=None, color='k', ls='solid', figtitle=''):
     """
     Function to plot nsn vs...
 
@@ -854,6 +858,8 @@ def plot_nsn_binned(data, norm_factor=30, nside=128,
 
     if ax is None:
         fig, ax = plt.subplots(figsize=(14, 8))
+
+    fig.suptitle(figtitle)
 
     res = bin_it(data, xvar=xvar, bins=bins,
                  norm_factor=norm_factor)
@@ -980,8 +986,8 @@ def process_WFD_OS(conf_df, dataType, dbDir_WFD, runType,
         wfda = eval(tt)
         idx = wfda['ebvofMW'] < 0.25
         wfda = wfda[idx]
-        #mypl = Plot_nsn_vs(wfda, norm_factor, nside=64)
-        #mypl.plot_nsn_mollview(what='year', dbName=OS_WFD)
+        # mypl = Plot_nsn_vs(wfda, norm_factor, nside=64)
+        # mypl.plot_nsn_mollview(what='year', dbName=OS_WFD)
         # wfd = pd.concat((wfd, wfda))
         # get some stat
         wfda = wfda.groupby(['dbName', 'year']).apply(
@@ -1117,6 +1123,38 @@ def process_DDF(conf_df, dataType, dbDir_DD, runType,
     plot_DDF(ddf, norm_factor, nside=128, config=conf_df)
 
 
+def process_DDF_summary(conf_df, dataType, dbDir_DD, runType,
+                        timescale_file):
+
+    # load DDF
+    OS_DDFs = conf_df['dbName_DD'].unique()
+
+    ddf = pd.DataFrame()
+
+    for OS_DDF in OS_DDFs:
+        idx = conf_df['dbName_DD'] == OS_DDF
+        fieldType = 'DDF'
+        search_path = '{}/{}/DDF_{}/nsn_{}_{}.hdf5'.format(
+            dbDir_DD, OS_DDF, runType, OS_DDF, timescale_file)
+        res = pd.read_hdf(search_path)
+        res['dbName'] = OS_DDF
+        ddf = pd.concat((ddf, res))
+
+    fields = ddf['field'].unique()
+
+    for field in fields:
+        fig, ax = plt.subplots()
+        idx = ddf['field'] == field
+        sela = ddf[idx]
+        dbNames = sela['dbName']
+        for dbName in dbNames:
+            idxa = sela['dbName'] == dbName
+            selb = sela[idxa]
+            ax.plot(selb['year'], selb['nsn'])
+
+    plt.show()
+
+
 parser = OptionParser(description='Script to analyze SN prod after selection')
 
 parser.add_option('--dbDir_DD', type=str,
@@ -1195,7 +1233,11 @@ if dbDir_WFD != '':
 # print(test)
 
 if dbDir_DD != '':
+
     process_DDF(conf_df, dataType, dbDir_DD, runType,
                 timescale_file, timeslots, norm_factor_DD)
-
+    """
+    process_DDF_summary(conf_df, dataType, dbDir_DD, runType,
+                        timescale_file)
+    """
 plt.show()
