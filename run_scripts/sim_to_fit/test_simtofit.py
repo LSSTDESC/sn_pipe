@@ -55,12 +55,35 @@ cmd += ' ../Output_SN_test_new/{}/DDF_spectroz'.format(dbName)
 cmd += ' --fieldType DD'
 cmd += ' --Fitter_parnames t0,x1,c,x0 --fieldName COSMOS'
 cmd += ' --ProductionIDSimu SN_DD_{}_spectroz_1'.format(dbName)
-cmd += ' --Observations_season 1 --nside=128 --Pixelisation_nside=128'
+cmd += ' --Observations_season 2 --nside=128 --Pixelisation_nside=128'
 cmd += ' --npixels=1 --SN_sigmaInt=0.0'
 cmd += ' --InstrumentSimu_telescope_tag={}'.format(tag)
 cmd += ' --InstrumentFit_telescope_tag={}'.format(tag)
 cmd += ' --pixelList=pixelList.csv'
 
-
+"""
+cmd = 'python run_scripts/sim_to_fit/run_sim_to_fit.py'
+cmd += ' --dbName {}'.format(dbName)
+cmd += ' --dbDir {} --dbExtens npy --OutputSimu_save 0'.format(dbDir)
+cmd += ' --OutputSimu_throwafterdump 0 --SN_x1_type=unique --SN_x1_min=0.0'
+cmd += ' --SN_color_type=unique --SN_color_min=0.0 --SN_z_type=random'
+cmd += ' --SN_z_min 0.01 --SN_z_max 1.1 --SN_daymax_type=random'
+cmd += ' --Simulator_model salt3 --Simulator_version 2.0 --Fitter_model salt3'
+cmd += ' --Fitter_version 2.0 --MultiprocessingSimu_nproc 1'
+cmd += ' --MultiprocessingFit_nproc 1 --nproc_pixels 8 --nproc 1'
+cmd += ' --SN_NSNfactor 30 --SN_NSNabsolute=-1 --fit_selected 0'
+cmd += ' --ebvofMW_pixel 0.25 --OutputSimu_directory'
+cmd += ' ../Output_SN_test_new/{}/DDF_spectroz'.format(dbName)
+cmd += ' --OutputFit_directory'
+cmd += ' ../Output_SN_test_new/{}/DDF_spectroz'.format(dbName)
+cmd += ' --fieldType DD'
+cmd += ' --Fitter_parnames t0,x1,c,x0 --fieldName XMM-LSS'
+cmd += ' --ProductionIDSimu SN_DD_{}_spectroz_1'.format(dbName)
+cmd += ' --Observations_season 1 --nside=128 --Pixelisation_nside=128'
+cmd += ' --SN_sigmaInt=0.0'
+cmd += ' --InstrumentSimu_telescope_tag={}'.format(tag)
+cmd += ' --InstrumentFit_telescope_tag={}'.format(tag)
+cmd += ' --pixelList=pixelList.csv'
+"""
 print(cmd)
 os.system(cmd)
