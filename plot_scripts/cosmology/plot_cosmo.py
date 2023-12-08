@@ -36,6 +36,9 @@ def load_data(dbDir, config):
     for i, row in config.iterrows():
         fi = '{}/cosmo_{}.hdf5'.format(dbDir, row['dbName'])
         dfa = pd.read_hdf(fi)
+        # print(dfa)
+        dfa = dfa.replace([np.inf, -np.inf, np.nan], 0)
+
         df = pd.concat((df, dfa))
 
     return df
@@ -48,10 +51,15 @@ parser.add_option('--dbDir', type=str, default='../cosmo_fit',
 parser.add_option('--dbList', type=str,
                   default='input/DESC_cohesive_strategy/config_ana.csv',
                   help='OS name[%default]')
+parser.add_option('--timescale', type=str,
+                  default='year',
+                  help='timescale for plot - year or season [%default]')
+
 opts, args = parser.parse_args()
 
 dbDir = opts.dbDir
 dbList = opts.dbList
+timescale = opts.timescale
 
 config = pd.read_csv(dbList, comment='#')
 
@@ -60,9 +68,10 @@ print(data.columns)
 # data['dbName_DD'] += '_{}'.format(budget)
 
 
-grpCol = ['season', 'dbName_DD', 'prior']
+grpCol = [timescale, 'dbName_DD', 'prior']
 # resdf = process_OS(data, grpCol)
 resdf = Process_OS(data, grpCol).res
+
 
 resdf['UD_mean'] = 0
 resdf['DD_mean'] = 0
@@ -70,7 +79,7 @@ resdf['DD_mean'] = 0
 for UD in ['COSMOS', 'XMM-LSS']:
     resdf['UD_mean'] += resdf['{}_mean'.format(UD)]
 
-for DD in ['CDFS', 'COSMOS', 'EDFSa', 'EDFSb', 'ELAISS1']:
+for DD in ['CDFS', 'EDFSa', 'EDFSb', 'ELAISS1']:
     resdf['DD_mean'] += resdf['{}_mean'.format(DD)]
 
 resdf['DDF_mean'] = resdf['UD_mean']+resdf['DD_mean']
@@ -100,18 +109,28 @@ dd = dict(zip(priors, ['']))
 
 for vary in vvars:
     for prior in priors:
-        plot_allOS(resdf, config, vary=vary,
+        plot_allOS(resdf, config, varx=timescale, legx=timescale, vary=vary,
                    legy=leg[vary], prior=prior, figtitle=dd[prior], dbNorm='')
 
-"""
+
 vvarsb = ['DDF', 'UD', 'DD', 'WFD']
+DDFs = ['COSMOS', 'XMM-LSS', 'CDFS', 'EDFSa', 'EDFSb', 'ELAISS1']
+vvarsb += DDFs
 legb = [r'$N^{DDF}_{SN}$', r'$N^{UD}_{SN}$',
         r'$N^{DD}_{SN}$', r'$N^{WFD}_{SN}$']
+legbb = []
+for ddf in DDFs:
+    bb = r'$N^{'+ddf+'}_{SN}$'
+    legb.append(bb)
+
+legb += legbb
+
 lleg = dict(zip(vvarsb, legb))
+
 for vary in vvarsb:
-    plot_allOS(resdf, config, vary=vary,
-               legy=lleg[vary], prior='prior', figtitle='')
-"""
+    plot_allOS(resdf, config, varx=timescale, legx=timescale, vary=vary,
+               legy=lleg[vary], prior='prior', figtitle='', dbNorm='')
+
 
 # ax.legend()
 # idx = resdf['prior'] == 'noprior'
