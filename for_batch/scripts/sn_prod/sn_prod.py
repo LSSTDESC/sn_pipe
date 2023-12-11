@@ -84,7 +84,8 @@ def batch_DDF(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
 
 
 def batch_WFD(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
-              time='60:00:00', mem='40G', seas_min=1, seas_max=10):
+              time='60:00:00', mem='40G', seas_min=1, seas_max=10,
+              zmin=0.01, zmax=0.7):
     """
     Function to launch sim_to_fit for WFD
 
@@ -116,6 +117,8 @@ def batch_WFD(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
     reprocList = theDict['reprocList']
     sigmaInt = theDict['SN_sigmaInt']
     snrate = theDict['SN_z_rate']
+    zmax = np.round(zmax, 1)
+    zmin = np.round(zmin, 2)
 
     tag_list = pd.DataFrame()
     if 'None' not in reprocList:
@@ -147,11 +150,14 @@ def batch_WFD(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
         RAmax = np.round(RAmax, 1)
         procName = 'WFD_{}_{}_{}{}_{}_{}'.format(
             dbName, RAmin, RAmax, tag_dir, np.round(sigmaInt, 2), snrate)
-        procNamea = '{}_{}_{}'.format(procName, seas_min, seas_max)
+        procNamea = '{}_{}_{}_{}_{}'.format(
+            procName, seas_min, seas_max, zmin, zmax)
         sprocName = 'SN_WFD_{}_{}_{}{}'.format(dbName, RAmin, RAmax, tag_dir)
         mybatch = BatchIt(processName=procNamea, time=time, mem=mem)
         procDict['RAmin'] = RAmin
         procDict['RAmax'] = RAmax
+        procDict['SN_z_min'] = zmin
+        procDict['SN_z_max'] = zmax
 
         if not tag_list.empty:
             idx = tag_list['ProductionID'] == sprocName
@@ -161,12 +167,13 @@ def batch_WFD(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
                 seasons = range(season_max, 11)
 
         for seas in seasons:
-            procDict['ProductionIDSimu'] = 'SN_{}_{}'.format(procName, seas)
+            tttag = 'SN_{}_{}_{}_{}'.format(procName, seas, zmin, zmax)
+            procDict['ProductionIDSimu'] = tttag
             procDict['Observations_season'] = seas
             mybatch.add_batch(scriptref, procDict)
 
         # go for batch
-        mybatch.go_batch()
+        # mybatch.go_batch()
 
 
 # get script parameters and put in a dict
@@ -195,6 +202,8 @@ if opts.fieldType == 'DD':
 # this is for WFD
 seasons = [(1, 5), (6, 10), (11, 14)]
 if opts.fieldType == 'WFD':
-    procDict['SN_z_max'] = 1.0
     for seas in seasons:
-        batch_WFD(procDict, seas_min=seas[0], seas_max=seas[1])
+        batch_WFD(procDict, seas_min=seas[0],
+                  seas_max=seas[1], zmin=0.01, zmax=0.7)
+        batch_WFD(procDict, seas_min=seas[0],
+                  seas_max=seas[1], zmin=0.7, zmax=1.)
