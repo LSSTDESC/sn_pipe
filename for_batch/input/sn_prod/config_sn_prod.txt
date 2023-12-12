@@ -22,7 +22,7 @@ nproc 1 int # nprocs for pixel processing
 SN_NSNfactor 50 int #nsn factor for LC prod
 fit_selected 0 int # to fit only selected LC
 ebvofMW_pixel 0.0 float # E(B-V) selection for pixels
-DD_list COSMOS,CDFS,EDFSa,EDFSb,ELAISS1,XMM-LSS str # list of DDFs to process
+DD_list COSMOS,CDFS,EDFS,ELAISS1,XMM-LSS str # list of DDFs to process
 OutputSimu_directory Output_SN str # output dir for LC
 OutputFit_directory Output_SN str # output dir for SN
 fieldType DD str # field type to process - DD or WFD
