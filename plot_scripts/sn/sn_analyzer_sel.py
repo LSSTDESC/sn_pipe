@@ -328,7 +328,7 @@ def plot_DDF_nsn_z(data, norm_factor, nside, timescale='year'):
 
     """
 
-    #mypl = Plot_nsn_vs(data, norm_factor, nside)
+    # mypl = Plot_nsn_vs(data, norm_factor, nside)
 
     for field in data['field'].unique():
         idx = data['field'] == field
@@ -776,7 +776,8 @@ def plot_nsn_versus_two(data, norm_factor=30, nside=128,
                         bins=np.arange(0.005, 0.8, 0.01),
                         xvar='z', xleg='z', logy=False,
                         cumul=False, xlim=[0.01, 0.8],
-                        label='', fig=None, ax=None, figtitle=''):
+                        label='', fig=None, ax=None, figtitle='',
+                        color='k', marker='o'):
     """
     Method to plot two curves sn vs ...
 
@@ -794,18 +795,19 @@ def plot_nsn_versus_two(data, norm_factor=30, nside=128,
     # idxa = data['z'] <= 0.1
     # data = data[idxa]
 
-    label = 'no selection'
+    label = data['dbName'].unique()[0]
     plot_nsn_binned(data, bins=bins, norm_factor=norm_factor,
                     nside=nside,
                     xvar=xvar, xleg=xleg, logy=logy,
                     cumul=cumul, xlim=xlim,
-                    label=label, fig=fig, ax=ax,)
+                    label=label, fig=fig, ax=ax, color=color, marker=marker)
     idx = data['sigmaC'] <= 0.04
-    label = '$\sigma_C \leq 0.04$'
+    labelb = label+' - $\sigma_C \leq 0.04$'
     plot_nsn_binned(data[idx], norm_factor=norm_factor, bins=bins,
                     xvar=xvar, xleg=xleg, logy=logy,
                     cumul=cumul, xlim=xlim,
-                    label=label, fig=fig, ax=ax, ls='dotted')
+                    label=labelb, fig=fig, ax=ax, ls='dotted',
+                    color=color, marker=marker)
     if logy:
         ax.set_yscale("log")
 
@@ -837,7 +839,8 @@ def plot_nsn_binned(data, norm_factor=30, nside=128,
                     bins=np.arange(0.005, 0.8, 0.01),
                     xvar='z', xleg='z', logy=False,
                     cumul=False, xlim=[0.01, 0.8],
-                    label='', fig=None, ax=None, color='k', ls='solid', figtitle=''):
+                    label='', fig=None, ax=None, color='k',
+                    ls='solid', figtitle='', marker='o'):
     """
     Function to plot nsn vs...
 
@@ -877,7 +880,12 @@ def plot_nsn_binned(data, norm_factor=30, nside=128,
     vv = res['NSN']
     if cumul:
         vv = np.cumsum(res['NSN'])
-    ax.plot(res[xvar], vv, label=label, color=color, linestyle=ls)
+    if label != '':
+        ax.plot(res[xvar], vv, label=label, color=color,
+                linestyle=ls, marker=marker, markersize=9, lw=2)
+    else:
+        ax.plot(res[xvar], vv, color=color, linestyle=ls,
+                marker=marker, markersize=9, lw=2)
 
     ax.set_xlabel(xleg)
     ax.set_ylabel(r'$N_{SN}$', fontweight='bold')
@@ -977,6 +985,7 @@ def process_WFD_OS(conf_df, dataType, dbDir_WFD, runType,
 
     OS_WFDs = conf_df['dbName_WFD'].unique()
     wfd = pd.DataFrame()
+    fig, ax = plt.subplots(figsize=(14, 8))
     for OS_WFD in OS_WFDs:
         idx = conf_df['dbName_WFD'] == OS_WFD
         tt = 'load_{}(\'{}\',\'{}\',\'{}\',\'{}\',{})'.format(
@@ -988,15 +997,31 @@ def process_WFD_OS(conf_df, dataType, dbDir_WFD, runType,
         wfda = wfda[idx]
         # mypl = Plot_nsn_vs(wfda, norm_factor, nside=64)
         # mypl.plot_nsn_mollview(what='year', dbName=OS_WFD)
+        idc = conf_df['dbName_WFD'] == OS_WFD
+        selp = conf_df[idc]
+        ls = selp['ls'].values[0]
+        marker = selp['marker'].values[0]
+        color = selp['color'].values[0]
+        plot_nsn_versus_two(wfda, xvar='z', xleg='z', logy=False,
+                            bins=np.arange(0.005, 0.805, 0.01),
+                            norm_factor=norm_factor,
+                            cumul=False, xlim=[0.01, 0.8], color=color,
+                            marker=marker, fig=fig, ax=ax)
         # wfd = pd.concat((wfd, wfda))
         # get some stat
         wfda = wfda.groupby(['dbName', 'year']).apply(
             lambda x: get_stat(x, norm_factor)).reset_index()
         wfd = pd.concat((wfd, wfda))
 
-    print(wfd)
+    ax.legend(loc='upper left', bbox_to_anchor=(
+        0.0, 1.15), ncol=3, fontsize=11, frameon=False)
+    plt.show()
 
-    wfd.to_csv(outName, index=False)
+    # print(wfd)
+
+    # wfd.to_csv(outName, index=False)
+
+    return wfd
 
 
 def process_WFD(conf_df, dataType, dbDir_WFD, runType,
@@ -1025,13 +1050,39 @@ def process_WFD(conf_df, dataType, dbDir_WFD, runType,
 
     """
 
-    outName = 'nsn_WFD_v3.csv'
-    import os
-    if not os.path.isfile(outName):
-        process_WFD_OS(conf_df, dataType, dbDir_WFD, runType,
-                       timescale_file, timeslots, norm_factor, nside, outName)
+    outName = 'nsn_WFD_v3_test.csv'
 
-    wfd = pd.read_csv(outName)
+    wfd = process_WFD_OS(conf_df, dataType, dbDir_WFD, runType,
+                         timescale_file, timeslots, norm_factor, nside, outName)
+
+    plot_summary_wfd(wfd, conf_df)
+
+    """
+    plot_nsn_versus_two(wfd, xvar='year', xleg='year', logy=False,
+                        bins=np.arange(0.5, 11.5, 1), norm_factor=norm_factor,
+                        nside=nside,
+                        cumul=False, xlim=[1, 10], figtitle=OS_WFDs[0])
+    """
+    """
+
+    plot_nsn_versus_two(wfd, xvar='z', xleg='z', logy=True,
+                        bins=np.arange(0.005, 0.805, 0.01), norm_factor=norm_factor,
+                        cumul=True, xlim=[0.01, 0.8])
+    """
+    """
+    for dbName in wfd['dbName'].unique():
+        idx = wfd['dbName'] == dbName
+        selwfd = wfd[idx]
+        mypl = Plot_nsn_vs(selwfd, norm_factor, nside=64)
+
+        mypl.plot_nsn_mollview(what='year', dbName=dbName)
+
+    print(len(wfd))
+    """
+
+
+def plot_summary_wfd(wfd, conf_df):
+
     fig, ax = plt.subplots(figsize=(12, 8))
 
     for dbName in wfd['dbName'].unique():
@@ -1065,29 +1116,6 @@ def process_WFD(conf_df, dataType, dbDir_WFD, runType,
     ax.plot([xmin, xmax], [nsn, nsn], color='dimgrey', lw=2, linestyle='solid')
     ax.text(5, 0.32e6, '300k SNe Ia', color='dimgrey', fontsize=12)
     plt.show()
-
-    """
-    plot_nsn_versus_two(wfd, xvar='year', xleg='year', logy=False,
-                        bins=np.arange(0.5, 11.5, 1), norm_factor=norm_factor,
-                        nside=nside,
-                        cumul=False, xlim=[1, 10], figtitle=OS_WFDs[0])
-    """
-    """
-
-    plot_nsn_versus_two(wfd, xvar='z', xleg='z', logy=True,
-                        bins=np.arange(0.005, 0.805, 0.01), norm_factor=norm_factor,
-                        cumul=True, xlim=[0.01, 0.8])
-    """
-    """
-    for dbName in wfd['dbName'].unique():
-        idx = wfd['dbName'] == dbName
-        selwfd = wfd[idx]
-        mypl = Plot_nsn_vs(selwfd, norm_factor, nside=64)
-
-        mypl.plot_nsn_mollview(what='year', dbName=dbName)
-
-    print(len(wfd))
-    """
 
 
 def get_stat(grp, norm_factor, sigmaC=0.04):
