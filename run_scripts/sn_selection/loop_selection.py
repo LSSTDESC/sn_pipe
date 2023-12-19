@@ -16,7 +16,7 @@ parser.add_option("--timescale", type=str,
 parser.add_option("--runType", type=str,
                   default='DDF_spectroz', help=" [%default]")
 parser.add_option("--listFields", type=str,
-                  default='COSMOS,CDFS,XMM-LSS,ELAISS1,EDFSa,EDFSb',
+                  default='COSMOS,CDFS,XMM-LSS,ELAISS1,EDFS',
                   help=" [%default]")
 parser.add_option("--fieldType", type=str,
                   default='DDF',
