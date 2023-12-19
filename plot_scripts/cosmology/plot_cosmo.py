@@ -54,12 +54,21 @@ parser.add_option('--dbList', type=str,
 parser.add_option('--timescale', type=str,
                   default='year',
                   help='timescale for plot - year or season [%default]')
+parser.add_option('--UDFs', type=str,
+                  default='COSMOS,XMM-LSS',
+                  help='UD fields [%default]')
+parser.add_option('--DFs', type=str,
+                  default='CDFS,EDFS,ELAISS1',
+                  help='Deep fields [%default]')
+
 
 opts, args = parser.parse_args()
 
 dbDir = opts.dbDir
 dbList = opts.dbList
 timescale = opts.timescale
+udfs = opts.UDFs.split(',')
+dfs = opts.DFs.split(',')
 
 config = pd.read_csv(dbList, comment='#')
 
@@ -70,16 +79,16 @@ print(data.columns)
 
 grpCol = [timescale, 'dbName_DD', 'prior']
 # resdf = process_OS(data, grpCol)
-resdf = Process_OS(data, grpCol).res
+resdf = Process_OS(data, grpCol, udfs, dfs).res
 
 
 resdf['UD_mean'] = 0
 resdf['DD_mean'] = 0
 
-for UD in ['COSMOS', 'XMM-LSS']:
+for UD in udfs:
     resdf['UD_mean'] += resdf['{}_mean'.format(UD)]
 
-for DD in ['CDFS', 'EDFSa', 'EDFSb', 'ELAISS1']:
+for DD in dfs:
     resdf['DD_mean'] += resdf['{}_mean'.format(DD)]
 
 resdf['DDF_mean'] = resdf['UD_mean']+resdf['DD_mean']
@@ -112,9 +121,10 @@ for vary in vvars:
         plot_allOS(resdf, config, varx=timescale, legx=timescale, vary=vary,
                    legy=leg[vary], prior=prior, figtitle=dd[prior], dbNorm='')
 
-
+"""
 vvarsb = ['DDF', 'UD', 'DD', 'WFD']
-DDFs = ['COSMOS', 'XMM-LSS', 'CDFS', 'EDFSa', 'EDFSb', 'ELAISS1']
+# DDFs = ['COSMOS', 'XMM-LSS', 'CDFS', 'EDFSa', 'EDFSb', 'ELAISS1']
+DDFs = ['COSMOS', 'XMM-LSS', 'CDFS', 'EDFS', 'ELAISS1']
 vvarsb += DDFs
 legb = [r'$N^{DDF}_{SN}$', r'$N^{UD}_{SN}$',
         r'$N^{DD}_{SN}$', r'$N^{WFD}_{SN}$']
@@ -131,7 +141,7 @@ for vary in vvarsb:
     plot_allOS(resdf, config, varx=timescale, legx=timescale, vary=vary,
                legy=lleg[vary], prior='prior', figtitle='', dbNorm='')
 
-
+"""
 # ax.legend()
 # idx = resdf['prior'] == 'noprior'
 # cosmo_plot(resdf[idx])
