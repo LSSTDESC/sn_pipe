@@ -17,7 +17,7 @@ import numpy as np
 def select_filt(dataDir, dbName, sellist, seasons,
                 runType='DDF_spectroz', nsn_factor=1,
                 listFields='COSMOS', fieldType='DD',
-                outDir='Test', nproc=8, mjdStart=60796.001,
+                outDir='Test', nproc=8,
                 timescale='year'):
     """
     Function to select and save selected SN data
@@ -63,6 +63,7 @@ def select_filt(dataDir, dbName, sellist, seasons,
     import os
     store = {}
     mydt = {}
+
     for seas in seasons:
         outName = '{}/SN_{}_{}_{}_{}.hdf5'.format(
             outDir_full, fieldType, dbName, timescale, seas)
@@ -92,14 +93,14 @@ def select_filt(dataDir, dbName, sellist, seasons,
         if 'selected' in sel_data.columns:
             sel_data = sel_data.drop(columns=['selected'])
 
-        # add lsststart as column
-        sel_data['LSSTStart'] = mjdStart
-        # add year as column
-        sel_data['year'] = sel_data['daymax']+60*(1.+sel_data['z'])
-        sel_data['year'] -= mjdStart
-        sel_data['year'] /= 365.
-        sel_data['year'] += 1.
+        tt = sel_data['mjd_max']-sel_data['lsst_start']
+        #sel_data['year'] = sel_data['daymax']+60*(1.+sel_data['z'])
+        #sel_data['year'] -= sel_data['lsst_start']
+        tt /= 365.
+        sel_data['year'] = np.ceil(tt)
+        #print(sel_data['year'], sel_data['lsst_start'])
         sel_data['year'] = sel_data['year'].astype(int)
+        # print(sel_data['year'])
         sel_data['chisq'] = sel_data['chisq'].astype(float)
 
         """
@@ -137,12 +138,15 @@ def select_filt(dataDir, dbName, sellist, seasons,
         # stat = sel_data.groupby(['field', 'season']).apply(
         #     lambda x: pd.DataFrame({'nsn': [len(x)/nsn_factor]})).reset_index()
         """
-        stat = get_stat(sel_data, nsn_factor, timescale=timescale)
+        stat, rname = get_stat(sel_data, nsn_factor, timescale=timescale)
+        stat[rname] = stat[rname].astype(int)
         stat_tot = pd.concat((stat_tot, stat))
 
     if timescale == 'year':
+        vv = ['nsn']+rname
         stat_tot = stat_tot.groupby(['field', timescale])[
-            'nsn', 'nsn_z_0.1', 'nsn_z_0.2'].sum().reset_index()
+            vv].sum().reset_index()
+
     """
     if sel_tot.empty:
         return -1
@@ -200,11 +204,18 @@ def get_stat(sel_data, nsn_factor, timescale='year'):
                                varname='nsn')).reset_index()
     stat_sn = stat_sn.drop(['level_2'], axis=1)
 
-    for zlim in [0.1, 0.2]:
-        nname = 'nsn_z_{}'.format(np.round(zlim, 1))
+    # for zlim in [0.1, 0.2]:
+    zlim = np.arange(0.0, 1.1, 0.1)
+    r = []
+    for i in range(len(zlim)-1):
+        zmin = zlim[i]
+        zmax = zlim[i+1]
+        nname = 'nsn_z_{}_{}'.format(np.round(zmin, 1), np.round(zmax, 1))
+        r.append(nname)
         stat_sn_z = sel_data.groupby(['field', timescale]).apply(
             lambda x: nsn_estimate(x,
-                                   zmax=zlim,
+                                   zmin=zmin,
+                                   zmax=zmax,
                                    nsn_factor=nsn_factor,
                                    varname=nname)).reset_index()
         stat_sn_z = stat_sn_z.drop(['level_2'], axis=1)
@@ -213,12 +224,13 @@ def get_stat(sel_data, nsn_factor, timescale='year'):
             stat_sn_z, left_on=['field', timescale],
             right_on=['field', timescale], suffixes=['', ''])
 
-    return stat_sn
+    return stat_sn, r
 
 
-def nsn_estimate(grp, zmax=1.1, nsn_factor=1, varname='nsn'):
+def nsn_estimate(grp, zmin=0., zmax=1.1, nsn_factor=1, varname='nsn'):
 
-    idx = grp['z'] <= zmax
+    idx = grp['z'] < zmax
+    idx &= grp['z'] >= zmin
 
     sel = grp[idx]
 
@@ -248,9 +260,6 @@ parser.add_option("--nsn_factor", type=int,
                   default=30, help="MC normalisation factor [%default]")
 parser.add_option("--nproc", type=int,
                   default=8, help="nproc for multiprocessing [%default]")
-parser.add_option("--lsst_start", type=str,
-                  default='LSSTStart.csv',
-                  help="List of LSST start survey night. [%default]")
 parser.add_option("--timescale", type=str,
                   default='year',
                   help="Time scale for NSN estimation. [%default]")
@@ -265,7 +274,6 @@ runType = opts.runType
 fieldType = opts.fieldType
 listFields = opts.listFields
 nsn_factor = opts.nsn_factor
-lsst_start = opts.lsst_start
 timescale = opts.timescale
 
 outDir = '{}_{}'.format(dataDir, selconfig)
@@ -276,13 +284,9 @@ seasons = range(1, 13)
 
 sellist = selection_criteria()[selconfig]
 
-mjd_start = pd.read_csv(lsst_start, comment='#')
-
-idx = mjd_start['dbName'] == dbName
-mjdStart = mjd_start[idx]['LSSTStart'].median()
 
 select_filt(dataDir, dbName, sellist, seasons=seasons,
             runType=runType, nsn_factor=nsn_factor,
             listFields=listFields, fieldType=fieldType,
-            outDir=outDir, nproc=nproc, mjdStart=mjdStart,
+            outDir=outDir, nproc=nproc,
             timescale=timescale)
