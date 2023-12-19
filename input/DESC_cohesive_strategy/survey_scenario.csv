@@ -3,6 +3,7 @@ COSMOS,1,10,1e10,host_effi_UD
 XMM-LSS,1,10,1.e10,host_effi_UD
 ELAISS1,1,5,1.e10,host_effi_DD
 CDFS,1,5,1.e10,host_effi_DD
-EDFSa,1,5,1.e10,host_effi_DD
-EDFSb,1,5,1.e10,host_effi_DD
+#EDFSa,1,5,1.e10,host_effi_DD
+#EDFSb,1,5,1.e10,host_effi_DD
+EDFS,1,5,1.e10,host_effi_DD
 WFD,1,5,1.e4,host_effi_DD
