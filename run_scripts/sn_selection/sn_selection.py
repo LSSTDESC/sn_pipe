@@ -18,7 +18,8 @@ def select_filt(dataDir, dbName, sellist, seasons,
                 runType='DDF_spectroz', nsn_factor=1,
                 listFields='COSMOS', fieldType='DD',
                 outDir='Test', nproc=8,
-                timescale='year'):
+                timescale='year',
+                dataType='pandasDataFrame'):
     """
     Function to select and save selected SN data
     (per season)
@@ -48,7 +49,9 @@ def select_filt(dataDir, dbName, sellist, seasons,
     mjdStart: float, optional.
       starting date of the LSST survey. The default is 60796.001.
     timescale : str, optional
-        timescale for calculation. The default is 'year'.
+        timescale for calculation. The default is 'year'.    
+    dataType: str, opt.
+      data type to process. The default is 'pandasDataFrame'
 
     Returns
     -------
@@ -79,9 +82,10 @@ def select_filt(dataDir, dbName, sellist, seasons,
 
     for seas in seasons:
         # load DDFs
+
         data = load_complete_dbSimu(
             dataDir, dbName, runType, listDDF=listFields,
-            seasons=str(seas), nproc=nproc)
+            seasons=str(seas), nproc=nproc, dataType=dataType)
         print(seas, len(data))
 
         if data.empty:
@@ -93,12 +97,14 @@ def select_filt(dataDir, dbName, sellist, seasons,
         if 'selected' in sel_data.columns:
             sel_data = sel_data.drop(columns=['selected'])
 
-        tt = sel_data['mjd_max']-sel_data['lsst_start']
-        #sel_data['year'] = sel_data['daymax']+60*(1.+sel_data['z'])
-        #sel_data['year'] -= sel_data['lsst_start']
-        tt /= 365.
-        sel_data['year'] = np.ceil(tt)
-        #print(sel_data['year'], sel_data['lsst_start'])
+        sel_data['year'] = 1
+        if 'mjd_max' in sel_data.columns:
+            tt = sel_data['mjd_max']-sel_data['lsst_start']
+            #sel_data['year'] = sel_data['daymax']+60*(1.+sel_data['z'])
+            #sel_data['year'] -= sel_data['lsst_start']
+            tt /= 365.
+            sel_data['year'] = np.ceil(tt)
+            #print(sel_data['year'], sel_data['lsst_start'])
         sel_data['year'] = sel_data['year'].astype(int)
         # print(sel_data['year'])
         sel_data['chisq'] = sel_data['chisq'].astype(float)
@@ -202,7 +208,8 @@ def get_stat(sel_data, nsn_factor, timescale='year'):
                                zmax=1.1,
                                nsn_factor=nsn_factor,
                                varname='nsn')).reset_index()
-    stat_sn = stat_sn.drop(['level_2'], axis=1)
+    if 'level_2' in stat_sn.columns:
+        stat_sn = stat_sn.drop(['level_2'], axis=1)
 
     # for zlim in [0.1, 0.2]:
     zlim = np.arange(0.0, 1.1, 0.1)
@@ -218,7 +225,8 @@ def get_stat(sel_data, nsn_factor, timescale='year'):
                                    zmax=zmax,
                                    nsn_factor=nsn_factor,
                                    varname=nname)).reset_index()
-        stat_sn_z = stat_sn_z.drop(['level_2'], axis=1)
+        if 'level_2' in stat_sn_z.columns:
+            stat_sn_z = stat_sn_z.drop(['level_2'], axis=1)
         # merge
         stat_sn = stat_sn.merge(
             stat_sn_z, left_on=['field', timescale],
@@ -263,6 +271,9 @@ parser.add_option("--nproc", type=int,
 parser.add_option("--timescale", type=str,
                   default='year',
                   help="Time scale for NSN estimation. [%default]")
+parser.add_option("--dataType", type=str,
+                  default='pandasDataFrame',
+                  help="Data type to process (pandasDataFrame/astropyTable). [%default]")
 
 opts, args = parser.parse_args()
 
@@ -275,6 +286,7 @@ fieldType = opts.fieldType
 listFields = opts.listFields
 nsn_factor = opts.nsn_factor
 timescale = opts.timescale
+dataType = opts.dataType
 
 outDir = '{}_{}'.format(dataDir, selconfig)
 nproc = opts.nproc
@@ -289,4 +301,5 @@ select_filt(dataDir, dbName, sellist, seasons=seasons,
             runType=runType, nsn_factor=nsn_factor,
             listFields=listFields, fieldType=fieldType,
             outDir=outDir, nproc=nproc,
-            timescale=timescale)
+            timescale=timescale,
+            dataType=dataType)
