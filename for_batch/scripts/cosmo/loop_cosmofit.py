@@ -24,6 +24,8 @@ parser.add_option("--tag", type=str,
 parser.add_option("--frac_WFD_low_sigmaC", type=float,
                   default=0.3,
                   help="fraction of SNe Ia WFD low sigmaC  [%default]")
+parser.add_option('--timescale', type=str, default='year',
+                  help='timescale for the cosmology (year or season)[%default]')
 
 opts, args = parser.parse_args()
 
@@ -35,6 +37,7 @@ inputDir_WFD = opts.inputDir_WFD
 survey = opts.survey
 tag = opts.tag
 frac_WFD_low_sigmaC = opts.frac_WFD_low_sigmaC
+timescale = opts.timescale
 
 # load OS files to process
 fis = pd.read_csv(dbList, comment='#')
@@ -55,5 +58,6 @@ for i, row in fis.iterrows():
     params['outDir'] = outDir
     params['survey'] = survey
     params['frac_WFD_low_sigmaC'] = frac_WFD_low_sigmaC
+    params['timescale'] = timescale
     mybatch.add_batch(script, params)
     mybatch.go_batch()
