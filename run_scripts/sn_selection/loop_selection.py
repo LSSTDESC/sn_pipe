@@ -26,6 +26,9 @@ parser.add_option("--nsn_factor", type=int,
 parser.add_option("--nproc", type=int,
                   default=8,
                   help="Number of procs for multiprocessing [%default]")
+parser.add_option("--dataType", type=str,
+                  default='pandasDataFrame',
+                  help="Data type to process (pandasDataFrame/astropyTable). [%default]")
 
 opts, args = parser.parse_args()
 
@@ -37,7 +40,7 @@ listFields = opts.listFields
 fieldType = opts.fieldType
 nsn_factor = opts.nsn_factor
 nproc = opts.nproc
-
+dataType = opts.dataType
 
 db = pd.read_csv(dbList, comment='#')
 
@@ -51,5 +54,6 @@ for i, row in db.iterrows():
     cmd += ' --listFields={}'.format(listFields)
     cmd += ' --nsn_factor={}'.format(nsn_factor)
     cmd += ' --nproc={}'.format(nproc)
+    cmd += ' --dataType={}'.format(dataType)
     print(cmd)
     os.system(cmd)
