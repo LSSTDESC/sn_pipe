@@ -298,11 +298,11 @@ def plot_DDF(data, norm_factor, config, nside=128):
         0.5, 11.5, 1), xvar='season', xleg='season',
         logy=False, xlim=[1, 10], nside=nside)
     """
-    # plot_DDF_nsn(data, norm_factor, config, nside)
+    plot_DDF_nsn(data, norm_factor, config, nside)
 
     # plot_DDF_dither(data, norm_factor, config, nside)
 
-    plot_DDF_nsn_z(data, norm_factor, nside)
+    # plot_DDF_nsn_z(data, norm_factor, nside)
 
     """
     mypl.plot_nsn_versus_two(xvar='z', xleg='z', logy=True,
@@ -436,7 +436,7 @@ def plot_DDF_nsn(data, norm_factor, config, nside, sigmaC=1.e6):
     data = data[idx]
 
     mypl = Plot_nsn_vs(data, norm_factor, nside)
-
+    mypl.plot_nsn_mollview()
     """
     # mypl.plot_nsn_versus_two(xvar='z', xleg='z', logy=True,
     #                         cumul=True, xlim=[0.01, 1.1])
@@ -995,8 +995,8 @@ def process_WFD_OS(conf_df, dataType, dbDir_WFD, runType,
         wfda = eval(tt)
         idx = wfda['ebvofMW'] < 0.25
         wfda = wfda[idx]
-        # mypl = Plot_nsn_vs(wfda, norm_factor, nside=64)
-        # mypl.plot_nsn_mollview(what='year', dbName=OS_WFD)
+        mypl = Plot_nsn_vs(wfda, norm_factor, nside=64)
+        mypl.plot_nsn_mollview(what=timescale_file, dbName=OS_WFD)
         idc = conf_df['dbName_WFD'] == OS_WFD
         selp = conf_df[idc]
         ls = selp['ls'].values[0]
@@ -1009,7 +1009,7 @@ def process_WFD_OS(conf_df, dataType, dbDir_WFD, runType,
                             marker=marker, fig=fig, ax=ax)
         # wfd = pd.concat((wfd, wfda))
         # get some stat
-        wfda = wfda.groupby(['dbName', 'year']).apply(
+        wfda = wfda.groupby(['dbName', timescale_file]).apply(
             lambda x: get_stat(x, norm_factor)).reset_index()
         wfd = pd.concat((wfd, wfda))
 
