@@ -19,6 +19,11 @@ parser.add_option("--dbList_WFD", type="str", default='WFD_fbs_3.3.csv',
                   help="db list to process (WFD) [%default]")
 parser.add_option("--outDir_WFD", type="str", default='/sps/lsst/users/gris/Output_SN_WFD_sigmaInt_0.0_Hounsell_new',
                   help="output dir for WFD prod [%default]")
+parser.add_option("--SN_smearFlux", type=int, default=1,
+                  help="LC flux smearing [%default]")
+parser.add_option("--Fitter_sigmaz", type=float, default=1.e-5,
+                  help="sigmaz for LC fits [%default]")
+
 opts, args = parser.parse_args()
 
 dbList_DD = opts.dbList_DD
@@ -27,6 +32,9 @@ outDir_DD = opts.outDir_DD
 dbList_WFD = opts.dbList_WFD
 outDir_WFD = opts.outDir_WFD
 
+smearFlux = opts.SN_smearFlux
+sigmaz = opts.Fitter_sigmaz
+
 cmd_scr = 'python for_batch/scripts/sn_prod/loop_prod.py'
 cmd_scr += ' --SN_sigmaInt=0.0'
 
@@ -34,6 +42,8 @@ cmd_scr += ' --SN_sigmaInt=0.0'
 if dbList_DD != '':
     cmd_ddf = '{} --dbList={}'.format(cmd_scr, dbList_DD)
     cmd_ddf += ' --outputDir={}'.format(outDir_DD)
+    cmd_ddf += ' --SN_smearFlux={}'.format(smearFlux)
+    cmd_ddf += ' --Fitter_sigmaz={}'.format(sigmaz)
 
     print(cmd_ddf)
     os.system(cmd_ddf)
@@ -44,6 +54,8 @@ if dbList_WFD != '':
     cmd_wfd = '{} --dbList={}'.format(cmd_scr, dbList_WFD)
     cmd_wfd += ' --outputDir={}'.format(outDir_WFD)
     cmd_wfd += ' --SN_NSNfactor=10'
+    cmd_wfd += ' --SN_smearFlux={}'.format(smearFlux)
+    cmd_wfd += ' --Fitter_sigmaz={}'.format(sigmaz)
 
     print(cmd_wfd)
     os.system(cmd_wfd)

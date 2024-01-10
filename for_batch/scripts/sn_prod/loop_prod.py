@@ -38,6 +38,10 @@ parser.add_option("--SN_NSNfactor", type=int, default=30,
                   help="SN production scale factor [%default]")
 parser.add_option("--Observations_coadd", type=int, default=1,
                   help="Coadd obs per night [%default]")
+parser.add_option("--SN_smearFlux", type=int, default=1,
+                  help="LC flux smearing [%default]")
+parser.add_option("--Fitter_sigmaz", type=float, default=1.e-5,
+                  help="sigmaz for LC fits [%default]")
 
 opts, args = parser.parse_args()
 
@@ -65,5 +69,7 @@ for i, row in df.iterrows():
     procDict['Observations_coadd'] = opts.Observations_coadd
     procDict['InstrumentSimu_telescope_tag'] = row['teltag']
     procDict['InstrumentFit_telescope_tag'] = row['teltag']
+    procDict['SN_smearFlux'] = opts.SN_smearFlux
+    procDict['Fitter_sigmaz'] = opts.Fitter_sigmaz
 
     go_batch(script, procDict)
