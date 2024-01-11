@@ -56,7 +56,7 @@ def batch_DDF(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
         tag_dir = '_photz'
     procDict['OutputSimu_directory'] = '{}/{}/DDF{}'.format(outDir,
                                                             dbName, tag_dir)
-    # checkDir(procDict['OutputSimu_directory'])
+    checkDir(procDict['OutputSimu_directory'])
     procDict['OutputFit_directory'] = procDict['OutputSimu_directory']
     # procDict['SN_NSNfactor'] = 30
     procDict['Pixelisation_nside'] = procDict['nside']
