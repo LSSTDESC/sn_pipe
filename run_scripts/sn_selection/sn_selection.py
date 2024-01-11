@@ -90,6 +90,7 @@ def select_filt(dataDir, dbName, sellist, seasons,
 
         if data.empty:
             continue
+
         # apply selection on Data
         sel_data = select(data, sellist)
         sel_data = sel_data[sel_data.columns.drop(
@@ -236,6 +237,28 @@ def get_stat(sel_data, nsn_factor, timescale='year'):
 
 
 def nsn_estimate(grp, zmin=0., zmax=1.1, nsn_factor=1, varname='nsn'):
+    """
+    Method to estimate the number of sn in a redshift range
+
+    Parameters
+    ----------
+    grp : pandas df
+        Data to process.
+    zmin : float, optional
+        Min redshift. The default is 0..
+    zmax : float optional
+        Max redshift. The default is 1.1.
+    nsn_factor : int, optional
+        Normalization parameter. The default is 1.
+    varname : str, optional
+        Column of interest. The default is 'nsn'.
+
+    Returns
+    -------
+    pandas df
+        Two columns: column of interest, nsn.
+
+    """
 
     idx = grp['z'] < zmax
     idx &= grp['z'] >= zmin
