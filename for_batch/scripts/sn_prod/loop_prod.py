@@ -26,7 +26,7 @@ parser.add_option("--dbList", type="str", default='DD_fbs_2.99.csv',
                   help="db list to process[%default]")
 parser.add_option("--outputDir", type="str", default='/sps/lsst/users/gris/Output_SN',
                   help="main output dir [%default]")
-parser.add_option("--Fitter_parnames", type="str", default='t0,x1,c,x0',
+parser.add_option("--Fitter_parnames", type="str", default='t0,x1,c,x0,z',
                   help="parameters to fit [%default]")
 parser.add_option("--reprocList", type="str", default='None.csv',
                   help="to reproc some of the db files only [%default]")
@@ -42,6 +42,8 @@ parser.add_option("--SN_smearFlux", type=int, default=1,
                   help="LC flux smearing [%default]")
 parser.add_option("--Fitter_sigmaz", type=float, default=1.e-5,
                   help="sigmaz for LC fits [%default]")
+parser.add_option("--simuParams_fromFile", type=int, default=0,
+                  help="to use simulation params from file [%default]")
 
 opts, args = parser.parse_args()
 
@@ -71,5 +73,6 @@ for i, row in df.iterrows():
     procDict['InstrumentFit_telescope_tag'] = row['teltag']
     procDict['SN_smearFlux'] = opts.SN_smearFlux
     procDict['Fitter_sigmaz'] = opts.Fitter_sigmaz
+    procDict['simuParams_fromFile'] = opts.simuParams_fromFile
 
     go_batch(script, procDict)

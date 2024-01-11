@@ -51,14 +51,18 @@ def batch_DDF(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
 
     # procDict['Fitter_parnames'] = 'z,t0,x1,c,x0'
     tag_dir = '_spectroz'
-    if 'z' in procDict['Fitter_parnames']:
+    # if 'z' in procDict['Fitter_parnames']:
+    if procDict['Fitter_sigmaz'] >= 1.e-3:
         tag_dir = '_photz'
     procDict['OutputSimu_directory'] = '{}/{}/DDF{}'.format(outDir,
                                                             dbName, tag_dir)
-    checkDir(procDict['OutputSimu_directory'])
+    # checkDir(procDict['OutputSimu_directory'])
     procDict['OutputFit_directory'] = procDict['OutputSimu_directory']
     # procDict['SN_NSNfactor'] = 30
     procDict['Pixelisation_nside'] = procDict['nside']
+
+    simu_fromFile = procDict['simuParams_fromFile']
+    procDict.pop('simuParams_fromFile')
 
     for fieldName in DD_list:
         procDict['fieldName'] = fieldName
@@ -77,6 +81,14 @@ def batch_DDF(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
             procDict['ProductionIDSimu'] = 'SN_{}_{}'.format(
                 procName, season)
             procDict['Observations_season'] = season
+
+            if simu_fromFile == 1:
+                ffi = 'SN_simu_params_DDF_{}_season_{}.hdf5'.format(
+                    dbName, season)
+                outDir_simuparams = '{}_simuparams'.format(outDir)
+                procDict['SN_simuFile'] = '{}/{}/DDF_spectroz/{}'.format(
+                    outDir_simuparams, dbName, ffi)
+
             mybatch.add_batch(scriptref, procDict)
 
         # go for batch
@@ -132,13 +144,17 @@ def batch_WFD(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
     # procDict['fieldType'] = 'WD'
     # procDict['Fitter_parnames'] = 'z,t0,x1,c,x0'
     tag_dir = '_spectroz'
-    if 'z' in procDict['Fitter_parnames']:
+    # if 'z' in procDict['Fitter_parnames']:
+    if procDict['Fitter_sigmaz'] >= 1.e-3:
         tag_dir = '_photz'
+
     procDict['OutputSimu_directory'] = '{}/{}/WFD{}'.format(outDir,
                                                             dbName, tag_dir)
     procDict['OutputFit_directory'] = procDict['OutputSimu_directory']
     # procDict['SN_NSNfactor'] = 30
 
+    simu_fromFile = procDict['simuParams_fromFile']
+    procDict.pop('simuParams_fromFile')
     deltaRA = 10.
 
     RAs = np.arange(0., 360.+deltaRA, deltaRA)
@@ -170,6 +186,15 @@ def batch_WFD(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
             tttag = 'SN_{}_{}_{}_{}'.format(procName, seas, zmin, zmax)
             procDict['ProductionIDSimu'] = tttag
             procDict['Observations_season'] = seas
+
+            if simu_fromFile == 1:
+                suffix = '{}_{}'.format(zmin, zmax)
+                ffi = 'SN_simu_params_WFD_{}_season_{}_{}.hdf5'.format(
+                    dbName, seas, suffix)
+                outDir_simuparams = '{}_simuparams'.format(outDir)
+                procDict['SN_simuFile'] = '{}/{}/WFD_spectroz/{}'.format(
+                    outDir_simuparams, dbName, ffi)
+
             mybatch.add_batch(scriptref, procDict)
 
         # go for batch
@@ -200,6 +225,8 @@ if opts.fieldType == 'DD':
     batch_DDF(procDict)
 
 # this is for WFD
+procDict['simuParamss_fromFile'] = opts.simuParams_fromFile
+
 seasons = [(1, 5), (6, 10), (11, 14)]
 if opts.fieldType == 'WFD':
     for seas in seasons:
