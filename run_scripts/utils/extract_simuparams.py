@@ -104,7 +104,7 @@ parser.add_option("--dataType", type=str,
                   default='pandasDataFrame',
                   help="Data type to process (pandasDataFrame/astropyTable). [%default]")
 parser.add_option("--suffix", type=str,
-                  default='\'\'',
+                  default='',
                   help="suffix of the data file name to process. [%default]")
 
 opts, args = parser.parse_args()
