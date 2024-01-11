@@ -270,7 +270,7 @@ def load_Table(dbDir_WFD, OS_WFD, runType='spectroz',
     return wfd
 
 
-def plot_DDF(data, norm_factor, config, nside=128):
+def plot_DDF(data, norm_factor, config, nside=128, timescale='year'):
     """
 
 
@@ -284,6 +284,8 @@ def plot_DDF(data, norm_factor, config, nside=128):
       config for plot
     nside : int, optional
         Healpix nside parameter. The default is 128.
+    timescale: str, opt
+        Time scale for the plot. the default is 'year'
 
     Returns
     -------
@@ -298,7 +300,9 @@ def plot_DDF(data, norm_factor, config, nside=128):
         0.5, 11.5, 1), xvar='season', xleg='season',
         logy=False, xlim=[1, 10], nside=nside)
     """
-    plot_DDF_nsn(data, norm_factor, config, nside)
+    #plot_DDF_nsn(data, norm_factor, config, nside, timescale=timescale)
+
+    plot_zmax(data, norm_factor, config, nside, timescale=timescale)
 
     # plot_DDF_dither(data, norm_factor, config, nside)
 
@@ -309,6 +313,92 @@ def plot_DDF(data, norm_factor, config, nside=128):
                              cumul=True, xlim=[0.01, 1.1])
     mypl.plot_nsn_mollview()
     """
+
+
+def plot_zmax(data, norm_factor, config, nside, timescale):
+
+    field = 'COSMOS'
+    dbName = 'baseline_v3.3_10yrs'
+    #dbName = 'DDF_DESC_0.80_WZ_0.07'
+
+    plot_test(data, field, dbName, timescale)
+    print(test)
+    df = get_zmax_field(data, field, dbName, timescale, zmin=0.7, sigmaC=1.e6)
+
+    fig, ax = plt.subplots()
+    ax.plot(df[timescale], df['nsn_zmin'], 'ko')
+
+    plt.show()
+
+
+def plot_test(data, field, dbName, timescale):
+
+    idx = data['field'] == field
+    idx &= data['dbName'] == dbName
+
+    dbNameb = '_'.join(dbName.split('_')[:-1])
+    sel = data[idx]
+
+    # for each year: sigmamu vs z
+    fig, ax = plt.subplots(figsize=(12, 8))
+    fig.suptitle('{} - {}'.format(dbNameb, field))
+    for timeslot in timeslots:
+
+        idxb = sel[timescale] == timeslot
+        selb = sel[idxb]
+        df = bin_it_mean(selb, xvar='z', yvar='sigma_mu',
+                         bins=np.arange(0.01, 1.12, 0.02))
+        # ax.errorbar(df['z'], df['sigma_mu'], yerr=df['sigma_mu_std'])
+        ax.plot(df['z'], df['sigma_mu'], color='k')
+        print(df)
+
+    ax.grid(visible=True)
+    xmin = 0.2
+    xmax = 1.08
+    ymin = 0.0
+    ymax = 0.6
+    ax.set_xlim([xmin, xmax])
+    ax.set_ylim([ymin, ymax])
+    ax.plot([xmin, xmax], [0.12]*2, ls='dashed', color='k')
+    ttext = '$\sigma_{int}\sim$0.12'
+    ax.text(0.3, 0.13, ttext)
+    ax.set_xlabel(r'$z$')
+    ax.set_ylabel(r'$\sigma_{\mu}}$ [mag]')
+
+    plt.show()
+
+
+def get_zmax_field(data, field, dbName, timescale, zmin, sigmaC):
+
+    idx = data['field'] == field
+    idx &= data['dbName'] == dbName
+
+    sel = data[idx]
+
+    # for each year: cumulative vs z
+
+    timeslots = sel[timescale].unique()
+
+    r = []
+    for timeslot in timeslots:
+
+        idxb = sel[timescale] == timeslot
+        idxb &= sel['sigmaC'] <= sigmaC
+        selb = sel[idxb]
+
+        nsntot = len(selb)
+        idxc = selb['z'] >= zmin
+        selc = selb[idxc]
+        nsn_zmin = len(selc)
+        frac = nsn_zmin/nsntot
+        print(timeslot, zmin, frac)
+        r.append((dbName, field, timeslot, zmin, frac, nsn_zmin))
+
+    cols = ['dbName', 'field', timescale, 'zmin', 'frac', 'nsn_zmin']
+
+    df = pd.DataFrame(r, columns=cols)
+
+    return df
 
 
 def plot_DDF_nsn_z(data, norm_factor, nside, timescale='year'):
@@ -408,7 +498,7 @@ def plot_DDF_dither(data, norm_factor, config, nside, timescale='year'):
     plt.show()
 
 
-def plot_DDF_nsn(data, norm_factor, config, nside, sigmaC=1.e6):
+def plot_DDF_nsn(data, norm_factor, config, nside, sigmaC=1.e6, timescale='year'):
     """
 
 
@@ -424,6 +514,8 @@ def plot_DDF_nsn(data, norm_factor, config, nside, sigmaC=1.e6):
         Healpix nside parameter.
     sigmaC: float, optional.
      sigmaC selection cut. The default is 1.e6
+    timescale: str, opt
+    Time scale for the plot. The default is 'year'
 
     Returns
     -------
@@ -436,7 +528,7 @@ def plot_DDF_nsn(data, norm_factor, config, nside, sigmaC=1.e6):
     data = data[idx]
 
     mypl = Plot_nsn_vs(data, norm_factor, nside)
-    mypl.plot_nsn_mollview()
+    # mypl.plot_nsn_mollview()
     """
     # mypl.plot_nsn_versus_two(xvar='z', xleg='z', logy=True,
     #                         cumul=True, xlim=[0.01, 1.1])
@@ -445,7 +537,6 @@ def plot_DDF_nsn(data, norm_factor, config, nside, sigmaC=1.e6):
 
     # estimate the number of sn for all the fields/season
 
-    timescale = 'year'
     sums = get_sums_nsn(data, norm_factor, nside, cols=[
         timescale, 'dbName', 'field'])
     sumt = get_sums_nsn(data, norm_factor, nside, cols=[timescale, 'dbName'])
@@ -840,7 +931,7 @@ def plot_nsn_binned(data, norm_factor=30, nside=128,
                     xvar='z', xleg='z', logy=False,
                     cumul=False, xlim=[0.01, 0.8],
                     label='', fig=None, ax=None, color='k',
-                    ls='solid', figtitle='', marker='o'):
+                    ls='solid', figtitle='', marker='o', frac=0.95):
     """
     Function to plot nsn vs...
 
@@ -867,7 +958,6 @@ def plot_nsn_binned(data, norm_factor=30, nside=128,
     res = bin_it(data, xvar=xvar, bins=bins,
                  norm_factor=norm_factor)
 
-    print(res)
     nsn_tot = np.sum(res['NSN'])
     print('total number of SN', nsn_tot)
 
@@ -880,6 +970,8 @@ def plot_nsn_binned(data, norm_factor=30, nside=128,
     vv = res['NSN']
     if cumul:
         vv = np.cumsum(res['NSN'])
+        print(vv)
+        vv /= vv.max()
     if label != '':
         ax.plot(res[xvar], vv, label=label, color=color,
                 linestyle=ls, marker=marker, markersize=9, lw=2)
@@ -890,6 +982,11 @@ def plot_nsn_binned(data, norm_factor=30, nside=128,
     ax.set_xlabel(xleg)
     ax.set_ylabel(r'$N_{SN}$', fontweight='bold')
     ax.set_xlim(xlim)
+
+    if cumul:
+        from scipy.interpolate import interp1d
+        vv = interp1d(vv, res[xvar], bounds_error=False, fill_value=0.)
+        print(vv(frac))
 
 
 def plotMollview(data, varName, leg, addleg, op, xmin, xmax,
@@ -1133,14 +1230,15 @@ def get_stat(grp, norm_factor, sigmaC=0.04):
 
 def process_DDF(conf_df, dataType, dbDir_DD, runType,
                 timescale_file, timeslots,
-                norm_factor, nside=128):
+                norm_factor, nside=128, name='dbName_DD'):
 
+    print('iii', conf_df)
     # load DDF
-    OS_DDFs = conf_df['dbName_DD'].unique()
+    OS_DDFs = conf_df[name].unique()
 
     ddf = pd.DataFrame()
     for OS_DDF in OS_DDFs:
-        idx = conf_df['dbName_DD'] == OS_DDF
+        idx = conf_df[name] == OS_DDF
         fieldType = 'DDF'
         tt = 'load_{}(\'{}\',\'{}\',\'{}\',\'{}\',{},\'{}\')'.format(
             dataType, dbDir_DD, OS_DDF, runType,
@@ -1148,7 +1246,9 @@ def process_DDF(conf_df, dataType, dbDir_DD, runType,
         ddfa = eval(tt)
         ddf = pd.concat((ddf, ddfa))
 
-    plot_DDF(ddf, norm_factor, nside=128, config=conf_df)
+    print('allllllll', timescale_file)
+    plot_DDF(ddf, norm_factor, nside=128,
+             config=conf_df, timescale=timescale_file)
 
 
 def process_DDF_summary(conf_df, dataType, dbDir_DD, runType,
