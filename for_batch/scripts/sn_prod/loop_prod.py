@@ -44,6 +44,9 @@ parser.add_option("--Fitter_sigmaz", type=float, default=1.e-5,
                   help="sigmaz for LC fits [%default]")
 parser.add_option("--simuParams_fromFile", type=int, default=0,
                   help="to use simulation params from file [%default]")
+parser.add_option("--simuParams_dir", type=str,
+                  default='/sps/lsst/users/gris/Output_SN_WFD_sigmaInt_0.0_Hounsell_nnew',
+                  help="Dir for the simu param files [%default]")
 
 opts, args = parser.parse_args()
 
@@ -74,5 +77,6 @@ for i, row in df.iterrows():
     procDict['SN_smearFlux'] = opts.SN_smearFlux
     procDict['Fitter_sigmaz'] = opts.Fitter_sigmaz
     procDict['simuParams_fromFile'] = opts.simuParams_fromFile
+    procDict['simuParams_dir'] = opts.simuParams_dir
 
     go_batch(script, procDict)

@@ -62,7 +62,9 @@ def batch_DDF(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
     procDict['Pixelisation_nside'] = procDict['nside']
 
     simu_fromFile = procDict['simuParams_fromFile']
+    simuParams_dir = procDict['simuParams_dir']
     procDict.pop('simuParams_fromFile')
+    procDict.pop('simuParams_dir')
 
     for fieldName in DD_list:
         procDict['fieldName'] = fieldName
@@ -85,7 +87,7 @@ def batch_DDF(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
             if simu_fromFile == 1:
                 ffi = 'SN_simu_params_DDF_{}_season_{}.hdf5'.format(
                     dbName, season)
-                outDir_simuparams = '{}_simuparams'.format(outDir)
+                outDir_simuparams = '{}_simuparams'.format(simuParams_dir)
                 procDict['SN_simuFile'] = '{}/{}/DDF_spectroz/{}'.format(
                     outDir_simuparams, dbName, ffi)
 
@@ -154,7 +156,10 @@ def batch_WFD(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
     # procDict['SN_NSNfactor'] = 30
 
     simu_fromFile = procDict['simuParams_fromFile']
+    simuParams_dir = procDict['simuParams_dir']
     procDict.pop('simuParams_fromFile')
+    procDict.pop('simuParams_dir')
+
     deltaRA = 10.
 
     RAs = np.arange(0., 360.+deltaRA, deltaRA)
@@ -191,7 +196,7 @@ def batch_WFD(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
                 suffix = '{}_{}'.format(zmin, zmax)
                 ffi = 'SN_simu_params_WFD_{}_season_{}_{}.hdf5'.format(
                     dbName, seas, suffix)
-                outDir_simuparams = '{}_simuparams'.format(outDir)
+                outDir_simuparams = '{}_simuparams'.format(simuParams_dir)
                 procDict['SN_simuFile'] = '{}/{}/WFD_spectroz/{}'.format(
                     outDir_simuparams, dbName, ffi)
 
