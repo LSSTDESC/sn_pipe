@@ -26,9 +26,12 @@ parser.add_option("--Fitter_sigmaz", type=float, default=1.e-5,
                   help="sigmaz for LC fits [%default]")
 parser.add_option("--simuParams_fromFile", type=int, default=0,
                   help="to use simulation params from file [%default]")
-parser.add_option("--simuParams_dir", type=str,
+parser.add_option("--simuParams_dir_DD", type=str,
+                  default='/sps/lsst/users/gris/Output_SN_sigmaInt_0.0_Hounsell_nnew',
+                  help="Dir for the simu param files  - DD[%default]")
+parser.add_option("--simuParams_dir_WFD", type=str,
                   default='/sps/lsst/users/gris/Output_SN_WFD_sigmaInt_0.0_Hounsell_nnew',
-                  help="Dir for the simu param files [%default]")
+                  help="Dir for the simu param files  - WFD[%default]")
 
 opts, args = parser.parse_args()
 
@@ -41,7 +44,8 @@ outDir_WFD = opts.outDir_WFD
 smearFlux = opts.SN_smearFlux
 sigmaz = opts.Fitter_sigmaz
 simuParams_fromFile = opts.simuParams_fromFile
-simuParams_dir = opts.simuParams_dir
+simuParams_dir_DD = opts.simuParams_dir_DD
+simuParams_dir_WFD = opts.simuParams_dir_WFD
 
 cmd_scr = 'python for_batch/scripts/sn_prod/loop_prod.py'
 cmd_scr += ' --SN_sigmaInt=0.0'
@@ -53,7 +57,7 @@ if dbList_DD != '':
     cmd_ddf += ' --SN_smearFlux={}'.format(smearFlux)
     cmd_ddf += ' --Fitter_sigmaz={}'.format(sigmaz)
     cmd_ddf += ' --simuParams_fromFile={}'.format(simuParams_fromFile)
-    cmd_ddf += ' --simuParams_dir={}'.format(simuParams_dir)
+    cmd_ddf += ' --simuParams_dir={}'.format(simuParams_dir_DD)
 
     print(cmd_ddf)
     os.system(cmd_ddf)
@@ -67,7 +71,7 @@ if dbList_WFD != '':
     cmd_wfd += ' --SN_smearFlux={}'.format(smearFlux)
     cmd_wfd += ' --Fitter_sigmaz={}'.format(sigmaz)
     cmd_wfd += ' --simuParams_fromFile={}'.format(simuParams_fromFile)
-    cmd_wfd += ' --simuParams_dir={}'.format(simuParams_dir)
+    cmd_wfd += ' --simuParams_dir={}'.format(simuParams_dir_WFD)
 
     print(cmd_wfd)
     os.system(cmd_wfd)

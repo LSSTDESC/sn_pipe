@@ -35,3 +35,4 @@ InstrumentFit telescope_tag 1.9 str #throughputs tag version
 Fitter sigmaz 1.e-5 float # redshift error for LC fit
 SN smearFlux 0 int #LC flux smearing
 simuParams_fromFile 0 int #to use simu params from file
+simuParams_dir ../Output_SN_WFD_sigmaInt_0.0_Hounsell_nnew str #simu params dir
