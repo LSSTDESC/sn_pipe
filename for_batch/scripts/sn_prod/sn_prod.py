@@ -230,7 +230,7 @@ if opts.fieldType == 'DD':
     batch_DDF(procDict)
 
 # this is for WFD
-procDict['simuParamss_fromFile'] = opts.simuParams_fromFile
+#procDict['simuParams_fromFile'] = opts.simuParams_fromFile
 
 seasons = [(1, 5), (6, 10), (11, 14)]
 if opts.fieldType == 'WFD':
