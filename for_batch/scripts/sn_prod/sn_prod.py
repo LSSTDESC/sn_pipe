@@ -227,7 +227,7 @@ for key, vals in confDict.items():
 
 # this is for DDFs
 if opts.fieldType == 'DD':
-    batch_DDF(procDict)
+    batch_DDF(procDict, mem='20Gb')
 
 # this is for WFD
 #procDict['simuParams_fromFile'] = opts.simuParams_fromFile
@@ -236,6 +236,6 @@ seasons = [(1, 5), (6, 10), (11, 14)]
 if opts.fieldType == 'WFD':
     for seas in seasons:
         batch_WFD(procDict, seas_min=seas[0],
-                  seas_max=seas[1], zmin=0.01, zmax=0.7)
+                  seas_max=seas[1], zmin=0.01, zmax=0.7, mem='20Gb')
         batch_WFD(procDict, seas_min=seas[0],
-                  seas_max=seas[1], zmin=0.7, zmax=1.)
+                  seas_max=seas[1], zmin=0.7, zmax=1., mem='20Gb')
