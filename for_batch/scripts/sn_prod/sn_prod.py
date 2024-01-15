@@ -37,6 +37,7 @@ def batch_DDF(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
     reprocList = theDict['reprocList']
     sigmaInt = theDict['SN_sigmaInt']
     snrate = theDict['SN_z_rate']
+    smearFlux = theDict['SN_smearFlux']
 
     tag_list = pd.DataFrame()
     if 'None' not in reprocList:
@@ -68,8 +69,9 @@ def batch_DDF(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
 
     for fieldName in DD_list:
         procDict['fieldName'] = fieldName
-        procName = 'DD_{}_{}{}_{}_{}'.format(
-            dbName, fieldName, tag_dir, np.round(sigmaInt, 2), snrate)
+        procName = 'DD_{}_{}{}_{}_{}_{}'.format(
+            dbName, fieldName, tag_dir, np.round(sigmaInt, 2),
+            snrate, smearFlux)
         mybatch = BatchIt(processName=procName, time=time, mem=mem)
         seasons = range(1, 14)
         if not tag_list.empty:
@@ -133,6 +135,7 @@ def batch_WFD(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
     snrate = theDict['SN_z_rate']
     zmax = np.round(zmax, 1)
     zmin = np.round(zmin, 2)
+    smearFlux = theDict['SN_smearFlux']
 
     tag_list = pd.DataFrame()
     if 'None' not in reprocList:
@@ -173,7 +176,8 @@ def batch_WFD(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
             dbName, RAmin, RAmax, tag_dir, np.round(sigmaInt, 2), snrate)
         procNamea = '{}_{}_{}_{}_{}'.format(
             procName, seas_min, seas_max, zmin, zmax)
-        sprocName = 'SN_WFD_{}_{}_{}{}'.format(dbName, RAmin, RAmax, tag_dir)
+        sprocName = 'SN_WFD_{}_{}_{}{}_{}'.format(dbName, RAmin, RAmax,
+                                                  tag_dir, smearFlux)
         mybatch = BatchIt(processName=procNamea, time=time, mem=mem)
         procDict['RAmin'] = RAmin
         procDict['RAmax'] = RAmax
