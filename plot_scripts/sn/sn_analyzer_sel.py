@@ -1363,15 +1363,16 @@ def process_WFD_OS(conf_df, dataType, dbDir_WFD, runType,
         wfda = eval(tt)
         idx = wfda['ebvofMW'] < 0.25
         wfda = wfda[idx]
-        mypl = Plot_nsn_vs(wfda, norm_factor, nside=64)
-        mypl.plot_nsn_mollview(what=timescale_file, dbName=OS_WFD)
+        # plot mollview here
+        #mypl = Plot_nsn_vs(wfda, norm_factor, nside=64)
+        #mypl.plot_nsn_mollview(what=timescale_file, dbName=OS_WFD)
         idc = conf_df['dbName_WFD'] == OS_WFD
         selp = conf_df[idc]
         ls = selp['ls'].values[0]
         marker = selp['marker'].values[0]
         color = selp['color'].values[0]
         plot_nsn_versus_two(wfda, xvar='z', xleg='z', logy=False,
-                            bins=np.arange(0.005, 0.805, 0.01),
+                            bins=np.arange(0.005, 0.805, 0.05),
                             norm_factor=norm_factor,
                             cumul=False, xlim=[0.01, 0.8], color=color,
                             marker=marker, fig=fig, ax=ax)
