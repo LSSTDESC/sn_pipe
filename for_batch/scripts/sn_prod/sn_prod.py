@@ -240,6 +240,6 @@ seasons = [(1, 5), (6, 10), (11, 14)]
 if opts.fieldType == 'WFD':
     for seas in seasons:
         batch_WFD(procDict, seas_min=seas[0],
-                  seas_max=seas[1], zmin=0.01, zmax=0.7, mem='20Gb')
+                  seas_max=seas[1], zmin=0.01, zmax=0.4, mem='20Gb')
         batch_WFD(procDict, seas_min=seas[0],
-                  seas_max=seas[1], zmin=0.7, zmax=1., mem='20Gb')
+                  seas_max=seas[1], zmin=0.4, zmax=0.8, mem='20Gb')
