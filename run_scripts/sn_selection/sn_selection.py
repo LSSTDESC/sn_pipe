@@ -15,7 +15,7 @@ import numpy as np
 
 
 def select_filt(dataDir, dbName, sellist, seasons,
-                runType='DDF_spectroz', nsn_factor=1,
+                zType='spectroz', nsn_factor=1,
                 listFields='COSMOS', fieldType='DD',
                 outDir='Test', nproc=8,
                 timescale='year',
@@ -34,8 +34,8 @@ def select_filt(dataDir, dbName, sellist, seasons,
         Selection criteria.
     seasons : list(int)
         list of seasons to process.
-    runType : str, optional
-        Type of run. The default is 'DDF_spectroz'.
+    ztype: str, opt
+        redshift run type. The default is spectroz
     nsn_factor : int, optional
         MC normalization factor. The default is 1.
     listFields : list(str), optional
@@ -58,7 +58,7 @@ def select_filt(dataDir, dbName, sellist, seasons,
     None.
 
     """
-
+    runType = '{}_{}'.format(fieldType, zType)
     outDir_full = '{}/{}/{}'.format(outDir, dbName, runType)
     checkDir(outDir_full)
 
@@ -66,6 +66,10 @@ def select_filt(dataDir, dbName, sellist, seasons,
     import os
     store = {}
     mydt = {}
+
+    suffix = ''
+    if fieldType == 'WFD':
+        suffix = '_*'
 
     for seas in seasons:
         outName = '{}/SN_{}_{}_{}_{}.hdf5'.format(
@@ -85,7 +89,7 @@ def select_filt(dataDir, dbName, sellist, seasons,
 
         data = load_complete_dbSimu(
             dataDir, dbName, runType, listDDF=listFields,
-            seasons=str(seas), nproc=nproc, dataType=dataType)
+            seasons=str(seas), nproc=nproc, dataType=dataType, suffix=suffix)
         print(seas, len(data))
 
         if data.empty:
@@ -278,9 +282,9 @@ parser.add_option("--dataDir", type=str,
 parser.add_option("--dbName", type=str,
                   default='DDF_Univ_WZ', help="db name [%default]")
 parser.add_option("--selconfig", type=str,
-                  default='G10_JLA', help=" [%default]")
-parser.add_option("--runType", type=str,
-                  default='DDF_spectroz', help=" [%default]")
+                  default='G10_JLA', help="sel config name[%default]")
+parser.add_option("--zType", type=str,
+                  default='spectroz', help="z type (spectroz/photz) [%default]")
 parser.add_option("--listFields", type=str,
                   default='COSMOS,CDFS,XMM-LSS,ELAISS1,EDFSa,EDFSb',
                   help=" [%default]")
@@ -304,7 +308,7 @@ opts, args = parser.parse_args()
 dataDir = opts.dataDir
 dbName = opts.dbName
 selconfig = opts.selconfig
-runType = opts.runType
+zType = opts.zType
 fieldType = opts.fieldType
 listFields = opts.listFields
 nsn_factor = opts.nsn_factor
@@ -321,7 +325,7 @@ sellist = selection_criteria()[selconfig]
 
 
 select_filt(dataDir, dbName, sellist, seasons=seasons,
-            runType=runType, nsn_factor=nsn_factor,
+            zType=zType, nsn_factor=nsn_factor,
             listFields=listFields, fieldType=fieldType,
             outDir=outDir, nproc=nproc,
             timescale=timescale,
