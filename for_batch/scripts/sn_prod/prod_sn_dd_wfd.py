@@ -32,6 +32,10 @@ parser.add_option("--simuParams_dir_DD", type=str,
 parser.add_option("--simuParams_dir_WFD", type=str,
                   default='/sps/lsst/users/gris/Output_SN_WFD_sigmaInt_0.0_Hounsell_nnew',
                   help="Dir for the simu param files  - WFD[%default]")
+parser.add_option("--DD_list", type=str,
+                  default='COSMOS,CDFS,EDFS,ELAISS1,XMM-LSS',
+                  help="List of DDFs to process [%default]")
+
 
 opts, args = parser.parse_args()
 
@@ -46,6 +50,7 @@ sigmaz = opts.Fitter_sigmaz
 simuParams_fromFile = opts.simuParams_fromFile
 simuParams_dir_DD = opts.simuParams_dir_DD
 simuParams_dir_WFD = opts.simuParams_dir_WFD
+dd_list = opts.DD_list
 
 cmd_scr = 'python for_batch/scripts/sn_prod/loop_prod.py'
 cmd_scr += ' --SN_sigmaInt=0.0'
@@ -58,7 +63,7 @@ if dbList_DD != '':
     cmd_ddf += ' --Fitter_sigmaz={}'.format(sigmaz)
     cmd_ddf += ' --simuParams_fromFile={}'.format(simuParams_fromFile)
     cmd_ddf += ' --simuParams_dir={}'.format(simuParams_dir_DD)
-
+    cmd_ddf += ' --DD_list={}'.format(dd_list)
     print(cmd_ddf)
     os.system(cmd_ddf)
 

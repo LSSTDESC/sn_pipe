@@ -47,7 +47,9 @@ parser.add_option("--simuParams_fromFile", type=int, default=0,
 parser.add_option("--simuParams_dir", type=str,
                   default='/sps/lsst/users/gris/Output_SN_WFD_sigmaInt_0.0_Hounsell_nnew',
                   help="Dir for the simu param files [%default]")
-
+parser.add_option("--DD_list", type=str,
+                  default='COSMOS,CDFS,EDFS,ELAISS1,XMM-LSS',
+                  help="List of DDFs to process [%default]")
 opts, args = parser.parse_args()
 
 # load csv file
@@ -78,5 +80,6 @@ for i, row in df.iterrows():
     procDict['Fitter_sigmaz'] = opts.Fitter_sigmaz
     procDict['simuParams_fromFile'] = opts.simuParams_fromFile
     procDict['simuParams_dir'] = opts.simuParams_dir
+    procDict['DD_list'] = opts.DD_list
 
     go_batch(script, procDict)
