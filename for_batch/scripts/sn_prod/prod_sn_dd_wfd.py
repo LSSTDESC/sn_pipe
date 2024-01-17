@@ -35,6 +35,9 @@ parser.add_option("--simuParams_dir_WFD", type=str,
 parser.add_option("--DD_list", type=str,
                   default='COSMOS,CDFS,EDFS,ELAISS1,XMM-LSS',
                   help="List of DDFs to process [%default]")
+parser.add_option("--lookup_ddf", type=str,
+                  default='input/simulation/lookup_ddf',
+                  help="Look up table for DDFs [%default]")
 
 
 opts, args = parser.parse_args()
@@ -51,6 +54,7 @@ simuParams_fromFile = opts.simuParams_fromFile
 simuParams_dir_DD = opts.simuParams_dir_DD
 simuParams_dir_WFD = opts.simuParams_dir_WFD
 dd_list = opts.DD_list
+lookup_ddf = opts.lookup_ddf
 
 cmd_scr = 'python for_batch/scripts/sn_prod/loop_prod.py'
 cmd_scr += ' --SN_sigmaInt=0.0'
@@ -64,6 +68,7 @@ if dbList_DD != '':
     cmd_ddf += ' --simuParams_fromFile={}'.format(simuParams_fromFile)
     cmd_ddf += ' --simuParams_dir={}'.format(simuParams_dir_DD)
     cmd_ddf += ' --DD_list={}'.format(dd_list)
+    cmd_ddf += ' --lookup_ddf={}'.format(lookup_ddf)
     print(cmd_ddf)
     os.system(cmd_ddf)
 

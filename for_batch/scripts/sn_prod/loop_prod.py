@@ -50,6 +50,10 @@ parser.add_option("--simuParams_dir", type=str,
 parser.add_option("--DD_list", type=str,
                   default='COSMOS,CDFS,EDFS,ELAISS1,XMM-LSS',
                   help="List of DDFs to process [%default]")
+parser.add_option("--lookup_ddf", type=str,
+                  default='input/simulation/lookup_ddf',
+                  help="Look up table for DDFs [%default]")
+
 opts, args = parser.parse_args()
 
 # load csv file
@@ -81,5 +85,5 @@ for i, row in df.iterrows():
     procDict['simuParams_fromFile'] = opts.simuParams_fromFile
     procDict['simuParams_dir'] = opts.simuParams_dir
     procDict['DD_list'] = opts.DD_list
-
+    procDict['lookup_ddf'] = opts.lookup_ddf
     go_batch(script, procDict)
