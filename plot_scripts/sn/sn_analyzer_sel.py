@@ -339,8 +339,8 @@ def plot_survey_features(data, norm_factor, config, nside, timescale):
     """
 
     field = 'COSMOS'
-    dbName = 'baseline_v3.3_10yrs'
-    # dbName = 'DDF_DESC_0.80_WZ_0.07'
+    #dbName = 'baseline_v3.3_10yrs'
+    dbName = 'DDF_DESC_0.80_WZ_0.07'
 
     plot_sn_features(data, field, dbName, timescale,
                      yvar='sigma_mu', ylabel='$\sigma_{\mu}}$ [mag]',
@@ -701,7 +701,7 @@ def plot_DDF_nsn_z(data, norm_factor, nside, timescale='year'):
             fig, ax = plt.subplots(figsize=(14, 8))
             for season in selb[timescale].unique():
                 idxb = selb[timescale] == season
-                idxb &= selb['sigmaC'] <= 0.04
+                idxb &= selb['sigma_mu'] <= 0.12
                 selc = selb[idxb]
 
                 plot_nsn_binned(selc, xvar='z', xleg='z', logy=True,
@@ -1139,7 +1139,7 @@ def plot_nsn_versus_two(data, norm_factor=30, nside=128,
                         xvar='z', xleg='z', logy=False,
                         cumul=False, xlim=[0.01, 0.8],
                         label='', fig=None, ax=None, figtitle='',
-                        color='k', marker='o'):
+                        color='k', marker='o', cumnorm=False):
     """
     Method to plot two curves sn vs ...
 
@@ -1162,14 +1162,15 @@ def plot_nsn_versus_two(data, norm_factor=30, nside=128,
                     nside=nside,
                     xvar=xvar, xleg=xleg, logy=logy,
                     cumul=cumul, xlim=xlim,
-                    label=label, fig=fig, ax=ax, color=color, marker=marker)
-    idx = data['sigmaC'] <= 0.04
-    labelb = label+' - $\sigma_C \leq 0.04$'
+                    label=label, fig=fig, ax=ax, color=color, marker=marker,
+                    cumnorm=cumnorm)
+    idx = data['sigma_mu'] <= 0.12
+    labelb = label+' - $\sigma_{\mu} \leq 0.12$'
     plot_nsn_binned(data[idx], norm_factor=norm_factor, bins=bins,
                     xvar=xvar, xleg=xleg, logy=logy,
                     cumul=cumul, xlim=xlim,
                     label=labelb, fig=fig, ax=ax, ls='dotted',
-                    color=color, marker=marker)
+                    color=color, marker=marker, cumnorm=cumnorm)
     if logy:
         ax.set_yscale("log")
 
@@ -1202,7 +1203,8 @@ def plot_nsn_binned(data, norm_factor=30, nside=128,
                     xvar='z', xleg='z', logy=False,
                     cumul=False, xlim=[0.01, 0.8],
                     label='', fig=None, ax=None, color='k',
-                    ls='solid', figtitle='', marker='o', frac=0.95):
+                    ls='solid', figtitle='', marker='o', frac=0.95,
+                    cumnorm=False):
     """
     Function to plot nsn vs...
 
@@ -1242,7 +1244,8 @@ def plot_nsn_binned(data, norm_factor=30, nside=128,
     if cumul:
         vv = np.cumsum(res['NSN'])
         print(vv)
-        vv /= vv.max()
+        if cumnorm:
+            vv /= vv.max()
     if label != '':
         ax.plot(res[xvar], vv, label=label, color=color,
                 linestyle=ls, marker=marker, markersize=9, lw=2)
@@ -1374,8 +1377,8 @@ def process_WFD_OS(conf_df, dataType, dbDir_WFD, runType,
         plot_nsn_versus_two(wfda, xvar='z', xleg='z', logy=False,
                             bins=np.arange(0.005, 0.805, 0.05),
                             norm_factor=norm_factor,
-                            cumul=False, xlim=[0.01, 0.8], color=color,
-                            marker=marker, fig=fig, ax=ax)
+                            cumul=True, xlim=[0.01, 0.8], color=color,
+                            marker=marker, fig=fig, ax=ax, cumnorm=True)
         # wfd = pd.concat((wfd, wfda))
         # get some stat
         wfda = wfda.groupby(['dbName', timescale_file]).apply(
@@ -1464,8 +1467,8 @@ def plot_summary_wfd(wfd, conf_df):
         color = selp['color'].values[0]
         plot_versus(sel, fig=fig, ax=ax, cumul=True,
                     ls=ls, marker=marker, color=color, mfc=color, label=dbName)
-        labelb = dbName+'-'+'$\sigma_C\leq 0.04$'
-        plot_versus(sel, yvar='nsn_sigmaC', fig=fig, ax=ax, cumul=True,
+        labelb = dbName+'-'+'$\sigma_{\mu}\leq 0.12$'
+        plot_versus(sel, yvar='nsn_sigma_mu', fig=fig, ax=ax, cumul=True,
                     ls=ls, marker=marker, color=color,
                     mfc='None', label=labelb)
 
@@ -1487,15 +1490,15 @@ def plot_summary_wfd(wfd, conf_df):
     plt.show()
 
 
-def get_stat(grp, norm_factor, sigmaC=0.04):
+def get_stat(grp, norm_factor, sigma_mu=0.12):
 
     nsn = len(grp)/norm_factor
 
-    idx = grp['sigmaC'] <= sigmaC
+    idx = grp['sigma_mu'] <= sigma_mu
 
     nsn_sel = len(grp[idx])/norm_factor
 
-    dictout = dict(zip(['nsn', 'nsn_sigmaC'], [[nsn], [nsn_sel]]))
+    dictout = dict(zip(['nsn', 'nsn_sigma_mu'], [[nsn], [nsn_sel]]))
 
     return pd.DataFrame.from_dict(dictout)
 
