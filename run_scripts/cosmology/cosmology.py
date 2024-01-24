@@ -79,6 +79,9 @@ parser.add_option("--max_sigmaC", type=float,
 parser.add_option("--test_mode", type=int,
                   default=0,
                   help="To run the test mode of the program [%default]")
+parser.add_option("--plot_test", type=int,
+                  default=0,
+                  help="To run the test mode of the program and plot the samples distrib.[%default]")
 parser.add_option("--lowz_optimize", type=float,
                   default=0.1,
                   help="To maximize the lowz sample [%default]")
@@ -107,6 +110,7 @@ host_effi_photz = opts.host_effi_photz
 frac_WFD_low_sigmaC = opts.frac_WFD_low_sigmaC
 max_sigmaC = opts.max_sigmaC
 test_mode = opts.test_mode
+plot_test = opts.plot_test
 lowz_optimize = opts.lowz_optimize
 sigmaInt = opts.sigmaInt
 dump_data = opts.dump_data
@@ -162,6 +166,6 @@ resfi = pd.DataFrame()
 cl = Fit_seasons(fitconfig, dataDir_DD, dbName_DD,
                  dataDir_WFD, dbName_WFD, dictsel, survey,
                  priors, host_effi, frac_WFD_low_sigmaC,
-                 max_sigmaC, test_mode, lowz_optimize,
+                 max_sigmaC, test_mode, plot_test, lowz_optimize,
                  sigmaInt, dump_data, timescale, outName)
 res = cl()
