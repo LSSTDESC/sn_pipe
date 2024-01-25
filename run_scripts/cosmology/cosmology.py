@@ -81,18 +81,31 @@ parser.add_option("--test_mode", type=int,
                   help="To run the test mode of the program [%default]")
 parser.add_option("--plot_test", type=int,
                   default=0,
-                  help="To run the test mode of the program and plot the samples distrib.[%default]")
+                  help="To run the test mode of the program and plot\
+                  the samples distrib.[%default]")
 parser.add_option("--lowz_optimize", type=float,
                   default=0.1,
                   help="To maximize the lowz sample [%default]")
 parser.add_option("--sigmaInt", type=float,
                   default=0.12,
                   help="sigmaInt for SN [%default]")
-parser.add_option("--dump_data", type=int,
-                  default=0,
-                  help="to dump SN on disk [%default]")
+parser.add_option("--surveyDir", type=str,
+                  default='',
+                  help="to dump surveys on disk [%default]")
 parser.add_option('--timescale', type=str, default='year',
                   help='timescale for the cosmology (year or season)[%default]')
+parser.add_option('--fields_for_stat', type=str,
+                  default='COSMOS,XMM-LSS,ELAISS1,CDFS,EDFSa,EDFSb',
+                  help='field list for stat (fit) [%default]')
+parser.add_option('--seasons_cosmo', type=str,
+                  default='1-10',
+                  help='Seasons to estimate cosmology params [%default]')
+parser.add_option('--nrandom', type=int,
+                  default=50,
+                  help='number of random sample (per season/year) to generate [%default]')
+parser.add_option('--nproc', type=int,
+                  default=8,
+                  help='number of procs to use [%default]')
 
 opts, args = parser.parse_args()
 
@@ -113,10 +126,26 @@ test_mode = opts.test_mode
 plot_test = opts.plot_test
 lowz_optimize = opts.lowz_optimize
 sigmaInt = opts.sigmaInt
-dump_data = opts.dump_data
+surveyDir = opts.surveyDir
 timescale = opts.timescale
+fields_for_stat = opts.fields_for_stat.split(',')
+seasons_cosmo = opts.seasons_cosmo
+nrandom = opts.nrandom
+nproc = opts.nproc
+
+if '-' in seasons_cosmo:
+    seas = seasons_cosmo.split('-')
+    seas_min = int(seas[0])
+    seas_max = int(seas[1])
+    seasons_cosmo = list(range(seas_min, seas_max+1))
+else:
+    seas = seasons_cosmo.split(',')
+    seasons_cosmo = list(map(int, seas))
 
 checkDir(outDir)
+
+if surveyDir != '':
+    checkDir(surveyDir)
 
 dictsel = selection_criteria()[selconfig]
 survey = pd.read_csv(survey_file, comment='#')
@@ -155,7 +184,8 @@ fitconfig['fitd'] = dict(zip(['w0', 'wa', 'Om0'],
 
 priors = {}
 
-#priors['noprior'] = pd.DataFrame()
+# priors['noprior'] = pd.DataFrame()
+
 priors['prior'] = pd.DataFrame({'varname': ['Om0'],
                                 'refvalue': [0.3],
                                'sigma': [0.0073]})
@@ -167,5 +197,7 @@ cl = Fit_seasons(fitconfig, dataDir_DD, dbName_DD,
                  dataDir_WFD, dbName_WFD, dictsel, survey,
                  priors, host_effi, frac_WFD_low_sigmaC,
                  max_sigmaC, test_mode, plot_test, lowz_optimize,
-                 sigmaInt, dump_data, timescale, outName)
+                 sigmaInt, surveyDir, timescale, outName,
+                 fields_for_stat=fields_for_stat,
+                 seasons=seasons_cosmo, nrandom=nrandom, nproc=nproc)
 res = cl()
