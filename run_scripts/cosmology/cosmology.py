@@ -10,6 +10,7 @@ from sn_analysis.sn_selection import selection_criteria
 from optparse import OptionParser
 from sn_cosmology.fit_season import Fit_seasons
 from sn_tools.sn_io import checkDir
+import numpy as np
 
 
 def host_effi_1D(lista, listb):
@@ -157,7 +158,10 @@ host_effi = host_effi_1D([host_effi_UD, host_effi_DD, host_effi_photz], [
 
 
 # save the survey in outDir
-outName_survey = '{}/survey_{}.csv'.format(outDir, dbName_DD)
+seas_min = np.min(seasons_cosmo)
+seas_max = np.max(seasons_cosmo)
+outName_survey = '{}/survey_{}_{}_{}.csv'.format(
+    outDir, dbName_DD, seas_min, seas_max)
 survey.to_csv(outName_survey)
 
 
@@ -190,7 +194,8 @@ priors['prior'] = pd.DataFrame({'varname': ['Om0'],
                                 'refvalue': [0.3],
                                'sigma': [0.0073]})
 
-outName = '{}/cosmo_{}.hdf5'.format(outDir, dbName_DD)
+outName = '{}/cosmo_{}_{}_{}.hdf5'.format(outDir,
+                                          dbName_DD, seas_min, seas_max)
 resfi = pd.DataFrame()
 
 cl = Fit_seasons(fitconfig, dataDir_DD, dbName_DD,
