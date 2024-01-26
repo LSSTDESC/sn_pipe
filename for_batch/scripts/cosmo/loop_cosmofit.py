@@ -26,6 +26,9 @@ parser.add_option("--frac_WFD_low_sigmaC", type=float,
                   help="fraction of SNe Ia WFD low sigmaC  [%default]")
 parser.add_option('--timescale', type=str, default='year',
                   help='timescale for the cosmology (year or season)[%default]')
+parser.add_option('--seasons_cosmo', type=str,
+                  default='1-10',
+                  help='Seasons to estimate cosmology params [%default]')
 
 opts, args = parser.parse_args()
 
@@ -38,6 +41,7 @@ survey = opts.survey
 tag = opts.tag
 frac_WFD_low_sigmaC = opts.frac_WFD_low_sigmaC
 timescale = opts.timescale
+seasons_cosmo = opts.seasons_cosmo
 
 # load OS files to process
 fis = pd.read_csv(dbList, comment='#')
@@ -59,5 +63,6 @@ for i, row in fis.iterrows():
     params['survey'] = survey
     params['frac_WFD_low_sigmaC'] = frac_WFD_low_sigmaC
     params['timescale'] = timescale
+    params['seasons_cosmo'] = seasons_cosmo
     mybatch.add_batch(script, params)
     mybatch.go_batch()
