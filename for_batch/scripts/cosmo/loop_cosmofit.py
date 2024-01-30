@@ -29,6 +29,9 @@ parser.add_option('--timescale', type=str, default='year',
 parser.add_option('--seasons_cosmo', type=str,
                   default='1-10',
                   help='Seasons to estimate cosmology params [%default]')
+parser.add_option('--nrandom', type=int,
+                  default=50,
+                  help='number of random sample (per season/year) to generate [%default]')
 
 opts, args = parser.parse_args()
 
@@ -42,7 +45,7 @@ tag = opts.tag
 frac_WFD_low_sigmaC = opts.frac_WFD_low_sigmaC
 timescale = opts.timescale
 seasons_cosmo = opts.seasons_cosmo
-
+nrandom = opts.nrandom
 # load OS files to process
 fis = pd.read_csv(dbList, comment='#')
 
@@ -64,5 +67,6 @@ for i, row in fis.iterrows():
     params['frac_WFD_low_sigmaC'] = frac_WFD_low_sigmaC
     params['timescale'] = timescale
     params['seasons_cosmo'] = seasons_cosmo
+    params['nrandom'] = nrandom
     mybatch.add_batch(script, params)
     mybatch.go_batch()
