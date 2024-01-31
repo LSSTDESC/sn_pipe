@@ -1158,6 +1158,7 @@ def plot_nsn_versus_two(data, norm_factor=30, nside=128,
     # data = data[idxa]
 
     label = data['dbName'].unique()[0]
+    print('rrr', xvar)
     plot_nsn_binned(data, bins=bins, norm_factor=norm_factor,
                     nside=nside,
                     xvar=xvar, xleg=xleg, logy=logy,
@@ -1377,7 +1378,7 @@ def process_WFD_OS(conf_df, dataType, dbDir_WFD, runType,
         plot_nsn_versus_two(wfda, xvar='z', xleg='z', logy=False,
                             bins=np.arange(0.005, 0.805, 0.05),
                             norm_factor=norm_factor,
-                            cumul=True, xlim=[0.01, 0.8], color=color,
+                            cumul=False, xlim=[0.01, 0.8], color=color,
                             marker=marker, fig=fig, ax=ax, cumnorm=True)
         # wfd = pd.concat((wfd, wfda))
         # get some stat
@@ -1397,7 +1398,8 @@ def process_WFD_OS(conf_df, dataType, dbDir_WFD, runType,
 
 
 def process_WFD(conf_df, dataType, dbDir_WFD, runType,
-                timescale_file, timeslots, norm_factor, nside=64):
+                timescale_file, timeslots, norm_factor,
+                nside=64, timescale='season'):
     """
     Function to process WFD data
 
@@ -1427,16 +1429,18 @@ def process_WFD(conf_df, dataType, dbDir_WFD, runType,
     wfd = process_WFD_OS(conf_df, dataType, dbDir_WFD, runType,
                          timescale_file, timeslots, norm_factor, nside, outName)
 
-    plot_summary_wfd(wfd, conf_df)
+    plot_summary_wfd(wfd, conf_df, timescale_file)
 
     """
+    print('wwwwwww', wfd.columns)
+    OS_WFDs = wfd['dbName'].unique()
     plot_nsn_versus_two(wfd, xvar='year', xleg='year', logy=False,
                         bins=np.arange(0.5, 11.5, 1), norm_factor=norm_factor,
                         nside=nside,
                         cumul=False, xlim=[1, 10], figtitle=OS_WFDs[0])
-    """
-    """
 
+    """
+    """
     plot_nsn_versus_two(wfd, xvar='z', xleg='z', logy=True,
                         bins=np.arange(0.005, 0.805, 0.01), norm_factor=norm_factor,
                         cumul=True, xlim=[0.01, 0.8])
@@ -1453,10 +1457,28 @@ def process_WFD(conf_df, dataType, dbDir_WFD, runType,
     """
 
 
-def plot_summary_wfd(wfd, conf_df):
+def plot_summary_wfd(wfd, conf_df, timescale='season', cumul=False):
+    """
+    Method to plot nsn vs year
 
-    fig, ax = plt.subplots(figsize=(12, 8))
+    Parameters
+    ----------
+    wfd : pandas df
+        Data to process.
+    conf_df : pandas df
+        config for plot.
+    timescale : str, optional
+        Time scale to use (season/year). The default is 'season'.
+    cumul : bool, optional
+        To plot cumulative results. The default is False.
 
+    Returns
+    -------
+    None.
+
+    """
+
+    fig, ax = plt.subplots(figsize=(13, 8))
     for dbName in wfd['dbName'].unique():
         idx = wfd['dbName'] == dbName
         sel = wfd[idx]
@@ -1465,28 +1487,35 @@ def plot_summary_wfd(wfd, conf_df):
         ls = selp['ls'].values[0]
         marker = selp['marker'].values[0]
         color = selp['color'].values[0]
-        plot_versus(sel, fig=fig, ax=ax, cumul=True,
+        plot_versus(sel, fig=fig, ax=ax, cumul=cumul,
                     ls=ls, marker=marker, color=color, mfc=color, label=dbName)
-        labelb = dbName+'-'+'$\sigma_{\mu}\leq 0.12$'
-        plot_versus(sel, yvar='nsn_sigma_mu', fig=fig, ax=ax, cumul=True,
-                    ls=ls, marker=marker, color=color,
+        labelb = dbName+' - '+'$\sigma_{\mu}\leq \sigma_{int}$'
+        plot_versus(sel, yvar='nsn_sigma_mu', fig=fig, ax=ax, cumul=cumul,
+                    ls='dotted', marker=marker, color=color,
                     mfc='None', label=labelb)
 
     ax.grid()
     ax.set_xlim([0.95, 10.05])
-    ax.set_xlabel('year', fontweight='bold')
-    ax.set_ylabel('$\Sigma N_{SN}$')
+    ax.set_xlabel(timescale, fontweight='bold')
+    legy = '$N_{SN}$'
+    if cumul:
+        '$\Sigma N_{SN}$'
+    ax.set_ylabel(legy)
+    # 0, 1.15 for multiple OS
     ax.legend(loc='upper left', bbox_to_anchor=(
-        0.0, 1.15), ncol=3, fontsize=11, frameon=False)
+        0.1, 1.1), ncol=3, fontsize=15, frameon=False)
 
-    xmin, xmax = ax.get_xlim()
+    if cumul:
+        xmin, xmax = ax.get_xlim()
 
-    nsn = 1.e6
-    ax.plot([xmin, xmax], [nsn, nsn], color='dimgrey', lw=2, linestyle='solid')
-    ax.text(5, 1.02e6, '1 million SNe Ia', color='dimgrey', fontsize=12)
-    nsn = 300000
-    ax.plot([xmin, xmax], [nsn, nsn], color='dimgrey', lw=2, linestyle='solid')
-    ax.text(5, 0.32e6, '300k SNe Ia', color='dimgrey', fontsize=12)
+        nsn = 1.e6
+        ax.plot([xmin, xmax], [nsn, nsn],
+                color='dimgrey', lw=2, linestyle='solid')
+        ax.text(5, 1.02e6, '1 million SNe Ia', color='dimgrey', fontsize=12)
+        nsn = 300000
+        ax.plot([xmin, xmax], [nsn, nsn],
+                color='dimgrey', lw=2, linestyle='solid')
+        ax.text(5, 0.32e6, '300k SNe Ia', color='dimgrey', fontsize=12)
     plt.show()
 
 
