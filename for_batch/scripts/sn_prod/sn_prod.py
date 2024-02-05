@@ -183,6 +183,8 @@ def batch_WFD(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
         procDict['RAmax'] = RAmax
         procDict['SN_z_min'] = zmin
         procDict['SN_z_max'] = zmax
+        procDict['SN_z_minsimu'] = 0.01
+        procDict['SN_z_maxsimu'] = 0.8
 
         if not tag_list.empty:
             idx = tag_list['ProductionID'] == sprocName
