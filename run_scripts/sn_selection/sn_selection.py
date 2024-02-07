@@ -19,7 +19,8 @@ def select_filt(dataDir, dbName, sellist, seasons,
                 listFields='COSMOS', fieldType='DD',
                 outDir='Test', nproc=8,
                 timescale='year',
-                dataType='pandasDataFrame'):
+                dataType='pandasDataFrame',
+                ebvofMW=100):
     """
     Function to select and save selected SN data
     (per season)
@@ -52,6 +53,8 @@ def select_filt(dataDir, dbName, sellist, seasons,
         timescale for calculation. The default is 'year'.    
     dataType: str, opt.
       data type to process. The default is 'pandasDataFrame'
+     ebvofMW: float, opt.
+        Max E(B-V). The default is 100.
 
     Returns
     -------
@@ -94,6 +97,10 @@ def select_filt(dataDir, dbName, sellist, seasons,
 
         if data.empty:
             continue
+
+        # E(B-V) cut
+        idx = data['ebvofMW'] <= ebvofMW
+        data = data[idx]
 
         # apply selection on Data
         sel_data = select(data, sellist)
@@ -301,6 +308,9 @@ parser.add_option("--timescale", type=str,
 parser.add_option("--dataType", type=str,
                   default='pandasDataFrame',
                   help="Data type to process (pandasDataFrame/astropyTable). [%default]")
+parser.add_option("--ebvofMW", type=float,
+                  default=0.25,
+                  help="Max e(B-V). [%default]")
 
 opts, args = parser.parse_args()
 
@@ -314,6 +324,7 @@ listFields = opts.listFields
 nsn_factor = opts.nsn_factor
 timescale = opts.timescale
 dataType = opts.dataType
+ebvofMW = opts.ebvofMW
 
 outDir = '{}_{}'.format(dataDir, selconfig)
 nproc = opts.nproc
@@ -329,4 +340,5 @@ select_filt(dataDir, dbName, sellist, seasons=seasons,
             listFields=listFields, fieldType=fieldType,
             outDir=outDir, nproc=nproc,
             timescale=timescale,
-            dataType=dataType)
+            dataType=dataType,
+            ebvofMW=ebvofMW)
