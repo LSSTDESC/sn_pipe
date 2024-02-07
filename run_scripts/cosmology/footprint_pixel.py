@@ -367,7 +367,7 @@ def footprint_DDF(nside=128):
 
     map_pixel = footprint_points(nside, fcoord)
 
-    save_footprint(map_pixel, 'Subaru')
+    save_footprint(map_pixel, 'Subaru_DDF')
     plot_pixels(map_pixel)
 
     fields = ['ECFDS', 'ELAISS1']
