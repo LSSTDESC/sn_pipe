@@ -10,6 +10,7 @@ import healpy as hp
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+from sn_tools.sn_visu import get_map, plot_pixels
 
 
 def point_in_triangle(point, triangle):
@@ -49,38 +50,6 @@ def point_in_triangle(point, triangle):
     return np.logical_or(vvneg, vvpos)
 
 
-def get_map(nside) -> pd.DataFrame:
-    """
-    Function to get a pixel map
-
-    Parameters
-    ----------
-    nside : int
-        nside healpix parameter.
-
-    Returns
-    -------
-    map_pixel : pandas df
-        cols: pix_RA, pix_Dec, weight, healpixID.
-
-    """
-
-    # get the total number of pixels
-    npixels = hp.nside2npix(nside)
-
-    # pixels = hp.get_all_neighbours(nside, 0.0, 0.0, nest=True, lonlat=Tru)
-
-    # get the (RA, Dec) of the pixel centers
-    vec = hp.pix2ang(nside, range(npixels), nest=True, lonlat=True)
-
-    map_pixel = pd.DataFrame(range(npixels), columns=['healpixID'])
-    map_pixel['pix_RA'] = vec[0]
-    map_pixel['pix_Dec'] = vec[1]
-    map_pixel['weight'] = 1
-
-    return map_pixel
-
-
 def tag_Tides_MW(map_pixel) -> pd.DataFrame:
     """
     Function to exclude (weight=-1) MW to get TiDES footprint
@@ -98,14 +67,14 @@ def tag_Tides_MW(map_pixel) -> pd.DataFrame:
     """
 
     # exclude MW zone
-    xc = 0.8*360/24
+    xc = 0.8*360/24+180.
     yc = 20.
-    radius_1 = 55+yc
+    radius_1 = 60+yc
     radius_2 = 75+yc
 
     map_pixel['pix_RA_mod'] = map_pixel['pix_RA']
     idx = map_pixel['pix_RA_mod'] >= 180.
-    map_pixel.loc[idx, 'pix_RA_mod'] -= 360.
+    map_pixel.loc[idx, 'pix_RA_mod'] -= 0.
     map_pixel['dist'] = (map_pixel['pix_RA_mod']-xc)**2 + \
         (map_pixel['pix_Dec']-yc)**2
 
@@ -142,13 +111,13 @@ def tag_Tides_zone_1(map_pixel) -> pd.DataFrame:
     """
 
     # exclude MW zone
-    xc = 0.8*360/24
+    xc = 0.8*360/24+180.
     yc = 17.14
     radius = 43.43+yc
 
     map_pixel['pix_RA_mod'] = map_pixel['pix_RA']
     idx = map_pixel['pix_RA_mod'] >= 180.
-    map_pixel.loc[idx, 'pix_RA_mod'] -= 360.
+    map_pixel.loc[idx, 'pix_RA_mod'] -= 0.
     map_pixel['dist'] = (map_pixel['pix_RA_mod']-xc)**2 + \
         (map_pixel['pix_Dec']-yc)**2
 
@@ -179,32 +148,36 @@ def tag_Tides_upper_zone(map_pixel) -> pd.DataFrame:
 
     """
 
-    idx = map_pixel['pix_RA'] <= 218
-    idx &= map_pixel['pix_RA'] >= 110
+    #idx = map_pixel['pix_RA'] <= 218
+    idx = map_pixel['pix_RA'] >= 110+180
     idx &= map_pixel['pix_Dec'] > 0.
-
     map_pixel.loc[idx, 'weight'] = -1
 
-    idx = map_pixel['pix_RA'] >= 300
+    idx = map_pixel['pix_RA'] <= 265.
+    idx &= map_pixel['pix_RA'] >= 120.
     idx &= map_pixel['pix_Dec'] > 12.
     map_pixel.loc[idx, 'weight'] = -1
 
-    idx = map_pixel['pix_RA'] <= 80.
-    idx &= map_pixel['pix_Dec'] > 12.
+    idx = map_pixel['pix_RA'] <= 180.+27.6
+    idx &= map_pixel['pix_RA'] >= 180.-35
+    idx &= map_pixel['pix_Dec'] > 6.
     map_pixel.loc[idx, 'weight'] = -1
 
-    idx = map_pixel['pix_RA'] <= 26.
+    """
+    idx = map_pixel['pix_RA'] <= 26.+180
     idx &= map_pixel['pix_Dec'] > 6
     map_pixel.loc[idx, 'weight'] = -1
 
-    idx = map_pixel['pix_RA'] >= 360.-26
+    idx = map_pixel['pix_RA'] >= 360.-26-180.
     idx &= map_pixel['pix_Dec'] > 6
     map_pixel.loc[idx, 'weight'] = -1
+    
+    """
 
     triangle = []
-    triangle.append((218., 12.))
-    triangle.append((218., -12))
-    triangle.append((250, 12))
+    triangle.append((218.-180., 12.))
+    triangle.append((218.-180., -12))
+    triangle.append((250-180., 12))
 
     ll = np.c_[map_pixel['pix_RA'].to_numpy(
     ), map_pixel['pix_Dec'].to_list()].tolist()
@@ -217,47 +190,25 @@ def tag_Tides_upper_zone(map_pixel) -> pd.DataFrame:
     idx = map_pixel['in_triangle'] == True
     map_pixel.loc[idx, 'weight'] = -1
 
+    idx = map_pixel['pix_RA'] <= 39.
+    idx &= map_pixel['pix_Dec'] > 0.
+    map_pixel.loc[idx, 'weight'] = -1
+
+    idx = map_pixel['pix_RA'] >= 39.
+    idx &= map_pixel['pix_RA'] <= 93.
+    idx &= map_pixel['pix_Dec'] > 12.
+    map_pixel.loc[idx, 'weight'] = -1
+
+    """
     idx = map_pixel['pix_RA'] >= 218
     idx = map_pixel['pix_RA'] <= 272
     idx &= map_pixel['pix_Dec'] > 12
     map_pixel.loc[idx, 'weight'] = -1
+    """
 
     map_pixel = map_pixel.drop(columns=['in_triangle'])
 
     return map_pixel
-
-
-def plot_pixels(data):
-    """
-    Function to plot pixels with weight >= 0
-
-    Parameters
-    ----------
-    data : pandas df
-        data to plot.
-
-    Returns
-    -------
-    None.
-
-    """
-
-    npixels = len(data)
-    hpxmap = np.zeros(npixels, dtype=np.float)
-    hpxmap = np.full(hpxmap.shape, 0.)
-    hpxmap[data['healpixID']] += data['weight']
-
-    xmin = 0.0
-    xmax = np.max(data['weight'])
-    norm = plt.cm.colors.Normalize(xmin, xmax)
-
-    cmap = plt.cm.jet
-    cmap.set_under('w')
-
-    hp.mollview(hpxmap, cmap=cmap, nest=True,
-                min=xmin, max=xmax, norm=norm,
-                title='E(B-V) MW - SFD')
-    hp.graticule()
 
 
 def footprint_TiDES(nside):
@@ -288,20 +239,22 @@ def footprint_TiDES(nside):
 
     idx = map_pixel['pix_Dec'] > 17.4
     map_pixel.loc[idx, 'weight'] = -1
-    # plot_pixels(map_pixel)
+    #plot_pixels(map_pixel, rot=(180., 0., 0.))
 
     # Tides MW
     map_pixel = tag_Tides_MW(map_pixel)
 
-    # plot_pixels(map_pixel)
+    #plot_pixels(map_pixel, rot=(180., 0., 0.))
 
     map_pixel = tag_Tides_zone_1(map_pixel)
-    # plot_pixels(map_pixel)
+    #plot_pixels(map_pixel, rot=(180., 0., 0.))
 
     map_pixel = tag_Tides_upper_zone(map_pixel)
 
     # select ony pixels of the footprint
     save_footprint(map_pixel, 'TiDES_WFD')
+
+    plot_pixels(map_pixel, rot=(180., 0., 0.))
 
     plot_pixels(map_pixel)
     plt.show()
