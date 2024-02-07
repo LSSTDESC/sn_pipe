@@ -42,6 +42,34 @@ def host_effi_1D(lista, listb):
     return dict_out
 
 
+def load_footprints(dataDir):
+    """
+    Function to load footprints
+
+    Parameters
+    ----------
+    dataDir : str
+        Location dir of the footprint files.
+
+    Returns
+    -------
+    df : pd.Dataframe
+        Footprints (two cols: footprint, healpixID).
+
+    """
+
+    df = pd.DataFrame()
+
+    import glob
+    fis = glob.glob('{}/*.hdf5'.format(dataDir))
+
+    for fi in fis:
+        dfa = pd.read_hdf(fi)
+        df = pd.concat((df, dfa))
+
+    return df
+
+
 parser = OptionParser()
 
 parser.add_option("--dataDir_DD", type=str,
@@ -60,16 +88,19 @@ parser.add_option("--selconfig", type=str,
 parser.add_option("--outDir", type=str,
                   default='../cosmo_fit', help="output dir [%default]")
 parser.add_option("--survey", type=str,
-                  default='input/DESC_cohesive_strategy/survey_scenario.csv',
+                  default='input/cosmology/scenarios/survey_scenario.csv',
                   help=" survey to use[%default]")
 parser.add_option("--host_effi_UD", type=str,
-                  default='input/DESC_cohesive_strategy/host_effi_Subaru.csv',
+                  default='input/cosmology/host_effi/host_effi_Subaru.csv',
                   help="host effi curve for UD fields [%default]")
 parser.add_option("--host_effi_DD", type=str,
-                  default='input/DESC_cohesive_strategy/host_effi_4Most.csv',
+                  default='input/cosmology/host_effi/host_effi_4Most.csv',
                   help="host effi curve for DD+WFD fields [%default]")
 parser.add_option("--host_effi_photz", type=str,
-                  default='input/DESC_cohesive_strategy/host_effi_photz.csv',
+                  default='input/cosmology/host_effi/host_effi_photz.csv',
+                  help="host effi for photo-z [%default]")
+parser.add_option("--footprintDir", type=str,
+                  default='input/cosmology/footprints',
                   help="host effi for photo-z [%default]")
 parser.add_option("--frac_WFD_low_sigmaC", type=float,
                   default=0.8,
@@ -133,6 +164,8 @@ fields_for_stat = opts.fields_for_stat.split(',')
 seasons_cosmo = opts.seasons_cosmo
 nrandom = opts.nrandom
 nproc = opts.nproc
+footprintDir = opts.footprintDir
+
 
 if '-' in seasons_cosmo:
     seas = seasons_cosmo.split('-')
@@ -156,6 +189,9 @@ survey = pd.read_csv(survey_file, comment='#')
 host_effi = host_effi_1D([host_effi_UD, host_effi_DD, host_effi_photz], [
     'host_effi_UD', 'host_effi_DD', 'host_effi_photz'])
 
+
+# load footprints
+footprints = load_footprints(footprintDir)
 
 # save the survey in outDir
 seas_min = np.min(seasons_cosmo)
@@ -200,7 +236,7 @@ resfi = pd.DataFrame()
 
 cl = Fit_seasons(fitconfig, dataDir_DD, dbName_DD,
                  dataDir_WFD, dbName_WFD, dictsel, survey,
-                 priors, host_effi, frac_WFD_low_sigmaC,
+                 priors, host_effi, footprints, frac_WFD_low_sigmaC,
                  max_sigmaC, test_mode, plot_test, lowz_optimize,
                  sigmaInt, surveyDir, timescale, outName,
                  fields_for_stat=fields_for_stat,
