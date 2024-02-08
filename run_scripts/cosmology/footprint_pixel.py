@@ -335,10 +335,25 @@ def footprint_DDF(nside=128):
     plt.show()
 
 
-def footprint_DESI(fName):
+def footprint_DESI(fName, outName):
+    """
+    Function to estimate and save DESI/DESIII foorptints
+
+    Parameters
+    ----------
+    fName : str
+        Footprint file name.
+    outName : str
+        Tag for outname.
+
+    Returns
+    -------
+    None.
+
+    """
 
     hpx_map_desi = np.load(fName)
-    hp.mollview((hpx_map_desi), hold=True, nest=False, fig=1)
+    hp.mollview((hpx_map_desi), hold=True, nest=True, fig=1)
     hp.graticule()
 
     nside = 64
@@ -347,10 +362,7 @@ def footprint_DESI(fName):
     theta, phi = hp.pixelfunc.pix2ang(nside, index)
     ra, dec = np.degrees(np.pi*2.-phi), -np.degrees(theta-np.pi/2.)
 
-    print(len(ra), len(hpx_map_desi))
-    print(ra)
     vec = hp.pix2ang(nside, range(npix), nest=True, lonlat=True)
-    print(vec[0])
 
     map_pixel = get_map(nside)
 
@@ -360,6 +372,7 @@ def footprint_DESI(fName):
 
     plot_pixels(map_pixel)
 
+    save_footprint(map_pixel, outName)
     plt.show()
 
 
@@ -408,4 +421,7 @@ if foot_type == 'DDF':
     footprint_DDF(nside)
 
 if foot_type == 'DESI':
-    footprint_DESI('desi_footprint_bright.npy')
+    footprint_DESI('desi_footprint_bright.npy', foot_type)
+
+if foot_type == 'DESI2':
+    footprint_DESI('desi2_footprint_bright.npy', foot_type)
