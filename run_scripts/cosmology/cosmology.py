@@ -11,6 +11,7 @@ from optparse import OptionParser
 from sn_cosmology.fit_season import Fit_seasons
 from sn_tools.sn_io import checkDir
 import numpy as np
+import glob
 
 
 def host_effi_1D(lista, listb):
@@ -40,6 +41,33 @@ def host_effi_1D(lista, listb):
                                 bounds_error=False, fill_value=0.)
 
     return dict_out
+
+
+def load_host_effi(dataDir):
+    """
+    Function to load all effi(z) csv files in a dict
+
+    Parameters
+    ----------
+    dataDir : str
+        Data dir.
+
+    Returns
+    -------
+    dictout : dict
+        key=name; val=interp1d(z,effi).
+
+    """
+
+    fis = glob.glob('{}/*.csv'.format(dataDir))
+
+    dictout = {}
+    for fi in fis:
+        nname = fi.split('_')[-1].split('.')[0]
+        rr = host_effi_1D([fi], ['host_effi_{}'.format(nname)])
+        dictout.update(rr)
+
+    return dictout
 
 
 def load_footprints(dataDir):
@@ -90,18 +118,12 @@ parser.add_option("--outDir", type=str,
 parser.add_option("--survey", type=str,
                   default='input/cosmology/scenarios/survey_scenario.csv',
                   help=" survey to use[%default]")
-parser.add_option("--host_effi_UD", type=str,
-                  default='input/cosmology/host_effi/host_effi_Subaru.csv',
-                  help="host effi curve for UD fields [%default]")
-parser.add_option("--host_effi_DD", type=str,
-                  default='input/cosmology/host_effi/host_effi_4Most.csv',
-                  help="host effi curve for DD+WFD fields [%default]")
-parser.add_option("--host_effi_photz", type=str,
-                  default='input/cosmology/host_effi/host_effi_photz.csv',
-                  help="host effi for photo-z [%default]")
+parser.add_option("--hosteffiDir", type=str,
+                  default='input/cosmology/host_effi',
+                  help="host effi dir [%default]")
 parser.add_option("--footprintDir", type=str,
                   default='input/cosmology/footprints',
-                  help="host effi for photo-z [%default]")
+                  help="footprint dir [%default]")
 parser.add_option("--frac_WFD_low_sigmaC", type=float,
                   default=0.8,
                   help="fraction of WFD SN with low sigmaC [%default]")
@@ -149,9 +171,7 @@ dbName_WFD = opts.dbName_WFD
 selconfig = opts.selconfig
 outDir = opts.outDir
 survey_file = opts.survey
-host_effi_UD = opts.host_effi_UD
-host_effi_DD = opts.host_effi_DD
-host_effi_photz = opts.host_effi_photz
+host_effi_dir = opts.hosteffiDir
 frac_WFD_low_sigmaC = opts.frac_WFD_low_sigmaC
 max_sigmaC = opts.max_sigmaC
 test_mode = opts.test_mode
@@ -184,10 +204,9 @@ if surveyDir != '':
 dictsel = selection_criteria()[selconfig]
 survey = pd.read_csv(survey_file, comment='#')
 
-# make interp1d for host_effi
+# load host_effi
 
-host_effi = host_effi_1D([host_effi_UD, host_effi_DD, host_effi_photz], [
-    'host_effi_UD', 'host_effi_DD', 'host_effi_photz'])
+host_effi = load_host_effi(host_effi_dir)
 
 
 # load footprints
