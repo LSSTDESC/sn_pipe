@@ -372,7 +372,7 @@ def footprint_DESI(fName, outName):
 
     plot_pixels(map_pixel)
 
-    save_footprint(map_pixel, outName)
+    save_footprint(map_pixel, '{}_WFD'.format(outName))
     plt.show()
 
 
