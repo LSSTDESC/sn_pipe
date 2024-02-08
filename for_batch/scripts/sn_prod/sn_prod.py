@@ -187,8 +187,7 @@ def batch_WFD(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
         procDict['SN_z_minsimu'] = 0.01
         procDict['SN_z_maxsimu'] = 0.8
         if dbExtens == 'npy':
-            procDict['dbName'] = procDict['dbName'] + \
-                '_{}_{}'.format(RAmin, RAmax)
+            procDict['dbName'] = '{}_{}_{}'.format(dbName, RAmin, RAmax)
 
         if not tag_list.empty:
             idx = tag_list['ProductionID'] == sprocName
