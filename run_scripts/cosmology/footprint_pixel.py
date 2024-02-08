@@ -335,6 +335,34 @@ def footprint_DDF(nside=128):
     plt.show()
 
 
+def footprint_DESI(fName):
+
+    hpx_map_desi = np.load(fName)
+    hp.mollview((hpx_map_desi), hold=True, nest=False, fig=1)
+    hp.graticule()
+
+    nside = 64
+    npix = hp.nside2npix(nside)
+    index = np.arange(npix)
+    theta, phi = hp.pixelfunc.pix2ang(nside, index)
+    ra, dec = np.degrees(np.pi*2.-phi), -np.degrees(theta-np.pi/2.)
+
+    print(len(ra), len(hpx_map_desi))
+    print(ra)
+    vec = hp.pix2ang(nside, range(npix), nest=True, lonlat=True)
+    print(vec[0])
+
+    map_pixel = get_map(nside)
+
+    map_pixel['weight'] = hpx_map_desi
+    idx = map_pixel['weight'] == 0
+    map_pixel.loc[idx, 'weight'] = -1
+
+    plot_pixels(map_pixel)
+
+    plt.show()
+
+
 def save_footprint(map_pixel, footprint):
     """
     Function to dump pixela with positive weight on disk
@@ -378,3 +406,6 @@ if foot_type == 'WFD':
 
 if foot_type == 'DDF':
     footprint_DDF(nside)
+
+if foot_type == 'DESI':
+    footprint_DESI('desi_footprint_bright.npy')
