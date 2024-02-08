@@ -216,7 +216,8 @@ def batch_WFD(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
 
         else:
 
-            tttag = 'SN_{}_{}_{}_{}'.format(procName, seas, zmin, zmax)
+            tttag = 'SN_{}_{}_{}_{}_{}'.format(
+                procName, seas_min, seas_max, zmin, zmax)
             procDict['ProductionIDSimu'] = tttag
             procDict['Observations_season'] = '{}-{}'.format(
                 seas_min, seas_max)
