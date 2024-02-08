@@ -254,18 +254,21 @@ if opts.fieldType == 'DD':
 #procDict['simuParams_fromFile'] = opts.simuParams_fromFile
 
 seasons = [(1, 5), (6, 10), (11, 14)]
+seasons = [(1, 7), (7, 14)]
 runMode = 'all_seasons'
 if opts.fieldType == 'WFD':
     for seas in seasons:
         batch_WFD(procDict,
                   seas_min=seas[0], seas_max=seas[1],
-                  zmin=0.01, zmax=0.3,
+                  zmin=0.01, zmax=0.4,
                   mem='20Gb', runMode=runMode)
         batch_WFD(procDict,
                   seas_min=seas[0], seas_max=seas[1],
-                  zmin=0.3, zmax=0.6,
+                  zmin=0.4, zmax=0.8,
                   mem='20Gb', runMode=runMode)
+        """
         batch_WFD(procDict,
                   seas_min=seas[0], seas_max=seas[1],
                   zmin=0.6, zmax=0.8,
                   mem='20Gb', runMode=runMode)
+        """
