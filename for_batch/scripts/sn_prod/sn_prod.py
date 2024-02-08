@@ -101,7 +101,7 @@ def batch_DDF(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
 
 def batch_WFD(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
               time='60:00:00', mem='40G', seas_min=1, seas_max=10,
-              zmin=0.01, zmax=0.7):
+              zmin=0.01, zmax=0.7, runMode='seasonal'):
     """
     Function to launch sim_to_fit for WFD
 
@@ -129,6 +129,7 @@ def batch_WFD(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
     """
 
     dbName = theDict['dbName']
+    dbExtens = theDict['dbExtens']
     outDir = theDict['OutputSimu_directory']
     reprocList = theDict['reprocList']
     sigmaInt = theDict['SN_sigmaInt']
@@ -185,6 +186,9 @@ def batch_WFD(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
         procDict['SN_z_max'] = zmax
         procDict['SN_z_minsimu'] = 0.01
         procDict['SN_z_maxsimu'] = 0.8
+        if dbExtens == 'npy':
+            procDict['dbName'] = procDict['dbName'] + \
+                '_{}_{}'.format(RAmin, RAmax)
 
         if not tag_list.empty:
             idx = tag_list['ProductionID'] == sprocName
@@ -193,18 +197,29 @@ def batch_WFD(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
                 season_max = sel['season_max'].max()
                 seasons = range(season_max, 11)
 
-        for seas in seasons:
+        if runMode == 'seasonal':
+
+            for seas in seasons:
+                tttag = 'SN_{}_{}_{}_{}'.format(procName, seas, zmin, zmax)
+                procDict['ProductionIDSimu'] = tttag
+                procDict['Observations_season'] = seas
+
+                if simu_fromFile == 1:
+                    suffix = '{}_{}'.format(zmin, zmax)
+                    ffi = 'SN_simu_params_WFD_{}_season_{}_{}.hdf5'.format(
+                        dbName, seas, suffix)
+                    outDir_simuparams = '{}_simuparams'.format(simuParams_dir)
+                    procDict['SN_simuFile'] = '{}/{}/WFD_spectroz/{}'.format(
+                        outDir_simuparams, dbName, ffi)
+
+                mybatch.add_batch(scriptref, procDict)
+
+        else:
+
             tttag = 'SN_{}_{}_{}_{}'.format(procName, seas, zmin, zmax)
             procDict['ProductionIDSimu'] = tttag
-            procDict['Observations_season'] = seas
-
-            if simu_fromFile == 1:
-                suffix = '{}_{}'.format(zmin, zmax)
-                ffi = 'SN_simu_params_WFD_{}_season_{}_{}.hdf5'.format(
-                    dbName, seas, suffix)
-                outDir_simuparams = '{}_simuparams'.format(simuParams_dir)
-                procDict['SN_simuFile'] = '{}/{}/WFD_spectroz/{}'.format(
-                    outDir_simuparams, dbName, ffi)
+            procDict['Observations_season'] = '{}-{}'.format(
+                seas_min, seas_max)
 
             mybatch.add_batch(scriptref, procDict)
 
@@ -239,11 +254,18 @@ if opts.fieldType == 'DD':
 #procDict['simuParams_fromFile'] = opts.simuParams_fromFile
 
 seasons = [(1, 5), (6, 10), (11, 14)]
+runMode = 'all_seasons'
 if opts.fieldType == 'WFD':
     for seas in seasons:
-        batch_WFD(procDict, seas_min=seas[0],
-                  seas_max=seas[1], zmin=0.01, zmax=0.3, mem='20Gb')
-        batch_WFD(procDict, seas_min=seas[0],
-                  seas_max=seas[1], zmin=0.3, zmax=0.6, mem='20Gb')
-        batch_WFD(procDict, seas_min=seas[0],
-                  seas_max=seas[1], zmin=0.6, zmax=0.8, mem='20Gb')
+        batch_WFD(procDict,
+                  seas_min=seas[0], seas_max=seas[1],
+                  zmin=0.01, zmax=0.3,
+                  mem='20Gb', runMode=runMode)
+        batch_WFD(procDict,
+                  seas_min=seas[0], seas_max=seas[1],
+                  zmin=0.3, zmax=0.6,
+                  mem='20Gb', runMode=runMode)
+        batch_WFD(procDict,
+                  seas_min=seas[0], seas_max=seas[1],
+                  zmin=0.6, zmax=0.8,
+                  mem='20Gb', runMode=runMode)
