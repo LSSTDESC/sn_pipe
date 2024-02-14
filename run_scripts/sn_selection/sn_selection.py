@@ -12,15 +12,411 @@ from sn_analysis.sn_selection import selection_criteria
 from optparse import OptionParser
 import pandas as pd
 import numpy as np
+import glob
 
 
-def select_filt(dataDir, dbName, sellist, seasons,
-                zType='spectroz', nsn_factor=1,
-                listFields='COSMOS', fieldType='DD',
-                outDir='Test', nproc=8,
-                timescale='year',
-                dataType='pandasDataFrame',
-                ebvofMW=100):
+class Select_filt:
+    def __init__(self, dataDir, dbName, sellist, seasons,
+                 zType='spectroz', nsn_factor=1,
+                 listFields='COSMOS', fieldType='DDF',
+                 outDir='Test', nproc=8,
+                 timescale='year',
+                 dataType='pandasDataFrame',
+                 ebvofMW=100):
+        """
+        class to load and select SN - output results: one file per season/year
+
+        Parameters
+        ----------
+        dataDir : str
+            Data directory.
+        dbName : str
+            Dbname to process.
+        sellist : dict
+            Selection criteria.
+        seasons : list(int)
+            seasons to process.
+        zType : str, optional
+            host z-type (spectroz/photz). The default is 'spectroz'.
+        nsn_factor : int, optional
+            nsn normalization factor. The default is 1.
+        listFields : list(str), optional
+            List of fields to process. The default is 'COSMOS'.
+        fieldType : str, optional
+            Type of field (DDF/WFD). The default is 'DDF'.
+        outDir : str, optional
+            Output dir. The default is 'Test'.
+        nproc : int, optional
+            Number of proc. The default is 8.
+        timescale : str, optional
+            Timescale (year/season). The default is 'year'.
+        dataType : str, optional
+            Data type. The default is 'pandasDataFrame'.
+        ebvofMW : float, optional
+            E(B-V) selection criteria. The default is 100.
+
+        Returns
+        -------
+        None.
+
+        """
+
+        self.dataDir = dataDir
+        self.dbName = dbName
+        self.sellist = sellist
+        self.seasons = seasons
+        self.zType = zType
+        self.nsn_factor = nsn_factor
+        self.listFields = listFields
+        self.fieldType = fieldType
+        self.outDir = outDir
+        self.nproc = nproc
+        self.timescale = timescale
+        self.dataType = dataType
+        self.ebvofMW = ebvofMW
+
+        self.outDir_full = self.init_dir()
+        self.clean()
+
+        self.process()
+
+    def init_dir(self):
+        """
+        Method to create output dir
+
+        Returns
+        -------
+        outDir_full : TYPE
+            DESCRIPTION.
+
+        """
+
+        self.runType = '{}_{}'.format(self.fieldType, self.zType)
+        outDir_full = '{}/{}/{}'.format(self.outDir, self.dbName, self.runType)
+        checkDir(outDir_full)
+
+        return outDir_full
+
+    def clean(self):
+        """
+        Method to clean output dir
+
+        Returns
+        -------
+        None.
+
+        """
+
+        import os
+        for seas in self.seasons:
+            outName = self.get_name(seas)
+
+            if os.path.isfile(outName):
+                os.remove(outName)
+
+    def process(self):
+        """
+        Method to process data
+
+        Returns
+        -------
+        None.
+
+        """
+
+        if self.fieldType == 'DDF':
+            self.process_DDF()
+
+        if self.fieldType == 'WFD':
+            self.process_WFD()
+
+    def process_DDF(self):
+        """
+        Method to process DDFs
+
+        Returns
+        -------
+        None.
+
+        """
+
+        for seas in self.seasons:
+
+            # load DDFs
+            data = load_complete_dbSimu(
+                self.dataDir, self.dbName, self.runType,
+                listDDF=self.listFields, seasons=str(seas),
+                nproc=self.nproc, dataType=self.dataType)
+            print(seas, len(data))
+
+            if data.empty:
+                continue
+
+            # E(B-V) cut
+            idx = data['ebvofMW'] <= self.ebvofMW
+            data = data[idx]
+
+            # apply selection on Data
+            sel_data = select(data, self.sellist)
+
+            # get year
+            sel_data = self.get_year(sel_data)
+
+            # save the data
+            self.save_data(sel_data, seas)
+
+            # this is to get stat
+            """
+                stat, rname = get_stat(
+                    sel_data, nsn_factor, timescale=timescale)
+                stat[rname] = stat[rname].astype(int)
+                stat_tot = pd.concat((stat_tot, stat))
+                """
+
+        # this is to get stat
+        """
+        if timescale == 'year':
+            vv = ['nsn']+rname
+            stat_tot = stat_tot.groupby(['field', timescale])[
+                vv].sum().reset_index()
+
+        stat_tot[timescale] = stat_tot[timescale].astype(int)
+        stat_tot['nsn'] = stat_tot['nsn'].astype(int)
+        outName_stat = '{}/nsn_{}_{}.hdf5'.format(
+            outDir_full, dbName, timescale)
+        store = pd.HDFStore(outName_stat, 'w')
+        store.put('SN', stat_tot)
+
+        # stat_tot.to_hdf(outName_stat, key='SN')
+        """
+
+    def process_WFD(self):
+        """
+        Method to process WFD
+
+        Returns
+        -------
+        None.
+
+        """
+
+        deltaRA = 10.
+
+        RAs = np.arange(0., 360.+deltaRA, deltaRA)
+
+        RA_loop = []
+        for RA in RAs[:-1]:
+            RAmin = np.round(RA, 1)
+            RAmax = RAmin+deltaRA
+            RAmax = np.round(RAmax, 1)
+            RA_loop.append((RAmin, RAmax))
+
+        from sn_tools.sn_utils import multiproc
+        params = {}
+        multiproc(RA_loop, params, self.load_process, self.nproc)
+
+    def load_process(self, toproc, params, j=0, output_q=None):
+        """
+        Method to load and process using multiprocessing
+
+        Parameters
+        ----------
+        toproc : list((float, float))
+            List of (RAmin, RAmax) to process.
+        params : dict
+            Parameters.
+        j : int, optional
+            internal int for multiprocessing. The default is 0.
+        output_q : multiprocessing queue, optional
+            Multiprocessing queue where to dump results. The default is None.
+
+        Returns
+        -------
+        int
+            Output data.
+
+        """
+
+        dfb = pd.DataFrame()
+        for vv in toproc:
+            dd = self.load_process_RAs(vv[0], vv[1])
+            dfb = pd.concat((dfb, dd))
+
+        if len(dfb) == 0:
+            if output_q is not None:
+                return output_q.put({j: 0})
+            else:
+                return 0
+
+        for seas in self.seasons:
+            idx = dfb['season'] == seas
+            selb = dfb[idx]
+            self.save_data(selb, seas)
+
+        if output_q is not None:
+            return output_q.put({j: 0})
+        else:
+            return 0
+
+    def load_process_RAs(self, RAmin, RAmax):
+        """
+        Method to load and process files
+
+
+        Parameters
+        ----------
+        RAmin : float
+            Min RA.
+        RAmax : float
+            Max RA.
+
+        Returns
+        -------
+        None.
+
+        """
+
+        fullpath = '{}/{}/{}/*{}_{}*.hdf5'.format(self.dataDir, self.dbName,
+                                                  self.runType, RAmin, RAmax)
+        fis = glob.glob(fullpath)
+
+        if len(fis) == 0:
+            return pd.DataFrame()
+
+        # load the data
+        data = pd.DataFrame()
+        for fi in fis:
+            print(fi)
+            dd = pd.read_hdf(fi)
+            data = pd.concat((data, dd))
+
+        # E(B-V) cut
+        idx = data['ebvofMW'] <= self.ebvofMW
+        data = data[idx]
+        # get year
+        data = self.get_year(data)
+
+        # apply selection on Data
+        sel_data = select(data, self.sellist)
+
+        return sel_data
+
+        """
+        for seas in self.seasons:
+            idx = sel_data['season'] == seas
+            selb = sel_data[idx]
+            self.save_data(selb, seas)
+        """
+
+    def get_year(self, data):
+        """
+        Method to estimate the year
+        and to add it as a df col
+
+        Parameters
+        ----------
+        data : pandas df
+            Data to process.
+
+        Returns
+        -------
+        sel_data : pandas df
+            original df plus year col.
+
+        """
+
+        sel_data = pd.DataFrame(data)
+        sel_data = sel_data[sel_data.columns.drop(
+            list(sel_data.filter(regex='mask')))]
+        if 'selected' in sel_data.columns:
+            sel_data = sel_data.drop(columns=['selected'])
+
+        sel_data['year'] = 1
+        if 'mjd_max' in sel_data.columns:
+            tt = sel_data['mjd_max']-sel_data['lsst_start']
+            # sel_data['year'] = sel_data['daymax']+60*(1.+sel_data['z'])
+            # sel_data['year'] -= sel_data['lsst_start']
+            tt /= 365.
+            sel_data['year'] = np.ceil(tt)
+            # print(sel_data['year'], sel_data['lsst_start'])
+        sel_data['year'] = sel_data['year'].astype(int)
+        # print(sel_data['year'])
+        sel_data['chisq'] = sel_data['chisq'].astype(float)
+        sel_data['sigmat0'] = np.sqrt(sel_data['Cov_t0t0'])
+        sel_data['sigmax1'] = np.sqrt(sel_data['Cov_x1x1'])
+
+        return sel_data
+
+    def save_data(self, sel_data, seas):
+        """
+        Method to dump data on disk
+
+        Parameters
+        ----------
+        sel_data : pandas df
+            Data to dump.
+        seas : int
+            season.
+
+        Returns
+        -------
+        None.
+
+        """
+
+        # save output data in pandas df
+        if timescale == 'season':
+            # store[seas].put('SN', sel_data)
+
+            """
+            outName = '{}/SN_{}_{}_{}_{}.hdf5'.format(
+                self.outDir_full, self.fieldType, 
+                self.dbName, self.timescale, seas)
+            """
+            sel_data.to_hdf(self.get_name(seas), key='SN')
+
+        else:
+            years = sel_data[self.timescale].unique()
+            for vv in years:
+                idx = sel_data[self.timescale] == vv
+                selb = sel_data[idx]
+                """
+                outName = '{}/SN_{}_{}_{}_{}.hdf5'.format(
+                    self.outDir_full, self.fieldType, self.dbName, self.timescale, vv)
+                """
+                selb.to_hdf(self.get_name(vv), key='SN', append=True)
+                # store[vv].put('SN', selb)
+
+    def get_name(self, seas):
+        """
+        Method to get the name of output files
+
+        Parameters
+        ----------
+        seas : int
+            season/year.
+
+        Returns
+        -------
+        outName : str
+            Output name.
+
+        """
+
+        outName = '{}/SN_{}_{}_{}_{}.hdf5'.format(
+            self.outDir_full, self.fieldType,
+            self.dbName, self.timescale, seas)
+
+        return outName
+
+
+def select_filt_deprecated(dataDir, dbName, sellist, seasons,
+                           zType='spectroz', nsn_factor=1,
+                           listFields='COSMOS', fieldType='DD',
+                           outDir='Test', nproc=8,
+                           timescale='year',
+                           dataType='pandasDataFrame',
+                           ebvofMW=100):
     """
     Function to select and save selected SN data
     (per season)
@@ -82,14 +478,21 @@ def select_filt(dataDir, dbName, sellist, seasons,
             os.remove(outName)
         mydt[seas] = pd.DataFrame()
 
-        #store[seas] = pd.HDFStore(outName, 'w')
+        # store[seas] = pd.HDFStore(outName, 'w')
 
     stat_tot = pd.DataFrame()
     # sel_tot = pd.DataFrame()
 
-    for seas in seasons:
-        # load DDFs
+    process_DDF(dataDir, dbName, runType, listFields,
+                seasons, nproc, dataType, suffix, outDir_full)
 
+
+def process_DDF_deprecated(dataDir, dbName, runType, listFields,
+                           seasons, nproc, dataType, suffix, outDir_full):
+
+    for seas in seasons:
+
+        # load DDFs
         data = load_complete_dbSimu(
             dataDir, dbName, runType, listDDF=listFields,
             seasons=str(seas), nproc=nproc, dataType=dataType, suffix=suffix)
@@ -104,86 +507,27 @@ def select_filt(dataDir, dbName, sellist, seasons,
 
         # apply selection on Data
         sel_data = select(data, sellist)
-        sel_data = sel_data[sel_data.columns.drop(
-            list(sel_data.filter(regex='mask')))]
-        if 'selected' in sel_data.columns:
-            sel_data = sel_data.drop(columns=['selected'])
 
-        sel_data['year'] = 1
-        if 'mjd_max' in sel_data.columns:
-            tt = sel_data['mjd_max']-sel_data['lsst_start']
-            #sel_data['year'] = sel_data['daymax']+60*(1.+sel_data['z'])
-            #sel_data['year'] -= sel_data['lsst_start']
-            tt /= 365.
-            sel_data['year'] = np.ceil(tt)
-            #print(sel_data['year'], sel_data['lsst_start'])
-        sel_data['year'] = sel_data['year'].astype(int)
-        # print(sel_data['year'])
-        sel_data['chisq'] = sel_data['chisq'].astype(float)
+        # get year
+        sel_data = get_year(sel_data)
 
+        # save the data
+        save_data(sel_data, outDir_full,
+                  fieldType, dbName, timescale, seas)
+
+        # this is to get stat
         """
-        misscols = ['x1', 'color']
-        for mcol in misscols:
-            if 'Cov_{}x0'.format(mcol) not in sel_data.columns:
-                sel_data['Cov_{}x0'.format(
-                    mcol)] = sel_data['Cov_x0{}'.format(mcol)]
-        """
-        # sel_tot = pd.concat((sel_data, sel_tot))
+            stat, rname = get_stat(sel_data, nsn_factor, timescale=timescale)
+            stat[rname] = stat[rname].astype(int)
+            stat_tot = pd.concat((stat_tot, stat))
+            """
 
-        # save output data in pandas df
-        if timescale == 'season':
-            # store[seas].put('SN', sel_data)
-
-            outName = '{}/SN_{}_{}_{}_{}.hdf5'.format(
-                outDir_full, fieldType, dbName, timescale, seas)
-
-            sel_data.to_hdf(outName, key='SN')
-
-        else:
-            years = sel_data[timescale].unique()
-            for vv in years:
-                idx = sel_data[timescale] == vv
-                selb = sel_data[idx]
-
-                outName = '{}/SN_{}_{}_{}_{}.hdf5'.format(
-                    outDir_full, fieldType, dbName, timescale, vv)
-                selb.to_hdf(outName, key='SN', append=True)
-                #store[vv].put('SN', selb)
-
-        """
-        # sel_tot = pd.concat((sel_data, sel_tot))
-        # get some stat
-        # stat = sel_data.groupby(['field', 'season']).apply(
-        #     lambda x: pd.DataFrame({'nsn': [len(x)/nsn_factor]})).reset_index()
-        """
-        stat, rname = get_stat(sel_data, nsn_factor, timescale=timescale)
-        stat[rname] = stat[rname].astype(int)
-        stat_tot = pd.concat((stat_tot, stat))
-
+    # this is to get stat
+    """
     if timescale == 'year':
         vv = ['nsn']+rname
         stat_tot = stat_tot.groupby(['field', timescale])[
             vv].sum().reset_index()
-
-    """
-    if sel_tot.empty:
-        return -1
-
-    timescales = sel_tot[timescale].unique()
-
-    for timescalev in timescales:
-        idx = sel_tot[timescale] == timescalev
-        sel_data = sel_tot[idx]
-        # save output data in pandas df
-        outName = '{}/SN_{}_{}_{}.hdf5'.format(
-            outDir_full, fieldType, dbName, timescalev)
-
-        sel_data.to_hdf(outName, key='SN')
-        stat = get_stat(sel_data, nsn_factor, timescale=timescale)
-        stat_tot = pd.concat((stat_tot, stat))
-
-    # stat_tot = get_stat(sel_tot, nsn_factor, timescale=timescale)
-    """
 
     stat_tot[timescale] = stat_tot[timescale].astype(int)
     stat_tot['nsn'] = stat_tot['nsn'].astype(int)
@@ -191,7 +535,93 @@ def select_filt(dataDir, dbName, sellist, seasons,
     store = pd.HDFStore(outName_stat, 'w')
     store.put('SN', stat_tot)
 
-    #stat_tot.to_hdf(outName_stat, key='SN')
+    # stat_tot.to_hdf(outName_stat, key='SN')
+    """
+
+
+def get_year_deprecated(data):
+    """
+    Function to estimate the year
+    and to add it as a df col
+
+    Parameters
+    ----------
+    data : pandas df
+        Data to process.
+
+    Returns
+    -------
+    sel_data : pandas df
+        original df plus year col.
+
+    """
+
+    sel_data = pd.DataFrame(data)
+    sel_data = sel_data[sel_data.columns.drop(
+        list(sel_data.filter(regex='mask')))]
+    if 'selected' in sel_data.columns:
+        sel_data = sel_data.drop(columns=['selected'])
+
+    sel_data['year'] = 1
+    if 'mjd_max' in sel_data.columns:
+        tt = sel_data['mjd_max']-sel_data['lsst_start']
+        # sel_data['year'] = sel_data['daymax']+60*(1.+sel_data['z'])
+        # sel_data['year'] -= sel_data['lsst_start']
+        tt /= 365.
+        sel_data['year'] = np.ceil(tt)
+        # print(sel_data['year'], sel_data['lsst_start'])
+    sel_data['year'] = sel_data['year'].astype(int)
+    # print(sel_data['year'])
+    sel_data['chisq'] = sel_data['chisq'].astype(float)
+
+    return sel_data
+
+
+def save_data_deprecated(sel_data, outDir_full,
+                         fieldType, dbName, timescale, seas):
+    """
+    Function to dump data on disk
+
+    Parameters
+    ----------
+    sel_data : pandas df
+        Data to dump.
+    outDir_full : str
+        output dir.
+    fieldType : str
+        field type.
+    dbName : str
+        db name.
+    timescale : str
+        Timescale to use (year/season).
+    seas : int
+        season.
+
+    Returns
+    -------
+    None.
+
+    """
+
+    # save output data in pandas df
+    if timescale == 'season':
+        # store[seas].put('SN', sel_data)
+
+        outName = '{}/SN_{}_{}_{}_{}.hdf5'.format(
+            outDir_full, fieldType, dbName, timescale, seas)
+
+        sel_data.to_hdf(outName, key='SN')
+
+    else:
+        years = sel_data[timescale].unique()
+        for vv in years:
+            idx = sel_data[timescale] == vv
+            selb = sel_data[idx]
+
+            outName = '{}/SN_{}_{}_{}_{}.hdf5'.format(
+                outDir_full, fieldType, dbName, timescale, vv)
+            selb.to_hdf(outName, key='SN', append=True)
+            # store[vv].put('SN', selb)
 
 
 def get_stat(sel_data, nsn_factor, timescale='year'):
@@ -334,8 +764,16 @@ seasons = range(1, 13)
 
 sellist = selection_criteria()[selconfig]
 
-
+"""
 select_filt(dataDir, dbName, sellist, seasons=seasons,
+            zType=zType, nsn_factor=nsn_factor,
+            listFields=listFields, fieldType=fieldType,
+            outDir=outDir, nproc=nproc,
+            timescale=timescale,
+            dataType=dataType,
+            ebvofMW=ebvofMW)
+"""
+Select_filt(dataDir, dbName, sellist, seasons=seasons,
             zType=zType, nsn_factor=nsn_factor,
             listFields=listFields, fieldType=fieldType,
             outDir=outDir, nproc=nproc,
