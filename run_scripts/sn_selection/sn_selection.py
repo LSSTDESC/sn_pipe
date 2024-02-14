@@ -240,8 +240,11 @@ class Select_filt:
         dfb = pd.DataFrame()
         for vv in toproc:
             dd = self.load_process_RAs(vv[0], vv[1])
-            dfb = pd.concat((dfb, dd))
+            # dfb = pd.concat((dfb, dd))
+            if len(dd) > 0:
+                self.save_data_wfd(dd)
 
+        """
         if len(dfb) == 0:
             if output_q is not None:
                 return output_q.put({j: 0})
@@ -252,11 +255,32 @@ class Select_filt:
             idx = dfb['season'] == seas
             selb = dfb[idx]
             self.save_data(selb, seas)
-
+        """
         if output_q is not None:
             return output_q.put({j: 0})
         else:
             return 0
+
+    def save_data_wfd(self, sel_data):
+        """
+        Method to save WFD data
+
+        Parameters
+        ----------
+        sel_data : pandas df
+            Data to save.
+
+        Returns
+        -------
+        None.
+
+        """
+
+        years = sel_data[self.timescale].unique()
+        for vv in years:
+            idx = sel_data[self.timescale] == vv
+            selb = sel_data[idx]
+            selb.to_hdf(self.get_name(vv), key='SN', append=True)
 
     def load_process_RAs(self, RAmin, RAmax):
         """
