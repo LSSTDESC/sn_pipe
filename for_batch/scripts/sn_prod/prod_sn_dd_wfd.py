@@ -77,7 +77,7 @@ if dbList_DD != '':
 if dbList_WFD != '':
     cmd_wfd = '{} --dbList={}'.format(cmd_scr, dbList_WFD)
     cmd_wfd += ' --outputDir={}'.format(outDir_WFD)
-    cmd_wfd += ' --SN_NSNfactor=20'
+    cmd_wfd += ' --SN_NSNfactor=10'
     cmd_wfd += ' --SN_smearFlux={}'.format(smearFlux)
     cmd_wfd += ' --Fitter_sigmaz={}'.format(sigmaz)
     cmd_wfd += ' --simuParams_fromFile={}'.format(simuParams_fromFile)
