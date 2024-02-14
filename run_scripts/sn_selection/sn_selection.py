@@ -239,11 +239,12 @@ class Select_filt:
 
         dfb = pd.DataFrame()
         for vv in toproc:
-            dd = self.load_process_RAs(vv[0], vv[1])
+            self.load_process_RAs(vv[0], vv[1])
             # dfb = pd.concat((dfb, dd))
+            """
             if len(dd) > 0:
                 self.save_data_wfd(dd, vv[0], vv[1])
-
+            """
         """
         if len(dfb) == 0:
             if output_q is not None:
@@ -309,22 +310,25 @@ class Select_filt:
             return pd.DataFrame()
 
         # load the data
-        data = pd.DataFrame()
+        #data = pd.DataFrame()
         for fi in fis:
             print(fi)
-            dd = pd.read_hdf(fi)
-            data = pd.concat((data, dd))
+            data = pd.read_hdf(fi)
+            #data = pd.concat((data, dd))
 
-        # E(B-V) cut
-        idx = data['ebvofMW'] <= self.ebvofMW
-        data = data[idx]
-        # get year
-        data = self.get_year(data)
+            # E(B-V) cut
+            idx = data['ebvofMW'] <= self.ebvofMW
+            data = data[idx]
+            # get year
+            data = self.get_year(data)
 
-        # apply selection on Data
-        sel_data = select(data, self.sellist)
+            # apply selection on Data
+            sel_data = select(data, self.sellist)
 
-        return sel_data
+            if len(sel_data) > 0:
+                self.save_data_wfd(sel_data, RAmin, RAmax)
+
+        # return sel_data
 
         """
         for seas in self.seasons:
