@@ -242,7 +242,7 @@ class Select_filt:
             dd = self.load_process_RAs(vv[0], vv[1])
             # dfb = pd.concat((dfb, dd))
             if len(dd) > 0:
-                self.save_data_wfd(dd)
+                self.save_data_wfd(dd, vv[0], vv[1])
 
         """
         if len(dfb) == 0:
@@ -261,7 +261,7 @@ class Select_filt:
         else:
             return 0
 
-    def save_data_wfd(self, sel_data):
+    def save_data_wfd(self, sel_data, RAmin, RAmax):
         """
         Method to save WFD data
 
@@ -280,7 +280,8 @@ class Select_filt:
         for vv in years:
             idx = sel_data[self.timescale] == vv
             selb = sel_data[idx]
-            selb.to_hdf(self.get_name(vv), key='SN', append=True)
+            selb.to_hdf(self.get_name_wfd(vv, RAmin, RAmax),
+                        key='SN', append=True)
 
     def load_process_RAs(self, RAmin, RAmax):
         """
@@ -430,6 +431,28 @@ class Select_filt:
         outName = '{}/SN_{}_{}_{}_{}.hdf5'.format(
             self.outDir_full, self.fieldType,
             self.dbName, self.timescale, seas)
+
+        return outName
+
+    def get_name_wfd(self, seas, RAmin, RAmax):
+        """
+        Method to get the name of output files
+
+        Parameters
+        ----------
+        seas : int
+            season/year.
+
+        Returns
+        -------
+        outName : str
+            Output name.
+
+        """
+
+        outName = '{}/SN_{}_{}_{}_{}_{}_{}.hdf5'.format(
+            self.outDir_full, self.fieldType,
+            self.dbName, RAmin, RAmax, self.timescale, seas)
 
         return outName
 
