@@ -36,7 +36,7 @@ parser.add_option("--DD_list", type=str,
                   default='COSMOS,CDFS,EDFS,ELAISS1,XMM-LSS',
                   help="List of DDFs to process [%default]")
 parser.add_option("--lookup_ddf", type=str,
-                  default='input/simulation/lookup_ddf',
+                  default='input/simulation/lookup_ddf.csv',
                   help="Look up table for DDFs [%default]")
 
 
