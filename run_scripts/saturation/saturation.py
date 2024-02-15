@@ -247,6 +247,7 @@ class PixelPSFSeeing:
     def __init__(self, psf_type):
 
         self.seeings = np.arange(0.3, 2.6, 0.01)
+        #self.seeings = np.arange(0.5, 0.51, 0.01)
         self.psf_type = psf_type
         prefix = 'PSF_pixel'
 
@@ -380,9 +381,12 @@ psf_type = 'single_gauss'
 psf_type = 'moffat'
 PixelPSFSeeing(psf_type)
 
+PlotMaxFrac(psf_type=psf_type, title='')
+PlotPixel(0.5, 'moffat', 'xpixel', 0., 'ypixel', 0., 'xc',
+          'yc', 'Moffat', type_plot='contour')
+plt.show()
 print('done', time.time()-time_ref)
 print(test)
-# PlotMaxFrac()
 #PlotMaxFrac(psf_type=psf_type, title='Single gaussian profile')
 """
 PlotMaxFrac(psf_type=psf_type, title='')
