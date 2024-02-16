@@ -108,6 +108,7 @@ class Select_filt:
         """
 
         import os
+
         for seas in self.seasons:
             outName = self.get_name(seas)
 
@@ -456,7 +457,7 @@ class Select_filt:
 
         outName = '{}/SN_{}_{}_{}_{}_{}_{}.hdf5'.format(
             self.outDir_full, self.fieldType,
-            self.dbName, RAmin, RAmax, self.timescale, seas)
+            self.dbName, RAmin, RAmax, self.timescale, int(seas))
 
         return outName
 
