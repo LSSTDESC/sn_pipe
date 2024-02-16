@@ -5,7 +5,7 @@ Created on Mon Jul  3 12:26:32 2023
 
 @author: philippe.gris@clermont.in2p3.fr
 """
-from sn_analysis.sn_tools import load_complete_dbSimu
+from sn_analysis.sn_tools import load_complete_dbSimu, complete_df
 from sn_analysis.sn_calc_plot import select
 from sn_tools.sn_io import checkDir
 from sn_analysis.sn_selection import selection_criteria
@@ -315,6 +315,9 @@ class Select_filt:
         for fi in fis:
             print(fi)
             data = pd.read_hdf(fi)
+            # estimate sigma_mu...
+            if len(data) > 0:
+                data = complete_df(data, alpha=0.4, beta=3)
             #data = pd.concat((data, dd))
 
             # E(B-V) cut
