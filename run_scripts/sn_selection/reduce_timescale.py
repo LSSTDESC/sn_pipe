@@ -35,6 +35,7 @@ def process(dataDir, timescale):
             r = []
             for bb in fis:
                 r.append(bb)
+            print('allo man', fis)
             common_substring = os.path.commonprefix(
                 [fis[0], fis[1], fis[2], fis[4]])
 
