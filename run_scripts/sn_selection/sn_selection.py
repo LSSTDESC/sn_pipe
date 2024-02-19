@@ -327,9 +327,7 @@ class Select_filt:
             data = self.get_year(data)
 
             # apply selection on Data
-            print('before selection', len(data))
             sel_data = select(data, self.sellist)
-            print('before selection', len(sel_data))
 
             if len(sel_data) > 0:
                 self.save_data_wfd(sel_data, RAmin, RAmax)

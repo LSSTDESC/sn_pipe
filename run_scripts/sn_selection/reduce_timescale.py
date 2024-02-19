@@ -35,7 +35,6 @@ def process(dataDir, timescale):
             r = []
             for bb in fis:
                 r.append(bb)
-            print('allo man', fis)
             common_substring = os.path.commonprefix(
                 [fis[0], fis[1], fis[2], fis[4]])
 
@@ -103,5 +102,4 @@ dbNames = pd.read_csv(dbList, comment='#')
 for i, row in dbNames.iterrows():
     dbName = row['dbName']
     dataDir = '{}/{}/{}_{}'.format(dbDir, dbName, fieldType, zType)
-    print('reducing', dataDir)
     process(dataDir, timescale)
