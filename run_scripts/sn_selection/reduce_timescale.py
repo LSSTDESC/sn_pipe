@@ -101,5 +101,5 @@ dbNames = pd.read_csv(dbList, comment='#')
 # loop on dbs and process
 
 for dbName in dbNames:
-    dataDir = '{}/{}/{}_{}'.format(dbDir, dbName, zType, fieldType)
+    dataDir = '{}/{}/{}_{}'.format(dbDir, dbName, fieldType, zType)
     process(dataDir, timescale)
