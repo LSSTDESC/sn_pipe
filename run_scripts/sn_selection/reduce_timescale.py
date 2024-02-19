@@ -47,7 +47,7 @@ def process(dataDir, timescale):
                 df = pd.concat((df, dd))
             df.to_hdf(outName, key='sn')
 
-    clean_dir(fis)
+            clean_dir(fis)
 
 
 def clean_dir(fis):
