@@ -97,9 +97,9 @@ fieldType = opts.fieldType
 # load dbs
 dbNames = pd.read_csv(dbList, comment='#')
 
-
 # loop on dbs and process
 
-for dbName in dbNames:
+for i,row in dbNames.iterrows():
+    dbName = row['dbName']
     dataDir = '{}/{}/{}_{}'.format(dbDir, dbName, fieldType, zType)
     process(dataDir, timescale)
