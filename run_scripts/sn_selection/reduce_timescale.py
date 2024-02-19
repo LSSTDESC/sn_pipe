@@ -99,7 +99,8 @@ dbNames = pd.read_csv(dbList, comment='#')
 
 # loop on dbs and process
 
-for i,row in dbNames.iterrows():
+for i, row in dbNames.iterrows():
     dbName = row['dbName']
     dataDir = '{}/{}/{}_{}'.format(dbDir, dbName, fieldType, zType)
+    print('reducing', dataDir)
     process(dataDir, timescale)
