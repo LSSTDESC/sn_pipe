@@ -82,6 +82,8 @@ parser.add_option("--timescale", type=str,
                   help="Time scale for NSN estimation. [%default]")
 parser.add_option("--zType", type=str,
                   default='spectroz', help="z type (spectroz/photz)  [%default]")
+parser.add_option("--fieldType", type=str,
+                  default='WFD', help="field type (DDF/WFD)  [%default]")
 
 opts, args = parser.parse_args()
 
@@ -89,6 +91,7 @@ dbDir = opts.dbDir
 dbList = opts.dbList
 timescale = opts.timescale
 zType = opts.zType
+fieldType = opts.fieldType
 
 
 # load dbs
@@ -98,5 +101,5 @@ dbNames = pd.read_csv(dbList, comment='#')
 # loop on dbs and process
 
 for dbName in dbNames:
-    dataDir = '{}/{}/{}'.format(dbDir, dbName, zType)
+    dataDir = '{}/{}/{}_{}'.format(dbDir, dbName, zType, fieldType)
     process(dataDir, timescale)
