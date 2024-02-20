@@ -318,6 +318,7 @@ class Select_filt:
             # estimate sigma_mu...
             if len(data) > 0:
                 data = complete_df(data, alpha=0.4, beta=3)
+            data['field'] = 'WFD'
             #data = pd.concat((data, dd))
 
             # E(B-V) cut
