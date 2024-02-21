@@ -339,7 +339,7 @@ def plot_survey_features(data, norm_factor, config, nside, timescale):
     """
 
     field = 'COSMOS'
-    #dbName = 'baseline_v3.3_10yrs'
+    # dbName = 'baseline_v3.3_10yrs'
     dbName = 'DDF_DESC_0.80_WZ_0.07'
 
     plot_sn_features(data, field, dbName, timescale,
@@ -1097,7 +1097,7 @@ class Plot_nsn_vs:
             self.Mollview_sum(sel, addleg='{} \n {} {}'.format(dbName, what, int(year)),
                               saveName=saveName)
 
-        plt.show()
+        # plt.show()
 
     def Mollview_sum(self, data, var='nsn',
                      legvar='N$_{SN}$', addleg='', saveName=''):
@@ -1353,7 +1353,8 @@ def get_val(var):
 
 
 def process_WFD_OS(conf_df, dataType, dbDir_WFD, runType,
-                   timescale_file, timeslots, norm_factor, nside, outName):
+                   timescale_file, timeslots, norm_factor, nside, outName,
+                   plot_moll=False):
 
     OS_WFDs = conf_df['dbName_WFD'].unique()
     wfd = pd.DataFrame()
@@ -1363,25 +1364,30 @@ def process_WFD_OS(conf_df, dataType, dbDir_WFD, runType,
         tt = 'load_{}(\'{}\',\'{}\',\'{}\',\'{}\',{})'.format(
             dataType, dbDir_WFD, OS_WFD, runType,
             timescale_file, timeslots)
-        print('allo', tt)
         wfda = eval(tt)
         idx = wfda['ebvofMW'] < 0.25
         wfda = wfda[idx]
         # plot mollview here
-        #mypl = Plot_nsn_vs(wfda, norm_factor, nside=64)
-        #mypl.plot_nsn_mollview(what=timescale_file, dbName=OS_WFD)
+        if plot_moll:
+            mypl = Plot_nsn_vs(wfda, norm_factor, nside=64)
+            mypl.plot_nsn_mollview(what=timescale_file, dbName=OS_WFD)
         idc = conf_df['dbName_WFD'] == OS_WFD
         selp = conf_df[idc]
         ls = selp['ls'].values[0]
         marker = selp['marker'].values[0]
         color = selp['color'].values[0]
+        """
         plot_nsn_versus_two(wfda, xvar='z', xleg='z', logy=False,
                             bins=np.arange(0.005, 0.805, 0.05),
                             norm_factor=norm_factor,
                             cumul=False, xlim=[0.01, 0.8], color=color,
                             marker=marker, fig=fig, ax=ax, cumnorm=True)
+        """
+        Plot_density(wfda, timescale_file, OS_WFD)
+
         # wfd = pd.concat((wfd, wfda))
         # get some stat
+
         wfda = wfda.groupby(['dbName', timescale_file]).apply(
             lambda x: get_stat(x, norm_factor)).reset_index()
         wfd = pd.concat((wfd, wfda))
@@ -1394,12 +1400,13 @@ def process_WFD_OS(conf_df, dataType, dbDir_WFD, runType,
 
     # wfd.to_csv(outName, index=False)
 
+    print('out')
     return wfd
 
 
 def process_WFD(conf_df, dataType, dbDir_WFD, runType,
                 timescale_file, timeslots, norm_factor,
-                nside=64, timescale='season'):
+                nside=64, timescale='season', plot_moll=False):
     """
     Function to process WFD data
 
@@ -1427,8 +1434,10 @@ def process_WFD(conf_df, dataType, dbDir_WFD, runType,
     outName = 'nsn_WFD_v3_test.csv'
 
     wfd = process_WFD_OS(conf_df, dataType, dbDir_WFD, runType,
-                         timescale_file, timeslots, norm_factor, nside, outName)
+                         timescale_file, timeslots, norm_factor,
+                         nside, outName, plot_moll=plot_moll)
 
+    print(test)
     plot_summary_wfd(wfd, conf_df, timescale_file)
 
     """
@@ -1455,6 +1464,209 @@ def process_WFD(conf_df, dataType, dbDir_WFD, runType,
 
     print(len(wfd))
     """
+
+
+class Plot_density:
+    def __init__(self, data, timescale, dbName='', norm_factor=10, nside=64):
+        """
+        Class to plot SNe Ia density vs time
+
+        Parameters
+        ----------
+        data : pandas df
+            Data to process.
+        timescale : str
+            Time scale (year/season).
+        dbName : str, optional
+            OS name. The default is ''.
+        norm_factor : int, optional
+            Normalization factor. The default is 10.
+        nside : int, optional
+            healpix nside parameter. The default is 64.
+
+        Returns
+        -------
+        None.
+
+        """
+
+        self.data = data
+        self.timescale = timescale
+        self.dbName = dbName
+        self.norm_factor = norm_factor
+        self.nside = nside
+        import healpy as hp
+        self.pixSize = hp.nside2pixarea(self.nside, degrees=True)
+
+        self.plot_hist()
+        # self.plot()
+
+    def plot_hist(self):
+        """
+        Method to plot histos of SNe Ia density (per deg2)
+
+        Returns
+        -------
+        None.
+
+        """
+
+        nsn = self.data.groupby([self.timescale]).apply(
+            lambda x: self.get_nsn(x)).reset_index()
+
+        #fig, ax = plt.subplots(figsize=(14, 9))
+
+        seasons = nsn[self.timescale].unique()
+
+        for seas in seasons:
+            fig, ax = plt.subplots()
+            fig.suptitle('season {}'.format(seas))
+            idx = nsn[self.timescale] == seas
+            seldata = nsn[idx]
+            ax.hist(seldata['size'], histtype='step', bins=50)
+
+    def plot(self):
+        """
+        Method to plot
+
+        Returns
+        -------
+        None.
+
+        """
+
+        fig, ax = plt.subplots(figsize=(14, 9))
+        fig.suptitle(r'{}'.format(self.dbName))
+
+        config = ['a', 'b']
+        sigma_mus = [1.e6, 0.12]
+        sigmas = dict(zip(config, sigma_mus))
+        ls = dict(zip(config, ['solid', 'dashed']))
+
+        for key, vals in sigmas.items():
+            label = None
+            if key == 'b':
+                label = '$\sigma_{\mu}\leq$ 0.12'
+            nsn_dens = self.get_density(sigma_mu=vals)
+            self.plot_density(nsn_dens, what='area',
+                              ls=ls[key], label=label, fig=fig, ax=ax)
+
+        ax.set_xlim([1, 10])
+        ax.set_xlabel(r'{}'.format(self.timescale), fontweight='bold')
+        ax.set_ylabel(r'$N_{SN}/deg^{2}$')
+        ax.legend(loc='upper left', bbox_to_anchor=(
+            0.1, 1.1), ncol=3, fontsize=15, frameon=False)
+        ax.grid(visible=True)
+
+    def get_density(self, sigma_mu=0.12):
+        """
+        Method to estimate density
+
+        Parameters
+        ----------
+        sigma_mu : float, optional
+            sigma_mu selection criteria. The default is 0.12.
+
+        Returns
+        -------
+        dens : pandas df
+            Density vs time.
+
+        """
+
+        idx = self.data['sigma_mu'] <= sigma_mu
+        data = pd.DataFrame(self.data[idx])
+
+        # estimate densities here
+        dens = data.groupby([self.timescale]).apply(
+            lambda x: self.get_density_season(x)).reset_index()
+
+        return dens
+
+    def get_nsn(self, grp):
+        """
+        MEthod to estimate the number of SNe IA/pixel/deg2
+
+        Parameters
+        ----------
+        grp : pandas df
+            Data to process.
+
+        Returns
+        -------
+        nsn : pandas df
+            SNe Ia/deg2/pixel.
+
+        """
+
+        nsn = grp.groupby(['healpixID']).size().to_frame(
+            'size').reset_index()
+        nsn['size'] /= self.pixSize*self.norm_factor
+
+        return nsn
+
+    def get_density_season(self, grp):
+        """
+        Method to estimate density for grp
+
+        Parameters
+        ----------
+        grp : pandas df group
+            Data to process.
+
+        Returns
+        -------
+        pandas df
+            SNe Ia density.
+
+        """
+        nsn = grp.groupby(['healpixID']).size().to_frame(
+            'size').reset_index()
+
+        area = len(nsn)*self.pixSize
+        nsn_std = nsn['size'].std()
+        nsn_mean = nsn['size'].mean()
+        print(nsn_mean, nsn_std)
+        idx = np.abs(nsn['size']-nsn_mean) <= nsn_std
+        nsn = nsn[idx]
+        dens = nsn['size'].median()/self.pixSize
+        dens_mean = nsn['size'].sum()/area
+
+        return pd.DataFrame({'density': [dens/self.norm_factor],
+                             'density_mean': [dens_mean/self.norm_factor],
+                             'area': [area]})
+
+    def plot_density(self, nsn_dens, what='density_mean',
+                     ls='solid', label=None, fig=None, ax=None):
+        """
+        Method to plot density
+
+        Parameters
+        ----------
+        nsn_dens : pandas df
+            Data to plot.
+        what: str, optional
+           var to plot. The default is density_mean
+        ls : str, optional
+            Line style. The default is 'solid'.
+        label : str, optional
+            Plot label. The default is None.
+        fig : matplotlib figure, optional
+            Figure for the plot. The default is None.
+        ax : matplotlib axis, optional
+            Axis for the plot. The default is None.
+
+        Returns
+        -------
+        None.
+
+        """
+
+        if fig is None:
+            fig, ax = plt.subplots(figsize=(14, 9))
+
+        ax.plot(nsn_dens[self.timescale], nsn_dens[what],
+                color='k', linestyle=ls, label=label)
 
 
 def plot_summary_wfd(wfd, conf_df, timescale='season', cumul=False):
@@ -1516,6 +1728,8 @@ def plot_summary_wfd(wfd, conf_df, timescale='season', cumul=False):
         ax.plot([xmin, xmax], [nsn, nsn],
                 color='dimgrey', lw=2, linestyle='solid')
         ax.text(5, 0.32e6, '300k SNe Ia', color='dimgrey', fontsize=12)
+
+    print('here showing')
     plt.show()
 
 
@@ -1619,6 +1833,9 @@ parser.add_option('--timeslots', type=str,
 parser.add_option('--dataType', type=str,
                   default='DataFrame',
                   help='data type [%default]')
+parser.add_option('--plot_Mollweid', type=int,
+                  default=0,
+                  help='Mollweid view plot for WFD [%default]')
 
 
 opts, args = parser.parse_args()
@@ -1633,6 +1850,7 @@ config = opts.config
 timeslots = opts.timeslots
 timescale_file = opts.timescale_file
 timeslots = get_val(timeslots)
+plot_moll = opts.plot_Mollweid
 
 dataType = opts.dataType
 
@@ -1660,7 +1878,8 @@ Plot_nsn_vs(wfd, norm_factor_DD, bins=np.arange(
 if dbDir_WFD != '':
 
     process_WFD(conf_df, dataType, dbDir_WFD, runType,
-                timescale_file, timeslots, norm_factor_WFD, nside=64)
+                timescale_file, timeslots, norm_factor_WFD,
+                nside=64, plot_moll=plot_moll)
 
 # print(test)
 
