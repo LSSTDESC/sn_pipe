@@ -256,7 +256,7 @@ resfi = pd.DataFrame()
 cl = Fit_seasons(fitconfig, dataDir_DD, dbName_DD,
                  dataDir_WFD, dbName_WFD, dictsel, survey,
                  priors, host_effi, footprints, frac_WFD_low_sigmaC,
-                 max_sigmaC, test_mode, plot_test, lowz_optimize,
+                 max_sigmaC, test_mode, plot_test,
                  sigmaInt, surveyDir, timescale, outName,
                  fields_for_stat=fields_for_stat,
                  seasons=seasons_cosmo, nrandom=nrandom, nproc=nproc)
