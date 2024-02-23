@@ -151,6 +151,9 @@ parser.add_option('--timescale', type=str, default='year',
 parser.add_option('--fields_for_stat', type=str,
                   default='COSMOS,XMM-LSS,ELAISS1,CDFS,EDFSa,EDFSb',
                   help='field list for stat (fit) [%default]')
+parser.add_option('--simu_norm_factor', type=str,
+                  default='input/cosmology/simuinfo/normfactor.csv',
+                  help='norm factors for simu [%default]')
 parser.add_option('--seasons_cosmo', type=str,
                   default='1-10',
                   help='Seasons to estimate cosmology params [%default]')
@@ -160,6 +163,7 @@ parser.add_option('--nrandom', type=int,
 parser.add_option('--nproc', type=int,
                   default=8,
                   help='number of procs to use [%default]')
+
 
 opts, args = parser.parse_args()
 
@@ -181,6 +185,7 @@ sigmaInt = opts.sigmaInt
 surveyDir = opts.surveyDir
 timescale = opts.timescale
 fields_for_stat = opts.fields_for_stat.split(',')
+simu_norm_factor = pd.read_csv(opts.simu_norm_factor, comment='#')
 seasons_cosmo = opts.seasons_cosmo
 nrandom = opts.nrandom
 nproc = opts.nproc
@@ -259,5 +264,6 @@ cl = Fit_seasons(fitconfig, dataDir_DD, dbName_DD,
                  max_sigmaC, test_mode, plot_test,
                  sigmaInt, surveyDir, timescale, outName,
                  fields_for_stat=fields_for_stat,
+                 simu_norm_factor=simu_norm_factor,
                  seasons=seasons_cosmo, nrandom=nrandom, nproc=nproc)
 res = cl()
