@@ -21,9 +21,9 @@ parser.add_option("--survey", type=str,
 parser.add_option("--tag", type=str,
                   default='-1.0',
                   help="tag for job name [%default]")
-parser.add_option("--frac_WFD_low_sigmaC", type=float,
-                  default=0.3,
-                  help="fraction of SNe Ia WFD low sigmaC  [%default]")
+parser.add_option("--low_z_optimize", type=int,
+                  default=0,
+                  help="to optimize low-z sample  [%default]")
 parser.add_option('--timescale', type=str, default='year',
                   help='timescale for the cosmology (year or season)[%default]')
 parser.add_option('--seasons_cosmo', type=str,
@@ -42,7 +42,7 @@ inputDir_WFD = opts.inputDir_WFD
 # dbName_WFD = opts.dbName_WFD
 survey = opts.survey
 tag = opts.tag
-frac_WFD_low_sigmaC = opts.frac_WFD_low_sigmaC
+low_z_optimize = opts.low_z_optimize
 timescale = opts.timescale
 seasons_cosmo = opts.seasons_cosmo
 nrandom = opts.nrandom
@@ -50,6 +50,13 @@ nrandom = opts.nrandom
 fis = pd.read_csv(dbList, comment='#')
 
 # loop on files and create batches
+
+seasons_cosmo = []
+for i in range(2,12):
+    dd = list(range(1,i))
+    seasons_cosmo.append(dd)
+
+
 
 script = 'run_scripts/cosmology/cosmology.py'
 for i, row in fis.iterrows():
@@ -64,9 +71,11 @@ for i, row in fis.iterrows():
     params['dbName_WFD'] = dbName_WFD
     params['outDir'] = outDir
     params['survey'] = survey
-    params['frac_WFD_low_sigmaC'] = frac_WFD_low_sigmaC
+    params['low_z_optimize'] = low_z_optimize
     params['timescale'] = timescale
-    params['seasons_cosmo'] = seasons_cosmo
     params['nrandom'] = nrandom
-    mybatch.add_batch(script, params)
+    for seas in seasons_cosmo:
+        params['seasons_cosmo'] = ','.join(list(map(str,seas)))
+
+        mybatch.add_batch(script, params)
     mybatch.go_batch()
