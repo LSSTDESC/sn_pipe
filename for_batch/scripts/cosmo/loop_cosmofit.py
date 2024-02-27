@@ -56,6 +56,7 @@ for i in range(2,12):
     dd = list(range(1,i))
     seasons_cosmo.append(dd)
 
+seasons_cosmo=list(range(1,11))
 
 
 script = 'run_scripts/cosmology/cosmology.py'
@@ -74,8 +75,7 @@ for i, row in fis.iterrows():
     params['low_z_optimize'] = low_z_optimize
     params['timescale'] = timescale
     params['nrandom'] = nrandom
-    for seas in seasons_cosmo:
-        params['seasons_cosmo'] = ','.join(list(map(str,seas)))
+    params['seasons_cosmo'] = ','.join(list(map(str,seasons_cosmo)))
 
-        mybatch.add_batch(script, params)
+    mybatch.add_batch(script, params)
     mybatch.go_batch()
