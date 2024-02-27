@@ -9,43 +9,25 @@ Created on Mon Feb 26 16:46:59 2024
 import pandas as pd
 import glob
 import matplotlib.pyplot as plt
-
-
-def load_data(theDir, dbName, timescale, spectro_config):
-
-    fName = '{}/cosmo_{}*.hdf5'.format(theDir, dbName)
-    fis = glob.glob(fName)
-
-    df = pd.DataFrame()
-
-    for fi in fis:
-        dd = pd.read_hdf(fi)
-        df = pd.concat((df, dd))
-
-    print(df.columns)
-    dfb = df.groupby([timescale])['WFD_TiDES',
-                                  'all_Fields'].mean().reset_index()
-
-    dfb['dbName'] = dbName
-    dfb['spectro_config'] = spectro_config
-
-    return dfb
+from sn_analysis.sn_tools import load_cosmo_data
 
 
 theDir = '../cosmo_fit_WFD_TiDES'
+theDir = '../cosmo_fit_WFD_sigmaC_test_lowz'
 
 dbName = 'baseline_v3.0_10yrs'
+dbName = 'DDF_DESC_0.75_co_0.07_1_10'
 
-timescale = 'year'
+timescale = 'season'
 
 spectro_config = theDir.split('cosmo_fit_WFD_')[-1]
 
-df = load_data(theDir, dbName, timescale, spectro_config)
+df = load_cosmo_data(theDir, dbName, timescale, spectro_config)
 
 print(df)
 
 fig, ax = plt.subplots()
 
-ax.plot(df[timescale], df['all_Fields'])
+ax.errorbar(df[timescale], df['MoM_mean'], yerr=df['MoM_std'])
 
 plt.show()
