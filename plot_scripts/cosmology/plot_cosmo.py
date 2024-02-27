@@ -79,7 +79,7 @@ def load_data_old(dbDir, config):
     return df
 
 
-def plot_cosmo_summary(data, udfs, dfs, comment_on_plot):
+def plot_cosmo_summary(data, udfs, dfs, comment_on_plot, fill_between=False):
 
     grpCol = [timescale, 'dbName_DD', 'prior']
     # resdf = process_OS(data, grpCol)
@@ -123,7 +123,8 @@ def plot_cosmo_summary(data, udfs, dfs, comment_on_plot):
                        legx=timescale, vary=vary,
                        legy=leg[vary], prior=prior,
                        figtitle=dd[prior], dbNorm='',
-                       comment_on_plot=comment_on_plot)
+                       comment_on_plot=comment_on_plot,
+                       fill_between=fill_between)
 
     """
     vvarsb = ['DDF', 'UD', 'DD', 'WFD']
@@ -283,9 +284,11 @@ parser.add_option('--DFs', type=str,
                   default='CDFS,EDFS,ELAISS1',
                   help='Deep fields [%default]')
 parser.add_option('--comment_on_plot', type=str,
-                  default='',
+                  default='Host spectro-z only',
                   help='comment for the SMoM plot [%default]')
-
+parser.add_option('--fill_between', type=int,
+                  default=0,
+                  help='to fill +-1 sigma area with yellow [%default]')
 
 opts, args = parser.parse_args()
 
@@ -295,6 +298,7 @@ timescale = opts.timescale
 udfs = opts.UDFs.split(',')
 dfs = opts.DFs.split(',')
 comment_on_plot = opts.comment_on_plot
+fill_between = opts.fill_between
 
 config = pd.read_csv(dbList, comment='#')
 
@@ -304,4 +308,4 @@ print(data.columns)
 
 #plot_pulls(data, timescale, config)
 # cosmo summary plot
-plot_cosmo_summary(data, udfs, dfs, comment_on_plot)
+plot_cosmo_summary(data, udfs, dfs, comment_on_plot, fill_between)
