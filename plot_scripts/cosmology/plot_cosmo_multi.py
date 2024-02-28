@@ -39,9 +39,11 @@ for conf in configs:
 
     #xnew, ynew = get_spline(tt, timescale, 'MoM_mean')
 
-    ax.plot(tt[timescale], tt['MoM_mean'], linestyle=ls[conf], color='k')
+    ax.plot(tt[timescale], tt['MoM_mean'],
+            linestyle=ls[conf], color='k', label=conf)
 
 ax.grid(visible=True)
-ax.set_xlabel(r'{}'.format(timescale))
-ax.set_ylabel(r'SMoM')
+ax.set_xlabel(r'{}'.format(timescale), fontweight='bold')
+ax.set_ylabel(r'SMoM', fontweight='bold')
+ax.legend()
 plt.show()
