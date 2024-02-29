@@ -10,6 +10,7 @@ import pandas as pd
 from sn_plotter_cosmology import plt
 import numpy as np
 from sn_plotter_cosmology.cosmoplot import Process_OS, plot_allOS
+from sn_analysis.sn_tools import load_cosmo_data
 from optparse import OptionParser
 import glob
 
@@ -80,6 +81,27 @@ def load_data_old(dbDir, config):
 
 
 def plot_cosmo_summary(data, udfs, dfs, comment_on_plot, fill_between=False):
+    """
+    Function to plot summary cosmo
+
+    Parameters
+    ----------
+    data : pandas df
+        Data to plot.
+    udfs : list(str)
+        List of ultradeep fields.
+    dfs : list(str)
+        List of deep fields (DF).
+    comment_on_plot :str 
+        To add a comment on the plot
+    fill_between : bool, optional
+        To fill in area +-1sigma. The default is False.
+
+    Returns
+    -------
+    None.
+
+    """
 
     grpCol = [timescale, 'dbName_DD', 'prior']
     # resdf = process_OS(data, grpCol)
@@ -267,10 +289,29 @@ def plot_pull(df, config, what='w0',
                  ncol=1, fontsize=15, frameon=False)
 
 
+# def plot(dbDir,dbList, timescale, config, vars=[['MoM', 'nsn_z_0.8']], comment_plot=''):
+
+
+def process_cosmo(config, cols_group,
+                  cols=['MoM', 'WFD_TiDES', 'all_Fields', 'nsn_z_0.8']):
+
+    df_tot = pd.DataFrame()
+    for i, row in config.iterrows():
+        dbName = row['dbName']
+        dbDir = row['dbDir']
+        spectro_config = row['spectro_config']
+        df = load_cosmo_data(dbDir, dbName, cols_group,
+                             spectro_config, cols=cols)
+        df_tot = pd.concat((df_tot, df))
+    return df_tot
+
+
 parser = OptionParser(description='Script to analyze SN prod')
 
+"""
 parser.add_option('--dbDir', type=str, default='../cosmo_fit',
                   help='OS location dir[%default]')
+"""
 parser.add_option('--dbList', type=str,
                   default='input/DESC_cohesive_strategy/config_ana.csv',
                   help='OS name[%default]')
@@ -292,7 +333,7 @@ parser.add_option('--fill_between', type=int,
 
 opts, args = parser.parse_args()
 
-dbDir = opts.dbDir
+# dbDir = opts.dbDir
 dbList = opts.dbList
 timescale = opts.timescale
 udfs = opts.UDFs.split(',')
@@ -301,11 +342,52 @@ comment_on_plot = opts.comment_on_plot
 fill_between = opts.fill_between
 
 config = pd.read_csv(dbList, comment='#')
-
+"""
+dbDir = '../cosmo_fit_WFD_paper_spectroz_nolowzopti'
 data = load_data(dbDir, config)
 print(data.columns)
+print(test)
+"""
+
 # data['dbName_DD'] += '_{}'.format(budget)
 
 #plot_pulls(data, timescale, config)
 # cosmo summary plot
-plot_cosmo_summary(data, udfs, dfs, comment_on_plot, fill_between)
+#plot_cosmo_summary(data, udfs, dfs, comment_on_plot, fill_between)
+cols = ['MoM', 'WFD_TiDES', 'all_Fields',
+        'nsn_z_0.8', 'WFD_DESI1', 'WFD_DESI2']
+data = process_cosmo(
+    config, [timescale, 'prior', 'dbName_DD', 'dbName_WFD'], cols=cols)
+print(data)
+
+priors = ['prior']
+
+dd = dict(zip(priors, ['']))
+
+for prior in priors:
+    plot_allOS(data, config, varx=timescale,
+               legx=timescale, vary='MoM_mean',
+               legy='$SMoM$', vary_std='MoM_std', prior=prior,
+               figtitle=dd[prior], dbNorm='',
+               comment_on_plot=comment_on_plot,
+               fill_between=fill_between)
+    plot_allOS(data, config, varx='nsn_z_0.8_mean',
+               legx='$N_{SN}^{z\geq0.8}$', vary='MoM_mean',
+               legy='$SMoM$', vary_std='MoM_std', prior=prior,
+               figtitle=dd[prior], dbNorm='',
+               comment_on_plot=comment_on_plot,
+               fill_between=fill_between)
+    plot_allOS(data, config, varx=timescale,
+               legx=timescale, vary='WFD_TiDES_mean',
+               legy='$N_{SN}^{TiDES}$', vary_std='WFD_TiDES_std', prior=prior,
+               figtitle=dd[prior], dbNorm='',
+               comment_on_plot=comment_on_plot,
+               fill_between=fill_between)
+    plot_allOS(data, config, varx=timescale,
+               legx=timescale, vary='WFD_DESI1_mean',
+               legy='$N_{SN}^{DESI}$', vary_std='WFD_DESI1_std', prior=prior,
+               figtitle=dd[prior], dbNorm='',
+               comment_on_plot=comment_on_plot,
+               fill_between=fill_between)
+plt.show()
+#plot(data, timescale, config)
