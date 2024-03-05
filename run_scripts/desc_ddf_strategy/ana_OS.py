@@ -119,7 +119,7 @@ corresp_dd_names = dict(zip(init_dd, new_dd))
 
 # this is to plot the budget, PZ req and WL req
 
-if 'budget' in plots or 'PZ_req' in plots or 'WL_req' in plots:
+if 'budget' in plots or 'PZ_req' in plots or 'WL_req' in plots or 'PZ_WL_reqs':
 
     pp = Anaplot_OS(dbDir, config_db, Nvisits_LSST, budget, outDir=outDir,
                     pz_requirement=pz_requirement,
@@ -132,6 +132,8 @@ if 'budget' in plots or 'PZ_req' in plots or 'WL_req' in plots:
         pp.plot_m5_PZ()
     if 'WL_req' in plots:
         pp.plot_Nvisits_WL()
+    if 'PZ_WL_reqs' in plots:
+        pp.plot_m5_Nvisits()
 
 # pp.plot_cadence_mean()
 
