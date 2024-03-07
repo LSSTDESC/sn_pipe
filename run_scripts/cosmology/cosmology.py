@@ -124,9 +124,9 @@ parser.add_option("--hosteffiDir", type=str,
 parser.add_option("--footprintDir", type=str,
                   default='input/cosmology/footprints',
                   help="footprint dir [%default]")
-parser.add_option("--max_sigmaC", type=float,
-                  default=0.04,
-                  help="Max sigmaC defining low sigmaC sample [%default]")
+parser.add_option("--max_sigma_mu", type=float,
+                  default=0.12,
+                  help="Max sigma_mu defining low sigma_mu sample [%default]")
 parser.add_option("--test_mode", type=int,
                   default=0,
                   help="To run the test mode of the program [%default]")
@@ -173,7 +173,7 @@ selconfig = opts.selconfig
 outDir = opts.outDir
 survey_file = opts.survey
 host_effi_dir = opts.hosteffiDir
-max_sigmaC = opts.max_sigmaC
+max_sigma_mu = opts.max_sigma_mu
 test_mode = opts.test_mode
 plot_test = opts.plot_test
 low_z_optimize = opts.low_z_optimize
@@ -257,7 +257,7 @@ resfi = pd.DataFrame()
 cl = Fit_seasons(fitconfig, dataDir_DD, dbName_DD,
                  dataDir_WFD, dbName_WFD, dictsel, survey,
                  priors, host_effi, footprints, low_z_optimize,
-                 max_sigmaC, test_mode, plot_test,
+                 max_sigma_mu, test_mode, plot_test,
                  sigmaInt, surveyDir, timescale, outName,
                  fields_for_stat=fields_for_stat,
                  simu_norm_factor=simu_norm_factor,
