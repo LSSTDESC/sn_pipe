@@ -1355,6 +1355,38 @@ def get_val(var):
 def process_WFD_OS(conf_df, dataType, dbDir_WFD, runType,
                    timescale_file, timeslots, norm_factor, nside, outName,
                    plot_moll=False):
+    """
+    Function to process WFD data
+
+    Parameters
+    ----------
+    conf_df : pandas df
+        config file.
+    dataType : str
+        Data type.
+    dbDir_WFD : str
+        Data dir.
+    runType : str
+        Run type.
+    timescale_file : str
+        Time scale (year/season)
+    timeslots : list(int)
+        Time slots
+    norm_factor : float
+        Normalization factor
+    nside : int
+        Healpix nside parameter.
+    outName : str
+        Output name.
+    plot_moll : bool, optional
+        To plot Mollview. The default is False.
+
+    Returns
+    -------
+    wfd : pandas df
+        Output data.
+
+    """
 
     OS_WFDs = conf_df['dbName_WFD'].unique()
     wfd = pd.DataFrame()
@@ -1383,7 +1415,8 @@ def process_WFD_OS(conf_df, dataType, dbDir_WFD, runType,
                             cumul=False, xlim=[0.01, 0.8], color=color,
                             marker=marker, fig=fig, ax=ax, cumnorm=True)
         """
-        Plot_density(wfda, timescale_file, OS_WFD)
+        # density plot here
+        # Plot_density(wfda, timescale_file, OS_WFD)
 
         # wfd = pd.concat((wfd, wfda))
         # get some stat
@@ -1437,7 +1470,6 @@ def process_WFD(conf_df, dataType, dbDir_WFD, runType,
                          timescale_file, timeslots, norm_factor,
                          nside, outName, plot_moll=plot_moll)
 
-    print(test)
     plot_summary_wfd(wfd, conf_df, timescale_file)
 
     """
