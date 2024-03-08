@@ -15,7 +15,7 @@ from optparse import OptionParser
 import glob
 
 
-def load_data(dbDir, config):
+def load_data_deprecated(dbDir, config):
     """
     Method to load data
 
@@ -43,7 +43,6 @@ def load_data(dbDir, config):
             dfa = pd.read_hdf(fi)
             # print(dfa)
             dfa = dfa.replace([np.inf, -np.inf, np.nan], 0)
-
             df = pd.concat((df, dfa))
 
     return df
@@ -354,8 +353,13 @@ print(test)
 #plot_pulls(data, timescale, config)
 # cosmo summary plot
 #plot_cosmo_summary(data, udfs, dfs, comment_on_plot, fill_between)
+
 cols = ['MoM', 'WFD_TiDES', 'all_Fields',
         'nsn_z_0.8', 'WFD_DESI1', 'WFD_DESI2']
+"""
+cols = ['MoM', 'all_Fields',
+        'nsn_z_0.8', 'nsn_z_0.8_sigma_mu', 'nsn_rat_highz']
+"""
 data = process_cosmo(
     config, [timescale, 'prior', 'dbName_DD', 'dbName_WFD'], cols=cols)
 print(data)
@@ -364,6 +368,8 @@ priors = ['prior']
 
 dd = dict(zip(priors, ['']))
 
+print(data.columns)
+
 for prior in priors:
     plot_allOS(data, config, varx=timescale,
                legx=timescale, vary='MoM_mean',
@@ -371,12 +377,28 @@ for prior in priors:
                figtitle=dd[prior], dbNorm='',
                comment_on_plot=comment_on_plot,
                fill_between=fill_between)
-    plot_allOS(data, config, varx='nsn_z_0.8_mean',
-               legx='$N_{SN}^{z\geq0.8}$', vary='MoM_mean',
-               legy='$SMoM$', vary_std='MoM_std', prior=prior,
+    plot_allOS(data, config, varx=timescale, legx=timescale,
+               vary='nsn_z_0.8_mean',
+               legy='$N_{SN}^{z\geq0.8}$', vary_std='nsn_z_0.8_std', prior=prior,
                figtitle=dd[prior], dbNorm='',
                comment_on_plot=comment_on_plot,
                fill_between=fill_between)
+    """
+    plot_allOS(data, config, varx=timescale, legx=timescale,
+               vary='nsn_rat_highz_mean',
+               legy='$N_{SN}^{z\geq0.8,\sigma_{\mu}\leq0.12}$', vary_std='nsn_rat_highz_std', prior=prior,
+               figtitle=dd[prior], dbNorm='',
+               comment_on_plot=comment_on_plot,
+               fill_between=fill_between)
+    """
+    """
+    plot_allOS(data, config, varx=timescale, legx=timescale,
+               vary='nsn_z_0.8_sigma_mu_mean',
+               legy='$N_{SN}^{z\geq0.8,\sigma_{\mu}\leq0.12}$', vary_std='nsn_z_0.8_sigma_mu_std', prior=prior,
+               figtitle=dd[prior], dbNorm='',
+               comment_on_plot=comment_on_plot,
+               fill_between=fill_between)
+
     plot_allOS(data, config, varx=timescale,
                legx=timescale, vary='WFD_TiDES_mean',
                legy='$N_{SN}^{TiDES}$', vary_std='WFD_TiDES_std', prior=prior,
@@ -389,5 +411,6 @@ for prior in priors:
                figtitle=dd[prior], dbNorm='',
                comment_on_plot=comment_on_plot,
                fill_between=fill_between)
+    """
 plt.show()
 #plot(data, timescale, config)
