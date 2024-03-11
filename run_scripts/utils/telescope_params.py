@@ -15,6 +15,8 @@ parser.add_option('--tag', type=str, default='1.9',
                   help='tag version of the throughputs [%default]')
 parser.add_option('--airmass', type=float, default=1.2,
                   help='airmass value [%default]')
+parser.add_option('--gain', type=float, default=2.5,
+                  help='electronic gain [%default]')
 opts, args = parser.parse_args()
 
 # config = dict(zip(['tag','label'],[['1.5','1.9'],['Al_Ag_Al','Ag_Ag_Ag']]))
@@ -25,6 +27,7 @@ atmosDir = opts.atmosDir
 airmass = opts.airmass
 tag = opts.tag
 aerosol = 1
+gain = opts.gain
 
 telb = '{}_{}'.format(tel_dir, tag)
 through_dir = '{}/{}'.format(telb, throughputsDir)
@@ -33,7 +36,7 @@ telescope = get_telescope(tel_dir=telb,
                           through_dir=through_dir,
                           atmos_dir=atmos_dir,
                           tag=tag, load_components=True,
-                          airmass=airmass, aerosol=aerosol)
+                          airmass=airmass, aerosol=aerosol, gain=gain)
 
 
 bands = 'ugrizy'
