@@ -293,8 +293,27 @@ def plot_pull(df, config, what='w0',
 
 def process_cosmo(config, cols_group,
                   cols=['MoM', 'WFD_TiDES', 'all_Fields', 'nsn_z_0.8']):
+    """
+    Function to process cosmo files
+
+    Parameters
+    ----------
+    config : pandas df
+        configuration params.
+    cols_group : list(str)
+        List of cols for groupby.
+    cols : list(str), optional
+        Observable to process. The default is ['MoM', 'WFD_TiDES', 'all_Fields', 'nsn_z_0.8'].
+
+    Returns
+    -------
+    df_tot : pandas df
+        Processed data.
+
+    """
 
     df_tot = pd.DataFrame()
+
     for i, row in config.iterrows():
         dbName = row['dbName']
         dbDir = row['dbDir']
@@ -302,6 +321,8 @@ def process_cosmo(config, cols_group,
         df = load_cosmo_data(dbDir, dbName, cols_group,
                              spectro_config, cols=cols)
         df_tot = pd.concat((df_tot, df))
+        df_tot['dbNamePlot'] = row['dbNamePlot']
+
     return df_tot
 
 
@@ -356,6 +377,8 @@ print(test)
 
 cols = ['MoM', 'WFD_TiDES', 'all_Fields',
         'nsn_z_0.8', 'WFD_DESI1', 'WFD_DESI2']
+cols = ['MoM', 'WFD_TiDES', 'all_Fields',
+        'WFD_DESI1', 'WFD_DESI2']
 """
 cols = ['MoM', 'all_Fields',
         'nsn_z_0.8', 'nsn_z_0.8_sigma_mu', 'nsn_rat_highz']
@@ -377,12 +400,14 @@ for prior in priors:
                figtitle=dd[prior], dbNorm='',
                comment_on_plot=comment_on_plot,
                fill_between=fill_between)
+    """
     plot_allOS(data, config, varx=timescale, legx=timescale,
                vary='nsn_z_0.8_mean',
                legy='$N_{SN}^{z\geq0.8}$', vary_std='nsn_z_0.8_std', prior=prior,
                figtitle=dd[prior], dbNorm='',
                comment_on_plot=comment_on_plot,
                fill_between=fill_between)
+    """
     """
     plot_allOS(data, config, varx=timescale, legx=timescale,
                vary='nsn_rat_highz_mean',

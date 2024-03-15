@@ -149,7 +149,9 @@ if 'cadence' in plots:
     # dbNames = ['DDF_SCOC_pII_0.07']
     # dbNames = ['DDF_Univ_SN_0.07']
     for dbName in dbNames:
-        print('processing', dbName)
-        Plot_cadence(dbDir, dbName, df_config_scen, outDir=outDir,
+        idx = config_db['dbName'] == dbName
+        dbNamePlot = config_db[idx]['dbNamePlot'].tolist()[0]
+        print('processing', dbName, dbNamePlot)
+        Plot_cadence(dbDir, dbName, dbNamePlot, df_config_scen, outDir=outDir,
                      corresp_dd_names=corresp_dd_names)
 plt.show()

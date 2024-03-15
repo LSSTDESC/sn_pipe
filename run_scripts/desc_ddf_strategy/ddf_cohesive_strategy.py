@@ -225,11 +225,11 @@ if pparams['budget_DD'] < 0.06:
     du_pos = 90
 deep_universal['Deep Universal'] = [
     Nvisits_avail/(opts.Ns_DD*opts.NDDF), du_pos]
-scoc_pII['SCOC_pII'] = [Nv_DD_SCOC_pII, Nv_UD_SCOC_pII]
+scoc_pII['SCOC_p2'] = [Nv_DD_SCOC_pII, Nv_UD_SCOC_pII]
 
 
 res = myclass.plot(restot, varx='Nv_DD',
-                   legx='N$_{visits}^{DF}/season}$',
+                   legx='N$_{v}^{DF}/season}$',
                    vary='Nv_UD_night',
                    legy='N$_{v}^{UDF}/obs.~night$', scenario=scenario,
                    zcomp_req=zcomp_req, zcomp_req_err=zcomp_req_err,
