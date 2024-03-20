@@ -10,7 +10,8 @@ import os
 
 
 def process(dataDir_DD, dbName_DD, dataDir_WFD,
-            dbName_WFD, timescale, survey_scenario, tagsurvey):
+            dbName_WFD, timescale, survey_scenario,
+            tagsurvey, DD_surveys, WFD_surveys):
     """
     Function to launch cosmology estimation
 
@@ -53,6 +54,8 @@ def process(dataDir_DD, dbName_DD, dataDir_WFD,
     cmd += ' --test_mode=0'
     cmd += ' --nproc=1'
     cmd += ' --low_z_opti=0'
+    cmd += ' --DD_surveys={}'.format(DD_surveys)
+    cmd += ' --WFD_surveys={}'.format(WFD_surveys)
 
     os.system(cmd)
 
@@ -79,7 +82,12 @@ parser.add_option("--survey_scenario", type=str,
 parser.add_option("--tagsurvey", type=str,
                   default='ti',
                   help="survey name tag[%default]")
-
+parser.add_option('--DD_surveys', type=str,
+                  default='DDF_COSMOS,DDF_XMM,DDF_ELAIS,DDF_CDFS',
+                  help='DD surveys to consider [%default]')
+parser.add_option('--WFD_surveys', type=str,
+                  default='WFD_TiDES,WFD_desi_lrg,WFD_desi_bg,WFD_desi2,WFD_4hs,WFD_crs_lrg,WFD_crs_bg',
+                  help='DD surveys to consider [%default]')
 opts, args = parser.parse_args()
 
 process(**vars(opts))
