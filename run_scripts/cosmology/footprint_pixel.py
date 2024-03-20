@@ -335,7 +335,7 @@ def footprint_DDF(nside=128):
     plt.show()
 
 
-def footprint_DESI(fName, outName):
+def footprint_DESI(fName, outName, outDir):
     """
     Function to estimate and save DESI/DESIII foorptints
 
@@ -345,6 +345,8 @@ def footprint_DESI(fName, outName):
         Footprint file name.
     outName : str
         Tag for outname.
+    outDir: str
+     output dir
 
     Returns
     -------
@@ -360,9 +362,9 @@ def footprint_DESI(fName, outName):
     npix = hp.nside2npix(nside)
     index = np.arange(npix)
     theta, phi = hp.pixelfunc.pix2ang(nside, index)
-    ra, dec = np.degrees(np.pi*2.-phi), -np.degrees(theta-np.pi/2.)
+    #ra, dec = np.degrees(np.pi*2.-phi), -np.degrees(theta-np.pi/2.)
 
-    vec = hp.pix2ang(nside, range(npix), nest=True, lonlat=True)
+    #vec = hp.pix2ang(nside, range(npix), nest=True, lonlat=True)
 
     map_pixel = get_map(nside)
 
@@ -372,11 +374,11 @@ def footprint_DESI(fName, outName):
 
     plot_pixels(map_pixel)
 
-    save_footprint(map_pixel, '{}_WFD'.format(outName))
+    save_footprint(map_pixel, '{}_WFD'.format(outName), outDir)
     plt.show()
 
 
-def save_footprint(map_pixel, footprint):
+def save_footprint(map_pixel, footprint, outDir='input/cosmology/footprints'):
     """
     Function to dump pixela with positive weight on disk
 
@@ -385,7 +387,9 @@ def save_footprint(map_pixel, footprint):
     map_pixel : pandas df
         Data to dump.
     footprint : str
-        footprint name.
+        footprint name.   
+    outDir: str, optional
+     output dir. The default is input/cosmology/footprints
 
     Returns
     -------
@@ -400,28 +404,37 @@ def save_footprint(map_pixel, footprint):
 
     tt = sel[['footprint', 'healpixID']]
 
-    tt.to_hdf('footprint_{}.hdf5'.format(footprint), key='footprint')
+    fName = '{}/footprint_{}.hdf5'.format(outDir, footprint)
+    tt.to_hdf(fName, key='footprint')
 
 
 parser = OptionParser()
 parser.add_option("--nside", type=int, default=64,
                   help="nside healpix parameter[%default]")
-parser.add_option("--footprint_type", type=str, default='WFD',
-                  help="footprint type (WFD/DDF)[%default]")
+parser.add_option("--footprint_type", type=str, default='DESI',
+                  help="footprint type (WFD/DDF/DESI/DESI2)[%default]")
+parser.add_option("--footprint_name", type=str,
+                  default='desi_footprint_bright.npy',
+                  help="footprint name [%default]")
+parser.add_option("--footprint_dir", type=str,
+                  default='../desi_desc_efficiencies_v2_with_desi2_strategies',
+                  help="footprint dir [%default]")
+parser.add_option("--output_dir", type=str,
+                  default='input/cosmology/footprints',
+                  help="output dir dir [%default]")
 
 opts, args = parser.parse_args()
 
 nside = opts.nside
 foot_type = opts.footprint_type
+foot_name = opts.footprint_name
+foot_dir = opts.footprint_dir
+out_dir = opts.output_dir
 
 if foot_type == 'WFD':
     footprint_TiDES(nside)
-
-if foot_type == 'DDF':
+elif foot_type == 'DDF':
     footprint_DDF(nside)
-
-if foot_type == 'DESI':
-    footprint_DESI('desi_footprint_bright.npy', foot_type)
-
-if foot_type == 'DESI2':
-    footprint_DESI('desi2_footprint_bright.npy', foot_type)
+else:
+    fName = '{}/{}'.format(foot_dir, foot_name)
+    footprint_DESI(fName, foot_type, out_dir)
