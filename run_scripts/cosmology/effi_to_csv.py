@@ -13,7 +13,7 @@ from optparse import OptionParser
 parser = OptionParser('script to transform npy effi(z) arry to cvs files')
 
 parser.add_option("--dataDir", type=str,
-                  default='.',
+                  default='../desi_desc_efficiencies_v2_with_desi2_strategies',
                   help="data dir[%default]")
 parser.add_option("--fName", type=str,
                   default='host_efficiency_desi.npy',
