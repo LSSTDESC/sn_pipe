@@ -307,5 +307,6 @@ cl = Fit_seasons(fitconfig, dataDir_DD, dbName_DD,
                  sigmaInt, surveyDir, timescale, outName,
                  fields_for_stat=fields_for_stat,
                  simu_norm_factor=simu_norm_factor,
-                 seasons=seasons_cosmo, nrandom=nrandom, nproc=nproc)
+                 seasons=seasons_cosmo, nrandom=nrandom,
+                 nproc=nproc, tagsurvey=tagsurvey)
 res = cl()
