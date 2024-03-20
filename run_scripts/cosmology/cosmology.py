@@ -186,9 +186,12 @@ parser.add_option('--nrandom', type=int,
 parser.add_option('--nproc', type=int,
                   default=8,
                   help='number of procs to use [%default]')
-parser.add_option('--tagsurvey', type=str,
+parser.add_option('--wfd_tagsurvey', type=str,
                   default='notag',
-                  help='tag for the survey [%default]')
+                  help='tag for the WFD survey [%default]')
+parser.add_option('--dd_tagsurvey', type=str,
+                  default='notag',
+                  help='tag for the DD survey [%default]')
 parser.add_option('--DD_surveys', type=str,
                   default='DDF_COSMOS,DDF_XMM,DDF_ELAIS,DDF_CDFS',
                   help='DD surveys to consider [%default]')
@@ -220,7 +223,8 @@ seasons_cosmo = opts.seasons_cosmo
 nrandom = opts.nrandom
 nproc = opts.nproc
 footprintDir = opts.footprintDir
-tagsurvey = opts.tagsurvey
+wfd_tagsurvey = opts.wfd_tagsurvey
+dd_tagsurvey = opts.dd_tagsurvey
 dd_surveys = opts.DD_surveys.split(',')
 wfd_surveys = opts.WFD_surveys.split(',')
 
@@ -261,8 +265,8 @@ footprints = load_footprints(footprintDir)
 # save the survey in outDir
 seas_min = np.min(seasons_cosmo)
 seas_max = np.max(seasons_cosmo)
-outName_survey = '{}/survey_{}_{}_{}_{}.csv'.format(
-    outDir, dbName_DD, seas_min, seas_max, tagsurvey)
+outName_survey = '{}/survey_{}_{}_{}_{}_{}.csv'.format(
+    outDir, dbName_DD, seas_min, seas_max, dd_tagsurvey, wfd_tagsurvey)
 survey.to_csv(outName_survey)
 
 
@@ -295,9 +299,10 @@ priors['prior'] = pd.DataFrame({'varname': ['Om0'],
                                 'refvalue': [0.3],
                                'sigma': [0.0073]})
 
-outName = '{}/cosmo_{}_{}_{}_{}.hdf5'.format(outDir,
-                                             dbName_DD, seas_min,
-                                             seas_max, tagsurvey)
+outName = '{}/cosmo_{}_{}_{}_{}_{}.hdf5'.format(outDir,
+                                                dbName_DD,
+                                                seas_min, seas_max,
+                                                dd_tagsurvey, wfd_tagsurvey)
 resfi = pd.DataFrame()
 
 cl = Fit_seasons(fitconfig, dataDir_DD, dbName_DD,
@@ -308,5 +313,6 @@ cl = Fit_seasons(fitconfig, dataDir_DD, dbName_DD,
                  fields_for_stat=fields_for_stat,
                  simu_norm_factor=simu_norm_factor,
                  seasons=seasons_cosmo, nrandom=nrandom,
-                 nproc=nproc, tagsurvey=tagsurvey)
+                 nproc=nproc, wfd_tagsurvey=wfd_tagsurvey,
+                 dd_tagsurvey=dd_tagsurvey)
 res = cl()

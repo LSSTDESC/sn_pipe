@@ -11,7 +11,7 @@ import os
 
 def process(dataDir_DD, dbName_DD, dataDir_WFD,
             dbName_WFD, timescale, survey_scenario,
-            tagsurvey, DD_surveys, WFD_surveys):
+            wfd_tagsurvey, dd_tagsurvey, DD_surveys, WFD_surveys):
     """
     Function to launch cosmology estimation
 
@@ -45,7 +45,8 @@ def process(dataDir_DD, dbName_DD, dataDir_WFD,
     cmd += ' --dbName_WFD={}'.format(dbName_WFD)
     cmd += ' --timescale={}'.format(timescale)
     cmd += ' --survey={}'.format(survey_scenario)
-    cmd += ' --tagsurvey={}'.format(tagsurvey)
+    cmd += ' --wfd_tagsurvey={}'.format(wfd_tagsurvey)
+    cmd += ' --dd_tagsurvey={}'.format(dd_tagsurvey)
     cmd += ' --outDir=../cosmo_fit_WFD_sigmaC_test'
     cmd += ' --seasons=1,2,3,4,5,6,7,8,9,10'
     cmd += ' --surveyDir=../test_survey'
@@ -79,9 +80,12 @@ parser.add_option("--timescale", type=str,
 parser.add_option("--survey_scenario", type=str,
                   default='survey_scenario_ti.csv',
                   help="survey scenario [%default]")
-parser.add_option("--tagsurvey", type=str,
-                  default='ti',
-                  help="survey name tag[%default]")
+parser.add_option('--wfd_tagsurvey', type=str,
+                  default='notag',
+                  help='tag for the WFD survey [%default]')
+parser.add_option('--dd_tagsurvey', type=str,
+                  default='notag',
+                  help='tag for the DD survey [%default]')
 parser.add_option('--DD_surveys', type=str,
                   default='DDF_COSMOS,DDF_XMM,DDF_ELAIS,DDF_CDFS',
                   help='DD surveys to consider [%default]')
