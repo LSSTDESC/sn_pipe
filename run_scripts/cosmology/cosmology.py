@@ -43,7 +43,32 @@ def host_effi_1D(lista, listb):
     return dict_out
 
 
-def load_host_effi(dataDir):
+def load_host_effi(dataDir, llist):
+    """
+    Function to load all effi(z) csv files in a dict
+
+    Parameters
+    ----------
+    dataDir : str
+        Data dir.
+
+    Returns
+    -------
+    dictout : dict
+        key=name; val=interp1d(z,effi).
+
+    """
+
+    dictout = {}
+    for ll in llist:
+        fName = '{}/{}.csv'.format(dataDir, ll)
+        rr = host_effi_1D([fName], [ll])
+        dictout.update(rr)
+
+    return dictout
+
+
+def load_host_effi_deprecated(dataDir):
     """
     Function to load all effi(z) csv files in a dict
 
@@ -61,6 +86,7 @@ def load_host_effi(dataDir):
 
     fis = glob.glob('{}/*.csv'.format(dataDir))
 
+    print('alors', dataDir, fis)
     dictout = {}
     for fi in fis:
         nname = fi.split('_')[-1].split('.')[0]
@@ -160,7 +186,9 @@ parser.add_option('--nrandom', type=int,
 parser.add_option('--nproc', type=int,
                   default=8,
                   help='number of procs to use [%default]')
-
+parser.add_option('--tagsurvey', type=str,
+                  default='notag',
+                  help='tag for the survey [%default]')
 
 opts, args = parser.parse_args()
 
@@ -186,6 +214,7 @@ seasons_cosmo = opts.seasons_cosmo
 nrandom = opts.nrandom
 nproc = opts.nproc
 footprintDir = opts.footprintDir
+tagsurvey = opts.tagsurvey
 
 
 if '-' in seasons_cosmo:
@@ -207,17 +236,17 @@ survey = pd.read_csv(survey_file, comment='#')
 
 # load host_effi
 
-host_effi = load_host_effi(host_effi_dir)
+host_effi = load_host_effi(host_effi_dir, survey['host_effi'].unique())
 
-
+print('hello', host_effi, survey['host_effi'].unique())
 # load footprints
 footprints = load_footprints(footprintDir)
 
 # save the survey in outDir
 seas_min = np.min(seasons_cosmo)
 seas_max = np.max(seasons_cosmo)
-outName_survey = '{}/survey_{}_{}_{}.csv'.format(
-    outDir, dbName_DD, seas_min, seas_max)
+outName_survey = '{}/survey_{}_{}_{}_{}.csv'.format(
+    outDir, dbName_DD, seas_min, seas_max, tagsurvey)
 survey.to_csv(outName_survey)
 
 
@@ -250,8 +279,9 @@ priors['prior'] = pd.DataFrame({'varname': ['Om0'],
                                 'refvalue': [0.3],
                                'sigma': [0.0073]})
 
-outName = '{}/cosmo_{}_{}_{}.hdf5'.format(outDir,
-                                          dbName_DD, seas_min, seas_max)
+outName = '{}/cosmo_{}_{}_{}_{}.hdf5'.format(outDir,
+                                             dbName_DD, seas_min,
+                                             seas_max, tagsurvey)
 resfi = pd.DataFrame()
 
 cl = Fit_seasons(fitconfig, dataDir_DD, dbName_DD,
