@@ -189,6 +189,12 @@ parser.add_option('--nproc', type=int,
 parser.add_option('--tagsurvey', type=str,
                   default='notag',
                   help='tag for the survey [%default]')
+parser.add_option('--DD_surveys', type=str,
+                  default='DDF_COSMOS,DDF_XMM,DDF_ELAIS,DDF_CDFS',
+                  help='DD surveys to consider [%default]')
+parser.add_option('--WFD_surveys', type=str,
+                  default='WFD_TiDES,WFD_desi_lrg,WFD_desi_bgs,WFD_desi2,WFD_4hs,WFD_crs_lrg,WFD_crs_bg',
+                  help='DD surveys to consider [%default]')
 
 opts, args = parser.parse_args()
 
@@ -215,6 +221,8 @@ nrandom = opts.nrandom
 nproc = opts.nproc
 footprintDir = opts.footprintDir
 tagsurvey = opts.tagsurvey
+dd_surveys = opts.DD_surveys.split(',')
+wfd_surveys = opts.WFD_surveys.split(',')
 
 
 if '-' in seasons_cosmo:
@@ -232,13 +240,21 @@ if surveyDir != '':
     checkDir(surveyDir)
 
 dictsel = selection_criteria()[selconfig]
-survey = pd.read_csv(survey_file, comment='#')
+survey_init = pd.read_csv(survey_file, comment='#')
+
+# process only required surveys
+idxa = survey_init['survey'].isin(dd_surveys)
+idxb = survey_init['survey'].isin(wfd_surveys)
+
+survey = pd.DataFrame(survey_init[idxa])
+survey = pd.concat((survey, survey_init[idxb]))
+
+print('Survey considered', survey['survey'].unique())
 
 # load host_effi
 
 host_effi = load_host_effi(host_effi_dir, survey['host_effi'].unique())
 
-print('hello', host_effi, survey['host_effi'].unique())
 # load footprints
 footprints = load_footprints(footprintDir)
 
