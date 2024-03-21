@@ -9,6 +9,7 @@ import pandas as pd
 from sn_analysis.sn_selection import selection_criteria
 from optparse import OptionParser
 from sn_cosmology.fit_season import Fit_seasons
+from sn_cosmology.cosmo_tools import get_survey_nickname
 from sn_tools.sn_io import checkDir
 import numpy as np
 import glob
@@ -144,6 +145,9 @@ parser.add_option("--outDir", type=str,
 parser.add_option("--survey", type=str,
                   default='input/cosmology/scenarios/survey_scenario.csv',
                   help=" survey to use[%default]")
+parser.add_option("--lookup_survey", type=str,
+                  default='input/cosmology/scenarios/lookup_survey.csv',
+                  help="lookup table for scenarios [%default]")
 parser.add_option("--hosteffiDir", type=str,
                   default='input/cosmology/host_effi',
                   help="host effi dir [%default]")
@@ -209,6 +213,7 @@ dbName_WFD = opts.dbName_WFD
 selconfig = opts.selconfig
 outDir = opts.outDir
 survey_file = opts.survey
+lookup_survey_file = opts.lookup_survey
 host_effi_dir = opts.hosteffiDir
 max_sigma_mu = opts.max_sigma_mu
 test_mode = opts.test_mode
@@ -228,7 +233,6 @@ dd_tagsurvey = opts.dd_tagsurvey
 dd_surveys = opts.DD_surveys.split(',')
 wfd_surveys = opts.WFD_surveys.split(',')
 
-
 if '-' in seasons_cosmo:
     seas = seasons_cosmo.split('-')
     seas_min = int(seas[0])
@@ -242,6 +246,16 @@ checkDir(outDir)
 
 if surveyDir != '':
     checkDir(surveyDir)
+
+# load lookup table for survey
+survey_table = pd.read_csv(lookup_survey_file)
+
+wfd_tagsurvey, wfd_surveys = get_survey_nickname(
+    wfd_tagsurvey, wfd_surveys, survey_table)
+
+dd_tagsurvey, dd_surveys = get_survey_nickname(
+    dd_tagsurvey, dd_surveys, survey_table)
+
 
 dictsel = selection_criteria()[selconfig]
 survey_init = pd.read_csv(survey_file, comment='#')
