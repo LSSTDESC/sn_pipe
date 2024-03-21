@@ -88,4 +88,4 @@ for i, row in fis.iterrows():
     params['dd_tagsurvey'] = dd_tagsurvey
 
     mybatch.add_batch(script, params)
-    # mybatch.go_batch()
+    mybatch.go_batch()
