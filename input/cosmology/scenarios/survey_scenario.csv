@@ -10,7 +10,7 @@ WFD_TiDES,WFD,WFD,1,5,1.e4,host_effi_TiDES,spectroz,TiDES_WFD,0.4
 WFD_desi_bgs,WFD,WFD,1,5,1.e4,host_effi_desi_bgs_v2,spectroz,desi_WFD,0.8
 WFD_desi_lrg,WFD,WFD,1,5,1.e4,host_effi_desi_lrg_v2,spectroz,desi_WFD,0.8
 WFD_desi2,WFD,WFD,3,8,1.e4,host_effi_desi2_0_v2,spectroz,desi2_WFD,0.8
-WFD_4hs,WFD,WFD,3,8,1.e4,host_effi_4hs_v2,spectroz,4hs_WFD,0.8
-WFD_crs_lrg,WFD,WFD,3,8,1.e4,host_effi_crs_lrg_v2,spectroz,crs_WFD,0.8
-WFD_crs_bg,WFD,WFD,3,8,1.e4,host_effi_crs_bg_v2,spectroz,crs_WFD,0.8
+WFD_4hs,WFD,WFD,1,5,1.e4,host_effi_4hs_v2,spectroz,4hs_WFD,0.8
+WFD_crs_lrg,WFD,WFD,1,5,1.e4,host_effi_crs_lrg_v2,spectroz,crs_WFD,0.8
+WFD_crs_bg,WFD,WFD,1,5,1.e4,host_effi_crs_bg_v2,spectroz,crs_WFD,0.8
 WFD_photz,WFD,WFD,1,10,5.e4,host_effi_photz,photz,Nospectro,0.8
