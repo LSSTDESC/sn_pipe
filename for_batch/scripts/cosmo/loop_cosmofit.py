@@ -16,7 +16,7 @@ parser.add_option("--inputDir_WFD", type="str",
                   default='/sps/lsst/users/gris/Output_SN_WFD_sigmaInt_0.0_Hounsell_G10_JLA',
                   help="input directory for WFD files[%default]")
 parser.add_option("--survey", type=str,
-                  default='input/DESC_cohesive_strategy/survey_scenario.csv',
+                  default='input/cosmology/scenarios/survey_scenario.csv',
                   help=" survey to use[%default]")
 parser.add_option("--tag", type=str,
                   default='-1.0',
@@ -52,18 +52,26 @@ fis = pd.read_csv(dbList, comment='#')
 # loop on files and create batches
 
 seasons_cosmo = []
-for i in range(2,12):
-    dd = list(range(1,i))
+for i in range(2, 12):
+    dd = list(range(1, i))
     seasons_cosmo.append(dd)
 
-seasons_cosmo=list(range(1,11))
+seasons_cosmo = list(range(1, 11))
 
 
 script = 'run_scripts/cosmology/cosmology.py'
 for i, row in fis.iterrows():
     dbName_DD = row['dbName_DD']
     dbName_WFD = row['dbName_WFD']
-    processName = 'cosmo_{}_{}'.format(dbName_DD, tag)
+    wfd_tagsurvey = 'notag'
+    dd_tagsurvey = 'notag'
+    if 'wfd_tagsurvey' in fis.columns:
+        wfd_tagsurvey = row['wfd_tagsurvey']
+    if 'dd_tagsurvey' in fis.columns:
+        dd_tagsurvey = row['dd_tagsurvey']
+
+    processName = 'cosmo_{}_{}_{}'.format(
+        dbName_DD, wfd_tagsurvey, dd_tagsurvey)
     mybatch = BatchIt(processName=processName)
     params = {}
     params['dataDir_DD'] = inputDir_DD
@@ -75,7 +83,9 @@ for i, row in fis.iterrows():
     params['low_z_optimize'] = low_z_optimize
     params['timescale'] = timescale
     params['nrandom'] = nrandom
-    params['seasons_cosmo'] = ','.join(list(map(str,seasons_cosmo)))
+    params['seasons_cosmo'] = ','.join(list(map(str, seasons_cosmo)))
+    params['wfd_tagsurvey'] = wfd_tagsurvey
+    params['dd_tagsurvey'] = dd_tagsurvey
 
     mybatch.add_batch(script, params)
-    mybatch.go_batch()
+    # mybatch.go_batch()
