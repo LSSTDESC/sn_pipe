@@ -90,7 +90,7 @@ parser.add_option('--DD_surveys', type=str,
                   default='DDF_COSMOS,DDF_XMM,DDF_ELAIS,DDF_CDFS',
                   help='DD surveys to consider [%default]')
 parser.add_option('--WFD_surveys', type=str,
-                  default='WFD_TiDES,WFD_desi_lrg,WFD_desi_bg,WFD_desi2,WFD_4hs,WFD_crs_lrg,WFD_crs_bg',
+                  default='WFD_TiDES,WFD_desi_lrg,WFD_desi_bgs,WFD_desi2,WFD_4hs,WFD_crs_lrg,WFD_crs_bg',
                   help='DD surveys to consider [%default]')
 opts, args = parser.parse_args()
 
