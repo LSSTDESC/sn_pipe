@@ -320,8 +320,9 @@ def process_cosmo(config, cols_group,
         spectro_config = row['spectro_config']
         df = load_cosmo_data(dbDir, dbName, cols_group,
                              spectro_config, cols=cols)
+        df['dbName_DD'] = dbName
+        df['dbNamePlot'] = row['dbNamePlot']
         df_tot = pd.concat((df_tot, df))
-        df_tot['dbNamePlot'] = row['dbNamePlot']
 
     return df_tot
 
