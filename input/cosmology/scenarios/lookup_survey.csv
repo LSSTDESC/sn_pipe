@@ -7,7 +7,7 @@ DDF_EDFS,ed
 DDF_EDFSa,eda
 DDF_EDFSb,edb
 WFD_TiDES,ti
-WFD_desi_bgs,desibg
+WFD_desi_bgs,desibgs
 WFD_desi_lrg,desilrg
 WFD_desi_bgs+WFD_desi_lrg,desi
 WFD_desi2,desi2
