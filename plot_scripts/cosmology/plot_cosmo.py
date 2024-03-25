@@ -379,7 +379,7 @@ print(test)
 cols = ['MoM', 'WFD_TiDES', 'all_Fields',
         'nsn_z_0.8', 'WFD_DESI1', 'WFD_DESI2']
 cols = ['MoM', 'WFD_TiDES', 'all_Fields',
-        'WFD_DESI1', 'WFD_DESI2']
+        'WFD_desi2_footprint', 'WFD_desi_lrg_footprint', 'WFD_desi_bgs_footprint']
 """
 cols = ['MoM', 'all_Fields',
         'nsn_z_0.8', 'nsn_z_0.8_sigma_mu', 'nsn_rat_highz']
@@ -401,6 +401,25 @@ for prior in priors:
                figtitle=dd[prior], dbNorm='',
                comment_on_plot=comment_on_plot,
                fill_between=fill_between)
+    plot_allOS(data, config, varx=timescale, legx=timescale,
+               vary='WFD_desi_lrg_footprint_mean',
+               legy='$N_{spectro-z}^{desi~lrg}$', vary_std='', prior=prior,
+               figtitle=dd[prior], dbNorm='',
+               comment_on_plot=comment_on_plot,
+               fill_between=fill_between)
+    plot_allOS(data, config, varx=timescale, legx=timescale,
+               vary='WFD_desi_bgs_footprint_mean',
+               legy='$N_{spectro-z}^{desi~bgs}$', vary_std='', prior=prior,
+               figtitle=dd[prior], dbNorm='',
+               comment_on_plot=comment_on_plot,
+               fill_between=fill_between)
+    plot_allOS(data, config, varx=timescale, legx=timescale,
+               vary='WFD_desi2_footprint_mean',
+               legy='$N_{spectro-z}^{desi2}$', vary_std='', prior=prior,
+               figtitle=dd[prior], dbNorm='',
+               comment_on_plot=comment_on_plot,
+               fill_between=fill_between)
+
     """
     plot_allOS(data, config, varx=timescale, legx=timescale,
                vary='nsn_z_0.8_mean',
