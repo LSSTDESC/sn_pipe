@@ -379,7 +379,8 @@ print(test)
 cols = ['MoM', 'WFD_TiDES', 'all_Fields',
         'nsn_z_0.8', 'WFD_DESI1', 'WFD_DESI2']
 cols = ['MoM', 'WFD_TiDES', 'all_Fields',
-        'WFD_desi2_footprint', 'WFD_desi_lrg_footprint', 'WFD_desi_bgs_footprint']
+        'WFD_desi2_footprint', 'WFD_desi_lrg_footprint',
+        'WFD_desi_bgs_footprint', 'nsn_z_0.8', 'nsn_rat_highz']
 """
 cols = ['MoM', 'all_Fields',
         'nsn_z_0.8', 'nsn_z_0.8_sigma_mu', 'nsn_rat_highz']
@@ -402,11 +403,19 @@ for prior in priors:
                comment_on_plot=comment_on_plot,
                fill_between=fill_between)
     plot_allOS(data, config, varx=timescale, legx=timescale,
+               vary='WFD_TiDES_mean',
+               legy='$N_{spectro-z}^{TiDES}$', vary_std='', prior=prior,
+               figtitle=dd[prior], dbNorm='',
+               comment_on_plot=comment_on_plot,
+               fill_between=fill_between)
+
+    plot_allOS(data, config, varx=timescale, legx=timescale,
                vary='WFD_desi_lrg_footprint_mean',
                legy='$N_{spectro-z}^{desi~lrg}$', vary_std='', prior=prior,
                figtitle=dd[prior], dbNorm='',
                comment_on_plot=comment_on_plot,
                fill_between=fill_between)
+    """
     plot_allOS(data, config, varx=timescale, legx=timescale,
                vary='WFD_desi_bgs_footprint_mean',
                legy='$N_{spectro-z}^{desi~bgs}$', vary_std='', prior=prior,
@@ -419,7 +428,6 @@ for prior in priors:
                figtitle=dd[prior], dbNorm='',
                comment_on_plot=comment_on_plot,
                fill_between=fill_between)
-
     """
     plot_allOS(data, config, varx=timescale, legx=timescale,
                vary='nsn_z_0.8_mean',
@@ -427,15 +435,14 @@ for prior in priors:
                figtitle=dd[prior], dbNorm='',
                comment_on_plot=comment_on_plot,
                fill_between=fill_between)
-    """
-    """
+
     plot_allOS(data, config, varx=timescale, legx=timescale,
                vary='nsn_rat_highz_mean',
                legy='$N_{SN}^{z\geq0.8,\sigma_{\mu}\leq0.12}$', vary_std='nsn_rat_highz_std', prior=prior,
                figtitle=dd[prior], dbNorm='',
                comment_on_plot=comment_on_plot,
                fill_between=fill_between)
-    """
+
     """
     plot_allOS(data, config, varx=timescale, legx=timescale,
                vary='nsn_z_0.8_sigma_mu_mean',
