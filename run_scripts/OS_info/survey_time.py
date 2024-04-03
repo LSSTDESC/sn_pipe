@@ -8,13 +8,14 @@ Created on Fri Feb  2 09:03:02 2024
 
 import numpy as np
 from sn_tools.sn_obs import season
+from sn_tools.sn_cadence_tools import Survey_depth, Survey_time
 import pandas as pd
 import operator
 import os
 from optparse import OptionParser
 
 
-def nvisits(grp, varsel, valsel, op):
+def nvisits_deprecated(grp, varsel, valsel, op):
 
     idx = op(grp[varsel], valsel)
 
@@ -26,7 +27,7 @@ def nvisits(grp, varsel, valsel, op):
     return pd.DataFrame([[expTime, len(sel)]], columns=['expTime', 'nvisits'])
 
 
-def nightly_visits(data):
+def nightly_visits_deprecated(data):
 
     # get the nightly number of visits
     nv_moon = data.groupby(['note', 'night']).apply(
@@ -45,7 +46,7 @@ def nightly_visits(data):
     return df
 
 
-def calc_exptime(data):
+def calc_exptime_deprecated(data):
 
     idx = data['expTime'] > 0.
     sel_data = data[idx]
@@ -56,7 +57,7 @@ def calc_exptime(data):
     return pd.DataFrame([[med_exptime, sum_exptime]], columns=['expTime_nightly', 'expTime_sum'])
 
 
-def get_infos(data, season, field='all'):
+def get_infos_deprecated(data, season, field='all'):
 
     dfb = pd.DataFrame()
     for seas in season:
@@ -75,7 +76,7 @@ def get_infos(data, season, field='all'):
     return dfb
 
 
-def process_OS(dbDir, dbName):
+def process_OS_deprecated(dbDir, dbName):
 
     full_path = '{}/{}.npy'.format(dbDir, dbName)
 
@@ -114,7 +115,7 @@ def process_OS(dbDir, dbName):
     return df_tot
 
 
-def process(dbDir, configFile):
+def process_deprecated(dbDir, configFile):
 
     conf = pd.read_csv(configFile)
 
@@ -129,7 +130,7 @@ def process(dbDir, configFile):
     return df
 
 
-def get_vals(sela, field):
+def get_vals_deprecated(sela, field):
 
     idxb = sela['field'] == field
     selb = sela[idxb]
@@ -143,14 +144,14 @@ def get_vals(sela, field):
     return [np.round(ra, 1), np.round(rb, 1)]
 
 
-def process_survey_time(dbDir, configFile):
+def process_survey_time_deprecated(dbDir, configFile):
 
     df = process(dbDir, configFile)
 
     df.to_hdf(outName, key='sn')
 
 
-def print_survey_time(df):
+def print_survey_time_deprecated(df):
 
     # udf
     idx = df['season'] == 2
@@ -206,7 +207,7 @@ def print_survey_time(df):
     print('\end{table}')
 
 
-def estimate_survey_time(dbDir, configFile):
+def estimate_survey_time_deprecated(dbDir, configFile):
 
     outName = 'survey_time.hdf5'
 
@@ -217,201 +218,6 @@ def estimate_survey_time(dbDir, configFile):
     df = pd.read_hdf(outName)
 
     print_survey_time(df)
-
-
-def process_OS_depths(dbDir, configFile):
-
-    conf = pd.read_csv(configFile)
-
-    df = pd.DataFrame()
-
-    for i, row in conf.iterrows():
-        dfa = process_OS_depth(dbDir, row['dbName'])
-        dfa['dbName'] = row['dbName']
-        dfa['dbNamePlot'] = row['dbNamePlot']
-        df = pd.concat((df, dfa))
-
-    return df
-
-
-def process_OS_depth(dbDir, dbName):
-
-    full_path = '{}/{}.npy'.format(dbDir, dbName)
-
-    data = np.load(full_path, allow_pickle=True)
-
-    data = pd.DataFrame.from_records(season(data))
-
-    idx = data['season'] == 1
-
-    res = pd.DataFrame()
-
-    for seas in data['season'].unique():
-        idx = data['season'] == seas
-
-        sela = data[idx]
-
-        res_y = sela.groupby(['note', 'filter']).apply(
-            lambda x: gime_m5_visits(x)).reset_index()
-        res_y['season'] = seas
-
-        res = pd.concat((res, res_y))
-
-    # cumulate seasons 2-10
-    idx = data['season'] >= 2
-    selb = data[idx]
-    res_c = selb.groupby(['note', 'filter']).apply(
-        lambda x: gime_m5_visits(x)).reset_index()
-    res_c['season'] = 11
-
-    res = pd.concat((res, res_c))
-
-    return res
-
-
-def estimate_depth(dbDir, configFile):
-
-    # process the data
-    df = process_OS_depths(dbDir, configFile)
-
-    print_latex_depth(df)
-
-
-def gime_m5_visits(grp):
-
-    m5_coadd = 1.25*np.log10(np.sum(10**(0.8*grp['fiveSigmaDepth'])))
-    nvisits = len(grp)
-
-    res = pd.DataFrame({'m5': [m5_coadd], 'nvisits': [nvisits]})
-
-    return res
-
-
-def print_latex_depth(df):
-
-    dbNames = df['dbName'].unique()
-
-    for io, dbName in enumerate(dbNames):
-        idx = df['dbName'] == dbName
-        sel = df[idx]
-        dbNameb = sel['dbNamePlot'].unique()[0]
-        print_latex_depth_os(sel, dbName, io, dbNameb)
-
-
-def print_latex_depth_os(df, dbName, io, dbNameb):
-
-    tta = ['DD:COSMOS', 'DD:ELAISS1', 'DD:XMM_LSS',
-           'DD:ECDFS', 'DD:EDFS_a', 'DD:EDFS_b']
-    ttb = ['\cosmos', '\elais', '\\xmm', '\cdfs', '\\adfa', '\\adfb']
-    trans_ddf = dict(zip(tta, ttb))
-
-    fields = df['note'].unique()
-
-    bands = list('ugrizy')
-    dbNameb = dbNameb.split('_')
-    dbNameb = '\_'.join(dbNameb)
-    caption = '{} strategy: coadded \\fivesig~depth and total number of visits $N_v$ per band.'.format(
-        dbNameb)
-
-    caption = '{'+caption+'}'
-    label = 'tab:total_depth_{}'.format(io)
-    label = '{'+label+'}'
-    r = get_beg_table(caption=caption, label=label)
-    rr = ' & '
-    pp = 'Field & '
-    seas_max = 10
-    # for seas in df['season'].unique():
-    for seas in [1]:
-        pp += 'season & $m_5$ &$N_v$'
-        bb = '/'.join(bands)
-        rr += ' & {} & {}'.format(bb, bb)
-        rr += ' \\\\'
-        pp += ' \\\\'
-        """
-        if seas < seas_max:
-            rr += ' & '
-            pp += ' & '
-        else:
-            rr += ' \\\\'
-            pp += ' \\\\'
-        """
-        r += [pp]
-        r += [rr]
-        r += [' & & & \\\\']
-        r += ['\hline']
-    for fi in fields:
-        idx = df['note'] == fi
-        selb = df[idx]
-        ll = print_latex_depth_field(selb)
-        for io, vv in enumerate(ll):
-            if io != 5:
-                tt = ' & {}'.format(vv)
-            else:
-                tt = '{} & {}'.format(trans_ddf[fi], vv)
-            r += [tt]
-        r += ['\hline']
-    r += get_end_table()
-
-    for vv in r:
-        print(vv)
-
-
-def print_latex_depth_field(data, bands='ugrizy'):
-
-    r = []
-    seasons = range(1, 12, 1)
-    seas_tt = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '2-10']
-    trans_seas = dict(zip(seasons, seas_tt))
-
-    for seas in data['season'].unique():
-        idx = data['season'] == seas
-        sel = data[idx]
-        m5 = []
-        nv = []
-        for b in list(bands):
-            idxb = sel['filter'] == b
-            selb = sel[idxb]
-            mm5 = selb['m5'].values[0]
-            nvv = selb['nvisits'].values[0]
-            m5.append('{}'.format(np.round(mm5, 1)))
-            nv.append('{}'.format(int(nvv)))
-        m5_tot = '/'.join(m5)
-        nv_tot = '/'.join(nv)
-
-        rr = '{} & {} & {}'.format(trans_seas[seas], m5_tot, nv_tot)
-        rr += '\\\\'
-        r.append(rr)
-        """
-        if seas != 10:
-            rr += ' & '
-        else:
-            rr += ' \\\\'
-        """
-    return r
-
-
-def get_beg_table(caption='{test}', label='{tab:test}'):
-
-    r = ['\\begin{table*}[!htbp]']
-    r += ['\\tiny']
-    r += ['\\begin{center}']
-    r += ['\caption{} \label{}'.format(caption, label)]
-    # r += ['\\begin{tabular}{l|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c}']
-    r += ['\\begin{tabular}{l|c|c|c}']
-    r += ['\hline']
-    r += ['\hline']
-    r += [' & & & \\\\']
-    return r
-
-
-def get_end_table():
-
-    r = ['\hline']
-    r += ['\end{tabular}']
-    r += ['\end{center}']
-    r += ['\end{table*}']
-
-    return r
 
 
 parser = OptionParser()
@@ -432,11 +238,12 @@ whats = opts.what.split(',')
 
 
 if 'survey_time' in whats:
-    estimate_survey_time(dbDir, configFile)
+    # estimate_survey_time(dbDir, configFile)
+    Survey_time(dbDir, configFile)
 
 if 'depth' in whats:
-    estimate_depth(dbDir, configFile)
-
+    # estimate_depth(dbDir, configFile)
+    Survey_depth(dbDir, configFile)
 
 """
 idx = df['season'] == 1
