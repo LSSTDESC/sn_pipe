@@ -196,9 +196,9 @@ ls = dict(zip(tags, ['solid', 'dotted']))
 
 tel = {}
 
-aerosol = False
+aerosol = ''
 if airmass >= 1.:
-    aerosol = True
+    aerosol = 'aerosol'
 
 for tag in tags:
     telb = '{}_{}'.format(tel_dir, tag)
@@ -207,8 +207,7 @@ for tag in tags:
     tel[tag] = get_telescope(tel_dir=telb,
                              through_dir=through_dir,
                              atmos_dir=atmos_dir,
-                             tag=tag, load_components=True,
-                             airmass=airmass, aerosol=aerosol)
+                             tag=tag, airmass=airmass, aerosol=aerosol)
 
 
 fig, ax = plt.subplots(figsize=(12, 8))
