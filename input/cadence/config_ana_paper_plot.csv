@@ -1,0 +1,13 @@
+dbName,color,ls,marker,dbNamePlot
+DDF_DESC_0.80_WZ_0.07,r,solid,o,DDF_DESC_0.80_WZ
+DDF_DESC_0.80_SN_0.07,r,dashed,o,DDF_DESC_0.80_SN
+DDF_DESC_0.80_co_0.07,r,dotted,o,DDF_DESC_0.80_co
+DDF_DESC_0.75_WZ_0.07,b,solid,s,DDF_DESC_0.75_WZ
+DDF_DESC_0.75_SN_0.07,b,dashed,s,DDF_DESC_0.75_SN
+DDF_DESC_0.75_co_0.07,b,dotted,s,DDF_DESC_0.75_co
+DDF_DESC_0.70_WZ_0.07,k,solid,P,DDF_DESC_0.70_WZ
+DDF_DESC_0.70_SN_0.07,k,dashed,P,DDF_DESC_0.70_SN
+DDF_DESC_0.70_co_0.07,k,dotted,P,DDF_DESC_0.70_co
+DDF_SCOC_pII_0.07,g,solid,None,DDF_SCOC_p2
+DDF_Univ_SN_0.07,m,dashed,None,DDF_Univ_SN
+DDF_Univ_WZ_0.07,orange,dotted,None,DDF_Univ_WZ
