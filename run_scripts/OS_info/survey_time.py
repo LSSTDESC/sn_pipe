@@ -6,12 +6,7 @@ Created on Fri Feb  2 09:03:02 2024
 @author: philippe.gris@clermont.in2p3.fr
 """
 
-import numpy as np
-from sn_tools.sn_obs import season
 from sn_tools.sn_cadence_tools import Survey_depth, Survey_time
-import pandas as pd
-import operator
-import os
 from optparse import OptionParser
 
 
@@ -35,16 +30,7 @@ whats = opts.what.split(',')
 
 
 if 'survey_time' in whats:
-    # estimate_survey_time(dbDir, configFile)
     Survey_time(dbDir, configFile)
 
 if 'depth' in whats:
-    # estimate_depth(dbDir, configFile)
     Survey_depth(dbDir, configFile)
-
-"""
-idx = df['season'] == 1
-sela = df[idx]
-
-print(sela)
-"""
