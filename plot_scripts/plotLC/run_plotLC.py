@@ -21,8 +21,9 @@ visu = VisuLC(**opts_dict)
 while 1:
     answer = input('SN to plot? ')
 
-    if answer != 'exit':
-        visu.plot(answer)
-
-    else:
+    if answer == 'exit':
         break
+
+    if answer == '':
+        continue
+    visu.plot(answer)
