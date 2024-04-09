@@ -11,6 +11,8 @@ parser.add_option('--SNFile', type=str, default='None',
                   help='SN file[%default]')
 parser.add_option('--SNDir', type=str, default='None',
                   help='SN dir [%default]')
+parser.add_option('--airmassType', type=str, default='const',
+                  help='airmass type [%default]')
 
 opts, args = parser.parse_args()
 
