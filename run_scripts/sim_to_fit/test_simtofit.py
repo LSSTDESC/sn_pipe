@@ -38,7 +38,7 @@ if not os.path.isfile(ffile):
 
 
 #zpfile = 'zp_airmass_v{}.npy'.format(tag)
-"""
+
 cmd = 'python run_scripts/sim_to_fit/run_sim_to_fit.py'
 cmd += ' --dbName {}'.format(dbName)
 cmd += ' --dbDir {} --dbExtens npy --OutputSimu_save 0'.format(dbDir)
@@ -54,40 +54,55 @@ cmd += ' ../Output_SN_test_new/{}/DDF_spectroz'.format(dbName)
 cmd += ' --OutputFit_directory'
 cmd += ' ../Output_SN_test_new/{}/DDF_spectroz'.format(dbName)
 cmd += ' --fieldType DD'
-cmd += ' --Fitter_parnames t0,x1,c,x0 --fieldName COSMOS'
+#cmd += ' --Fitter_parnames t0,x1,c,x0'
+cmd += ' --fieldName COSMOS'
 cmd += ' --ProductionIDSimu SN_DD_{}_spectroz_1'.format(dbName)
-cmd += ' --Observations_season 2 --nside=128 --Pixelisation_nside=128'
-cmd += ' --npixels=8 --SN_sigmaInt=0.0'
+cmd += ' --Observations_season 1 --nside=128 --Pixelisation_nside=128'
+# cmd += ' --npixels=8
+cmd += ' --SN_sigmaInt=0.0'
 cmd += ' --InstrumentSimu_telescope_tag={}'.format(tag)
 cmd += ' --InstrumentFit_telescope_tag={}'.format(tag)
 #cmd += ' --pixelList=pixelList.csv'
 
 """
+fitter_sigmaz = 1.e-5
+#fitter_sigmaz = 0.02
+suffix = 'spectroz'
+if fitter_sigmaz >= 1.e-3:
+    suffix = 'photoz'
+
 cmd = 'python run_scripts/sim_to_fit/run_sim_to_fit.py'
 cmd += ' --dbName {}'.format(dbName)
 cmd += ' --dbDir {} --dbExtens npy --OutputSimu_save 0'.format(dbDir)
 cmd += ' --OutputSimu_throwafterdump 0 --SN_x1_type=random --SN_x1_min=0.0'
 cmd += ' --SN_color_type=random --SN_color_min=0.0 --SN_z_type=random'
-cmd += ' --SN_z_min 0.01 --SN_z_max 0.7 --SN_daymax_type=random'
+cmd += ' --SN_z_min 0.01 --SN_z_max 0.3 --SN_daymax_type=random'
+cmd += ' --SN_z_minsimu 0.01 --SN_z_maxsimu 0.7'
 cmd += ' --Simulator_model salt3 --Simulator_version 2.0 --Fitter_model salt3'
 cmd += ' --Fitter_version 2.0 --MultiprocessingSimu_nproc 8'
 cmd += ' --MultiprocessingFit_nproc 8 --nproc_pixels 8 --nproc 1'
-cmd += ' --SN_NSNfactor 10 --fit_selected 0'
+cmd += ' --SN_NSNfactor 20 --fit_selected 0'
+#cmd += ' --SN_NSNabsolute=100'
 cmd += ' --ebvofMW_pixel 0.0 --OutputSimu_directory'
-cmd += ' ../Output_SN_test_new/{}/DDF_spectroz'.format(dbName)
+cmd += ' ../Output_SN_test_new/{}/DDF_{}'.format(dbName, suffix)
 cmd += ' --OutputFit_directory'
-cmd += ' ../Output_SN_test_new/{}/DDF_spectroz'.format(dbName)
+cmd += ' ../Output_SN_test_new/{}/DDF_{}'.format(dbName, suffix)
 cmd += ' --fieldType WFD'
-cmd += ' --Fitter_parnames t0,x1,c,x0 --fieldName WFD'
-cmd += ' --ProductionIDSimu SN_DD_{}_spectroz_1'.format(dbName)
-cmd += ' --Observations_season=11 --nside=64 --Pixelisation_nside=64'
+cmd += ' --fieldName WFD'
+cmd += ' --ProductionIDSimu SN_DD_{}_{}_1'.format(dbName, suffix)
+cmd += ' --Observations_season=1 --nside=64 --Pixelisation_nside=64'
 cmd += ' --SN_sigmaInt=0.0'
 cmd += ' --InstrumentSimu_telescope_tag={}'.format(tag)
 cmd += ' --InstrumentFit_telescope_tag={}'.format(tag)
 cmd += ' --pixelList=pixelList.csv'
 cmd += ' --SN_z_rate Hounsell'
-cmd += ' --RAmin 290.0 --RAmax 300.0'
-#cmd += ' --npixel=50'
-
+cmd += ' --RAmin 0. --RAmax 20.'
+cmd += ' --npixel=10'
+#cmd += ' --SN_simuFile=params_simu_WFD_baseline_v3.0_10yrs_season_1.hdf5'
+#cmd += ' --Fitter_sigmaz=0.02'
+cmd += ' --SN_smearFlux=0'
+cmd += ' --Fitter_sigmaz={}'.format(fitter_sigmaz)
 print(cmd)
+
+"""
 os.system(cmd)
