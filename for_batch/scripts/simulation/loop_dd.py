@@ -1,69 +1,114 @@
 import os
 from optparse import OptionParser
+import pandas as pd
+from sn_tools.sn_batchutils import BatchIt
 
-def simulation(fieldName,dbName,dbDir,dbExtens,outDir,mode,pixelmap_dir,ebvofMW,nproc):
-     
-    cmd = 'python for_batch/scripts/batch_dd_simu.py'
+
+def simulation(**dd):
+
+    cmd = 'python for_batch/scripts/simulation/batch_dd_simu.py'
+    for key, vals in dd.items():
+        cmd += ' --{}={}'.format(key, vals)
+    """
     cmd += ' --fieldName {}'.format(fieldName)
     cmd += ' --dbName {}'.format(dbName)
     cmd += ' --dbDir {}'.format(dbDir)
     cmd += ' --dbExtens {}'.format(dbExtens)
     cmd += ' --outDir {}'.format(outDir)
-    cmd += ' --mode {}'.format(mode)
-    cmd += ' --pixelmap_dir {}'.format(pixelmap_dir)
+    # cmd += ' --mode {}'.format(mode)
+    # cmd += ' --pixelmap_dir {}'.format(pixelmap_dir)
     cmd += ' --ebvofMW {}'.format(ebvofMW)
     cmd += ' --nproc {}'.format(nproc)
-
+    """
     print(cmd)
     os.system(cmd)
 
-def fit(fieldName,dbName,simuDir,outDir,mode,snrmin,nbands=0):
 
-    cmd = 'python for_batch/scripts/batch_dd_fit.py'
+def process_new(**params):
+    """
+    Method to process simulations
+
+    Parameters
+    ----------
+    **params : dic
+        Run parameters.
+
+    Returns
+    -------
+    None.
+
+    """
+
+    script = 'run_scripts/simulation/run_simulation.py'
+    script = 'run_scripts/simulation/run_simulation_wrapper.py'
+    fields = params['fieldNames'].split(',')
+
+    del params['fieldNames']
+    for field in fields:
+        processName = 'simu_{}_{}'.format(params['dbName'], field)
+        mybatch = BatchIt(processName=processName)
+        params['SN_color_type'] = 'random'
+        params['SN_x1_type'] = 'random'
+        params['SN_z_min'] = 0.01
+        params['SN_z_max'] = 1.1
+        params['SN_z_type'] = 'random'
+        params['Simulator_model'] = 'salt3'
+        params['Simulator_version'] = '2.0'
+        params['SN_NSNfactor'] = 10
+        params['Observations_fieldtype'] = params['fieldType']
+        params['ProductionIDSimu'] = 'LC_{}_{}_spectroz'.format(params['fieldType'],
+                                                                params['dbName'])
+        params['nside'] = 128
+        params['Pixelisation_nside'] = 128
+        params['Observations_fieldname'] = field
+        params['nproc'] = 1
+        params['MultiprocessingSimu_nproc'] = params['nproc']
+        params['OutputSimu_save'] = 0
+        params['OutputSimu_savefromwrapper'] = 1
+        mybatch.add_batch(script, params)
+        # mybatch.go_batch()
+
+
+def fit(fieldName, dbName, simuDir, outDir, snrmin, nbands=0):
+
+    cmd = 'python for_batch/scripts/simulation/batch_dd_fit.py'
     cmd += ' --fieldName {}'.format(fieldName)
     cmd += ' --dbName {}'.format(dbName)
     cmd += ' --simuDir {}'.format(simuDir)
     cmd += ' --outDir {}'.format(outDir)
-    cmd += ' --mode {}'.format(mode)
     cmd += ' --snrmin {}'.format(snrmin)
     print(cmd)
     os.system(cmd)
 
+
 parser = OptionParser()
 
-parser.add_option('--dbName', type='str', default='descddf_v1.5_10yrs',help='dbName to process  [%default]')
-parser.add_option('--dbDir', type='str', default='/sps/lsst/cadence/LSST_SN_PhG/cadence_db/fbs_1.5/npy',help='dbDir to process  [%default]')
-parser.add_option('--dbExtens', type='str', default='npy',help='dbDir extens [%default]')
-parser.add_option('--simuDir', type='str', default='/sps/lsst/users/gris/DD/Simu',help='simu dir [%default]')
-parser.add_option('--fitDir', type='str', default='/sps/lsst/users/gris/DD/Fit',help='output directory [%default]')
-parser.add_option('--action', type='str', default='simulation',help='what to do: simulation or fit [%default]')
-parser.add_option('--mode', type='str', default='batch',help='running mode batch/interactive [%default]')
-parser.add_option('--snrmin', type=float, default=1.,help='min snr for LC point fit[%default]')
-parser.add_option('--pixelmap_dir', type='str', default='/sps/lsst/users/gris/ObsPixelized',help='pixelmap directory [%default]')
-parser.add_option('--nproc', type=int, default=8,help='number of proc [%default]')
-parser.add_option('--ebvofMW', type=float, default=-1.0,help='E(B-V) [%default]')
-parser.add_option('--fieldNames', type=str, default='COSMOS,CDFS,ELAIS,XMM-LSS,ADFS1,ADFS2',help='DD fields to process [%default]')
+parser.add_option('--dbList', type='str', default='DD_fbs_3.3.csv',
+                  help='dbList to process [%default]')
+parser.add_option('--OutputSimu_directory', type='str',
+                  default='/sps/lsst/users/gris/DD/Simu',
+                  help='simu dir [%default]')
+
+parser.add_option('--nproc', type=int, default=8,
+                  help='number of proc [%default]')
+parser.add_option('--ebvofMW', type=float, default=-
+                  1.0, help='E(B-V) [%default]')
+parser.add_option('--fieldNames', type=str,
+                  default='COSMOS,CDFS,ELAIS,XMM-LSS,ADFS1,ADFS2',
+                  help='DD fields to process [%default]')
+parser.add_option('--InstrumentSimu_airmassType', type=str, default='dep',
+                  help='airmass for LCs const/dep[%default]')
 
 opts, args = parser.parse_args()
 
-dbName = opts.dbName
-dbDir = opts.dbDir
-dbExtens = opts.dbExtens
-simuDir = opts.simuDir
-fitDir = opts.fitDir
-mode = opts.mode
-snrmin = opts.snrmin
-pixelmap_dir = opts.pixelmap_dir
-nproc = opts.nproc
-ebvofMW = opts.ebvofMW
 
-DDF = list(opts.fieldNames.split(','))
-#DDF = ['COSMOS','CDFS','ELAIS','XMM-LSS','ADFS1','ADFS2']
-#DDF = ['COSMOS']
-#DDF = ['CDFS','ELAIS','XMM-LSS','ADFS1','ADFS2']
+dbList = pd.read_csv(opts.dbList)
 
-for dd in DDF:
-    if opts.action == 'simulation':
-        simulation(dd,dbName,dbDir,dbExtens,simuDir,mode,pixelmap_dir,ebvofMW,nproc)
-    if opts.action == 'fit':
-        fit(dd,dbName,simuDir,fitDir,mode,snrmin)
+dd = vars(opts)
+del dd['dbList']
+for i, row in dbList.iterrows():
+    for col in dbList.columns:
+        dd[col] = row[col]
+    dd['Observations_coadd'] = dd.pop('coadd')
+    dd['InstrumentSimu_telescope_tag'] = dd.pop('teltag')
+    process_new(**dd)
