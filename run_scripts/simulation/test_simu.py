@@ -56,6 +56,7 @@ cmd += ' --Observations_season 1 --nside 128 --Pixelisation_nside 128'
 cmd += ' --npixels=1 --SN_sigmaInt=0.0'
 cmd += ' --SN_nspectra=-1 --pixelList=pixelList.csv'
 cmd += ' --InstrumentSimu_telescope_tag={}'.format(tag)
-
+cmd += ' --InstrumentSimu_airmassType=variable'
+cmd += ' --OutputSimu_clean=0'
 print(cmd)
 os.system(cmd)
