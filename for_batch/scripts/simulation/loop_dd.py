@@ -66,7 +66,7 @@ def process_new(**params):
         params['OutputSimu_save'] = 0
         params['OutputSimu_savefromwrapper'] = 1
         mybatch.add_batch(script, params)
-        # mybatch.go_batch()
+        mybatch.go_batch()
 
 
 def fit(fieldName, dbName, simuDir, outDir, snrmin, nbands=0):
