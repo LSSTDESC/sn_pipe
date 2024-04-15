@@ -43,6 +43,9 @@ def process_new(**params):
     script = 'run_scripts/simulation/run_simulation_wrapper.py'
     fields = params['fieldNames'].split(',')
     nprocSimu = params['nprocSimu']
+    outDir = params['OutputSimu_directory']
+    params['OutputSimu_directory'] = '{}/{}'.format(outDir, params['dbName'])
+
     del params['fieldNames']
     del params['nprocSimu']
 
