@@ -42,8 +42,10 @@ def process_new(**params):
     script = 'run_scripts/simulation/run_simulation.py'
     script = 'run_scripts/simulation/run_simulation_wrapper.py'
     fields = params['fieldNames'].split(',')
-
+    nprocSimu = params['nprocSimu']
     del params['fieldNames']
+    del params['nprocSimu']
+
     for field in fields:
         processName = 'simu_{}_{}'.format(params['dbName'], field)
         mybatch = BatchIt(processName=processName)
@@ -61,8 +63,8 @@ def process_new(**params):
         params['nside'] = 128
         params['Pixelisation_nside'] = 128
         params['Observations_fieldname'] = field
-        # params['nproc'] = 1
-        params['MultiprocessingSimu_nproc'] = params['nproc']
+        params['nproc'] = 1
+        params['MultiprocessingSimu_nproc'] = nprocSimu
         params['OutputSimu_save'] = 0
         params['OutputSimu_savefromwrapper'] = 1
         params['OutputSimu_throwafterdump'] = 0
@@ -90,8 +92,8 @@ parser.add_option('--OutputSimu_directory', type='str',
                   default='/sps/lsst/users/gris/DD/Simu',
                   help='simu dir [%default]')
 
-parser.add_option('--nproc', type=int, default=8,
-                  help='number of proc [%default]')
+parser.add_option('--nprocSimu', type=int, default=8,
+                  help='number of proc for simu [%default]')
 parser.add_option('--ebvofMW', type=float, default=-
                   1.0, help='E(B-V) [%default]')
 parser.add_option('--fieldNames', type=str,
