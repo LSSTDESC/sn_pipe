@@ -61,10 +61,11 @@ def process_new(**params):
         params['nside'] = 128
         params['Pixelisation_nside'] = 128
         params['Observations_fieldname'] = field
-        #params['nproc'] = 1
+        # params['nproc'] = 1
         params['MultiprocessingSimu_nproc'] = params['nproc']
         params['OutputSimu_save'] = 0
         params['OutputSimu_savefromwrapper'] = 1
+        params['OutputSimu_throwafterdump'] = 0
         mybatch.add_batch(script, params)
         mybatch.go_batch()
 
