@@ -7,7 +7,7 @@ Created on Thu Apr 18 11:17:02 2024
 """
 
 from optparse import OptionParser
-from sn_saturation.psf_plot import plot_pixel
+from sn_plotters_flux_pixels.plot_flux_pixels import plot_pixel
 
 parser = OptionParser()
 parser.add_option("--psf_type", type=str, default='single_gauss',
