@@ -196,7 +196,8 @@ ffig = '{} \n'.format(ftit)
 ffiga = '{} \n'.format(ftit)
 ffig += '{}={} days, season length={} days'.format(cadud, myclass.cad_UD,
                                                    int(myclass.sl_UD))
-#ffiga += 'season length={} days'.format(int(myclass.sl_UD))
+ffigb = ffig
+# ffiga += 'season length={} days'.format(int(myclass.sl_UD))
 
 """
 restot = rf.append_fields(restot, 'Nv_UD_season',
@@ -207,6 +208,14 @@ myclass.plot(restot, varx='Nv_DD',
              vary='Nv_UD',
              legy='N$_{v}^{UDF}/season}$', figtitle=ffiga)
 
+myclass.plot(restot, varx='Nv_DD',
+             legx='N$_{v}^{DF}/season}$',
+             vary='Nv_UD_night',
+             legy='N$_{v}^{UDF}/obs.~night$', scenario={},
+             zcomp_req=zcomp_req, zcomp_req_err=zcomp_req_err,
+             pz_wl_req=pz_wl_req, pz_wl_req_err=pz_wl_req_err,
+             deep_universal={}, scoc_pII={},
+             figtitle=ffigb)
 
 # zcomp_req = {}
 # zcomp_req_err = {}
@@ -336,7 +345,7 @@ print('uniformize', dfres[['name', 'year',
 
 
 # plot scenario vs time - does not work any more
-#Scenario_time(dfres, swap_filter_moon=pparams['swap_filter_moon'])
+# Scenario_time(dfres, swap_filter_moon=pparams['swap_filter_moon'])
 # see run_scripts/desc_ddf_strategy/ana_OS.py for this
 
 
