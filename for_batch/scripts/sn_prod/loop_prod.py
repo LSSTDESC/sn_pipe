@@ -53,6 +53,18 @@ parser.add_option("--DD_list", type=str,
 parser.add_option("--lookup_ddf", type=str,
                   default='input/simulation/lookup_ddf',
                   help="Look up table for DDFs [%default]")
+parser.add_option("--saturation_effect", type=int,
+                  default=0,
+                  help="to include saturation effects [%default]")
+parser.add_option("--saturation_psf", type=str,
+                  default='single_gauss',
+                  help="psf to use for saturation effects [%default]")
+parser.add_option("--saturation_ccdfullwell", type=float,
+                  default=120000,
+                  help="ccd full well to use for saturation effects [%default]")
+parser.add_option("--SN_z_max", type=float,
+                  default=1.1,
+                  help="zmax for sn prod [%default]")
 
 opts, args = parser.parse_args()
 
@@ -86,4 +98,8 @@ for i, row in df.iterrows():
     procDict['simuParams_dir'] = opts.simuParams_dir
     procDict['DD_list'] = opts.DD_list
     procDict['lookup_ddf'] = opts.lookup_ddf
+    procDict['saturation_effect'] = opts.saturation_effect
+    procDict['saturation_psf'] = opts.saturation_psf
+    procDict['saturation_ccdfullwell'] = opts.saturation_ccdfullwell
+    procDict['SN_z_max'] = opts.SN_z_max
     go_batch(script, procDict)

@@ -37,3 +37,8 @@ SN smearFlux 0 int #LC flux smearing
 simuParams_fromFile 0 int #to use simu params from file
 simuParams_dir ../Output_SN_WFD_sigmaInt_0.0_Hounsell_nnew str #simu params dir
 lookup_ddf input/simulation/lookup_ddf.csv str #ddf lookup table
+saturation_effect 0 int #to include saturation effects
+saturation_psf single_gauss str #PSF for saturation effects
+saturation_ccdfullwell 90.e3 float #ccd full well value
+SN_z_max 1.0 float #SN z max
+SN_NSNfactor 30 int #SN nsn factor

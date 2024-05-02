@@ -38,8 +38,21 @@ parser.add_option("--DD_list", type=str,
 parser.add_option("--lookup_ddf", type=str,
                   default='input/simulation/lookup_ddf.csv',
                   help="Look up table for DDFs [%default]")
-
-
+parser.add_option("--saturation_effect", type=int,
+                  default=0,
+                  help="to include saturation effects [%default]")
+parser.add_option("--saturation_psf", type=str,
+                  default='single_gauss',
+                  help="psf to use for saturation effects [%default]")
+parser.add_option("--saturation_ccdfullwell", type=float,
+                  default=120000,
+                  help="ccd full well to use for saturation effects [%default]")
+parser.add_option("--SN_z_max", type=float,
+                  default=1.1,
+                  help="zmax for sn prod [%default]")
+parser.add_option("--SN_NSNfactor", type=int,
+                  default=30,
+                  help="nsn factor for production[%default]")
 opts, args = parser.parse_args()
 
 dbList_DD = opts.dbList_DD
@@ -55,6 +68,11 @@ simuParams_dir_DD = opts.simuParams_dir_DD
 simuParams_dir_WFD = opts.simuParams_dir_WFD
 dd_list = opts.DD_list
 lookup_ddf = opts.lookup_ddf
+saturation_effect = opts.saturation_effect
+saturation_psf = opts.saturation_psf
+saturation_ccdfullwell = opts.saturation_ccdfullwell
+sn_z_max = opts.SN_z_max
+sn_nsn_factor = opts.SN_NSNfactor
 
 cmd_scr = 'python for_batch/scripts/sn_prod/loop_prod.py'
 cmd_scr += ' --SN_sigmaInt=0.0'
@@ -69,6 +87,7 @@ if dbList_DD != '':
     cmd_ddf += ' --simuParams_dir={}'.format(simuParams_dir_DD)
     cmd_ddf += ' --DD_list={}'.format(dd_list)
     cmd_ddf += ' --lookup_ddf={}'.format(lookup_ddf)
+    cmd_ddf += ' --SN_NSNfactor={}'.format(sn_nsn_factor)
     print(cmd_ddf)
     os.system(cmd_ddf)
 
@@ -82,6 +101,10 @@ if dbList_WFD != '':
     cmd_wfd += ' --Fitter_sigmaz={}'.format(sigmaz)
     cmd_wfd += ' --simuParams_fromFile={}'.format(simuParams_fromFile)
     cmd_wfd += ' --simuParams_dir={}'.format(simuParams_dir_WFD)
-
+    cmd_wfd += ' --saturation_effect={}'.format(saturation_effect)
+    cmd_wfd += ' --saturation_psf={}'.format(saturation_psf)
+    cmd_wfd += ' --saturation_ccdfullwell={}'.format(saturation_ccdfullwell)
+    cmd_wfd += ' --SN_z_max={}'.format(sn_z_max)
+    cmd_wfd += ' --SN_NSNfactor={}'.format(sn_nsn_factor)
     print(cmd_wfd)
     os.system(cmd_wfd)

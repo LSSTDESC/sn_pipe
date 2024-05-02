@@ -101,7 +101,8 @@ def batch_DDF(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
 
 def batch_WFD(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
               time='60:00:00', mem='40G', seas_min=1, seas_max=10,
-              zmin=0.01, zmax=0.7, runMode='seasonal', splitobs=False):
+              zmin=0.01, zmax=0.7, runMode='seasonal', splitobs=False,
+              extend_rate=True):
     """
     Function to launch sim_to_fit for WFD
 
@@ -137,6 +138,9 @@ def batch_WFD(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
     zmax = np.round(zmax, 1)
     zmin = np.round(zmin, 2)
     smearFlux = theDict['SN_smearFlux']
+    sat = theDict['saturation_effect']
+    sat_psf = theDict['saturation_psf']
+    ccdfullwell = theDict['saturation_ccdfullwell']
 
     tag_list = pd.DataFrame()
     if 'None' not in reprocList:
@@ -149,7 +153,10 @@ def batch_WFD(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
     # procDict['nside'] = 64
     # procDict['fieldType'] = 'WD'
     # procDict['Fitter_parnames'] = 'z,t0,x1,c,x0'
-    tag_dir = '_spectroz'
+    satb = 'nosat'
+    if sat == 1:
+        satb = 'sat_{}_{}'.format(sat_psf, int(ccdfullwell))
+    tag_dir = '_spectroz_{}'.format(satb)
     # if 'z' in procDict['Fitter_parnames']:
     if procDict['Fitter_sigmaz'] >= 1.e-3:
         tag_dir = '_photz'
@@ -184,8 +191,9 @@ def batch_WFD(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
         procDict['RAmax'] = RAmax
         procDict['SN_z_min'] = zmin
         procDict['SN_z_max'] = zmax
-        procDict['SN_z_minsimu'] = 0.01
-        procDict['SN_z_maxsimu'] = 0.8
+        if extend_rate:
+            procDict['SN_z_minsimu'] = 0.01
+            procDict['SN_z_maxsimu'] = 0.8
 
         if dbExtens == 'npy' and splitobs:
             procDict['dbName'] = '{}_{}_{}'.format(dbName, RAmin, RAmax)
@@ -252,21 +260,28 @@ if opts.fieldType == 'DD':
     batch_DDF(procDict, mem='20Gb')
 
 # this is for WFD
-#procDict['simuParams_fromFile'] = opts.simuParams_fromFile
+# procDict['simuParams_fromFile'] = opts.simuParams_fromFile
 
 seasons = [(1, 5), (6, 10), (11, 14)]
 seasons = [(1, 7), (7, 14)]
 runMode = 'all_seasons'
 if opts.fieldType == 'WFD':
     for seas in seasons:
-        batch_WFD(procDict,
-                  seas_min=seas[0], seas_max=seas[1],
-                  zmin=0.01, zmax=0.4,
-                  mem='20Gb', runMode=runMode)
-        batch_WFD(procDict,
-                  seas_min=seas[0], seas_max=seas[1],
-                  zmin=0.4, zmax=0.8,
-                  mem='20Gb', runMode=runMode)
+        if opts.SN_z_max >= 0.4:
+            batch_WFD(procDict,
+                      seas_min=seas[0], seas_max=seas[1],
+                      zmin=0.01, zmax=0.4,
+                      mem='20Gb', runMode=runMode)
+            batch_WFD(procDict,
+                      seas_min=seas[0], seas_max=seas[1],
+                      zmin=0.4, zmax=0.8,
+                      mem='20Gb', runMode=runMode)
+        else:
+            batch_WFD(procDict,
+                      seas_min=seas[0], seas_max=seas[1],
+                      zmin=0.01, zmax=opts.SN_z_max,
+                      mem='20Gb', runMode=runMode, extend_rate=False)
+
         """
         batch_WFD(procDict,
                   seas_min=seas[0], seas_max=seas[1],
