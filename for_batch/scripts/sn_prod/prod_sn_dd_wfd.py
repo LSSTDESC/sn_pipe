@@ -53,6 +53,10 @@ parser.add_option("--SN_z_max", type=float,
 parser.add_option("--SN_NSNfactor", type=int,
                   default=30,
                   help="nsn factor for production[%default]")
+parser.add_option("--Observations_coadd", type=int,
+                  default=1,
+                  help="obs coadd [%default]")
+
 opts, args = parser.parse_args()
 
 dbList_DD = opts.dbList_DD
@@ -73,6 +77,7 @@ saturation_psf = opts.saturation_psf
 saturation_ccdfullwell = opts.saturation_ccdfullwell
 sn_z_max = opts.SN_z_max
 sn_nsn_factor = opts.SN_NSNfactor
+obs_coadd = opts.Observations_coadd
 
 cmd_scr = 'python for_batch/scripts/sn_prod/loop_prod.py'
 cmd_scr += ' --SN_sigmaInt=0.0'
@@ -88,6 +93,7 @@ if dbList_DD != '':
     cmd_ddf += ' --DD_list={}'.format(dd_list)
     cmd_ddf += ' --lookup_ddf={}'.format(lookup_ddf)
     cmd_ddf += ' --SN_NSNfactor={}'.format(sn_nsn_factor)
+    cmd_ddf += ' --Observations_coadd={}'.format(obs_coadd)
     print(cmd_ddf)
     os.system(cmd_ddf)
 
@@ -106,5 +112,6 @@ if dbList_WFD != '':
     cmd_wfd += ' --saturation_ccdfullwell={}'.format(saturation_ccdfullwell)
     cmd_wfd += ' --SN_z_max={}'.format(sn_z_max)
     cmd_wfd += ' --SN_NSNfactor={}'.format(sn_nsn_factor)
+    cmd_wfd += ' --Observations_coadd={}'.format(obs_coadd)
     print(cmd_wfd)
     os.system(cmd_wfd)
