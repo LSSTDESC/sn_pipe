@@ -305,13 +305,14 @@ class Select_filt:
 
         fullpath = '{}/{}/{}/*{}_{}*.hdf5'.format(self.dataDir, self.dbName,
                                                   self.runType, RAmin, RAmax)
+
         fis = glob.glob(fullpath)
 
         if len(fis) == 0:
             return pd.DataFrame()
 
         # load the data
-        #data = pd.DataFrame()
+        # data = pd.DataFrame()
         for fi in fis:
             print(fi)
             data = pd.read_hdf(fi)
@@ -319,7 +320,7 @@ class Select_filt:
             if len(data) > 0:
                 data = complete_df(data, alpha=0.4, beta=3)
             data['field'] = 'WFD'
-            #data = pd.concat((data, dd))
+            # data = pd.concat((data, dd))
 
             # E(B-V) cut
             idx = data['ebvofMW'] <= self.ebvofMW
@@ -334,7 +335,6 @@ class Select_filt:
                 self.save_data_wfd(sel_data, RAmin, RAmax)
 
         # return sel_data
-
         """
         for seas in self.seasons:
             idx = sel_data['season'] == seas
