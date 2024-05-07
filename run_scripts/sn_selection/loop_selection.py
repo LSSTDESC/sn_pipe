@@ -6,15 +6,17 @@ from optparse import OptionParser
 parser = OptionParser()
 
 parser.add_option("--dataDir", type=str,
-                  default='../Output_SN_sigmaInt_0.0_Hounsell',
+                  default='../Output_SN_WFD_sigmaInt_0.0_Hounsell_z_smflux',
                   help="data dir[%default]")
 parser.add_option("--dbList", type=str,
-                  default='list_OS.csv', help="DB list to process [%default]")
+                  default='list_OS_new.csv', help="DB list to process [%default]")
 parser.add_option("--timescale", type=str,
                   default='year',
                   help="Time scale for NSN estimation. [%default]")
+"""
 parser.add_option("--zType", type=str,
                   default='spectroz', help="z type (spectroz/photz)  [%default]")
+"""
 parser.add_option("--listFields", type=str,
                   default='COSMOS,CDFS,XMM-LSS,ELAISS1,EDFS',
                   help=" [%default]")
@@ -35,7 +37,7 @@ opts, args = parser.parse_args()
 dbList = opts.dbList
 dataDir = opts.dataDir
 timescale = opts.timescale
-zType = opts.zType
+# zType = opts.zType
 listFields = opts.listFields
 fieldType = opts.fieldType
 nsn_factor = opts.nsn_factor
@@ -49,7 +51,7 @@ script = 'python run_scripts/sn_selection/sn_selection.py'
 for i, row in db.iterrows():
     cmd = '{} --dbName {} --dataDir {}'.format(script, row['dbName'], dataDir)
     cmd += ' --timescale={}'.format(timescale)
-    cmd += ' --zType={}'.format(zType)
+    cmd += ' --zType={}'.format(row['zType'])
     cmd += ' --fieldType={}'.format(fieldType)
     cmd += ' --listFields={}'.format(listFields)
     cmd += ' --nsn_factor={}'.format(nsn_factor)
