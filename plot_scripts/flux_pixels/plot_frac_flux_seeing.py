@@ -13,7 +13,7 @@ from sn_plotters_flux_pixels.plot_flux_pixels import plot_frac_flux
 
 parser = OptionParser()
 parser.add_option("--fNames", type=str,
-                  default='PSF_pixel_single_gauss_summary.npy,PSF_pixel_moffat_summary.npy',
+                  default='psf_pixel_single_gauss_summary.npy,psf_pixel_moffat_summary.npy',
                   help="PSF files [%default]")
 parser.add_option("--labels", type=str,
                   default='single gaussian PSF,Moffat PSF',
