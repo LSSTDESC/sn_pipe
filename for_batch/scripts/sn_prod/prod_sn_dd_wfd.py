@@ -24,6 +24,8 @@ parser.add_option("--SN_smearFlux", type=int, default=1,
                   help="LC flux smearing [%default]")
 parser.add_option("--Fitter_sigmaz", type=float, default=1.e-5,
                   help="sigmaz for LC fits [%default]")
+parser.add_option("--SN_sigmaz", type=float, default=1.e-5,
+                  help="sigmaz for LC zsim [%default]")
 parser.add_option("--simuParams_fromFile", type=int, default=0,
                   help="to use simulation params from file [%default]")
 parser.add_option("--simuParams_dir_DD", type=str,
@@ -78,6 +80,7 @@ saturation_ccdfullwell = opts.saturation_ccdfullwell
 sn_z_max = opts.SN_z_max
 sn_nsn_factor = opts.SN_NSNfactor
 obs_coadd = opts.Observations_coadd
+sn_sigmaz = opts.SN_sigmaz
 
 cmd_scr = 'python for_batch/scripts/sn_prod/loop_prod.py'
 cmd_scr += ' --SN_sigmaInt=0.0'
@@ -94,6 +97,7 @@ if dbList_DD != '':
     cmd_ddf += ' --lookup_ddf={}'.format(lookup_ddf)
     cmd_ddf += ' --SN_NSNfactor={}'.format(sn_nsn_factor)
     cmd_ddf += ' --Observations_coadd={}'.format(obs_coadd)
+    cmd_ddf += ' --SN_sigmaz={}'.format(sn_sigmaz)
     print(cmd_ddf)
     os.system(cmd_ddf)
 
@@ -113,5 +117,6 @@ if dbList_WFD != '':
     cmd_wfd += ' --SN_z_max={}'.format(sn_z_max)
     cmd_wfd += ' --SN_NSNfactor={}'.format(sn_nsn_factor)
     cmd_wfd += ' --Observations_coadd={}'.format(obs_coadd)
+    cmd_wfd += ' --SN_sigmaz={}'.format(sn_sigmaz)
     print(cmd_wfd)
     os.system(cmd_wfd)

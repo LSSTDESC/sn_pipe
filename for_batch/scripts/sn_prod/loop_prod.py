@@ -26,7 +26,7 @@ parser.add_option("--dbList", type="str", default='DD_fbs_2.99.csv',
                   help="db list to process[%default]")
 parser.add_option("--outputDir", type="str", default='/sps/lsst/users/gris/Output_SN',
                   help="main output dir [%default]")
-parser.add_option("--Fitter_parnames", type="str", default='t0,x1,c,x0,z',
+parser.add_option("--Fitter_parnames", type="str", default='t0,x1,c,x0',
                   help="parameters to fit [%default]")
 parser.add_option("--reprocList", type="str", default='None.csv',
                   help="to reproc some of the db files only [%default]")
@@ -65,6 +65,8 @@ parser.add_option("--saturation_ccdfullwell", type=float,
 parser.add_option("--SN_z_max", type=float,
                   default=1.1,
                   help="zmax for sn prod [%default]")
+parser.add_option("--SN_sigmaz", type=float, default=1.e-5,
+                  help="sigmaz for LC zsim [%default]")
 
 opts, args = parser.parse_args()
 
@@ -102,4 +104,5 @@ for i, row in df.iterrows():
     procDict['saturation_psf'] = opts.saturation_psf
     procDict['saturation_ccdfullwell'] = opts.saturation_ccdfullwell
     procDict['SN_z_max'] = opts.SN_z_max
+    procDict['SN_z_sigmaz'] = opts.SN_sigmaz
     go_batch(script, procDict)

@@ -42,3 +42,4 @@ saturation_psf single_gauss str #PSF for saturation effects
 saturation_ccdfullwell 90.e3 float #ccd full well value
 SN_z_max 1.0 float #SN z max
 SN_NSNfactor 30 int #SN nsn factor
+SN_z_sigmaz 1.e-5 float #SN sigmaz
