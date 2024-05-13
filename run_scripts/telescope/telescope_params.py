@@ -36,7 +36,7 @@ telescope = get_telescope(tel_dir=telb,
                           through_dir=through_dir,
                           atmos_dir=atmos_dir,
                           tag=tag, load_components=True,
-                          airmass=airmass)
+                          airmass=airmass, gain=gain)
 
 
 bands = 'ugrizy'
@@ -51,6 +51,7 @@ m5 = dict(zip(bands, [telescope.m5(b, exptime) for b in bands]))
 
 df['zp'] = [telescope.zp(b) for b in bands]
 df['flux_zp'] = [telescope.counts_zp(b) for b in bands]
+df['ADU_zp'] = [telescope.adu_zp(b) for b in bands]
 df['msky'] = [telescope.mag_sky(b) for b in bands]
 df['flux_sky'] = [telescope.flux_sky(b, exptime) for b in bands]
 df['flux_sky_mag'] = 10**(-0.4*(df['msky']-df['zp']))*plateScale**2
