@@ -36,7 +36,7 @@ telescope = get_telescope(tel_dir=telb,
                           through_dir=through_dir,
                           atmos_dir=atmos_dir,
                           tag=tag, load_components=True,
-                          airmass=airmass, aerosol=aerosol, gain=gain)
+                          airmass=airmass)
 
 
 bands = 'ugrizy'

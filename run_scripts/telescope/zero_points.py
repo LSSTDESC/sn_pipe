@@ -89,7 +89,7 @@ outName = 'zp_airmass_v{}.npy'.format(tag)
 
 zp = Zeropoint_airmass(tel_dir=telDir,
                        through_dir=throughputsDir,
-                       atmos_dir=atmosDir, tag=tag, aerosol=True)
+                       atmos_dir=atmosDir, tag=tag, aerosol='aerosol')
 
 res = zp.get_data()
 np.save('data_{}'.format(outName), res)
