@@ -52,9 +52,12 @@ parser.add_option("--saturation_ccdfullwell", type=float,
 parser.add_option("--SN_z_max", type=float,
                   default=1.1,
                   help="zmax for sn prod [%default]")
-parser.add_option("--SN_NSNfactor", type=int,
+parser.add_option("--SN_NSNfactor_DDF", type=int,
                   default=30,
-                  help="nsn factor for production[%default]")
+                  help="nsn factor for DDF production[%default]")
+parser.add_option("--SN_NSNfactor_WFD", type=int,
+                  default=10,
+                  help="nsn factor for WFD production[%default]")
 parser.add_option("--Observations_coadd", type=int,
                   default=1,
                   help="obs coadd [%default]")
@@ -78,7 +81,8 @@ saturation_effect = opts.saturation_effect
 saturation_psf = opts.saturation_psf
 saturation_ccdfullwell = opts.saturation_ccdfullwell
 sn_z_max = opts.SN_z_max
-sn_nsn_factor = opts.SN_NSNfactor
+sn_nsn_factor_dd = opts.SN_NSNfactor_DDF
+sn_nsn_factor_wfd = opts.SN_NSNfactor_WFD
 obs_coadd = opts.Observations_coadd
 sn_sigmaz = opts.SN_sigmaz
 
@@ -95,7 +99,7 @@ if dbList_DD != '':
     cmd_ddf += ' --simuParams_dir={}'.format(simuParams_dir_DD)
     cmd_ddf += ' --DD_list={}'.format(dd_list)
     cmd_ddf += ' --lookup_ddf={}'.format(lookup_ddf)
-    cmd_ddf += ' --SN_NSNfactor={}'.format(sn_nsn_factor)
+    cmd_ddf += ' --SN_NSNfactor={}'.format(sn_nsn_factor_dd)
     cmd_ddf += ' --Observations_coadd={}'.format(obs_coadd)
     cmd_ddf += ' --SN_sigmaz={}'.format(sn_sigmaz)
     print(cmd_ddf)
@@ -115,7 +119,7 @@ if dbList_WFD != '':
     cmd_wfd += ' --saturation_psf={}'.format(saturation_psf)
     cmd_wfd += ' --saturation_ccdfullwell={}'.format(saturation_ccdfullwell)
     cmd_wfd += ' --SN_z_max={}'.format(sn_z_max)
-    cmd_wfd += ' --SN_NSNfactor={}'.format(sn_nsn_factor)
+    cmd_wfd += ' --SN_NSNfactor={}'.format(sn_nsn_factor_wfd)
     cmd_wfd += ' --Observations_coadd={}'.format(obs_coadd)
     cmd_wfd += ' --SN_sigmaz={}'.format(sn_sigmaz)
     print(cmd_wfd)
