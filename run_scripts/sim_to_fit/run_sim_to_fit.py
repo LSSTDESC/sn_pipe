@@ -23,8 +23,10 @@ confDict_fit = make_dict_from_config(path_fit[0], 'config_fit.txt')
 
 parser = OptionParser()
 
+parser.add_option("--fit_remove_sat", type=str,
+                  default='0',
+                  help="to fit w/o saturated points  [%default]")
 
-parser = OptionParser()
 # parser for simulation parameters : 'dynamical' generation
 add_parser(parser, confDict_gen)
 add_parser(parser, confDict_simu)
@@ -32,6 +34,7 @@ add_parser(parser, confDict_info)
 add_parser(parser, confDict_fit)
 
 opts, args = parser.parse_args()
+fit_remove_sat = opts.fit_remove_sat
 """
 # parser for simulation parameters : 'dynamical' generation
 for key, vals in confDict.items():
@@ -57,7 +60,7 @@ procDict = {}
 infoDict = {}
 fitDict = {}
 for key, vals in confDict_simu.items():
-    #simuDict[key] = eval('opts.{}'.format(key))
+    # simuDict[key] = eval('opts.{}'.format(key))
     newval = eval('opts.{}'.format(key))
     simuDict[key] = (vals[0], newval)
 for key, vals in confDict_gen.items():
@@ -114,7 +117,10 @@ with open(yaml_name_fit, 'w') as f:
 
 # define what to process using simuWrapper
 
-metricList = [SimInfoFitWrapper(yaml_name, infoDict, yaml_name_fit)]
+metricList = [SimInfoFitWrapper(yaml_name,
+                                infoDict,
+                                yaml_name_fit,
+                                fit_remove_sat)]
 fieldType = yaml_params['Observations']['fieldtype']
 fieldName = yaml_params['Observations']['fieldname']
 nside = yaml_params['Pixelisation']['nside']
