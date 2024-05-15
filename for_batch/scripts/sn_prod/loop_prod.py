@@ -24,7 +24,8 @@ parser = OptionParser()
 
 parser.add_option("--dbList", type="str", default='DD_fbs_2.99.csv',
                   help="db list to process[%default]")
-parser.add_option("--outputDir", type="str", default='/sps/lsst/users/gris/Output_SN',
+parser.add_option("--outputDir", type="str",
+                  default='/sps/lsst/users/gris/Output_SN',
                   help="main output dir [%default]")
 parser.add_option("--Fitter_parnames", type="str", default='t0,x1,c,x0',
                   help="parameters to fit [%default]")
@@ -67,6 +68,9 @@ parser.add_option("--SN_z_max", type=float,
                   help="zmax for sn prod [%default]")
 parser.add_option("--SN_sigmaz", type=float, default=1.e-5,
                   help="sigmaz for LC zsim [%default]")
+parser.add_option("--fit_remove_sat", type=str,
+                  default='0',
+                  help="to remove LC saturated points [%default]")
 
 opts, args = parser.parse_args()
 
@@ -78,6 +82,7 @@ print(df)
 
 procDict = {}
 script = 'for_batch/scripts/sn_prod/sn_prod.py'
+
 for i, row in df.iterrows():
     procDict['dbDir'] = row['dbDir']
     procDict['dbExtens'] = row['dbExtens']
@@ -105,4 +110,6 @@ for i, row in df.iterrows():
     procDict['saturation_ccdfullwell'] = opts.saturation_ccdfullwell
     procDict['SN_z_max'] = opts.SN_z_max
     procDict['SN_z_sigmaz'] = opts.SN_sigmaz
+    procDict['fit_remove_sat'] = opts.fit_remove_sat
+
     go_batch(script, procDict)
