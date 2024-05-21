@@ -1546,7 +1546,7 @@ class Plot_density:
         nsn = self.data.groupby([self.timescale]).apply(
             lambda x: self.get_nsn(x)).reset_index()
 
-        #fig, ax = plt.subplots(figsize=(14, 9))
+        # fig, ax = plt.subplots(figsize=(14, 9))
 
         seasons = nsn[self.timescale].unique()
 
