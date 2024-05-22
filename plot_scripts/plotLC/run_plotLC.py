@@ -13,6 +13,8 @@ parser.add_option('--SNDir', type=str, default='None',
                   help='SN dir [%default]')
 parser.add_option('--airmassType', type=str, default='const',
                   help='airmass type [%default]')
+parser.add_option('--tag_tel', type=str, default='1.9',
+                  help='tag for telescope version [%default]')
 
 opts, args = parser.parse_args()
 
