@@ -16,7 +16,7 @@ for dbName in listdb:
             cmd += ' --SN_smearFlux=1 --Fitter_sigmaz=1e-05 --SN_z_max=0.12 --SN_NSNfactor_WFD=50'
             cmd += ' --saturation_effect=1 --saturation_psf={} --saturation_ccdfullwell={}'.format(
                 psf, ccdfull)
-            cmd += '--Observations_coadd=0 --fit_remove_sat=0, 1'
+            cmd += ' --Observations_coadd=0 --fit_remove_sat=0, 1'
 
             # print(cmd)
             os.system(cmd)
