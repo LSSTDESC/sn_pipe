@@ -79,7 +79,7 @@ def plot_nsn_z(vals, fig=None, ax=None):
     ax.plot(nsn_zb['z'], np.cumsum(nsn_zb['nsn']), linestyle='dashed')
 
 
-def plot_sigma_mu_z(vals, varp='sigma_mu', fig=None, ax=None):
+def plot_sigma_mu_z(vals, varp='sigma_mu', fig=None, ax=None, type='all'):
 
     if fig is None:
         fig, ax = plt.subplots()
@@ -87,11 +87,19 @@ def plot_sigma_mu_z(vals, varp='sigma_mu', fig=None, ax=None):
     nsn_tot = len(vals)
     idx = vals['remove_sat'] == 0
     sel = vals[idx]
-    print(key, len(sel), nsn_tot-len(sel), len(sel)/norm_factor)
-    nsn_z = mean_vs(sel, varx='z', vary=varp)
-    ax.plot(nsn_z['z'], nsn_z[varp])
-    nsn_zb = mean_vs(vals[~idx], varx='z', vary=varp)
-    ax.plot(nsn_zb['z'], nsn_zb[varp], linestyle='dashed')
+    selb = vals[~idx]
+    print(key, len(sel), nsn_tot-len(sel), len(sel) /
+          norm_factor, len(selb)/norm_factor)
+    print(sel[['z', 'sigma_c', 'remove_sat']])
+    print(selb[['z', 'sigma_c', 'remove_sat']])
+    if type == 'mean':
+        nsn_z = mean_vs(sel, varx='z', vary=varp)
+        ax.plot(nsn_z['z'], nsn_z[varp])
+        nsn_zb = mean_vs(vals[~idx], varx='z', vary=varp)
+        ax.plot(nsn_zb['z'], nsn_zb[varp], linestyle='dashed')
+    if type == 'all':
+        ax.plot(sel['z'], sel[varp], 'ko')
+        ax.plot(selb['z'], selb[varp], 'r*')
 
 
 parser = OptionParser()
@@ -131,7 +139,7 @@ for key, vals in data_dict.items():
     idx = vals['z'] <= 0.11
     vals = vals[idx]
     # plot_nsn_z(vals, fig=fig, ax=ax)
-    # plot_sigma_mu_z(vals, fig=figb, ax=axb)
-    ax.plot(vals['z'], vals['sigma_mu'], 'ko')
+    plot_sigma_mu_z(vals, fig=figb, ax=axb, type='all')
+    # ax.plot(vals['z'], vals['sigma_mu'], 'ko')
 
 plt.show()
