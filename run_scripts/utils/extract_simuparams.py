@@ -127,13 +127,13 @@ def get_simu_params_WFD(dataDir, dbName, seasons,
              'SNID']
 
     ddataDir = '{}/{}/{}'.format(dataDir, dbName, runType)
+    print('looking at', ddataDir)
     fis = glob.glob('{}/*.hdf5'.format(ddataDir))
 
     ddict = {}
     for seas in seasons:
         ddict[seas] = pd.DataFrame()
 
-    print('ooo', fis, outDir_full)
     for fi in fis:
         df = pd.read_hdf(fi)
 
@@ -183,8 +183,10 @@ parser.add_option("--dataDir", type=str,
                   help="data dir[%default]")
 parser.add_option("--dbName", type=str,
                   default='DDF_Univ_WZ', help="db name [%default]")
+"""
 parser.add_option("--selconfig", type=str,
                   default='G10_JLA', help=" [%default]")
+"""
 parser.add_option("--runType", type=str,
                   default='DDF_spectroz', help=" [%default]")
 parser.add_option("--listFields", type=str,
@@ -206,7 +208,7 @@ opts, args = parser.parse_args()
 
 dataDir = opts.dataDir
 dbName = opts.dbName
-selconfig = opts.selconfig
+# selconfig = opts.selconfig
 runType = opts.runType
 fieldType = opts.fieldType
 listFields = opts.listFields
