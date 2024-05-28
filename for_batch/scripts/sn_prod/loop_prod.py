@@ -37,6 +37,9 @@ parser.add_option("--SN_z_rate", type=str, default='Hounsell',
                   help="SN production rate [%default]")
 parser.add_option("--SN_NSNfactor", type=int, default=30,
                   help="SN production scale factor [%default]")
+parser.add_option("--SN_NSNabsolute", type=int,
+                  default=-1,
+                  help="absolute nsn for production[%default]")
 parser.add_option("--Observations_coadd", type=int, default=1,
                   help="Coadd obs per night [%default]")
 parser.add_option("--SN_smearFlux", type=int, default=1,
@@ -96,6 +99,7 @@ for i, row in df.iterrows():
     procDict['SN_sigmaInt'] = opts.SN_sigmaInt
     procDict['SN_z_rate'] = opts.SN_z_rate
     procDict['SN_NSNfactor'] = opts.SN_NSNfactor
+    procDict['SN_NSNabsolute'] = opts.SN_NSNabsolute
     procDict['Observations_coadd'] = opts.Observations_coadd
     procDict['InstrumentSimu_telescope_tag'] = row['teltag']
     procDict['InstrumentFit_telescope_tag'] = row['teltag']
