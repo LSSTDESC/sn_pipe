@@ -191,6 +191,8 @@ def batch_WFD(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
         procDict['RAmax'] = RAmax
         procDict['SN_z_min'] = zmin
         procDict['SN_z_max'] = zmax
+        procDict['SN_z_minsimu'] = zmin
+        procDict['SN_z_maxsimu'] = zmax
         if extend_rate:
             procDict['SN_z_minsimu'] = 0.01
             procDict['SN_z_maxsimu'] = 0.8
@@ -233,7 +235,7 @@ def batch_WFD(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
             mybatch.add_batch(scriptref, procDict)
 
         # go for batch
-        mybatch.go_batch()
+         mybatch.go_batch()
 
 
 # get script parameters and put in a dict
