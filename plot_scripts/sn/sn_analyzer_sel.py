@@ -300,7 +300,11 @@ def plot_DDF(data, norm_factor, config, nside=128, timescale='year'):
         0.5, 11.5, 1), xvar='season', xleg='season',
         logy=False, xlim=[1, 10], nside=nside)
     """
-    # plot_DDF_nsn(data, norm_factor, config, nside, timescale=timescale)
+    idx = data['zmeas'] >= 0.8
+    sel = data[idx]
+    sigma_mu = 0.12
+    plot_DDF_nsn(sel, norm_factor, config, nside,
+                 sigma_mu=sigma_mu, timescale=timescale)
 
     plot_survey_features(data, norm_factor, config, nside, timescale=timescale)
 
@@ -339,8 +343,8 @@ def plot_survey_features(data, norm_factor, config, nside, timescale):
     """
 
     field = 'COSMOS'
-    # dbName = 'baseline_v3.3_10yrs'
-    dbName = 'DDF_DESC_0.80_WZ_0.07'
+    dbName = 'baseline_v3.4_10yrs'
+    # dbName = 'DDF_DESC_0.80_WZ_0.07'
 
     plot_sn_features(data, field, dbName, timescale,
                      yvar='sigma_mu', ylabel='$\sigma_{\mu}}$ [mag]',
@@ -769,7 +773,7 @@ def plot_DDF_dither(data, norm_factor, config, nside, timescale='year'):
     plt.show()
 
 
-def plot_DDF_nsn(data, norm_factor, config, nside, sigmaC=1.e6, timescale='year'):
+def plot_DDF_nsn(data, norm_factor, config, nside, sigma_mu=1.e6, timescale='year'):
     """
 
 
@@ -783,8 +787,8 @@ def plot_DDF_nsn(data, norm_factor, config, nside, sigmaC=1.e6, timescale='year'
       config for plots.
     nside : int
         Healpix nside parameter.
-    sigmaC: float, optional.
-     sigmaC selection cut. The default is 1.e6
+    sigma_mu: float, optional.
+     sigma_mu selection cut. The default is 1.e6
     timescale: str, opt
     Time scale for the plot. The default is 'year'
 
@@ -794,7 +798,7 @@ def plot_DDF_nsn(data, norm_factor, config, nside, sigmaC=1.e6, timescale='year'
 
     """
 
-    idx = data['sigmaC'] <= sigmaC
+    idx = data['sigma_mu'] <= sigma_mu
 
     data = data[idx]
 
@@ -1135,7 +1139,7 @@ class Plot_nsn_vs:
 
 
 def plot_nsn_versus_two(data, norm_factor=30, nside=128,
-                        bins=np.arange(0.005, 0.8, 0.01),
+                        bins=np.arange(0.005, 0.81, 0.01),
                         xvar='z', xleg='z', logy=False,
                         cumul=False, xlim=[0.01, 0.8],
                         label='', fig=None, ax=None, figtitle='',
@@ -1232,8 +1236,9 @@ def plot_nsn_binned(data, norm_factor=30, nside=128,
     res = bin_it(data, xvar=xvar, bins=bins,
                  norm_factor=norm_factor)
 
+    print('bin it', res)
     nsn_tot = np.sum(res['NSN'])
-    print('total number of SN', nsn_tot)
+    print('total number of SN', len(data), nsn_tot)
 
     npixels = len(data['healpixID'].unique())
     import healpy as hp
@@ -1397,7 +1402,8 @@ def process_WFD_OS(conf_df, dataType, dbDir_WFD, runType,
             dataType, dbDir_WFD, OS_WFD, runType,
             timescale_file, timeslots)
         wfda = eval(tt)
-        idx = wfda['ebvofMW'] < 0.25
+        idx = wfda['fitstatus'] == 'fitok'
+        idx &= wfda['ebvofMW'] < 0.25
         wfda = wfda[idx]
         # plot mollview here
         if plot_moll:
@@ -1408,13 +1414,15 @@ def process_WFD_OS(conf_df, dataType, dbDir_WFD, runType,
         ls = selp['ls'].values[0]
         marker = selp['marker'].values[0]
         color = selp['color'].values[0]
-        """
+
+        # plot nsn vs z
+
         plot_nsn_versus_two(wfda, xvar='z', xleg='z', logy=False,
-                            bins=np.arange(0.005, 0.805, 0.05),
+                            bins=np.arange(0.005, 0.81, 0.01),
                             norm_factor=norm_factor,
-                            cumul=False, xlim=[0.01, 0.8], color=color,
-                            marker=marker, fig=fig, ax=ax, cumnorm=True)
-        """
+                            cumul=True, xlim=[0.01, 0.81], color=color,
+                            marker=marker, fig=fig, ax=ax, cumnorm=False)
+
         # density plot here
         # Plot_density(wfda, timescale_file, OS_WFD)
 
@@ -1463,6 +1471,7 @@ def process_WFD(conf_df, dataType, dbDir_WFD, runType,
     None.
 
     """
+    print('processinh wfd')
 
     outName = 'nsn_WFD_v3_test.csv'
 
@@ -1470,7 +1479,7 @@ def process_WFD(conf_df, dataType, dbDir_WFD, runType,
                          timescale_file, timeslots, norm_factor,
                          nside, outName, plot_moll=plot_moll)
 
-    plot_summary_wfd(wfd, conf_df, timescale_file)
+    plot_summary_wfd(wfd, conf_df, timescale_file, cumul=True)
 
     """
     print('wwwwwww', wfd.columns)
@@ -1919,6 +1928,7 @@ if dbDir_DD != '':
 
     process_DDF(conf_df, dataType, dbDir_DD, runType,
                 timescale_file, timeslots, norm_factor_DD)
+
     """
     process_DDF_summary(conf_df, dataType, dbDir_DD, runType,
                         timescale_file)
