@@ -15,7 +15,8 @@ parser.add_option('--airmassType', type=str, default='const',
                   help='airmass type [%default]')
 parser.add_option('--tag_tel', type=str, default='1.9',
                   help='tag for telescope version [%default]')
-
+parser.add_option('--remove_sat', type=int, default=0,
+                  help='to remove saturated LC points [%default]')
 opts, args = parser.parse_args()
 
 opts_dict = vars(opts)
