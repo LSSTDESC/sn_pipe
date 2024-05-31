@@ -22,11 +22,15 @@ def mean_vs(data, varx='z', vary='sigma_mu', bins=np.arange(0.005, 0.11, 0.01)):
     group = data.groupby(pd.cut(data[varx], bins))
 
     _centers = (bins[:-1] + bins[1:])/2
-    _values = group[vary].mean()
+    _mean = group[vary].mean()
+    _med = group[vary].median()
+    _rms = group[vary].std()
 
     df = pd.DataFrame(_centers, columns=[varx])
 
-    df[vary] = list(_values)
+    df['{}_mean'.format(vary)] = list(_mean)
+    df['{}_med'.format(vary)] = list(_med)
+    df['{}_rms'.format(vary)] = list(_rms)
 
     return df
 
@@ -104,6 +108,7 @@ def plot_sigma_mu_z(vals, varp='sigma_mu',
         fig, ax = plt.subplots()
 
     nsn_tot = len(vals)
+    print('ooo', nsn_tot, len(vals['SNID'].unique()))
     idx = vals['remove_sat'] == 0
     sel = vals[idx]
     selb = vals[~idx]
@@ -113,22 +118,36 @@ def plot_sigma_mu_z(vals, varp='sigma_mu',
     print(sel[['z', 'sigma_c', 'remove_sat']])
     print(selb[['z', 'sigma_c', 'remove_sat']])
     """
-    delta = 0.001
+    delta = 0.003
     bins = np.arange(0.01-delta/2, zmax+delta, delta)
     if type == 'mean':
         nsn_z = mean_vs(sel, varx='z', vary=varp, bins=bins)
         nsn_zb = mean_vs(vals[~idx], varx='z', vary=varp, bins=bins)
+        varpm = '{}_mean'.format(varp)
+        varpr = '{}_rms'.format(varp)
         if not ratio:
-            ax.plot(nsn_z['z'], nsn_z[varp])
-            ax.plot(nsn_zb['z'], nsn_zb[varp], linestyle='dashed')
+            ax.plot(nsn_z['z'], nsn_z[varpm])
+            ax.plot(nsn_zb['z'], nsn_zb[varpm], linestyle='dashed')
         else:
+            tt = sel.merge(selb, left_on=['SNID', 'z'], right_on=['SNID', 'z'])
+            tt['ratio'] = tt['sigma_mu_y']/tt['sigma_mu_x']
+            idx = tt['ratio'] >= 0.9
+            tt = tt[idx]
+            print(tt[['SNID', 'z', 'ratio']])
+            """
             tt = nsn_z.merge(nsn_zb, left_on=['z'], right_on=['z'])
             tt['ratio'] = tt['sigma_mu_y']/tt['sigma_mu_x']
             print(tt[['z', 'ratio']])
-            x, y = get_spline(tt, 'z', 'ratio')
+            """
+            nsn_z_rat = mean_vs(tt, varx='z', vary='ratio', bins=bins)
+
+            x, y = get_spline(nsn_z_rat, 'z', 'ratio_med')
             ax.plot(x, y, label=label, marker=marker,
                     color=color, linestyle=ls, mfc='None', ms=10, markevery=5)
-            ax.plot(tt['z'], tt['ratio'])
+            """
+            ax.errorbar(nsn_z_rat['z'], nsn_z_rat['ratio_mean'],
+                        yerr=nsn_z_rat['ratio_rms'])
+            """
     if type == 'all':
         ax.plot(sel['z'], sel[varp], 'ko')
         ax.plot(selb['z'], selb[varp], 'r*')
@@ -139,6 +158,22 @@ def plot_sigma_mu_z(vals, varp='sigma_mu',
     rr = '$\frac{\sigma_{\mu}^{no~LC~sat}{\sigma_{\mu}}$'
     # ax.set_ylabel(r'{}'.format(rr))
     ax.set_ylabel(r'$\frac{\sigma_{\mu}^{no~LC~sat}}{\sigma_{\mu}}$')
+
+
+def rat(grp):
+
+    z = grp['z'].mean()
+    idxa = grp['remove_sat'] == 0
+    sela = grp[idxa]
+    idxb = grp['remove_sat'] == 1
+    selb = grp[idxb]
+
+    if len(selb) == 0:
+        ratio = 0
+    else:
+        ratio = selb['sigma_mu']/sela['sigma_mu']
+
+    return pd.DataFrame({'z': [z], 'ratio': [ratio]})
 
 
 parser = OptionParser()
