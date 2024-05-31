@@ -303,8 +303,9 @@ def plot_DDF(data, norm_factor, config, nside=128, timescale='year'):
     idx = data['zmeas'] >= 0.8
     sel = data[idx]
     sigma_mu = 0.12
+    yleg = '$N_{SN} (z\geq 0.8, \sigma_{\mu}\leq\sigma_{int})$'
     plot_DDF_nsn(sel, norm_factor, config, nside,
-                 sigma_mu=sigma_mu, timescale=timescale)
+                 sigma_mu=sigma_mu, timescale=timescale, yleg=yleg)
 
     plot_survey_features(data, norm_factor, config, nside, timescale=timescale)
 
@@ -773,7 +774,8 @@ def plot_DDF_dither(data, norm_factor, config, nside, timescale='year'):
     plt.show()
 
 
-def plot_DDF_nsn(data, norm_factor, config, nside, sigma_mu=1.e6, timescale='year'):
+def plot_DDF_nsn(data, norm_factor, config, nside, sigma_mu=1.e6,
+                 timescale='year', yleg=''):
     """
 
 
@@ -816,14 +818,15 @@ def plot_DDF_nsn(data, norm_factor, config, nside, sigma_mu=1.e6, timescale='yea
         timescale, 'dbName', 'field'])
     sumt = get_sums_nsn(data, norm_factor, nside, cols=[timescale, 'dbName'])
 
-    plot_field(sums, mypl, config, xvar=timescale,
-               xleg=timescale, cumul=True)
+    # plot_field(sums, mypl, config, xvar=timescale,
+    #           xleg=timescale, cumul=True)
     # plot_field(sums, mypl, xvar=timescale, xleg=timescale,
     #           yvar='pixArea', yleg='Observed Area [deg$^{2}$]')
 
     # total number of SN per season/OS
     plot_field(sumt, mypl, config, xvar=timescale, xleg=timescale,
-               cumul=True)
+               cumul=True, yleg=yleg)
+
     # plot_field(sumt, mypl, xvar=timescale, xleg=timescale,
     #           yvar='pixArea', yleg='Observed Area [deg$^{2}$]')
     plt.show()
