@@ -42,7 +42,7 @@ cmd += ' --dbName_WFD={}'.format(opts.dbName_WFD)
 cmd += ' --timescale={}'.format(opts.timescale)
 cmd += ' --survey={}'.format(opts.survey)
 cmd += ' --outDir={}'.format(opts.outDir)
-cmd += ' --seasons={}'.format(opts.season)
+cmd += ' --seasons={}'.format(opts.seasons)
 cmd += ' --surveyDir={}'.format(opts.surveyDir)
 cmd += ' --nrandom=1'
 cmd += ' --plot_test=0 --test_mode=0 --nproc=1 --low_z_opti=0'
