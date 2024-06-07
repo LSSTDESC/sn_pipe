@@ -345,6 +345,7 @@ def plot_survey_features(data, norm_factor, config, nside, timescale):
 
     field = 'COSMOS'
     dbName = 'baseline_v3.4_10yrs'
+    dbName = 'roll_uniform_early_half_mjdp67_v3.4_10yrs'
     # dbName = 'DDF_DESC_0.80_WZ_0.07'
 
     plot_sn_features(data, field, dbName, timescale,
@@ -1713,7 +1714,7 @@ class Plot_density:
                 color='k', linestyle=ls, label=label)
 
 
-def plot_summary_wfd(wfd, conf_df, timescale='season', cumul=False):
+def plot_summary_wfd(wfd, conf_df, timescale='season', cumul=False, rem_from_name='_v3.4_10yrs'):
     """
     Method to plot nsn vs year
 
@@ -1734,7 +1735,8 @@ def plot_summary_wfd(wfd, conf_df, timescale='season', cumul=False):
 
     """
 
-    fig, ax = plt.subplots(figsize=(13, 8))
+    fig, ax = plt.subplots(figsize=(18, 8))
+    fig.subplots_adjust(right=0.75)
     for dbName in wfd['dbName'].unique():
         idx = wfd['dbName'] == dbName
         sel = wfd[idx]
@@ -1743,9 +1745,10 @@ def plot_summary_wfd(wfd, conf_df, timescale='season', cumul=False):
         ls = selp['ls'].values[0]
         marker = selp['marker'].values[0]
         color = selp['color'].values[0]
+        dbNameb = dbName.split(rem_from_name)[0]
         plot_versus(sel, fig=fig, ax=ax, cumul=cumul,
-                    ls=ls, marker=marker, color=color, mfc=color, label=dbName)
-        labelb = dbName+' - '+'$\sigma_{\mu}\leq \sigma_{int}$'
+                    ls=ls, marker=marker, color=color, mfc=color, label=dbNameb)
+        labelb = dbNameb+' - '+'$\sigma_{\mu}\leq \sigma_{int}$'
         plot_versus(sel, yvar='nsn_sigma_mu', fig=fig, ax=ax, cumul=cumul,
                     ls='dotted', marker=marker, color=color,
                     mfc='None', label=labelb)
@@ -1758,9 +1761,11 @@ def plot_summary_wfd(wfd, conf_df, timescale='season', cumul=False):
         '$\Sigma N_{SN}$'
     ax.set_ylabel(legy)
     # 0, 1.15 for multiple OS
-    ax.legend(loc='upper left', bbox_to_anchor=(
-        0.1, 1.1), ncol=3, fontsize=15, frameon=False)
-
+    # ax.legend(loc='upper left', bbox_to_anchor=(
+    #    0.1, 1.1), ncol=3, fontsize=15, frameon=False)
+    ax.legend(loc='upper center',
+              bbox_to_anchor=(1.20, 0.7),
+              ncol=1, fontsize=12, frameon=False)
     if cumul:
         xmin, xmax = ax.get_xlim()
 
@@ -1768,10 +1773,10 @@ def plot_summary_wfd(wfd, conf_df, timescale='season', cumul=False):
         ax.plot([xmin, xmax], [nsn, nsn],
                 color='dimgrey', lw=2, linestyle='solid')
         ax.text(5, 1.02e6, '1 million SNe Ia', color='dimgrey', fontsize=12)
-        nsn = 300000
+        nsn = 200000
         ax.plot([xmin, xmax], [nsn, nsn],
                 color='dimgrey', lw=2, linestyle='solid')
-        ax.text(5, 0.32e6, '300k SNe Ia', color='dimgrey', fontsize=12)
+        ax.text(5, 0.22e6, '200k SNe Ia', color='dimgrey', fontsize=12)
 
     print('here showing')
     plt.show()
@@ -1794,7 +1799,6 @@ def process_DDF(conf_df, dataType, dbDir_DD, runType,
                 timescale_file, timeslots,
                 norm_factor, nside=128, name='dbName_DD'):
 
-    print('iii', conf_df)
     # load DDF
     OS_DDFs = conf_df[name].unique()
 
