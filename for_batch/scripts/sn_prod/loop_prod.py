@@ -115,5 +115,8 @@ for i, row in df.iterrows():
     procDict['SN_z_max'] = opts.SN_z_max
     procDict['SN_z_sigmaz'] = opts.SN_sigmaz
     procDict['fit_remove_sat'] = opts.fit_remove_sat
+    procDict['InstrumentSimu_airmassType'] = 'dep'
+    procDict['InstrumentFit_airmassType'] = 'dep'
+    procDict['LCSelection_snrmin'] = 5.
 
     go_batch(script, procDict)
