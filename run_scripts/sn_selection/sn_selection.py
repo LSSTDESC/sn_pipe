@@ -318,7 +318,7 @@ class Select_filt:
             data = pd.read_hdf(fi)
             # estimate sigma_mu...
             if len(data) > 0:
-                data = complete_df(data, alpha=0.4, beta=3)
+                data = complete_df(data, alpha=0.13, beta=3.1)
             data['field'] = 'WFD'
             # data = pd.concat((data, dd))
 
