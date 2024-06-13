@@ -17,7 +17,7 @@ import glob
 
 class Select_filt:
     def __init__(self, dataDir, dbName, sellist, seasons,
-                 zType='spectroz', nsn_factor=1,
+                 zType='spectroz',  # nsn_factor=1,
                  listFields='COSMOS', fieldType='DDF',
                  outDir='Test', nproc=8,
                  timescale='year',
@@ -38,8 +38,6 @@ class Select_filt:
             seasons to process.
         zType : str, optional
             host z-type (spectroz/photz). The default is 'spectroz'.
-        nsn_factor : int, optional
-            nsn normalization factor. The default is 1.
         listFields : list(str), optional
             List of fields to process. The default is 'COSMOS'.
         fieldType : str, optional
@@ -66,7 +64,6 @@ class Select_filt:
         self.sellist = sellist
         self.seasons = seasons
         self.zType = zType
-        self.nsn_factor = nsn_factor
         self.listFields = listFields
         self.fieldType = fieldType
         self.outDir = outDir
@@ -772,6 +769,9 @@ parser = OptionParser()
 parser.add_option("--dataDir", type=str,
                   default='../Output_SN_sigmaInt_0.0_Hounsell',
                   help="data dir[%default]")
+parser.add_option("--outDir", type=str,
+                  default='../Output_SN_sigmaInt_0.0_Hounsell_G10_JLA',
+                  help="output dir[%default]")
 parser.add_option("--dbName", type=str,
                   default='DDF_Univ_WZ', help="db name [%default]")
 parser.add_option("--selconfig", type=str,
@@ -784,8 +784,10 @@ parser.add_option("--listFields", type=str,
 parser.add_option("--fieldType", type=str,
                   default='DDF',
                   help=" [%default]")
+"""
 parser.add_option("--nsn_factor", type=int,
                   default=30, help="MC normalisation factor [%default]")
+"""
 parser.add_option("--nproc", type=int,
                   default=8, help="nproc for multiprocessing [%default]")
 parser.add_option("--timescale", type=str,
@@ -807,12 +809,12 @@ selconfig = opts.selconfig
 zType = opts.zType
 fieldType = opts.fieldType
 listFields = opts.listFields
-nsn_factor = opts.nsn_factor
+# nsn_factor = opts.nsn_factor
 timescale = opts.timescale
 dataType = opts.dataType
 ebvofMW = opts.ebvofMW
+outDir = opts.outDir
 
-outDir = '{}_{}'.format(dataDir, selconfig)
 nproc = opts.nproc
 
 
@@ -830,7 +832,7 @@ select_filt(dataDir, dbName, sellist, seasons=seasons,
             ebvofMW=ebvofMW)
 """
 Select_filt(dataDir, dbName, sellist, seasons=seasons,
-            zType=zType, nsn_factor=nsn_factor,
+            zType=zType,  # nsn_factor=nsn_factor,
             listFields=listFields, fieldType=fieldType,
             outDir=outDir, nproc=nproc,
             timescale=timescale,

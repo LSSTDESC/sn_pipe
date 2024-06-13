@@ -8,6 +8,9 @@ parser = OptionParser()
 parser.add_option("--dataDir", type=str,
                   default='../Output_SN_WFD_sigmaInt_0.0_Hounsell_z_smflux',
                   help="data dir[%default]")
+parser.add_option("--outDir_pre", type=str,
+                  default='../Output_SN_WFD_sigmaInt_0.0_Hounsell_z_smflux',
+                  help="data dir[%default]")
 parser.add_option("--dbList", type=str,
                   default='list_OS_new.csv', help="DB list to process [%default]")
 parser.add_option("--timescale", type=str,
@@ -31,7 +34,8 @@ parser.add_option("--nproc", type=int,
 parser.add_option("--dataType", type=str,
                   default='pandasDataFrame',
                   help="Data type to process (pandasDataFrame/astropyTable). [%default]")
-
+parser.add_option("--selconfig", type=str,
+                  default='G10_JLA', help="sel config name[%default]")
 opts, args = parser.parse_args()
 
 dbList = opts.dbList
@@ -43,6 +47,8 @@ fieldType = opts.fieldType
 nsn_factor = opts.nsn_factor
 nproc = opts.nproc
 dataType = opts.dataType
+selconfig = opts.selconfig
+outDir = '{}_{}'.format(opts.outDir_pre, selconfig)
 
 db = pd.read_csv(dbList, comment='#')
 
@@ -57,5 +63,7 @@ for i, row in db.iterrows():
     cmd += ' --nsn_factor={}'.format(nsn_factor)
     cmd += ' --nproc={}'.format(nproc)
     cmd += ' --dataType={}'.format(dataType)
+    cmd += ' --selconfig={}'.format(selconfig)
+    cmd += ' --outDir={}'.format(outDir)
     print(cmd)
     os.system(cmd)
