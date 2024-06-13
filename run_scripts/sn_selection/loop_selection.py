@@ -60,7 +60,7 @@ for i, row in db.iterrows():
     cmd += ' --zType={}'.format(row['zType'])
     cmd += ' --fieldType={}'.format(fieldType)
     cmd += ' --listFields={}'.format(listFields)
-    cmd += ' --nsn_factor={}'.format(nsn_factor)
+    # cmd += ' --nsn_factor={}'.format(nsn_factor)
     cmd += ' --nproc={}'.format(nproc)
     cmd += ' --dataType={}'.format(dataType)
     cmd += ' --selconfig={}'.format(selconfig)
