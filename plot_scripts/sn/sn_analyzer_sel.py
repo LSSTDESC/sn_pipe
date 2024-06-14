@@ -1173,8 +1173,8 @@ def plot_nsn_versus_two(data, norm_factor=30, nside=128,
                     cumul=cumul, xlim=xlim,
                     label=label, fig=fig, ax=ax, color=color, marker=marker,
                     cumnorm=cumnorm)
-    idx = data['sigma_mu'] <= 0.12
-    labelb = label+' - $\sigma_{\mu} \leq 0.12$'
+    idx = data['sigma_c'] <= 0.04
+    labelb = label+' - $\sigma_C \leq 0.04$'
     plot_nsn_binned(data[idx], norm_factor=norm_factor, bins=bins,
                     xvar=xvar, xleg=xleg, logy=logy,
                     cumul=cumul, xlim=xlim,
@@ -1203,6 +1203,7 @@ def plot_versus(df, xvar='year', xlabel='year',
     if cumul:
         ypl = np.cumsum(ypl)
 
+    print('plotting here', xvar, yvar)
     ax.plot(df[xvar], ypl, ls=ls, marker=marker,
             color=color, label=label, mfc=mfc, markersize=9, lw=2)
 
@@ -1408,7 +1409,9 @@ def process_WFD_OS(conf_df, dataType, dbDir_WFD, runType,
         wfda = eval(tt)
         idx = wfda['fitstatus'] == 'fitok'
         idx &= wfda['ebvofMW'] < 0.25
+        # idx &= wfda['sigma_c'] <= 0.04
         wfda = wfda[idx]
+
         # plot mollview here
         if plot_moll:
             mypl = Plot_nsn_vs(wfda, norm_factor, nside=64)
@@ -1714,7 +1717,8 @@ class Plot_density:
                 color='k', linestyle=ls, label=label)
 
 
-def plot_summary_wfd(wfd, conf_df, timescale='season', cumul=False, rem_from_name='_v3.4_10yrs'):
+def plot_summary_wfd(wfd, conf_df, timescale='season',
+                     cumul=False, rem_from_name='_v3.4_10yrs'):
     """
     Method to plot nsn vs year
 
@@ -1749,7 +1753,9 @@ def plot_summary_wfd(wfd, conf_df, timescale='season', cumul=False, rem_from_nam
         plot_versus(sel, fig=fig, ax=ax, cumul=cumul,
                     ls=ls, marker=marker, color=color, mfc=color, label=dbNameb)
         labelb = dbNameb+' - '+'$\sigma_{\mu}\leq \sigma_{int}$'
-        plot_versus(sel, yvar='nsn_sigma_mu', fig=fig, ax=ax, cumul=cumul,
+        labelb = dbNameb+' - '+'$\sigma_C \leq 0.04$'
+        print('hhhhhhhhhhooooooooooooooooo', labelb)
+        plot_versus(sel, yvar='nsn_sigma_c', fig=fig, ax=ax, cumul=cumul,
                     ls='dotted', marker=marker, color=color,
                     mfc='None', label=labelb)
 
@@ -1773,10 +1779,10 @@ def plot_summary_wfd(wfd, conf_df, timescale='season', cumul=False, rem_from_nam
         ax.plot([xmin, xmax], [nsn, nsn],
                 color='dimgrey', lw=2, linestyle='solid')
         ax.text(5, 1.02e6, '1 million SNe Ia', color='dimgrey', fontsize=12)
-        nsn = 200000
+        nsn = 300000
         ax.plot([xmin, xmax], [nsn, nsn],
                 color='dimgrey', lw=2, linestyle='solid')
-        ax.text(5, 0.22e6, '200k SNe Ia', color='dimgrey', fontsize=12)
+        ax.text(5, 0.22e6, '300k SNe Ia', color='dimgrey', fontsize=12)
 
     print('here showing')
     plt.show()
@@ -1787,10 +1793,17 @@ def get_stat(grp, norm_factor, sigma_mu=0.12):
     nsn = len(grp)/norm_factor
 
     idx = grp['sigma_mu'] <= sigma_mu
+    # idx = grp['sigma_c'] <= 0.04
+    # idx &= grp['n_epochs_bef'] >= 4
+    # idx &= grp['n_epochs_aft'] >= 10
+    idx &= grp['n_epochs_m10_p5'] >= 5
+    idx &= grp['n_epochs_phase_minus_10'] >= 2
 
-    nsn_sel = len(grp[idx])/norm_factor
+    sel = grp[idx]
+    print('aoooo', sel[['sigma_c', 'sigma_mu']])
+    nsn_sel = len(sel)/norm_factor
 
-    dictout = dict(zip(['nsn', 'nsn_sigma_mu'], [[nsn], [nsn_sel]]))
+    dictout = dict(zip(['nsn', 'nsn_sigma_c'], [[nsn], [nsn_sel]]))
 
     return pd.DataFrame.from_dict(dictout)
 
