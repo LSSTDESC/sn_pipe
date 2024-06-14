@@ -1,6 +1,6 @@
 selname,selop,selval
 #min snr LC point selection
-snr_min,operator.ge,5.
+snr_min,operator.ge,1.
 # number of LC epochs phase < 0
 n_epochs_bef,operator.ge,4
  # number of LC epochs phase > 0
