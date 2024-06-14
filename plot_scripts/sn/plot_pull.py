@@ -202,15 +202,19 @@ ninit = len(dfa)
 
 idx = dfa['sigma_c'] <= 0.04
 # idx &= dfa['Nfilt_10'] > 2
+# idx &= dfa['n_epochs_m10_p5'] >= 5
+# idx &= dfa['n_epochs_phase_minus_10'] >= 2
+idx &= dfa['n_epochs_bef'] >= 4
+idx &= dfa['n_epochs_aft'] >= 10
 dfa = dfa[idx]
 
 
 print(dfa.columns, len(dfa)/30.)
 
-"""
+
 plot_pull(dfa, 'pull_x1')
 plot_pull(dfa, 'pull_c')
-plot_pull(dfa, 'pull_daymax')
+# plot_pull(dfa, 'pull_daymax')
 """
 ccols = ['n_epochs_bef', 'n_epochs_aft', 'Nfilt_10', 'Nfilt_15', 'Nfilt_20',
          'n_epochs_phase_minus_10',
@@ -224,5 +228,5 @@ for vv in ccols:
         sel = dfa[idx]
         plot_hist(sel, vv, figtit=vv, fig=fig, ax=ax, label=dbNam, bins=15)
     ax.legend()
-
+"""
 plt.show()
