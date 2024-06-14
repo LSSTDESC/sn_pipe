@@ -45,3 +45,6 @@ SN_NSNfactor 30 int #SN nsn factor
 SN_z_sigmaz 1.e-5 float #SN sigmaz
 fit_remove_sat 0 str #to remove LC saturated points
 SN_NSNabsolute -1 int # NSN abs prod
+InstrumentSimu_airmassType const str #airmass for simu
+InstrumentFit_airmassType const str #airmass for fit
+LCSelection_snrmin 1. float#SNRmin for fit

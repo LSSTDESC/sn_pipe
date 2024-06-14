@@ -117,6 +117,6 @@ for i, row in df.iterrows():
     procDict['fit_remove_sat'] = opts.fit_remove_sat
     procDict['InstrumentSimu_airmassType'] = 'dep'
     procDict['InstrumentFit_airmassType'] = 'dep'
-    procDict['LCSelection_snrmin'] = 5.
+    procDict['LCSelection_snrmin'] = 1.
 
     go_batch(script, procDict)
