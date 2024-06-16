@@ -264,8 +264,8 @@ if opts.fieldType == 'DD':
 # this is for WFD
 # procDict['simuParams_fromFile'] = opts.simuParams_fromFile
 
-seasons = [(1, 2), (3, 4), (5, 6), (7, 8), (9, 14)]
-# seasons = [(1, 7), (7, 14)]
+#seasons = [(1, 2), (3, 4), (5, 6), (7, 8), (9, 14)]
+seasons = [(1, 7), (7, 14)]
 runMode = 'all_seasons'
 if opts.fieldType == 'WFD':
     for seas in seasons:
