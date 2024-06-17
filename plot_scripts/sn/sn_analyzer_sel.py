@@ -1392,15 +1392,17 @@ def process_WFD_OS_nsn(conf_df, dataType, dbDir_WFD, runType,
 
     """
 
-    """
-    # get data
-    nsn_wfd = get_nsn_wfd(conf_df, dataType, dbDir_WFD, runType,
-                          timescale_file, timeslots, norm_factor)
+    # if the results are to be processed
+    import os
+    if not os.path.isfile(outName):
+        # get data
+        nsn_wfd = get_nsn_wfd(conf_df, dataType, dbDir_WFD, runType,
+                              timescale_file, timeslots, norm_factor)
 
-    if 'level_1' in nsn_wfd.columns:
-        nsn_wfd = nsn_wfd.drop(columns=['level_1'])
-    nsn_wfd.to_csv(outName, index=False)
-    """
+        if 'level_1' in nsn_wfd.columns:
+            nsn_wfd = nsn_wfd.drop(columns=['level_1'])
+        nsn_wfd.to_csv(outName, index=False)
+
     # plot here
     plot_summary_year(outName, conf_df, timescale=timescale_file, cumul=False)
     plot_summary_year(outName, conf_df, timescale=timescale_file, cumul=True)
