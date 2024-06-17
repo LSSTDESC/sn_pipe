@@ -51,6 +51,9 @@ def load_data(dbDir, dbName, runType, timescale, seasons):
             df['pull_x1'] = (df['x1']-df['x1_fit'])/df['sigmax1']
             df['pull_c'] = (df['color']-df['color_fit'])/df['sigma_c']
             df['pull_daymax'] = (df['daymax']-df['t0_fit'])/df['sigma_t0']
+            df['diff_x1'] = (df['x1']-df['x1_fit'])/df['x1']
+            df['diff_c'] = (df['color']-df['color_fit'])/df['color']
+
     return df
 
 
@@ -75,7 +78,7 @@ def gauss(x, *p):
     return A/np.sqrt(sigma)*np.exp(-(x-mu)**2/(2.*sigma**2))
 
 
-def plot_pull(dfa, pullvar):
+def plot_pull(dfa, pullvar, figtitle='', fitgauss=True):
     """
     Function to plot and fit of a pull distribution
 
@@ -93,24 +96,26 @@ def plot_pull(dfa, pullvar):
     """
 
     fig, ax = plt.subplots()
+    fig.suptitle(figtitle)
     # ax.hist(dfa['pull_x1'], histtype='step')
     idx = np.abs(dfa[pullvar]) <= 5
     sel = dfa[idx]
     print(len(sel)/len(dfa))
     ax.hist(sel[pullvar], histtype='step', bins=80)
-    coeff = fit_pull(sel, pullvar)
 
     # Get the fitted curve
-    xmin = sel[pullvar].min()
-    xmax = sel[pullvar].max()
-    newbins = np.arange(xmin, xmax, 0.01)
-    hist_fit = gauss(newbins, *coeff)
-    mean = np.round(coeff[1], 2)
-    sigma = np.round(coeff[2], 2)
-    leg = 'pull= {} +- {}'.format(mean, sigma)
-    ax.plot(newbins, hist_fit, label=leg)
-    print('bbb', coeff[0], coeff[1], coeff[2])
-
+    if fitgauss:
+        coeff = fit_pull(sel, pullvar)
+        xmin = sel[pullvar].min()
+        xmax = sel[pullvar].max()
+        newbins = np.arange(xmin, xmax, 0.01)
+        hist_fit = gauss(newbins, *coeff)
+        mean = np.round(coeff[1], 2)
+        sigma = np.round(coeff[2], 2)
+        leg = 'pull= {} +- {}'.format(mean, sigma)
+        ax.plot(newbins, hist_fit, label=leg)
+        print('bbb', coeff[0], coeff[1], coeff[2])
+    print(figtitle, np.mean(sel[pullvar]))
     """
     ttb = gauss(bin_centres, *coeff)
     print('chi2', np.sum(np.power(hist-ttb, 2))/(len(bin_centres)-3))
@@ -202,9 +207,9 @@ ninit = len(dfa)
 
 idx = dfa['sigma_c'] <= 0.04
 # idx &= dfa['Nfilt_10'] > 2
-# idx &= dfa['n_epochs_m10_p5'] >= 5
-# idx &= dfa['n_epochs_phase_minus_10'] >= 2
-idx &= dfa['n_epochs_bef'] >= 4
+idx &= dfa['n_epochs_m10_p5'] >= 5
+idx &= dfa['n_epochs_phase_minus_10'] >= 2
+idx &= dfa['n_epochs_bef'] >= 5
 idx &= dfa['n_epochs_aft'] >= 10
 dfa = dfa[idx]
 
@@ -212,8 +217,12 @@ dfa = dfa[idx]
 print(dfa.columns, len(dfa)/30.)
 
 
-plot_pull(dfa, 'pull_x1')
-plot_pull(dfa, 'pull_c')
+plot_pull(dfa, 'pull_x1', figtitle='pull x1')
+plot_pull(dfa, 'pull_c', figtitle='pull color')
+"""
+plot_pull(dfa, 'diff_x1', figtitle='diff x1', fitgauss=False)
+plot_pull(dfa, 'diff_c', figtitle='diff color', fitgauss=False)
+"""
 # plot_pull(dfa, 'pull_daymax')
 """
 ccols = ['n_epochs_bef', 'n_epochs_aft', 'Nfilt_10', 'Nfilt_15', 'Nfilt_20',
