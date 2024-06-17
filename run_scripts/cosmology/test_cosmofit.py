@@ -31,6 +31,17 @@ parser.add_option('--survey', type=str,
 parser.add_option('--seasons', type=str,
                   default='1,2,3,4,5,6,7,8,9,10',
                   help='seasons to process [%default]')
+parser.add_option('--fitparam_names', type=str,
+                  default='w0,wa,Om0',
+                  help='fit parameter names [%default]')
+parser.add_option('--fitparam_values', type=str,
+                  default='-1.0,0.0,0.3',
+                  help='fit parameter values [%default]')
+parser.add_option('--prior', type=int,
+                  default=1,
+                  help='prior for the fit [%default]')
+
+
 opts, args = parser.parse_args()
 
 
@@ -46,6 +57,9 @@ cmd += ' --seasons={}'.format(opts.seasons)
 cmd += ' --surveyDir={}'.format(opts.surveyDir)
 cmd += ' --nrandom=1'
 cmd += ' --plot_test=0 --test_mode=0 --nproc=1 --low_z_opti=0'
+cmd += ' --fitparam_names={}'.format(opts.fitparam_names)
+cmd += ' --fitparam_values={}'.format(opts.fitparam_values)
+cmd += ' --prior={}'.format(opts.prior)
 
 print(cmd)
 os.system(cmd)

@@ -202,6 +202,15 @@ parser.add_option('--DD_surveys', type=str,
 parser.add_option('--WFD_surveys', type=str,
                   default='WFD_TiDES,WFD_desi_lrg,WFD_desi_bgs,WFD_desi2,WFD_4hs,WFD_crs_lrg,WFD_crs_bg',
                   help='DD surveys to consider [%default]')
+parser.add_option('--fitparam_names', type=str,
+                  default='w0,wa,Om0',
+                  help='fit parameter names [%default]')
+parser.add_option('--fitparam_values', type=str,
+                  default='-1.0,0.0,0.3',
+                  help='fit parameter values [%default]')
+parser.add_option('--prior', type=int,
+                  default=1,
+                  help='prior for the fit [%default]')
 
 opts, args = parser.parse_args()
 
@@ -232,6 +241,9 @@ wfd_tagsurvey = opts.wfd_tagsurvey
 dd_tagsurvey = opts.dd_tagsurvey
 dd_surveys = opts.DD_surveys.split(',')
 wfd_surveys = opts.WFD_surveys.split(',')
+fitparams_names = opts.fitparam_names.split(',')
+fitparams_values = list(map(float, opts.fitparam_values.split(',')))
+prior = opts.prior
 
 if '-' in seasons_cosmo:
     seas = seasons_cosmo.split('-')
@@ -299,19 +311,24 @@ fitconfig['fitb'] = dict(zip(['w0', 'wa', 'Om0', 'alpha', 'beta', 'Mb'],
 # fitconfig['fitc'] = dict(zip(['sigmaInt'],
 #                              [0.12]))
 
-
-# fitconfig['fitc'] = dict(zip(['w0', 'Om0'],
-#                             [-1, 0.3]))
+"""
+fitconfig['fitc'] = dict(zip(['w0', 'Om0'],
+                             [-1, 0.3]))
+"""
+fitconfig['fita'] = dict(zip(fitparams_names, fitparams_values))
+"""
 fitconfig['fitd'] = dict(zip(['w0', 'wa', 'Om0'],
                              [-1, 0.0, 0.3]))
-
+"""
 priors = {}
 
-# priors['noprior'] = pd.DataFrame()
+if prior == 0:
+    priors['noprior'] = pd.DataFrame()
+else:
 
-priors['prior'] = pd.DataFrame({'varname': ['Om0'],
-                                'refvalue': [0.3],
-                               'sigma': [0.0073]})
+    priors['prior'] = pd.DataFrame({'varname': ['Om0'],
+                                    'refvalue': [0.3],
+                                    'sigma': [0.0073]})
 
 outName = '{}/cosmo_{}_{}_{}_{}_{}.hdf5'.format(outDir,
                                                 dbName_DD,
