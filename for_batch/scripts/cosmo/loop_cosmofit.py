@@ -32,6 +32,15 @@ parser.add_option('--seasons_cosmo', type=str,
 parser.add_option('--nrandom', type=int,
                   default=50,
                   help='number of random sample (per season/year) to generate [%default]')
+parser.add_option('--fitparam_names', type=str,
+                  default='w0,wa,Om0',
+                  help='fit parameter names [%default]')
+parser.add_option('--fitparam_values', type=str,
+                  default='-1.0,0.0,0.3',
+                  help='fit parameter values [%default]')
+parser.add_option('--prior', type=int,
+                  default=1,
+                  help='prior for the fit [%default]')
 
 opts, args = parser.parse_args()
 
@@ -46,6 +55,11 @@ low_z_optimize = opts.low_z_optimize
 timescale = opts.timescale
 seasons_cosmo = opts.seasons_cosmo
 nrandom = opts.nrandom
+fitparam_names = opts.fitparam_names
+fitparam_values = opts.fitparam_values
+prior = opts.prior
+
+
 # load OS files to process
 fis = pd.read_csv(dbList, comment='#')
 
@@ -86,6 +100,8 @@ for i, row in fis.iterrows():
     params['seasons_cosmo'] = ','.join(list(map(str, seasons_cosmo)))
     params['wfd_tagsurvey'] = wfd_tagsurvey
     params['dd_tagsurvey'] = dd_tagsurvey
-
+    params['fitparam_names'] = fitparam_names
+    params['fitparam_values'] = fitparam_values
+    params['prior'] = prior
     mybatch.add_batch(script, params)
     mybatch.go_batch()
