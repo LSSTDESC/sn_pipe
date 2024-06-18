@@ -313,7 +313,6 @@ def process_cosmo(config, cols_group,
     """
 
     df_tot = pd.DataFrame()
-
     for i, row in config.iterrows():
         dbName = row['dbName']
         dbDir = row['dbDir']
@@ -372,10 +371,10 @@ print(test)
 
 # data['dbName_DD'] += '_{}'.format(budget)
 
-#plot_pulls(data, timescale, config)
+# plot_pulls(data, timescale, config)
 # cosmo summary plot
-#plot_cosmo_summary(data, udfs, dfs, comment_on_plot, fill_between)
-
+# plot_cosmo_summary(data, udfs, dfs, comment_on_plot, fill_between)
+"""
 cols = ['MoM', 'WFD_TiDES', 'all_Fields',
         'nsn_z_0.8', 'WFD_DESI1', 'WFD_DESI2']
 cols = ['MoM', 'WFD_TiDES', 'all_Fields',
@@ -384,12 +383,12 @@ cols = ['MoM', 'WFD_TiDES', 'all_Fields',
 """
 cols = ['MoM', 'all_Fields',
         'nsn_z_0.8', 'nsn_z_0.8_sigma_mu', 'nsn_rat_highz']
-"""
+
 data = process_cosmo(
     config, [timescale, 'prior', 'dbName_DD', 'dbName_WFD'], cols=cols)
 print(data)
 
-priors = ['prior']
+priors = ['noprior']
 
 dd = dict(zip(priors, ['']))
 
@@ -465,4 +464,4 @@ for prior in priors:
                fill_between=fill_between)
     """
 plt.show()
-#plot(data, timescale, config)
+# plot(data, timescale, config)
