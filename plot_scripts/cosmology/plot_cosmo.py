@@ -9,7 +9,7 @@ Created on Wed Jul  5 14:08:41 2023
 import pandas as pd
 from sn_plotter_cosmology import plt
 import numpy as np
-from sn_plotter_cosmology.cosmoplot import Process_OS, plot_allOS
+from sn_plotter_cosmology.cosmoplot import Process_OS, plot_allOS, plot_allOS_survey
 from sn_analysis.sn_tools import load_cosmo_data
 from optparse import OptionParser
 import glob
@@ -146,6 +146,7 @@ def plot_cosmo_summary(data, udfs, dfs, comment_on_plot, fill_between=False):
                        figtitle=dd[prior], dbNorm='',
                        comment_on_plot=comment_on_plot,
                        fill_between=fill_between)
+            plot_allOS_survey()
 
     """
     vvarsb = ['DDF', 'UD', 'DD', 'WFD']
@@ -382,11 +383,11 @@ cols = ['MoM', 'WFD_TiDES', 'all_Fields',
         'WFD_desi_bgs_footprint', 'nsn_z_0.8', 'nsn_rat_highz']
 """
 cols = ['MoM', 'all_Fields',
-        'nsn_z_0.8', 'nsn_z_0.8_sigma_mu', 'nsn_rat_highz']
+        'nsn_z_0.8', 'nsn_z_0.8_sigma_mu', 'nsn_rat_highz', 'sigma_w0']
 
 data = process_cosmo(
     config, [timescale, 'prior', 'dbName_DD', 'dbName_WFD'], cols=cols)
-print(data)
+
 
 priors = ['noprior']
 
@@ -397,10 +398,20 @@ print(data.columns)
 for prior in priors:
     plot_allOS(data, config, varx=timescale,
                legx=timescale, vary='MoM_mean',
-               legy='$SMoM$', vary_std='MoM_std', prior=prior,
+               legy='$\\frac{\\Delta SMoM}{SMoM}$ [%]', vary_std='MoM_std', prior=prior,
+               figtitle='ref: baseline_v3.4_10yrs', dbNorm='baseline_v3.4_10yrs',
+               comment_on_plot=comment_on_plot,
+               fill_between=fill_between)
+    plot_allOS_survey()
+    """
+    plot_allOS(data, config, varx=timescale,
+               legx=timescale, vary='sigma_w0_mean',
+               legy='$\sigma_w0$', vary_std='sigma_w0_std', prior=prior,
                figtitle=dd[prior], dbNorm='',
                comment_on_plot=comment_on_plot,
                fill_between=fill_between)
+    """
+    """
     plot_allOS(data, config, varx=timescale, legx=timescale,
                vary='WFD_TiDES_mean',
                legy='$N_{spectro-z}^{TiDES}$', vary_std='', prior=prior,
@@ -415,6 +426,7 @@ for prior in priors:
                comment_on_plot=comment_on_plot,
                fill_between=fill_between)
     """
+    """
     plot_allOS(data, config, varx=timescale, legx=timescale,
                vary='WFD_desi_bgs_footprint_mean',
                legy='$N_{spectro-z}^{desi~bgs}$', vary_std='', prior=prior,
@@ -427,7 +439,6 @@ for prior in priors:
                figtitle=dd[prior], dbNorm='',
                comment_on_plot=comment_on_plot,
                fill_between=fill_between)
-    """
     plot_allOS(data, config, varx=timescale, legx=timescale,
                vary='nsn_z_0.8_mean',
                legy='$N_{SN}^{z\geq0.8}$', vary_std='nsn_z_0.8_std', prior=prior,
@@ -442,7 +453,6 @@ for prior in priors:
                comment_on_plot=comment_on_plot,
                fill_between=fill_between)
 
-    """
     plot_allOS(data, config, varx=timescale, legx=timescale,
                vary='nsn_z_0.8_sigma_mu_mean',
                legy='$N_{SN}^{z\geq0.8,\sigma_{\mu}\leq0.12}$', vary_std='nsn_z_0.8_sigma_mu_std', prior=prior,
