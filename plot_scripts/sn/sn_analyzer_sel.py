@@ -17,6 +17,7 @@ from sn_analysis.sn_calc_plot import bin_it, bin_it_mean, bin_it_effi
 # from astropy.table import Table
 # from sn_tools.sn_utils import multiproc
 from sn_plotter_analysis.sn_analyser_summary import process_WFD_OS_nsn
+from sn_plotter_analysis.sn_analyser_tools import get_stat
 
 
 def plot_DDF(data, norm_factor, config, nside=128, timescale='year'):
@@ -1149,7 +1150,11 @@ def process_WFD_OS(conf_df, dataType, dbDir_WFD, runType,
 
     OS_WFDs = conf_df['dbName_WFD'].unique()
     wfd = pd.DataFrame()
-    fig, ax = plt.subplots(figsize=(14, 8))
+    # fig, ax = plt.subplots(figsize=(14, 8))
+    fig, ax = None, None
+    from_to_load = 'from sn_plotter_analysis.sn_analyser_tools'
+    mod_to_load = '{} import load_{}'.format(from_to_load, dataType)
+    exec(mod_to_load)
     for OS_WFD in OS_WFDs:
         idx = conf_df['dbName_WFD'] == OS_WFD
         tt = 'load_{}(\'{}\',\'{}\',\'{}\',\'{}\',{})'.format(
@@ -1172,13 +1177,13 @@ def process_WFD_OS(conf_df, dataType, dbDir_WFD, runType,
         color = selp['color'].values[0]
 
         # plot nsn vs z
-
+        """
         plot_nsn_versus_two(wfda, xvar='z', xleg='z', logy=False,
                             bins=np.arange(0.005, 0.81, 0.01),
                             norm_factor=norm_factor,
                             cumul=True, xlim=[0.01, 0.81], color=color,
                             marker=marker, fig=fig, ax=ax, cumnorm=False)
-
+        """
         # density plot here
         # Plot_density(wfda, timescale_file, OS_WFD)
 
@@ -1189,8 +1194,9 @@ def process_WFD_OS(conf_df, dataType, dbDir_WFD, runType,
             lambda x: get_stat(x, norm_factor)).reset_index()
         wfd = pd.concat((wfd, wfda))
 
-    ax.legend(loc='upper left', bbox_to_anchor=(
-        0.0, 1.15), ncol=3, fontsize=11, frameon=False)
+    if ax is not None:
+        ax.legend(loc='upper left', bbox_to_anchor=(
+            0.0, 1.15), ncol=3, fontsize=11, frameon=False)
     plt.show()
 
     # print(wfd)
@@ -1229,6 +1235,7 @@ def process_WFD(conf_df, dataType, dbDir_WFD, runType,
     """
 
     outName = 'nsn_WFD_v3_test.csv'
+
     wfd = process_WFD_OS_nsn(conf_df, dataType, dbDir_WFD, runType,
                              timescale_file, timeslots, norm_factor)
 
@@ -1237,10 +1244,9 @@ def process_WFD(conf_df, dataType, dbDir_WFD, runType,
                          timescale_file, timeslots, norm_factor,
                          nside, outName, plot_moll=plot_moll)
 
-    plot_summary_wfd(wfd, conf_df, timescale_file, cumul=False)
-    """
+    plot_summary_wfd(wfd, conf_df, timescale_file, cumul=True)
 
-    """
+    
     print('wwwwwww', wfd.columns)
     OS_WFDs = wfd['dbName'].unique()
     plot_nsn_versus_two(wfd, xvar='year', xleg='year', logy=False,
@@ -1506,10 +1512,11 @@ def plot_summary_wfd(wfd, conf_df, timescale='season',
                     ls=ls, marker=marker, color=color, mfc=color, label=dbNameb)
         labelb = dbNameb+' - '+'$\sigma_{\mu}\leq \sigma_{int}$'
         labelb = dbNameb+' - '+'$\sigma_C \leq 0.04$'
+        labelb = dbNameb+' - '+'cosmo'
         print('hhhhhhhhhhooooooooooooooooo', labelb)
-        plot_versus(sel, yvar='nsn_sigma_c', fig=fig, ax=ax, cumul=cumul,
+        plot_versus(sel, yvar='nsn_cosmo', fig=fig, ax=ax, cumul=cumul,
                     ls='dotted', marker=marker, color=color,
-                    mfc='None', label=labelb)
+                    mfc='None', label='')
 
     ax.grid()
     ax.set_xlim([0.95, 10.05])
@@ -1531,10 +1538,10 @@ def plot_summary_wfd(wfd, conf_df, timescale='season',
         ax.plot([xmin, xmax], [nsn, nsn],
                 color='dimgrey', lw=2, linestyle='solid')
         ax.text(5, 1.02e6, '1 million SNe Ia', color='dimgrey', fontsize=12)
-        nsn = 300000
+        nsn = 200000
         ax.plot([xmin, xmax], [nsn, nsn],
                 color='dimgrey', lw=2, linestyle='solid')
-        ax.text(5, 0.22e6, '300k SNe Ia', color='dimgrey', fontsize=12)
+        ax.text(5, 0.22e6, '200k SNe Ia', color='dimgrey', fontsize=12)
 
     print('here showing')
     plt.show()
@@ -1548,6 +1555,9 @@ def process_DDF(conf_df, dataType, dbDir_DD, runType,
     OS_DDFs = conf_df[name].unique()
 
     ddf = pd.DataFrame()
+    from_to_load = 'from sn_plotter_analysis.sn_analyser_tools'
+    mod_to_load = '{} import load_{}'.format(from_to_load, dataType)
+    exec(mod_to_load)
     for OS_DDF in OS_DDFs:
         idx = conf_df[name] == OS_DDF
         fieldType = 'DDF'
