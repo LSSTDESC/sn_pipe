@@ -1236,6 +1236,7 @@ def process_WFD(conf_df, dataType, dbDir_WFD, runType,
 
     outName = 'nsn_WFD_v3_test.csv'
 
+    """
     wfd = process_WFD_OS_nsn(conf_df, dataType, dbDir_WFD, runType,
                              timescale_file, timeslots, norm_factor)
 
@@ -1246,7 +1247,7 @@ def process_WFD(conf_df, dataType, dbDir_WFD, runType,
 
     plot_summary_wfd(wfd, conf_df, timescale_file, cumul=True)
 
-    
+    """    
     print('wwwwwww', wfd.columns)
     OS_WFDs = wfd['dbName'].unique()
     plot_nsn_versus_two(wfd, xvar='year', xleg='year', logy=False,
