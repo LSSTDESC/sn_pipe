@@ -93,7 +93,7 @@ def plotDustMap(dustmap, ebvofMW_cut=0.25, Dec_max=90., Dec_min=-80):
     cmap = plt.cm.jet
     cmap.set_under('w')
 
-    hpxmap = np.zeros(npixels, dtype=np.float)
+    hpxmap = np.zeros(npixels, dtype=float)
     hpxmap = np.full(hpxmap.shape, 0.)
     hpxmap[dustmap['healpixID']] += dustmap['ebvofMW']
 
@@ -160,5 +160,5 @@ plotDustMap(dustmap, ebvofMW_cut=ebvofMW_max, Dec_min=Dec_min, Dec_max=Dec_max)
 plotDustHist(dustmap, ebvofMW_cut=ebvofMW_max,
              Dec_min=Dec_min, Dec_max=Dec_max)
 
-#plt.plot(vec[0], vec[1], 'ko')
+# plt.plot(vec[0], vec[1], 'ko')
 plt.show()
