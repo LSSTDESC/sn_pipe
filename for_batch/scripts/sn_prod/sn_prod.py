@@ -9,7 +9,7 @@ import pandas as pd
 
 
 def batch_DDF(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
-              time='30:00:00', mem='40G'):
+              time='50:00:00', mem='40G'):
     """
 
     Function to launch sim_to_fit for DD fields
@@ -100,7 +100,7 @@ def batch_DDF(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
 
 
 def batch_WFD(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
-              time='80:00:00', mem='40G', seas_min=1, seas_max=10,
+              time='160:00:00', mem='40G', seas_min=1, seas_max=10,
               zmin=0.01, zmax=0.7, runMode='seasonal', splitobs=False,
               extend_rate=True):
     """
