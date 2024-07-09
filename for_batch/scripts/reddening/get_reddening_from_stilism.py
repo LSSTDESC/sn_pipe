@@ -54,3 +54,4 @@ for fi in fis:
     procDict['output_file'] = fName
 
     mybatch.add_batch(scriptref, procDict)
+    mybatch.go_batch()
