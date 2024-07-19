@@ -12,10 +12,10 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 
-def get_trans(am, pmw, oz, colname=['Wavelength(nm)', 'Throughput(0-1)']):
+def get_trans(am, pmw, oz, tau=0., beta=1.4, colname=['Wavelength(nm)', 'Throughput(0-1)']):
 
     wl = list(np.arange(300., 1100., 0.1))
-    transm = emul.GetAllTransparencies(wl, am, pwv, oz)
+    transm = emul.GetAllTransparencies(wl, am, pwv, oz, tau=tau, beta=beta)
     df = pd.DataFrame(wl, columns=[colname[0]])
     df[colname[1]] = transm
 
@@ -27,13 +27,17 @@ emul = ObsAtmo('LSST', 743.0)
 am = 1.2  # set the airmass
 pwv = 4.0  # set the precipitable water vapor in mm
 oz = 300.  # set the ozone depth on DU
+tau = 0.1  # the vertical aerosol depth of each component at lambda0 vavelength, default set to 0.0 for no aerosol component
+beta = 1.4  # the angstrom exponent. Must be positive in the range 0., 3.
 
-df = get_trans(am, pwv, oz, colname=['wl', 'trans'])
+df = get_trans(am, pwv, oz, tau=tau, beta=beta, colname=['wl', 'trans'])
 
+dfb = get_trans(am, pwv, oz, tau=0., beta=beta, colname=['wl', 'trans'])
 # emul.plot_transmission()  # plot the transmission
 
 fig, ax = plt.subplots(figsize=(12, 8))
 
 ax.plot(df['wl'], df['trans'])
+ax.plot(dfb['wl'], dfb['trans'])
 
 plt.show()
