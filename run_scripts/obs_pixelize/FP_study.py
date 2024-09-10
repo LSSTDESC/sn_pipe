@@ -10,6 +10,30 @@ import healpy as hp
 
 
 def get_pixels(RA, Dec, nside=64, widthRA=5.):
+    """
+    grab pixels around (RA,Dec) (window width: widthRA)
+
+    Parameters
+    ----------
+    RA : float
+        RA value.
+    Dec : float
+        Dec value.
+    nside : int, optional
+        nside healpix parameter. The default is 64.
+    widthRA : float, optional
+        window width. The default is 5..
+
+    Returns
+    -------
+    healpixIDs : int
+        healpixIDs.
+    float
+        pixRA.
+    float
+        pixDec.
+
+    """
 
     healpixID = hp.ang2pix(nside, RA, Dec, nest=True, lonlat=True)
     print('allo', healpixID)
@@ -24,22 +48,48 @@ def get_pixels(RA, Dec, nside=64, widthRA=5.):
     return healpixIDs, coords[0], coords[1]
 
 
-def get_xy(RA, Dec):
-    healpixID, pixRA, pixDec = get_pixels(RA, Dec)
+def get_xy(RA, Dec, nside=64):
+    """
+    Grab gnomonic projection of pixels around(RA,Dec)
+
+    Parameters
+    ----------
+    RA : float
+        RA value.
+    Dec : float
+        Dec value.
+    nside: int, opt.
+        nside healpix value. The default is 64.
+
+    Returns
+    -------
+    x : float
+        x-axis values.
+    y : float
+        y-axis values.
+
+    """
+    healpixID, pixRA, pixDec = get_pixels(RA, Dec, nside=nside)
 
     print(pixRA, pixDec)
     pixRA_rad = np.deg2rad(pixRA)
     pixDec_rad = np.deg2rad(pixDec)
     # convert data position in rad
-    pRA = np.median(sel_data['RA'])
-    pDec = np.median(sel_data['Dec'])
-    pRA_rad = np.deg2rad(pRA)
-    pDec_rad = np.deg2rad(pDec)
+    # pRA = np.median(sel_data['RA'])
+    # pDec = np.median(sel_data['Dec'])
+    pRA_rad = np.deg2rad(RA)
+    pDec_rad = np.deg2rad(Dec)
 
     # gnomonic projection of pixels on the focal plane
     x, y = proj_gnomonic_plane(pRA_rad, pDec_rad, pixRA_rad, pixDec_rad)
 
-    return x, y
+    df = pd.DataFrame(healpixID, columns=['healpixID'])
+    df['pixRA'] = pixRA
+    df['pixDec'] = pixDec
+    df['xpixel_norot'] = x
+    df['ypixel_norot'] = y
+
+    return df
 
 
 class FocalPlane:
@@ -107,6 +157,18 @@ class FocalPlane:
 
         for key, vals in ccd_sub.items():
             self.remove_ccd(vals)
+
+        self.ccols = ['healpixID', 'pixRA', 'pixDec',
+                      'observationId', 'raft']
+        if level == 'ccd':
+            self.ccols.append('ccd')
+        if level == 'sensor':
+            self.ccols.append('ccd')
+            self.ccols.append('sensor')
+
+    def set_display_mode(self):
+
+        self.ccols += ['xpixel', 'ypixel', 'xmin', 'xmax', 'ymin', 'ymax']
 
     def buildIt(self):
         """
@@ -262,14 +324,143 @@ class FocalPlane:
 
         plt.show()
 
+    def plot_fp_pixels(self, pixels=None, signal=None):
+        """
+        Method to plot the FP pixels and pixels inside
+
+        Parameters
+        ----------
+        pixels : pandas df, optional
+            Pixel coordinates. The default is None.
+        signal : pandas df, optional
+            FP pixels with pixels (healpiX) inside. The default is None.
+
+        Returns
+        -------
+        None.
+
+        """
+
+        fig, ax = plt.subplots(figsize=(10, 10))
+
+        # draw the focal plane
+
+        for i, row in self.fp.iterrows():
+
+            rect = self.get_rect(row)
+            ax.add_patch(rect)
+
+        xmin = self.fp['xmin'].min()
+        xmax = self.fp['xmax'].max()
+        ymin = self.fp['ymin'].min()
+        ymax = self.fp['ymax'].max()
+
+        k = 1.5
+        ax.set_xlim([k*xmin, k*xmax])
+        ax.set_ylim([k*ymin, k*ymax])
+
+        if pixels is not None:
+            ax.plot(pixels['xpixel'], pixels['ypixel'], 'r.')
+
+        if signal is not None:
+            for i, row in signal.iterrows():
+                rect = self.get_rect(row, fill=True)
+                ax.add_patch(rect)
+
+        plt.show()
+
+    def get_rect(self, row, fill=False):
+
+        from matplotlib.patches import Rectangle
+        xy = (row['xmin'], row['ymin'])
+        height = row['ymax']-row['ymin']
+        width = row['xmax']-row['xmin']
+        rect = Rectangle(xy, width, height, fill=fill)
+
+        return rect
+
+    def pix_to_obs(self, df_pix):
+
+        # make super df
+
+        df_super = self.fp.merge(df_pix, how='cross')
+        print(df_super)
+        # select pixels inside FP
+        idx = df_super['xpixel'] >= df_super['xmin']
+        idx &= df_super['xpixel'] <= df_super['xmax']
+        idx &= df_super['ypixel'] >= df_super['ymin']
+        idx &= df_super['ypixel'] <= df_super['ymax']
+
+        res = pd.DataFrame(df_super[idx])
+
+        print('ooo', res.columns)
+        return res[self.ccols]
+
 
 def get_simuData(dbDir, dbName):
+    """
+    To load simulation data
+
+    Parameters
+    ----------
+    dbDir : str
+        Db loc dir.
+    dbName : str
+        Db name.
+
+    Returns
+    -------
+    data : numpy array
+        Data loaded.
+
+    """
 
     fName = '{}/{}'.format(dbDir, dbName)
 
-    data = np.load(fName)
+    data = np.load(fName, allow_pickle=True)
 
     return data
+
+
+def get_proj_data(sel_data, nside=64):
+    """
+    Function to get gnomonic projection of a pixel corresponding 
+    to a set of pointings. 
+
+    Parameters
+    ----------
+    sel_data : pandas df
+        Data to process.
+    nside: int, opt.
+        healpix nside parameter. The default is 64.
+
+    Returns
+    -------
+    df_pix : pandas df
+        projected pixels.
+
+    """
+
+    df_pix = pd.DataFrame()
+    for vv in sel_data:
+        dd = get_xy(vv['fieldRA'], vv['fieldDec'], nside=nside)
+        """
+        dd = pd.DataFrame(x, columns=['xpixel_norot'])
+        dd['ypixel_norot'] = y
+        """
+        for var in ['observationId', 'filter', 'rotSkyPos']:
+            dd[var] = vv[var]
+        df_pix = pd.concat((df_pix, dd))
+
+    # pixel rotation here
+    df_pix['rotSkyPixel'] = -np.deg2rad(df_pix['rotSkyPos'])
+    #df_pix['rotSkyPixel'] = 0.
+    df_pix['xpixel'] = np.cos(df_pix['rotSkyPixel'])*df_pix['xpixel_norot']
+    df_pix['xpixel'] -= np.sin(df_pix['rotSkyPixel'])*df_pix['ypixel_norot']
+    df_pix['ypixel'] = np.sin(df_pix['rotSkyPixel'])*df_pix['xpixel_norot']
+    df_pix['ypixel'] += np.cos(df_pix['rotSkyPixel'])*df_pix['ypixel_norot']
+
+    return df_pix
 
 
 FoV = 9.62  # area in deg2
@@ -315,36 +506,32 @@ ymax = xmax
 # xvalues = np.linspace(xmin, xmax, nx, endpoint=False)
 # yvalues = np.linspace(ymin, ymax, ny, endpoint=False)
 
-df_fp = FocalPlane(level='sensor')
+df_fp = FocalPlane(level='ccd')
 
-df_fp.check_fp(top_level='ccd', low_level='sensor')
-
-# df_fp_new.plot_fp()
+df_fp.check_fp(top_level='raft', low_level='ccd')
 
 
-simu_data = get_simuData('../DB_Files', 'baseline_v3.4_10yrs.npy')
+simu_data = get_simuData('../DB_Files', 'baseline_v3.0_10yrs.npy')
 
 print(len(simu_data))
 idx = simu_data['note'] == 'DD:COSMOS'
 sel_data = simu_data[idx][:2]
 print(sel_data.dtype)
-df_pix = pd.DataFrame()
-for vv in sel_data:
-    x, y = get_xy(vv['RA'], vv['Dec'])
-    dd = pd.DataFrame(x, columns=['xpixel'])
-    dd['ypixel'] = y
-    dd['observationId'] = vv['observationId']
-    df_pix = pd.concat((df_pix, dd))
 
-# make super df
+nside = 64
+# get proj pixels for obs
+df_pix = get_proj_data(sel_data, nside=nside)
+print('booooo', df_pix)
+# get matching pixels<-> FP pos
+# df_fp.set_display_mode() #mandatory if plot_fp_pixels is to be used
+pix_obs = df_fp.pix_to_obs(df_pix)
 
-df_super = df_fp.fp.merge(df_pix, how='cross')
-print(df_super)
-idx = df_super['xpixel'] >= xmin
-idx &= df_super['xpixel'] <= xmax
-idx &= df_super['ypixel'] >= ymin
-idx &= df_super['ypixel'] <= ymax
-print(len(df_fp.fp), len(df_pix), len(df_super), len(df_super[idx]))
+#print(len(df_fp.fp), len(df_pix), len(df_super), len(df_super[idx]))
+
+print(pix_obs)
+#df_fp.plot_fp_pixels(pixels=df_pix, signal=pix_obs)
+
+
 print(test)
 for i in range(nx):
     xa = xmin+i*d_elem
