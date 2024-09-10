@@ -1,5 +1,7 @@
+import time
 from sn_tools.sn_obs import proj_gnomonic_plane
 from sn_tools.sn_obs import LSSTPointing_circular
+from sn_tools.sn_utils import multiproc
 import numpy as np
 import matplotlib.pyplot as plt
 from shapely import geometry
@@ -36,9 +38,7 @@ def get_pixels(RA, Dec, nside=64, widthRA=5.):
     """
 
     healpixID = hp.ang2pix(nside, RA, Dec, nest=True, lonlat=True)
-    print('allo', healpixID)
     vec = hp.pix2vec(nside, healpixID, nest=True)
-    print('allo', vec)
     healpixIDs = hp.query_disc(nside, vec, np.deg2rad(widthRA),
                                inclusive=True, nest=True)
 
@@ -71,7 +71,7 @@ def get_xy(RA, Dec, nside=64):
     """
     healpixID, pixRA, pixDec = get_pixels(RA, Dec, nside=nside)
 
-    print(pixRA, pixDec)
+    # print(pixRA, pixDec)
     pixRA_rad = np.deg2rad(pixRA)
     pixDec_rad = np.deg2rad(pixDec)
     # convert data position in rad
@@ -393,7 +393,7 @@ class FocalPlane:
 
         res = pd.DataFrame(df_super[idx])
 
-        print('ooo', res.columns)
+        # delete df_super
         return res[self.ccols]
 
 
@@ -424,8 +424,8 @@ def get_simuData(dbDir, dbName):
 
 def get_proj_data(sel_data, nside=64):
     """
-    Function to get gnomonic projection of a pixel corresponding 
-    to a set of pointings. 
+    Function to get gnomonic projection of a pixel corresponding
+    to a set of pointings.
 
     Parameters
     ----------
@@ -454,13 +454,33 @@ def get_proj_data(sel_data, nside=64):
 
     # pixel rotation here
     df_pix['rotSkyPixel'] = -np.deg2rad(df_pix['rotSkyPos'])
-    #df_pix['rotSkyPixel'] = 0.
+    # df_pix['rotSkyPixel'] = 0.
     df_pix['xpixel'] = np.cos(df_pix['rotSkyPixel'])*df_pix['xpixel_norot']
     df_pix['xpixel'] -= np.sin(df_pix['rotSkyPixel'])*df_pix['ypixel_norot']
     df_pix['ypixel'] = np.sin(df_pix['rotSkyPixel'])*df_pix['xpixel_norot']
     df_pix['ypixel'] += np.cos(df_pix['rotSkyPixel'])*df_pix['ypixel_norot']
 
     return df_pix
+
+
+def process_pointings(data, params, j=0, output_q=None):
+
+    nside = params['nside']
+    df_fp = params['df_fp']
+
+    time_ref = time.time()
+    print('start processing', j, len(data))
+    df_pix = get_proj_data(data, nside=nside)
+    print('booooo', df_pix)
+    # get matching pixels<-> FP pos
+    # df_fp.set_display_mode() #mandatory if plot_fp_pixels is to be used
+    pix_obs = df_fp.pix_to_obs(df_pix)
+
+    print('processing', j, time.time()-time_ref)
+    if output_q is not None:
+        return output_q.put({j: pix_obs})
+    else:
+        return pix_obs
 
 
 FoV = 9.62  # area in deg2
@@ -515,21 +535,21 @@ simu_data = get_simuData('../DB_Files', 'baseline_v3.0_10yrs.npy')
 
 print(len(simu_data))
 idx = simu_data['note'] == 'DD:COSMOS'
-sel_data = simu_data[idx][:2]
-print(sel_data.dtype)
+sel_data = simu_data[idx]
+print('data to process', len(sel_data))
 
 nside = 64
+params = {}
+params['nside'] = 128
+params['df_fp'] = df_fp
 # get proj pixels for obs
-df_pix = get_proj_data(sel_data, nside=nside)
-print('booooo', df_pix)
-# get matching pixels<-> FP pos
-# df_fp.set_display_mode() #mandatory if plot_fp_pixels is to be used
-pix_obs = df_fp.pix_to_obs(df_pix)
+time_ref = time.time()
+pix_obs = multiproc(sel_data, params, process_pointings, 8)
 
-#print(len(df_fp.fp), len(df_pix), len(df_super), len(df_super[idx]))
+# print(len(df_fp.fp), len(df_pix), len(df_super), len(df_super[idx]))
+print('elapse time', time.time()-time_ref)
 
-print(pix_obs)
-#df_fp.plot_fp_pixels(pixels=df_pix, signal=pix_obs)
+# df_fp.plot_fp_pixels(pixels=df_pix, signal=pix_obs)
 
 
 print(test)
