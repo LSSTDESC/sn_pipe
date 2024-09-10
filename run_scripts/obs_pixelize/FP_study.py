@@ -466,7 +466,10 @@ def get_proj_data(sel_data, nside=64):
 def process_pointings(data, params, j=0, output_q=None):
 
     nside = params['nside']
-    df_fp = params['df_fp']
+    fp_level = params['fp_level']
+    df_fp = FocalPlane(level=fp_level)
+
+    df_fp.check_fp(top_level='raft', low_level='ccd')
 
     time_ref = time.time()
     print('start processing', j, len(data))
@@ -541,7 +544,7 @@ print('data to process', len(sel_data))
 nside = 64
 params = {}
 params['nside'] = 128
-params['df_fp'] = df_fp
+params['fp_level'] = 'ccd'
 # get proj pixels for obs
 time_ref = time.time()
 pix_obs = multiproc(sel_data, params, process_pointings, 8)
