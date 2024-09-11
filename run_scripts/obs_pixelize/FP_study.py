@@ -83,11 +83,69 @@ def get_xy(RA, Dec, nside=64):
     # gnomonic projection of pixels on the focal plane
     x, y = proj_gnomonic_plane(pRA_rad, pDec_rad, pixRA_rad, pixDec_rad)
 
-    df = pd.DataFrame(healpixID, columns=['healpixID'])
+    df = pd.DataFrame(x, columns=['xpixel_norot'])
+    #df['xpixel_norot'] = x
+    df['ypixel_norot'] = y
+    df['healpixID'] = healpixID
     df['pixRA'] = pixRA
     df['pixDec'] = pixDec
-    df['xpixel_norot'] = x
+
+    return df
+
+
+def get_xy_pixels(pointings, healpixID, pixRA, pixDec, nside=64):
+    """
+    Grab gnomonic projection of pixels around(RA,Dec)
+
+    Parameters
+    ----------
+    RA : float
+        RA value.
+    Dec : float
+        Dec value.
+    nside: int, opt.
+        nside healpix value. The default is 64.
+
+    Returns
+    -------
+    x : float
+        x-axis values.
+    y : float
+        y-axis values.
+
+    """
+
+    # print(pixRA, pixDec)
+    pixRA_rad = np.deg2rad(pixRA)
+    pixDec_rad = np.deg2rad(pixDec)
+    # convert data position in rad
+    # pRA = np.median(sel_data['RA'])
+    # pDec = np.median(sel_data['Dec'])
+    RA = pointings['fieldRA'].tolist()
+    Dec = pointings['fieldDec'].tolist()
+
+    pRA_rad = np.deg2rad(RA)
+    pDec_rad = np.deg2rad(Dec)
+
+    # gnomonic projection of pixels on the focal plane
+    x, y = proj_gnomonic_plane(pRA_rad, pDec_rad, pixRA_rad, pixDec_rad)
+
+    df = pd.DataFrame(x, columns=['xpixel_norot'])
+    #df['xpixel_norot'] = x
     df['ypixel_norot'] = y
+    df['healpixID'] = healpixID
+    df['pixRA'] = pixRA
+    df['pixDec'] = pixDec
+    for var in ['observationId', 'filter', 'rotSkyPos']:
+        df[var] = pointings[var]
+
+    # pixel rotation here
+    df['rotSkyPixel'] = -np.deg2rad(df['rotSkyPos'])
+    # df['rotSkyPixel'] = 0.
+    df['xpixel'] = np.cos(df['rotSkyPixel'])*df['xpixel_norot']
+    df['xpixel'] -= np.sin(df['rotSkyPixel'])*df['ypixel_norot']
+    df['ypixel'] = np.sin(df['rotSkyPixel'])*df['xpixel_norot']
+    df['ypixel'] += np.cos(df['rotSkyPixel'])*df['ypixel_norot']
 
     return df
 
@@ -486,6 +544,66 @@ def process_pointings(data, params, j=0, output_q=None):
         return pix_obs
 
 
+def get_pixels_in_window(nside, RA_min, RA_max, Dec_min, Dec_max):
+    """
+    Method to grab pixels in window defined by (RA_min, RA_max, Dec_min, Dec_max)
+
+    Parameters
+    ----------
+    nside : int
+        healpix nside parameter.
+    RA_min : float
+        Min RA.
+    RA_max : float
+        Max RA.
+    Dec_min : float
+        Min Dec.
+    Dec_max : float
+        Max Dec.
+
+    Returns
+    -------
+    df : pandas df
+        Output data (healpixID, pixRA,pixDec).
+
+    """
+
+    import astropy
+    import healpy as hp
+    ra_poly = np.array([RA_min, RA_max, RA_max, RA_min])
+    dec_poly = np.array([Dec_min, Dec_min, Dec_max, Dec_max])
+    xyzpoly = astropy.coordinates.spherical_to_cartesian(
+        1, np.deg2rad(dec_poly), np.deg2rad(ra_poly))
+
+    healpixIDs = hp.query_polygon(
+        nside, np.array(xyzpoly).T, nest=True).tolist()
+
+    print(type(healpixIDs))
+
+    # get pixel coordinates
+    coords = hp.pix2ang(nside, healpixIDs, nest=True, lonlat=True)
+    pixRA, pixDec = coords[0], coords[1]
+
+    df = pd.DataFrame(healpixIDs, columns=['healpixID'])
+    df['pixRA'] = pixRA
+    df['pixDec'] = pixDec
+
+    return df
+
+
+def get_window(data, RACol='fieldRA', DecCol='fieldDec', radius=np.sqrt(12./3.14)):
+
+    RA_mean = data[RACol].mean()
+    Dec_mean = data[DecCol].mean()
+
+    RA_min = RA_mean-radius
+    RA_max = RA_mean+radius
+    Dec_min = Dec_mean-radius
+    Dec_max = Dec_mean+radius
+
+    return RA_min, RA_max, Dec_min, Dec_max
+
+
 FoV = 9.62  # area in deg2
 
 fov_str = FoV*(np.pi/180.)**2  # LSST fov in sr
@@ -540,6 +658,27 @@ print(len(simu_data))
 idx = simu_data['note'] == 'DD:COSMOS'
 sel_data = simu_data[idx]
 print('data to process', len(sel_data))
+
+# get (RA,Dec) window for these data
+RA_min, RA_max, Dec_min, Dec_max = get_window(sel_data)
+
+# get pixels in this window
+nside = 128
+pixels = get_pixels_in_window(nside, RA_min, RA_max, Dec_min, Dec_max)
+
+print(pixels)
+
+
+for i, pix in pixels.iterrows():
+
+    dd = get_xy_pixels(sel_data,
+                       pix['healpixID'], pix['pixRA'], pix['pixDec'])
+    print(dd)
+    pix_obs = df_fp.pix_to_obs(dd)
+    print(pix_obs)
+    break
+
+print(test)
 
 nside = 64
 params = {}
