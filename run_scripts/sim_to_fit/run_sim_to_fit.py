@@ -4,7 +4,7 @@ import sn_fit_input as simu_fit
 import sn_script_input
 from sn_tools.sn_io import make_dict_from_config, make_dict_from_optparse
 from sn_tools.sn_io import add_parser, checkDir
-from sn_tools.sn_process import Process
+from sn_tools.sn_process_new import Process
 from optparse import OptionParser
 import os
 import yaml
