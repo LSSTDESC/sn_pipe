@@ -70,6 +70,9 @@ parser.add_option("--Observations_coadd", type=int,
 parser.add_option("--fit_remove_sat", type=str,
                   default='0',
                   help="to remove LC saturated points [%default]")
+parser.add_option("--code", type=str,
+                  default='new',
+                  help="code to use (new/old) [%default]")
 
 opts, args = parser.parse_args()
 
@@ -97,6 +100,7 @@ sn_nsn_abs_wfd = opts.SN_NSNabsolute_WFD
 obs_coadd = opts.Observations_coadd
 sn_sigmaz = opts.SN_sigmaz
 fit_remove_sat = opts.fit_remove_sat
+code = opts.code
 
 cmd_scr = 'python for_batch/scripts/sn_prod/loop_prod.py'
 cmd_scr += ' --SN_sigmaInt=0.0'
@@ -115,6 +119,7 @@ if dbList_DD != '':
     cmd_ddf += ' --SN_NSNabsolute={}'.format(sn_nsn_abs_dd)
     cmd_ddf += ' --Observations_coadd={}'.format(obs_coadd)
     cmd_ddf += ' --SN_sigmaz={}'.format(sn_sigmaz)
+    cmd_ddf += ' --code={}'.format(code)
     print(cmd_ddf)
     os.system(cmd_ddf)
 
@@ -137,5 +142,6 @@ if dbList_WFD != '':
     cmd_wfd += ' --Observations_coadd={}'.format(obs_coadd)
     cmd_wfd += ' --SN_sigmaz={}'.format(sn_sigmaz)
     cmd_wfd += ' --fit_remove_sat={}'.format(fit_remove_sat)
+    cmd_wfd += ' --code={}'.format(code)
     print(cmd_wfd)
     os.system(cmd_wfd)

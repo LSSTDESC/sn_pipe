@@ -48,3 +48,4 @@ SN_NSNabsolute -1 int # NSN abs prod
 InstrumentSimu_airmassType const str #airmass for simu
 InstrumentFit_airmassType const str #airmass for fit
 LCSelection_snrmin 1. float#SNRmin for fit
+code new str #code to use (old/new)

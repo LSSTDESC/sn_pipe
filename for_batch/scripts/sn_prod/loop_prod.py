@@ -74,6 +74,9 @@ parser.add_option("--SN_sigmaz", type=float, default=1.e-5,
 parser.add_option("--fit_remove_sat", type=str,
                   default='0',
                   help="to remove LC saturated points [%default]")
+parser.add_option("--code", type=str,
+                  default='new',
+                  help="code to use (new/old) [%default]")
 
 opts, args = parser.parse_args()
 
@@ -118,5 +121,6 @@ for i, row in df.iterrows():
     procDict['InstrumentSimu_airmassType'] = 'const'
     procDict['InstrumentFit_airmassType'] = 'const'
     procDict['LCSelection_snrmin'] = 1.
+    procDict['code'] = opts.code
 
     go_batch(script, procDict)
