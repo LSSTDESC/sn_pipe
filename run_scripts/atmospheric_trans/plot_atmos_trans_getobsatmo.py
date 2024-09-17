@@ -8,10 +8,10 @@ Created on Tue Jul  2 15:10:32 2024
 
 from getObsAtmo.getObsAtmo import ObsAtmo
 import numpy as np
-import matplotlib.pyplot as plt
-import pandas as pd
 from rubin_sim.phot_utils import Bandpass
 from scipy.interpolate import interp1d
+from sn_telmodel.sn_transtools import get_trans
+import matplotlib.pyplot as plt
 
 filtercolors = dict(zip('ugrizy', ['b', 'c', 'g', 'y', 'r', 'm']))
 
@@ -27,44 +27,6 @@ plt.rcParams['axes.titleweight'] = 'bold'
 plt.rcParams['figure.titleweight'] = 'bold'
 # plt.rcParams['font.family'] = 'Arial'
 plt.rcParams['font.size'] = 20
-
-
-def get_trans(am, pwv, oz, tau=0., beta=1.4,
-              colname=['Wavelength(nm)', 'Throughput(0-1)']):
-    """
-    Function to estimate transmissions
-
-    Parameters
-    ----------
-    am : float
-        airmass value.
-    pwv : float
-        precipitable water vapor in mm.
-    oz : float
-        Ozone depth in DU (Dobson Unit).
-    tau : float, optional
-        vertical aerosol depth of each component at lambda0 vavelength.
-        The default is 0..
-    beta : float, optional
-       the angstrom exponent. Must be positive in the range 0., 3.
-       The default is 1.4.
-    colname : list(str), optional
-        list of output columns. 
-        The default is ['Wavelength(nm)', 'Throughput(0-1)'].
-
-    Returns
-    -------
-    df : TYPE
-        DESCRIPTION.
-
-    """
-
-    wl = list(np.arange(300., 1100., 0.1))
-    transm = emul.GetAllTransparencies(wl, am, pwv, oz, tau=tau, beta=beta)
-    df = pd.DataFrame(wl, columns=[colname[0]])
-    df[colname[1]] = transm
-
-    return df
 
 
 def plot_trans(atm_params=dict(zip(['am', 'pwv', 'oz', 'tau', 'beta'],
@@ -149,9 +111,6 @@ def compare_spectra(spa, spb):
 
     ax.plot(waves, transa/transb)
 
-
-# emulate obsAtmo
-emul = ObsAtmo('LSST', 743.0)
 
 cols = ['atm', 'pwv', 'oz', 'tau', 'beta']
 vals = [[1.5], [4.0], [300], [0.04], [1.4]]
