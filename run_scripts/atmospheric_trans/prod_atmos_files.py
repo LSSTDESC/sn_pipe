@@ -42,7 +42,7 @@ def go_to_file(df, fName, dirOut=''):
 
 
 airmass = np.arange(1.0, 2.6, 0.1)
-airmass = [1.2]
+# airmass = [1.2]
 pwvs = [4.]
 ozs = [300]
 taus = [0.0]
@@ -55,12 +55,13 @@ checkDir(outputDir)
 emul = ObsAtmo('LSST', 743.0)
 
 for am in airmass:
+    am = np.round(am, 1)
     for pwv in pwvs:
         for oz in ozs:
             for tau in taus:
                 trans = get_trans(
                     am, pwv, oz, tau, beta, colname=['wl', 'trans'], emul=emul)
-                fName = 'airmass_{}_pwv_{}_oz_{}_tau_{}_beta_{}.dat'.format(
+                fName = 'airmass_{}_pwv_{}_oz_{}_aero_{}_beta_{}.dat'.format(
                     am, pwv, oz, tau, beta)
                 trans = trans.round({'wl': 1, 'trans': 8})
                 go_to_file(trans, fName, outputDir)
