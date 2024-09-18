@@ -62,6 +62,6 @@ for am in airmass:
                 trans = get_trans(
                     am, pwv, oz, tau, beta, colname=['wl', 'trans'], emul=emul)
                 fName = 'airmass_{}_pwv_{}_oz_{}_aero_{}_beta_{}.dat'.format(
-                    am, pwv, oz, tau, beta)
+                    int(10*am), int(10*pwv), int(oz), int(10*tau), beta)
                 trans = trans.round({'wl': 1, 'trans': 8})
                 go_to_file(trans, fName, outputDir)
