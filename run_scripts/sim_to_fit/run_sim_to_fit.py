@@ -7,7 +7,8 @@ from sn_tools.sn_io import add_parser, checkDir
 from optparse import OptionParser
 import os
 import yaml
-
+from sn_tools.sn_process import Process
+import multiprocessing
 
 # get all possible simulation parameters and put in a dict
 path_process_input = sn_script_input.__path__
@@ -139,15 +140,19 @@ procDict['pixelList'] = opts.pixelList
 procDict['nside'] = opts.nside
 
 # print('processing', procDict)
-
+"""
 toimport = 'from sn_tools.sn_process import Process'
 
 if opts.code == 'new':
     toimport = 'from sn_tools.sn_process_new import Process'
 
 exec(toimport)
+"""
 del procDict['code']
 
-process = Process(**procDict)
+if __name__ == '__main__':
+    # set the start method
+    multiprocessing.set_start_method('forkserver')
+    process = Process(**procDict)
 
 # print('Processed')
