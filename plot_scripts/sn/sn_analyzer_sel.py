@@ -1054,7 +1054,7 @@ def plotMollview(data, varName, leg, addleg, op, xmin, xmax,
 
     fig = plt.figure(figsize=(8, 6))
 
-    hpxmap = np.zeros(npix, dtype=np.float)
+    hpxmap = np.zeros(npix, dtype=float)
     hpxmap = np.full(hpxmap.shape, 0.)
     hpxmap[data['healpixID'].astype(
         int)] += data[varName]
@@ -1193,6 +1193,7 @@ def process_WFD_OS(conf_df, dataType, dbDir_WFD, runType,
         wfda = wfda.groupby(['dbName', timescale_file]).apply(
             lambda x: get_stat(x, norm_factor)).reset_index()
         wfd = pd.concat((wfd, wfda))
+        del wfda
 
     if ax is not None:
         ax.legend(loc='upper left', bbox_to_anchor=(
@@ -1234,20 +1235,23 @@ def process_WFD(conf_df, dataType, dbDir_WFD, runType,
 
     """
 
-    outName = 'nsn_WFD_v3_test.csv'
-
+    outName = 'nsn_WFD_v3_6.csv'
     """
+    outName = 'nsn_WFD_v3_6.csv'
+    outName = 'res_nsn_wfd_3_6.csv'
     wfd = process_WFD_OS_nsn(conf_df, dataType, dbDir_WFD, runType,
-                             timescale_file, timeslots, norm_factor)
+                             timescale_file, timeslots, norm_factor,
+                             outName=outName)
 
     """
     wfd = process_WFD_OS(conf_df, dataType, dbDir_WFD, runType,
                          timescale_file, timeslots, norm_factor,
                          nside, outName, plot_moll=plot_moll)
 
-    plot_summary_wfd(wfd, conf_df, timescale_file, cumul=True)
+    plot_summary_wfd(wfd, conf_df, timescale_file,
+                     cumul=True, rem_from_name='v3.0')
 
-    """    
+    """
     print('wwwwwww', wfd.columns)
     OS_WFDs = wfd['dbName'].unique()
     plot_nsn_versus_two(wfd, xvar='year', xleg='year', logy=False,
