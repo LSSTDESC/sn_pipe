@@ -9,6 +9,8 @@ import sn_script_input
 from sn_tools.sn_io import make_dict_from_config, make_dict_from_optparse
 from sn_tools.sn_io import add_parser
 from optparse import OptionParser
+import yaml
+from sn_metrics.sn_obs_strat_metric import SNObsStratMetric
 
 # get all possible simulation parameters and put in a dict
 path_process_input = sn_script_input.__path__
@@ -26,6 +28,26 @@ opts, args = parser.parse_args()
 procDict = {}
 for key, vals in confDict_gen.items():
     procDict[key] = eval('opts.{}'.format(key))
+
+metricList = [SNObsStratMetric()]
+"""
+fieldType = yaml_params['Observations']['fieldtype']
+fieldName = yaml_params['Observations']['fieldname']
+nside = yaml_params['Pixelisation']['nside']
+saveData = 0
+outDir = yaml_params['OutputSimu']['directory']
+# now perform the processing
+"""
+
+# print('seasons and metric', opts.Observations_season,
+#      metricList, opts.pixelmap_dir, opts.npixels)
+
+procDict['fieldType'] = 'WFD'
+procDict['metricList'] = metricList
+procDict['fieldName'] = 'WFD'
+# procDict['outDir'] = outDir
+procDict['pixelList'] = opts.pixelList
+procDict['nside'] = opts.nside
 
 if __name__ == '__main__':
     toimport = 'from sn_tools.sn_process import Process'
