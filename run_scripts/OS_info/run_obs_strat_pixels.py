@@ -10,7 +10,7 @@ from sn_tools.sn_io import make_dict_from_config, make_dict_from_optparse
 from sn_tools.sn_io import add_parser
 from optparse import OptionParser
 import yaml
-from sn_metrics.sn_obs_strat_metric import SNObsStratMetric
+from sn_metrics.sn_obs_strat_pixels import SNObsStratPixel
 
 # get all possible simulation parameters and put in a dict
 path_process_input = sn_script_input.__path__
@@ -29,7 +29,7 @@ procDict = {}
 for key, vals in confDict_gen.items():
     procDict[key] = eval('opts.{}'.format(key))
 
-metricList = [SNObsStratMetric()]
+metricList = [SNObsStratPixel()]
 """
 fieldType = yaml_params['Observations']['fieldtype']
 fieldName = yaml_params['Observations']['fieldname']
