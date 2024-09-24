@@ -167,9 +167,9 @@ def plot_nvisits(nside, tab, minx, maxx, leg='', xval='count'):
 
 
 # FP instance
-df_fp = FocalPlane(level='ccd')
+df_fp = FocalPlane(level='raft')
 # quick check
-df_fp.check_fp(top_level='raft', low_level='ccd')
+# df_fp.check_fp(top_level='raft', low_level='ccd')
 
 # load the data to process
 data = get_simuData('../DB_Files', 'baseline_v3.0_10yrs.npy')
