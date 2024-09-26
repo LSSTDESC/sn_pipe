@@ -7,6 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 import healpy as hp
+from optparse import OptionParser
 
 
 def get_simuData(dbDir, dbName, fieldName='DD:COSMOS'):
@@ -32,7 +33,7 @@ def get_simuData(dbDir, dbName, fieldName='DD:COSMOS'):
     fName = '{}/{}'.format(dbDir, dbName)
 
     data = np.load(fName, allow_pickle=True)
-    idx = data['note'] == fieldName
+    idx = data['scheduler_note'] == fieldName
     sel_data = data[idx]
 
     return sel_data
@@ -62,17 +63,22 @@ def process_pointings(data, params, j=0, output_q=None):
 
     nside = params['nside']
     fp_level = params['fp_level']
+    RACol = params['RACol']
+    DecCol = params['DecCol']
+    filterCol = params['filterCol']
     df_fp = FocalPlane(level=fp_level)
 
-    df_fp.check_fp(top_level='raft', low_level='ccd')
+    # df_fp.check_fp(top_level='raft', low_level='ccd')
 
     time_ref = time.time()
     print('start processing', j, len(data))
-    df_pix = get_proj_data(data, nside=nside)
+    df_pix = get_proj_data(data, nside=nside, RACol=RACol,
+                           DecCol=DecCol, filterCol=filterCol)
     print('booooo', df_pix)
     # get matching pixels<-> FP pos
-    # df_fp.set_display_mode() #mandatory if plot_fp_pixels is to be used
+    df_fp.set_display_mode()  # mandatory if plot_fp_pixels is to be used
     pix_obs = df_fp.pix_to_obs(df_pix)
+    df_fp.plot_fp_pixels(pixels=df_pix, signal=pix_obs)
 
     print('processing', j, time.time()-time_ref)
     if output_q is not None:
@@ -105,10 +111,16 @@ def process_pixels(pixels, params, j=0, output_q=None):
 
     data = params['data']
     df_fp = params['df_fp']
+    RACol = params['RACol']
+    DecCol = params['DecCol']
+    filterCol = params['filterCol']
+
     pix_obs = pd.DataFrame()
     for i, pix in pixels.iterrows():
-
-        dd = get_xy_pixels(data, pix['healpixID'], pix['pixRA'], pix['pixDec'])
+        dd = get_xy_pixels(data, pix['healpixID'],
+                           pix['pixRA'],
+                           pix['pixDec'],
+                           RACol=RACol, DecCol=DecCol, filterCol=filterCol)
         pixl_obs = df_fp.pix_to_obs(dd)
         pix_obs = pd.concat((pix_obs, pixl_obs))
 
@@ -151,7 +163,7 @@ def plot_nvisits(nside, tab, minx, maxx, leg='', xval='count'):
     cmap.set_under('w')
 
     hpID = 'healpixID'
-    hpxmap = np.zeros(npix, dtype=np.float)
+    hpxmap = np.zeros(npix, dtype=float)
     r = []
     for healpixID in np.unique(tab[hpID]):
         ii = tab[hpID] == healpixID
@@ -166,20 +178,46 @@ def plot_nvisits(nside, tab, minx, maxx, leg='', xval='count'):
     hp.graticule()
 
 
+parser = OptionParser(description='LSST FP test')
+
+parser.add_option('--dbDir', type='str',
+                  default='../DB_Files', help='db dir [%default')
+parser.add_option('--dbName', type='str',
+                  default='baseline_v3.6_10yrs', help='db name [%default]')
+parser.add_option('--RACol', type='str', default='RA',
+                  help="RA colname [%default]")
+parser.add_option('--DecCol', type='str', default='Dec',
+                  help="Dec colname [%default]")
+parser.add_option('--filterCol', type='str', default='band',
+                  help="filter colname [%default]")
+parser.add_option('--fp_level', type='str', default='raft',
+                  help="FP level [raft/ccd/sensor] [%default]")
+
+opts, args = parser.parse_args()
+
+dbDir = opts.dbDir
+dbName = '{}.npy'.format(opts.dbName)
+RACol = opts.RACol
+DecCol = opts.DecCol
+filterCol = opts.filterCol
+fp_level = opts.fp_level
+
 # FP instance
-df_fp = FocalPlane(level='raft')
+df_fp = FocalPlane(level=fp_level)
 # quick check
 # df_fp.check_fp(top_level='raft', low_level='ccd')
 
 # load the data to process
-data = get_simuData('../DB_Files', 'baseline_v3.0_10yrs.npy')
+data = get_simuData(dbDir, dbName)
 data = pd.DataFrame(data)
 print('data', len(data))
 # first method: use pixels as ref
 # get (RA,Dec) window for these data
-RA_min, RA_max, Dec_min, Dec_max = get_window(data, radius=np.sqrt(20./3.14))
+print(data.columns)
+RA_min, RA_max, Dec_min, Dec_max = get_window(data, RACol=RACol,
+                                              DecCol=DecCol,
+                                              radius=np.sqrt(20./3.14))
 
-print('there man', RA_min, RA_max, Dec_min, Dec_max)
 # get pixels in this window
 nside = 128
 pixels = get_pixels_in_window(nside, RA_min, RA_max, Dec_min, Dec_max)
@@ -189,15 +227,17 @@ print('number of pixels', len(pixels))
 params = {}
 params['data'] = data
 params['df_fp'] = df_fp
+params['RACol'] = RACol
+params['DecCol'] = DecCol
+params['filterCol'] = 'band'
 res = multiproc(pixels, params, process_pixels, 8)
 
-print('aoo', len(res['healpixID'].unique()), res.columns)
 
 obsCol = 'observationId'
 obsids = res[obsCol].to_list()
 
 idx = data[obsCol].isin(obsids)
-sel_data = data[idx][[obsCol, 'fieldRA', 'fieldDec']]
+sel_data = data[idx][[obsCol, RACol, DecCol]]
 
 mm = res.merge(sel_data, left_on=[obsCol],
                right_on=[obsCol], suffixes=['', ''])
@@ -213,8 +253,20 @@ minx = np.min(tt['count'])
 maxx = np.max(tt['count'])
 plot_nvisits(nside, tt, minx, maxx)
 fig, ax = plt.subplots()
-ax.plot(mm['fieldRA'], mm['fieldDec'], 'k.')
+ax.plot(mm[RACol], mm[DecCol], 'k.')
 ax.plot(mm['pixRA'], mm['pixDec'], 'r*')
+
+
+params = {}
+params['nside'] = nside
+params['fp_level'] = fp_level
+params['RACol'] = RACol
+params['DecCol'] = DecCol
+params['filterCol'] = filterCol
+# get proj pixels for obs
+time_ref = time.time()
+# pix_obs = multiproc(data, params, process_pointings, 1)
+pix_obs = process_pointings(data[:1], params)
 
 plt.show()
 
