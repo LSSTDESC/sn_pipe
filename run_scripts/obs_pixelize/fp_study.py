@@ -210,7 +210,9 @@ df_fp = FocalPlane(level=fp_level)
 # load the data to process
 data = get_simuData(dbDir, dbName)
 data = pd.DataFrame(data)
+nside = 128
 print('data', len(data))
+"""
 # first method: use pixels as ref
 # get (RA,Dec) window for these data
 print(data.columns)
@@ -219,7 +221,7 @@ RA_min, RA_max, Dec_min, Dec_max = get_window(data, RACol=RACol,
                                               radius=np.sqrt(20./3.14))
 
 # get pixels in this window
-nside = 128
+
 pixels = get_pixels_in_window(nside, RA_min, RA_max, Dec_min, Dec_max)
 
 print('number of pixels', len(pixels))
@@ -255,7 +257,7 @@ plot_nvisits(nside, tt, minx, maxx)
 fig, ax = plt.subplots()
 ax.plot(mm[RACol], mm[DecCol], 'k.')
 ax.plot(mm['pixRA'], mm['pixDec'], 'r*')
-
+"""
 
 params = {}
 params['nside'] = nside
