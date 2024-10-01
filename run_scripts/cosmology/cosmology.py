@@ -282,7 +282,6 @@ survey = pd.concat((survey, survey_init[idxb]))
 print('Survey considered', survey['survey'].unique())
 
 # load host_effi
-
 host_effi = load_host_effi(host_effi_dir, survey['host_effi'].unique())
 
 # load footprints
