@@ -148,7 +148,7 @@ def tag_Tides_upper_zone(map_pixel) -> pd.DataFrame:
 
     """
 
-    #idx = map_pixel['pix_RA'] <= 218
+    # idx = map_pixel['pix_RA'] <= 218
     idx = map_pixel['pix_RA'] >= 110+180
     idx &= map_pixel['pix_Dec'] > 0.
     map_pixel.loc[idx, 'weight'] = -1
@@ -239,15 +239,15 @@ def footprint_TiDES(nside):
 
     idx = map_pixel['pix_Dec'] > 17.4
     map_pixel.loc[idx, 'weight'] = -1
-    #plot_pixels(map_pixel, rot=(180., 0., 0.))
+    # plot_pixels(map_pixel, rot=(180., 0., 0.))
 
     # Tides MW
     map_pixel = tag_Tides_MW(map_pixel)
 
-    #plot_pixels(map_pixel, rot=(180., 0., 0.))
+    # plot_pixels(map_pixel, rot=(180., 0., 0.))
 
     map_pixel = tag_Tides_zone_1(map_pixel)
-    #plot_pixels(map_pixel, rot=(180., 0., 0.))
+    # plot_pixels(map_pixel, rot=(180., 0., 0.))
 
     map_pixel = tag_Tides_upper_zone(map_pixel)
 
@@ -362,9 +362,9 @@ def footprint_DESI(fName, outName, outDir):
     npix = hp.nside2npix(nside)
     index = np.arange(npix)
     theta, phi = hp.pixelfunc.pix2ang(nside, index)
-    #ra, dec = np.degrees(np.pi*2.-phi), -np.degrees(theta-np.pi/2.)
+    # ra, dec = np.degrees(np.pi*2.-phi), -np.degrees(theta-np.pi/2.)
 
-    #vec = hp.pix2ang(nside, range(npix), nest=True, lonlat=True)
+    # vec = hp.pix2ang(nside, range(npix), nest=True, lonlat=True)
 
     map_pixel = get_map(nside)
 
@@ -437,4 +437,7 @@ elif foot_type == 'DDF':
     footprint_DDF(nside)
 else:
     fName = '{}/{}'.format(foot_dir, foot_name)
+    foot_type = fName.split('/')[-1].split('footprint_')[-1]
+    foot_type = foot_type.split('.npy')[0]
+    print('jjj', fName, foot_type)
     footprint_DESI(fName, foot_type, out_dir)
