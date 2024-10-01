@@ -23,7 +23,7 @@ parser.add_option("--outDir", type=str,
                   help="output dir dir[%default]")
 parser.add_option("--tagName", type=str,
                   default='DESI',
-                  help="output tag name: host_effi_tagName.csv [%default]")
+                  help="output tag name: host_effi_tagName [%default]")
 
 
 opts, args = parser.parse_args()
