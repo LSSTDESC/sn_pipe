@@ -13,6 +13,9 @@ from sn_cosmology.cosmo_tools import get_survey_nickname
 from sn_tools.sn_io import checkDir
 import numpy as np
 import glob
+from sn_tools.sn_io import make_dict_from_config, make_dict_from_optparse
+from sn_tools.sn_io import add_parser
+import sn_phystools_input as cosmo_input
 
 
 def host_effi_1D(lista, listb):
@@ -125,92 +128,15 @@ def load_footprints(dataDir):
     return df
 
 
-parser = OptionParser()
+# get all possible script parameters and put in a dict
+path_cosmo_input = cosmo_input.__path__
+confDict = make_dict_from_config(
+    path_cosmo_input[0], 'sn_cosmology.txt')
 
-parser.add_option("--dataDir_DD", type=str,
-                  default='../Output_SN_sigmaInt_0.0_Hounsell_G10_JLA',
-                  help="data dir[%default]")
-parser.add_option("--dbName_DD", type=str,
-                  default='DDF_Univ_WZ', help="db name [%default]")
-parser.add_option("--dataDir_WFD", type=str,
-                  default='../Output_SN_WFD_sigmaInt_0.0_Hounsell_G10_JLA',
-                  help="data dir[%default]")
-parser.add_option("--dbName_WFD", type=str,
-                  default='baseline_v3.0_10yrs',
-                  help="db name [%default]")
-parser.add_option("--selconfig", type=str,
-                  default='G10_JLA', help="sel config [%default]")
-parser.add_option("--outDir", type=str,
-                  default='../cosmo_fit', help="output dir [%default]")
-parser.add_option("--survey", type=str,
-                  default='input/cosmology/scenarios/survey_scenario.csv',
-                  help=" survey to use[%default]")
-parser.add_option("--lookup_survey", type=str,
-                  default='input/cosmology/scenarios/lookup_survey.csv',
-                  help="lookup table for scenarios [%default]")
-parser.add_option("--hosteffiDir", type=str,
-                  default='input/cosmology/host_effi',
-                  help="host effi dir [%default]")
-parser.add_option("--footprintDir", type=str,
-                  default='input/cosmology/footprints',
-                  help="footprint dir [%default]")
-parser.add_option("--max_sigma_mu", type=float,
-                  default=0.12,
-                  help="Max sigma_mu defining low sigma_mu sample [%default]")
-parser.add_option("--test_mode", type=int,
-                  default=0,
-                  help="To run the test mode of the program [%default]")
-parser.add_option("--plot_test", type=int,
-                  default=0,
-                  help="To run the test mode of the program and plot\
-                  the samples distrib.[%default]")
-parser.add_option("--low_z_optimize", type=int,
-                  default=1,
-                  help="To maximize the lowz sample [%default]")
-parser.add_option("--sigmaInt", type=float,
-                  default=0.12,
-                  help="sigmaInt for SN [%default]")
-parser.add_option("--surveyDir", type=str,
-                  default='',
-                  help="to dump surveys on disk [%default]")
-parser.add_option('--timescale', type=str, default='year',
-                  help='timescale for the cosmology (year or season)[%default]')
-parser.add_option('--fields_for_stat', type=str,
-                  default='COSMOS,XMM-LSS,ELAISS1,CDFS,EDFSa,EDFSb',
-                  help='field list for stat (fit) [%default]')
-parser.add_option('--simu_norm_factor', type=str,
-                  default='input/cosmology/simuinfo/normfactor.csv',
-                  help='norm factors for simu [%default]')
-parser.add_option('--seasons_cosmo', type=str,
-                  default='1-10',
-                  help='Seasons to estimate cosmology params [%default]')
-parser.add_option('--nrandom', type=int,
-                  default=50,
-                  help='number of random sample (per season/year) to generate [%default]')
-parser.add_option('--nproc', type=int,
-                  default=8,
-                  help='number of procs to use [%default]')
-parser.add_option('--wfd_tagsurvey', type=str,
-                  default='notag',
-                  help='tag for the WFD survey [%default]')
-parser.add_option('--dd_tagsurvey', type=str,
-                  default='notag',
-                  help='tag for the DD survey [%default]')
-parser.add_option('--DD_surveys', type=str,
-                  default='DDF_COSMOS,DDF_XMM,DDF_ELAIS,DDF_CDFS',
-                  help='DD surveys to consider [%default]')
-parser.add_option('--WFD_surveys', type=str,
-                  default='WFD_TiDES,WFD_desi_lrg,WFD_desi_bgs,WFD_desi2,WFD_4hs,WFD_crs_lrg,WFD_crs_bg',
-                  help='DD surveys to consider [%default]')
-parser.add_option('--fitparam_names', type=str,
-                  default='w0,wa,Om0',
-                  help='fit parameter names [%default]')
-parser.add_option('--fitparam_values', type=str,
-                  default='-1.0,0.0,0.3',
-                  help='fit parameter values [%default]')
-parser.add_option('--prior', type=int,
-                  default=1,
-                  help='prior for the fit [%default]')
+parser = OptionParser('script to fit cosmology parameters')
+
+# parser for script parameters : 'dynamical' generation
+add_parser(parser, confDict)
 
 opts, args = parser.parse_args()
 
@@ -221,8 +147,9 @@ dataDir_WFD = opts.dataDir_WFD
 dbName_WFD = opts.dbName_WFD
 selconfig = opts.selconfig
 outDir = opts.outDir
+outName = opts.outName
 survey_file = opts.survey
-lookup_survey_file = opts.lookup_survey
+# lookup_survey_file = opts.lookup_survey
 host_effi_dir = opts.hosteffiDir
 max_sigma_mu = opts.max_sigma_mu
 test_mode = opts.test_mode
@@ -239,8 +166,8 @@ nproc = opts.nproc
 footprintDir = opts.footprintDir
 wfd_tagsurvey = opts.wfd_tagsurvey
 dd_tagsurvey = opts.dd_tagsurvey
-dd_surveys = opts.DD_surveys.split(',')
-wfd_surveys = opts.WFD_surveys.split(',')
+# dd_surveys = opts.DD_surveys.split(',')
+# wfd_surveys = opts.WFD_surveys.split(',')
 fitparams_names = opts.fitparam_names.split(',')
 fitparams_values = list(map(float, opts.fitparam_values.split(',')))
 prior = opts.prior
@@ -260,6 +187,7 @@ if surveyDir != '':
     checkDir(surveyDir)
 
 # load lookup table for survey
+"""
 survey_table = pd.read_csv(lookup_survey_file)
 
 wfd_tagsurvey, wfd_surveys = get_survey_nickname(
@@ -267,18 +195,19 @@ wfd_tagsurvey, wfd_surveys = get_survey_nickname(
 
 dd_tagsurvey, dd_surveys = get_survey_nickname(
     dd_tagsurvey, dd_surveys, survey_table)
-
+"""
 
 dictsel = selection_criteria()[selconfig]
-survey_init = pd.read_csv(survey_file, comment='#')
+survey = pd.read_csv(survey_file, comment='#')
 
+"""
 # process only required surveys
 idxa = survey_init['survey'].isin(dd_surveys)
 idxb = survey_init['survey'].isin(wfd_surveys)
 
 survey = pd.DataFrame(survey_init[idxa])
 survey = pd.concat((survey, survey_init[idxb]))
-
+"""
 print('Survey considered', survey['survey'].unique())
 
 # load host_effi
@@ -290,8 +219,11 @@ footprints = load_footprints(footprintDir)
 # save the survey in outDir
 seas_min = np.min(seasons_cosmo)
 seas_max = np.max(seasons_cosmo)
+"""
 outName_survey = '{}/survey_{}_{}_{}_{}_{}.csv'.format(
     outDir, dbName_DD, seas_min, seas_max, dd_tagsurvey, wfd_tagsurvey)
+"""
+outName_survey = '{}/{}.csv'.format(outDir, outName)
 survey.to_csv(outName_survey)
 
 
@@ -329,17 +261,20 @@ else:
                                     'refvalue': [0.3],
                                     'sigma': [0.0073]})
 
+"""
 outName = '{}/cosmo_{}_{}_{}_{}_{}.hdf5'.format(outDir,
                                                 dbName_DD,
                                                 seas_min, seas_max,
                                                 dd_tagsurvey, wfd_tagsurvey)
+"""
+outName_full = '{}/{}.hdf5'.format(outDir, outName)
 resfi = pd.DataFrame()
 
 cl = Fit_seasons(fitconfig, dataDir_DD, dbName_DD,
                  dataDir_WFD, dbName_WFD, dictsel, survey,
                  priors, host_effi, footprints, low_z_optimize,
                  max_sigma_mu, test_mode, plot_test,
-                 sigmaInt, surveyDir, timescale, outName,
+                 sigmaInt, surveyDir, timescale, outName_full,
                  fields_for_stat=fields_for_stat,
                  simu_norm_factor=simu_norm_factor,
                  seasons=seasons_cosmo, nrandom=nrandom,
