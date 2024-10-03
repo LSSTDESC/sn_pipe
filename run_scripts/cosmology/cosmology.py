@@ -183,8 +183,10 @@ else:
 
 checkDir(outDir)
 
-if surveyDir != '':
+if surveyDir != 'None':
     checkDir(surveyDir)
+else:
+    surveyDir = ''
 
 # load lookup table for survey
 """
