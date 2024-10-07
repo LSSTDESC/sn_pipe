@@ -13,6 +13,20 @@ import matplotlib.pyplot as plt
 
 
 def load(fName):
+    """
+    Function to load fName
+
+    Parameters
+    ----------
+    fName : str
+        File name to load.
+
+    Returns
+    -------
+    df : pandas df
+        Data.
+
+    """
 
     df = pd.read_hdf(fName)
     survey = fName.split('/')[-1].split('.hdf5')[0].split('cosmo_fit_')[-1]
@@ -21,10 +35,25 @@ def load(fName):
 
 
 def mean_std(grp, var='MoM'):
+    """
+    Function to get mean and std
+
+    Parameters
+    ----------
+    grp : pandas df
+        Data to process.
+    var : str, optional
+        Variable of interest. The default is 'MoM'.
+
+    Returns
+    -------
+    pandas df
+        Mean and std corresponding to var..
+
+    """
 
     idx = grp['MoM'] <= 1.e10
     sel = grp[idx]
-    print('there man', len(grp), len(sel))
     mean = sel[var].mean()
     std = sel[var].std()
 
@@ -32,6 +61,20 @@ def mean_std(grp, var='MoM'):
 
 
 def get_surveys(theDir):
+    """
+    Function to get the survey
+
+    Parameters
+    ----------
+    theDir : str
+        Data directory.
+
+    Returns
+    -------
+    df : pandas df
+        Data.
+
+    """
 
     fis = glob.glob('{}/*.csv'.format(theDir))
 
@@ -43,7 +86,7 @@ def get_surveys(theDir):
         strip_list = list(map(lambda it: it.strip('WFD_'), surveys))
 
         survey = '/'.join(strip_list)
-        print('allo', strip_list, survey)
+        print('allo', scen, survey)
         r.append([scen, survey])
 
     df = pd.DataFrame(r, columns=['survey', 'surveylist'])
@@ -119,12 +162,22 @@ selb = selb.sort_values(by=['MoM_ratio'])
 dfs = get_surveys('desc_desi_surveys')
 
 selb = selb.merge(dfs, left_on=['survey'], right_on=['survey'])
+df_tot = df.merge(dfs, left_on=['survey'], right_on=['survey'])
 
-figb, axb = plt.subplots()
+figb, axb = plt.subplots(figsize=(18, 9))
+figb.subplots_adjust(bottom=0.20)
 axb.plot(selb['surveylist'], selb['MoM_ratio'])
 plt.setp(axb.get_xticklabels(), rotation=30,
-         ha="right", rotation_mode="anchor", fontsize=12)
+         ha="right", rotation_mode="anchor", fontsize=8)
 axb.grid(visible=True)
+
+axb.set_ylabel(r'$\frac{SMoM^{survey}}{SMoM^{TiDES}}$')
+
+figc, axc = plt.subplots()
+
+print(df_tot.columns)
+df_tot = df_tot.fillna(0)
+axc.plot(df_tot['surveylist'], df_tot['WFD_TiDES'], 'ko')
 
 
 plt.show()
