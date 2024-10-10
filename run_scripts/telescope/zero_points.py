@@ -115,6 +115,6 @@ res = np.load('data_{}'.format(outName))
 
 tit = 'v{}'.format(tag)
 plot(res, zp.fitfunc, fitres, figtitle=tit)
-plot(res, zp.fitfunc, yvar='zp_adu_sec',
-     yleg='zp [ADU/s]', figtitle=tit)
+plot(res, zp.fitfunc, yvar='zp_e_sec',
+     yleg='zp [pe/s]', figtitle=tit)
 plt.show()
