@@ -73,10 +73,16 @@ parser.add_option('--telDir', type=str, default='throughputs',
                   help='main throughputs location dir [%default]')
 parser.add_option('--throughputsDir', type=str, default='baseline',
                   help='throughputs location dir [%default]')
-parser.add_option('--atmosDir', type=str, default='atmos',
+parser.add_option('--atmosDir', type=str, default='atmos_new',
                   help='atmosphere location dir [%default]')
 parser.add_option('--tag', type=str, default='1.9',
                   help='tag versions of the throughputs [%default]')
+parser.add_option('--aerosol', type=float, default=0.0,
+                  help='aerosol value [%default]')
+parser.add_option('--pwv', type=float, default=4.0,
+                  help='precipitable water vapor value [%default]')
+parser.add_option('--ozone', type=float, default=300.,
+                  help='ozone value [%default]')
 
 opts, args = parser.parse_args()
 
@@ -84,12 +90,15 @@ telDir = opts.telDir
 throughputsDir = opts.throughputsDir
 atmosDir = opts.atmosDir
 tag = opts.tag
-
+aerosol = opts.aerosol
+pwv = opts.pwv
+ozone = opts.ozone
 outName = 'zp_airmass_v{}.npy'.format(tag)
 
 zp = Zeropoint_airmass(tel_dir=telDir,
                        through_dir=throughputsDir,
-                       atmos_dir=atmosDir, tag=tag, aerosol='aerosol')
+                       atmos_dir=atmosDir, tag=tag,
+                       aerosol=aerosol, pwv=pwv, oz=ozone)
 
 res = zp.get_data()
 np.save('data_{}'.format(outName), res)

@@ -9,12 +9,18 @@ parser.add_option('--tel_dir', type=str, default='throughputs',
                   help='main throughputs location dir [%default]')
 parser.add_option('--throughputsDir', type=str, default='baseline',
                   help='throughputs location dir [%default]')
-parser.add_option('--atmosDir', type=str, default='atmos',
+parser.add_option('--atmosDir', type=str, default='atmos_new',
                   help='atmosphere location dir [%default]')
 parser.add_option('--tag', type=str, default='1.9',
                   help='tag version of the throughputs [%default]')
 parser.add_option('--airmass', type=float, default=1.2,
                   help='airmass value [%default]')
+parser.add_option('--aerosol', type=float, default=0.0,
+                  help='aerosol value [%default]')
+parser.add_option('--pwv', type=float, default=4.0,
+                  help='precipitable water vapor value [%default]')
+parser.add_option('--ozone', type=float, default=300.,
+                  help='ozone value [%default]')
 parser.add_option('--gain', type=float, default=2.5,
                   help='electronic gain [%default]')
 opts, args = parser.parse_args()
@@ -26,8 +32,10 @@ throughputsDir = opts.throughputsDir
 atmosDir = opts.atmosDir
 airmass = opts.airmass
 tag = opts.tag
-aerosol = 1
 gain = opts.gain
+aerosol = opts.aerosol
+pwv = opts.pwv
+ozone = opts.ozone
 
 telb = '{}_{}'.format(tel_dir, tag)
 through_dir = '{}/{}'.format(telb, throughputsDir)
@@ -36,7 +44,8 @@ telescope = get_telescope(tel_dir=telb,
                           through_dir=through_dir,
                           atmos_dir=atmos_dir,
                           tag=tag, load_components=True,
-                          airmass=airmass, gain=gain)
+                          airmass=airmass, aerosol=aerosol,
+                          pwv=pwv, oz=ozone, gain=gain)
 
 
 bands = 'ugrizy'

@@ -172,12 +172,18 @@ parser.add_option('--tel_dir', type=str, default='throughputs',
                   help='main throughputs location dir [%default]')
 parser.add_option('--throughputsDir', type=str, default='baseline',
                   help='throughputs location dir [%default]')
-parser.add_option('--atmosDir', type=str, default='atmos',
+parser.add_option('--atmosDir', type=str, default='atmos_new',
                   help='atmosphere location dir [%default]')
 parser.add_option('--tags', type=str, default='1.9,1.5',
                   help='tag versions of the throughputs [%default]')
 parser.add_option('--airmass', type=float, default=1.2,
                   help='airmass value [%default]')
+parser.add_option('--aerosol', type=float, default=0.0,
+                  help='aerosol value [%default]')
+parser.add_option('--pwv', type=float, default=4.0,
+                  help='precipitable water vapor value [%default]')
+parser.add_option('--ozone', type=float, default=300.,
+                  help='ozone value [%default]')
 opts, args = parser.parse_args()
 
 # config = dict(zip(['tag','label'],[['1.5','1.9'],['Al_Ag_Al','Ag_Ag_Ag']]))
@@ -186,7 +192,9 @@ tel_dir = opts.tel_dir
 throughputsDir = opts.throughputsDir
 atmosDir = opts.atmosDir
 airmass = opts.airmass
-
+pwv = opts.pwv
+aerosol = opts.aerosol
+ozone = opts.ozone
 
 tags = opts.tags.split(',')
 
@@ -196,10 +204,6 @@ ls = dict(zip(tags, ['solid', 'dotted']))
 
 tel = {}
 
-aerosol = ''
-if airmass >= 1.:
-    aerosol = 'aerosol'
-
 for tag in tags:
     telb = '{}_{}'.format(tel_dir, tag)
     through_dir = '{}/{}'.format(telb, throughputsDir)
@@ -207,7 +211,8 @@ for tag in tags:
     tel[tag] = get_telescope(tel_dir=telb,
                              through_dir=through_dir,
                              atmos_dir=atmos_dir,
-                             tag=tag, airmass=airmass, aerosol=aerosol)
+                             tag=tag, airmass=airmass,
+                             aerosol=aerosol, pwv=pwv, oz=ozone)
 
 
 fig, ax = plt.subplots(figsize=(12, 8))
