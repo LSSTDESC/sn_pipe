@@ -1235,15 +1235,20 @@ def process_WFD(conf_df, dataType, dbDir_WFD, runType,
 
     """
 
-    outName = 'nsn_WFD_v3_6.csv'
+    outName = 'res_nsn_wfd_3_6_to.csv'
     """
     outName = 'nsn_WFD_v3_6.csv'
-    outName = 'res_nsn_wfd_3_6.csv'
+    outName = 'res_nsn_wfd_3_6_new.csv'
+    
     wfd = process_WFD_OS_nsn(conf_df, dataType, dbDir_WFD, runType,
                              timescale_file, timeslots, norm_factor,
                              outName=outName)
+    
+    plot_summary_wfd(wfd, conf_df, timescale_file,
+                     cumul=True, rem_from_name='v3.0')
 
     """
+
     wfd = process_WFD_OS(conf_df, dataType, dbDir_WFD, runType,
                          timescale_file, timeslots, norm_factor,
                          nside, outName, plot_moll=plot_moll)
@@ -1284,15 +1289,15 @@ class Plot_density:
 
         Parameters
         ----------
-        data : pandas df
+        data: pandas df
             Data to process.
-        timescale : str
-            Time scale (year/season).
-        dbName : str, optional
+        timescale: str
+            Time scale(year/season).
+        dbName: str, optional
             OS name. The default is ''.
-        norm_factor : int, optional
+        norm_factor: int, optional
             Normalization factor. The default is 10.
-        nside : int, optional
+        nside: int, optional
             healpix nside parameter. The default is 64.
 
         Returns
@@ -1314,7 +1319,7 @@ class Plot_density:
 
     def plot_hist(self):
         """
-        Method to plot histos of SNe Ia density (per deg2)
+        Method to plot histos of SNe Ia density(per deg2)
 
         Returns
         -------
@@ -1375,12 +1380,12 @@ class Plot_density:
 
         Parameters
         ----------
-        sigma_mu : float, optional
+        sigma_mu: float, optional
             sigma_mu selection criteria. The default is 0.12.
 
         Returns
         -------
-        dens : pandas df
+        dens: pandas df
             Density vs time.
 
         """
@@ -1400,12 +1405,12 @@ class Plot_density:
 
         Parameters
         ----------
-        grp : pandas df
+        grp: pandas df
             Data to process.
 
         Returns
         -------
-        nsn : pandas df
+        nsn: pandas df
             SNe Ia/deg2/pixel.
 
         """
@@ -1422,7 +1427,7 @@ class Plot_density:
 
         Parameters
         ----------
-        grp : pandas df group
+        grp: pandas df group
             Data to process.
 
         Returns
@@ -1454,17 +1459,17 @@ class Plot_density:
 
         Parameters
         ----------
-        nsn_dens : pandas df
+        nsn_dens: pandas df
             Data to plot.
         what: str, optional
            var to plot. The default is density_mean
-        ls : str, optional
+        ls: str, optional
             Line style. The default is 'solid'.
-        label : str, optional
+        label: str, optional
             Plot label. The default is None.
-        fig : matplotlib figure, optional
+        fig: matplotlib figure, optional
             Figure for the plot. The default is None.
-        ax : matplotlib axis, optional
+        ax: matplotlib axis, optional
             Axis for the plot. The default is None.
 
         Returns
@@ -1487,13 +1492,13 @@ def plot_summary_wfd(wfd, conf_df, timescale='season',
 
     Parameters
     ----------
-    wfd : pandas df
+    wfd: pandas df
         Data to process.
-    conf_df : pandas df
+    conf_df: pandas df
         config for plot.
-    timescale : str, optional
-        Time scale to use (season/year). The default is 'season'.
-    cumul : bool, optional
+    timescale: str, optional
+        Time scale to use(season/year). The default is 'season'.
+    cumul: bool, optional
         To plot cumulative results. The default is False.
 
     Returns
@@ -1667,6 +1672,8 @@ conf_df = pd.read_csv(config, comment='#')
 
 # load wfds
 """
+
+
 OS_WFDs = conf_df['dbName_WFD'].unique()
 
 for OS_WFD in OS_WFDs:
