@@ -9,6 +9,7 @@ Created on Tue Oct  1 09:27:46 2024
 from optparse import OptionParser
 import pandas as pd
 import os
+from sn_tools.sn_io import checkDir
 
 
 def get_survey(df, scenType):
@@ -34,7 +35,7 @@ def get_survey(df, scenType):
     return df[idx]
 
 
-def loopIt(iscen, surv_dict, dfa, dfb=None, dfc=None):
+def loopIt(iscen, surv_dict, dfa, dfb=None, dfc=None, dfd=None):
     """
     Function to combine scenarios
 
@@ -50,7 +51,8 @@ def loopIt(iscen, surv_dict, dfa, dfb=None, dfc=None):
         Data to consider. The default is None.
     dfc : pandas df, optional
         Data to consider. The default is None.
-
+    dfd : pandas df, optional
+        Data to consider. The default is None.
     Returns
     -------
     iscen : int
@@ -59,6 +61,8 @@ def loopIt(iscen, surv_dict, dfa, dfb=None, dfc=None):
         dict of scenarios.
 
     """
+
+    print('allo', dfc, dfd)
 
     for i, row in dfa.iterrows():
         if dfb is None:
@@ -72,11 +76,20 @@ def loopIt(iscen, surv_dict, dfa, dfb=None, dfc=None):
                     surv_dict['scen_{}'.format(iscen)] = surv
                 else:
                     for k, rowc in dfc.iterrows():
-                        iscen += 1
-                        surv = '{}/{}/{}'.format(row['survey'],
-                                                 rowb['survey'],
-                                                 rowc['survey'])
-                        surv_dict['scen_{}'.format(iscen)] = surv
+                        if dfd is None:
+                            iscen += 1
+                            surv = '{}/{}/{}'.format(row['survey'],
+                                                     rowb['survey'],
+                                                     rowc['survey'])
+                            surv_dict['scen_{}'.format(iscen)] = surv
+                        else:
+                            for l, rowd in dfd.iterrows():
+                                iscen += 1
+                                surv = '{}/{}/{}/{}'.format(row['survey'],
+                                                            rowb['survey'],
+                                                            rowc['survey'],
+                                                            rowd['survey'])
+                                surv_dict['scen_{}'.format(iscen)] = surv
 
     return iscen, surv_dict
 
@@ -108,10 +121,10 @@ def get_full_survey(df):
 parser = OptionParser('script to build survey scenarios for desi/desi2')
 
 parser.add_option("--lookup_desi", type=str,
-                  default='lookup_desi.csv',
+                  default='input/desc_desi/lookup_desi.csv',
                   help="DESI/DESI2 scenarios [%default]")
 parser.add_option("--survey_ref", type=str,
-                  default='survey_scenario_ref.csv',
+                  default='input/desc_desi/survey_scenario_ref.csv',
                   help="reference scenario to append [%default]")
 parser.add_option("--outDir", type=str,
                   default='desc_desi_surveys',
@@ -122,6 +135,7 @@ opts, args = parser.parse_args()
 lookup_desi = opts.lookup_desi
 survey_ref = opts.survey_ref
 outDir = opts.outDir
+checkDir(outDir)
 
 # load desi lookup table (survey def.)
 scen_desi = pd.read_csv(lookup_desi, comment='#')
@@ -139,15 +153,23 @@ hs_survey = get_survey(scen_desi, '4hs')
 surv_dict = {}
 
 desi_survey = get_full_survey(desi_surveys)
+crs_surveys = get_full_survey(crs_survey)
 
 iscen = 0
 # make surveys
 iscen, surv_dict = loopIt(iscen, surv_dict, scen_desi)
+
 for vv in [desi_surveys, desi_survey]:
     iscen, surv_dict = loopIt(iscen, surv_dict, vv, desi2_survey)
     iscen, surv_dict = loopIt(iscen, surv_dict, vv, crs_survey)
     iscen, surv_dict = loopIt(iscen, surv_dict, vv, hs_survey)
+    # iscen, surv_dict = loopIt(iscen, surv_dict, vv, desi2_survey, hs_survey)
 
+# added recently
+surv_dict = {}
+for vv in [desi_surveys, desi_survey]:
+    iscen, surv_dict = loopIt(iscen, surv_dict, vv,
+                              desi2_survey, hs_survey, crs_surveys)
 
 print(surv_dict)
 
