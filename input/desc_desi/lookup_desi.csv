@@ -1,0 +1,14 @@
+survey,season_min,season_max,host_effi,footprint,scenType
+WFD_desi_bgs,1,10,host_effi_desi_bgs_v3,desi_v3,desi
+WFD_desi_lrg,1,10,host_effi_desi_lrg_v3,desi_v3,desi
+WFD_desi2_16,1,10,host_effi_desi2_16_v3,desi2_v3,desi2
+WFD_desi2_17,1,10,host_effi_desi2_17_v3,desi2_v3,desi2
+WFD_desi2_18,1,10,host_effi_desi2_18_v3,desi2_v3,desi2
+WFD_desi2_19,1,10,host_effi_desi2_19_v3,desi2_v3,desi2
+WFD_desi2_20,1,10,host_effi_desi2_20_v3,desi2_v3,desi2
+WFD_desi2_21,1,10,host_effi_desi2_21_v3,desi2_v3,desi2
+WFD_desi2_22,1,10,host_effi_desi2_22_v3,desi2_v3,desi2
+WFD_desi2_23,1,10,host_effi_desi2_23_v3,desi2_v3,desi2
+WFD_crs_lrg,1,10,host_effi_crs_lrg_v3,crs_v3,crs
+WFD_crs_bg,1,10,host_effi_crs_bg_v3,crs_v3,crs
+WFD_4hs,1,10,host_effi_4hs_v3,4hs_v3,4hs
