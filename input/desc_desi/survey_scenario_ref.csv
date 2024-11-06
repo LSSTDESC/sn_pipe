@@ -1,0 +1,9 @@
+survey,field,fieldType,season_min,season_max,nsn_max_season,host_effi,zType,footprint,zmax
+#DDF_COSMOS,COSMOS,DDF,1,10,1e10,host_effi_Subaru,spectroz,Subaru_DDF,1.1
+#DDF_XMM,XMM-LSS,DDF,1,10,1.e10,host_effi_Subaru,spectroz,Subaru_DDF,1.1
+#DDF_ELAIS,ELAISS1,DDF,1,5,1.e10,host_effi_TiDES,spectroz,TiDES_DDF,1.1
+#DDF_CDFS,CDFS,DDF,1,5,1.e10,host_effi_TiDES,spectroz,TiDES_DDF,1.1
+#DD_EDFSa,EDFSa,DDF,1,10,1.e10,host_effi_photz,photz,Nospectro,1.1
+#DD_EDFSb,EDFSb,DDF,1,10,1.e10,host_effi_photz,photz,NoSpectro,1.1
+#DD_EDFS,EDFS,DDF,1,5,1.e10,host_effi_DD,spectroz,Tides,1.1
+WFD_TiDES,WFD,WFD,1,10,1.e4,host_effi_TiDES,spectroz_nosat,TiDES_WFD,0.6
