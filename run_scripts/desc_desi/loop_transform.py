@@ -30,7 +30,7 @@ fileType = opts.fileType
 fis = glob.glob('{}/*{}*.npy'.format(dataDir, fileType))
 
 print('files', fis)
-cmd = 'python run_scripts/cosmology/effi_to_csv.py'
+cmd = 'python run_scripts/desc_desi/effi_to_csv.py'
 cmd += ' --dataDir={}'.format(dataDir)
 cmd += ' --outDir={}'.format(outDir)
 
