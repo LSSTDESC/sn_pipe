@@ -10,6 +10,7 @@ import pandas as pd
 import glob
 from sn_analysis.sn_tools import recalc
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 def load(fName):
@@ -118,7 +119,15 @@ ref_df = pd.DataFrame(dfb[idx])
 dfb = dfb.merge(ref_df, left_on=['year'], right_on=[
                 'year'], suffixes=['', '_ref'])
 
+print(dfb.columns)
+
 dfb['MoM_ratio'] = dfb['MoM_mean']/dfb['MoM_mean_ref']
+dfb['MoM_ratio_std'] = (dfb['MoM_std']/dfb['MoM_mean_ref'])**2
+dfb['MoM_ratio_std'] += (dfb['MoM_mean'] *
+                         dfb['MoM_std_ref'])**2/dfb['MoM_mean_ref']**4
+dfb['MoM_ratio_std'] = np.sqrt(dfb['MoM_ratio_std'])
+dfb['MoM_ratio_plus'] = dfb['MoM_ratio']+dfb['MoM_ratio_std']
+dfb['MoM_ratio_minus'] = dfb['MoM_ratio']-dfb['MoM_ratio_std']
 print(dfb)
 
 idxb = dfb['MoM_ratio'] > 3
@@ -167,6 +176,8 @@ df_tot = df.merge(dfs, left_on=['survey'], right_on=['survey'])
 figb, axb = plt.subplots(figsize=(18, 9))
 figb.subplots_adjust(bottom=0.20)
 axb.plot(selb['surveylist'], selb['MoM_ratio'])
+axb.fill_between(selb['surveylist'], selb['MoM_ratio_plus'],
+                 selb['MoM_ratio_minus'], color='yellow')
 plt.setp(axb.get_xticklabels(), rotation=30,
          ha="right", rotation_mode="anchor", fontsize=8)
 axb.grid(visible=True)
