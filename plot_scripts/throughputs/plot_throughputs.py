@@ -10,20 +10,54 @@ from sn_telmodel.sn_throughputs_new import Throughputs
 import matplotlib.pyplot as plt
 
 
+def plots(throughputs):
+    """
+    Function to plot throughputs (telescope+atmosphere)
+
+    Parameters
+    ----------
+    throughputs : Throughputs
+        Throughputs class.
+
+    Returns
+    -------
+    None.
+
+    """
+
+    # optical components
+    throughputs.plot_components()
+
+    # atmospheric transmission
+    throughputs.load_atmosphere()
+
+    throughputs.plot_atmospheric_transmission(plt)
+
+    # plot throughputs
+
+    throughputs.plot_throughputs(plt)
+
+    # plot darksky
+    throughputs.plot_darksky(plt)
+
+
 throughputs = Throughputs()
 
-# optical components
-throughputs.plot_components()
-
-# atmospheric transmission
-throughputs.load_atmosphere()
-
-throughputs.plot_atmospheric_transmission(plt)
-
 # plot throughputs
+# plots(throughputs)
 
-throughputs.plot_throughputs(plt)
 
-# plot darksky
-throughputs.plot_darksky(plt)
+# get etc
+throughputs.etc()
+
+# reset data
+throughputs.reset_data()
+
+# new atmos
+throughputs.new_atmosphere(airmass=1.5)
+
+# get etc
+
+throughputs.etc()
+
 plt.show()
