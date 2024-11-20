@@ -23,4 +23,7 @@ throughputs.plot_atmospheric_transmission(plt)
 # plot throughputs
 
 throughputs.plot_throughputs(plt)
+
+# plot darksky
+throughputs.plot_darksky(plt)
 plt.show()
