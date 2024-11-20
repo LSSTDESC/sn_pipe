@@ -152,7 +152,7 @@ del procDict['code']
 
 if __name__ == '__main__':
     # set the start method
-    multiprocessing.set_start_method('forkserver')
+    # multiprocessing.set_start_method('forkserver')
     process = Process(**procDict)
 
 # print('Processed')
