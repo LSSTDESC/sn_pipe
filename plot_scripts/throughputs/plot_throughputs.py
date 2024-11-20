@@ -12,8 +12,15 @@ import matplotlib.pyplot as plt
 
 throughputs = Throughputs()
 
+# optical components
+throughputs.plot_components()
+
+# atmospheric transmission
 throughputs.load_atmosphere()
 
 throughputs.plot_atmospheric_transmission(plt)
 
+# plot throughputs
+
+throughputs.plot_throughputs(plt)
 plt.show()
