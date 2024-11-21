@@ -9,6 +9,8 @@ Created on Thu Nov 14 14:49:10 2024
 from sn_telmodel.sn_throughputs_new import Throughputs
 import numpy as np
 import pandas as pd
+from sn_tools.sn_utils import multiproc
+import time
 
 
 def get_random_values(ntrials, mean_values, sigma_values):
@@ -32,14 +34,12 @@ def get_values(names, values):
     return dict(zip(names, values))
 
 
-def zp(data, params):
+def zp(data, params, j=0, output_q=None):
 
     throughput = params['throughput']
     zp_dict = {}
     bands = list('ugrizy')
     zp_dict = dict(zip(bands, [[], [], [], [], [], []]))
-
-    print('zp dict', zp_dict, bands, len(bands))
 
     for i, row in data.iterrows():
         throughput.reset_data()
@@ -57,9 +57,13 @@ def zp(data, params):
 
     res = pd.DataFrame.from_dict(zp_dict)
 
-    return res
+    if output_q is not None:
+        return output_q.put({j: res})
+    else:
+        return res
 
 
+time_ref = time.time()
 tel_dir = 'throughputs'
 through_dir = 'baseline'
 tag = '1.9'
@@ -78,7 +82,7 @@ par_names = ['airmass', 'pwv', 'ozone', 'beta', 'aerosol']
 mean_values = get_values(par_names, [1.2, 4.0, 300., 0.05, 0.05])
 sigma_values = get_values(par_names, [0.01, 0.2, 10., 0.0, 0.001])
 
-ntrials = 1000
+ntrials = 500
 
 param_values = get_random_values(ntrials, mean_values, sigma_values)
 
@@ -88,6 +92,8 @@ params = {}
 
 params['throughput'] = throughput
 
-zp_values = zp(param_values[:10], params)
+nproc = 8
+zp_values = multiproc(param_values, params, zp, nproc)
 
 print(zp_values)
+print('end of processing', time.time()-time_ref)
