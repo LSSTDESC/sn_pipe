@@ -214,6 +214,7 @@ class Sigma_zp:
         zp_dict = {}
         bands = list('ugrizy')
         zp_dict = dict(zip(bands, [[], [], [], [], [], []]))
+        mean_wave_dict = dict(zip(bands, [[], [], [], [], [], []]))
 
         for i, row in data.iterrows():
             throughput.reset_data()
@@ -223,13 +224,15 @@ class Sigma_zp:
                                       oz=row['ozone'],
                                       beta=row['beta'])
 
-            # tel.mean_wave()
+            throughput.mean_wave()
             for b in 'ugrizy':
                 # mean_wave = tel.mean_wavelength[b]
                 zpb = throughput.zp(b)
                 zp_dict[b].append(zpb)
+                mean_wave_dict[b].append(throughput.mean_wavelength[b])
 
         res = pd.DataFrame.from_dict(zp_dict)
+        print('rrr', mean_wave_dict)
 
         if output_q is not None:
             return output_q.put({j: res})
