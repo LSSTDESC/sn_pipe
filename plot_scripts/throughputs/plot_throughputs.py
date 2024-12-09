@@ -6,7 +6,7 @@ Created on Wed Nov 20 19:04:53 2024
 @author: philippe.gris@clermont.in2p3.fr
 """
 
-from sn_telmodel.sn_throughputs_new import Throughputs
+from sn_telmodel.sn_throughputs import Throughputs
 import matplotlib.pyplot as plt
 
 

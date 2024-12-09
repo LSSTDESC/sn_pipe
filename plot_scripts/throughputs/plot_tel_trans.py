@@ -6,7 +6,7 @@ Created on Fri Nov 15 10:41:08 2024
 @author: philippe.gris@clermont.in2p3;fr
 """
 
-from sn_telmodel.sn_telescope_new import Telescope
+from sn_telmodel.sn_telescope import Telescope
 import matplotlib.pyplot as plt
 
 
