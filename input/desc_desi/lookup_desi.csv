@@ -1,6 +1,8 @@
 survey,season_min,season_max,host_effi,footprint,scenType
 WFD_desi_bgs,1,10,host_effi_desi_bgs_v3,desi_v3,desi
 WFD_desi_lrg,1,10,host_effi_desi_lrg_v3,desi_v3,desi
+WFD_desi_ext_bgs,1,10,host_effi_desi_bgs_v3,desi_ext_v3,desi
+WFD_desi_ext_lrg,1,10,host_effi_desi_lrg_v3,desi_ext_v3,desi
 WFD_desi2_16,1,10,host_effi_desi2_16_v3,desi2_v3,desi2
 WFD_desi2_17,1,10,host_effi_desi2_17_v3,desi2_v3,desi2
 WFD_desi2_18,1,10,host_effi_desi2_18_v3,desi2_v3,desi2
