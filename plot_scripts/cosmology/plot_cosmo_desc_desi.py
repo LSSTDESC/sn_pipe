@@ -11,6 +11,7 @@ import glob
 from sn_analysis.sn_tools import recalc
 import matplotlib.pyplot as plt
 import numpy as np
+from optparse import OptionParser
 
 
 def load(fName):
@@ -53,12 +54,12 @@ def mean_std(grp, var='MoM'):
 
     """
 
-    idx = grp['MoM'] <= 1.e10
+    idx = grp[var] <= 1.e10
     sel = grp[idx]
     mean = sel[var].mean()
     std = sel[var].std()
 
-    return pd.DataFrame({'MoM_mean': [mean], 'MoM_std': [std]})
+    return pd.DataFrame({'{}_mean'.format(var): [mean], '{}_std'.format(var): [std]})
 
 
 def get_surveys(theDir):
@@ -95,7 +96,14 @@ def get_surveys(theDir):
     return df
 
 
-theDir = '../cosmo_fit_desc_desi_new'
+parser = OptionParser(
+    description='Script to estimate atmospheric transparency')
+parser.add_option('--file_dir', type=str,
+                  default='../cosmo_fit_desc_desi_new',
+                  help='dir for files[%default]')
+opts, args = parser.parse_args()
+
+theDir = opts.file_dir
 
 fis = glob.glob('{}/*.hdf5'.format(theDir))
 
