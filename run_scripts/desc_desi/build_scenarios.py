@@ -62,7 +62,7 @@ def loopIt(iscen, surv_dict, dfa, dfb=None, dfc=None, dfd=None):
 
     """
 
-    print('allo', dfc, dfd)
+    # print('allo', dfa, dfc, dfd)
 
     for i, row in dfa.iterrows():
         if dfb is None:
@@ -147,30 +147,38 @@ scentypes = scen_desi['scenType'].unique()
 # load surveys
 
 desi_surveys = get_survey(scen_desi, 'desi')
+desi_ext_surveys = get_survey(scen_desi, 'desi_ext')
 desi2_survey = get_survey(scen_desi, 'desi2')
 crs_survey = get_survey(scen_desi, 'crs')
 hs_survey = get_survey(scen_desi, '4hs')
 surv_dict = {}
 
 desi_survey = get_full_survey(desi_surveys)
+desi_ext_survey = get_full_survey(desi_ext_surveys)
 crs_surveys = get_full_survey(crs_survey)
 
 iscen = 0
 # make surveys
 iscen, surv_dict = loopIt(iscen, surv_dict, scen_desi)
 
+
 for vv in [desi_surveys, desi_survey]:
+    iscen, surv_dict = loopIt(iscen, surv_dict, vv, desi_ext_survey)
     iscen, surv_dict = loopIt(iscen, surv_dict, vv, desi2_survey)
     iscen, surv_dict = loopIt(iscen, surv_dict, vv, crs_survey)
     iscen, surv_dict = loopIt(iscen, surv_dict, vv, hs_survey)
+    # iscen, surv_dict = loopIt(iscen, surv_dict, vv, desi_ext_survey)
     # iscen, surv_dict = loopIt(iscen, surv_dict, vv, desi2_survey, hs_survey)
+    iscen, surv_dict = loopIt(iscen, surv_dict, vv,
+                              desi2_survey, desi_ext_survey)
 
 # added recently
+"""
 surv_dict = {}
 for vv in [desi_surveys, desi_survey]:
     iscen, surv_dict = loopIt(iscen, surv_dict, vv,
                               desi2_survey, hs_survey, crs_surveys)
-
+"""
 print(surv_dict)
 
 # create new files
@@ -190,6 +198,7 @@ for key, vals in surv_dict.items():
         idx = scen_desi['survey'] == vv
         sel_scen = scen_desi[idx]
         sur = vv
+
         season_min = sel_scen['season_min'].values[0]
         season_max = sel_scen['season_max'].values[0]
         host_effi = sel_scen['host_effi'].values[0]
