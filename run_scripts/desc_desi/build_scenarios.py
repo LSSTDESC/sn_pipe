@@ -160,7 +160,7 @@ crs_surveys = get_full_survey(crs_survey)
 iscen = 0
 # make surveys
 iscen, surv_dict = loopIt(iscen, surv_dict, scen_desi)
-
+print(surv_dict)
 
 for vv in [desi_surveys, desi_survey]:
     iscen, surv_dict = loopIt(iscen, surv_dict, vv, desi_ext_survey)
@@ -171,6 +171,8 @@ for vv in [desi_surveys, desi_survey]:
     # iscen, surv_dict = loopIt(iscen, surv_dict, vv, desi2_survey, hs_survey)
     iscen, surv_dict = loopIt(iscen, surv_dict, vv,
                               desi2_survey, desi_ext_survey)
+isc = len(surv_dict)
+surv_dict['scen_{}'.format(isc+1)] = 'WFD_desi_bgs/WFD_desi_lrg'
 
 # added recently
 """
