@@ -34,7 +34,10 @@ fig, ax = plt.subplots()
 for fi in fis:
     df = pd.read_csv(fi, comment='#')
     fName = fi.split('/')[-1].split('.csv')[0].split('host_effi_')[-1]
-    ax.plot(df['z'], df['effi'], label=fName)
+    ls = 'solid'
+    if 'desi2' in fName:
+        ls = 'dashed'
+    ax.plot(df['z'], df['effi'], label=fName, linestyle=ls)
 
 ax.grid(visible='True')
 ax.legend()

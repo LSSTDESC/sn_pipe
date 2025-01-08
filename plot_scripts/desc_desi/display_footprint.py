@@ -32,6 +32,7 @@ inputDir = 'input/cosmology/footprints'
 footprints = ['TiDES', 'desi2_v3', 'crs_v3', 'desi_v3', '4hs_v3']
 
 footprints = ['TiDES', 'desi_v3', '4hs_v3', 'desi2_v3', 'crs_v3']
+footprints = ['TiDES', 'desi_v3', '4hs_v3', 'desiext_v3', 'crs_v3']
 nside = 64
 map_pixel = get_map(nside)
 
@@ -41,6 +42,6 @@ for i, footp in enumerate(footprints):
     map_pixel = put_in_map(map_pixel, df, i+2)
 
 
-plot_pixels(map_pixel)
+plot_pixels(map_pixel, xticklabels=footprints)
 
 plt.show()
