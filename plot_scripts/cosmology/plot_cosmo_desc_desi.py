@@ -89,6 +89,7 @@ def get_surveys(theDir):
 
         survey = '/'.join(strip_list)
         print('allo', scen, survey)
+
         r.append([scen, survey])
 
     df = pd.DataFrame(r, columns=['survey', 'surveylist'])
@@ -96,8 +97,154 @@ def get_surveys(theDir):
     return df
 
 
+def plot_smom_year(dfb):
+
+    fig, ax = plt.subplots()
+
+    surveys = dfb['survey'].unique()
+
+    idx = dfb['year'] > 2
+    dfb = dfb[idx]
+    for survey in surveys:
+        idx = dfb['survey'] == survey
+        sel = dfb[idx]
+        ax.plot(sel['year'], sel['MoM_ratio'])
+
+    ax.grid(visible=True)
+
+
+def plot_val(df):
+
+    fig, ax = plt.subplots()
+    idx = df['survey'] == 'scen_0'
+    idx &= df['year'] == 2
+    # idx &= df['MoM'] <= 5000
+    sel = df[idx]
+
+    vvar = 'Cov_Om0_Om0_fit'
+    vvar = 'Cov_w0_w0_fit'
+    vvar = 'Cov_Om0_w0_fit'
+    vvar = 'MoM'
+    vvarb = 'WFD_TiDES'
+    ax.hist(sel[vvar], histtype='step', bins=100)
+    # ax.plot(sel[vvarb], sel[vvar], 'k.')
+    print(sel[vvar])
+    print(sel.columns.tolist())
+
+
+def plot_summary(dfb, surveys='plot_surveys.csv',
+                 y_var='MoM_ratio',
+                 y_leg='$\\frac{SMoM^{survey}}{SMoM^{TiDES}}$',
+                 ascending=True):
+
+    plot_surveys = pd.read_csv(surveys, comment='#')
+    print('aoo', plot_surveys)
+
+    idx = dfb['year'] == 11
+    selb = dfb[idx]
+    selb = selb.sort_values(by=[y_var], ascending=ascending)
+
+    dfs = get_surveys('desc_desi_surveys')
+
+    selb = selb.merge(dfs, left_on=['survey'], right_on=['survey'])
+    # df_tot = df.merge(dfs, left_on=['survey'], right_on=['survey'])
+    idxb = selb['surveylist'].isin(plot_surveys['surveylist'].to_list())
+    selb = selb[idxb]
+    selb = selb.merge(plot_surveys, left_on=['surveylist'], right_on=[
+                      'surveylist'], suffixes=['', ''])
+
+    figb, axb = plt.subplots(figsize=(18, 9))
+    figb.subplots_adjust(bottom=0.20)
+    axb.plot(selb['nickname'], selb[y_var], color='r', lw=2)
+    axb.fill_between(selb['nickname'], selb['{}_plus'.format(y_var)],
+                     selb['{}_minus'.format(y_var)], color='yellow')
+    plt.setp(axb.get_xticklabels(), rotation=30,
+             ha="right", rotation_mode="anchor", fontsize=12)
+    axb.grid(visible=True)
+
+    axb.set_ylabel(r'{}'.format(y_leg))
+
+
+def get_mean_std(df, var='WFD'):
+    """
+    Function to estimate mean and std for a var.
+
+    Parameters
+    ----------
+    df : pandas df
+        data to process.
+    var : str, optional
+        var of interest. The default is 'WFD'.
+
+    Returns
+    -------
+    dfc : pandas df
+        output data.
+
+    """
+
+    dfc = df.groupby(['survey', 'year']).apply(
+        lambda x: mean_std(x, var)).reset_index()
+
+    varmean = '{}_mean'.format(var)
+    varstd = '{}_std'.format(var)
+
+    dfc['{}_plus'.format(varmean)] = dfc[varmean]+dfc[varstd]
+    dfc['{}_minus'.format(varmean)] = dfc[varmean]-dfc[varstd]
+
+    return dfc
+
+
+def get_ratio(df, var='MoM'):
+    """
+    Method to estimate the ratio of var w.r.t a reference config.
+
+    Parameters
+    ----------
+    df : pandas df
+        Data to process.
+    var : str, optional
+        Variable of interest. The default is 'MoM'.
+
+    Returns
+    -------
+    dfb : pandas df
+        Output data.
+
+    """
+
+    dfb = get_mean_std(df, var)
+    # ref survey
+    idx = dfb['survey'] == 'scen_0'
+    ref_df = pd.DataFrame(dfb[idx])
+
+    dfb = dfb.merge(ref_df, left_on=['year'], right_on=[
+                    'year'], suffixes=['', '_ref'])
+
+    print(dfb.columns)
+
+    var_mean = '{}_mean'.format(var)
+    var_mean_r = '{}_mean_ref'.format(var)
+    var_std = '{}_std'.format(var)
+    var_std_r = '{}_std_ref'.format(var)
+    var_ratio = '{}_ratio'.format(var)
+    var_ratio_p = '{}_ratio_plus'.format(var)
+    var_ratio_m = '{}_ratio_minus'.format(var)
+    var_ratio_std = '{}_ratio_std'.format(var)
+
+    dfb[var_ratio] = dfb[var_mean]/dfb[var_mean_r]
+    dfb[var_ratio_std] = (dfb[var_std]/dfb[var_mean_r])**2
+    dfb[var_ratio_std] += (dfb[var_mean] *
+                           dfb[var_std_r])**2/dfb[var_mean_r]**4
+    dfb[var_ratio_std] = np.sqrt(dfb[var_ratio_std])
+    dfb[var_ratio_p] = dfb[var_ratio]+dfb[var_ratio_std]
+    dfb[var_ratio_m] = dfb[var_ratio]-dfb[var_ratio_std]
+
+    return dfb
+
+
 parser = OptionParser(
-    description='Script to estimate atmospheric transparency')
+    description='Script to plot cosmo results for DESC+DESI scenarios')
 parser.add_option('--file_dir', type=str,
                   default='../cosmo_fit_desc_desi_new',
                   help='dir for files[%default]')
@@ -114,89 +261,51 @@ for fi in fis:
 
 # estimate SMoM
 df = recalc(df)
+df['sigma_w'] = 100.*np.sqrt(df['Cov_w0_w0_fit'])
+df['sigma_Om'] = 100.*np.sqrt(df['Cov_Om0_Om0_fit'])
+
+print(df.columns.to_list())
+
 print(df['survey'].unique(), df['MoM'])
 
 dfb = df.groupby(['survey', 'year']).apply(lambda x: mean_std(x)).reset_index()
 
+
 print(dfb)
 
-# ref survey
-idx = dfb['survey'] == 'scen_0'
-ref_df = pd.DataFrame(dfb[idx])
-
-dfb = dfb.merge(ref_df, left_on=['year'], right_on=[
-                'year'], suffixes=['', '_ref'])
-
-print(dfb.columns)
-
-dfb['MoM_ratio'] = dfb['MoM_mean']/dfb['MoM_mean_ref']
-dfb['MoM_ratio_std'] = (dfb['MoM_std']/dfb['MoM_mean_ref'])**2
-dfb['MoM_ratio_std'] += (dfb['MoM_mean'] *
-                         dfb['MoM_std_ref'])**2/dfb['MoM_mean_ref']**4
-dfb['MoM_ratio_std'] = np.sqrt(dfb['MoM_ratio_std'])
-dfb['MoM_ratio_plus'] = dfb['MoM_ratio']+dfb['MoM_ratio_std']
-dfb['MoM_ratio_minus'] = dfb['MoM_ratio']-dfb['MoM_ratio_std']
-print(dfb)
-
+"""
+dfb = get_ratio(df, 'MoM')
 idxb = dfb['MoM_ratio'] > 3
 print(dfb[idxb])
 
+# plot_smom_year(dfb)
 
-fig, ax = plt.subplots()
+plot_summary(dfb, y_var='MoM_ratio')
+"""
+var = ['WFD', 'sigma_w', 'sigma_Om']
+leg = ['$N_{SN}$', '$\\sigma_w$ [%]', '$\\sigma_{\Omega_m}$ [%]']
+ascl = [True, False, False]
 
-surveys = dfb['survey'].unique()
+var_r = ['MoM', 'sigma_w', 'sigma_Om']
+leg_r = ['$\\frac{SMoM^{survey}}{SMoM^{TiDES}}$',
+         '$\\frac{\sigma_w^{survey}}{\sigma_w^{TiDES}}$',
+         '$\\frac{\sigma_{\Omega_m}^{survey}}{\sigma_{\Omega_m}^{TiDES}}$']
+ascl_r = [True, False, False]
 
-idx = dfb['year'] > 2
-dfb = dfb[idx]
-for survey in surveys:
-    idx = dfb['survey'] == survey
-    sel = dfb[idx]
-    ax.plot(sel['year'], sel['MoM_ratio'])
+pplots = dict(zip(var, leg))
+asc = dict(zip(var, ascl))
 
-ax.grid(visible=True)
+for key, vals in pplots.items():
+    dfc = get_mean_std(df, key)
+    plot_summary(dfc, y_var='{}_mean'.format(
+        key), y_leg=vals, ascending=asc[key])
 
-fig, ax = plt.subplots()
-idx = df['survey'] == 'scen_0'
-idx &= df['year'] == 2
-# idx &= df['MoM'] <= 5000
-sel = df[idx]
+pplots_r = dict(zip(var_r, leg_r))
+asc_r = dict(zip(var_r, ascl_r))
 
-vvar = 'Cov_Om0_Om0_fit'
-vvar = 'Cov_w0_w0_fit'
-vvar = 'Cov_Om0_w0_fit'
-vvar = 'MoM'
-vvarb = 'WFD_TiDES'
-ax.hist(sel[vvar], histtype='step', bins=100)
-# ax.plot(sel[vvarb], sel[vvar], 'k.')
-
-print(sel[vvar])
-print(sel.columns.tolist())
-
-idx = dfb['year'] == 11
-selb = dfb[idx]
-selb = selb.sort_values(by=['MoM_ratio'])
-
-dfs = get_surveys('desc_desi_surveys')
-
-selb = selb.merge(dfs, left_on=['survey'], right_on=['survey'])
-df_tot = df.merge(dfs, left_on=['survey'], right_on=['survey'])
-
-figb, axb = plt.subplots(figsize=(18, 9))
-figb.subplots_adjust(bottom=0.20)
-axb.plot(selb['surveylist'], selb['MoM_ratio'])
-axb.fill_between(selb['surveylist'], selb['MoM_ratio_plus'],
-                 selb['MoM_ratio_minus'], color='yellow')
-plt.setp(axb.get_xticklabels(), rotation=30,
-         ha="right", rotation_mode="anchor", fontsize=8)
-axb.grid(visible=True)
-
-axb.set_ylabel(r'$\frac{SMoM^{survey}}{SMoM^{TiDES}}$')
-
-figc, axc = plt.subplots()
-
-print(df_tot.columns)
-df_tot = df_tot.fillna(0)
-axc.plot(df_tot['surveylist'], df_tot['WFD_TiDES'], 'ko')
-
+for key, vals in pplots_r.items():
+    dfc = get_ratio(df, key)
+    plot_summary(dfc, y_var='{}_ratio'.format(
+        key), y_leg=vals, ascending=asc_r[key])
 
 plt.show()
