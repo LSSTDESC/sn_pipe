@@ -27,21 +27,26 @@ def path(inputDir, sname):
     return pp
 
 
-inputDir = 'input/cosmology/footprints'
+inputDirf = 'input/cosmology/footprints'
+inputDirc = 'input/cosmology/contours'
 
 footprints = ['TiDES', 'desi2_v3', 'crs_v3', 'desi_v3', '4hs_v3']
 
 footprints = ['TiDES', 'desi_v3', '4hs_v3', 'desi2_v3', 'crs_v3']
-footprints = ['TiDES', 'desi_v3', '4hs_v3', 'desiext_v3', 'crs_v3']
+footprints = ['TiDES', 'desi_v3', '4hs_v3', 'desiext_v3', 'crs_v3','desi2_v3']
+inDir = [inputDirf,inputDirf,inputDirc,inputDirc,inputDirc,inputDirc]
+
+dict_dir = dict(zip(footprints,inDir))
 nside = 64
 map_pixel = get_map(nside)
 
 for i, footp in enumerate(footprints):
-    pp = path(inputDir, footp)
+    pp = path(dict_dir[footp], footp)
     df = pd.read_hdf(pp)
+    print(df.columns)
     map_pixel = put_in_map(map_pixel, df, i+2)
 
 
-plot_pixels(map_pixel, xticklabels=footprints)
+plot_pixels(map_pixel, xticklabels=footprints,imax=6)
 
 plt.show()
