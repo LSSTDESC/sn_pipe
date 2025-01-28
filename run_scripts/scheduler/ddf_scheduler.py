@@ -186,7 +186,7 @@ parser.add_option("--num_years", type=int, default=10,
                   help="number of years [%default]")
 parser.add_option("--year_length", type=int, default=365,
                   help="year length [days] [%default]")
-parser.add_option("--outDir", type=str, default='../ddf_scheduler_1.5',
+parser.add_option("--outDir", type=str, default='../ddf_scheduler',
                   help="output dir for the results [%default]")
 
 opts, args = parser.parse_args()
