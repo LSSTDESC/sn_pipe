@@ -10,11 +10,11 @@ Created on Wed Jan 22 14:09:06 2025
 import astropy.units as u
 from astropy.time import Time
 from optparse import OptionParser
-from sn_scheduler import StarAltTime
+from sn_scheduler.scheduler import StarAltTime
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
-from tools import checkDir
+from sn_tools.sn_io import checkDir
 
 
 def process_night(stars_alt, year, month, day, targets, plot_it=False):
@@ -77,7 +77,6 @@ def process_night(stars_alt, year, month, day, targets, plot_it=False):
     alt_min = 25.
     alt_max = 86.5
     airmass_max = 2.5
-    airmass_max = 1.5
 
     targets_info = stars_alt.target_info(star_alt_min=alt_min*u.deg,
                                          star_alt_max=alt_max*u.deg,
@@ -179,7 +178,7 @@ parser.add_option('--RA_deg', type=float, default=150.10833,
                   help="field RA [deg]  [%default]")
 parser.add_option("--Dec_deg", type=float, default=2.233611,
                   help="field Dec [deg] [%default]")
-parser.add_option("--target_list", type=str, default='ddf.csv',
+parser.add_option("--target_list", type=str, default='input/scheduler/ddf.csv',
                   help="list of targets [%default]")
 parser.add_option("--mjd_min", type=int, default=60980,
                   help="survey start [%default]")
