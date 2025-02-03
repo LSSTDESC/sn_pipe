@@ -13,6 +13,22 @@ import pandas as pd
 
 
 def get_seasons(obs, mjdCol='mjd'):
+    """
+    Function to estimate the season for each field
+
+    Parameters
+    ----------
+    obs : numpy array
+        Data to process.
+    mjdCol : str, optional
+        column name for season estimation. The default is 'mjd'.
+
+    Returns
+    -------
+    obs_season : numpy array
+        Original array+season col.
+
+    """
 
     targets = np.unique(obs['target_name'])
 
@@ -30,6 +46,22 @@ def get_seasons(obs, mjdCol='mjd'):
 
 
 def stat_night(grp, mjdCol='mjd'):
+    """
+    Function to estimate the stat per night
+
+    Parameters
+    ----------
+    grp : pandas df
+        Data to process.
+    mjdCol : str, optional
+        column name. The default is 'mjd'.
+
+    Returns
+    -------
+    pandas df
+        stat for the night.
+
+    """
 
     dd = {}
     for b in 'ugrizy':
@@ -42,7 +74,23 @@ def stat_night(grp, mjdCol='mjd'):
     return pd.DataFrame.from_dict(dd)
 
 
-def stat(grp, mjdCol='mjd'):
+def stat_season(grp, mjdCol='mjd'):
+    """
+    Function to grab stat per season (cadence, gaps, ...)
+
+    Parameters
+    ----------
+    grp : pandas df
+        Data to process.
+    mjdCol : str, optional
+        mjd col name. The default is 'mjd'.
+
+    Returns
+    -------
+    pandas df
+        df with stat.
+
+    """
 
     grp = grp.sort_values(by=[mjdCol])
 
@@ -71,25 +119,27 @@ def stat(grp, mjdCol='mjd'):
 def ana_observation(obs, mjd0=60980.):
 
     # get seasons
+    print(obs['mjd'])
+    print(test)
 
     obs_season = get_seasons(obs, mjdCol='mjd')
     print(obs_season.dtype.names)
 
+    # add night number
     df = pd.DataFrame.from_records(obs_season)
     df['night'] = df['mjd']-mjd0
     df['night'] = df['night'].astype(int)
     df['night'] += 1
     df['season'] = df['season'].astype(int)
 
+    # get stat per night
     rstat_night = df.groupby(['target_name', 'night']).apply(
         lambda x: stat_night(x)).reset_index()
 
     print(rstat_night)
 
     rstat = rstat_night.groupby(['target_name', 'season']).apply(
-        lambda x: stat(x)).reset_index()
-
-    print(rstat)
+        lambda x: stat_season(x)).reset_index()
 
     print(rstat.groupby(['target_name'])['nvisits'].sum().reset_index())
     """
@@ -105,6 +155,23 @@ def ana_observation(obs, mjd0=60980.):
 
 
 def ana_ddf_grid(obs, mjdCol='mjd', mjd0=60980.):
+    """
+    Function to analyze a file in rubin_scheduler
+
+    Parameters
+    ----------
+    obs : array
+        Data to process.
+    mjdCol : str, optional
+        MJD col name. The default is 'mjd'.
+    mjd0 : float, optional
+        MJD start of the survey. The default is 60980..
+
+    Returns
+    -------
+    None.
+
+    """
 
     df = pd.DataFrame.from_records(obs)
     print('rrr', df[mjdCol])
@@ -141,7 +208,7 @@ def ana_ddf_grid(obs, mjdCol='mjd', mjd0=60980.):
 mjd0 = 60980.0
 
 # ddf_grid
-
+"""
 fName = '../../rubin_sim_data/scheduler/ddf_grid.npz'
 
 ddf_data = np.load(fName)
@@ -154,8 +221,7 @@ ana_ddf_grid(ddf_grid, mjd0=mjd0)
 
 """
 # observations
-fName = 'notebooks/observations_scheduler_orig.npy'
+fName = 'observations_scheduler.npy'
 
 obs = np.load(fName)
 ana_observation(obs)
-"""
