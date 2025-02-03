@@ -46,8 +46,67 @@ def process_ddf_example(name, ddfs, ddf_grid):
     ax.set_ylabel("g 5-sigma depth (mags)")
 
 
-  # ax.set_title(name)
-    # There are some differences between desired and best fit, since the field is not always visible
+def ddf_config(sequence_time=60.0,
+               season_unobs_frac=0.2,
+               low_season_frac=0,
+               low_season_rate=0.3):
+
+    ddf_kwargs = {}
+
+    ddf_kwargs["ELAISS1"] = {
+        "season_seq": 30,
+        "boost_early_factor": None,
+        "boost_factor_third": 0,
+        "season_unobs_frac": season_unobs_frac,
+        "sequence_time": sequence_time,
+        "low_season_frac": low_season_frac,
+        "low_season_rate": low_season_rate,
+    }
+
+    ddf_kwargs["XMM_LSS"] = {
+        "season_seq": 30,
+        "boost_early_factor": None,
+        "boost_factor_third": 0,
+        "season_unobs_frac": season_unobs_frac,
+        "sequence_time": sequence_time,
+        "low_season_frac": low_season_frac,
+        "low_season_rate": low_season_rate,
+    }
+
+    ddf_kwargs["ECDFS"] = {
+        "season_seq": 30,
+        "boost_early_factor": None,
+        "boost_factor_third": 0,
+        "season_unobs_frac": season_unobs_frac,
+        "sequence_time": sequence_time,
+        "low_season_frac": low_season_frac,
+        "low_season_rate": low_season_rate,
+    }
+
+    ddf_kwargs["COSMOS"] = {
+        "season_seq": 30,
+        "boost_early_factor": None,
+        "boost_factor_third": 0,
+        "season_unobs_frac": season_unobs_frac,
+        "sequence_time": sequence_time,
+        "low_season_frac": low_season_frac,
+        "low_season_rate": low_season_rate,
+    }
+
+    ddf_kwargs["EDFS_a"] = {
+        "season_seq": 30,
+        "boost_early_factor": None,
+        "boost_factor_third": 0,
+        "season_unobs_frac": season_unobs_frac,
+        "sequence_time": sequence_time,
+        "low_season_frac": low_season_frac,
+        "low_season_rate": low_season_rate,
+    }
+
+    return ddf_kwargs
+
+
+"""
 mjd0 = SURVEY_START_MJD
 print(mjd0)
 
@@ -69,9 +128,12 @@ print(ddfs)
 print(ddf_grid.dtype)
 
 process_ddf_example('ECDFS', ddfs, ddf_grid)
+"""
 
+# grab ddf configuration
+ddf_kwargs = ddf_config()
 
-observations = generate_ddf_scheduled_obs(dist_tol=1)
+observations = generate_ddf_scheduled_obs(dist_tol=1, ddf_kwargs=ddf_kwargs)
 print(observations)
 np.save('observations_scheduler.npy', observations)
 

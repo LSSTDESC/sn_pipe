@@ -119,8 +119,6 @@ def stat_season(grp, mjdCol='mjd'):
 def ana_observation(obs, mjd0=60980.):
 
     # get seasons
-    print(obs['mjd'])
-    print(test)
 
     obs_season = get_seasons(obs, mjdCol='mjd')
     print(obs_season.dtype.names)
