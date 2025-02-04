@@ -15,6 +15,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 from sn_tools.sn_io import checkDir
+from sn_tools.sn_utils import multiproc
+import warnings
+warnings.filterwarnings("ignore")
 
 
 def process_night(stars_alt, year, month, day, targets, plot_it=False):
@@ -169,6 +172,42 @@ def process(mjd_min, mjd_max, stars_alt, targets, plot_it=False, outDir=''):
     res.to_hdf(outName, key='schedule')
 
 
+def process_multiproc(toproc, params, j=0, output_q=None):
+    """
+    Function to process data using multiprocessing
+
+    Parameters
+    ----------
+    toproc : list((float,float))
+        list of mjds to process.
+    params : dict
+        parameters.
+    j : int, optional
+        internal int for multiproc. The default is 0.
+    output_q : multiprocessing queue, optional
+        Where to put the results. The default is None.
+
+    Returns
+    -------
+    int
+        output value.
+
+    """
+
+    stars_alt = params['star_alt']
+    targets = params['targets']
+    outDir = params['outDir']
+
+    for vv in toproc:
+        print(vv[0], vv[1])
+        process(vv[0], vv[1], stars_alt, targets, plot_it=False, outDir=outDir)
+
+    if output_q is not None:
+        return output_q.put({j: [1]})
+    else:
+        return [1]
+
+
 parser = OptionParser(description='Script to estimate the schedule of a field')
 
 parser.add_option('--fieldName', type=str,
@@ -215,13 +254,32 @@ stars_alt = StarAltTime()
 
 # mjjds = [mjd_min, mjd_min+1]
 
+mjds = []
 for i in range(num_years):
 
     mjdmin = mjd_min+i*year_length+i
 
     mjdmax = mjdmin+year_length
-    print(mjdmin, mjdmax)
-    process(mjdmin, mjdmax, stars_alt, targets, plot_it=False, outDir=outDir)
+
+    mjds.append((mjdmin, mjdmax))
+
+
+"""
+
+print((mjdmax-mjd_min)/year_length)
+
+
+mjdds = np.linspace(mjd_min, mjd_min+11*year_length, num=9).astype(int)
+print(mjdds)
+print(test)
+"""
+
+params = {}
+params['star_alt'] = stars_alt
+params['targets'] = targets
+params['outDir'] = outDir
+
+multiproc(mjds, params, process_multiproc, nproc=8)
 
 """
 for i in range(len(mjdds)-1):
