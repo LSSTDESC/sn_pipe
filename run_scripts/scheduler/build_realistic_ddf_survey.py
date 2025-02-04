@@ -173,7 +173,7 @@ def select_target(target_sched):
     return tt
 
 
-def reduce_season_length(grp, mjdCol='mjd', sl_max=180.):
+def reduce_season_length(grp, mjdCol='mjd', sl_max=200.):
     """
     Function to reduce the number of observations acdcording to season length
 
