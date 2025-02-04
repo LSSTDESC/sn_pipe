@@ -140,6 +140,8 @@ def ana_observation(obs, mjd0=60980.):
         lambda x: stat_season(x)).reset_index()
 
     print(rstat.groupby(['target_name'])['nvisits'].sum().reset_index())
+
+    print(rstat[['target_name', 'season', 'season_length', 'cad']])
     """
     idx = obs_season['target_name'] == 'DD:COSMOS'
     plt.plot(obs_season[idx]["mjd"]-mjd0,
@@ -203,6 +205,20 @@ def ana_ddf_grid(obs, mjdCol='mjd', mjd0=60980.):
     plt.show()
 
 
+def make_full_survey(obs):
+
+    bands = 'ugrizy'
+    r = []
+    for i, row in obs.iterrows():
+        for b in bands:
+            for nvisit in range(row[b]):
+                r.append((row['target'], row['mjd'], b))
+
+    res = np.rec.fromrecords(r, names=['target_name', 'mjd', 'band'])
+
+    return res
+
+
 mjd0 = 60980.0
 
 # ddf_grid
@@ -222,4 +238,14 @@ ana_ddf_grid(ddf_grid, mjd0=mjd0)
 fName = 'observations_scheduler.npy'
 
 obs = np.load(fName)
+
+"""
+fName = 'ddf_desc_0.70_sn.hdf5'
+obs = pd.read_hdf(fName)
+
+obs = obs.drop(columns=['season'])
+obs['target_name'] = obs['target']
+
+obs = make_full_survey(obs)
+"""
 ana_observation(obs)
