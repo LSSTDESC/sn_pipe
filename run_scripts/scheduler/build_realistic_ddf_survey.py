@@ -14,6 +14,20 @@ from sn_tools.sn_obs import season
 
 
 def load_data(dirFiles):
+    """
+    Fonction to load files of dirFiles
+
+    Parameters
+    ----------
+    dirFiles : str
+        location dir of the files.
+
+    Returns
+    -------
+    ddf : pandas df
+        data from the files.
+
+    """
 
     fis = glob.glob('{}/*.hdf5'.format(dirFiles))
 
@@ -26,6 +40,24 @@ def load_data(dirFiles):
 
 
 def get_survey(field, survey, field_type='UD'):
+    """
+    Function to grab the survey corresponding to a field
+
+    Parameters
+    ----------
+    field : str
+        field name.
+    survey : pandas df
+        survey.
+    field_type : str, optional
+        Type of field. The default is 'UD'.
+
+    Returns
+    -------
+    dfb : pandas df
+        survey corresponding to the field.
+
+    """
 
     idx = survey['target'] == field_type
     dfb = pd.DataFrame(survey[idx])
@@ -35,6 +67,24 @@ def get_survey(field, survey, field_type='UD'):
 
 
 def process(ddf_scheduler, survey, field_type):
+    """
+    Function to process the targets
+
+    Parameters
+    ----------
+    ddf_scheduler : pandas df
+        observations.
+    survey : pandas df
+        survey to consider.
+    field_type : dict
+        field types.
+
+    Returns
+    -------
+    res : pandas df
+        output schedule.
+
+    """
 
     targets = ddf_scheduler['target'].unique()
 
@@ -54,6 +104,22 @@ def process(ddf_scheduler, survey, field_type):
 
 
 def process_target(target_sched, target_survey):
+    """
+    Function to process a target
+
+    Parameters
+    ----------
+    target_sched : pandas df
+        Data to process
+    target_survey : pandas df
+        survey to use.
+
+    Returns
+    -------
+    target_sched : pandas df
+        processed target data.
+
+    """
 
     # grab seasons
     seas = season(target_sched.to_records(index=False), mjdCol='mjd')
@@ -75,6 +141,20 @@ def process_target(target_sched, target_survey):
 
 
 def select_target(target_sched):
+    """
+    Function to select the target
+
+    Parameters
+    ----------
+    target_sched : pandas df
+        Data to process.
+
+    Returns
+    -------
+    tt : pandas df
+        selected df.
+
+    """
 
     # select obs with sufficient observing time
     bands = 'ugrizy'
@@ -94,6 +174,24 @@ def select_target(target_sched):
 
 
 def reduce_season_length(grp, mjdCol='mjd', sl_max=180.):
+    """
+    Function to reduce the number of observations acdcording to season length
+
+    Parameters
+    ----------
+    grp : pandas df
+        Data to process.
+    mjdCol : str, optional
+        col name to estimate season length. The default is 'mjd'.
+    sl_max : float, optional
+        max season length. The default is 180..
+
+    Returns
+    -------
+    res : pandas df
+        obs corresponding to the reduced season length.
+
+    """
 
     # get season length
     mjd_min = grp[mjdCol].min()
