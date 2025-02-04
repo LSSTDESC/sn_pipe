@@ -2,15 +2,17 @@ import os
 
 import numpy as np
 import matplotlib.pylab as plt
-from sn_rubin_scheduler.ddf_presched import ddf_slopes, match_cumulative, optimize_ddf_times, generate_ddf_scheduled_obs
+from sn_rubin_scheduler.ddf_presched import ddf_slopes, match_cumulative
+from sn_rubin_scheduler.ddf_presched import optimize_ddf_times, generate_ddf_scheduled_obs_new
 
 from rubin_scheduler.data import get_data_dir
 from rubin_scheduler.scheduler.utils import ScheduledObservationArray
 from rubin_scheduler.site_models import Almanac
 from rubin_scheduler.utils import SURVEY_START_MJD, calc_season, ddf_locations
+import pandas as pd
 
 
-def process_ddf_example(name, ddfs, ddf_grid):
+def process_ddf_example(name, ddfs, ddf_grid, mjd0):
 
     # Run a script that sets up a desired total number of sequences vs time,
     # Then fits observations given depth constraints
@@ -54,7 +56,7 @@ def ddf_config(sequence_time=60.0,
     ddf_kwargs = {}
 
     ddf_kwargs["ELAISS1"] = {
-        "season_seq": 30,
+        "season_seq": 80,
         "boost_early_factor": None,
         "boost_factor_third": 0,
         "season_unobs_frac": season_unobs_frac,
@@ -64,7 +66,7 @@ def ddf_config(sequence_time=60.0,
     }
 
     ddf_kwargs["XMM_LSS"] = {
-        "season_seq": 30,
+        "season_seq": 110,
         "boost_early_factor": None,
         "boost_factor_third": 0,
         "season_unobs_frac": season_unobs_frac,
@@ -74,7 +76,7 @@ def ddf_config(sequence_time=60.0,
     }
 
     ddf_kwargs["ECDFS"] = {
-        "season_seq": 30,
+        "season_seq": 80,
         "boost_early_factor": None,
         "boost_factor_third": 0,
         "season_unobs_frac": season_unobs_frac,
@@ -84,7 +86,7 @@ def ddf_config(sequence_time=60.0,
     }
 
     ddf_kwargs["COSMOS"] = {
-        "season_seq": 30,
+        "season_seq": 110,
         "boost_early_factor": None,
         "boost_factor_third": 0,
         "season_unobs_frac": season_unobs_frac,
@@ -94,7 +96,7 @@ def ddf_config(sequence_time=60.0,
     }
 
     ddf_kwargs["EDFS_a"] = {
-        "season_seq": 30,
+        "season_seq": 80,
         "boost_early_factor": None,
         "boost_factor_third": 0,
         "season_unobs_frac": season_unobs_frac,
@@ -127,13 +129,19 @@ print(ddfs)
 # Handy info pre-computed about each DDF
 print(ddf_grid.dtype)
 
-process_ddf_example('ECDFS', ddfs, ddf_grid)
+process_ddf_example('ECDFS', ddfs, ddf_grid,mjd0)
 """
 
 # grab ddf configuration
 ddf_kwargs = ddf_config()
 
-observations = generate_ddf_scheduled_obs(dist_tol=1, ddf_kwargs=ddf_kwargs)
+
+# grab ddf scenario
+fName = 'ddf_desc_0.70_sn.hdf5'
+ddf_scenario = pd.read_hdf(fName)
+
+observations = generate_ddf_scheduled_obs_new(dist_tol=1, ddf_kwargs=ddf_kwargs,
+                                              ddf_scenario=ddf_scenario)
 print(observations)
 np.save('observations_scheduler.npy', observations)
 
