@@ -10,6 +10,7 @@ from sn_tools.sn_obs import season
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
+from optparse import OptionParser
 
 
 def get_seasons(obs, mjdCol='mjd'):
@@ -141,7 +142,12 @@ def ana_observation(obs, mjd0=60980.):
 
     print(rstat.groupby(['target_name'])['nvisits'].sum().reset_index())
 
+    print(rstat['nvisits'].sum())
     print(rstat[['target_name', 'season', 'season_length', 'cad']])
+
+    plot_res(rstat, vary='season_length')
+    plot_res(rstat, vary='cad', legy='cadence [day-1]')
+    plt.show()
     """
     idx = obs_season['target_name'] == 'DD:COSMOS'
     plt.plot(obs_season[idx]["mjd"]-mjd0,
@@ -152,6 +158,22 @@ def ana_observation(obs, mjd0=60980.):
 
     plt.show()
     """
+
+
+def plot_res(rstat, varx='season', legx='season', vary='season_length', legy='season_length'):
+
+    targets = rstat['target_name'].unique()
+
+    fig, ax = plt.subplots()
+    for tt in targets:
+        idx = rstat['target_name'] == tt
+        sel = rstat[idx]
+        ax.plot(sel[varx], sel[vary], label=tt)
+
+    ax.grid(visible=True)
+    ax.set_xlabel(r'{}'.format(legx))
+    ax.set_ylabel(r'{}'.format(legy))
+    ax.legend()
 
 
 def ana_ddf_grid(obs, mjdCol='mjd', mjd0=60980.):
@@ -219,7 +241,22 @@ def make_full_survey(obs):
     return res
 
 
-mjd0 = 60980.0
+parser = OptionParser(
+    description='Script to analyze the file produced for the LSST scheduler')
+
+parser.add_option('--dirFiles', type=str,
+                  default='../desc_ddf_deep_rolling',
+                  help='Location dir of the ddf obs file [%default]')
+parser.add_option("--ddf_survey", type=str, default='ddf_desc_0.70_sn',
+                  help="survey to analyze [%default]")
+parser.add_option("--mjd_min", type=int, default=60980,
+                  help="survey start [%default]")
+
+opts, args = parser.parse_args()
+
+dirFiles = opts.dirFiles
+ddf_survey = opts.ddf_survey
+mjd0 = opts.mjd_min
 
 # ddf_grid
 """
@@ -235,7 +272,7 @@ ana_ddf_grid(ddf_grid, mjd0=mjd0)
 
 """
 # observations
-fName = 'observations_scheduler.npy'
+fName = '{}/{}.npy'.format(dirFiles, ddf_survey)
 
 obs = np.load(fName)
 
@@ -248,4 +285,4 @@ obs['target_name'] = obs['target']
 
 obs = make_full_survey(obs)
 """
-ana_observation(obs)
+ana_observation(obs, mjd0=mjd0)
