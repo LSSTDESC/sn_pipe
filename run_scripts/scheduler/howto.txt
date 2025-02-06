@@ -1,0 +1,24 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Feb  6 14:37:51 2025
+
+@author: philippe.gris@clermont.in2p3.fr
+"""
+
+# set of scripts to produce DDF observation files
+
+a) star_alt_night.py: 
+-> estimate alt vs time for a given observing night and for a list of DDFs
+
+b) sn_ddf_scheduler.py
+-> produce a set of mjd of observations for the DDF with selection criteria 
+(sun<-18, 25. < alt_star < 86.5, airmass < 2.5)
+
+c) build_realistic_ddf_survey.py:
+-> build a realistic survey with the result of b) with no downtime or g-mag 
+limit and observation every possible night
+
+d) ddf_rubin_scheduler:
+-> generate observation files to be used by the LSST scheduler. 
+Uses c) results as input
