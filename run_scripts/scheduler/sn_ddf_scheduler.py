@@ -13,7 +13,9 @@ from sn_scheduler.scheduler import StarAltTime
 import pandas as pd
 from sn_tools.sn_io import checkDir
 from sn_tools.sn_utils import multiproc
-from sn_scheduler.scheduler import process_multiproc
+from sn_scheduler.scheduler import process_target_multiproc
+import numpy as np
+
 import warnings
 warnings.filterwarnings("ignore")
 
@@ -45,6 +47,10 @@ parser.add_option("--alt_max", type=float, default=86.5,
                   help="max star alt (in deg.) for observation [%default]")
 parser.add_option("--airmass_max", type=float, default=2.5,
                   help="max airmass for observation [%default]")
+parser.add_option("--nproc", type=int, default=8,
+                  help="nproc for multiprocessing [%default]")
+parser.add_option("--nseasons", type=int, default=10,
+                  help="number of seasons [%default]")
 
 opts, args = parser.parse_args()
 
@@ -53,11 +59,12 @@ mjd_min = opts.mjd_min
 num_years = opts.num_years
 year_length = opts.year_length
 outDir = opts.outDir
-sun_alt_night = opts.sun_alt_night,
-alt_min = opts.alt_min,
-alt_max = opts.alt_max,
+sun_alt_night = opts.sun_alt_night
+alt_min = opts.alt_min
+alt_max = opts.alt_max
 airmass_max = opts.airmass_max
-
+nproc = opts.nproc
+nseasons = opts.nseasons
 
 # create output dir (if necessary)
 checkDir(outDir)
@@ -72,30 +79,17 @@ print(fc)
 # StarAltTime instance
 stars_alt = StarAltTime()
 
-# mjdds = np.linspace(mjd_min, mjd_max, num=9).astype(int)
-# print(mjdds)
-
-# mjjds = [mjd_min, mjd_min+1]
+mjdds = np.linspace(mjd_min, mjd_min+nseasons*year_length +
+                    nseasons-1, num=nproc+1).astype(int)
 
 mjds = []
-for i in range(num_years):
-
-    mjdmin = mjd_min+i*year_length+i
-
-    mjdmax = mjdmin+year_length
-
+for i in range(len(mjdds)-1):
+    mjdmin = mjdds[i]
+    mjdmax = mjdds[i+1]
+    if i > 0:
+        mjdmin += 1
     mjds.append((mjdmin, mjdmax))
 
-
-"""
-
-print((mjdmax-mjd_min)/year_length)
-
-
-mjdds = np.linspace(mjd_min, mjd_min+11*year_length, num=9).astype(int)
-print(mjdds)
-print(test)
-"""
 
 params = {}
 params['star_alt'] = stars_alt
@@ -106,7 +100,7 @@ params['alt_min'] = alt_min
 params['alt_max'] = alt_max
 params['airmass_max'] = airmass_max
 
-multiproc(mjds, params, process_multiproc, nproc=8)
+multiproc(mjds, params, process_target_multiproc, nproc=8)
 
 """
 for i in range(len(mjdds)-1):
