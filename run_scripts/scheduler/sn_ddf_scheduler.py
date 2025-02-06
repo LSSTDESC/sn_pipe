@@ -37,6 +37,14 @@ parser.add_option("--year_length", type=int, default=365,
                   help="year length [days] [%default]")
 parser.add_option("--outDir", type=str, default='../sn_ddf_scheduler',
                   help="output dir for the results [%default]")
+parser.add_option("--sun_alt_night", type=float, default=-18.,
+                  help="max sun alt (in deg.) for a night to be defined [%default]")
+parser.add_option("--alt_min", type=float, default=25.,
+                  help="min star alt (in deg.) for observation [%default]")
+parser.add_option("--alt_max", type=float, default=86.5,
+                  help="max star alt (in deg.) for observation [%default]")
+parser.add_option("--airmass_max", type=float, default=2.5,
+                  help="max airmass for observation [%default]")
 
 opts, args = parser.parse_args()
 
@@ -45,6 +53,11 @@ mjd_min = opts.mjd_min
 num_years = opts.num_years
 year_length = opts.year_length
 outDir = opts.outDir
+sun_alt_night = opts.sun_alt_night,
+alt_min = opts.alt_min,
+alt_max = opts.alt_max,
+airmass_max = opts.airmass_max
+
 
 # create output dir (if necessary)
 checkDir(outDir)
@@ -88,6 +101,10 @@ params = {}
 params['star_alt'] = stars_alt
 params['targets'] = targets
 params['outDir'] = outDir
+params['sun_alt_night'] = sun_alt_night
+params['alt_min'] = alt_min
+params['alt_max'] = alt_max
+params['airmass_max'] = airmass_max
 
 multiproc(mjds, params, process_multiproc, nproc=8)
 
