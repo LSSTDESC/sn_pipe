@@ -7,7 +7,7 @@ from sn_tools.sn_io import add_parser, checkDir
 from optparse import OptionParser
 import os
 import yaml
-from sn_tools.sn_process import Process
+from sn_tools.sn_process_new import Process
 import multiprocessing
 
 # get all possible simulation parameters and put in a dict

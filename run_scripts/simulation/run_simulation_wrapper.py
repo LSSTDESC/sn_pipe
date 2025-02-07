@@ -9,7 +9,7 @@ Created on Thu Apr 11 15:03:33 2024
 import sn_simu_input as simu_input
 from sn_tools.sn_io import make_dict_from_config, make_dict_from_optparse
 from sn_tools.sn_io import add_parser, checkDir
-from sn_tools.sn_process import Process
+from sn_tools.sn_process_new import Process
 from optparse import OptionParser
 import sn_script_input
 from sn_simu_wrapper.sn_wrapper_for_simu import SimuWrapper
