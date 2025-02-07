@@ -201,7 +201,7 @@ def ddf_config(sequence_time=60.0,
     }
 
     ddf_kwargs["EDFS_a"] = {
-        "season_seq": 80,
+        "season_seq": 40,
         "boost_early_factor": None,
         "boost_factor_third": 0,
         "g_depth_limit": g_depth_limit,
