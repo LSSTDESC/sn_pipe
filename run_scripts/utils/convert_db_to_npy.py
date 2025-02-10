@@ -30,6 +30,9 @@ parser.add_option('--tableName', type=str,
 parser.add_option('--split_in_RA', type=int,
                   default=0,
                   help='To split obs in RA slices [%default]')
+parser.add_option('--select_ddf', type='str',
+                  default='No',
+                  help='ddf field to select [%default]')
 
 
 opts, args = parser.parse_args()
@@ -39,6 +42,7 @@ outputDir = opts.outputDir
 dbName = opts.dbName
 tableName = opts.tableName
 split_in_RA = opts.split_in_RA
+select_ddf = opts.select_ddf
 
 # open sqlite connexion
 # cnx = sqlite3.connect('{}/{}.db'.format(inputDir, dbName))
@@ -58,7 +62,13 @@ obs = getObservations(inputDir, dbName, 'db')
 print(obs.dtype)
 
 if not split_in_RA:
-    np.save('{}/{}.npy'.format(outputDir, dbName), obs)
+    if select_ddf == 'No':
+        np.save('{}/{}.npy'.format(outputDir, dbName), obs)
+    else:
+        idx = obs['scheduler_note'] == 'DD:{}'.format(select_ddf)
+        np.save('{}/{}_{}.npy'.format(outputDir, dbName, select_ddf), obs[idx])
+
+
 else:
     RA_slice = 10.
     deltaRA = 10.
