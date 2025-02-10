@@ -5,10 +5,10 @@ import sn_script_input
 from sn_tools.sn_io import make_dict_from_config, make_dict_from_optparse
 from sn_tools.sn_io import add_parser, checkDir
 from optparse import OptionParser
-import os
+# import os
 import yaml
-from sn_tools.sn_process_new import Process
-import multiprocessing
+from sn_tools.sn_process import Process
+# import multiprocessing
 
 # get all possible simulation parameters and put in a dict
 path_process_input = sn_script_input.__path__
