@@ -7,3 +7,4 @@ sn_tools dev
 sn_phystools dev
 sn_telmodel dev
 sn_scheduler dev
+sn_rubin_scheduler dev

@@ -210,7 +210,7 @@ def cmd_install_pack(package, version, user):
 
     """
 
-    cmd = 'pip install{}git+https://github.com/lsstdesc/{}.git@{}'.format(
+    cmd = 'pip install{}git+https://github.com/lsstdesc/{}.git@{} -r requirements.txt'.format(
         user,
         package, version)
 
