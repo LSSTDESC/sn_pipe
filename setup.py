@@ -61,7 +61,7 @@ class InstallCommand_deprecated(install):
         install.run(self)
 
     def cmd_(self, package, version):
-        cmd = 'pip install --user git+https://github.com/lsstdesc/{}.git@{} -r requirements.txt'.format(
+        cmd = 'pip install --user git+https://github.com/lsstdesc/{}.git@{}'.format(
             package, version)
         return cmd
 
