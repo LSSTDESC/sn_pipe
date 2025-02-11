@@ -11,3 +11,4 @@ tables
 #h5py==2.7.1
 #### git packages
 git+https://github.com/lsst/rubin_sim.git#egg=rubin_sim
+git+https://github.com/lsstdesc/getObsAtmo.git#egg=getObsAtmo
