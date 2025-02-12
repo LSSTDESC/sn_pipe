@@ -54,8 +54,15 @@ def plot_DDF(data, norm_factor, config, nside=128, timescale='year', timeslots='
     plot_DDF_nsn(sel, norm_factor, config, nside,
                  sigma_mu=sigma_mu, timescale=timescale, yleg=yleg)
 
-    plot_survey_features(data, norm_factor, config, nside,
-                         timescale=timescale, timeslots=timeslots)
+    # specific survey features
+    print(data.columns)
+    fields = ['COSMOS']
+    dbNames = data['dbName'].unique()
+
+    for field in fields:
+        for dbName in dbNames:
+            plot_survey_features(data, field, dbName, norm_factor, config, nside,
+                                 timescale=timescale, timeslots=timeslots)
 
     # plot_DDF_dither(data, norm_factor, config, nside)
 
@@ -121,3 +128,5 @@ print('allllllll', timescale)
 # plot
 plot_DDF(ddf, norm_factor, nside=128, config=conf_df,
          timescale=timescale, timeslots=timeslots)
+
+plt.show()
