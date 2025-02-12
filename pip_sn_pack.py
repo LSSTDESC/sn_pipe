@@ -18,7 +18,13 @@ def cmd_uninstall(pack):
     cmd: str
       cmd to apply
     """
+    pack = pack.replace('-', '_')
+    version = get_version(pack, available_packs)
     cmd = "pip uninstall {}".format(pack)
+
+    cmd += ' -r https://raw.githubusercontent.com/lsstdesc/{}/refs/heads/{}/requirements.txt'.format(
+        pack, version)
+
     return cmd
 
 
@@ -147,8 +153,8 @@ def get_install_list(package, user):
 
     cmdlist = []
     if package == 'sn_pipe':
-        cmd = 'pip install{}-r requirements.txt --no-deps'.format(add_user)
-        cmdlist.append(cmd)
+        #cmd = 'pip install{} -r requirements.txt --no-deps'.format(add_user)
+        # cmdlist.append(cmd)
         # sn_tools to install by default
         version = get_version('sn_tools', available_packs)
         cmd = cmd_install_pack('sn_tools', version, add_user)
@@ -210,8 +216,12 @@ def cmd_install_pack(package, version, user):
 
     """
 
-    cmd = 'pip install{}git+https://github.com/lsstdesc/{}.git@{} -r requirements.txt'.format(
+    cmd = 'pip install{}git+https://github.com/lsstdesc/{}.git@{}#egg={}'.format(
         user,
+        package, version, package)
+    # add requirements.txt
+
+    cmd += ' -r https://raw.githubusercontent.com/lsstdesc/{}/refs/heads/{}/requirements.txt'.format(
         package, version)
 
     return cmd
@@ -238,7 +248,7 @@ action = opts.action
 user = opts.user
 
 available_packs = np.loadtxt('pack_version.txt', dtype={'names': (
-    'packname', 'version'), 'formats': ('U15', 'U15')})
+    'packname', 'version'), 'formats': ('U18', 'U15')})
 
 if action == 'install':
     cmd = cmd_install(pack, verbose, available_packs, user)
@@ -251,7 +261,10 @@ if action == 'list':
 
 if action == 'uninstall':
     if pack != 'all':
-        pp = pack.split(',')
+        if pack != 'sn_pipe':
+            pp = pack.split(',')
+        else:
+            pp = ['sn_tools', 'sn_telmodel']
         for pa in pp:
             os.system(cmd_uninstall(pa))
     else:
@@ -262,7 +275,8 @@ if action == 'uninstall':
         listpk = packgs.decode().split('\n')
         for pp in listpk:
             if pp != '':
-                os.system(cmd_uninstall(pp.split(' ')[0]))
+                tt = pp.split(' ')[0]
+                os.system(cmd_uninstall(tt))
 
 if action == 'list_available':
     print('The list of available packages is ',

@@ -1,82 +1,10 @@
 from setuptools import setup
-import distutils.cmd
-import distutils.log
-import os
-from setuptools.command.install import install
-# from pip.req import parse_requirements
-from pip._internal.req import parse_requirements
-import numpy as np
-
-
-class InstallCommand_deprecated(install):
-    """A custom command to install requested package to run Survey Strategy Support Pipeline"""
-
-    description = 'Script to install requested package to run Survey Strategy Support Pipeline'
-    user_options = install.user_options + [
-        ('package=', None, 'package to install')
-    ]
-
-    def initialize_options(self):
-        """Set default values for options."""
-        # Each user option must be listed here with their default value.
-        install.initialize_options(self)
-        self.package = ''
-        # self.available_packages = ''
-        # load available packages and versions
-        self.packs = np.loadtxt('pack_version.txt', dtype={'names': (
-            'packname', 'version'), 'formats': ('U15', 'U15')})
-
-    def finalize_options(self):
-        """Post-process options."""
-
-        if self.package:
-            if self.package not in self.packs['packname'].tolist() and self.package != 'sn_pipe':
-                print('{} impossible to install'.format(self.package))
-        install.finalize_options(self)
-
-    def run(self):
-        # install dependencies first
-        if self.package == 'sn_pipe':
-            cmd = 'pip install --user -r requirements.txt --no-deps'
-            os.system(cmd)
-
-        else:
-            if self.package != 'all':
-                # now install the requested package
-                # get the version for this package
-                if self.package == 'sn_metrics':
-                    # need to install sn_fit_lc !!!
-                    version = self.packvers('sn_fit_lc')
-                    os.system(self.cmd_('sn_fit_lc', version))
-
-                version = self.packvers(self.package)
-                os.system(self.cmd_(self.package, version))
-            else:
-                for pack in self.packs:
-                    # get the version for this package
-                    packname = pack['packname']
-                    version = pack['version']
-                    os.system(self.cmd_(packname, version))
-
-        install.run(self)
-
-    def cmd_(self, package, version):
-        cmd = 'pip install --user git+https://github.com/lsstdesc/{}.git@{}'.format(
-            package, version)
-        return cmd
-
-    def packvers(self, package):
-        idx = self.packs['packname'] == package
-        version = self.packs[idx]['version'].item()
-        return version
-
 
 # get the version here
 pkg_vars = {}
 
 with open("version.py") as fp:
     exec(fp.read(), pkg_vars)
-
 
 setup(
     name='sn_pipe',
