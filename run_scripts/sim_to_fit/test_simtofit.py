@@ -13,8 +13,11 @@ parser = OptionParser(description='Script to simulate light curves+fit')
 
 parser.add_option('--dbName', type=str, default='baseline_v4.0_10yrs_COSMOS',
                   help='dbName to process [%default]')
+parser.add_option('--dbExtens', type=str, default='npy',
+                  help='db extens [%default]')
 parser.add_option('--dbDir', type=str, default='../DB_Files',
                   help='dbDir of the OS to process [%default]')
+
 parser.add_option('--tag', type=str, default='1.9',
                   help='tag versions of the throughputs [%default]')
 parser.add_option('--WebPathSimu', type=str,
@@ -25,12 +28,13 @@ parser.add_option('--WebPathSimu', type=str,
 opts, args = parser.parse_args()
 
 dbName = opts.dbName
+dbExtens = opts.dbExtens
 tag = opts.tag
 dbDir = opts.dbDir
 web = opts.WebPathSimu
 
 # grab the file if necessary
-fulldbName = '{}.npy'.format(dbName)
+fulldbName = '{}.{}'.format(dbName, dbExtens)
 ffile = '{}/{}'.format(dbDir, fulldbName)
 if not os.path.isfile(ffile):
     # if this file does not exist, grab it from a web server
@@ -41,7 +45,7 @@ npixels = 2
 
 cmd = 'python run_scripts/sim_to_fit/run_sim_to_fit.py'
 cmd += ' --dbName {}'.format(dbName)
-cmd += ' --dbDir {} --dbExtens npy'.format(dbDir)
+cmd += ' --dbDir {} --dbExtens {}'.format(dbDir, dbExtens)
 cmd += ' --OutputSimu_savefromwrapper 0'
 cmd += ' --OutputSimu_save 1'
 cmd += ' --OutputSimu_clean 0'
