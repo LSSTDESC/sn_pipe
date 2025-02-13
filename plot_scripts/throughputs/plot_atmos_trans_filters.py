@@ -10,10 +10,6 @@ from sn_telmodel.sn_atmosphere import Atmos_Transmission
 from sn_telmodel.sn_telescope import Telescope
 import matplotlib.pyplot as plt
 
-# from file
-atmos_trans_file = Atmos_Transmission(atmos_type='from_file')
-atmos_trans_file.load_atmosphere()
-
 # from getObsAtmo
 atmos_trans_obsatmo = Atmos_Transmission(atmos_type='obsatmo')
 atmos_trans_obsatmo.load_atmosphere(aerosol=0.04)
@@ -37,17 +33,16 @@ ran = ','.join(ra)
 rb = list(map(str, rb))
 rbn = ','.join(rb)
 
-
-labela = 'from file airmass({})+aerosol'.format(atmos_trans_file.airmass)
 labelb = '({})=({})'.format(ran, rbn)
 
 fig, ax = plt.subplots(figsize=(12, 8))
-atmos_trans_file.plot_atmospheric_transmission(
-    plt, fig=fig, ax=ax, label=labela)
 atmos_trans_obsatmo.plot_atmospheric_transmission(
     plt, fig=fig, ax=ax, label=labelb, color='k', linestyle='dashed')
 
-telescope = Telescope()
+tel = Telescope()
 
-
+for key, vals in tel.filter.items():
+    tel.plot_component(key, vals, fig=fig, ax=ax,
+                       color=tel.filter_colors[key],
+                       label='{} band'.format(key))
 plt.show()
