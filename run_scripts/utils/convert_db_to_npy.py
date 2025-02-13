@@ -33,7 +33,9 @@ parser.add_option('--split_in_RA', type=int,
 parser.add_option('--select_ddf', type='str',
                   default='No',
                   help='ddf field to select [%default]')
-
+parser.add_option('--colSelect', type='str',
+                  default='target_name',
+                  help='col name selection [%default]')
 
 opts, args = parser.parse_args()
 
@@ -43,6 +45,7 @@ dbName = opts.dbName
 tableName = opts.tableName
 split_in_RA = opts.split_in_RA
 select_ddf = opts.select_ddf
+colSelect = opts.colSelect
 
 # open sqlite connexion
 # cnx = sqlite3.connect('{}/{}.db'.format(inputDir, dbName))
@@ -59,13 +62,13 @@ np.save('{}/{}.npy'.format(outputDir, dbName), df.to_records(index=False))
 
 obs = getObservations(inputDir, dbName, 'db')
 
-print(obs.dtype)
+print(obs.dtype, len(obs))
 
 if not split_in_RA:
     if select_ddf == 'No':
         np.save('{}/{}.npy'.format(outputDir, dbName), obs)
     else:
-        idx = obs['scheduler_note'] == 'DD:{}'.format(select_ddf)
+        idx = obs[colSelect] == 'DD:{}'.format(select_ddf)
         np.save('{}/{}_{}.npy'.format(outputDir, dbName, select_ddf), obs[idx])
 
 
