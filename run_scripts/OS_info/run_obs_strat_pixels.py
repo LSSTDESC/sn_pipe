@@ -51,9 +51,9 @@ outDir = yaml_params['OutputSimu']['directory']
 # print('seasons and metric', opts.Observations_season,
 #      metricList, opts.pixelmap_dir, opts.npixels)
 
-procDict['fieldType'] = 'WFD'
+procDict['fieldType'] = 'DD'
 procDict['metricList'] = metricList
-procDict['fieldName'] = 'WFD'
+procDict['fieldName'] = 'COSMOS'
 # procDict['outDir'] = outDir
 procDict['pixelList'] = opts.pixelList
 procDict['nside'] = opts.nside
@@ -61,8 +61,8 @@ procDict['nside'] = opts.nside
 if __name__ == '__main__':
     toimport = 'from sn_tools.sn_process import Process'
 
-    if opts.code == 'new':
-        toimport = 'from sn_tools.sn_process_new import Process'
+    if opts.code == 'old':
+        toimport = 'from sn_tools.sn_process_old import Process'
 
     exec(toimport)
 
