@@ -51,9 +51,9 @@ outDir = yaml_params['OutputSimu']['directory']
 # print('seasons and metric', opts.Observations_season,
 #      metricList, opts.pixelmap_dir, opts.npixels)
 
-procDict['fieldType'] = 'DD'
+# procDict['fieldType'] = 'DD'
 procDict['metricList'] = metricList
-procDict['fieldName'] = 'COSMOS'
+# procDict['fieldName'] = 'COSMOS'
 # procDict['outDir'] = outDir
 procDict['pixelList'] = opts.pixelList
 procDict['nside'] = opts.nside

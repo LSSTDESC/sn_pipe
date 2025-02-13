@@ -7,6 +7,7 @@ Created on Thu Feb 13 16:42:18 2025
 """
 from optparse import OptionParser
 import pandas as pd
+import matplotlib.pyplot as plt
 
 parser = OptionParser(description='Script to plot pixel level OS infos')
 
@@ -24,4 +25,14 @@ fName = '{}/{}.hdf5'.format(dbDir, dbName)
 
 df = pd.read_hdf(fName)
 
-print(df)
+print(df.columns)
+
+fig, ax = plt.subplots(figsize=(12, 8))
+
+idx = df['season'] > 0
+idx = df['season'] < 11
+sel = df[idx]
+
+ax.plot(df['season'], df['cadence'], 'ko')
+
+plt.show()
