@@ -317,6 +317,7 @@ if plotSummary:
 # plots per field
 
 # for field in df['field'].unique():
+fields = df['field'].unique()
 for field in ['COSMOS']:
     idx = df['field'] == field
     sel = df[idx]
@@ -382,7 +383,9 @@ flat = flat.groupby(['dbName', 'field', 'family', 'filter_alloc', 'season'])[
 
 print(flat)
 idx = dfgroup['dbName'] == dbName_night
+
 family = dfgroup[idx]['family'].to_list()[0]
+
 plot_filter_alloc(flat, family, fieldName_night)
 
 # plot_night(

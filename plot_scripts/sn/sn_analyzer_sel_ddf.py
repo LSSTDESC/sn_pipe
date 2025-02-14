@@ -54,6 +54,7 @@ def plot_DDF(data, norm_factor, config, nside=128, timescale='year', timeslots='
     plot_DDF_nsn(sel, norm_factor, config, nside,
                  sigma_mu=sigma_mu, timescale=timescale, yleg=yleg)
 
+    plt.show()
     # specific survey features
     print(data.columns)
     fields = ['COSMOS']

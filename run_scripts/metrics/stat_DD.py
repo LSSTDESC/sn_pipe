@@ -27,6 +27,7 @@ print('toprocess', toprocess)
 
 restot = pd.DataFrame()
 for i, vv in toprocess.iterrows():
+    print('processing', vv['dbName'])
     restab = Stat_DD_night(vv['dbDir'], vv['dbName'], vv['dbExtens']).summary
     if save_nightly:
         thepath = 'Summary_night_{}.hdf5'.format(vv['dbName'])

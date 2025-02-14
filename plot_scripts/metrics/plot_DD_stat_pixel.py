@@ -29,7 +29,7 @@ def plotMollview(nside, data, varName, leg, op, xmin, xmax):
     """
     npix = hp.nside2npix(nside)
 
-    hpxmap = np.zeros(npix, dtype=np.float)
+    hpxmap = np.zeros(npix, dtype=float)
     hpxmap = np.full(hpxmap.shape, 0.)
     hpxmap[data['healpixID'].astype(
         int)] += data[varName]
@@ -357,8 +357,8 @@ print(df.columns)
 print(df['dbName'].unique())
 
 pixArea = hp.nside2pixarea(nside, degrees=True)
-#fig, ax = plt.subplots(figsize=(12, 8))
-#figb, axb = plt.subplots(figsize=(12, 8))
+# fig, ax = plt.subplots(figsize=(12, 8))
+# figb, axb = plt.subplots(figsize=(12, 8))
 colors = ['b', 'r']
 
 df['Nvisits'] = df['u']+df['g']+df['r']+df['i']+df['z']+df['y']
