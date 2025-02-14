@@ -295,8 +295,7 @@ fieldName_night = opts.fieldName_night
 
 dfgroup = pd.read_csv(configGroup, comment='#')  # load list of db+plot infos
 df = pd.read_hdf(pointingFile)  # load pointing data
-print('hhh', df)
-print('bbb', dfgroup)
+
 df = complete_pointing(df, dfgroup)  # merge pointing data+plot data
 
 metric = pd.DataFrame()
@@ -307,8 +306,6 @@ if addMetric:
                          fieldType, fieldNames, nside)
     metric = merge_with_pointing(metric, df)
 
-print('ahhh', metric)
-
 # summary plots
 if plotSummary:
     summary_plots(df)
@@ -318,7 +315,7 @@ if plotSummary:
 
 # for field in df['field'].unique():
 fields = df['field'].unique()
-for field in ['COSMOS']:
+for field in fields:
     idx = df['field'] == field
     sel = df[idx]
     plot_field(sel, title='{} pointings'.format(field))
@@ -373,7 +370,7 @@ plot_series_fields(dfb, what=toplot, leg=leg)
 plt.show()
 """
 
-# this is to plot fraction of filter alloc per night
+# this is to plot fraction of filter alloc per night - for one OS only
 
 flat = df.groupby(['dbName', 'field', 'family', 'season']).apply(
     lambda x: flat_this(x, cols=['filter_alloc', 'filter_frac'])).reset_index()
@@ -381,7 +378,6 @@ flat = df.groupby(['dbName', 'field', 'family', 'season']).apply(
 flat = flat.groupby(['dbName', 'field', 'family', 'filter_alloc', 'season'])[
     'filter_frac'].median().reset_index()
 
-print(flat)
 idx = dfgroup['dbName'] == dbName_night
 
 family = dfgroup[idx]['family'].to_list()[0]
