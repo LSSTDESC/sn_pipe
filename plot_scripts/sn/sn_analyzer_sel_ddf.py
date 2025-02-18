@@ -14,7 +14,8 @@ from sn_plotter_analysis.sn_analyser_summary import process_DDF
 from sn_plotter_analysis.sn_analyser_ddf import get_val
 
 
-def plot_DDF(data, norm_factor, config, nside=128, timescale='year', timeslots='None'):
+def plot_DDF(data, norm_factor, config, nside=128,
+             timescale='year', timeslots='None'):
     """
     function to plot ddf data
 
@@ -44,15 +45,37 @@ def plot_DDF(data, norm_factor, config, nside=128, timescale='year', timeslots='
         0.5, 11.5, 1), xvar='season', xleg='season',
         logy=False, xlim=[1, 10], nside=nside)
     """
-    from sn_plotter_analysis.sn_analyser_ddf import plot_DDF_nsn
+    from sn_plotter_analysis.sn_analyser_ddf import plot_DDF_nsn, plot_nsn_new
     from sn_plotter_analysis.sn_analyser_ddf import plot_survey_features
+
+    """
+    plot_nsn_new(data, norm_factor, config, nside,
+                 sigma_mu=0.12, timescale=timescale)
 
     idx = data['zmeas'] >= 0.8
     sel = data[idx]
+
+    plot_nsn_new(sel, norm_factor, config, nside,
+                 sigma_mu=0.12, timescale=timescale)
+
+    idx &= data['sigma_mu'] <= 0.12
+    sel = data[idx]
+
+    plot_nsn_new(sel, norm_factor, config, nside,
+                 sigma_mu=0.12, timescale=timescale)
+    print(test)
+    """
     sigma_mu = 0.12
-    yleg = '$N_{SN} (z\geq 0.8, \sigma_{\mu}\leq\sigma_{int})$'
+    plot_DDF_nsn(data, norm_factor, config, nside,
+                 timescale=timescale)
+
+    idx = data['zmeas'] >= 0.8
+    idx &= data['sigma_mu'] <= sigma_mu
+    sel = data[idx]
+
+    yleg_add = '$(z\geq 0.8, \sigma_{\mu}\leq\sigma_{int})$'
     plot_DDF_nsn(sel, norm_factor, config, nside,
-                 sigma_mu=sigma_mu, timescale=timescale, yleg=yleg)
+                 timescale=timescale, yleg_add=yleg_add)
 
     plt.show()
     # specific survey features
@@ -124,8 +147,7 @@ conf_df = pd.read_csv(config, comment='#')
 ddf = process_DDF(conf_df, dataType, dbDir, runType,
                   timescale, timeslots, norm_factor)
 
-
-print('allllllll', timescale)
+print(ddf.columns)
 # plot
 plot_DDF(ddf, norm_factor, nside=128, config=conf_df,
          timescale=timescale, timeslots=timeslots)
