@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 import yaml
 from sn_tools.sn_obs import season
+from sn_tools.sn_io import checkDir
 
 
 def process_night(grp):
@@ -35,6 +36,7 @@ def process_night(grp):
 
     resdict['nvisits'] = [len(grp)]
     resdict['season'] = [int(grp['season'].mean())]
+    resdict['moonPhase'] = [int(grp['moonPhase'].mean())]
     for b in bands:
         idx = grp['band'] == b
         sel = grp[idx]
@@ -150,40 +152,23 @@ def merge_exp_simu(dbDir, dbName, configDir, configName):
     ddf = dd.merge(exp_survey, left_on=['target_name', 'season'], right_on=[
                    'target_name', 'season'], suffixes=['', '_exp'])
 
-    return ddf
+    # adjustements related to moonPhase
+    idx = ddf['moonPhase'] <= 40
+    sela = pd.DataFrame(ddf[idx])
+    selb = pd.DataFrame(ddf[~idx])
 
+    sela['y_exp'] = 0
+    selb['u_exp'] = 0
 
-def analyze_simu_exp(data):
+    ddf_moon = pd.concat((sela, selb))
 
-    # add new columns as diff
+    r = []
+    for b in 'ugrizy':
+        r.append('{}_exp'.format(b))
 
-    for vv in ['nvisits', 'u', 'g', 'r', 'i', 'z', 'y']:
-        data['diff_{}'.format(vv)] = data['{}_exp'.format(vv)] - data[vv]
+    ddf_moon['nvisits_exp'] = ddf_moon[r].sum(axis=1)
 
-    print(data)
-
-    res_stat = data.groupby(['target_name', 'season']).apply(
-        lambda x: stat_simu_exp(x))
-
-    print(res_stat)
-
-
-def stat_simu_exp(grp):
-
-    dict_frac = {}
-    nnights = len(grp)
-    for vv in ['nvisits', 'u', 'g', 'r', 'i', 'z', 'y']:
-        myvar = 'diff_{}'.format(vv)
-        idxa = grp[myvar] >= 1
-        idxb = grp[myvar] <= -1
-        idxc = np.abs(grp[myvar]) < 0.5
-        dict_frac['{}_missing'.format(vv)] = [len(grp[idxa])/nnights]
-        dict_frac['{}_excess'.format(vv)] = [len(grp[idxb])/nnights]
-        dict_frac['{}_perfect'.format(vv)] = [len(grp[idxc])/nnights]
-
-    rr = pd.DataFrame.from_dict(dict_frac)
-
-    return rr
+    return ddf_moon
 
 
 parser = OptionParser(
@@ -204,6 +189,10 @@ parser.add_option("--configDir", type="str",
 parser.add_option("--configName", type="str",
                   default="ddf_desc_0.70_sn",
                   help="input config name [%default]")
+parser.add_option("--outDir", type="str",
+                  default="../ddf_visits_night",
+                  help="output directory [%default]")
+
 
 opts, args = parser.parse_args()
 # Load parameters
@@ -212,14 +201,12 @@ dbName = opts.dbName
 ddf_list = opts.ddf_list.split(',')
 configDir = opts.configDir
 configName = opts.configName
+outDir = opts.outDir
 
-fName = 'test_merge.hdf5'
-"""
+checkDir(outDir)
+
+fName = '{}/{}.hdf5'.format(outDir, dbName)
+
 res = merge_exp_simu(dbDir, dbName, configDir, configName)
 print(res)
-res.to_hdf('test_merge.hdf5', key='ddf')
-"""
-
-data = pd.read_hdf(fName)
-
-analyze_simu_exp(data)
+res.to_hdf(fName, key='ddf')
