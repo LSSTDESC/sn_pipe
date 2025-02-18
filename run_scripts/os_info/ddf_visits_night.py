@@ -100,6 +100,7 @@ def get_survey(survey, ddf_list=['DD:COSMOS']):
         idx = df_conf['target'] == fieldType
         rr = pd.DataFrame(df_conf[idx])
         rr['target_name'] = ddf
+        rr['DD_type'] = fieldType
         res = pd.concat((res, rr))
 
     res['nvisits'] = res[list('ugrizy')].sum(axis=1)
