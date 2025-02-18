@@ -55,8 +55,8 @@ def process(dataDir_DD, dbName_DD, dataDir_WFD,
     cmd += ' --test_mode=0'
     cmd += ' --nproc=1'
     cmd += ' --low_z_opti=0'
-    cmd += ' --DD_surveys={}'.format(DD_surveys)
-    cmd += ' --WFD_surveys={}'.format(WFD_surveys)
+    # cmd += ' --DD_surveys={}'.format(DD_surveys)
+    # cmd += ' --WFD_surveys={}'.format(WFD_surveys)
 
     os.system(cmd)
 
