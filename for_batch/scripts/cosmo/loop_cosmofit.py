@@ -103,5 +103,6 @@ for i, row in fis.iterrows():
     params['fitparam_names'] = fitparam_names
     params['fitparam_values'] = fitparam_values
     params['prior'] = prior
+    params['outName'] = 'cosmo_fit_{}'.format(dbName_DD)
     mybatch.add_batch(script, params)
     mybatch.go_batch()
