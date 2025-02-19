@@ -138,6 +138,7 @@ def plot_cosmo_summary(data, udfs, dfs, comment_on_plot, fill_between=False):
 
     dd = dict(zip(priors, ['']))
 
+    dd = dict(zip(priors, ['prior']))
     for vary in vvars:
         for prior in priors:
             plot_allOS(resdf, config, varx=timescale,
@@ -351,6 +352,16 @@ parser.add_option('--comment_on_plot', type=str,
 parser.add_option('--fill_between', type=int,
                   default=0,
                   help='to fill +-1 sigma area with yellow [%default]')
+parser.add_option('--prior', type=str,
+                  default='prior',
+                  help='data were processed with or withuot prior [%default]')
+parser.add_option('--plots', type=str,
+                  default='mom_year,mom_10yrs,sigma_w0,sigma_wa',
+                  help='plots to make [%default]')
+parser.add_option('--ref_OS', type=str,
+                  default='baseline_v4.0_10yrs',
+                  help='ref os to normalize the plots [%default]')
+
 
 opts, args = parser.parse_args()
 
@@ -361,6 +372,9 @@ udfs = opts.UDFs.split(',')
 dfs = opts.DFs.split(',')
 comment_on_plot = opts.comment_on_plot
 fill_between = opts.fill_between
+prior = opts.prior
+plots = opts.plots
+ref_OS = opts.ref_OS
 
 config = pd.read_csv(dbList, comment='#')
 """
@@ -383,95 +397,111 @@ cols = ['MoM', 'WFD_TiDES', 'all_Fields',
         'WFD_desi_bgs_footprint', 'nsn_z_0.8', 'nsn_rat_highz']
 """
 cols = ['MoM', 'all_Fields',
-        'nsn_z_0.8', 'nsn_z_0.8_sigma_mu', 'nsn_rat_highz', 'sigma_w0']
+        'nsn_z_0.8', 'nsn_z_0.8_sigma_mu', 'nsn_rat_highz', 'sigma_w0', 'sigma_wa']
 
 data = process_cosmo(
     config, [timescale, 'prior', 'dbName_DD', 'dbName_WFD'], cols=cols)
 
 
-priors = ['noprior']
+dd = {}
 
-dd = dict(zip(priors, ['']))
+dd['prior'] = 'with prior'
 
-print(data.columns)
+if prior != 'prior':
+    dd['prior'] = 'no prior'
 
-for prior in priors:
+dbNorm = ''
+figtit = ''
+if ref_OS != None:
+    dbNorm = ref_OS
+    figtit = 'ref: {}'.format(dbNorm.split('_10yrs')[0])
+if 'mom_year' in plots:
     plot_allOS(data, config, varx=timescale,
                legx=timescale, vary='MoM_mean',
                legy='$\\frac{\\Delta SMoM}{SMoM}$ [%]', vary_std='MoM_std', prior=prior,
-               figtitle='ref: baseline_v3.4_10yrs', dbNorm='baseline_v3.4_10yrs',
+               figtitle=figtit, dbNorm=dbNorm,
                comment_on_plot=comment_on_plot,
                fill_between=fill_between)
-    plot_allOS_survey()
-    """
+if 'mom_10yrs' in plots:
+
+    plot_allOS_survey(dbNorm=dbNorm)
+
+if 'sigma_w0' in plots:
     plot_allOS(data, config, varx=timescale,
                legx=timescale, vary='sigma_w0_mean',
-               legy='$\sigma_w0$', vary_std='sigma_w0_std', prior=prior,
+               legy='$\sigma_{w_0}$', vary_std='sigma_w0_std', prior=prior,
                figtitle=dd[prior], dbNorm='',
                comment_on_plot=comment_on_plot,
                fill_between=fill_between)
-    """
-    """
-    plot_allOS(data, config, varx=timescale, legx=timescale,
-               vary='WFD_TiDES_mean',
-               legy='$N_{spectro-z}^{TiDES}$', vary_std='', prior=prior,
-               figtitle=dd[prior], dbNorm='',
-               comment_on_plot=comment_on_plot,
-               fill_between=fill_between)
-
-    plot_allOS(data, config, varx=timescale, legx=timescale,
-               vary='WFD_desi_lrg_footprint_mean',
-               legy='$N_{spectro-z}^{desi~lrg}$', vary_std='', prior=prior,
-               figtitle=dd[prior], dbNorm='',
-               comment_on_plot=comment_on_plot,
-               fill_between=fill_between)
-    """
-    """
-    plot_allOS(data, config, varx=timescale, legx=timescale,
-               vary='WFD_desi_bgs_footprint_mean',
-               legy='$N_{spectro-z}^{desi~bgs}$', vary_std='', prior=prior,
-               figtitle=dd[prior], dbNorm='',
-               comment_on_plot=comment_on_plot,
-               fill_between=fill_between)
-    plot_allOS(data, config, varx=timescale, legx=timescale,
-               vary='WFD_desi2_footprint_mean',
-               legy='$N_{spectro-z}^{desi2}$', vary_std='', prior=prior,
-               figtitle=dd[prior], dbNorm='',
-               comment_on_plot=comment_on_plot,
-               fill_between=fill_between)
-    plot_allOS(data, config, varx=timescale, legx=timescale,
-               vary='nsn_z_0.8_mean',
-               legy='$N_{SN}^{z\geq0.8}$', vary_std='nsn_z_0.8_std', prior=prior,
-               figtitle=dd[prior], dbNorm='',
-               comment_on_plot=comment_on_plot,
-               fill_between=fill_between)
-
-    plot_allOS(data, config, varx=timescale, legx=timescale,
-               vary='nsn_rat_highz_mean',
-               legy='$N_{SN}^{z\geq0.8,\sigma_{\mu}\leq0.12}$', vary_std='nsn_rat_highz_std', prior=prior,
-               figtitle=dd[prior], dbNorm='',
-               comment_on_plot=comment_on_plot,
-               fill_between=fill_between)
-
-    plot_allOS(data, config, varx=timescale, legx=timescale,
-               vary='nsn_z_0.8_sigma_mu_mean',
-               legy='$N_{SN}^{z\geq0.8,\sigma_{\mu}\leq0.12}$', vary_std='nsn_z_0.8_sigma_mu_std', prior=prior,
-               figtitle=dd[prior], dbNorm='',
-               comment_on_plot=comment_on_plot,
-               fill_between=fill_between)
-
+if 'sigma_wa' in plots:
     plot_allOS(data, config, varx=timescale,
-               legx=timescale, vary='WFD_TiDES_mean',
-               legy='$N_{SN}^{TiDES}$', vary_std='WFD_TiDES_std', prior=prior,
+               legx=timescale, vary='sigma_wa_mean',
+               legy='$\sigma_{w_a}$', vary_std='sigma_wa_std', prior=prior,
                figtitle=dd[prior], dbNorm='',
                comment_on_plot=comment_on_plot,
                fill_between=fill_between)
-    plot_allOS(data, config, varx=timescale,
-               legx=timescale, vary='WFD_DESI1_mean',
-               legy='$N_{SN}^{DESI}$', vary_std='WFD_DESI1_std', prior=prior,
-               figtitle=dd[prior], dbNorm='',
-               comment_on_plot=comment_on_plot,
-               fill_between=fill_between)
-    """
+
+"""
+plot_allOS(data, config, varx=timescale, legx=timescale,
+           vary='WFD_TiDES_mean',
+           legy='$N_{spectro-z}^{TiDES}$', vary_std='', prior=prior,
+           figtitle=dd[prior], dbNorm='',
+           comment_on_plot=comment_on_plot,
+           fill_between=fill_between)
+
+plot_allOS(data, config, varx=timescale, legx=timescale,
+           vary='WFD_desi_lrg_footprint_mean',
+           legy='$N_{spectro-z}^{desi~lrg}$', vary_std='', prior=prior,
+           figtitle=dd[prior], dbNorm='',
+           comment_on_plot=comment_on_plot,
+           fill_between=fill_between)
+"""
+"""
+plot_allOS(data, config, varx=timescale, legx=timescale,
+           vary='WFD_desi_bgs_footprint_mean',
+           legy='$N_{spectro-z}^{desi~bgs}$', vary_std='', prior=prior,
+           figtitle=dd[prior], dbNorm='',
+           comment_on_plot=comment_on_plot,
+           fill_between=fill_between)
+plot_allOS(data, config, varx=timescale, legx=timescale,
+           vary='WFD_desi2_footprint_mean',
+           legy='$N_{spectro-z}^{desi2}$', vary_std='', prior=prior,
+           figtitle=dd[prior], dbNorm='',
+           comment_on_plot=comment_on_plot,
+           fill_between=fill_between)
+plot_allOS(data, config, varx=timescale, legx=timescale,
+           vary='nsn_z_0.8_mean',
+           legy='$N_{SN}^{z\geq0.8}$', vary_std='nsn_z_0.8_std', prior=prior,
+           figtitle=dd[prior], dbNorm='',
+           comment_on_plot=comment_on_plot,
+           fill_between=fill_between)
+
+plot_allOS(data, config, varx=timescale, legx=timescale,
+           vary='nsn_rat_highz_mean',
+           legy='$N_{SN}^{z\geq0.8,\sigma_{\mu}\leq0.12}$', vary_std='nsn_rat_highz_std', prior=prior,
+           figtitle=dd[prior], dbNorm='',
+           comment_on_plot=comment_on_plot,
+           fill_between=fill_between)
+
+plot_allOS(data, config, varx=timescale, legx=timescale,
+           vary='nsn_z_0.8_sigma_mu_mean',
+           legy='$N_{SN}^{z\geq0.8,\sigma_{\mu}\leq0.12}$', vary_std='nsn_z_0.8_sigma_mu_std', prior=prior,
+           figtitle=dd[prior], dbNorm='',
+           comment_on_plot=comment_on_plot,
+           fill_between=fill_between)
+
+plot_allOS(data, config, varx=timescale,
+           legx=timescale, vary='WFD_TiDES_mean',
+           legy='$N_{SN}^{TiDES}$', vary_std='WFD_TiDES_std', prior=prior,
+           figtitle=dd[prior], dbNorm='',
+           comment_on_plot=comment_on_plot,
+           fill_between=fill_between)
+plot_allOS(data, config, varx=timescale,
+           legx=timescale, vary='WFD_DESI1_mean',
+           legy='$N_{SN}^{DESI}$', vary_std='WFD_DESI1_std', prior=prior,
+           figtitle=dd[prior], dbNorm='',
+           comment_on_plot=comment_on_plot,
+           fill_between=fill_between)
+"""
 plt.show()
 # plot(data, timescale, config)
