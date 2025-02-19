@@ -67,7 +67,7 @@ def plot_DDF(data, norm_factor, config, nside=128,
     """
     sigma_mu = 0.12
     plot_DDF_nsn(data, norm_factor, config, nside,
-                 timescale=timescale)
+                 timescale=timescale, plots=['nsn_field_OS'])
 
     idx = data['zmeas'] >= 0.8
     idx &= data['sigma_mu'] <= sigma_mu
@@ -75,7 +75,8 @@ def plot_DDF(data, norm_factor, config, nside=128,
 
     yleg_add = '$(z\geq 0.8, \sigma_{\mu}\leq\sigma_{int})$'
     plot_DDF_nsn(sel, norm_factor, config, nside,
-                 timescale=timescale, yleg_add=yleg_add)
+                 timescale=timescale, yleg_add=yleg_add,
+                 cumul=True, plots=['nsn_os', 'pix_area'])
 
     plt.show()
     # specific survey features
