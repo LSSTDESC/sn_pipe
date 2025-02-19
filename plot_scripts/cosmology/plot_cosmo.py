@@ -359,7 +359,7 @@ parser.add_option('--plots', type=str,
                   default='mom_year,mom_10yrs,sigma_w0,sigma_wa',
                   help='plots to make [%default]')
 parser.add_option('--ref_OS', type=str,
-                  default='baseline_v4.0_10yrs',
+                  default='None',
                   help='ref os to normalize the plots [%default]')
 
 
@@ -412,13 +412,16 @@ if prior != 'prior':
 
 dbNorm = ''
 figtit = ''
-if ref_OS != None:
+if ref_OS != 'None':
     dbNorm = ref_OS
     figtit = 'ref: {}'.format(dbNorm.split('_10yrs')[0])
 if 'mom_year' in plots:
+    legy = 'SMoM'
+    if ref_OS != 'None':
+        legy = '$\\frac{\\Delta SMoM}{SMoM}$ [%]'
     plot_allOS(data, config, varx=timescale,
                legx=timescale, vary='MoM_mean',
-               legy='$\\frac{\\Delta SMoM}{SMoM}$ [%]', vary_std='MoM_std', prior=prior,
+               legy=legy, vary_std='MoM_std', prior=prior,
                figtitle=figtit, dbNorm=dbNorm,
                comment_on_plot=comment_on_plot,
                fill_between=fill_between)
