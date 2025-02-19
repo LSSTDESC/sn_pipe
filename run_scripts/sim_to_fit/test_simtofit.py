@@ -23,7 +23,8 @@ parser.add_option('--tag', type=str, default='1.9',
 parser.add_option('--WebPathSimu', type=str,
                   default='https://me.lsst.eu/gris/DESC_SN_pipeline',
                   help='web path for reference files [%default]')
-
+parser.add_option('--fieldType', type=str, default='DD',
+                  help='field type [%default]')
 
 opts, args = parser.parse_args()
 
@@ -32,6 +33,7 @@ dbExtens = opts.dbExtens
 tag = opts.tag
 dbDir = opts.dbDir
 web = opts.WebPathSimu
+fieldType = opts.fieldType
 
 # grab the file if necessary
 fulldbName = '{}.{}'.format(dbName, dbExtens)
@@ -60,7 +62,7 @@ cmd += ' --ebvofMW_pixel 0.25 --OutputSimu_directory'
 cmd += ' ../Output_SN_test_new/{}/DDF_spectroz'.format(dbName)
 cmd += ' --OutputFit_directory'
 cmd += ' ../Output_SN_test_new/{}/DDF_spectroz'.format(dbName)
-cmd += ' --fieldType DD'
+cmd += ' --fieldType {}'.format(fieldType)
 # cmd += ' --Fitter_parnames t0,x1,c,x0'
 cmd += ' --fieldName COSMOS'
 cmd += ' --ProductionIDSimu SN_DD_{}_spectroz_1'.format(dbName)
@@ -69,6 +71,7 @@ cmd += ' --npixels={}'.format(npixels)
 cmd += ' --SN_sigmaInt=0.0'
 cmd += ' --InstrumentSimu_telescope_tag={}'.format(tag)
 cmd += ' --InstrumentFit_telescope_tag={}'.format(tag)
+# cmd += ' --Observations_fieldtype={}'.format(fieldType)
 # cmd += ' --pixelList=pixelList.csv'
 
 """
