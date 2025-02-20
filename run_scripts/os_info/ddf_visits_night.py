@@ -210,4 +210,5 @@ fName = '{}/{}.hdf5'.format(outDir, dbName)
 
 res = merge_exp_simu(dbDir, dbName, configDir, configName)
 print(res)
+res['dbName'] = dbName
 res.to_hdf(fName, key='ddf')
