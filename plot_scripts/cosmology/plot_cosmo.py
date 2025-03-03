@@ -396,8 +396,12 @@ cols = ['MoM', 'WFD_TiDES', 'all_Fields',
         'WFD_desi2_footprint', 'WFD_desi_lrg_footprint',
         'WFD_desi_bgs_footprint', 'nsn_z_0.8', 'nsn_rat_highz']
 """
+fields = ['COSMOS', 'XMM-LSS', 'ELAISS1', 'CDFS', 'EDFSa', 'EDFSb', 'DDF']
+
 cols = ['MoM', 'all_Fields',
         'nsn_z_0.8', 'nsn_z_0.8_sigma_mu', 'nsn_rat_highz', 'sigma_w0', 'sigma_wa']
+
+cols += fields
 
 data = process_cosmo(
     config, [timescale, 'prior', 'dbName_DD', 'dbName_WFD'], cols=cols)
@@ -425,6 +429,7 @@ if 'mom_year' in plots:
                figtitle=figtit, dbNorm=dbNorm,
                comment_on_plot=comment_on_plot,
                fill_between=fill_between)
+
 if 'mom_10yrs' in plots:
 
     plot_allOS_survey(dbNorm=dbNorm)
@@ -443,6 +448,17 @@ if 'sigma_wa' in plots:
                figtitle=dd[prior], dbNorm='',
                comment_on_plot=comment_on_plot,
                fill_between=fill_between)
+if 'nsn' in plots:
+    for field in fields:
+        fm = f'{field}_mean'
+        fstd = f'{field}_std'
+        plot_allOS(data, config, varx=timescale,
+                   legx=timescale, vary=fm,
+                   legy='$N_{SN}$', vary_std=fstd, prior=prior,
+                   figtitle=field, dbNorm='',
+                   comment_on_plot=comment_on_plot,
+                   fill_between=fill_between)
+
 
 """
 plot_allOS(data, config, varx=timescale, legx=timescale,
