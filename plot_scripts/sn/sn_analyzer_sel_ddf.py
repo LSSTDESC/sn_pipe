@@ -15,7 +15,7 @@ from sn_plotter_analysis.sn_analyser_ddf import get_val
 
 
 def plot_DDF(data, norm_factor, config, nside=128,
-             timescale='year', timeslots='None'):
+             timescale='year', timeslots='None', cumul=False):
     """
     function to plot ddf data
 
@@ -31,6 +31,8 @@ def plot_DDF(data, norm_factor, config, nside=128,
         Healpix nside parameter. The default is 128.
     timescale: str, opt
         Time scale for the plot. the default is 'year'
+    cumul: bool.
+        To plot cumulative (for NSN for example). The default is False
 
     Returns
     -------
@@ -67,7 +69,8 @@ def plot_DDF(data, norm_factor, config, nside=128,
     """
     sigma_mu = 0.12
     plot_DDF_nsn(data, norm_factor, config, nside,
-                 timescale=timescale, plots=['nsn_field_OS'])
+                 timescale=timescale, cumul=cumul,
+                 plots=['nsn_field_OS'])
 
     idx = data['zmeas'] >= 0.8
     idx &= data['sigma_mu'] <= sigma_mu
@@ -76,7 +79,7 @@ def plot_DDF(data, norm_factor, config, nside=128,
     yleg_add = '$(z\geq 0.8, \sigma_{\mu}\leq\sigma_{int})$'
     plot_DDF_nsn(sel, norm_factor, config, nside,
                  timescale=timescale, yleg_add=yleg_add,
-                 cumul=True, plots=['nsn_os', 'pix_area'])
+                 cumul=cumul, plots=['nsn_os', 'pix_area'])
 
     plt.show()
     # specific survey features
@@ -126,6 +129,9 @@ parser.add_option('--timeslots', type=str,
 parser.add_option('--dataType', type=str,
                   default='DataFrame',
                   help='data type [%default]')
+parser.add_option('--cumul', type=int,
+                  default=0,
+                  help='for cumulative plots [%default]')
 
 opts, args = parser.parse_args()
 
@@ -137,6 +143,7 @@ config = opts.config
 timeslots = opts.timeslots
 timescale = opts.timescale
 timeslots = get_val(timeslots)
+cumul = opts.cumul
 # plot_moll = opts.plot_Mollweid
 
 dataType = opts.dataType
@@ -151,6 +158,6 @@ ddf = process_DDF(conf_df, dataType, dbDir, runType,
 print(ddf.columns)
 # plot
 plot_DDF(ddf, norm_factor, nside=128, config=conf_df,
-         timescale=timescale, timeslots=timeslots)
+         timescale=timescale, timeslots=timeslots, cumul=cumul)
 
 plt.show()
