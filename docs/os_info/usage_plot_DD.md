@@ -45,7 +45,7 @@ Options:
 
 python plot_scripts/metrics/plot_DD_stat.py --dirFile . --configGroup=DDF_fbs_multiple.csv --dbName_night=desc_ddf_v4.2.1_10yrs --plotSummary=1
 
-The DDF_fbs_multiple.csv file is available [here](docs/os_info/DDF_fbs_multiple.csv).
+The DDF_fbs_multiple.csv file is available [here](DDF_fbs_multiple.csv).
 
 Plots produced:
 <img src="plot1.png" height="100">
