@@ -249,8 +249,7 @@ def flat_this(grp, cols=['filter_alloc', 'filter_frac']):
 
 
 parser = OptionParser(
-    description='Display correlation plots between (NSN,zlim) \
-    metric results for DD fields and the budget')
+    description='OS analysis plots from pointings')
 parser.add_option("--dirFile", type="str",
                   default='../MetricOutput_DD_new_128_gnomonic_circular',
                   help="file directory [%default]")

@@ -65,7 +65,7 @@ To uninstall the pipeline: python pip_sn_pack.py --action uninstall --package=al
 
 ### [Run and analyze light curve fitting](docs/fit/Fit.md)
 
-### [Analyze observing strategy](docs/os_info/os_info.md)
+### [Observing Strategy Analysis](docs/os_info/os_info.md)
 
 ## sn_pipe structure
 
