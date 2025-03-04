@@ -40,7 +40,9 @@ parser.add_option('--fitparam_values', type=str,
 parser.add_option('--prior', type=int,
                   default=1,
                   help='prior for the fit [%default]')
-
+parser.add_option('--test_mode', type=int,
+                  default=0,
+                  help='test mode fitter [%default]')
 
 opts, args = parser.parse_args()
 
@@ -56,7 +58,8 @@ cmd += ' --outDir={}'.format(opts.outDir)
 cmd += ' --seasons={}'.format(opts.seasons)
 cmd += ' --surveyDir={}'.format(opts.surveyDir)
 cmd += ' --nrandom=1'
-cmd += ' --plot_test=0 --test_mode=0 --nproc=1 --low_z_opti=0'
+cmd += ' --plot_test=0 --nproc=1 --low_z_opti=0'
+cmd += ' --test_mode={}'.format(opts.test_mode)
 cmd += ' --fitparam_names={}'.format(opts.fitparam_names)
 cmd += ' --fitparam_values={}'.format(opts.fitparam_values)
 cmd += ' --prior={}'.format(opts.prior)
