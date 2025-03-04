@@ -43,6 +43,13 @@ parser.add_option('--prior', type=int,
 parser.add_option('--test_mode', type=int,
                   default=0,
                   help='test mode fitter [%default]')
+parser.add_option('--select_DDF', type=int,
+                  default=0,
+                  help='to select SN DDF for the cosmology-grade sample [%default]')
+parser.add_option('--select_WFD', type=int,
+                  default=1,
+                  help='to select SN WFD for the cosmology-grade sample [%default]')
+
 
 opts, args = parser.parse_args()
 
@@ -63,6 +70,8 @@ cmd += ' --test_mode={}'.format(opts.test_mode)
 cmd += ' --fitparam_names={}'.format(opts.fitparam_names)
 cmd += ' --fitparam_values={}'.format(opts.fitparam_values)
 cmd += ' --prior={}'.format(opts.prior)
+cmd += ' --select_DDF={}'.format(opts.select_DDF)
+cmd += ' --select_WFD={}'.format(opts.select_WFD)
 
 print(cmd)
 os.system(cmd)

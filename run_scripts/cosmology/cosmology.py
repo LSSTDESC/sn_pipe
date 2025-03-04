@@ -171,6 +171,9 @@ dd_tagsurvey = opts.dd_tagsurvey
 fitparams_names = opts.fitparam_names.split(',')
 fitparams_values = list(map(float, opts.fitparam_values.split(',')))
 prior = opts.prior
+select_DDF = opts.select_DDF
+select_WFD = opts.select_WFD
+
 
 if '-' in seasons_cosmo:
     seas = seasons_cosmo.split('-')
@@ -281,5 +284,7 @@ cl = Fit_seasons(fitconfig, dataDir_DD, dbName_DD,
                  simu_norm_factor=simu_norm_factor,
                  seasons=seasons_cosmo, nrandom=nrandom,
                  nproc=nproc, wfd_tagsurvey=wfd_tagsurvey,
-                 dd_tagsurvey=dd_tagsurvey)
+                 dd_tagsurvey=dd_tagsurvey,
+                 select_DDF=select_DDF,
+                 select_WFD=select_WFD)
 res = cl()
