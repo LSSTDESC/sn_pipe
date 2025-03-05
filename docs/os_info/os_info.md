@@ -7,6 +7,6 @@ There are thus two possible ways to analyze observing strategies, that is to est
 ## [Pointings analysis](pointing_analysis.md)
 OS parameters are estimated using LSST pointings. This is especially suitable for DDFs where the area of observation is clearley defined.
 
-## Pixel analysis
+## [Pixel analysis](pixel_analysis.cmd)
 OS parameters are estimated for each pixel of the celestial sphere. This approach is more precised that the pointing analysis but requires also more computing time.
 

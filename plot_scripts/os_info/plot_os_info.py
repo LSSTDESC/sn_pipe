@@ -33,6 +33,6 @@ idx = df['season'] > 0
 idx = df['season'] < 11
 sel = df[idx]
 
-ax.plot(df['season'], df['cadence'], 'ko')
+ax.plot(sel['season'], sel['cadence'], 'ko')
 
 plt.show()
