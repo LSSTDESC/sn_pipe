@@ -38,16 +38,29 @@ The DDF_fbs_multiple.csv file is available [here](DDF_fbs_multiple.csv).
 Plots produced:
 
 [DD budget](plot1.png)
+
 [DD budget per field](plot3.png)
+
 [Relative DD budget per field](plot2.png)
+
 [Overhead (filter changes)](plot6.png)
+
 [Overhead (filter changes) per field](plot4.png)
+
 [Number of filter changes](plot7.png)
+
 [Number of filter changes per field](plot5.png)
+
 [Cadence and season length - COSMOS](plot8.png)
+
 [Cadence and season length - XMM-LSS](plot9.png)
+
 [Cadence and season length - CDFS](plot10.png)
+
 [Cadence and season length - ELAISS1](plot13.png)
+
 [Cadence and season length - EDFSa](plot11.png)
+
 [Cadence and season length - EDFSb](plot12.png)
+
 [Filter allocation per observing night - desc_ddf_v4.2.1 - COSMOS - season 1](plot14.png)
