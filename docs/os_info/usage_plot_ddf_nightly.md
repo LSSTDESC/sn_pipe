@@ -14,3 +14,7 @@ Options:
  </pre>
 
 ## example
+
+Choosing the night number 28 after running 'python plot_ddf_nightly.py' will lead to the plot of the DDF filter allocation corresponding to the night 28 for the obsreving strategy desc_ddf_v4.2.1_10yrs (located in ../DB_Files).
+
+[filter allocation - night 28 - DDF](figc1.png)

@@ -17,3 +17,7 @@
 ### plot the data
 
 - use the script [plot_scripts/os_info/plot_ddf_visits_night.py](usage_plot_ddf_visits.md)
+
+## nightly filter allocation for DDFs.
+
+- use the script[plot_scripts/os_info/plot_ddf_nightly.py](usage_plot_ddf_nightly.md)
