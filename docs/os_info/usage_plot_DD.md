@@ -36,30 +36,5 @@ python plot_scripts/metrics/plot_DD_stat.py --dirFile . --configGroup=DDF_fbs_mu
 The DDF_fbs_multiple.csv file is available [here](DDF_fbs_multiple.csv).
 
 Plots produced:
-<img src="plot1.png" height="100">
 
-<img src="plot2.png" height="100">
-
-<img src="plot3.png" height="100">
-
-<img src="plot4.png" height="100">
-
-<img src="plot5.png" height="100">
-
-<img src="plot6.png" height="100">
-
-<img src="plot7.png" height="100">
-
-<img src="plot8.png" height="100">
-
-<img src="plot9.png" height="100">
-
-<img src="plot10.png" height="100">
-
-<img src="plot11.png" height="100">
-
-<img src="plot12.png" height="100">
-
-<img src="plot13.png" height="100">
-
-<img src="plot14.png" height="100">
+[DD budget](plot1.png)
