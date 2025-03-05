@@ -1,0 +1,4 @@
+dbDir,dbExtens,dbName
+../DB_Files,npy,baseline_v3.4_10yrs
+../DB_Files,npy,baseline_v4.0_10yrs
+../DB_Files,npy,desc_ddf_v4.2.1_10yrs
