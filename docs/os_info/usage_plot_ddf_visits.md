@@ -11,3 +11,14 @@ Options:
 </pre>
 
 ##example
+python plot_scripts/os_info/plot_ddf_visits_night.py will lead to a set of firures corresponding to the file ../ddf_visits_night/desc_ddf_v4.2.1_10yrs.hdf5:
+
+[Nnights with nvisits(expected)/nvisits(simulated)=1 per field](plotb1.png)
+
+[Nnights with nvisits(expected)/nvisits(simulated)<1 per field](plotb2.png)
+
+[Nnights with nvisits(expected)/nvisits(simulated)>1 per field](plotb3.png)
+
+[Nnights with nvisits(expected)/nvisits(simulated)<1 per band](plotb4.png)
+
+[DDF obs. time and NDDF observed vs night](plotb5.png)
