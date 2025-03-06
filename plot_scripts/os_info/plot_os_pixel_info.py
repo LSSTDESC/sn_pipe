@@ -9,11 +9,38 @@ from optparse import OptionParser
 import pandas as pd
 import matplotlib.pyplot as plt
 from sn_plotter_metrics.plot4metric import plot_pixels
+from sn_plotter_metrics.plot4metric import plotMollview_seasons
+import numpy as np
 
 
-def plot_cadence(datam, figtitle='', varx='season',
-                 legx='season', vary='cadence',
-                 legy='cadence [day]', plot_mean=True):
+def plot_var_mean(datam, figtitle='', varx='season',
+                  legx='season', vary='cadence',
+                  legy='cadence [day]', plot_mean=True):
+    """
+    Function to make a plot and sumperimpose means
+
+    Parameters
+    ----------
+    datam : pandas df
+        Data to process.
+    figtitle : str, optional
+        figure title. The default is ''.
+    varx : str, optional
+        x-axis variable. The default is 'season'.
+    legx : str, optional
+        x-axis label. The default is 'season'.
+    vary : str, optional
+        y-axis variable. The default is 'cadence'.
+    legy : str, optional
+        y-axis label. The default is 'cadence [day]'.
+    plot_mean : bool, optional
+        To superimpose the <y>. The default is True.
+
+    Returns
+    -------
+    None.
+
+    """
 
     fig, ax = plt.subplots(figsize=(12, 8))
     fig.suptitle(figtitle)
@@ -38,6 +65,27 @@ def plot_cadence(datam, figtitle='', varx='season',
 
 
 def multiplot_season(sel, varx, legx, vary, legy):
+    """
+    plots of vary vs varx
+
+    Parameters
+    ----------
+    sel : pandas df
+        Data to plot.
+    varx : str
+        x-axis variable.
+    legx : str
+        x-axis legend.
+    vary : str
+        y-axis variable.
+    legy : str
+        y-axis legend.
+
+    Returns
+    -------
+    None.
+
+    """
 
     fields = sel['field'].unique()
 
@@ -45,16 +93,33 @@ def multiplot_season(sel, varx, legx, vary, legy):
     for field in fields:
         idx = sel['field'] == field
         selb = sel[idx]
-        plot_cadence(selb, figtitle=field, varx=varx,
-                     legx=legx, vary=vary, legy=legy)
+        plot_var_mean(selb, figtitle=field, varx=varx,
+                      legx=legx, vary=vary, legy=legy)
         for b in bands:
             vvary = f'{vary}_{b}'
             figtitle = f'{field} - {b} band'
-            plot_cadence(selb, figtitle=figtitle, varx=varx,
-                         legx=legx, vary=vvary, legy=legy)
+            plot_var_mean(selb, figtitle=figtitle, varx=varx,
+                          legx=legx, vary=vvary, legy=legy)
 
 
 def multiplot_dist(sel, yvar='cadence', yleg='cadence [day]'):
+    """
+    Function to plot yvar vs distance to the cluster center
+
+    Parameters
+    ----------
+    sel : pandas df
+        Data to process.
+    yvar : str, optional
+        y-axis variable. The default is 'cadence'.
+    yleg : str, optional
+        y-axis label. The default is 'cadence [day]'.
+
+    Returns
+    -------
+    None.
+
+    """
 
     fields = sel['field'].unique()
 
@@ -89,17 +154,42 @@ def multiplot_dist(sel, yvar='cadence', yleg='cadence [day]'):
         # ax.set_xlim([0, None])
 
 
+def print_pixel_info(sel, healpixID):
+
+    idxb = sel['healpixID'] == healpixID
+    selnc = sel[idxb]
+    print(selnc[['healpixID', 'pixRA', 'pixDec', 'nvisits', 'cadence', 'season']])
+
+
 parser = OptionParser(description='Script to plot pixel level OS infos')
 
 parser.add_option('--dbName', type=str, default='test_newb',
                   help='dbName to process [%default]')
 parser.add_option('--dbDir', type=str, default='../test_metric',
                   help='dbDir of the OS to process [%default]')
+parser.add_option('--nside', type=int, default=128,
+                  help='healpix nside parameter [%default]')
+parser.add_option('--plots', type=str,
+                  default='cadence_season,nvisits_season,cadence_dist,nvisits_dist,mollview_cadence,mollview_nvisits',
+                  help='plots to show[%default]')
+parser.add_option('--mollview_seasons', type=str,
+                  default='1-5',
+                  help='plots to show[%default]')
 
 opts, args = parser.parse_args()
 
 dbDir = opts.dbDir
 dbName = opts.dbName
+nside = opts.nside
+plots = opts.plots.split(',')
+mollview_seasons = opts.mollview_seasons
+if '-' in mollview_seasons:
+    cad_brk = mollview_seasons.split('-')
+    moll_seasons = list(range(int(cad_brk[0]), int(cad_brk[1])+1))
+else:
+    moll_seasons = list(map(int, mollview_seasons.split(',')))
+
+print('seasons moll', moll_seasons)
 
 fName = '{}/{}.hdf5'.format(dbDir, dbName)
 
@@ -112,13 +202,32 @@ idx &= df['season'] < 11
 idx &= df['cadence'] > 0.
 sel = df[idx]
 
-varx = 'season'
-legx = 'season'
-vary = 'cadence'
-legy = 'cadence [day]'
 
-# multiplot_season(sel, varx, legx, vary, legy)
-multiplot_dist(sel)
-multiplot_dist(sel, yvar='nvisits', yleg=r'N$_{visits}$')
+if 'cadence_season' in plots:
+    multiplot_season(sel, varx='season', legx='season',
+                     vary='cadence', legy='cadence [day]')
+if 'nvisits_season' in plots:
+    multiplot_season(sel, varx='season', legx='season',
+                     vary='nvisits', legy='N$_{visits}$')
+if 'cadence_dist' in plots:
+    multiplot_dist(sel)
+if 'nvisits_dist' in plots:
+    multiplot_dist(sel, yvar='nvisits', yleg=r'N$_{visits}$')
+if 'mollview_cadence' in plots:
+    plotMollview_seasons(nside, sel, dbName,
+                         yvar='cadence', yleg='cadence [day]',
+                         op=np.mean, seasons=moll_seasons)
+if 'mollview_nvisits' in plots:
+    plotMollview_seasons(nside, sel, dbName,
+                         yvar='nvisits', yleg='N$_{visits}$',
+                         op=None, seasons=moll_seasons)
+
+idx = sel['season'] == 6
+seln = sel[idx]
+seln = seln.sort_values(by=['nvisits'], ascending=False)
+print(seln[['healpixID', 'pixRA', 'pixDec', 'nvisits', 'cadence']])
+
+print_pixel_info(sel, 109384)
+print_pixel_info(sel, 109031)
 
 plt.show()
