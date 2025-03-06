@@ -80,7 +80,8 @@ def multiplot_dist(sel, yvar='cadence', yleg='cadence [day]'):
             plot_pixels(selc, yvar=yvar,
                         yleg=yleg, fig=fig, ax=ax, showIt=False,
                         color=cols[seas], ls=lstys[seas], marker=marks[seas],
-                        label=f'season {seas}')
+                        label=f'season {seas}', ms=12, markevery=10,
+                        rebin=True, smoothIt=True, distval='dist')
 
         ax.grid(visible='True')
         ax.legend(bbox_to_anchor=(0.99, 0.8),
@@ -118,5 +119,6 @@ legy = 'cadence [day]'
 
 # multiplot_season(sel, varx, legx, vary, legy)
 multiplot_dist(sel)
+multiplot_dist(sel, yvar='nvisits', yleg=r'N$_{visits}$')
 
 plt.show()

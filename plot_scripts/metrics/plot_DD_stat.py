@@ -314,10 +314,19 @@ if plotSummary:
 
 # for field in df['field'].unique():
 fields = df['field'].unique()
+print('kk', df.columns)
+bands = list('ugrizy')
+df['nvisits'] = df[bands].sum(axis=1).to_list()
+print(df[list(bands)+['nvisits', 'filter_frac']])
 for field in fields:
     idx = df['field'] == field
     sel = df[idx]
     plot_field(sel, title='{} pointings'.format(field))
+    plot_field(sel, xvars=['season', 'season'],
+               xlab=['season', 'season'],
+               yvars=['nvisits', 'gap_5_10'],
+               ylab=['N$_{visits}$', 'N$_{gaps}^{5-10}$'],
+               title='{} pointings'.format(field))
     if addMetric:
         print(metric.columns)
         idc = metric['field'] == field
@@ -338,7 +347,7 @@ for field in fields:
         selb['nsn_frac'] = selb['nsn']/selb['nsn_season']
         plot_field(selb, yvars=['time_budget_field_season', 'nsn_frac'], ylab=[
                    'Time budget [%]', 'N$_{SN}$ frac'], title='{} metrics'.format(field))
-        
+
         """
 
         idx = selm['zcomp'] > 0
