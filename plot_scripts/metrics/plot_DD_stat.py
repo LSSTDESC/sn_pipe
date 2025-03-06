@@ -271,12 +271,15 @@ parser.add_option("--configGroup", type="str", default='DD_fbs_2.99_plot.csv',
                   help="pointing file name [%default]")
 parser.add_option("--addMetric", type=int, default=0,
                   help="to add metric correlation plots [%default]")
-parser.add_option("--plotSummary", type=int, default=0,
-                  help="to draw summary plots [%default]")
 parser.add_option("--dbName_night", type=str, default='baseline_v3.0_10yrs',
                   help="dbName for night plot stat [%default]")
 parser.add_option("--fieldName_night", type=str, default='COSMOS',
                   help="field for night plot stat [%default]")
+parser.add_option("--plots", type=str,
+                  default='summary,field_cad_seasonlength,field_nvisits,field_nvisits_band',
+                  help="plots to draw [%default]")
+
+
 opts, args = parser.parse_args()
 # Load parameters
 dirFile = opts.dirFile
@@ -288,9 +291,9 @@ fieldNames = opts.fieldNames.split(',')
 pointingFile = opts.pointingFile
 configGroup = opts.configGroup
 addMetric = opts.addMetric
-plotSummary = opts.plotSummary
 dbName_night = opts.dbName_night
 fieldName_night = opts.fieldName_night
+plots = opts.plots.split(',')
 
 dfgroup = pd.read_csv(configGroup, comment='#')  # load list of db+plot infos
 df = pd.read_hdf(pointingFile)  # load pointing data
@@ -306,27 +309,37 @@ if addMetric:
     metric = merge_with_pointing(metric, df)
 
 # summary plots
-if plotSummary:
+if 'summary' in plots:
     summary_plots(df)
-    plt.show()
 
 # plots per field
 
 # for field in df['field'].unique():
 fields = df['field'].unique()
-print('kk', df.columns)
+
 bands = list('ugrizy')
 df['nvisits'] = df[bands].sum(axis=1).to_list()
-print(df[list(bands)+['nvisits', 'filter_frac']])
+prefix = 'N$_{visits}$'
 for field in fields:
     idx = df['field'] == field
     sel = df[idx]
-    plot_field(sel, title='{} pointings'.format(field))
-    plot_field(sel, xvars=['season', 'season'],
-               xlab=['season', 'season'],
-               yvars=['nvisits', 'gap_5_10'],
-               ylab=['N$_{visits}$', 'N$_{gaps}^{5-10}$'],
-               title='{} pointings'.format(field))
+    if 'field_cad_seasonlength' in plots:
+        plot_field(sel, title='{} pointings'.format(field))
+    if 'field_nvisits' in plots:
+        plot_field(sel, xvars=['season', 'season'],
+                   xlab=['season', 'season'],
+                   yvars=['nvisits', 'gap_5_10'],
+                   ylab=['N$_{visits}$', 'N$_{gaps}^{5-10}$'],
+                   title='{} pointings'.format(field))
+    if 'field_nvisits_band' in plots:
+        for b in [['u', 'g'], ['r', 'i'], ['z', 'y']]:
+            ylab = list(map(lambda x: prefix + '$^'+x+'$', b))
+            plot_field(sel, xvars=['season', 'season'],
+                       xlab=['season', 'season'],
+                       yvars=b,
+                       ylab=ylab,
+                       title='{} pointings'.format(field))
+
     if addMetric:
         print(metric.columns)
         idc = metric['field'] == field
