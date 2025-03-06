@@ -141,7 +141,6 @@ def multiplot_dist(sel, yvar='cadence', yleg='cadence [day]'):
         for seas in range(1, 11):
             idxb = selb['season'] == seas
             selc = selb[idxb]
-            print('plotting season', seas)
             plot_pixels(selc, yvar=yvar,
                         yleg=yleg, fig=fig, ax=ax, showIt=False,
                         color=cols[seas], ls=lstys[seas], marker=marks[seas],
@@ -222,12 +221,9 @@ if 'mollview_nvisits' in plots:
                          yvar='nvisits', yleg='N$_{visits}$',
                          op=None, seasons=moll_seasons)
 
-idx = sel['season'] == 6
-seln = sel[idx]
-seln = seln.sort_values(by=['nvisits'], ascending=False)
-print(seln[['healpixID', 'pixRA', 'pixDec', 'nvisits', 'cadence']])
-
+"""
 print_pixel_info(sel, 109384)
 print_pixel_info(sel, 109031)
+"""
 
 plt.show()
