@@ -88,16 +88,18 @@ def multiplot_season(sel, varx, legx, vary, legy):
     """
 
     fields = sel['field'].unique()
+    dbName = sel['dbName'].unique()[0]
 
     bands = 'ugrizy'
     for field in fields:
         idx = sel['field'] == field
         selb = sel[idx]
-        plot_var_mean(selb, figtitle=field, varx=varx,
+        figtitle = f'{dbName} - {field}'
+        plot_var_mean(selb, figtitle=figtitle, varx=varx,
                       legx=legx, vary=vary, legy=legy)
         for b in bands:
             vvary = f'{vary}_{b}'
-            figtitle = f'{field} - {b} band'
+            figtitle = f'{dbName} - {field} - {b} band'
             plot_var_mean(selb, figtitle=figtitle, varx=varx,
                           legx=legx, vary=vvary, legy=legy)
 
@@ -122,6 +124,7 @@ def multiplot_dist(sel, yvar='cadence', yleg='cadence [day]'):
     """
 
     fields = sel['field'].unique()
+    dbName = sel['dbName'].unique()[0]
 
     bands = 'ugrizy'
     seasons = range(1, 11, 1)
@@ -137,7 +140,8 @@ def multiplot_dist(sel, yvar='cadence', yleg='cadence [day]'):
         seasons = selb['season'].unique()
         fig, ax = plt.subplots(figsize=(12, 8))
         fig.subplots_adjust(right=0.80)
-        fig.suptitle(field)
+        figtitle = f'{dbName} - {field}'
+        fig.suptitle(figtitle)
         for seas in range(1, 11):
             idxb = selb['season'] == seas
             selc = selb[idxb]
@@ -193,7 +197,7 @@ print('seasons moll', moll_seasons)
 fName = '{}/{}.hdf5'.format(dbDir, dbName)
 
 df = pd.read_hdf(fName)
-
+df['dbName'] = dbName
 print(df.columns)
 
 idx = df['season'] > 0
