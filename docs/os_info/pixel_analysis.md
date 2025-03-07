@@ -8,4 +8,4 @@ Two steps:
 
 ### plot the data
 
-- use the script [plot_scripts/os_info/plot_os_info.py](usage_plot_pixel.md)
+- use the script [plot_scripts/os_info/plot_os_pixel_info.py](usage_plot_pixel.md)
