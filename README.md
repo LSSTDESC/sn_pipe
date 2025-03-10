@@ -67,6 +67,8 @@ To uninstall the pipeline: python pip_sn_pack.py --action uninstall --package=al
 
 ### [Observing Strategy Analysis](docs/os_info/os_info.md)
 
+### [Scheduler Analysis](docs/scheduler/scheduler.md)
+
 ## sn_pipe structure
 
 ### [sn_pipe content](docs/gen/sn_pipe.md)
