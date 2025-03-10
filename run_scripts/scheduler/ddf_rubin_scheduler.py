@@ -157,7 +157,7 @@ def ddf_config(sequence_time=60.0,
     ddf_kwargs = {}
 
     ddf_kwargs["ELAISS1"] = {
-        "season_seq": 80,
+        "season_seq": [75]*11,
         "boost_early_factor": None,
         "boost_factor_third": 0,
         "g_depth_limit": g_depth_limit,
@@ -168,7 +168,7 @@ def ddf_config(sequence_time=60.0,
     }
 
     ddf_kwargs["XMM_LSS"] = {
-        "season_seq": 110,
+        "season_seq": [75]+[110]*4+[75]*6,
         "boost_early_factor": None,
         "boost_factor_third": 0,
         "g_depth_limit": g_depth_limit,
@@ -179,7 +179,7 @@ def ddf_config(sequence_time=60.0,
     }
 
     ddf_kwargs["ECDFS"] = {
-        "season_seq": 80,
+        "season_seq": [75]*11,
         "boost_early_factor": None,
         "boost_factor_third": 0,
         "g_depth_limit": g_depth_limit,
@@ -190,7 +190,7 @@ def ddf_config(sequence_time=60.0,
     }
 
     ddf_kwargs["COSMOS"] = {
-        "season_seq": 110,
+        "season_seq": [75]+[110]*4+[75]*6,
         "boost_early_factor": None,
         "boost_factor_third": 0,
         "g_depth_limit": g_depth_limit,
@@ -201,7 +201,7 @@ def ddf_config(sequence_time=60.0,
     }
 
     ddf_kwargs["EDFS_a"] = {
-        "season_seq": 40,
+        "season_seq": [40]*11,
         "boost_early_factor": None,
         "boost_factor_third": 0,
         "g_depth_limit": g_depth_limit,
