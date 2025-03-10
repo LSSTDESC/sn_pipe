@@ -10,8 +10,19 @@ from sn_plotter_scheduler.plot_scheduler import plot_season_length, plot
 import pandas as pd
 import glob
 import matplotlib.pyplot as plt
+from optparse import OptionParser
 
-theDir = '../ddf_scheduler'
+parser = OptionParser(
+    description='Script to plot DDF season length vs nvisits')
+parser.add_option("--dirFiles", type=str, default='../sn_ddf_scheduler',
+                  help="directory files [%default]")
+parser.add_option("--plots", type=str, default='nvisits_season,season_length_nvisits',
+                  help="plots [%default]")
+
+opts, args = parser.parse_args()
+
+theDir = opts.dirFiles
+plots = opts.plots.split(',')
 
 fis = glob.glob('{}/*.hdf5'.format(theDir))
 
@@ -26,20 +37,18 @@ print(df.columns)
 
 targets = df['target'].unique()
 
-plot(df)
+if 'nvisits_season' in plots:
+    plot(df)
 
 # estimate season length - take a central season, 5, for this estimation
 
-idx = df['season'] == 5
-sel_df = df[idx]
+if 'season_length_nvisits' in plots:
+    idx = df['season'] == 5
+    sel_df = df[idx]
 
-print('bobobobo', sel_df['target'].unique())
+    res_season = sel_df.groupby(['target']).apply(
+        lambda x: ana_season(x)).reset_index()
 
-res_season = sel_df.groupby(['target']).apply(
-    lambda x: ana_season(x)).reset_index()
-
-print(res_season)
-
-plot_season_length(res_season)
+    plot_season_length(res_season)
 
 plt.show()
