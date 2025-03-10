@@ -23,7 +23,7 @@ Options:
   --nproc=NPROC         nproc for multiprocessing [8]
   --nseasons=NSEASONS   number of seasons [10]
 
-<pre>
+</pre>
 
 ## example
 
