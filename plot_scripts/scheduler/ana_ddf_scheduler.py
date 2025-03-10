@@ -8,7 +8,7 @@ Created on Tue Jan 21 09:06:51 2025
 
 from sn_tools.sn_obs import season
 import numpy as np
-import matplotlib.pyplot as plt
+from sn_plotter_scheduler import plt
 import pandas as pd
 from optparse import OptionParser
 
@@ -118,6 +118,21 @@ def stat_season(grp, mjdCol='mjd'):
 
 
 def ana_observation(obs, mjd0=60980.):
+    """
+    Function to analyze observations
+
+    Parameters
+    ----------
+    obs : array
+        Data to process.
+    mjd0 : float, optional
+        MJD start of observation. The default is 60980..
+
+    Returns
+    -------
+    None.
+
+    """
 
     # get seasons
 
@@ -145,7 +160,7 @@ def ana_observation(obs, mjd0=60980.):
     print(rstat['nvisits'].sum())
     print(rstat[['target_name', 'season', 'season_length', 'cad']])
 
-    plot_res(rstat, vary='season_length')
+    plot_res(rstat, vary='season_length', legy='Season length [day]')
     plot_res(rstat, vary='cad', legy='cadence [day-1]')
     plt.show()
     """
@@ -160,11 +175,33 @@ def ana_observation(obs, mjd0=60980.):
     """
 
 
-def plot_res(rstat, varx='season', legx='season', vary='season_length', legy='season_length'):
+def plot_res(rstat, varx='season', legx='season',
+             vary='season_length', legy='season_length'):
+    """
+    Function to make some plots
+
+    Parameters
+    ----------
+    rstat : pandas df
+        Data to process.
+    varx : str, optional
+        x-axis var. The default is 'season'.
+    legx : str, optional
+        x-axis label. The default is 'season'.
+    vary : str, optional
+        y-axis var. The default is 'season_length'.
+    legy : str, optional
+        y-axis label. The default is 'season_length'.
+
+    Returns
+    -------
+    None.
+
+    """
 
     targets = rstat['target_name'].unique()
 
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(12, 8))
     for tt in targets:
         idx = rstat['target_name'] == tt
         sel = rstat[idx]
@@ -173,7 +210,7 @@ def plot_res(rstat, varx='season', legx='season', vary='season_length', legy='se
     ax.grid(visible=True)
     ax.set_xlabel(r'{}'.format(legx))
     ax.set_ylabel(r'{}'.format(legy))
-    ax.legend()
+    ax.legend(bbox_to_anchor=(0.08, 1.), ncol=3, frameon=False, fontsize=12)
 
 
 def ana_ddf_grid(obs, mjdCol='mjd', mjd0=60980.):
