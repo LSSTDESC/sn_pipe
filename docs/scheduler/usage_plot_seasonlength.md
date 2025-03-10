@@ -8,7 +8,7 @@ Options:
   --dirFiles=DIRFILES  directory files [../sn_ddf_scheduler]
   --plots=PLOTS        plots [nvisits_season,season_length_nvisits]
 
-<pre>
+</pre>
 
 ## Example
 
