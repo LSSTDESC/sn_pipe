@@ -22,13 +22,6 @@ warnings.filterwarnings("ignore")
 
 parser = OptionParser(description='Script to estimate the schedule of a field')
 
-parser.add_option('--fieldName', type=str,
-                  default='COSMOS',
-                  help='field name [%default]')
-parser.add_option('--RA_deg', type=float, default=150.10833,
-                  help="field RA [deg]  [%default]")
-parser.add_option("--Dec_deg", type=float, default=2.233611,
-                  help="field Dec [deg] [%default]")
 parser.add_option("--target_list", type=str, default='input/scheduler/ddf.csv',
                   help="list of targets [%default]")
 parser.add_option("--mjd_min", type=int, default=60980,
