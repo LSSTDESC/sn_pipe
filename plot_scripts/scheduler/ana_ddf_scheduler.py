@@ -110,6 +110,8 @@ def stat_season(grp, mjdCol='mjd'):
         nv = 0
         for b in 'ugrizy':
             dict_out[b] = [grp[b].sum()]
+            dict_out['{}_night_mean'.format(b)] = [grp[b].mean()]
+            dict_out['{}_night_std'.format(b)] = [grp[b].std()]
             nv += grp[b].sum()
 
         dict_out['nvisits'] = [nv]
@@ -155,13 +157,19 @@ def ana_observation(obs, mjd0=60980.):
     rstat = rstat_night.groupby(['target_name', 'season']).apply(
         lambda x: stat_season(x)).reset_index()
 
+    print(rstat)
+    """
     print(rstat.groupby(['target_name'])['nvisits'].sum().reset_index())
 
     print(rstat['nvisits'].sum())
     print(rstat[['target_name', 'season', 'season_length', 'cad']])
+    """
 
     plot_res(rstat, vary='season_length', legy='Season length [day]')
     plot_res(rstat, vary='cad', legy='cadence [day-1]')
+    for b in 'ugrizy':
+        plot_res(rstat, vary='{}_night_mean'.format(b),
+                 legy='<N$_{visits}^{night}>$', figtit='{}-band '.format(b))
     plt.show()
     """
     idx = obs_season['target_name'] == 'DD:COSMOS'
@@ -176,7 +184,7 @@ def ana_observation(obs, mjd0=60980.):
 
 
 def plot_res(rstat, varx='season', legx='season',
-             vary='season_length', legy='season_length'):
+             vary='season_length', legy='season_length', figtit=''):
     """
     Function to make some plots
 
@@ -202,15 +210,28 @@ def plot_res(rstat, varx='season', legx='season',
     targets = rstat['target_name'].unique()
 
     fig, ax = plt.subplots(figsize=(12, 8))
+    fig.subplots_adjust(right=0.80)
+    fig.suptitle(figtit)
+    fields = ['COSMOS', 'XMM_LSS', 'ELAISS1', 'ECDFS', 'EDFS_a', 'EDFS_b']
+    fields = list(map(lambda x: 'DD:'+x, fields))
+
+    lsty = ['dashed']*2+['solid']*4
+    colrs = ['r', 'k', 'b', 'm', 'darkgreen', 'limegreen']
+
+    ls = dict(zip(fields, lsty))
+    colors = dict(zip(fields, colrs))
+
     for tt in targets:
         idx = rstat['target_name'] == tt
         sel = rstat[idx]
-        ax.plot(sel[varx], sel[vary], label=tt)
+        ax.plot(sel[varx], sel[vary], label=tt,
+                linestyle=ls[tt], color=colors[tt])
 
     ax.grid(visible=True)
     ax.set_xlabel(r'{}'.format(legx))
     ax.set_ylabel(r'{}'.format(legy))
-    ax.legend(bbox_to_anchor=(0.08, 1.), ncol=3, frameon=False, fontsize=12)
+    ax.legend(loc='center right', bbox_to_anchor=(1.30, 0.5),
+              ncol=1, fontsize=15, frameon=False)
 
 
 def ana_ddf_grid(obs, mjdCol='mjd', mjd0=60980.):
