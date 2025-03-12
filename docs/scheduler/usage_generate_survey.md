@@ -18,6 +18,6 @@ Options:
 
 </pre>
 
-Two input files are required: a configuration file for the fields (ex: [deep_rolling_survey.csv](deep_rolling_survey.cmd) and a file with the expected number of visits per observing night (ex: [ddf_desc_0.70_sn.csv](ddf_desc_0.70_sn.csv).
+Two input files are required: a configuration file for the fields (ex: [deep_rolling_survey.csv](deep_rolling_survey.csv)) and a file with the expected number of visits per observing night (ex: [ddf_desc_0.70_sn.csv](ddf_desc_0.70_sn.csv)).
 
 The results of the script is a numpy array saved in a file (with the same name as ddf_survey_visits) located in outputDir.
