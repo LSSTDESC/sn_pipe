@@ -37,12 +37,42 @@ def process_ddf_grid():
     indx = np.where(ddf_grid["mjd"] < mjd0)[0].max()
     ddf_grid = ddf_grid[indx:]
 
-    print(ddfs)
+    # print(ddfs)
 
     # Handy info pre-computed about each DDF
     print(ddf_grid.dtype)
 
-    process_ddf_example('ECDFS', ddfs, ddf_grid, mjd0)
+    # process_ddf_example('ECDFS', ddfs, ddf_grid, mjd0)
+
+    # get_obs_night_length(ddf_grid, mjd0)
+
+
+"""
+def get_obs_night_length(ddf_grid, mjd0):
+
+    import numpy.lib.recfunctions as rf
+    print(len(ddf_grid))
+
+    to = np.copy(ddf_grid)
+    nnights = to['mjd']-mjd0+1
+
+    to = rf.append_fields(to, 'night', nnights, dtypes='<i8')
+
+    idx = to['night'] >= 1
+    idx &= to['night'] <= 11*365
+
+    sel = to[idx]
+    print(sel['night'])
+    nights = np.unique(sel['night'])
+
+    import matplotlib.pyplot as plt
+    for nn in nights:
+        dd = sel[sel['night'] == nn]
+        fig, ax = plt.subplots()
+        # ax.plot(dd['mjd'], dd['COSMOS_airmass'], 'k.')
+        ax.plot(dd['mjd'], np.rad2deg(dd['sun_alt']), 'k.')
+        plt.show()
+"""
 
 
 def process_ddf_example(name, ddfs, ddf_grid, mjd0):
@@ -201,7 +231,7 @@ def ddf_config(sequence_time=60.0,
     }
 
     ddf_kwargs["EDFS_a"] = {
-        "season_seq": [40]*11,
+        "season_seq": [37]*11,
         "boost_early_factor": None,
         "boost_factor_third": 0,
         "g_depth_limit": g_depth_limit,
@@ -226,37 +256,41 @@ parser.add_option('--outputDir', type=str,
 parser.add_option('--ddf_survey', type=str,
                   default='ddf_desc_0.70_sn',
                   help='name of the survey to produce [%default]')
+parser.add_option('--what_to_do', type=str,
+                  default='process_ddf_grid,generate_obs_for_scheduler',
+                  help='name of the survey to produce [%default]')
 
 opts, args = parser.parse_args()
 
 inputDir = opts.inputDir
 outputDir = opts.outputDir
 ddf_survey = opts.ddf_survey
+what = opts.what_to_do.split(',)')
 
 
-"""
-process_ddf_grid()
+if 'process_ddf_grid' in what:
+    process_ddf_grid()
 
-plt.show()
-"""
+    plt.show()
 
-# check if output dir exist
-checkDir(outputDir)
+if 'generate_obs_for_scheduler' in what:
 
-# grab ddf configuration for rubin survey
-ddf_kwargs = ddf_config()
+    # check if output dir exist
+    checkDir(outputDir)
 
+    # grab ddf configuration for rubin survey
+    ddf_kwargs = ddf_config()
 
-# grab ddf scenario
-fName = '{}/{}.hdf5'.format(inputDir, ddf_survey)
-ddf_scenario = pd.read_hdf(fName)
+    # grab ddf scenario
+    fName = '{}/{}.hdf5'.format(inputDir, ddf_survey)
+    ddf_scenario = pd.read_hdf(fName)
 
-# generate observations
+    # generate observations
 
-observations = generate_ddf_scheduled_obs_new(dist_tol=1,
-                                              ddf_kwargs=ddf_kwargs,
-                                              ddf_scenario=ddf_scenario,
-                                              include_moon_phase=False)
-# save the file
-outName = '{}/{}.npy'.format(outputDir, ddf_survey)
-np.save(outName, observations)
+    observations = generate_ddf_scheduled_obs_new(dist_tol=1,
+                                                  ddf_kwargs=ddf_kwargs,
+                                                  ddf_scenario=ddf_scenario,
+                                                  include_moon_phase=False)
+    # save the file
+    outName = '{}/{}.npy'.format(outputDir, ddf_survey)
+    np.save(outName, observations)
