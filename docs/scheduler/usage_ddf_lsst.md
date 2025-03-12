@@ -15,4 +15,4 @@ Options:
 
 </pre>
 
-The input file (../survey_lsst_scheduler/ddf_desc_0.70_sn.npy as default) is can be generated using the script [generate_survey.py](usage_generate_survey.cmd)
+The input file (../survey_lsst_scheduler/ddf_desc_0.70_sn.npy as default) can be generated using the script [generate_survey.py](usage_generate_survey.md)
