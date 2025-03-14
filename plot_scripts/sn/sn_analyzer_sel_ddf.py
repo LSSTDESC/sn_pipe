@@ -12,6 +12,206 @@ import numpy as np
 
 from sn_plotter_analysis.sn_analyser_summary import process_DDF
 from sn_plotter_analysis.sn_analyser_ddf import get_val
+from sn_plotter_analysis.sn_analyser_ddf import get_nsn
+
+
+def plot_ddf_year(datab, norm_factor, config, nside=128,
+                  cols=['year', 'dbName'],
+                  fields=['COSMOS', 'CDFS',
+                          'XMM-LSS',
+                          'ELAISS1', 'EDFS_a', 'EDFS_b']):
+    """
+    Function to plot nsn vs year
+
+    Parameters
+    ----------
+    datab : pandas df
+        Data to process.
+    norm_factor : float
+        norm factor.
+    config : pandas df
+        configuration for the plot.
+    nside : int, optional
+        nside healpix param. The default is 128.
+    cols : list(str), optional
+        columns to select data. The default is ['year', 'dbName'].
+    fields : list(str), optional
+        List of DDFs to consider. The default is 
+        ['COSMOS', 'CDFS','XMM-LSS','ELAISS1', 'EDFS_a', 'EDFS_b'].
+
+    Returns
+    -------
+    None.
+
+    """
+    print('aooooo', config)
+    # plot nsn vs year
+    plot_nsn_tot(datab, norm_factor, config, nside=128,
+                 cols=['year', 'dbName'], cumul=False, fields=fields)
+    # plot nsn vs year - cumulative
+    plot_nsn_tot(datab, norm_factor, config, nside=128,
+                 cols=['year', 'dbName'], cumul=True, fields=fields)
+
+    # plot ratio nsn(z>zmin,sigmac<sigmaC_max)/nsn(z>zmin)
+    plot_ratio_sigmac(datab, norm_factor, config, nside=128,
+                      cols=['year', 'dbName'],
+                      fields=fields, zmin=0.8, sigmaC_max=0.04)
+
+
+def plot_nsn_tot(datab, norm_factor, config, nside=128,
+                 cols=['year', 'dbName'], cumul=False, fields=['COSMOS']):
+    """
+    Function to plot nsn (no sel) vs year
+
+    Parameters
+    ----------
+    datab : pandas df
+        Data to process.
+    norm_factor : float
+        norm factor.
+    config : pandas df
+        configuration for the plot.
+    nside : int, optional
+        nside healpix param. The default is 128.
+    cols : list(str), optional
+        List of cols (groupby) to estimate nsn. The default is ['year', 'dbName'].
+    cumul : bool, optional
+        To plot cumulative or not. The default is False.
+    fields : list(str), optional
+        List of DDFs to consider. The default is ['COSMOS'].
+
+    Returns
+    -------
+    None.
+
+    """
+
+    idx = datab['field'].isin(fields)
+    sel = datab[idx]
+    nsn_a = get_nsn(sel, norm_factor, nside, cols=cols)
+
+    plot_nsn_year_all(nsn_a, config,
+                      xvar='year', xlab='year',
+                      yvar='nsn', ylab='$\Sigma N_{SN}$',
+                      cumul=cumul, figtit=','.join(fields))
+
+
+def plot_ratio_sigmac(datab, norm_factor, config, nside=128,
+                      cols=['year', 'dbName'],
+                      fields=['COSMOS', 'CDFS', 'XMM-LSS',
+                              'ELAISS1', 'EDFS_a', 'EDFS_b'],
+                      zmin=0.8, sigmaC_max=0.04):
+    """
+    plot ratio nsn(z>zmin, sigmaC<=sigmaC_max)/nsn(z>zmin)
+
+    Parameters
+    ----------
+    datab : pandas df
+        Data to process.
+    norm_factor : float
+        norm factor.
+    config : pandas df
+        configuration for the plot.
+    nside : int, optional
+        nside healpix param. The default is 128.
+    cols : list(str), optional
+        List of cols (groupby) to estimate nsn. The default is ['year', 'dbName'].
+    fields : list(str), optional
+        List of DDFs to consider. 
+        The default is ['COSMOS', 'CDFS', 'XMM-LSS','ELAISS1', 'EDFS_a', 'EDFS_b'].
+    zmin : float, optional
+        Min redshift. The default is 0.8.
+    sigmaC_max : float, optional
+        Max sigmaC value. The default is 0.04.
+
+    Returns
+    -------
+    None.
+
+    """
+
+    idm = datab['field'].isin(fields)
+    data = datab[idm]
+    idx = data['zmeas'] >= zmin
+    sel = data[idx]
+
+    nsn_b = get_nsn(sel, norm_factor, nside, cols=cols)
+
+    idx &= data['sigmaC'] <= sigmaC_max
+    sel = data[idx]
+
+    nsn_c = get_nsn(sel, norm_factor, nside, cols=cols)
+
+    nsn_rat = nsn_b.merge(nsn_c, left_on=cols, right_on=cols)
+
+    nsn_rat['nsn_ratio'] = nsn_rat['nsn_y']/nsn_rat['nsn_x']
+
+    ylab = '$\\frac{N_{SN}^{z \geq ' + '{}'.format(zmin)
+    ylab += ',\sigma_C \leq '+'{}'.format(sigmaC_max)
+    ylab += '}}{N_{SN}^{z \geq '+'{}'.format(zmin)+'}}$'
+    plot_nsn_year_all(nsn_rat, config,
+                      xvar='year', xlab='year',
+                      yvar='nsn_ratio', ylab=ylab, cumul=False, figtit=','.join(fields))
+
+
+def plot_nsn_year_all(nsn, config,
+                      xvar='year', xlab='year',
+                      yvar='nsn', ylab='N$_{SN}$', cumul=False, figtit=''):
+    """
+    main plot
+
+    Parameters
+    ----------
+    nsn : pandas df
+        Data to plot.
+    config : pandas df
+        config for the plot.
+    xvar : str, optional
+        x-axis variable. The default is 'year'.
+    xlab : str, optional
+        x-axis label. The default is 'year'.
+    yvar : str, optional
+        y-axis variable. The default is 'nsn'.
+    ylab : str, optional
+        y-axis label. The default is 'N$_{SN}$'.
+    cumul : bool, optional
+        To plot cumulative. The default is False.
+    figtit : str, optional
+        Figure title. The default is ''.
+
+    Returns
+    -------
+    None.
+
+    """
+
+    fig, ax = plt.subplots(figsize=(12, 8))
+    fig.subplots_adjust(right=0.78)
+    fig.suptitle(figtit)
+
+    dbNames = nsn['dbName'].unique()
+    for dbName in dbNames:
+        idx = nsn['dbName'] == dbName
+        sel = nsn[idx]
+        toplot = sel[yvar]
+        if cumul:
+            toplot = np.cumsum(toplot)
+        # get config for plot
+        idxb = config['dbName'] == dbName
+        selconf = config[idxb]
+        ls = selconf['ls'].values[0]
+        color = selconf['color'].values[0]
+        mark = selconf['marker'].values[0]
+        name = selconf['dbName_plot'].values[0]
+        ax.plot(sel[xvar], toplot, color=color,
+                marker=mark, linestyle=ls, label=name, mfc='None', lw=3, ms=10)
+
+    ax.grid(visible=True)
+    ax.set_xlabel(r'{}'.format(xlab))
+    ax.set_ylabel(r'{}'.format(ylab))
+    ax.set_xlim([1, 10])
+    ax.legend(loc='center left', bbox_to_anchor=(
+        1, 0.5), ncol=1, fontsize=14, frameon=False)
 
 
 def plot_DDF(data, norm_factor, config, nside=128,
@@ -50,23 +250,11 @@ def plot_DDF(data, norm_factor, config, nside=128,
     from sn_plotter_analysis.sn_analyser_ddf import plot_DDF_nsn, plot_nsn_new
     from sn_plotter_analysis.sn_analyser_ddf import plot_survey_features
 
-    """
-    plot_nsn_new(data, norm_factor, config, nside,
-                 sigma_mu=0.12, timescale=timescale)
+    plot_ddf_year(data, norm_factor, config, nside,
+                  cols=[timescale, 'dbName'])
 
-    idx = data['zmeas'] >= 0.8
-    sel = data[idx]
-
-    plot_nsn_new(sel, norm_factor, config, nside,
-                 sigma_mu=0.12, timescale=timescale)
-
-    idx &= data['sigma_mu'] <= 0.12
-    sel = data[idx]
-
-    plot_nsn_new(sel, norm_factor, config, nside,
-                 sigma_mu=0.12, timescale=timescale)
     print(test)
-    """
+    plt.show()
     sigma_mu = 0.12
     plot_DDF_nsn(data, norm_factor, config, nside,
                  timescale=timescale, cumul=cumul,
@@ -157,6 +345,21 @@ ddf = process_DDF(conf_df, dataType, dbDir, runType,
 
 print(ddf.columns)
 # plot
+# all fields
+fields = ['COSMOS', 'CDFS', 'XMM-LSS', 'ELAISS1', 'EDFS_a', 'EDFS_b']
+plot_ddf_year(ddf, norm_factor, conf_df, nside=128,
+              cols=['year', 'dbName'],
+              fields=fields)
+
+# UD only
+
+fields = ['COSMOS', 'XMM-LSS']
+plot_ddf_year(ddf, norm_factor, conf_df, nside=128,
+              cols=['year', 'dbName'],
+              fields=fields)
+
+plt.show()
+
 plot_DDF(ddf, norm_factor, nside=128, config=conf_df,
          timescale=timescale, timeslots=timeslots, cumul=cumul)
 
