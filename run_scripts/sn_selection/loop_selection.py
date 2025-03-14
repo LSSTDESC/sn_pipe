@@ -21,7 +21,7 @@ parser.add_option("--zType", type=str,
                   default='spectroz', help="z type (spectroz/photz)  [%default]")
 """
 parser.add_option("--listFields", type=str,
-                  default='COSMOS,CDFS,XMM-LSS,ELAISS1,EDFS',
+                  default='COSMOS,CDFS,XMM-LSS,ELAISS1,EDFS_a,EDFS_b',
                   help=" [%default]")
 parser.add_option("--fieldType", type=str,
                   default='DDF',
