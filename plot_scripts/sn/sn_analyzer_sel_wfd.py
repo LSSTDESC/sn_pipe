@@ -1164,7 +1164,7 @@ def get_val(var):
 
 
 def process_WFD(conf_df, dataType, dbDir_WFD, runType,
-                timescale_file, timeslots, norm_factor):
+                timescale_file, timeslots, norm_factor, fName):
     """
     Function to process WFD data
 
@@ -1192,28 +1192,20 @@ def process_WFD(conf_df, dataType, dbDir_WFD, runType,
 
     OS_WFDs = conf_df['dbName_WFD'].unique()
     print('dbNames', OS_WFDs)
-    wfd = pd.DataFrame()
+
     # fig, ax = plt.subplots(figsize=(14, 8))
     from_to_load = 'from sn_plotter_analysis.sn_analyser_tools'
     mod_to_load = '{} import load_{}'.format(from_to_load, dataType)
     exec(mod_to_load)
     for OS_WFD in OS_WFDs:
         idx = conf_df['dbName_WFD'] == OS_WFD
-        tt = 'load_{}(\'{}\',\'{}\',\'{}\',\'{}\',{})'.format(
+        tt = 'load_{}(\'{}\',\'{}\',\'{}\',\'{}\',{},norm_factor={})'.format(
             dataType, dbDir_WFD, OS_WFD, runType,
-            timescale_file, timeslots)
+            timescale_file, timeslots, norm_factor)
         wfda = eval(tt)
-        idx = wfda['fitstatus'] == 'fitok'
-        idx &= wfda['ebvofMW'] < 0.25
-        # idx &= wfda['sigma_c'] <= 0.04
-        wfda = wfda[idx]
-        wfd = pd.concat((wfd, wfda))
+        wfda['dbName'] = OS_WFD
+        wfda.to_hdf(fName, key='nsn_WFD')
         del wfda
-
-    wfd = wfd.groupby(['dbName', 'healpixID', timescale_file]).apply(
-        lambda x: get_stat(x, norm_factor)).reset_index()
-
-    return wfd
 
 
 def process_WFD_OS_deprecated(conf_df, dataType, dbDir_WFD, runType,
@@ -1721,6 +1713,73 @@ def plot_mollview_wfd(data, timescale, timeslots, nside, varp='nsn', outDir='.')
                          outDir=outDirName, saveName=saveName)
 
 
+def plot_density_wfd(data, timescale, timeslots, nside, varp='nsn', norm_factor=10):
+
+    print(data.columns)
+
+    data['nsn'] /= norm_factor
+
+    data = pix_RA_Dec(data, nside)
+
+    dbNames = data['dbName'].unique()
+
+    for dbName in dbNames:
+        idx = data['dbName'] == dbName
+        sel = data[idx]
+        plot_density_os(sel, varp)
+
+    plt.show()
+
+
+def plot_density_os(data, varp):
+
+    df = get_nsn_dec(data, varp, delta_dec=5.)
+
+    fig, ax = plt.subplots(figsize=(12, 8))
+
+    # ax.plot(df['dec'], df['nsn_sum'])
+    ax.errorbar(df['dec'], df['nsn_density_mean'], yerr=df['nsn_density_std'])
+
+    ax.grid(visible=True)
+
+
+def pix_RA_Dec(data, nside):
+
+    data['healpixID'] = data['healpixID'].astype(int)
+    healpixId = data['healpixID'].unique().tolist()
+
+    import healpy as hp
+    coord = hp.pix2ang(nside, healpixId, nest=True, lonlat=True)
+    df_pix = pd.DataFrame(healpixId, columns=['healpixID'])
+
+    df_pix['pixRA'] = coord[0]
+    df_pix['pixDec'] = coord[1]
+
+    data = data.merge(df_pix, left_on=['healpixID'], right_on=[
+                      'healpixID'], suffixes=['', ''])
+
+    return data
+
+
+def get_nsn_dec(data, varp='nsn', delta_dec=5.):
+
+    decs = np.arange(-80., 20., delta_dec)
+    bin_centers = (decs[: -1] + decs[1:])/2
+    df = pd.DataFrame(bin_centers, columns=['dec'])
+    df['dec'] -= delta_dec/2.
+
+    group = data.groupby(pd.cut(data['pixDec'], decs))
+
+    pixSize = pixelSize(nside)
+    df[f'{varp}_sum'] = group[varp].sum().to_list()
+    df[f'{varp}_density_mean'] = group[varp].mean().to_list()
+    df[f'{varp}_density_std'] = group[varp].std().to_list()
+    df[f'{varp}_density_mean'] /= pixSize
+    df[f'{varp}_density_std'] /= pixSize
+
+    return df
+
+
 parser = OptionParser(description='Script to analyze SN prod after selection')
 
 parser.add_option('--config', type=str,
@@ -1778,22 +1837,33 @@ conf = pd.read_csv(config, comment='#')
 # check outputdir
 checkDir(outDir)
 
-fName = f'{outDir}/{outName}'
-if not os.path.isfile(fName):
-    # load wfds
-    wfd = process_WFD(conf, dataType, dbDir, runType,
-                      timescale, timeslots, norm_factor)
-    wfd.to_hdf(fName, key='nsn_WFD')
-else:
-    wfd = pd.read_hdf(fName)
+dbNames = conf['dbName_WFD'].unique()
+
+wfd = pd.DataFrame()
+for dbName in dbNames:
+    print('loading', dbName)
+    # check outputdir
+    fName = f'{outDir}/{dbName}/{outName}'
+    if not os.path.isfile(fName):
+        print('file not found', fName)
+        # load wfds
+        checkDir(f'{outDir}/{dbName}')
+        idx = conf['dbName_WFD'] == dbName
+        process_WFD(conf[idx], dataType, dbDir, runType,
+                    timescale, timeslots, norm_factor, fName)
+    wfda = pd.read_hdf(fName)
+    wfd = pd.concat((wfd, wfda))
 
 
-print(wfd)
+print(wfd['dbName'].unique())
 if 'summary' in plots:
     print('timescel', timescale)
     plot_summary_wfd(wfd, conf, timescale, cumul=True)
 
 if 'mollweid' in plots:
     plot_mollview_wfd(wfd, timescale, timeslots, nside, outDir=outDir)
+
+if 'density' in plots:
+    plot_density_wfd(wfd, timescale, timeslots, nside)
 
 plt.show()
