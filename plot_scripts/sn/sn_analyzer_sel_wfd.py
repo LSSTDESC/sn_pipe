@@ -64,7 +64,7 @@ parser.add_option('--dataType', type=str,
                   default='DataFrame',
                   help='data type [%default]')
 parser.add_option('--plots', type=str,
-                  default='summary,mollweid,density,density_season',
+                  default='summary,mollweid,density,density_indiv,density_season',
                   help='plots to draw [%default]')
 parser.add_option('--outDir', type=str,
                   default='../sn_wfd',
@@ -129,8 +129,11 @@ if 'mollweid' in plots:
 
 if 'density' in plots:
     from sn_plotter_analysis.sn_analyser_wdf import plot_density_wfd
+    plot_indiv = False
+    if 'density_indiv' in plots:
+        plot_indiv = True
     plot_density_wfd(wfd, timescale, timeslots, nside, conf,
-                     varp=vartoplot, plot_indiv=True)
+                     varp=vartoplot, plot_indiv=plot_indiv)
 if 'density_season' in plots:
     from sn_plotter_analysis.sn_analyser_wdf import plot_density_wfd_season
     plot_density_wfd_season(wfd, timescale, timeslots, nside, conf,
