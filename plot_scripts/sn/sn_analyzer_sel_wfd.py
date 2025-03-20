@@ -22,7 +22,7 @@ from sn_tools.sn_io import checkDir
 import os
 
 
-def plot_DDF(data, norm_factor, config, nside=128, timescale='year'):
+def plot_DDF_deprecated(data, norm_factor, config, nside=128, timescale='year'):
     """
 
 
@@ -72,7 +72,7 @@ def plot_DDF(data, norm_factor, config, nside=128, timescale='year'):
     """
 
 
-def plot_survey_features(data, norm_factor, config, nside, timescale):
+def plot_survey_features_deprecated(data, norm_factor, config, nside, timescale):
     """
     Function to plot survey features related to sn
 
@@ -121,11 +121,11 @@ def plot_survey_features(data, norm_factor, config, nside, timescale):
     """
 
 
-def plot_sn_features(data, field, dbName, timescale,
-                     xvar='z', xlabel='$z$', yvar='sigma_mu',
-                     ylabel='$frac^{N_{SN}}_{\sigma_{\mu} \leq \sigma_{int}}$',
-                     yvar_cut=0.12, type_plot='effi', smoothIt=False,
-                     norm_factor=1):
+def plot_sn_features_deprecated(data, field, dbName, timescale,
+                                xvar='z', xlabel='$z$', yvar='sigma_mu',
+                                ylabel='$frac^{N_{SN}}_{\sigma_{\mu} \leq \sigma_{int}}$',
+                                yvar_cut=0.12, type_plot='effi', smoothIt=False,
+                                norm_factor=1):
     """
     Function to plot sn features from survey
 
@@ -207,8 +207,8 @@ def plot_sn_features(data, field, dbName, timescale,
               ncol=1, fontsize=15, frameon=False)
 
 
-def plot_sigma_mu(ax, selb, xvar, yvar, yvar_cut,
-                  smoothIt, marks, listy, timescale, timeslot, norm_factor):
+def plot_sigma_mu_deprecated(ax, selb, xvar, yvar, yvar_cut,
+                             smoothIt, marks, listy, timescale, timeslot, norm_factor):
     """
     Function to plot sigma_mu vs z
 
@@ -259,8 +259,8 @@ def plot_sigma_mu(ax, selb, xvar, yvar, yvar_cut,
     ax.text(0.3, 0.13, ttext, color='r')
 
 
-def plot_nsn(ax, selb, xvar, yvar, yvar_cut,
-             smoothIt, marks, listy, timescale, timeslot, norm_factor):
+def plot_nsn_deprecated(ax, selb, xvar, yvar, yvar_cut,
+                        smoothIt, marks, listy, timescale, timeslot, norm_factor):
     """
     Function to plot nsn vs z
 
@@ -325,8 +325,8 @@ def plot_nsn(ax, selb, xvar, yvar, yvar_cut,
     # ax.set_ylim([ymin, ymax])
 
 
-def plot_effi(ax, selb, xvar, yvar, yvar_cut,
-              smoothIt, marks, listy, timescale, timeslot, norm_factor):
+def plot_effi_deprecated(ax, selb, xvar, yvar, yvar_cut,
+                         smoothIt, marks, listy, timescale, timeslot, norm_factor):
     """
     Function to plot effi vs z
 
@@ -397,7 +397,7 @@ def plot_effi(ax, selb, xvar, yvar, yvar_cut,
     ax.text(0.3, 0.92, ttext, color='r', fontsize=10)
 
 
-def get_zmax_field(data, field, dbName, timescale, zmin, sigmaC):
+def get_zmax_field_deprecated(data, field, dbName, timescale, zmin, sigmaC):
 
     idx = data['field'] == field
     idx &= data['dbName'] == dbName
@@ -430,7 +430,7 @@ def get_zmax_field(data, field, dbName, timescale, zmin, sigmaC):
     return df
 
 
-def plot_DDF_nsn_z(data, norm_factor, nside, timescale='year'):
+def plot_DDF_nsn_z_deprecated(data, norm_factor, nside, timescale='year'):
     """
     Parameters
     ----------
@@ -469,7 +469,7 @@ def plot_DDF_nsn_z(data, norm_factor, nside, timescale='year'):
                                     dbName, field))
 
 
-def plot_DDF_dither(data, norm_factor, config, nside, timescale='year'):
+def plot_DDF_dither_deprecated(data, norm_factor, config, nside, timescale='year'):
     """
     Functio to plot and estimate dithering effects
 
@@ -527,8 +527,8 @@ def plot_DDF_dither(data, norm_factor, config, nside, timescale='year'):
     plt.show()
 
 
-def plot_DDF_nsn(data, norm_factor, config, nside, sigma_mu=1.e6,
-                 timescale='year', yleg=''):
+def plot_DDF_nsn_deprecated(data, norm_factor, config, nside, sigma_mu=1.e6,
+                            timescale='year', yleg=''):
     """
 
 
@@ -585,7 +585,7 @@ def plot_DDF_nsn(data, norm_factor, config, nside, sigma_mu=1.e6,
     plt.show()
 
 
-def get_sums_nsn(data, norm_factor, nside, cols=['season', 'dbName', 'field']):
+def get_sums_nsn_deprecated(data, norm_factor, nside, cols=['season', 'dbName', 'field']):
     """
     Function to estimate global parameters (nsn, pixArea, ...)
 
@@ -644,8 +644,8 @@ def pixelSize(nside):
     return pixSize
 
 
-def plot_field(data, mypl, config, xvar='season', xleg='season',
-               yvar='nsn', yleg='$N_{SN}$', cumul=False, norm='', logy=False):
+def plot_field_deprecated(data, mypl, config, xvar='season', xleg='season',
+                          yvar='nsn', yleg='$N_{SN}$', cumul=False, norm='', logy=False):
     """
     Function to plot a set of fields results
 
@@ -711,8 +711,8 @@ def plot_field(data, mypl, config, xvar='season', xleg='season',
             ax.set_yscale("log")
 
 
-def plot_field_time(data, mypl, config, xvar='dist', xleg='dist',
-                    yvar='nsn', yleg='$N_{SN}$', ls='None', timescale='year'):
+def plot_field_time_deprecated(data, mypl, config, xvar='dist', xleg='dist',
+                               yvar='nsn', yleg='$N_{SN}$', ls='None', timescale='year'):
     """
     Function to plot a set of fields results
 
@@ -782,7 +782,7 @@ def plot_field_time(data, mypl, config, xvar='dist', xleg='dist',
     return res
 
 
-class Plot_nsn_vs:
+class Plot_nsn_vs_deprecated:
     def __init__(self, data, norm_factor, nside=64):
         """
         class to plot ns vs z or season or ...
@@ -894,12 +894,12 @@ class Plot_nsn_vs:
                      nside=self.nside, saveName=saveName)
 
 
-def plot_nsn_versus_two(data, norm_factor=30, nside=128,
-                        bins=np.arange(0.005, 0.81, 0.01),
-                        xvar='z', xleg='z', logy=False,
-                        cumul=False, xlim=[0.01, 0.8],
-                        label='', fig=None, ax=None, figtitle='',
-                        color='k', marker='o', cumnorm=False):
+def plot_nsn_versus_two_deprecated(data, norm_factor=30, nside=128,
+                                   bins=np.arange(0.005, 0.81, 0.01),
+                                   xvar='z', xleg='z', logy=False,
+                                   cumul=False, xlim=[0.01, 0.8],
+                                   label='', fig=None, ax=None, figtitle='',
+                                   color='k', marker='o', cumnorm=False):
     """
     Method to plot two curves sn vs ...
 
@@ -960,13 +960,13 @@ def plot_versus(df, xvar='year', xlabel='year',
             color=color, label=label, mfc=mfc, markersize=9, lw=2)
 
 
-def plot_nsn_binned(data, norm_factor=30, nside=128,
-                    bins=np.arange(0.005, 0.8, 0.01),
-                    xvar='z', xleg='z', logy=False,
-                    cumul=False, xlim=[0.01, 0.8],
-                    label='', fig=None, ax=None, color='k',
-                    ls='solid', figtitle='', marker='o', frac=0.95,
-                    cumnorm=False):
+def plot_nsn_binned_old(data, norm_factor=30, nside=128,
+                        bins=np.arange(0.005, 0.8, 0.01),
+                        xvar='z', xleg='z', logy=False,
+                        cumul=False, xlim=[0.01, 0.8],
+                        label='', fig=None, ax=None, color='k',
+                        ls='solid', figtitle='', marker='o', frac=0.95,
+                        cumnorm=False):
     """
     Function to plot nsn vs...
 
@@ -1335,11 +1335,11 @@ def process_WFD_deprecated(conf, dataType, dbDir, runType,
     """
     outName = 'nsn_WFD_v3_6.csv'
     outName = 'res_nsn_wfd_3_6_new.csv'
-    
+
     wfd = process_WFD_OS_nsn(conf_df, dataType, dbDir_WFD, runType,
                              timescale_file, timeslots, norm_factor,
                              outName=outName)
-    
+
     plot_summary_wfd(wfd, conf_df, timescale_file,
                      cumul=True, rem_from_name='v3.0')
 
@@ -1378,7 +1378,7 @@ def process_WFD_deprecated(conf, dataType, dbDir, runType,
     """
 
 
-class Plot_density:
+class Plot_density_deprecated:
     def __init__(self, data, timescale, dbName='', norm_factor=10, nside=64):
         """
         Class to plot SNe Ia density vs time
@@ -1713,40 +1713,166 @@ def plot_mollview_wfd(data, timescale, timeslots, nside, varp='nsn', outDir='.')
                          outDir=outDirName, saveName=saveName)
 
 
-def plot_density_wfd(data, timescale, timeslots, nside, varp='nsn', norm_factor=10):
+def plot_density_wfd(datam, timescale, timeslots, nside, conf_df,
+                     varp='nsn', norm_factor=10, plot_indiv=False):
+    """
+    Function to plot SN densities
 
-    print(data.columns)
+    Parameters
+    ----------
+    datam : pandas df
+        Data to process.
+    timescale : str
+        Timescale to use.
+    timeslots : list(int)
+        Time slots to select.
+    nside : int
+        nside healpix parameter.
+    conf_df : pandas df
+        Config for the plot.
+    varp : str, optional
+        Data to consider. The default is 'nsn'.
+    norm_factor : float, optional
+        WFD norm factor. The default is 10.
+    plot_indiv : bool, optional
+        to plot indiv. The default is False.
 
-    data['nsn'] /= norm_factor
+    Returns
+    -------
+    None.
 
-    data = pix_RA_Dec(data, nside)
+    """
 
-    dbNames = data['dbName'].unique()
+    print(datam.columns)
 
-    for dbName in dbNames:
-        idx = data['dbName'] == dbName
-        sel = data[idx]
-        plot_density_os(sel, varp)
-
-    plt.show()
-
-
-def plot_density_os(data, varp):
-
-    df = get_nsn_dec(data, varp, delta_dec=5.)
-
-    fig, ax = plt.subplots(figsize=(12, 8))
-
-    # ax.plot(df['dec'], df['nsn_sum'])
-    ax.errorbar(df['dec'], df['nsn_density_mean'], yerr=df['nsn_density_std'])
-
-    ax.grid(visible=True)
-
-
-def pix_RA_Dec(data, nside):
+    idx = datam[varp] > 0.
+    data = datam[idx]
+    data[varp] /= norm_factor
 
     data['healpixID'] = data['healpixID'].astype(int)
     healpixId = data['healpixID'].unique().tolist()
+    df_pix = pix_RA_Dec(healpixId, nside)
+    data = data.merge(df_pix, left_on=['healpixID'], right_on=[
+        'healpixID'], suffixes=['', ''])
+
+    dbNames = data['dbName'].unique()
+    ylabel = 'N$_{SN}$/deg$^{2}$'
+    if varp == 'nsn_cosmo':
+        ylabel = 'N$_{SN}^{cosmo}$/deg$^{2}$'
+    fig, ax = plt.subplots(figsize=(12, 8))
+    figb, axb = plt.subplots(figsize=(12, 8))
+    for dbName in dbNames:
+        idx = data['dbName'] == dbName
+        sel = data[idx]
+        idc = conf_df['dbName_WFD'] == dbName
+        selp = conf_df[idc]
+        ls = selp['ls'].values[0]
+        marker = selp['marker'].values[0]
+        color = selp['color'].values[0]
+        vara = '{}_density_mean'.format(varp)
+        varb = '{}_density_std'.format(varp)
+        dfa = sel.groupby(['healpixID', 'pixRA', 'pixDec'])[
+            varp].sum().reset_index()
+        df = get_nsn_dec(dfa, varp, delta_dec=5.)
+        if plot_indiv:
+            plot_density_os_summary(df, vara, varb,
+                                    fig=None, ax=None,
+                                    ylabel=ylabel, figtit=dbName,
+                                    ls=ls, color=color,
+                                    marker=marker, label='')
+        plot_density_os_summary(df, vara, '', fig=fig, ax=ax,
+                                ylabel=ylabel, figtit=dbName,
+                                ls=ls, color=color, marker=marker, label='')
+        plot_density_os_summary(df, '{}_area'.format(varp), '',
+                                fig=figb, ax=axb, ylabel='area [deg$^2$]',
+                                figtit=dbName, ls=ls, color=color,
+                                marker=marker, label='')
+
+    ax.grid(visible=True)
+    ax.set_xlabel(r'Dec [deg]')
+    ax.set_ylabel(r'{}'.format(ylabel))
+    axb.grid(visible=True)
+    axb.set_xlabel(r'Dec [deg]')
+    axb.set_ylabel(r'area [deg$^2$]')
+    plt.show()
+
+
+def plot_density_os_summary(df, varm, varstd, fig=None, ax=None,
+                            ylabel='N$_{SN}$/deg$^{2}$',
+                            figtit='', ls='None', color='k', marker='o',
+                            label=''):
+    """
+    Function to make the plot
+
+    Parameters
+    ----------
+    df : pandas df
+        Data to plot.
+    varm : str
+        y-axis var mean.
+    varstd : str
+        y-axis vzr std.
+    fig : matplotlib figure, optional
+        Figure for the plot. The default is None.
+    ax : matplotlib axis, optional
+        axis for the plot. The default is None.
+    ylabel : str, optional
+        y-label. The default is 'N$_{SN}$/deg$^{2}$'.
+    figtit : str, optional
+        Figure title. The default is ''.
+    ls : str, optional
+        Line style. The default is 'None'.
+    color : color, optional
+        color for the plot. The default is 'k'.
+    marker : str, optional
+        marker for the plot. The default is 'o'.
+    label : str, optional
+        label for legend. The default is ''.
+
+    Returns
+    -------
+    None.
+
+    """
+
+    draw_indiv = False
+    if fig is None:
+        draw_indiv = True
+        fig, ax = plt.subplots(figsize=(12, 8))
+        fig.suptitle(figtit)
+
+    ax.plot(df['dec'], df['{}'.format(varm)], color=color,
+            linestyle=ls, marker=marker, mfc='None', label=label)
+    # ax.errorbar(df['dec'], df['nsn_density_mean'],
+    #            yerr=df['nsn_density_std'], color='k')
+    if draw_indiv:
+        df['plus'] = df['{}'.format(varm)]+df['{}'.format(varstd)]
+        df['minus'] = df['{}'.format(varm)]-df['{}'.format(varstd)]
+        ax.fill_between(df['dec'], df['plus'],
+                        df['minus'], color='yellow')
+
+        ax.grid(visible=True)
+        ax.set_xlabel(r'Dec [deg]')
+        ax.set_ylabel(r'{}'.format(ylabel))
+
+
+def pix_RA_Dec(healpixId, nside):
+    """
+    Function to grab (pixRA,pixDec) from healpixID list
+
+    Parameters
+    ----------
+    healpixId : list(int)
+        List of healpixIDs.
+    nside : int
+        nside healpix parameter.
+
+    Returns
+    -------
+    data : pandas df
+        results: df['healpixID','pixRA','pixDec'].
+
+    """
 
     import healpy as hp
     coord = hp.pix2ang(nside, healpixId, nest=True, lonlat=True)
@@ -1755,13 +1881,28 @@ def pix_RA_Dec(data, nside):
     df_pix['pixRA'] = coord[0]
     df_pix['pixDec'] = coord[1]
 
-    data = data.merge(df_pix, left_on=['healpixID'], right_on=[
-                      'healpixID'], suffixes=['', ''])
-
-    return data
+    return df_pix
 
 
 def get_nsn_dec(data, varp='nsn', delta_dec=5.):
+    """
+    Function to estimate the varp density and area per Dec slices
+
+    Parameters
+    ----------
+    data : pandas df
+        Data to process.
+    varp : str, optional
+        var to consider. The default is 'nsn'.
+    delta_dec : float, optional
+        dec slice width. The default is 5..
+
+    Returns
+    -------
+    df : pandas df
+        output data.
+
+    """
 
     decs = np.arange(-80., 20., delta_dec)
     bin_centers = (decs[: -1] + decs[1:])/2
@@ -1776,6 +1917,8 @@ def get_nsn_dec(data, varp='nsn', delta_dec=5.):
     df[f'{varp}_density_std'] = group[varp].std().to_list()
     df[f'{varp}_density_mean'] /= pixSize
     df[f'{varp}_density_std'] /= pixSize
+    df[f'{varp}_area'] = group.size().to_list()
+    df[f'{varp}_area'] *= pixSize
 
     return df
 
@@ -1804,7 +1947,7 @@ parser.add_option('--dataType', type=str,
                   default='DataFrame',
                   help='data type [%default]')
 parser.add_option('--plots', type=str,
-                  default='summary',
+                  default='summary,mollweid,density',
                   help='plots to draw [%default]')
 parser.add_option('--outDir', type=str,
                   default='../sn_wfd',
@@ -1864,6 +2007,7 @@ if 'mollweid' in plots:
     plot_mollview_wfd(wfd, timescale, timeslots, nside, outDir=outDir)
 
 if 'density' in plots:
-    plot_density_wfd(wfd, timescale, timeslots, nside)
+    plot_density_wfd(wfd, timescale, timeslots, nside, conf,
+                     varp='nsn', plot_indiv=True)
 
 plt.show()
