@@ -15,4 +15,6 @@ Options:
 
 </pre>
 
-The input file (../survey_lsst_scheduler/ddf_desc_0.70_sn.npy as default) can be generated using the script [generate_survey.py](usage_generate_survey.md)
+The input file (../survey_lsst_scheduler/ddf_desc_0.70_sn.npy by default) can be generated using the script [generate_survey.py](usage_generate_survey.md)
+
+The output file (../desc_ddf_deep_rolling_auto/ddf_desc_0.70_sn.npy by default) may be analyzed using the script [plot_scripts/scheduler/ana_ddf_scheduler.py](plot_ana_ddf.md_)]
