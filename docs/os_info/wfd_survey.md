@@ -12,4 +12,4 @@ The analysis of the WFD SN survey may be done using the script [plot_scripts/sn/
 
 [NSN density vs Dec slices/year - one OS](plote5.png)
 
-[Mollvied view - one OS](plote6.png)
+[Mollweid view - one OS](plote6.png)
