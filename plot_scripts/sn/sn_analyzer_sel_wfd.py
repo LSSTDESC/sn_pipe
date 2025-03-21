@@ -122,10 +122,14 @@ if 'summary' in plots:
     from sn_plotter_analysis.sn_analyser_wdf import plot_summary_wfd
     plot_summary_wfd(wfd, conf, timescale, cumul=True)
 
-if 'mollweid' in plots:
+res = list(filter(lambda x: 'mollweid' in x, plots))
+if len(res) > 0:
     from sn_plotter_analysis.sn_analyser_wdf import plot_mollview_wfd
+    for_ffmpeg = False
+    if 'mollweid_ffmpeg' in res:
+        for_ffmpeg = True
     plot_mollview_wfd(wfd, timescale, timeslots, nside,
-                      varp=vartoplot, outDir=outDir)
+                      varp=vartoplot, outDir=outDir, for_ffmpeg=for_ffmpeg)
 
 if 'density' in plots:
     from sn_plotter_analysis.sn_analyser_wdf import plot_density_wfd
