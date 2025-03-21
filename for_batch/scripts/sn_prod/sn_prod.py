@@ -96,7 +96,6 @@ def batch_DDF(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
                     procDict['SN_simuFile'] = '{}/{}/DDF_spectroz/{}'.format(
                         outDir_simuparams, dbName, ffi)
 
-                print('go')
                 mybatch.add_batch(scriptref, procDict)
 
             # go for batch
