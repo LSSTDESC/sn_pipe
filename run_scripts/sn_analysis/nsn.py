@@ -12,10 +12,12 @@ from sn_tools.sn_io import load_DataFrame
 from sn_tools.sn_utils import n_z
 from sn_analysis.sn_selection import selection_criteria
 from sn_analysis.sn_calc_plot import select
+from sn_plotter_analysis.sn_analyser_ddf import plot_versus
 import numpy as np
+import matplotlib.pyplot as plt
 
 
-def effi(grp, sellist, bins=np.arange(0.005, 1.11, 0.01)):
+def effi(grp, sellist, bins=np.arange(0.005, 1.11, 0.05)):
 
     nsn_ref = n_z(grp, 'zmeas', bins=bins)
 
@@ -43,6 +45,38 @@ def effi(grp, sellist, bins=np.arange(0.005, 1.11, 0.01)):
     # print(df_effi)
 
     return df_effi
+
+
+def plot_effis(grp, timescale):
+
+    timeslots = grp[timescale].unique()
+
+    years = range(1, 13)
+    lines = ['solid', 'dashed']*6
+    colors = ['k', 'r']*6
+    markers = ['o', 's', 'v', 'P']*3
+
+    ls = dict(zip(years, lines))
+    cols = dict(zip(years, colors))
+    marks = dict(zip(years, markers))
+
+    fig, ax = plt.subplots(figsize=(12, 8))
+    print(grp.name)
+    fig.suptitle = grp.name
+    for tsl in timeslots:
+        idx = grp[timescale] == tsl
+        sel = grp[idx]
+
+        plot_versus(sel, xvar='zmeas', xleg='z',
+                    yvar='effi', yleg='$\epsilon',
+                    fig=fig, ax=ax,
+                    label='{} {}'.format(timescale, tsl), xlim=[0.0, 1.1],
+                    ls=ls[tsl], color=cols[tsl], marker=marks[tsl], yerrvar='err_effi')
+
+    ax.set_xlabel(r'z')
+    ax.set_ylabel(r'observing efficiency')
+    ax.grid(visible=True)
+    plt.show()
 
 
 parser = OptionParser(
@@ -111,6 +145,8 @@ idx = df['field'] == 'COSMOS'
 df = df[idx]
 hpix = df['season'].unique()
 
-effis = df.groupby(['healpixID', 'season']).apply(lambda x: effi(x, sellist))
+effis = df.groupby(['healpixID', 'year']).apply(
+    lambda x: effi(x, sellist)).reset_index()
 
+effis.groupby(['healpixID']).apply(lambda x: plot_effis(x, timescale))
 print(effis)
