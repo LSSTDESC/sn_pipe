@@ -1560,6 +1560,35 @@ def plot_summary_wfd(wfd, conf_df, timescale='season',
 def process_DDF(conf_df, dataType, dbDir_DD, runType,
                 timescale_file, timeslots,
                 norm_factor, nside=128, name='dbName_DD'):
+    """
+    Funtion to process DDFs
+
+    Parameters
+    ----------
+    conf_df : pandas df
+        config file.
+    dataType : str
+        Data type.
+    dbDir_DD : str
+        Data directory.
+    runType : str
+        Run type.
+    timescale_file : str
+        Time scale.
+    timeslots : list(int)
+        Time slots.
+    norm_factor : float
+        norm factor.
+    nside : int, optional
+        nside healpix parameter. The default is 128.
+    name : str, optional
+        db name tag. The default is 'dbName_DD'.
+
+    Returns
+    -------
+    None.
+
+    """
 
     # load DDF
     OS_DDFs = conf_df[name].unique()
