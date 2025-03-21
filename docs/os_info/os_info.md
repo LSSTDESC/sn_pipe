@@ -10,3 +10,5 @@ OS parameters are estimated using LSST pointings. This is especially suitable fo
 ## [Pixel analysis](pixel_analysis.md)
 OS parameters are estimated for each pixel of the celestial sphere. This approach is more precised that the pointing analysis but requires also more computing time.
 
+## [SN pixel analysis](sn_analysis.md)
+The impact of observing strategy on Type Ia supernovae can be estimated using a pixelized simulation of the survey. 
