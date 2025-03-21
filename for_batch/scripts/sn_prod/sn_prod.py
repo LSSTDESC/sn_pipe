@@ -9,7 +9,7 @@ import pandas as pd
 
 
 def batch_DDF(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
-              time='50:00:00', mem='40G'):
+              time='50:00:00', mem='40G', zmin=0.0, zmax=1.1, deltaz=0.2):
     """
 
     Function to launch sim_to_fit for DD fields
@@ -68,35 +68,39 @@ def batch_DDF(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
     procDict.pop('simuParams_dir')
 
     for fieldName in DD_list:
-        procDict['fieldName'] = fieldName
-        procName = 'DD_{}_{}{}_{}_{}_{}'.format(
-            dbName, fieldName, tag_dir, np.round(sigmaInt, 2),
-            snrate, smearFlux)
-        mybatch = BatchIt(processName=procName, time=time, mem=mem)
-        seasons = range(1, 14)
-        if not tag_list.empty:
-            idx = tag_list['ProductionID'] == procName
-            sel = tag_list[idx]
-            if len(sel) > 0:
-                season_max = sel['season_max'].max()
-                seasons = range(season_max, 11)
+        for zval in np.arange(zmin, zmax, deltaz):
+            procDict['fieldName'] = fieldName
+            procDict['SN_z_min'] = np.round(zval, 2)
+            procDict['SN_z_max'] = np.round(zval+deltaz, 2)
+            procName = 'DD_{}_{}{}_{}_{}_{}_{}_{}'.format(
+                dbName, fieldName, tag_dir, np.round(sigmaInt, 2),
+                snrate, smearFlux, np.round(zval, 2), np.round(zval+deltaz, 2))
+            mybatch = BatchIt(processName=procName, time=time, mem=mem)
+            seasons = range(1, 14)
+            if not tag_list.empty:
+                idx = tag_list['ProductionID'] == procName
+                sel = tag_list[idx]
+                if len(sel) > 0:
+                    season_max = sel['season_max'].max()
+                    seasons = range(season_max, 11)
 
-        for season in seasons:
-            procDict['ProductionIDSimu'] = 'SN_{}_{}'.format(
-                procName, season)
-            procDict['Observations_season'] = season
+            for season in seasons:
+                procDict['ProductionIDSimu'] = 'SN_{}_{}'.format(
+                    procName, season)
+                procDict['Observations_season'] = season
 
-            if simu_fromFile == 1:
-                ffi = 'SN_simu_params_DDF_{}_season_{}.hdf5'.format(
-                    dbName, season)
-                outDir_simuparams = '{}_simuparams'.format(simuParams_dir)
-                procDict['SN_simuFile'] = '{}/{}/DDF_spectroz/{}'.format(
-                    outDir_simuparams, dbName, ffi)
+                if simu_fromFile == 1:
+                    ffi = 'SN_simu_params_DDF_{}_season_{}.hdf5'.format(
+                        dbName, season)
+                    outDir_simuparams = '{}_simuparams'.format(simuParams_dir)
+                    procDict['SN_simuFile'] = '{}/{}/DDF_spectroz/{}'.format(
+                        outDir_simuparams, dbName, ffi)
 
-            mybatch.add_batch(scriptref, procDict)
+                print('go')
+                mybatch.add_batch(scriptref, procDict)
 
-        # go for batch
-        mybatch.go_batch()
+            # go for batch
+            mybatch.go_batch()
 
 
 def batch_WFD(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
