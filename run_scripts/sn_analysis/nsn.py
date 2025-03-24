@@ -146,21 +146,21 @@ def nsn_bin_err(data, xvar='zmeas', yvar='nsn', yvar_err='nsn_err',
                 bins=np.arange(0.005, 1.11, 0.2),
                 norm_factor=1):
 
-    group = data.groupby(pd.cut(data[xvar], bins)).apply(lambda x: get_val(x))
+    grp = data.groupby(pd.cut(data[xvar], bins)).apply(lambda x: get_valpar(x))
 
-    print(group)
+    print('booo', grp)
 
     _centers = (bins[:-1] + bins[1:])/2
-    _values = group[yvar].sum()
+    _values = grp[yvar].sum()
 
     print('jj', _values, yvar_err)
     _errors = []
-    for vv in group:
+    for vv in grp:
         _errors.append(np.sqrt((vv[yvar_err]**2).sum()))
 
     print(_errors)
 
-    _errors = np.sqrt((group[yvar_err]**2).sum().value)
+    _errors = np.sqrt((grp[yvar_err]**2).sum().value)
     _values /= norm_factor
 
     df = pd.DataFrame(_centers, columns=[xvar])
@@ -171,7 +171,7 @@ def nsn_bin_err(data, xvar='zmeas', yvar='nsn', yvar_err='nsn_err',
     return df
 
 
-def get_val(grp, yvar='nsn', yvar_err='nsn_err'):
+def get_valpar(grp, yvar='nsn', yvar_err='nsn_err'):
 
     dout = {}
     print('there', grp)
