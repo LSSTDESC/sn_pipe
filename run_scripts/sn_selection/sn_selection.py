@@ -140,13 +140,13 @@ class Select_filt:
 
         for seas in self.seasons:
 
-            print('processing season ', seas)
+            # print('processing season ', seas)
             # load DDFs
             data = load_complete_dbSimu(
                 self.dataDir, self.dbName, self.runType,
                 listDDF=self.listFields, seasons=str(seas),
                 nproc=self.nproc, dataType=self.dataType)
-            print('loaded', seas, len(data))
+            # print('loaded', seas, len(data))
 
             if data.empty:
                 continue
@@ -275,13 +275,24 @@ class Select_filt:
         None.
 
         """
+        vals = ['n_epochs_bef', 'n_epochs_aft',
+                'n_epochs_phase_minus_10', 'n_epochs_phase_plus_20',
+                'n_epochs_m10_p35', 'n_epochs_m10_p5', 'n_epochs_p5_p20',
+                'n_bands_m8_p10', 'Nfilt_10', 'Nfilt_15',
+                'Nfilt_20', 'ndof', 'remove_sat', 'status']
 
         years = sel_data[self.timescale].unique()
         for vv in years:
             idx = sel_data[self.timescale] == vv
-            selb = sel_data[idx]
+            selb = pd.DataFrame(sel_data[idx])
+
+            for vv in vals:
+                selb[vv] = selb[vv].astype(int)
+
             selb.to_hdf(self.get_name_wfd(vv, RAmin, RAmax),
                         key='SN', append=True)
+
+            del selb
 
     def load_process_RAs(self, RAmin, RAmax):
         """
@@ -395,6 +406,11 @@ class Select_filt:
         None.
 
         """
+        vals = ['n_epochs_bef', 'n_epochs_aft',
+                'n_epochs_phase_minus_10', 'n_epochs_phase_plus_20',
+                'n_epochs_m10_p35', 'n_epochs_m10_p5', 'n_epochs_p5_p20',
+                'n_bands_m8_p10', 'Nfilt_10', 'Nfilt_15',
+                'Nfilt_20', 'ndof', 'remove_sat', 'status']
 
         # save output data in pandas df
         if timescale == 'season':
@@ -410,14 +426,20 @@ class Select_filt:
         else:
             years = sel_data[self.timescale].unique()
             for vv in years:
+                if vv == 0:
+                    continue
                 idx = sel_data[self.timescale] == vv
-                selb = sel_data[idx]
+                selb = pd.DataFrame(sel_data[idx])
                 """
                 outName = '{}/SN_{}_{}_{}_{}.hdf5'.format(
                     self.outDir_full, self.fieldType, self.dbName, self.timescale, vv)
                 """
-                print('save data', vv, len(selb))
+                for pp in vals:
+                    selb[pp] = selb[pp].astype(int)
+
+                # selb.info(verbose=True)
                 selb.to_hdf(self.get_name(vv), key='SN', append=True)
+                del selb
                 # store[vv].put('SN', selb)
 
     def get_name(self, seas):
