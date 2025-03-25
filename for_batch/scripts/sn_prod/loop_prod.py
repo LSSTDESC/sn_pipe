@@ -80,6 +80,11 @@ parser.add_option("--fit_remove_sat", type=str,
 parser.add_option("--code", type=str,
                   default='new',
                   help="code to use (new/old) [%default]")
+parser.add_option("--SN_minRFphaseQual", type=float,
+                  default=-10.,
+                  help="min RF phase quality [%default]")
+parser.add_option("--SN_maxRFphaseQual", type=float, default=35.,
+                  help="max RF phase quality [%default]")
 
 opts, args = parser.parse_args()
 
@@ -126,5 +131,7 @@ for i, row in df.iterrows():
     procDict['InstrumentFit_airmassType'] = 'const'
     procDict['LCSelection_snrmin'] = 1.
     procDict['code'] = opts.code
+    procDict['SN_minRFphaseQual'] = opts.SN_minRFphaseQual
+    procDict['SN_maxRFphaseQual'] = opts.SN_maxRFphaseQual
 
     go_batch(script, procDict)

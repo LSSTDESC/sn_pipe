@@ -73,6 +73,12 @@ parser.add_option("--fit_remove_sat", type=str,
 parser.add_option("--code", type=str,
                   default='new',
                   help="code to use (new/old) [%default]")
+parser.add_option("--SN_minRFphaseQual", type=float,
+                  default=-10.,
+                  help="min RF phase quality [%default]")
+parser.add_option("--SN_maxRFphaseQual", type=float, default=35.,
+                  help="max RF phase quality [%default]")
+
 
 opts, args = parser.parse_args()
 
@@ -101,6 +107,8 @@ obs_coadd = opts.Observations_coadd
 sn_sigmaz = opts.SN_sigmaz
 fit_remove_sat = opts.fit_remove_sat
 code = opts.code
+SN_minRFphaseQual = opts.SN_minRFphaseQual
+SN_maxRFphaseQual = opts.SN_maxRFphaseQual
 
 cmd_scr = 'python for_batch/scripts/sn_prod/loop_prod.py'
 cmd_scr += ' --SN_sigmaInt=0.0'
@@ -120,6 +128,8 @@ if dbList_DD != '':
     cmd_ddf += ' --Observations_coadd={}'.format(obs_coadd)
     cmd_ddf += ' --SN_sigmaz={}'.format(sn_sigmaz)
     cmd_ddf += ' --code={}'.format(code)
+    cmd_ddf += ' --SN_minRFphaseQual={}'.format(SN_minRFphaseQual)
+    cmd_ddf += ' --SN_maxRFphaseQual={}'.format(SN_maxRFphaseQual)
     print(cmd_ddf)
     os.system(cmd_ddf)
 
@@ -143,5 +153,7 @@ if dbList_WFD != '':
     cmd_wfd += ' --SN_sigmaz={}'.format(sn_sigmaz)
     cmd_wfd += ' --fit_remove_sat={}'.format(fit_remove_sat)
     cmd_wfd += ' --code={}'.format(code)
+    cmd_wfd += ' --SN_minRFphaseQual={}'.format(SN_minRFphaseQual)
+    cmd_wfd += ' --SN_maxRFphaseQual={}'.format(SN_maxRFphaseQual)
     print(cmd_wfd)
     os.system(cmd_wfd)

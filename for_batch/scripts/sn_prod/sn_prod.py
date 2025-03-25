@@ -9,7 +9,7 @@ import pandas as pd
 
 
 def batch_DDF(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
-              time='50:00:00', mem='40G', zmin=0.01, zmax=1.1, deltaz=0.1):
+              time='50:00:00', mem='40G', zmin=0.00, zmax=1.1, deltaz=0.1):
     """
 
     Function to launch sim_to_fit for DD fields
@@ -67,14 +67,22 @@ def batch_DDF(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
     procDict.pop('simuParams_fromFile')
     procDict.pop('simuParams_dir')
 
+    zvalues = np.arange(zmin, zmax, deltaz).tolist()
     for fieldName in DD_list:
-        for zval in np.arange(zmin, zmax, deltaz):
+        for zval in zvalues:
+            zvmin = zval
+            if zvmin < 0.01:
+                zvmin = 0.01
+            zvmax = zval+deltaz
+            zvmin = np.round(zvmin, 2)
+            zvmax = np.round(zvmax, 2)
             procDict['fieldName'] = fieldName
-            procDict['SN_z_min'] = np.round(zval, 2)
-            procDict['SN_z_max'] = np.round(zval+deltaz, 2)
+            procDict['SN_z_min'] = zvmin
+            procDict['SN_z_max'] = zvmax
+
             procName = 'DD_{}_{}{}_{}_{}_{}_{}_{}'.format(
                 dbName, fieldName, tag_dir, np.round(sigmaInt, 2),
-                snrate, smearFlux, np.round(zval, 2), np.round(zval+deltaz, 2))
+                snrate, smearFlux, zvmin, zvmax)
             mybatch = BatchIt(processName=procName, time=time, mem=mem)
             seasons = range(1, 14)
             if not tag_list.empty:
@@ -103,9 +111,122 @@ def batch_DDF(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
 
 
 def batch_WFD(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
-              time='160:00:00', mem='40G', seas_min=1, seas_max=10,
-              zmin=0.01, zmax=0.7, runMode='seasonal', splitobs=False,
-              extend_rate=True):
+              time='160:00:00', mem='40G',
+              zmin=0.00, zmax=0.8, deltaz=0.1):
+    """
+    Function to launch sim_to_fit for WFD
+
+    Parameters
+    ----------
+    theDict : dict
+        script parameters.
+    scriptref : str, optional
+        script to use for production. The default is
+            'run_scripts/sim_to_fit/run_sim_to_fit.py'.
+    time : str, optional
+        processing time per job. The default is '30:00:00'.
+    mem : str, optional
+        job mem. The default is '40G'.
+    seas_min: int, optional
+        min season of obs. The default is 1.
+    seas_max: int, optional
+        max season of obs. The default is 10.
+
+
+    Returns
+    -------
+    None.
+
+    """
+
+    dbName = theDict['dbName']
+    dbExtens = theDict['dbExtens']
+    outDir = theDict['OutputSimu_directory']
+    reprocList = theDict['reprocList']
+    sigmaInt = theDict['SN_sigmaInt']
+    snrate = theDict['SN_z_rate']
+    zmax = np.round(zmax, 2)
+    zmin = np.round(zmin, 2)
+    smearFlux = theDict['SN_smearFlux']
+    sat = theDict['saturation_effect']
+    sat_psf = theDict['saturation_psf']
+    ccdfullwell = theDict['saturation_ccdfullwell']
+    zvalues = np.arange(zmin, zmax+deltaz, deltaz).tolist()
+    zvalues[0] += 0.01
+
+    tag_list = pd.DataFrame()
+    if 'None' not in reprocList:
+        tag_list = pd.read_csv(reprocList)
+
+    procDict = copy.deepcopy(theDict)
+
+    del procDict['DD_list']
+    del procDict['reprocList']
+    # procDict['nside'] = 64
+    # procDict['fieldType'] = 'WD'
+    # procDict['Fitter_parnames'] = 'z,t0,x1,c,x0'
+    satb = 'nosat'
+    if sat == 1:
+        satb = 'sat_{}_{}'.format(sat_psf, int(ccdfullwell))
+    tag_dir = '_spectroz_{}'.format(satb)
+    # if 'z' in procDict['Fitter_parnames']:
+    if procDict['Fitter_sigmaz'] >= 1.e-3:
+        tag_dir = '_photz'
+
+    procDict['OutputSimu_directory'] = '{}/{}/WFD{}'.format(outDir,
+                                                            dbName, tag_dir)
+    procDict['OutputFit_directory'] = procDict['OutputSimu_directory']
+    # procDict['SN_NSNfactor'] = 30
+
+    simu_fromFile = procDict['simuParams_fromFile']
+    simuParams_dir = procDict['simuParams_dir']
+    procDict.pop('simuParams_fromFile')
+    procDict.pop('simuParams_dir')
+
+    deltaRA = 10.
+
+    RAs = np.arange(0., 360.+deltaRA, deltaRA)
+
+    seas_min = 1
+    seas_max = 11
+    seasons = range(seas_min, seas_max+1)
+    for RA in RAs[:-1]:
+        RAmin = np.round(RA, 1)
+        RAmax = RAmin+deltaRA
+        RAmax = np.round(RAmax, 1)
+
+        procName = 'WFD_{}_{}_{}{}_{}_{}'.format(
+            dbName, RAmin, RAmax, tag_dir, np.round(sigmaInt, 2), snrate)
+        for iz in range(len(zvalues)-1):
+            zmin = np.round(zvalues[iz], 2)
+            zmax = np.round(zvalues[iz+1], 2)
+            procNamea = '{}_{}_{}'.format(
+                procName, zmin, zmax)
+            sprocName = 'SN_WFD_{}_{}_{}{}_{}'.format(dbName, RAmin, RAmax,
+                                                      tag_dir, smearFlux)
+            mybatch = BatchIt(processName=procNamea, time=time, mem=mem)
+            procDict['RAmin'] = RAmin
+            procDict['RAmax'] = RAmax
+            procDict['SN_z_min'] = zmin
+            procDict['SN_z_max'] = zmax
+            procDict['SN_z_minsimu'] = zmin
+            procDict['SN_z_maxsimu'] = zmax
+
+            for seas in seasons:
+                tttag = 'SN_{}_{}_{}_{}'.format(procName, seas, zmin, zmax)
+                procDict['ProductionIDSimu'] = tttag
+                procDict['Observations_season'] = seas
+
+                mybatch.add_batch(scriptref, procDict)
+
+            # go for batch
+            mybatch.go_batch()
+
+
+def batch_WFD_old(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
+                  time='160:00:00', mem='40G', seas_min=1, seas_max=10,
+                  zmin=0.01, zmax=0.7, runMode='seasonal', splitobs=False,
+                  extend_rate=True):
     """
     Function to launch sim_to_fit for WFD
 
@@ -264,10 +385,15 @@ for key, vals in confDict.items():
 if opts.fieldType == 'DD':
     batch_DDF(procDict, mem='20Gb')
 
+if opts.fieldType == 'WFD':
+    batch_WFD(procDict)
+
+
 # this is for WFD
 # procDict['simuParams_fromFile'] = opts.simuParams_fromFile
 
 # seasons = [(1, 2), (3, 4), (5, 6), (7, 8), (9, 14)]
+"""
 seasons = [(1, 7), (7, 14)]
 runMode = 'all_seasons'
 if opts.fieldType == 'WFD':
@@ -287,9 +413,4 @@ if opts.fieldType == 'WFD':
                       zmin=0.01, zmax=opts.SN_z_max,
                       mem='20Gb', runMode=runMode, extend_rate=False)
 
-        """
-        batch_WFD(procDict,
-                  seas_min=seas[0], seas_max=seas[1],
-                  zmin=0.6, zmax=0.8,
-                  mem='20Gb', runMode=runMode)
-        """
+"""
