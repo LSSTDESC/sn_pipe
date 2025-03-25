@@ -14,12 +14,31 @@ from sn_analysis.sn_selection import selection_criteria
 from sn_analysis.sn_calc_plot import select
 from sn_plotter_analysis.sn_analyser_ddf import plot_versus
 import numpy as np
-import matplotlib.pyplot as plt
+
 from sn_tools.sn_rate import SN_Rate
 from scipy.interpolate import interp1d
+from sn_tools.sn_utils import multiproc
 
 
-def effi(grp, sellist, bins=np.arange(0.005, 1.11, 0.1)):
+def effi(grp, sellist, bins=np.arange(0.0, 1.12, 0.02)):
+    """
+    Method to estimate efficiencies
+
+    Parameters
+    ----------
+    grp : pandas df
+        Data to process.
+    sellist : list(sel)
+        Selection list.
+    bins : np array, optional
+        z-bin range. The default is np.arange(0.0, 1.02, 0.02).
+
+    Returns
+    -------
+    df_effi : pandas df
+        efficiencies.
+
+    """
 
     nsn_ref = n_z(grp, 'zmeas', bins=bins)
 
@@ -27,11 +46,6 @@ def effi(grp, sellist, bins=np.arange(0.005, 1.11, 0.1)):
     sel = select(grp, sellist)
 
     nsn_sel = n_z(sel, 'zmeas', bins=bins)
-
-    """
-    print(nsn_ref)
-    print(nsn_sel)
-    """
 
     df_t = nsn_ref.merge(nsn_sel, left_on=['zmeas'],
                          right_on=['zmeas'], suffixes=['_ref', '_sel'])
@@ -45,45 +59,14 @@ def effi(grp, sellist, bins=np.arange(0.005, 1.11, 0.1)):
 
     df_effi = df_effi.fillna(0)
 
-    # print(df_effi)
+    del df_t
+    del nsn_ref
+    del nsn_sel
 
     return df_effi
 
 
-def plot_effis(grp, timescale):
-
-    timeslots = grp[timescale].unique()
-
-    years = range(1, 13)
-    lines = ['solid', 'dashed']*6
-    colors = ['k', 'r']*6
-    markers = ['o', 's', 'v', 'P']*3
-
-    ls = dict(zip(years, lines))
-    cols = dict(zip(years, colors))
-    marks = dict(zip(years, markers))
-
-    fig, ax = plt.subplots(figsize=(12, 8))
-    print(grp.name, type(grp.name))
-    figtitle = '{}'.format(int(grp.name))
-    fig.suptitle(figtitle)
-    for tsl in timeslots:
-        idx = grp[timescale] == tsl
-        sel = grp[idx]
-
-        plot_versus(sel, xvar='zmeas', xleg='z',
-                    yvar='effi', yleg='$\epsilon',
-                    fig=fig, ax=ax,
-                    label='{} {}'.format(timescale, tsl), xlim=[0.0, 1.1],
-                    ls=ls[tsl], color=cols[tsl], marker=marks[tsl], yerrvar='err_effi')
-
-    ax.set_xlabel(r'z')
-    ax.set_ylabel(r'observing efficiency')
-    ax.grid(visible=True)
-    plt.show()
-
-
-def get_nsn(grp, zmin=0.01, zmax=1.1, dz=0.1):
+def get_nsn(grp, sellist, zmin=0.01, zmax=1.2, dz=0.1):
     """
     Function to estimate the number of SNe Ia vs z
     from observing efficiency and SNe Ia rate explosion
@@ -105,76 +88,111 @@ def get_nsn(grp, zmin=0.01, zmax=1.1, dz=0.1):
 
     """
 
+    print('years', grp.groupby(['year']).size().reset_index(), len(grp))
+
+    # get efficiencies
+    effis = effi(grp, sellist)
+
+    print(grp.name)
+
+    # get snrates
     zplot = np.arange(zmin, zmax, dz)
     season_length = grp['season_length'].mean()
     survey_area = grp['survey_area'].mean()
-    zz, rateInterp, rateInterp_err = getRates(zmin=zmin, zmax=zmax, dz=dz, survey_area=survey_area,
+    zz, rateInterp, rateInterp_err = getRates(zmin=zmin, zmax=zmax, dz=dz,
+                                              survey_area=survey_area,
                                               season_length=season_length)
     # interpolate efficiency vs z
     effiInterp = interp1d(
-        grp['zmeas'], grp['effi'], kind='linear', bounds_error=False, fill_value=0.)
+        effis['zmeas'], effis['effi'], kind='linear',
+        bounds_error=False, fill_value=0.)
     # interpolate variance efficiency vs z
     effiInterp_err = interp1d(
-        grp['zmeas'], grp['effi_err'], kind='linear', bounds_error=False, fill_value=0.)
+        effis['zmeas'], effis['effi_err'], kind='linear',
+        bounds_error=False, fill_value=0.)
 
     nsn = effiInterp(zz)*rateInterp(zz)
 
     # get errors
     nsn_err = []
-    for i in range(len(zplot)):
-        siga = effiInterp_err(zplot[:i+1])*rateInterp(zplot[:i+1])
+    for i in range(len(zz)):
+        siga = effiInterp_err(zz[:i+1])*rateInterp(zz[:i+1])
         # sigb = effiInterp(zplot[:i+1])*rateInterp_err(zplot[:i+1])
         sigb = 0.
         nsn_err.append(np.sqrt(np.sum(siga**2 + sigb**2)))
-
-    print(grp.name, np.cumsum(nsn)[-1])
 
     sn_df = pd.DataFrame(zz, columns=['zmeas'])
     sn_df['nsn'] = nsn
     sn_df['nsn_err'] = nsn_err
 
-    print(sn_df)
-
     nsn_bin = nsn_bin_err(sn_df)
 
     print(nsn_bin)
+    # plot the results
+    # plot_effi_nsn(zz, effiInterp, effiInterp_err, nsn, nsn_err)
 
-    plot_effi_nsn(zz, effiInterp, effiInterp_err, nsn, nsn_err)
+    return nsn_bin
 
 
 def nsn_bin_err(data, xvar='zmeas', yvar='nsn', yvar_err='nsn_err',
-                bins=np.arange(0.005, 1.11, 0.2),
-                norm_factor=1):
+                bins=np.arange(0.0, 1.2, 0.1)):
+    """
+    Method to estimate nsn, err nsn per z-bin
 
-    grp = data.groupby(pd.cut(data[xvar], bins)).apply(lambda x: get_valpar(x))
+    Parameters
+    ----------
+    data : pandas df
+        Data to process.
+    xvar : str, optional
+        x-axis variable. The default is 'zmeas'.
+    yvar : str, optional
+        y-axis variable. The default is 'nsn'.
+    yvar_err : str, optional
+        y-axis variable error. The default is 'nsn_err'.
+    bins : np array, optional
+        z-bin values. The default is np.arange(0.0, 1.02, 0.2).
 
-    print('booo', grp)
+    Returns
+    -------
+    df : pandas df
+        output data.
 
+    """
+
+    df = data.groupby(pd.cut(data[xvar], bins, right=False)).apply(
+        lambda x: get_valpar(x))
+
+    df = pd.DataFrame(df)
+
+    print(df)
     _centers = (bins[:-1] + bins[1:])/2
-    _values = grp[yvar].sum()
-
-    print('jj', _values, yvar_err)
-    _errors = []
-    for vv in grp:
-        _errors.append(np.sqrt((vv[yvar_err]**2).sum()))
-
-    print(_errors)
-
-    _errors = np.sqrt((grp[yvar_err]**2).sum().value)
-    _values /= norm_factor
-
-    df = pd.DataFrame(_centers, columns=[xvar])
-
-    df[yvar] = list(_values)
-    df[yvar_err] = _errors
+    # df = df.drop(columns=[xvar])
+    df[f'{xvar}_new'] = _centers
 
     return df
 
 
 def get_valpar(grp, yvar='nsn', yvar_err='nsn_err'):
+    """
+    Method to grab sum and error NSN
+
+    Parameters
+    ----------
+    grp : pandas df
+        Data to process.
+    yvar : str, optional
+        var for the sum. The default is 'nsn'.
+    yvar_err : str, optional
+        var for the error. The default is 'nsn_err'.
+
+    Returns
+    -------
+    pandas df
+        output data.
+
+    """
 
     dout = {}
-    print('there', grp)
 
     dout[yvar] = [grp[yvar].sum()]
     dout[yvar_err] = [np.sqrt((grp[yvar_err]**2).sum())]
@@ -184,6 +202,7 @@ def get_valpar(grp, yvar='nsn', yvar_err='nsn_err'):
 
 def plot_effi_nsn(zz, effiInterp, effiInterp_err, nsn, nsn_err):
 
+    import matplotlib.pyplot as plt
     fig, ax = plt.subplots(figsize=(12, 8))
 
     ax.errorbar(zz, effiInterp(zz), yerr=effiInterp_err(
@@ -201,7 +220,7 @@ def plot_effi_nsn(zz, effiInterp, effiInterp_err, nsn, nsn_err):
 
 
 def getRates(rate='Hounsell', survey_area=9.6, season_length=180.,
-             zmin=0.01, zmax=1.1, dz=0.01, H0=70., Om0=0.3):
+             zmin=0.01, zmax=1.11, dz=0.01, H0=70., Om0=0.3):
     """
     Function to estimate SNe Ia rate explosion
 
@@ -244,7 +263,7 @@ def getRates(rate='Hounsell', survey_area=9.6, season_length=180.,
                                                             dz=dz,
                                                             duration=season_length,
                                                             survey_area=survey_area,
-                                                            account_for_edges=False)
+                                                            account_for_edges=True)
 
     # rate interpolation
     rateInterp = interp1d(zz, nsn, kind='linear',
@@ -317,11 +336,20 @@ for i, row in dbNames.iterrows():
 
 
 idx = df['field'] == 'COSMOS'
-# idx &= df['healpixID'] == 109032.
-df = df[idx]
-hpix = df['season'].unique()
+idx &= df['healpixID'] == 108957
+df = pd.DataFrame(df[idx])
 
-print(df.columns)
+# df.to_hdf('COSMOS.hdf5', key='sn')
+
+nsn = df.groupby(['healpixID', 'season']).apply(
+    lambda x: get_nsn(x, sellist)).reset_index()
+
+nsn = nsn.drop(columns=['zmeas'])
+nsn = nsn.rename(columns={'zmeas_new': 'zmeas'})
+print('ezs', nsn)
+
+
+"""
 effis = df.groupby(['healpixID', 'year']).apply(
     lambda x: effi(x, sellist)).reset_index()
 
@@ -335,3 +363,4 @@ effis = effis.merge(df[ccols], left_on=[
 # get nsn
 
 effis.groupby(['healpixID', timescale]).apply(lambda x: get_nsn(x))
+"""
