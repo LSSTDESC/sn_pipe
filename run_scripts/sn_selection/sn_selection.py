@@ -416,6 +416,7 @@ class Select_filt:
                 outName = '{}/SN_{}_{}_{}_{}.hdf5'.format(
                     self.outDir_full, self.fieldType, self.dbName, self.timescale, vv)
                 """
+                print('save data', vv, len(selb))
                 selb.to_hdf(self.get_name(vv), key='SN', append=True)
                 # store[vv].put('SN', selb)
 
