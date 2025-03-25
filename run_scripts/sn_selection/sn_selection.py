@@ -140,12 +140,13 @@ class Select_filt:
 
         for seas in self.seasons:
 
+            print('processing season ', seas)
             # load DDFs
             data = load_complete_dbSimu(
                 self.dataDir, self.dbName, self.runType,
                 listDDF=self.listFields, seasons=str(seas),
                 nproc=self.nproc, dataType=self.dataType)
-            print(seas, len(data))
+            print('loaded', seas, len(data))
 
             if data.empty:
                 continue
