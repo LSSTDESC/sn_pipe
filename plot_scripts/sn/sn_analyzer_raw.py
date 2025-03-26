@@ -1,11 +1,11 @@
 import matplotlib.pyplot as plt
 from sn_analysis.sn_tools import *
-from sn_analysis.sn_calc_plot import Calc_zlim, histSN_params, select
+from sn_analysis.sn_calc_plot import Calc_zlim, histSN_params
 from sn_analysis.sn_analysis import sn_load_select, get_nsn, nsn_vs_sel
 from sn_plotter_analysis.plotNSN import plotNSN, plot_NSN
 from sn_tools.sn_io import checkDir
 from sn_analysis.sn_analysis import processNSN, processNSN_z
-from sn_analysis.sn_selection import selection_criteria
+from sn_analysis.sn_selection import selection_criteria, select
 
 from optparse import OptionParser
 import numpy as np
