@@ -13,6 +13,7 @@ import numpy as np
 from sn_plotter_analysis.sn_analyser_summary import process_DDF
 from sn_plotter_analysis.sn_analyser_ddf import get_val
 from sn_plotter_analysis.sn_analyser_ddf import get_nsn
+from sn_plotter_analysis.sn_plot import plot_nsn_year_all
 
 
 def plot_ddf_year(datab, norm_factor, config, nside=128,
@@ -154,9 +155,9 @@ def plot_ratio_sigmac(datab, norm_factor, config, nside=128,
                       yvar='nsn_ratio', ylab=ylab, cumul=False, figtit=','.join(fields))
 
 
-def plot_nsn_year_all(nsn, config,
-                      xvar='year', xlab='year',
-                      yvar='nsn', ylab='N$_{SN}$', cumul=False, figtit=''):
+def plot_nsn_year_all_deprecated(nsn, config,
+                                 xvar='year', xlab='year',
+                                 yvar='nsn', ylab='N$_{SN}$', cumul=False, figtit=''):
     """
     main plot
 
