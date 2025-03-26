@@ -132,7 +132,7 @@ def process_pixels(healpixIDs, params, j=0, output_q=None):
     for hpix in healpixIDs:
         idx = data['healpixID'] == hpix
         sel = data[idx]
-        nsn_ = sel.groupby(['healpixID', 'season']).apply(
+        nsn_ = sel.groupby(vv).apply(
             lambda x: get_nsn(x, sellist)).reset_index()
         for v in vv:
             nsn_[v] = nsn_[v].astype(int)
