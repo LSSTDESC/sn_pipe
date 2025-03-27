@@ -161,9 +161,6 @@ parser.add_option("--fieldType", type=str,
 parser.add_option('--runType', type=str,
                   default='spectroz',
                   help='run type  [%default]')
-parser.add_option('--timescale', type=str,
-                  default='year',
-                  help='timescale of the files to process [%default]')
 parser.add_option('--timeslots', type=str,
                   default='1-10',
                   help='time slot (season or year) to process [%default]')
@@ -187,13 +184,14 @@ fieldType = opts.fieldType
 listFields = opts.listFields.split(',')
 runType = opts.runType
 timeslots = opts.timeslots
-timescale = opts.timescale
 timeslots = get_val(timeslots)
 dataType = opts.dataType
 dbList = opts.dbList
 selconfig = opts.selconfig
 outDir = opts.outDir
 
+# mandatory: seasons to estimate nsn
+timescale = 'season'
 
 checkDir(outDir)
 

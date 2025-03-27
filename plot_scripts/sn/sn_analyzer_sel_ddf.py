@@ -251,9 +251,12 @@ def plot_DDF(data, norm_factor, config, nside=128,
     from sn_plotter_analysis.sn_analyser_ddf import plot_DDF_nsn, plot_nsn_new
     from sn_plotter_analysis.sn_analyser_ddf import plot_survey_features
 
+    """
     plot_ddf_year(data, norm_factor, config, nside,
                   cols=[timescale, 'dbName'])
 
+    """
+    """
     print(test)
     plt.show()
     sigma_mu = 0.12
@@ -273,13 +276,15 @@ def plot_DDF(data, norm_factor, config, nside=128,
     plt.show()
     # specific survey features
     print(data.columns)
-    fields = ['COSMOS']
+    """
+    fields = ['XMM-LSS']
     dbNames = data['dbName'].unique()
 
     for field in fields:
         for dbName in dbNames:
             plot_survey_features(data, field, dbName, norm_factor, config, nside,
                                  timescale=timescale, timeslots=timeslots)
+    plt.show()
 
     # plot_DDF_dither(data, norm_factor, config, nside)
 
