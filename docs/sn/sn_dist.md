@@ -26,6 +26,6 @@ python plot_scripts/sn/sn_plot_dist_ddf.py --dbDir=../Output_SN_DD_sigmaInt_0.0_
 
 [NSN vs dist](plotb1.png)
 
-[NSN(z>=0.8)] vs dist](plotb2.png)
+[NSN(z>=0.8) vs dist](plotb2.png)
 
-[NSN(z>=0.8,sigmaC<= 0.04)] vs dist](plotb3.png)
+[NSN(z>=0.8,sigmaC<= 0.04) vs dist](plotb3.png)
