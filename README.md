@@ -69,6 +69,8 @@ To uninstall the pipeline: python pip_sn_pack.py --action uninstall --package=al
 
 ### [Scheduler Analysis](docs/scheduler/scheduler.md)
 
+### [Type Ia Supernovae production and analysis](docs/sn/sne_Ia.md)
+
 ## sn_pipe structure
 
 ### [sn_pipe content](docs/gen/sn_pipe.md)
