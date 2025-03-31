@@ -8,7 +8,7 @@ Created on Thu Feb 13 16:42:18 2025
 from optparse import OptionParser
 import pandas as pd
 import matplotlib.pyplot as plt
-from sn_plotter_metrics.plot4metric import plot_pixels
+from sn_plotter_metrics.plot4metric import multiplot_dist
 from sn_plotter_metrics.plot4metric import plotMollview_seasons
 import numpy as np
 
@@ -104,60 +104,22 @@ def multiplot_season(sel, varx, legx, vary, legy):
                           legx=legx, vary=vvary, legy=legy)
 
 
-def multiplot_dist(sel, yvar='cadence', yleg='cadence [day]'):
+def print_pixel_info(sel, healpixID):
     """
-    Function to plot yvar vs distance to the cluster center
+    Function to grab pixel info
 
     Parameters
     ----------
     sel : pandas df
         Data to process.
-    yvar : str, optional
-        y-axis variable. The default is 'cadence'.
-    yleg : str, optional
-        y-axis label. The default is 'cadence [day]'.
+    healpixID : int
+        healpix ID.
 
     Returns
     -------
     None.
 
     """
-
-    fields = sel['field'].unique()
-    dbName = sel['dbName'].unique()[0]
-
-    bands = 'ugrizy'
-    seasons = range(1, 11, 1)
-    colors = ['r', 'b', 'k', 'g', 'orange']*2
-    lstyles = ['solid']*5+['dashed']*5
-    mstyles = ['o', 's', 'P', 'D', 'x']*5
-    cols = dict(zip(seasons, colors))
-    lstys = dict(zip(seasons, lstyles))
-    marks = dict(zip(seasons, mstyles))
-    for field in fields:
-        idx = sel['field'] == field
-        selb = sel[idx]
-        seasons = selb['season'].unique()
-        fig, ax = plt.subplots(figsize=(12, 8))
-        fig.subplots_adjust(right=0.80)
-        figtitle = f'{dbName} - {field}'
-        fig.suptitle(figtitle)
-        for seas in range(1, 11):
-            idxb = selb['season'] == seas
-            selc = selb[idxb]
-            plot_pixels(selc, yvar=yvar,
-                        yleg=yleg, fig=fig, ax=ax, showIt=False,
-                        color=cols[seas], ls=lstys[seas], marker=marks[seas],
-                        label=f'season {seas}', ms=12, markevery=10,
-                        rebin=True, smoothIt=True, distval='dist')
-
-        ax.grid(visible='True')
-        ax.legend(bbox_to_anchor=(0.99, 0.8),
-                  ncol=1, frameon=False, fontsize=15)
-        # ax.set_xlim([0, None])
-
-
-def print_pixel_info(sel, healpixID):
 
     idxb = sel['healpixID'] == healpixID
     selnc = sel[idxb]
@@ -213,9 +175,9 @@ if 'nvisits_season' in plots:
     multiplot_season(sel, varx='season', legx='season',
                      vary='nvisits', legy='N$_{visits}$')
 if 'cadence_dist' in plots:
-    multiplot_dist(sel)
+    multiplot_dist(sel, dbName=dbName)
 if 'nvisits_dist' in plots:
-    multiplot_dist(sel, yvar='nvisits', yleg=r'N$_{visits}$')
+    multiplot_dist(sel, yvar='nvisits', yleg=r'N$_{visits}$', dbName=dbName)
 if 'mollview_cadence' in plots:
     plotMollview_seasons(nside, sel, dbName,
                          yvar='cadence', yleg='cadence [day]',
