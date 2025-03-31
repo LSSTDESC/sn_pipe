@@ -289,7 +289,7 @@ parser.add_option('--dataType', type=str,
                   help='data type [%default]')
 parser.add_option('--plots', type=str,
                   default='nsn_all,nsn_ud',
-                  help='for cumulative plots [%default]')
+                  help='plots to draw [%default]')
 """
 parser.add_option('--cumul', type=int,
                   default=0,
