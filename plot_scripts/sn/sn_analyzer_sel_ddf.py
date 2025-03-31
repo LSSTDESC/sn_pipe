@@ -53,6 +53,14 @@ def plot_ddf_year(datab, norm_factor, config, nside=128,
     plot_nsn_tot(datab, norm_factor, config, nside=128,
                  cols=['year', 'dbName'], cumul=True, fields=fields)
 
+    # zmin > 0.8
+
+    plot_nsn_tot(datab, norm_factor, config, nside=128,
+                 cols=['year', 'dbName'], cumul=False, fields=fields, zmin=0.8, sigmaC=0.04)
+    # plot nsn vs year - cumulative
+    plot_nsn_tot(datab, norm_factor, config, nside=128,
+                 cols=['year', 'dbName'], cumul=True, fields=fields, zmin=0.8, sigmaC=0.04)
+
     # plot ratio nsn(z>zmin,sigmac<sigmaC_max)/nsn(z>zmin)
     plot_ratio_sigmac(datab, norm_factor, config, nside=128,
                       cols=['year', 'dbName'],
@@ -60,7 +68,8 @@ def plot_ddf_year(datab, norm_factor, config, nside=128,
 
 
 def plot_nsn_tot(datab, norm_factor, config, nside=128,
-                 cols=['year', 'dbName'], cumul=False, fields=['COSMOS']):
+                 cols=['year', 'dbName'], cumul=False, fields=['COSMOS'],
+                 zmin=-1, sigmaC=-1):
     """
     Function to plot nsn (no sel) vs year
 
@@ -88,12 +97,27 @@ def plot_nsn_tot(datab, norm_factor, config, nside=128,
     """
 
     idx = datab['field'].isin(fields)
+
+    ylab_add = ''
+    if zmin > -1:
+        idx &= datab['zmeas'] >= zmin
+        ylab_add = '$z \geq $'+'{}'.format(zmin)
+
+    if sigmaC > -1:
+        idx &= datab['sigmaC'] <= sigmaC
+        ylab_add += ', $\sigma_C \leq $'+'{}'.format(sigmaC)
+
     sel = datab[idx]
+
     nsn_a = get_nsn(sel, norm_factor, nside, cols=cols)
+
+    ylab = '$\Sigma N_{SN}$'
+    if ylab_add != '':
+        ylab += '({})'.format(ylab_add)
 
     plot_nsn_year_all(nsn_a, config,
                       xvar='year', xlab='year',
-                      yvar='nsn', ylab='$\Sigma N_{SN}$',
+                      yvar='nsn', ylab=ylab,
                       cumul=cumul, figtit=','.join(fields))
 
 
@@ -155,68 +179,8 @@ def plot_ratio_sigmac(datab, norm_factor, config, nside=128,
                       yvar='nsn_ratio', ylab=ylab, cumul=False, figtit=','.join(fields))
 
 
-def plot_nsn_year_all_deprecated(nsn, config,
-                                 xvar='year', xlab='year',
-                                 yvar='nsn', ylab='N$_{SN}$', cumul=False, figtit=''):
-    """
-    main plot
-
-    Parameters
-    ----------
-    nsn : pandas df
-        Data to plot.
-    config : pandas df
-        config for the plot.
-    xvar : str, optional
-        x-axis variable. The default is 'year'.
-    xlab : str, optional
-        x-axis label. The default is 'year'.
-    yvar : str, optional
-        y-axis variable. The default is 'nsn'.
-    ylab : str, optional
-        y-axis label. The default is 'N$_{SN}$'.
-    cumul : bool, optional
-        To plot cumulative. The default is False.
-    figtit : str, optional
-        Figure title. The default is ''.
-
-    Returns
-    -------
-    None.
-
-    """
-
-    fig, ax = plt.subplots(figsize=(12, 8))
-    fig.subplots_adjust(right=0.78)
-    fig.suptitle(figtit)
-
-    dbNames = nsn['dbName'].unique()
-    for dbName in dbNames:
-        idx = nsn['dbName'] == dbName
-        sel = nsn[idx]
-        toplot = sel[yvar]
-        if cumul:
-            toplot = np.cumsum(toplot)
-        # get config for plot
-        idxb = config['dbName'] == dbName
-        selconf = config[idxb]
-        ls = selconf['ls'].values[0]
-        color = selconf['color'].values[0]
-        mark = selconf['marker'].values[0]
-        name = selconf['dbName_plot'].values[0]
-        ax.plot(sel[xvar], toplot, color=color,
-                marker=mark, linestyle=ls, label=name, mfc='None', lw=3, ms=10)
-
-    ax.grid(visible=True)
-    ax.set_xlabel(r'{}'.format(xlab))
-    ax.set_ylabel(r'{}'.format(ylab))
-    ax.set_xlim([1, 10])
-    ax.legend(loc='center left', bbox_to_anchor=(
-        1, 0.5), ncol=1, fontsize=14, frameon=False)
-
-
-def plot_DDF(data, norm_factor, config, nside=128,
-             timescale='year', timeslots='None', cumul=False):
+def plot_survey_features(data, norm_factor, config, nside=128,
+                         timescale='year', timeslots='None', cumul=False):
     """
     function to plot ddf data
 
@@ -323,9 +287,14 @@ parser.add_option('--timeslots', type=str,
 parser.add_option('--dataType', type=str,
                   default='DataFrame',
                   help='data type [%default]')
+parser.add_option('--plots', type=str,
+                  default='nsn_all,nsn_ud',
+                  help='for cumulative plots [%default]')
+"""
 parser.add_option('--cumul', type=int,
                   default=0,
                   help='for cumulative plots [%default]')
+"""
 
 opts, args = parser.parse_args()
 
@@ -337,7 +306,8 @@ config = opts.config
 timeslots = opts.timeslots
 timescale = opts.timescale
 timeslots = get_val(timeslots)
-cumul = opts.cumul
+plots = opts.plots.split(',')
+# cumul = opts.cumul
 # plot_moll = opts.plot_Mollweid
 
 dataType = opts.dataType
@@ -352,21 +322,23 @@ ddf = process_DDF(conf_df, dataType, dbDir, runType,
 print(ddf.columns)
 # plot
 # all fields
-fields = ['COSMOS', 'CDFS', 'XMM-LSS', 'ELAISS1', 'EDFS_a', 'EDFS_b']
-plot_ddf_year(ddf, norm_factor, conf_df, nside=128,
-              cols=['year', 'dbName'],
-              fields=fields)
+if 'nsn_all' in plots:
+    fields = ['COSMOS', 'CDFS', 'XMM-LSS', 'ELAISS1', 'EDFS_a', 'EDFS_b']
+    plot_ddf_year(ddf, norm_factor, conf_df, nside=128,
+                  cols=['year', 'dbName'],
+                  fields=fields)
+if 'nsn_ud' in plots:
+    # UD only
 
-# UD only
+    fields = ['COSMOS', 'XMM-LSS']
+    plot_ddf_year(ddf, norm_factor, conf_df, nside=128,
+                  cols=['year', 'dbName'],
+                  fields=fields)
 
-fields = ['COSMOS', 'XMM-LSS']
-plot_ddf_year(ddf, norm_factor, conf_df, nside=128,
-              cols=['year', 'dbName'],
-              fields=fields)
 
 plt.show()
 
-plot_DDF(ddf, norm_factor, nside=128, config=conf_df,
-         timescale=timescale, timeslots=timeslots, cumul=cumul)
+plot_survey_features(ddf, norm_factor, nside=128, config=conf_df,
+                     timescale=timescale, timeslots=timeslots, cumul=cumul)
 
 plt.show()
