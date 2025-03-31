@@ -7,13 +7,14 @@ Created on Mon Mar 31 14:34:09 2025
 """
 from sn_plotter_metrics.plot4metric import multiplot_dist
 from sn_plotter_analysis.sn_analyser_ddf import get_nsn, get_val
+from sn_plotter_analysis.sn_analyser_summary import load_data
 from optparse import OptionParser
 import matplotlib.pyplot as plt
 
 
 def plot_nsn_dist(data, fields=['COSMOS'],
                   timescale='year', norm_factor=30,
-                  nside=128):
+                  nside=128, zmin=-1, sigmaC=-1):
     """
     Function to plot ns vs pixel dist
 
@@ -37,58 +38,29 @@ def plot_nsn_dist(data, fields=['COSMOS'],
     """
 
     idx = data['field'].isin(fields)
+
+    ylab_add = ''
+
+    if zmin > -1:
+        idx &= data['zmeas'] >= zmin
+        ylab_add = '$z \geq $'+'{}'.format(zmin)
+
+    if sigmaC > -1:
+        idx &= data['sigmaC'] <= sigmaC
+        ylab_add += ', $\sigma_C \leq $'+'{}'.format(sigmaC)
+
     sel = data[idx]
+
+    ylab = '$N_{SN}$'
+    if ylab_add != '':
+        ylab += '({})'.format(ylab_add)
 
     cols = [timescale, 'dbName', 'healpixID', 'pixRA', 'pixDec']
     nsn = get_nsn(sel, norm_factor, nside, cols=cols)
 
     print(nsn)
 
-    multiplot_dist(nsn, yvar='nsn', yleg='N$_{SN}$', timescale='year')
-
-
-def load_data(dbDir, dbName, dataType, runType,
-              timescale, timeslots, fieldType):
-    """
-    Function to load the data
-
-    Parameters
-    ----------
-    dbDir : str
-        data dir.
-    dbName : str
-        OS to load.
-    dataType : str
-        Data type.
-    runType : str
-        run type.
-    timescale : str
-        time scale (year/season).
-    timeslots : list(int)
-        time slots.
-    fieldType : str
-        field type.
-
-    Returns
-    -------
-    ddfa : pandas df
-        Loaded data.
-
-    """
-
-    from_to_load = 'from sn_plotter_analysis.sn_analyser_tools'
-    mod_to_load = '{} import load_{}'.format(from_to_load, dataType)
-    exec(mod_to_load)
-
-    fieldType = 'DDF'
-    tt = 'load_{}(\'{}\',\'{}\',\'{}\',\'{}\',{},\'{}\')'.format(
-        dataType, dbDir, dbName, runType,
-        timescale, timeslots, fieldType)
-
-    ddfa = eval(tt)
-    ddfa['dbName'] = dbName
-
-    return ddfa
+    multiplot_dist(nsn, yvar='nsn', yleg=ylab, timescale='year')
 
 
 parser = OptionParser(description='Script to plot nsn vs pixel dist')
@@ -134,8 +106,16 @@ fieldType = 'DDF'
 df = load_data(dbDir, dbName, dataType, runType,
                timescale, timeslots, fieldType)
 
+
 plot_nsn_dist(df, fields=fields,
               timescale=timescale, norm_factor=norm_factor,
               nside=128)
 
+plot_nsn_dist(df, fields=fields,
+              timescale=timescale, norm_factor=norm_factor,
+              nside=128, zmin=0.8)
+
+plot_nsn_dist(df, fields=fields,
+              timescale=timescale, norm_factor=norm_factor,
+              nside=128, zmin=0.8, sigmaC=0.04)
 plt.show()
