@@ -119,8 +119,9 @@ def calc_zpercent(selb, xvar, yvar, yvar_cut, frac=[0.8, 0.9]):
     df = bin_it_effi(selb, xvar=xvar, yvar=yvar, yvar_cut=yvar_cut,
                      bins=np.arange(0.0, 1.24, 0.08))
 
+    # print(df)
     # ax.errorbar(df['z'], df['sigma_mu'], yerr=df['sigma_mu_std'])
-    xnew = np.linspace(np.min(df[xvar]), np.max(df[xvar]), 100)
+    xnew = np.linspace(0.2, np.max(df[xvar]), 100)
 
     spl = interp1d(df[xvar], df['effi'], bounds_error=False, fill_value=0.)
     spl_smooth = spl(xnew)
@@ -128,6 +129,11 @@ def calc_zpercent(selb, xvar, yvar, yvar_cut, frac=[0.8, 0.9]):
     r = []
     for refval in frac:
         bb = interp1d(spl_smooth, xnew, bounds_error=False, fill_value=0.)
+        """
+        fig, ax = plt.subplots()
+        ax.plot(spl_smooth, xnew)
+        plt.show()
+        """
         r.append((refval, bb(refval)))
 
     df = pd.DataFrame(r, columns=['frac', 'zlim'])
@@ -186,4 +192,5 @@ ddf = process_DDF(conf_df, dataType, dbDir, runType,
 
 res = get_zpercentiles(ddf, fields, timescale, timeslots)
 
+print(res)
 res.to_hdf('zpercentiles_ddf.hdf5', key='zper')
