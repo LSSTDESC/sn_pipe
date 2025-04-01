@@ -179,88 +179,6 @@ def plot_ratio_sigmac(datab, norm_factor, config, nside=128,
                       yvar='nsn_ratio', ylab=ylab, cumul=False, figtit=','.join(fields))
 
 
-def plot_survey_features(data, norm_factor, config, nside=128,
-                         timescale='year', timeslots='None', cumul=False):
-    """
-    function to plot ddf data
-
-    Parameters
-    ----------
-    data : pandas df
-        Data to process.
-    norm_factor : float
-        Normalization factor.
-    config: pandas df
-      config for plot
-    nside : int, optional
-        Healpix nside parameter. The default is 128.
-    timescale: str, opt
-        Time scale for the plot. the default is 'year'
-    cumul: bool.
-        To plot cumulative (for NSN for example). The default is False
-
-    Returns
-    -------
-    None.
-
-    """
-    """
-    Plot_nsn_vs(data, norm_factor, xvar='z', xleg='z',
-                logy=True, cumul=True, xlim=[0.01, 1.1], nside=nside)
-
-    Plot_nsn_vs(data, norm_factor, bins=np.arange(
-        0.5, 11.5, 1), xvar='season', xleg='season',
-        logy=False, xlim=[1, 10], nside=nside)
-    """
-    from sn_plotter_analysis.sn_analyser_ddf import plot_DDF_nsn, plot_nsn_new
-    from sn_plotter_analysis.sn_analyser_ddf import plot_survey_features
-
-    """
-    plot_ddf_year(data, norm_factor, config, nside,
-                  cols=[timescale, 'dbName'])
-
-    """
-    """
-    print(test)
-    plt.show()
-    sigma_mu = 0.12
-    plot_DDF_nsn(data, norm_factor, config, nside,
-                 timescale=timescale, cumul=cumul,
-                 plots=['nsn_field_OS'])
-
-    idx = data['zmeas'] >= 0.8
-    idx &= data['sigma_mu'] <= sigma_mu
-    sel = data[idx]
-
-    yleg_add = '$(z\geq 0.8, \sigma_{\mu}\leq\sigma_{int})$'
-    plot_DDF_nsn(sel, norm_factor, config, nside,
-                 timescale=timescale, yleg_add=yleg_add,
-                 cumul=cumul, plots=['nsn_os', 'pix_area'])
-
-    plt.show()
-    # specific survey features
-    print(data.columns)
-    """
-    fields = ['XMM-LSS']
-    dbNames = data['dbName'].unique()
-
-    for field in fields:
-        for dbName in dbNames:
-            plot_survey_features(data, field, dbName, norm_factor, config, nside,
-                                 timescale=timescale, timeslots=timeslots)
-    plt.show()
-
-    # plot_DDF_dither(data, norm_factor, config, nside)
-
-    # plot_DDF_nsn_z(data, norm_factor, nside)
-
-    """
-    mypl.plot_nsn_versus_two(xvar='z', xleg='z', logy=True,
-                             cumul=True, xlim=[0.01, 1.1])
-    mypl.plot_nsn_mollview()
-    """
-
-
 parser = OptionParser(description='Script to analyze SN - DDF after selection')
 
 parser.add_option('--dbDir', type=str,
@@ -334,11 +252,5 @@ if 'nsn_ud' in plots:
     plot_ddf_year(ddf, norm_factor, conf_df, nside=128,
                   cols=['year', 'dbName'],
                   fields=fields)
-
-
-plt.show()
-
-plot_survey_features(ddf, norm_factor, nside=128, config=conf_df,
-                     timescale=timescale, timeslots=timeslots, cumul=cumul)
 
 plt.show()
