@@ -49,7 +49,7 @@ RAmin = 0.
 RAmax = 360.
 deltaRA = 36.
 
-RAs = np.arange(RAmin, RAmax, deltaRA)
+RAs = np.arange(RAmin, RAmax+deltaRA, deltaRA)
 
 for i, row in dbs.iterrows():
     procDict = {}
