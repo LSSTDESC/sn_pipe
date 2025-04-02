@@ -69,8 +69,8 @@ for i, row in dbs.iterrows():
 
         mybatch = BatchIt(processName=procName, time=proctime, mem=procmem)
 
-        procDict['RA_min'] = RA_min
-        procDict['RA_max'] = RA_min
+        procDict['RAmin'] = RA_min
+        procDict['RAmax'] = RA_min
         procDict['prodID'] = '{}.hdf5'.format(procName)
 
         mybatch.add_batch(scriptref, procDict)
