@@ -36,7 +36,7 @@ procmem = opts.procmem
 # params
 nside = 64
 fieldType = 'WFD'
-scriptref = 'python run_scripts/os_info/run_obs_strat_pixels.py'
+scriptref = 'run_scripts/os_info/run_obs_strat_pixels.py'
 
 
 # load DB to process
