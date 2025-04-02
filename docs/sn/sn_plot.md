@@ -1,10 +1,16 @@
 # SN pixel analysis
 
 
-## [Number of SN - summary plots](sn_summary.md)
+## Deep Drilling Fields
 
-## [Number of SN vs pixel distance](sn_dist.md)
+### [Number of SN - summary plots](sn_summary.md)
 
-## [DDF features (sigma_mu, nsn, frac nsn(sigmaC<=0.04))](sn_feat.md)
+### [Number of SN vs pixel distance](sn_dist.md)
 
-## [z-percentiles](sn_zpercent.md)
+### [DDF features (sigma_mu, nsn, frac nsn(sigmaC<=0.04))](sn_feat.md)
+
+### [z-percentiles](sn_zpercent.md)
+
+## Wide Fast Deep survey
+
+### [Number of SN - summary plots](wfd_summary.md)

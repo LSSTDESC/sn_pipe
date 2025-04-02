@@ -1,0 +1,13 @@
+dbName,dbName_plot,ls,marker,color
+baseline_v4.3.1_10yrs,baseline,dotted,o,k
+desc_ddf_gen_0.70_co_v4.3.1_10yrs,desc_ddf_gen_0.70_co,dashed,o,g
+desc_ddf_gen_0.75_co_v4.3.1_10yrs,desc_ddf_gen_0.75_co,dashed,s,g
+desc_ddf_gen_0.80_co_v4.3.1_10yrs,desc_ddf_gen_0.80_co,dashed,P,g
+desc_ddf_gen_0.70_wz_v4.3.1_10yrs,desc_ddf_gen_0.70_wz,dotted,o,b
+desc_ddf_gen_0.75_wz_v4.3.1_10yrs,desc_ddf_gen_0.75_wz,dotted,s,b
+desc_ddf_gen_0.80_wz_v4.3.1_10yrs,desc_ddf_gen_0.80_wz,dotted,P,b
+desc_ddf_gen_0.70_sn_v4.3.1_10yrs,desc_ddf_gen_0.70_sn,solid,o,r
+desc_ddf_gen_0.75_sn_v4.3.1_10yrs,desc_ddf_gen_0.75_sn,solid,s,r
+desc_ddf_gen_0.80_sn_v4.3.1_10yrs,desc_ddf_gen_0.80_sn,solid,P,r
+desc_ddf_v4.3.1_10yrs,desc_ddf_v4.3.1,dashed,s,r
+#one_snap_v4.3.1_10yrs,one_snap_v4.3.1,dashed,*,k
