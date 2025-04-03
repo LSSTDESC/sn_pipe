@@ -174,12 +174,15 @@ parser.add_option('--config', type=str,
 parser.add_option('--nside', type=int,
                   default=64,
                   help='nside healpix parameter [%default]')
-
+parser.add_option('--plots', type=str,
+                  default='nvisits,mollweid,delta_nvisits',
+                  help='nside healpix parameter [%default]')
 opts, args = parser.parse_args()
 
 dbDir = opts.dbDir
 config = opts.config
 nside = opts.nside
+plots = opts.plots.split(',')
 
 # load config file
 conf_df = pd.read_csv(config, comment='#')
@@ -195,10 +198,13 @@ for i, row in conf_df.iterrows():
 
 print(data)
 
-# plot_nvisits_histo(data)
+if 'nvisits' in plots:
+    plot_nvisits_histo(data)
 
-# plot_mollweid(data)
+if 'mollweid' in plots:
+    plot_mollweid(data)
 
-plot_compare_pixels(data)
+if 'delta_nvisits' in plots:
+    plot_compare_pixels(data)
 
 plt.show()
