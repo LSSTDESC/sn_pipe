@@ -168,13 +168,13 @@ def complete_pointing(df, dfgroup):
     modified merged df
 
     """
-    df = df.merge(dfgroup[['dbName', 'family', 'marker', 'color']],
+    df = df.merge(dfgroup[['dbName', 'dbName_plot', 'marker', 'color', 'ls']],
                   left_on=['dbName'], right_on=['dbName'])
 
     # df['family'] = df['group']
 
     # strip db Name
-    df['family'] = df['family'].str.split('_v2.99_10yrs', expand=True)[0]
+    # df['family'] = df['family'].str.split('_v2.99_10yrs', expand=True)[0]
 
     # uniformity of DD names
 
@@ -208,16 +208,15 @@ def summary_plots(df):
     plot_series(df)
     df['time_budget_rel'] = df['time_budget_field']/df['time_budget']
     df['time_budget_rel'] *= 100.
-    plot_series_fields(df)
-    df_noseas = df.groupby(['dbName', 'field', 'family'])[
+    df_noseas = df.groupby(['dbName', 'field', 'dbName_plot'])[
         'Nfc'].sum().reset_index()
     df_noseas['overhead'] = df_noseas['Nfc'] * \
         2./60  # 2min overhead per filter swap
     plot_series_fields(df_noseas, what=['Nfc', 'overhead'], leg=[
         'Number of filter changes', 'Overhead (filter changes) [h]'])
-    df_fi = df.groupby(['dbName', 'family'])['Nfc'].sum().reset_index()
+    df_fi = df.groupby(['dbName', 'dbName_plot'])['Nfc'].sum().reset_index()
     df_fi['overhead'] = df_fi['Nfc']*2./60  # 2min overhead per filter swap
-    plot_series(df_fi, what=['Nfc', 'overhead'], leg=[
+    plot_series(df_fi, config, what=['Nfc', 'overhead'], leg=[
         'Number of filter changes', 'Overhead (filter changes) [h]'])
     # plot_hist_OS(df, what='cadence_median')
 
@@ -257,8 +256,10 @@ parser.add_option("--nside", type="int", default=128,
                   help="nside for healpixels [%default]")
 parser.add_option("--fieldType", type="str", default='DD',
                   help="field type - DD, WFD, Fake [%default]")
+"""
 parser.add_option("--dbList", type="str", default='List.csv',
                   help="list of cadences to display[%default]")
+"""
 parser.add_option("--fieldNames", type="str", default='COSMOS,CDFS,\
                   XMM-LSS,ELAISS1,EDFSa,EDFSb,EDFS',
                   help="fields to process [%default]")
@@ -267,7 +268,7 @@ parser.add_option("--metric", type="str", default='NSNY',
 parser.add_option("--pointingFile", type="str",
                   default='Summary_DD_pointings.hdf5',
                   help="pointing file name [%default]")
-parser.add_option("--configGroup", type="str", default='DD_fbs_2.99_plot.csv',
+parser.add_option("--config", type="str", default='DD_fbs_2.99_plot.csv',
                   help="pointing file name [%default]")
 parser.add_option("--addMetric", type=int, default=0,
                   help="to add metric correlation plots [%default]")
@@ -283,22 +284,24 @@ parser.add_option("--plots", type=str,
 opts, args = parser.parse_args()
 # Load parameters
 dirFile = opts.dirFile
-dbList = opts.dbList
+# dbList = opts.dbList
 nside = opts.nside
 fieldType = opts.fieldType
 metricName = opts.metric
 fieldNames = opts.fieldNames.split(',')
 pointingFile = opts.pointingFile
-configGroup = opts.configGroup
+config = opts.config
 addMetric = opts.addMetric
 dbName_night = opts.dbName_night
 fieldName_night = opts.fieldName_night
 plots = opts.plots.split(',')
 
-dfgroup = pd.read_csv(configGroup, comment='#')  # load list of db+plot infos
+df_conf = pd.read_csv(config, comment='#')  # load list of db+plot infos
 df = pd.read_hdf(pointingFile)  # load pointing data
 
-df = complete_pointing(df, dfgroup)  # merge pointing data+plot data
+df = complete_pointing(df, df_conf)  # merge pointing data+plot data
+
+print(df_conf)
 
 metric = pd.DataFrame()
 if addMetric:
@@ -393,15 +396,15 @@ plt.show()
 
 # this is to plot fraction of filter alloc per night - for one OS only
 
-flat = df.groupby(['dbName', 'field', 'family', 'season']).apply(
+flat = df.groupby(['dbName', 'dbName_plot', 'field', 'season']).apply(
     lambda x: flat_this(x, cols=['filter_alloc', 'filter_frac'])).reset_index()
 
-flat = flat.groupby(['dbName', 'field', 'family', 'filter_alloc', 'season'])[
+flat = flat.groupby(['dbName', 'dbName_plot', 'field', 'filter_alloc', 'season'])[
     'filter_frac'].median().reset_index()
 
-idx = dfgroup['dbName'] == dbName_night
+idx = df_conf['dbName'] == dbName_night
 
-family = dfgroup[idx]['family'].to_list()[0]
+family = df_conf[idx]['dbName_plot'].to_list()[0]
 
 plot_filter_alloc(flat, family, fieldName_night)
 
