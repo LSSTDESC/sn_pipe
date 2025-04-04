@@ -34,8 +34,9 @@ rb = list(map(str, rb))
 rbn = ','.join(rb)
 
 labelb = '({})=({})'.format(ran, rbn)
-
+labelb = 'atmos'
 fig, ax = plt.subplots(figsize=(12, 8))
+fig.subplots_adjust(right=0.80)
 atmos_trans_obsatmo.plot_atmospheric_transmission(
     plt, fig=fig, ax=ax, label=labelb, color='k', linestyle='dashed')
 
@@ -45,4 +46,23 @@ for key, vals in tel.filter.items():
     tel.plot_component(key, vals, fig=fig, ax=ax,
                        color=tel.filter_colors[key],
                        label='{} band'.format(key))
+
+
+ax.legend(bbox_to_anchor=(1., 0.8), ncol=1, frameon=False)
+ax.set_xlim([300, 1105])
+
+h2o = '$H_2O$'
+o2 = '$O_2$'
+
+xh2o = [935., 890., 810., 700.]
+yh2o = [0.54, 0.80, 0.85, 0.83]
+
+xo2 = [755, 685.]
+yo2 = [0.30, 0.72]
+
+for key, vals in dict(zip(xh2o, yh2o)).items():
+    ax.text(key, vals, h2o, fontsize=15, color='k')
+
+for key, vals in dict(zip(xo2, yo2)).items():
+    ax.text(key, vals, o2, fontsize=15, color='k')
 plt.show()
