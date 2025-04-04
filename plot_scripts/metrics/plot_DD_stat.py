@@ -247,6 +247,92 @@ def flat_this(grp, cols=['filter_alloc', 'filter_frac']):
     return pd.DataFrame.from_dict(dictout)
 
 
+def plot_relative_depth(df):
+
+    bands = list('ugrizy')
+    df['nvisits'] = df[bands].sum(axis=1).to_list()
+
+    dbNames = df['dbName'].unique()
+
+    dft = pd.DataFrame()
+    for dbName in dbNames:
+        idx = df['dbName'] == dbName
+        sel = df[idx]
+        dfc = get_seasons(sel)
+        dfc['dbName'] = dbName
+        dft = pd.concat((dft, dfc))
+    """
+    dfc = df.groupby(['dbName']).apply(
+        lambda x: get_relative_depth(x)).reset_index()
+    """
+    print(dft)
+
+    dfr = dft.groupby(['dbName']).apply(
+        lambda x: get_relative_depth(x, df)).reset_index()
+
+    print(dfr)
+
+
+def get_seasons(grp):
+
+    dd = grp.groupby(['field']).apply(
+        lambda x: get_high_season(x)).reset_index()
+
+    return dd
+
+
+def get_high_season(grp):
+
+    # take the last seasons as ref
+    seaslist = range(6, 10)
+    idx = grp['season'].isin(seaslist)
+
+    nvisits = grp[idx]['nvisits'].mean()
+
+    # grab the seasons that are above nvisits
+
+    idx = grp['nvisits'] >= 2.5*nvisits
+
+    seas_res = {}
+    rr = grp[idx]['season'].unique().tolist()
+    rr = list(map(int, rr))
+    rr = list(map(str, rr))
+    seas_res['seasons'] = [','.join(rr)]
+
+    return pd.DataFrame.from_dict(seas_res)
+
+
+def get_relative_depth(grp, data, fields=['COSMOS'], fieldref='ELAISS1'):
+
+    if 'desc_ddf' in grp.name:
+        fields += ['XMM-LSS']
+
+    idx = grp['field'].isin(fields)
+
+    sel = grp[idx]
+
+    seasons = sel['seasons'].to_list()[0]
+    ll = seasons.split(',')
+    print('alll', ll)
+    ll = list(map(int, ll))
+
+    idxb = data['field'].isin(fields)
+    idxb &= data['season'].isin(ll)
+
+    nvisits = data[idxb]['nvisits'].sum()
+
+    print('hohoho', data['field'].unique())
+    idxc = data['field'] == fieldref
+    selc = data[idxc]
+
+    nvisits_ref = selc['nvisits'].sum()
+
+    print('aoo', nvisits, nvisits_ref)
+    res = [nvisits/nvisits_ref]
+
+    return pd.DataFrame(res, columns=['depth'])
+
+
 parser = OptionParser(
     description='OS analysis plots from pointings')
 parser.add_option("--dirFile", type="str",
@@ -312,6 +398,11 @@ if addMetric:
     metric = merge_with_pointing(metric, df)
 
 # summary plots
+
+plot_relative_depth(df)
+
+print(test)
+
 if 'summary' in plots:
     summary_plots(df)
 
