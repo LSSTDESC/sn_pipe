@@ -248,6 +248,19 @@ def flat_this(grp, cols=['filter_alloc', 'filter_frac']):
 
 
 def plot_relative_depth(df):
+    """
+    Function to plot the relative depth of the UD vs DD
+
+    Parameters
+    ----------
+    df : pandas df
+        Data to process.
+
+    Returns
+    -------
+    None.
+
+    """
 
     bands = list('ugrizy')
     df['nvisits'] = df[bands].sum(axis=1).to_list()
@@ -272,8 +285,39 @@ def plot_relative_depth(df):
 
     print(dfr)
 
+    dfr = dfr.merge(df[['dbName', 'dbName_plot']], left_on=[
+                    'dbName'], right_on=['dbName'], suffixes=['', ''])
+
+    dfr = dfr.sort_values(by=['depth'])
+    fig, ax = plt.subplots(figsize=(12, 10))
+
+    ax.plot(dfr['dbName_plot'], dfr['depth'], color='k',
+            linestyle='solid', marker='o', mfc='None')
+
+    ax.set_ylabel(
+        '$\\frac{N_{visits}^{UD,UD seasons}}{N_{visits}^{ELAISS1,10 seasons}}$')
+    ax.grid(visible=True)
+
+    ax.tick_params(axis='x', labelrotation=20., labelsize=12)
+    for tick in ax.xaxis.get_majorticklabels():
+        tick.set_horizontalalignment("right")
+
 
 def get_seasons(grp):
+    """
+    function to get seasons correspondig to UDs per field
+
+    Parameters
+    ----------
+    grp : pandas df
+        Data to process.
+
+    Returns
+    -------
+    dd : pandas df
+        output data.
+
+    """
 
     dd = grp.groupby(['field']).apply(
         lambda x: get_high_season(x)).reset_index()
@@ -282,6 +326,20 @@ def get_seasons(grp):
 
 
 def get_high_season(grp):
+    """
+    Function to get high seasons
+
+    Parameters
+    ----------
+    grp : pandas df
+        Data to process.
+
+    Returns
+    -------
+    pandas df
+        list of seasons.
+
+    """
 
     # take the last seasons as ref
     seaslist = range(6, 10)
@@ -303,7 +361,28 @@ def get_high_season(grp):
 
 
 def get_relative_depth(grp, data, fields=['COSMOS'], fieldref='ELAISS1'):
+    """
+    Function to estimate the relative depth
 
+    Parameters
+    ----------
+    grp : pandas df
+        Data to process.
+    data : pandas df
+        Original data.
+    fields : list(str), optional
+        List of UD fields. The default is ['COSMOS'].
+    fieldref : str, optional
+        reference DD field for nvisits(10 years). The default is 'ELAISS1'.
+
+    Returns
+    -------
+    TYPE
+        DESCRIPTION.
+
+    """
+
+    print('database', grp.name)
     if 'desc_ddf' in grp.name:
         fields += ['XMM-LSS']
 
@@ -318,11 +397,13 @@ def get_relative_depth(grp, data, fields=['COSMOS'], fieldref='ELAISS1'):
 
     idxb = data['field'].isin(fields)
     idxb &= data['season'].isin(ll)
+    idxb &= data['dbName'] == grp.name
 
     nvisits = data[idxb]['nvisits'].sum()
 
     print('hohoho', data['field'].unique())
     idxc = data['field'] == fieldref
+    idxc &= data['dbName'] == grp.name
     selc = data[idxc]
 
     nvisits_ref = selc['nvisits'].sum()
@@ -363,7 +444,7 @@ parser.add_option("--dbName_night", type=str, default='baseline_v3.0_10yrs',
 parser.add_option("--fieldName_night", type=str, default='COSMOS',
                   help="field for night plot stat [%default]")
 parser.add_option("--plots", type=str,
-                  default='summary,field_cad_seasonlength,field_nvisits,field_nvisits_band',
+                  default='summary,field_cad_seasonlength,field_nvisits,field_nvisits_band,relative_depth',
                   help="plots to draw [%default]")
 
 
@@ -397,12 +478,11 @@ if addMetric:
                          fieldType, fieldNames, nside)
     metric = merge_with_pointing(metric, df)
 
+
+if 'relative_depth' in plots:
+    plot_relative_depth(df)
+
 # summary plots
-
-plot_relative_depth(df)
-
-print(test)
-
 if 'summary' in plots:
     summary_plots(df)
 
