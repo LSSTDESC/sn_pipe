@@ -16,4 +16,4 @@ Options:
 
 python movie_scripts/nsn_wfd/nsn_wfd.py --config=[config_ana_selplot.csv](config_ana_selplot.csv) --outDir=../sims_v4.3.1_WFD
 
-[movie for baseline_v4.3.1_10yrs](baseline_v4.3.1_10yrs.mp4)
+[list of movies](https://me.lsst.eu/gris/OS_Videos/sims_v4.3.1_WFD)
