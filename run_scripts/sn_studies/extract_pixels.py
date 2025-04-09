@@ -45,7 +45,7 @@ df_config = pd.read_csv(dbList, comment='#')
 
 print(df_config)
 
-cols = ['healpixID', 'pixRA', 'pixDec', 'season', 'season_length', 'field']
+cols = ['healpixID', 'pixRA', 'pixDec', 'season', 'season_length']
 cols += ['survey_area', 'x1', 'color']
 
 for i, row in df_config.iterrows():
