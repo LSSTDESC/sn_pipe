@@ -208,6 +208,12 @@ parser.add_option('--dataType', type=str,
 parser.add_option('--plots', type=str,
                   default='nsn_all,nsn_ud',
                   help='plots to draw [%default]')
+parser.add_option('--ud_fields', type=str,
+                  default='COSMOS,XMM-LSS',
+                  help='UD fields to consider [%default]')
+parser.add_option('--dd_fields', type=str,
+                  default='CDFS,ELAISS1,EDFS_a,EDFS_b',
+                  help='DD fields to consider [%default]')
 """
 parser.add_option('--cumul', type=int,
                   default=0,
@@ -225,6 +231,9 @@ timeslots = opts.timeslots
 timescale = opts.timescale
 timeslots = get_val(timeslots)
 plots = opts.plots.split(',')
+ud_fields = opts.ud_fields.split(',')
+dd_fields = opts.dd_fields.split(',')
+
 # cumul = opts.cumul
 # plot_moll = opts.plot_Mollweid
 
@@ -241,14 +250,14 @@ print(ddf.columns)
 # plot
 # all fields
 if 'nsn_all' in plots:
-    fields = ['COSMOS', 'CDFS', 'XMM-LSS', 'ELAISS1', 'EDFS_a', 'EDFS_b']
+    fields = ud_fields+dd_fields
     plot_ddf_year(ddf, norm_factor, conf_df, nside=128,
                   cols=['year', 'dbName'],
                   fields=fields)
 if 'nsn_ud' in plots:
     # UD only
 
-    fields = ['COSMOS', 'XMM-LSS']
+    fields = ud_fields
     plot_ddf_year(ddf, norm_factor, conf_df, nside=128,
                   cols=['year', 'dbName'],
                   fields=fields)
