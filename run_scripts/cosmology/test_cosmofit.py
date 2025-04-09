@@ -49,7 +49,9 @@ parser.add_option('--select_DDF', type=int,
 parser.add_option('--select_WFD', type=int,
                   default=1,
                   help='to select SN WFD for the cosmology-grade sample [%default]')
-
+parser.add_option('--outName', type=str,
+                  default='cosmo_fit',
+                  help='output file name [%default]')
 
 opts, args = parser.parse_args()
 
@@ -72,6 +74,7 @@ cmd += ' --fitparam_values={}'.format(opts.fitparam_values)
 cmd += ' --prior={}'.format(opts.prior)
 cmd += ' --select_DDF={}'.format(opts.select_DDF)
 cmd += ' --select_WFD={}'.format(opts.select_WFD)
+cmd += ' --outName={}'.format(opts.outName)
 
 print(cmd)
 os.system(cmd)
