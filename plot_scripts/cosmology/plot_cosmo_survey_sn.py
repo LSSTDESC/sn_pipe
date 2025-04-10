@@ -1,0 +1,104 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Apr 10 14:19:30 2025
+
+@author: philippe.gris@clermont.in2p3.fr
+"""
+from optparse import OptionParser
+import pandas as pd
+import glob
+from sn_plotter_metrics.plot4metric import plot_per_bin
+import matplotlib.pyplot as plt
+import numpy as np
+
+
+def load_data(dataDir, dbName):
+    """
+    Function to load the data
+
+    Parameters
+    ----------
+    dataDir : str
+        Data directory.
+    dbName : str
+        db Name.
+
+    Returns
+    -------
+    dft : pandas df
+        Loaded data.
+
+    """
+
+    fName = '{}/*{}*_for_fit.hdf5'.format(dataDir, dbName)
+
+    fis = glob.glob(fName)
+
+    dft = pd.DataFrame()
+    for fi in fis:
+        df_ = pd.read_hdf(fi)
+        dft = pd.concat((dft, df_))
+
+    return dft
+
+
+def plot_sigma_mu(data, config):
+
+    print(data.columns)
+
+    years = data['year'].unique()
+
+    for year in years:
+        idx = data['year'] == year
+        sel_y = data[idx]
+        fig, ax = plt.subplots(figsize=(12, 8))
+        dbNames = sel_y['dbName'].unique()
+        for dbName in dbNames:
+            idxb = sel_y['dbName'] == dbName
+            idxb &= sel_y['sigma_mu'] <= 0.5
+            selb = sel_y[idxb]
+            plot_per_bin(ax, selb, 'sigma_mu', 'nsn',
+                         smoothIt=True,
+                         bins=np.arange(0., 0.5, 0.01),
+                         xmin=0., xmax=0.5, sumIt=True)
+        ax.grid(visible=True)
+        plt.show()
+
+
+parser = OptionParser(
+    description='Script to plot the surveys used to estimate cosmo params')
+
+parser.add_option('--dataDir', type=str,
+                  default='../test_durvey',
+                  help='Data dir [%default]')
+parser.add_option('--config', type=str,
+                  default='config_ana_selplot.csv',
+                  help='config file [%default]')
+parser.add_option('--fields', type=str,
+                  default='COSMOS,XMM-LSS,CDFS,ELAISS1,EDFS_a,EDFS_b',
+                  help='data type [%default]')
+opts, args = parser.parse_args()
+
+dataDir = opts.dataDir
+config = opts.config
+fields = opts.fields.split(',')
+
+# load config
+df_config = pd.read_csv(config, comment='#')
+
+# load the data
+sn_cosmo = pd.DataFrame()
+for i, row in df_config.iterrows():
+    dbName = row['dbName']
+    df_ = load_data(dataDir, dbName)
+    print(dbName, len(df_))
+    if len(df_) > 0:
+        df_['dbName'] = dbName
+        sn_cosmo = pd.concat((sn_cosmo, df_))
+
+
+# select the fields
+idx = sn_cosmo['field'].isin(fields)
+
+plot_sigma_mu(sn_cosmo[idx], df_config)
