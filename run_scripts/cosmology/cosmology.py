@@ -173,7 +173,14 @@ fitparams_values = list(map(float, opts.fitparam_values.split(',')))
 prior = opts.prior
 select_DDF = opts.select_DDF
 select_WFD = opts.select_WFD
-
+H0 = opts.H0
+Om0 = opts.Om0
+Ode0 = opts.Ode0
+w0 = opts.w0
+wa = opts.wa
+alpha = opts.alpha
+beta = opts.beta
+recalc_sigmu = opts.recalc_sigmu
 
 if '-' in seasons_cosmo:
     seas = seasons_cosmo.split('-')
@@ -286,5 +293,14 @@ cl = Fit_seasons(fitconfig, dataDir_DD, dbName_DD,
                  nproc=nproc, wfd_tagsurvey=wfd_tagsurvey,
                  dd_tagsurvey=dd_tagsurvey,
                  select_DDF=select_DDF,
-                 select_WFD=select_WFD)
+                 select_WFD=select_WFD,
+                 H0=H0,
+                 Om0=Om0,
+                 Ode0=Ode0,
+                 w0=w0,
+                 wa=wa,
+                 alpha=alpha,
+                 beta=beta,
+                 recalc_sigmu=recalc_sigmu)
+
 res = cl()
