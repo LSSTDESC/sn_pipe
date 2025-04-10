@@ -52,6 +52,9 @@ parser.add_option('--select_WFD', type=int,
 parser.add_option('--outName', type=str,
                   default='cosmo_fit',
                   help='output file name [%default]')
+parser.add_option('--recalc_sigmu', type=int,
+                  default=0,
+                  help='to recalc sigma_mu [%default]')
 
 opts, args = parser.parse_args()
 
@@ -75,6 +78,6 @@ cmd += ' --prior={}'.format(opts.prior)
 cmd += ' --select_DDF={}'.format(opts.select_DDF)
 cmd += ' --select_WFD={}'.format(opts.select_WFD)
 cmd += ' --outName={}'.format(opts.outName)
-
+cmd += ' --recalc_sigmu={}'.format(opts.recalc_sigmu)
 print(cmd)
 os.system(cmd)
