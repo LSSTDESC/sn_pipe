@@ -293,7 +293,7 @@ def plot_pull(df, config, what='w0',
 # def plot(dbDir,dbList, timescale, config, vars=[['MoM', 'nsn_z_0.8']], comment_plot=''):
 
 
-def process_cosmo(config, cols_group,
+def process_cosmo(dbDir, config, spectro_config, cols_group,
                   cols=['MoM', 'WFD_TiDES', 'all_Fields', 'nsn_z_0.8']):
     """
     Function to process cosmo files
@@ -317,12 +317,10 @@ def process_cosmo(config, cols_group,
     df_tot = pd.DataFrame()
     for i, row in config.iterrows():
         dbName = row['dbName']
-        dbDir = row['dbDir']
-        spectro_config = row['spectro_config']
         df = load_cosmo_data(dbDir, dbName, cols_group,
                              spectro_config, cols=cols)
-        df['dbName_DD'] = dbName
-        df['dbNamePlot'] = row['dbNamePlot']
+        df['dbName'] = dbName
+        df['dbNamePlot'] = row['dbName_plot']
         df_tot = pd.concat((df_tot, df))
 
     return df_tot
@@ -330,13 +328,11 @@ def process_cosmo(config, cols_group,
 
 parser = OptionParser(description='Script to analyze SN prod')
 
-"""
-parser.add_option('--dbDir', type=str, default='../cosmo_fit',
+parser.add_option('--dbDir', type=str, default='../cosmo_fit_TiDES_notelrot_TiDES_5',
                   help='OS location dir[%default]')
-"""
-parser.add_option('--dbList', type=str,
-                  default='input/DESC_cohesive_strategy/config_ana.csv',
-                  help='OS name[%default]')
+parser.add_option('--config', type=str,
+                  default='config_ana_selplot.csv',
+                  help='config for the plots [%default]')
 parser.add_option('--timescale', type=str,
                   default='year',
                   help='timescale for plot - year or season [%default]')
@@ -361,12 +357,14 @@ parser.add_option('--plots', type=str,
 parser.add_option('--ref_OS', type=str,
                   default='None',
                   help='ref os to normalize the plots [%default]')
-
+parser.add_option('--spectro_config', type=str,
+                  default='WFD_TiDES',
+                  help='spectro config [%default]')
 
 opts, args = parser.parse_args()
 
-# dbDir = opts.dbDir
-dbList = opts.dbList
+dbDir = opts.dbDir
+config = opts.config
 timescale = opts.timescale
 udfs = opts.UDFs.split(',')
 dfs = opts.DFs.split(',')
@@ -375,8 +373,9 @@ fill_between = opts.fill_between
 prior = opts.prior
 plots = opts.plots
 ref_OS = opts.ref_OS
+spectro_config = opts.spectro_config
 
-config = pd.read_csv(dbList, comment='#')
+df_conf = pd.read_csv(config, comment='#')
 """
 dbDir = '../cosmo_fit_WFD_paper_spectroz_nolowzopti'
 data = load_data(dbDir, config)
@@ -403,8 +402,9 @@ cols = ['MoM', 'all_Fields',
 
 cols += fields
 
-data = process_cosmo(
-    config, [timescale, 'prior', 'dbName_DD', 'dbName_WFD'], cols=cols)
+data = process_cosmo(dbDir, df_conf, spectro_config,
+                     [timescale, 'prior', 'dbName_DD', 'dbName_WFD'],
+                     cols=cols)
 
 
 dd = {}
@@ -423,7 +423,7 @@ if 'mom_year' in plots:
     legy = 'SMoM'
     if ref_OS != 'None':
         legy = '$\\frac{\\Delta SMoM}{SMoM}$ [%]'
-    plot_allOS(data, config, varx=timescale,
+    plot_allOS(data, df_conf, varx=timescale,
                legx=timescale, vary='MoM_mean',
                legy=legy, vary_std='MoM_std', prior=prior,
                figtitle=figtit, dbNorm=dbNorm,
@@ -435,14 +435,14 @@ if 'mom_10yrs' in plots:
     plot_allOS_survey(dbNorm=dbNorm)
 
 if 'sigma_w0' in plots:
-    plot_allOS(data, config, varx=timescale,
+    plot_allOS(data, df_conf, varx=timescale,
                legx=timescale, vary='sigma_w0_mean',
                legy='$\sigma_{w_0}$', vary_std='sigma_w0_std', prior=prior,
                figtitle=dd[prior], dbNorm='',
                comment_on_plot=comment_on_plot,
                fill_between=fill_between)
 if 'sigma_wa' in plots:
-    plot_allOS(data, config, varx=timescale,
+    plot_allOS(data, df_conf, varx=timescale,
                legx=timescale, vary='sigma_wa_mean',
                legy='$\sigma_{w_a}$', vary_std='sigma_wa_std', prior=prior,
                figtitle=dd[prior], dbNorm='',
@@ -452,7 +452,7 @@ if 'nsn' in plots:
     for field in fields:
         fm = f'{field}_mean'
         fstd = f'{field}_std'
-        plot_allOS(data, config, varx=timescale,
+        plot_allOS(data, df_conf, varx=timescale,
                    legx=timescale, vary=fm,
                    legy='$N_{SN}$', vary_std=fstd, prior=prior,
                    figtitle=field, dbNorm='',
