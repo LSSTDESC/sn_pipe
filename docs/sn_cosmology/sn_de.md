@@ -1,6 +1,6 @@
 # Dark Energy parameter plots
 
-# Usage: plot_scripts/cosmology/plot_cosmo.py [options]
+## Usage: plot_scripts/cosmology/plot_cosmo.py [options]
 
 <pre>
 
@@ -24,5 +24,5 @@ Options:
 
 </pre>
 
-# Example
+## Example
 

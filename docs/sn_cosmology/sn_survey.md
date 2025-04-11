@@ -2,7 +2,7 @@
 
 
 
-# Usage: plot_scripts/cosmology/plot_cosmo_survey_sn.py [options]
+## Usage: plot_scripts/cosmology/plot_cosmo_survey_sn.py [options]
 
 <pre>
 
@@ -16,7 +16,7 @@ Options:
 
 </pre>
 
-# Example
+## Example
 
 python plot_scripts/cosmology/plot_cosmo_survey_sn.py --dataDir=../test_survey
 
