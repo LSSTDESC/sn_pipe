@@ -106,7 +106,7 @@ def plot_sigma_mu_yearly(data, config):
             plot_per_bin(ax, selb, 'sigma_mu', 'nsn',
                          smoothIt=True, ls=ls, color=color,
                          marker=marker, label=dbNameb,
-                         bins=np.arange(0., 0.51, 0.01),
+                         bins=np.arange(0., 0.52, 0.01),
                          xmin=0., xmax=0.5, ymin=0., sumIt=True, norm=False)
         ax.grid(visible=True)
         ax.legend(bbox_to_anchor=(1., 0.5), ncol=1, frameon=False, fontsize=15)
@@ -151,7 +151,7 @@ def plot_sigma_full_survey(data, config):
         plot_per_bin(ax, selb, 'sigma_mu', 'nsn',
                      smoothIt=True, ls=ls, color=color,
                      marker=marker, label=dbNameb,
-                     bins=np.arange(0., 0.5, 0.01),
+                     bins=np.arange(0., 0.52, 0.01),
                      xmin=0., xmax=0.5, ymin=0., sumIt=True, norm=False)
 
     ax.grid(visible=True)
