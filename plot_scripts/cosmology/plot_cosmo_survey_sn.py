@@ -44,9 +44,46 @@ def load_data(dataDir, dbName):
 
 
 def plot_sigma_mu(data, config):
+    """
+    Function to plot sigma_mu stat
+
+    Parameters
+    ----------
+    data : pandas df
+        Data to plot.
+    config : pandas df
+        config file.
+
+    Returns
+    -------
+    None.
+
+    """
 
     print(data.columns)
+    # yearly
+    plot_sigma_mu_yearly(data, config)
 
+    # all years
+    plot_sigma_full_survey(data, config)
+
+
+def plot_sigma_mu_yearly(data, config):
+    """
+    Function to plot sigma_mu stat yearly
+
+    Parameters
+    ----------
+    data : pandas df
+        Data to plot.
+    config : pandas df
+        config file.
+
+    Returns
+    -------
+    None.
+
+    """
     years = data['year'].unique()
 
     for year in years:
@@ -79,7 +116,53 @@ def plot_sigma_mu(data, config):
         ax.plot([sigmin, sigmin], [ymin, ymax], color='k', linestyle='dashed')
         ax.set_xlabel('$\sigma_{\mu}$')
         ax.set_ylabel('$\Sigma N_{SN}^{DDF}$')
-        plt.show()
+
+
+def plot_sigma_full_survey(data, config):
+    """
+    Function to plot sigma_mu stat - full survey
+
+    Parameters
+    ----------
+    data : pandas df
+        Data to plot.
+    config : pandas df
+        config file.
+
+    Returns
+    -------
+    None.
+
+    """
+    fig, ax = plt.subplots(figsize=(14, 9))
+    fig.subplots_adjust(right=0.75)
+
+    dbNames = data['dbName'].unique()
+    for dbName in dbNames:
+        idxb = data['dbName'] == dbName
+        idxb &= data['sigma_mu'] <= 0.5
+        selb = data[idxb]
+        idxcc = config['dbName'] == dbName
+        selp = config[idxcc]
+        dbNameb = selp['dbName_plot'].unique()[0]
+        marker = selp['marker'].unique()[0]
+        color = selp['color'].unique()[0]
+        ls = selp['ls'].unique()[0]
+        plot_per_bin(ax, selb, 'sigma_mu', 'nsn',
+                     smoothIt=True, ls=ls, color=color,
+                     marker=marker, label=dbNameb,
+                     bins=np.arange(0., 0.5, 0.01),
+                     xmin=0., xmax=0.5, ymin=0., sumIt=True, norm=False)
+
+    ax.grid(visible=True)
+    ax.legend(bbox_to_anchor=(1., 0.5), ncol=1, frameon=False, fontsize=15)
+
+    ymin, ymax = ax.get_ylim()
+    sigmin = 0.12
+    ax.plot([sigmin, sigmin], [ymin, ymax], color='k', linestyle='dashed')
+    ax.set_xlabel('$\sigma_{\mu}$')
+    ax.set_ylabel('$\Sigma N_{SN}^{DDF}$')
+    plt.show()
 
 
 parser = OptionParser(
