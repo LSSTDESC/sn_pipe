@@ -9,7 +9,8 @@ Created on Wed Jul  5 14:08:41 2023
 import pandas as pd
 from sn_plotter_cosmology import plt
 import numpy as np
-from sn_plotter_cosmology.cosmoplot import Process_OS, plot_allOS, plot_allOS_survey
+from sn_plotter_cosmology.cosmoplot import Process_OS, plot_allOS
+from sn_plotter_cosmology.cosmoplot import plot_allOS_survey, save_data
 from sn_analysis.sn_tools import load_cosmo_data
 from optparse import OptionParser
 import glob
@@ -320,7 +321,7 @@ def process_cosmo(dbDir, config, spectro_config, cols_group,
         df = load_cosmo_data(dbDir, dbName, cols_group,
                              spectro_config, cols=cols)
         df['dbName'] = dbName
-        df['dbNamePlot'] = row['dbName_plot']
+        df['dbName_plot'] = row['dbName_plot']
         df_tot = pd.concat((df_tot, df))
 
     return df_tot
@@ -352,7 +353,7 @@ parser.add_option('--prior', type=str,
                   default='prior',
                   help='data were processed with or withuot prior [%default]')
 parser.add_option('--plots', type=str,
-                  default='mom_year,mom_10yrs,sigma_w0,sigma_wa,nsn',
+                  default='mom_year,mom_survey,sigma_w0,sigma_wa,nsn',
                   help='plots to make [%default]')
 parser.add_option('--ref_OS', type=str,
                   default='None',
@@ -360,6 +361,9 @@ parser.add_option('--ref_OS', type=str,
 parser.add_option('--spectro_config', type=str,
                   default='WFD_TiDES',
                   help='spectro config [%default]')
+parser.add_option('--year_max', type=int,
+                  default=6,
+                  help='year max for the display [%default]')
 
 opts, args = parser.parse_args()
 
@@ -374,6 +378,7 @@ prior = opts.prior
 plots = opts.plots
 ref_OS = opts.ref_OS
 spectro_config = opts.spectro_config
+year_max = opts.year_max
 
 df_conf = pd.read_csv(config, comment='#')
 """
@@ -406,6 +411,13 @@ data = process_cosmo(dbDir, df_conf, spectro_config,
                      [timescale, 'prior', 'dbName_DD', 'dbName_WFD'],
                      cols=cols)
 
+# select year max
+idx = data[timescale] <= year_max
+data = data[idx]
+
+
+# save smom in csv file
+save_data(data, year_max=year_max)
 
 dd = {}
 
@@ -428,9 +440,9 @@ if 'mom_year' in plots:
                legy=legy, vary_std='MoM_std', prior=prior,
                figtitle=figtit, dbNorm=dbNorm,
                comment_on_plot=comment_on_plot,
-               fill_between=fill_between)
+               fill_between=fill_between, year_max=year_max)
 
-if 'mom_10yrs' in plots:
+if 'mom_survey' in plots:
 
     plot_allOS_survey(dbNorm=dbNorm)
 
