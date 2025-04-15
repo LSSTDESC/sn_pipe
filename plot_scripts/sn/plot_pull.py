@@ -51,8 +51,9 @@ def load_data(dbDir, dbName, runType, timescale, seasons):
             df['pull_x1'] = (df['x1']-df['x1_fit'])/df['sigmax1']
             df['pull_c'] = (df['color']-df['color_fit'])/df['sigma_c']
             df['pull_daymax'] = (df['daymax']-df['t0_fit'])/df['sigma_t0']
-            df['diff_x1'] = (df['x1']-df['x1_fit'])/df['x1']
-            df['diff_c'] = (df['color']-df['color_fit'])/df['color']
+            df['diff_x1'] = (df['x1']-df['x1_fit'])
+            df['diff_c'] = (df['color']-df['color_fit'])
+            df['chisq_ndof'] = df['chisq']/df['ndof']
 
     return df
 
@@ -123,6 +124,7 @@ def plot_pull(dfa, pullvar, figtitle='', fitgauss=True):
     print(ttb)
     print(hist-ttb)
     """
+    ax.grid(visible=True)
     ax.legend()
 
 
@@ -169,6 +171,26 @@ def plot_nsn_hist(dfa):
     plt.hist(dfb['nsn'], histtype='step')
 
 
+def plot_all_pull(df, seasons):
+
+    print('seasons', seasons)
+    for seas in seasons:
+        idx = df['season'] == seas
+        sel = df[idx]
+        print('pull man', len(sel))
+        plot_pull(sel, 'pull_x1', figtitle='pull x1 - season {}'.format(seas))
+        plot_pull(sel, 'pull_c', figtitle='pull color - season {}'.format(seas))
+        plot_pull(sel, 'pull_daymax',
+                  figtitle='pull daymax - season {}'.format(seas))
+
+
+def plot_vs(data, varx='chisq_ndof', vary='diff_x1'):
+
+    fig, ax = plt.subplots()
+
+    ax.plot(data[varx], data[vary], 'ko')
+
+
 parser = OptionParser(description='Script to analyze SN prod')
 
 parser.add_option('--dbDir', type=str,
@@ -186,6 +208,9 @@ parser.add_option('--timescale', type=str,
 parser.add_option('--seasons', type=str,
                   default='1',
                   help='seasons/years to process [%default]')
+parser.add_option('--fields', type=str,
+                  default='COSMOS',
+                  help='fields to process [%default]')
 
 opts, args = parser.parse_args()
 
@@ -194,6 +219,8 @@ dbName = opts.dbName.split(',')
 runType = opts.runType
 timescale = opts.timescale
 seasons = opts.seasons.split(',')
+seasons = list(map(int, seasons))
+fields = opts.fields.split(',')
 
 dfa = pd.DataFrame()
 print('kkkkkk', dbName)
@@ -205,14 +232,41 @@ for dbNam in dbName:
 
 ninit = len(dfa)
 
+idx = dfa['field'].isin(fields)
+nsn = len(dfa[idx])
+"""
 idx = dfa['sigma_c'] <= 0.04
 # idx &= dfa['Nfilt_10'] > 2
+"""
+# idx &= dfa['sigma_c'] <= 0.04
+"""
 idx &= dfa['n_epochs_m10_p5'] >= 5
 idx &= dfa['n_epochs_phase_minus_10'] >= 2
 idx &= dfa['n_epochs_bef'] >= 5
 idx &= dfa['n_epochs_aft'] >= 10
+"""
+# idx &= dfa['n_epochs_phase_minus_10'] >= 3
+# idx &= dfa['sigmax1'] <= 0.10
+# idx &= dfa['sigma_mu'] <= 0.2
+# idx &= dfa['n_epochs_bef'] >= 5
+# idx &= dfa['n_epochs_aft'] >= 10
+# idx &= dfa['n_epochs_phase_plus_20'] > 3
+# idx &= dfa['n_epochs_phase_minus_10'] >= 3
+idx &= (dfa['Nfilt_10'] >= 2)
 dfa = dfa[idx]
 
+nsn_filt = len(dfa)
+
+print('filt', nsn_filt/nsn)
+
+plot_all_pull(dfa, seasons)
+
+print(dfa.columns)
+varx = 'n_epochs_phase_plus_20'
+plot_vs(dfa, varx='SNR')
+plot_vs(dfa, varx='Nfilt_20', vary='diff_c')
+
+plt.show()
 
 print(dfa.columns, len(dfa)/30.)
 
