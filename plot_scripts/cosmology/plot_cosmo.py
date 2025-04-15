@@ -341,7 +341,7 @@ parser.add_option('--UDFs', type=str,
                   default='COSMOS,XMM-LSS',
                   help='UD fields [%default]')
 parser.add_option('--DFs', type=str,
-                  default='CDFS,EDFS,ELAISS1',
+                  default='CDFS,EDFS,ELAISS1,EDFS_a,EDFS_b',
                   help='Deep fields [%default]')
 parser.add_option('--comment_on_plot', type=str,
                   default='Host spectro-z only',
@@ -400,7 +400,7 @@ cols = ['MoM', 'WFD_TiDES', 'all_Fields',
         'WFD_desi2_footprint', 'WFD_desi_lrg_footprint',
         'WFD_desi_bgs_footprint', 'nsn_z_0.8', 'nsn_rat_highz']
 """
-fields = ['COSMOS', 'XMM-LSS', 'ELAISS1', 'CDFS', 'EDFSa', 'EDFSb', 'DDF']
+fields = ['COSMOS', 'XMM-LSS', 'ELAISS1', 'CDFS', 'EDFS_a', 'EDFS_b', 'DDF']
 
 cols = ['MoM', 'all_Fields',
         'nsn_z_0.8', 'nsn_z_0.8_sigma_mu', 'nsn_rat_highz', 'sigma_w0', 'sigma_wa']
