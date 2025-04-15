@@ -25,4 +25,26 @@ Options:
 </pre>
 
 ## Example
+python plot_scripts/cosmology/plot_cosmo.py --config=[config_ana_selplot.csv](config_ana_selplot.csv) --dbDir=../cosmo_fit_notelrot_TiDES_5
 
+[SMoM vs year](plot1a.png)
+
+[SMoM vs OS](plot2a.png)
+
+[sigma_w0 vs year](plot3a.png)
+
+[sigma_wa vs year](plot4a.png)
+
+[NSN vs year - COSMOS](plot5a.png)
+
+[NSN vs year - XMM-LSS](plot6a.png)
+
+[NSN vs year - ELAISS1](plot7a.png)
+
+[NSN vs year - CDFS](plot8a.png)
+
+[NSN vs year - EDFS_a](plot9a.png)
+
+[NSN vs year - EDFS_b](plot10a.png)
+
+[NSN vs year - all DDFs](plot11a.png)
