@@ -11,6 +11,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import curve_fit
+from sn_analysis.sn_tools import complete_df
 
 
 def load_data(dbDir, dbName, runType, timescale, seasons):
@@ -229,6 +230,7 @@ for dbNam in dbName:
     dff['dbName'] = dbNam
     dfa = pd.concat((dfa, dff))
 
+dfa = complete_df(dfa)
 
 ninit = len(dfa)
 
@@ -254,6 +256,11 @@ idx &= dfa['n_epochs_aft'] >= 10
 # idx &= dfa['n_epochs_phase_minus_10'] >= 3
 idx &= (dfa['Nfilt_10'] >= 2)
 dfa = dfa[idx]
+
+plot_hist(dfa, 'diff_mu', bins=100)
+
+print(dfa['diff_mu'].mean(), dfa['diff_mu'].std())
+plt.show()
 
 nsn_filt = len(dfa)
 
