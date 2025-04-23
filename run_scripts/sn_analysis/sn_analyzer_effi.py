@@ -136,36 +136,248 @@ def get_symbol(opdoc):
         return sym
 
 
-def get_pull(sel, pullvar, fitgauss=True):
+def plot_effi(data, field, thestyle,
+              varx='sel_str', legx='',
+              varya='effi', err_varya='err_effi', legya='Observing Efficiency [%]',
+              varyb='nsn', err_varyb='err_nsn', legyb='N$_{SN}$'):
 
-    fig, ax = plt.subplots()
-    figtitle = pullvar
-    fig.suptitle(pullvar)
-    print('fitting', pullvar, sel[pullvar])
+    dbName = data['dbName'].unique().tolist()[0]
 
-    # selb = pd.DataFrame(sel)
-    selb = sel_for_pull(sel, pullvar, nstd=3.)
+    idx = data['field'] == field
+    sel = data[idx]
 
-    ax.hist(selb[pullvar], histtype='step', bins=50)
+    sel['season'] = sel['season'].astype(int)
 
-    # Get the fitted curve
-    if fitgauss:
-        coeff = fit_pull(selb, pullvar)
-        xmin = selb[pullvar].min()
-        xmax = selb[pullvar].max()
-        newbins = np.arange(xmin, xmax, 0.01)
-        hist_fit = gauss(newbins, *coeff)
-        mean = np.round(coeff[1], 2)
-        sigma = np.round(coeff[2], 2)
-        leg = 'pull= {} +- {}'.format(mean, sigma)
-        ax.plot(newbins, hist_fit, label=leg)
-        print('bbb', coeff[0], coeff[1], coeff[2])
-    print(figtitle, np.mean(selb[pullvar]), np.std(selb[pullvar]))
+    # sel = sel.sort_values(by=['season'])
+    seasons = sel['season'].unique().tolist()
 
-    ax.grid(visible=True)
-    ax.legend()
+    seasons.sort()
 
-    # plt.show()
+    fig, ax = plt.subplots(figsize=(12, 10), nrows=2)
+    fig.suptitle('{} \n {}'.format(dbName, field))
+    fig.subplots_adjust(hspace=0.05, right=0.82)
+
+    """
+    ttimes = range(1, 12)
+    lls = ['solid']*4+['dashed']*4+['dotted']*4
+    mmarkers = ['o', '*', '^', 'h']*3
+    listy = dict(zip(ttimes, lls))
+    marks = dict(zip(ttimes, mmarkers))
+    """
+
+    for seas in seasons:
+        idxb = sel['season'] == seas
+        selb = sel[idxb]
+
+        idxs = thestyle['season'] == seas
+        sels = thestyle[idxs]
+        marker = sels['marker'].values[0]
+        ls = sels['ls'].values[0]
+        color = sels['color'].values[0]
+
+        erry_a = None
+        erry_b = None
+
+        if err_varya != '':
+            erry_a = selb[err_varya]
+
+        if err_varyb != '':
+            erry_b = selb[err_varyb]
+
+        ax[1].errorbar(selb[varx], selb[varya],
+                       yerr=erry_a,
+                       marker=marker,
+                       linestyle=ls,
+                       label='season {}'.format(seas),
+                       mfc='None', ms=10, color=color)
+
+        ax[0].errorbar(selb[varx], selb[varyb],
+                       yerr=erry_b,
+                       marker=marker,
+                       linestyle=ls,
+                       label='season {}'.format(seas),
+                       mfc='None', ms=10, color=color)
+
+    for i in range(2):
+        ax[i].grid(visible=True)
+
+    # ax[1].set_ylim([0., 101.])
+
+    ax[1].set_ylabel(r'{}'.format(legya),
+                     fontsize=15, fontweight='bold')
+    ax[0].set_ylabel(r'{}'.format(legyb), fontsize=15, fontweight='bold')
+    ax[0].set_xticklabels([])
+    ax[1].tick_params(axis='x', labelrotation=20., labelsize=12)
+    ax[1].tick_params(axis='y', labelsize=12)
+    ax[0].tick_params(axis='y', labelsize=12)
+
+    ax[1].legend(loc='upper center',
+                 bbox_to_anchor=(1.14, 1.4),
+                 ncol=1, fontsize=15, frameon=False)
+
+    plt.show()
+
+
+def process_season(data, seas, field, norm_factor):
+    """
+    Function to process a season
+
+    Parameters
+    ----------
+    data : pandas df
+        Data to process.
+    seas : int
+        season number.
+    field : str
+        Field of interest.
+    norm_factor : float
+        normalization factor.
+
+    Returns
+    -------
+    df_effi : pandas df
+        processed data.
+
+    """
+
+    idx = data['season'] == seas
+    mysel = data[idx]
+
+    n_nosel = int(len(mysel)/norm_factor)
+    print('no sel', n_nosel)
+    ra = get_pulls(mysel)
+    ra['sel_str'] = 'nosel'
+    ra['field'] = field
+    ra['season'] = seas
+    # dfa = pd.concat((dfa, ra))
+
+    ro = get_nsn(len(mysel), len(mysel), norm_factor)
+    ro['sel_str'] = 'nosel'
+    ro['field'] = field
+    ro['season'] = seas
+    # dfb = pd.concat((dfb, ro))
+    # get_pulls(mysel)
+    for i in range(1, len(sellist)+1):
+        # ro = [field, int(seas)]
+        mystr, sel = select_str(mysel, sellist[:i])
+        rasel = get_pulls(sel)
+        rasel['sel_str'] = mystr
+        rasel['field'] = field
+        rasel['season'] = seas
+        ra = pd.concat((ra, rasel))
+        rosel = get_nsn(len(sel), len(mysel), norm_factor)
+        rosel['sel_str'] = mystr
+        rosel['field'] = field
+        rosel['season'] = seas
+        # dfb = pd.concat((dfb, ro))
+        ro = pd.concat((ro, rosel))
+
+    # merge the two Dataframes
+
+    df_effi = ro.merge(ra,
+                       left_on=['field', 'season', 'sel_str'],
+                       right_on=['field', 'season', 'sel_str'],
+                       suffixes=['', ''])
+
+    return df_effi
+
+
+def process_db(dbDir, dbName, runType, fields,
+               norm_factor, zmin=0.01, zmax=1.1):
+    """
+    Function to process OS data
+
+    Parameters
+    ----------
+    dbDir : str
+        Data dir.
+    dbName : str
+        OS to process.
+    runType : str
+        run type.
+    fields : list(str)
+        List of fields to process.
+    norm_factor : float
+        normalization factor.
+    zmin: float, optional.
+        redshift min for data. The default is 0.01.
+    zmax: float, optional.
+        redshift max for data. The default is 1.11.   
+
+    Returns
+    -------
+    df_effi : pandas df
+        processed data.
+
+    """
+
+    df_effi = pd.DataFrame()
+
+    for field in fields:
+        data = load_data(dbDir, dbName, runType, field)
+        data = complete_df(data)
+
+        idxz = data['z'] >= zmin
+        idxz &= data['z'] <= zmax
+
+        data = data[idxz]
+        print(field, len(data), len(data)/norm_factor)
+
+        seasons = data['season'].unique()
+
+        for seas in seasons:
+            print('processing', zmin, zmax, seas)
+            dd = process_season(data, seas, field, norm_factor)
+            df_effi = pd.concat((df_effi, dd))
+
+    df_effi['dbName'] = dbName
+    df_effi['zmin'] = np.round(zmin, 2)
+    df_effi['zmax'] = np.round(zmax, 2)
+
+    return df_effi
+
+
+def plots(df_effi, thestyle, field='COSMOS'):
+    """
+    Function to draw a set of plots
+
+    Parameters
+    ----------
+    df_effi : pandas df
+        Data to plot.
+    thestyle : pandas df
+        plot style.
+    field : str, optional
+        field to plot. The default is 'COSMOS'.
+
+    Returns
+    -------
+    None.
+
+    """
+
+    plot_effi(df_effi, field, thestyle)
+    plot_effi(df_effi, field, thestyle,
+              varya='mu_mu', err_varya='', legya='mu',
+              varyb='sigma_mu', err_varyb='', legyb='sigma_mu')
+    plot_effi(df_effi, field, thestyle,
+              varya='mean_mu', err_varya='', legya='mean mu',
+              varyb='std_mu', err_varyb='', legyb='std mu')
+    plot_effi(df_effi, field, thestyle,
+              varya='mu_color', err_varya='', legya='$\mu_{pull}^{color}$',
+              varyb='sigma_color', err_varyb='', legyb='$\sigma_{pull}^{color}$')
+    plot_effi(df_effi, field, thestyle,
+              varya='mean_color', err_varya='', legya='$<pull^{color}>$',
+              varyb='std_mu', err_varyb='', legyb='$std(pull^{color})$')
+    plot_effi(df_effi, field, thestyle,
+              varya='mean_x1', err_varya='', legya='$<pull^{x1}>$',
+              varyb='std_x1', err_varyb='', legyb='$std(pull^{x1})$')
+    plot_effi(df_effi, field, thestyle,
+              varya='pvalue_kurtosis_mu', err_varya='', legya='mu - kurtosis pv',
+              varyb='pvalue_kurtosis_color', err_varyb='', legyb='color kurtosis pv')
+    plot_effi(df_effi, field, thestyle,
+              varya='kurtosis_mu', err_varya='', legya='mu - kurtosis',
+              varyb='kurtosis_color', err_varyb='', legyb='color kurtosis')
 
 
 parser = OptionParser(description='Script to analyze SN selection criteria')
@@ -192,7 +404,9 @@ parser.add_option('--norm_factor', type=float,
                   default=30.,
                   help='normalization factor [%default]')
 parser.add_option("--selconfig", type=str,
-                  default='G10_JLA', help="sel config name[%default]")
+                  default='G10_JLA', help="sel config name [%default]")
+parser.add_option("--zrange", type=int,
+                  default=0, help="to process data per zrange [%default]")
 
 opts, args = parser.parse_args()
 
@@ -206,55 +420,75 @@ seasons = list(map(int, seasons))
 fields = opts.fields.split(',')
 norm_factor = opts.norm_factor
 selconfig = opts.selconfig
+zrange = opts.zrange
 
-# selection vriteria
+# selection criteria
 sellist = selection_criteria()[selconfig]
+
+# add criteria
+sellist.append(('Nfilt_2', operator.ge, 3, 7))
+sellist.append(('Nfilt_5', operator.ge, 2, 7))
+sellist.append(('sigmaC', operator.le, 0.04, 7))
 
 print(sellist)
 rb = []
-dfa = pd.DataFrame()
-dfb = pd.DataFrame()
+# dfa = pd.DataFrame()
+# dfb = pd.DataFrame()
 
-for field in fields:
-    data = load_data(dbDir, dbName, runType, field)
-    data = complete_df(data)
-    print(field, len(data), len(data)/norm_factor)
+zmin = 0.0
+zmax = 1.1
+deltaz = 1.1
 
-    seasons = data['season'].unique()
+if zrange:
+    deltaz = 0.10
 
-    for seas in seasons:
-        idx = data['season'] == seas
-        mysel = data[idx]
-        print('no sel', len(mysel)/norm_factor)
-        n_nosel = int(len(mysel)/norm_factor)
-        ra = get_pulls(mysel)
-        ra['sel_str'] = 'nosel'
-        ra['field'] = field
-        ra['season'] = seas
-        dfa = pd.concat((dfa, ra))
-        ro = get_nsn(len(mysel), len(mysel), norm_factor)
-        ro['sel_str'] = 'nosel'
-        ro['field'] = field
-        ro['season'] = seas
-        dfb = pd.concat((dfb, ro))
-        # get_pulls(mysel)
-        for i in range(1, len(sellist)+1):
-            ro = [field, int(seas)]
-            mystr, sel = select_str(mysel, sellist[:i])
-            ra = get_pulls(sel)
-            ra['sel_str'] = mystr
-            ra['field'] = field
-            ra['season'] = seas
-            dfa = pd.concat((dfa, ra))
-            ro = get_nsn(len(sel), len(mysel), norm_factor)
-            ro['sel_str'] = mystr
-            ro['field'] = field
-            ro['season'] = seas
-            dfb = pd.concat((dfb, ro))
+zvals = np.arange(zmin, zmax, deltaz)
 
-df_effi = dfa.merge(dfb,
-                    left_on=['field', 'season', 'sel_str'],
-                    right_on=['field', 'season', 'sel_str'],
-                    suffixes=['', ''])
+# zvals[0] += 0.01
+print(zvals)
 
-print(df_effi)
+for vv in zvals:
+    zmi = vv
+    if zmi < 0.001:
+        zmi = 0.01
+    zma = vv+deltaz
+    df_effi = process_db(dbDir, dbName, runType, fields,
+                         norm_factor, zmin=zmi, zmax=zma)
+
+
+rorig = ['nosel',
+         'n_epochs_phase_minus_10 >= 1',
+         'n_epochs_phase_plus_20 >= 1',
+         'n_epochs_m10_p35 >= 4',
+         'n_epochs_m10_p5 >= 1',
+         'n_epochs_p5_p20 >= 1',
+         'n_bands_m8_p10 >= 2',
+         'fitstatus == fitok',
+         'sigmat0 <= 2.0',
+         'sigmax1 <= 1']
+rorig += ['Nfilt_2 >= 3', 'Nfilt_5 >= 2', 'sigmaC <= 0.04']
+renew = ['no selection',
+         '$N_{epochs}(p\leq-10)\geq 1$',
+         '$N_{epochs}(p\geq+20)\geq 1$',
+         '$N_{epochs}(-10 \leq p\leq+35)\geq 4$',
+         '$N_{epochs}(-10 \leq p\leq+5)\geq 1$',
+         '$N_{epochs}(+15 \leq p\leq+20)\geq 1$',
+         '$N_{epochs}(-8 \leq p\leq+10)\geq 2$',
+         '                 fit ok            ',
+         '$\sigma_{T_0}\leq 2$',
+         '$\sigma_{x_1}\leq 1$']
+renew += ['$N_{band}(SNR\geq 2)\geq 3$',
+          '$N_{band}(SNR\geq 5)\geq 2$',
+          '$\sigma_C \leq 0.04$']
+
+torep = dict(zip(rorig, renew))
+for key, vals in torep.items():
+    df_effi['sel_str'] = df_effi['sel_str'].str.replace(key, vals)
+
+
+thestyle = pd.read_csv('plot_style_4_udy.csv')
+
+
+print(df_effi.columns)
+
+plots(df_effi, thestyle)

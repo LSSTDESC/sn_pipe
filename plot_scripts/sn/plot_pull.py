@@ -254,7 +254,10 @@ idx &= dfa['n_epochs_aft'] >= 10
 # idx &= dfa['n_epochs_aft'] >= 10
 # idx &= dfa['n_epochs_phase_plus_20'] > 3
 # idx &= dfa['n_epochs_phase_minus_10'] >= 3
-idx &= (dfa['Nfilt_10'] >= 2) | (dfa['Nfilt_20'] >= 1)
+# idx &= (dfa['Nfilt_10'] >= 2) | (dfa['Nfilt_20'] >= 1)
+idx &= (dfa['Nfilt_2'] >= 3)
+idx &= (dfa['Nfilt_10'] >= 2)
+
 dfa = dfa[idx]
 
 plot_hist(dfa, 'diff_mu', bins=100)
@@ -273,7 +276,7 @@ plot_all_pull(dfa, seasons)
 print(dfa.columns)
 varx = 'n_epochs_phase_plus_20'
 plot_vs(dfa, varx='SNR')
-plot_vs(dfa, varx='Nfilt_20', vary='diff_c')
+plot_vs(dfa, varx='Nfilt_5', vary='diff_c')
 
 plt.show()
 
