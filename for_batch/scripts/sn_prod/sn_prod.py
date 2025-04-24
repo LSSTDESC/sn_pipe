@@ -67,6 +67,9 @@ def batch_DDF(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
     procDict.pop('simuParams_fromFile')
     procDict.pop('simuParams_dir')
 
+    if deltaz == 0.01:
+        zmin = 0.01
+
     zvalues = np.arange(zmin, zmax, deltaz).tolist()
     for fieldName in DD_list:
         for zval in zvalues:
@@ -151,8 +154,12 @@ def batch_WFD(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
     sat = theDict['saturation_effect']
     sat_psf = theDict['saturation_psf']
     ccdfullwell = theDict['saturation_ccdfullwell']
+    if deltaz == 0.01:
+        zmin = 0.01
+
     zvalues = np.arange(zmin, zmax+deltaz, deltaz).tolist()
-    zvalues[0] += 0.01
+    if deltaz > 0.01:
+        zvalues[0] += 0.01
 
     tag_list = pd.DataFrame()
     if 'None' not in reprocList:
