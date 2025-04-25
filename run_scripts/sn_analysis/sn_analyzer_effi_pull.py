@@ -8,12 +8,12 @@ Created on Tue Apr 22 10:58:22 2025
 from optparse import OptionParser
 import glob
 import pandas as pd
-from sn_analysis.sn_selection import selection_criteria, select
-from sn_analysis.sn_tools import complete_df, get_pulls, sel_for_pull
+from sn_analysis.sn_selection import selection_criteria
+from sn_analysis.sn_tools import complete_df, get_pulls
 import numpy as np
 import re
 import operator
-import matplotlib.pyplot as plt
+from sn_tools.sn_io import checkDir
 
 
 def load_data(dbDir, dbName, runType, field):
@@ -40,7 +40,7 @@ def load_data(dbDir, dbName, runType, field):
 
     theDir = '{}/{}/{}'.format(dbDir, dbName, runType)
 
-    print('scanning', theDir)
+    ('scanning', theDir)
     fis = glob.glob('{}/*{}*.hdf5'.format(theDir, field))
 
     df = pd.DataFrame()
@@ -134,88 +134,6 @@ def get_symbol(opdoc):
     sym = re.sub(r'.*\w\s?(\S+)\s?\w.*', '\\1', opdoc)
     if re.match('^\\W+$', sym):
         return sym
-
-
-def plot_effi(data, field, thestyle,
-              varx='sel_str', legx='',
-              varya='effi', err_varya='err_effi', legya='Observing Efficiency [%]',
-              varyb='nsn', err_varyb='err_nsn', legyb='N$_{SN}$'):
-
-    dbName = data['dbName'].unique().tolist()[0]
-
-    idx = data['field'] == field
-    sel = data[idx]
-
-    sel['season'] = sel['season'].astype(int)
-
-    # sel = sel.sort_values(by=['season'])
-    seasons = sel['season'].unique().tolist()
-
-    seasons.sort()
-
-    fig, ax = plt.subplots(figsize=(12, 10), nrows=2)
-    fig.suptitle('{} \n {}'.format(dbName, field))
-    fig.subplots_adjust(hspace=0.05, right=0.82)
-
-    """
-    ttimes = range(1, 12)
-    lls = ['solid']*4+['dashed']*4+['dotted']*4
-    mmarkers = ['o', '*', '^', 'h']*3
-    listy = dict(zip(ttimes, lls))
-    marks = dict(zip(ttimes, mmarkers))
-    """
-
-    for seas in seasons:
-        idxb = sel['season'] == seas
-        selb = sel[idxb]
-
-        idxs = thestyle['season'] == seas
-        sels = thestyle[idxs]
-        marker = sels['marker'].values[0]
-        ls = sels['ls'].values[0]
-        color = sels['color'].values[0]
-
-        erry_a = None
-        erry_b = None
-
-        if err_varya != '':
-            erry_a = selb[err_varya]
-
-        if err_varyb != '':
-            erry_b = selb[err_varyb]
-
-        ax[1].errorbar(selb[varx], selb[varya],
-                       yerr=erry_a,
-                       marker=marker,
-                       linestyle=ls,
-                       label='season {}'.format(seas),
-                       mfc='None', ms=10, color=color)
-
-        ax[0].errorbar(selb[varx], selb[varyb],
-                       yerr=erry_b,
-                       marker=marker,
-                       linestyle=ls,
-                       label='season {}'.format(seas),
-                       mfc='None', ms=10, color=color)
-
-    for i in range(2):
-        ax[i].grid(visible=True)
-
-    # ax[1].set_ylim([0., 101.])
-
-    ax[1].set_ylabel(r'{}'.format(legya),
-                     fontsize=15, fontweight='bold')
-    ax[0].set_ylabel(r'{}'.format(legyb), fontsize=15, fontweight='bold')
-    ax[0].set_xticklabels([])
-    ax[1].tick_params(axis='x', labelrotation=20., labelsize=12)
-    ax[1].tick_params(axis='y', labelsize=12)
-    ax[0].tick_params(axis='y', labelsize=12)
-
-    ax[1].legend(loc='upper center',
-                 bbox_to_anchor=(1.14, 1.4),
-                 ncol=1, fontsize=15, frameon=False)
-
-    plt.show()
 
 
 def process_season(data, seas, field, norm_factor):
@@ -321,12 +239,12 @@ def process_db(dbDir, dbName, runType, fields,
         idxz &= data['z'] <= zmax
 
         data = data[idxz]
-        print(field, len(data), len(data)/norm_factor)
+        # print(field, len(data), len(data)/norm_factor)
 
         seasons = data['season'].unique()
 
         for seas in seasons:
-            print('processing', zmin, zmax, seas)
+            # print('processing', zmin, zmax, seas)
             dd = process_season(data, seas, field, norm_factor)
             df_effi = pd.concat((df_effi, dd))
 
@@ -335,49 +253,6 @@ def process_db(dbDir, dbName, runType, fields,
     df_effi['zmax'] = np.round(zmax, 2)
 
     return df_effi
-
-
-def plots(df_effi, thestyle, field='COSMOS'):
-    """
-    Function to draw a set of plots
-
-    Parameters
-    ----------
-    df_effi : pandas df
-        Data to plot.
-    thestyle : pandas df
-        plot style.
-    field : str, optional
-        field to plot. The default is 'COSMOS'.
-
-    Returns
-    -------
-    None.
-
-    """
-
-    plot_effi(df_effi, field, thestyle)
-    plot_effi(df_effi, field, thestyle,
-              varya='mu_mu', err_varya='', legya='mu',
-              varyb='sigma_mu', err_varyb='', legyb='sigma_mu')
-    plot_effi(df_effi, field, thestyle,
-              varya='mean_mu', err_varya='', legya='mean mu',
-              varyb='std_mu', err_varyb='', legyb='std mu')
-    plot_effi(df_effi, field, thestyle,
-              varya='mu_color', err_varya='', legya='$\mu_{pull}^{color}$',
-              varyb='sigma_color', err_varyb='', legyb='$\sigma_{pull}^{color}$')
-    plot_effi(df_effi, field, thestyle,
-              varya='mean_color', err_varya='', legya='$<pull^{color}>$',
-              varyb='std_mu', err_varyb='', legyb='$std(pull^{color})$')
-    plot_effi(df_effi, field, thestyle,
-              varya='mean_x1', err_varya='', legya='$<pull^{x1}>$',
-              varyb='std_x1', err_varyb='', legyb='$std(pull^{x1})$')
-    plot_effi(df_effi, field, thestyle,
-              varya='pvalue_kurtosis_mu', err_varya='', legya='mu - kurtosis pv',
-              varyb='pvalue_kurtosis_color', err_varyb='', legyb='color kurtosis pv')
-    plot_effi(df_effi, field, thestyle,
-              varya='kurtosis_mu', err_varya='', legya='mu - kurtosis',
-              varyb='kurtosis_color', err_varyb='', legyb='color kurtosis')
 
 
 parser = OptionParser(description='Script to analyze SN selection criteria')
@@ -407,6 +282,9 @@ parser.add_option("--selconfig", type=str,
                   default='G10_JLA', help="sel config name [%default]")
 parser.add_option("--zrange", type=int,
                   default=0, help="to process data per zrange [%default]")
+parser.add_option('--outDir', type=str,
+                  default='../effi_pull_stat',
+                  help='output Dir dir[%default]')
 
 opts, args = parser.parse_args()
 
@@ -421,14 +299,18 @@ fields = opts.fields.split(',')
 norm_factor = opts.norm_factor
 selconfig = opts.selconfig
 zrange = opts.zrange
+outDir = opts.outDir
+
+# create output dir (if necessary)
+checkDir(outDir)
 
 # selection criteria
 sellist = selection_criteria()[selconfig]
 
 # add criteria
 sellist.append(('Nfilt_2', operator.ge, 3, 7))
-sellist.append(('Nfilt_5', operator.ge, 2, 7))
-sellist.append(('sigmaC', operator.le, 0.04, 7))
+# sellist.append(('Nfilt_5', operator.ge, 2, 7))
+# sellist.append(('sigmaC', operator.le, 0.04, 7))
 
 print(sellist)
 rb = []
@@ -456,39 +338,6 @@ for vv in zvals:
                          norm_factor, zmin=zmi, zmax=zma)
 
 
-rorig = ['nosel',
-         'n_epochs_phase_minus_10 >= 1',
-         'n_epochs_phase_plus_20 >= 1',
-         'n_epochs_m10_p35 >= 4',
-         'n_epochs_m10_p5 >= 1',
-         'n_epochs_p5_p20 >= 1',
-         'n_bands_m8_p10 >= 2',
-         'fitstatus == fitok',
-         'sigmat0 <= 2.0',
-         'sigmax1 <= 1']
-rorig += ['Nfilt_2 >= 3', 'Nfilt_5 >= 2', 'sigmaC <= 0.04']
-renew = ['no selection',
-         '$N_{epochs}(p\leq-10)\geq 1$',
-         '$N_{epochs}(p\geq+20)\geq 1$',
-         '$N_{epochs}(-10 \leq p\leq+35)\geq 4$',
-         '$N_{epochs}(-10 \leq p\leq+5)\geq 1$',
-         '$N_{epochs}(+15 \leq p\leq+20)\geq 1$',
-         '$N_{epochs}(-8 \leq p\leq+10)\geq 2$',
-         '                 fit ok            ',
-         '$\sigma_{T_0}\leq 2$',
-         '$\sigma_{x_1}\leq 1$']
-renew += ['$N_{band}(SNR\geq 2)\geq 3$',
-          '$N_{band}(SNR\geq 5)\geq 2$',
-          '$\sigma_C \leq 0.04$']
-
-torep = dict(zip(rorig, renew))
-for key, vals in torep.items():
-    df_effi['sel_str'] = df_effi['sel_str'].str.replace(key, vals)
-
-
-thestyle = pd.read_csv('plot_style_4_udy.csv')
-
-
-print(df_effi.columns)
-
-plots(df_effi, thestyle)
+# save the data
+outName = '{}/{}.hdf5'.format(outDir, dbName)
+df_effi.to_hdf(outName, key='effi_pull')
