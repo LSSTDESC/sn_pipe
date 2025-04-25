@@ -1,0 +1,13 @@
+dbName,plot_style_file
+baseline_v4.3.1_10yrs,plot_style_baseline.csv
+desc_ddf_gen_0.70_co_v4.3.1_10yrs,plot_style_4_udy.csv
+desc_ddf_gen_0.75_co_v4.3.1_10yrs,plot_style_3_udy.csv
+desc_ddf_gen_0.80_co_v4.3.1_10yrs,plot_style_2_udy.csv
+desc_ddf_gen_0.70_wz_v4.3.1_10yrs,plot_style_4_udy.csv
+desc_ddf_gen_0.75_wz_v4.3.1_10yrs,plot_style_3_udy.csv
+desc_ddf_gen_0.80_wz_v4.3.1_10yrs,plot_style_2_udy.csv
+desc_ddf_gen_0.70_sn_v4.3.1_10yrs,plot_style_4_udy.csv
+desc_ddf_gen_0.75_sn_v4.3.1_10yrs,plot_style_3_udy.csv
+desc_ddf_gen_0.80_sn_v4.3.1_10yrs,plot_style_2_udy.csv
+#desc_ddf_v4.3.1_10yrs,desc_ddf_v4.3.1,dashed,s,r
+#one_snap_v4.3.1_10yrs,one_snap_v4.3.1,dashed,*,k
