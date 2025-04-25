@@ -11,6 +11,7 @@ from optparse import OptionParser
 # import matplotlib.pyplot as plt
 import pandas as pd
 from sn_plotter_analysis import plt
+import numpy as np
 
 
 def rename_selection_criteria(df):
@@ -69,13 +70,46 @@ def plot_effi(data, field, thestyle,
               legya='Observing Efficiency [%]',
               varyb='nsn', err_varyb='err_nsn',
               legyb='N$_{SN}$'):
+    """
+    Main function plot
 
+    Parameters
+    ----------
+    data : pandas df
+        Data to plot.
+    field : str
+        field.
+    thestyle : str
+        plot style finle name.
+    varx : str, optional
+        x-axis variable. The default is 'sel_str'.
+    legx : str, optional
+        x-axis label. The default is ''.
+    varya : str, optional
+        y-axis variable for the first plot. The default is 'effi'.
+    err_varya : str, optional
+        y-axis variable error for the first plot. The default is 'err_effi'.
+    legya : str, optional
+        y-axis label for the first plot. The default is 'Observing Efficiency [%]'.
+    varyb : str, optional
+        y-axis variable for the second plot. The default is 'nsn'.
+    err_varyb : str, optional
+        y-axis variable error for the second plot. The default is 'err_nsn'.
+    legyb : str, optional
+        y-axis label for the second plot. The default is 'N$_{SN}$'.
+
+    Returns
+    -------
+    None.
+
+    """
+
+    data = rename_selection_criteria(data)
     dbName = data['dbName'].unique().tolist()[0]
 
     idx = data['field'] == field
     sel = data[idx]
 
-    print('alors', len(sel))
     sel['season'] = sel['season'].astype(int)
 
     # sel = sel.sort_values(by=['season'])
@@ -148,7 +182,8 @@ def plot_effi(data, field, thestyle,
                  ncol=1, fontsize=15, frameon=False)
 
 
-def plotIt(df_effi, thestyle, field='COSMOS', plots=['effi_nsn']):
+def plotIt(df_effi, plot_style_file, plot_style_dir,
+           field='COSMOS', plots=['effi_nsn']):
     """
     Function to draw a set of plots
 
@@ -156,8 +191,10 @@ def plotIt(df_effi, thestyle, field='COSMOS', plots=['effi_nsn']):
     ----------
     df_effi : pandas df
         Data to plot.
-    thestyle : pandas df
+    plot_style_file : csv file
         plot style.
+    plot_style_dir: str.
+         loc dir of the plot style files.
     field : str, optional
         field to plot. The default is 'COSMOS'.
     plots: list(str)
@@ -168,6 +205,9 @@ def plotIt(df_effi, thestyle, field='COSMOS', plots=['effi_nsn']):
     None.
 
     """
+
+    thestyle = pd.read_csv(
+        '{}/{}'.format(plot_style_dir, plot_style_file), comment='#')
 
     if 'effi_nsn' in plots:
         plot_effi(df_effi, field, thestyle)
@@ -195,17 +235,183 @@ def plotIt(df_effi, thestyle, field='COSMOS', plots=['effi_nsn']):
                   varyb='kurtosis_color', err_varyb='', legyb='color kurtosis')
 
 
+def plot_nsn_selection(data, config):
+    """
+    Function to plot ns vs selection criteria for each OS
+
+    Parameters
+    ----------
+    data : pandas df
+        Data to process.
+    config : pandas df
+        configuration for the plot.
+
+    Returns
+    -------
+    None.
+
+    """
+
+    dbNames = data['dbName'].unique()
+
+    fig, ax = plt.subplots(figsize=(12, 9))
+    fig.subplots_adjust(right=0.75)
+
+    data = rename_selection_criteria(data)
+    for dbName in dbNames:
+        idx = data['dbName'] == dbName
+        sel_data = data[idx]
+        sel_data = sel_data.sort_values(by=['nsn'], ascending=False)
+        idc = config['dbName'] == dbName
+        sel_conf = config[idc]
+
+        dbName_plot = sel_conf['dbName_plot'].values[0]
+        ls = sel_conf['ls'].values[0]
+        marker = sel_conf['marker'].values[0]
+        color = sel_conf['color'].values[0]
+
+        ax.errorbar(sel_data['sel_str'], sel_data['nsn'],
+                    yerr=sel_data['err_nsn'],
+                    linestyle=ls, color=color,
+                    marker=marker, mfc='None', label=dbName_plot)
+
+    ax.set_ylabel(r'$N_{SN}$')
+    ax.grid(visible=True)
+
+    ax.legend(loc='upper center',
+              bbox_to_anchor=(1.2, 0.7),
+              ncol=1, fontsize=12, frameon=False)
+
+    ax.tick_params(axis='x', labelrotation=20., labelsize=12)
+
+    plt.tight_layout()
+
+
+def get_summary(data, df_config):
+    """
+    Function to grab summary infos
+
+    Parameters
+    ----------
+    data : pandas df
+        Data to process.
+    df_config : pandas df
+        config for the plot.
+
+    Returns
+    -------
+    None.
+
+    """
+
+    print(data.columns)
+    df_sum = data.groupby(['dbName', 'sel_str']).apply(
+        lambda x: get_stat(x)).reset_index()
+
+    print(df_sum)
+
+    # plot summary here
+    # plot_nsn_selection(df_sum, df_config)
+
+    df_sum_field = data.groupby(['dbName', 'sel_str', 'field']).apply(
+        lambda x: get_stat(x)).reset_index()
+
+    print(df_sum_field)
+
+    last_sel = 'Nfilt_2 >= 3'
+
+    idx = df_sum['sel_str'] == last_sel
+    df_sum = df_sum[idx]
+
+    idxb = df_sum_field['sel_str'] == last_sel
+    df_sum_field = df_sum_field[idxb]
+
+    # now merge
+
+    df_m = df_sum_field.merge(df_sum, left_on=['dbName'], right_on=['dbName'])
+
+    print(df_m[['dbName', 'field', 'nsn_x', 'nsn_y']])
+
+    df_m['rat_nsn'] = 100.*df_m['nsn_x']/df_m['nsn_y']
+
+    fields = df_m['field'].unique()
+
+    print('\begin{table}[!htbp]')
+    print('\begin{center}')
+    print('\caption\{\}\label\{tab:pzreq_final\}')
+    print('\begin{tabular}{l|c|c|c|c|c|c|c|c}')
+    print('\hline')
+    print('\hline')
+
+    entete = 'Observing Strategy & nsn'
+
+    for fi in fields:
+        entete += ' & {}'.format(fi)
+
+    print(entete)
+    df_m = df_m.sort_values(by=['nsn_y'], ascending=False)
+    dbNames = df_m['dbName'].unique()
+    for dbName in dbNames:
+
+        idx = df_m['dbName'] == dbName
+        sel = df_m[idx]
+        mystr = '{} '.format(dbName.split('_v')[0])
+        nsn = int(sel['nsn_y'].mean())
+        err_nsn = int(sel['err_nsn_y'].mean())
+        mystr += '& {} \pm {}'.format(nsn, err_nsn)
+        for field in fields:
+            idxf = sel['field'] == field
+            sol = sel[idxf]
+            rat_nsn = sol['rat_nsn'].values[0]
+            mystr += '& {} \% '.format(np.round(rat_nsn, 1))
+
+        mystr += '\\\\'
+        print(mystr)
+
+    print('\hline')
+    print('\hline')
+    print('\end{tabular}')
+    print('\end{center}')
+    print('\end{table}')
+
+
+def get_stat(x):
+    """
+    Function to estimated sum and error
+
+    Parameters
+    ----------
+    x : pandas df
+        Data to process.
+
+    Returns
+    -------
+    df : pandas df
+        Result.
+
+    """
+
+    rr = {'nsn': [x['nsn'].sum()],
+          'err_nsn': np.sqrt((x['err_nsn']*x['err_nsn']).sum())}
+
+    df = pd.DataFrame.from_dict(rr)
+
+    df['err_nsn'] = df['err_nsn'].astype(int)
+
+    return df
+
+
 parser = OptionParser(
     description='Script to plot SN selection criteria (efficiencies, pull mean and sigma)')
 
 parser.add_option('--dbDir', type=str,
                   default='../effi_pull_stat',
                   help='OS location dir[%default]')
-parser.add_option('--dbName', type=str,
-                  default='baseline_v4.3.1_10yrs',
-                  help='OS name [%default]')
+parser.add_option('--config', type=str,
+                  default='config_ana_selplot.csv',
+                  help='config file [%default]')
 parser.add_option('--plot_style_file', type=str,
-                  default='plot_style_4_udy.csv',
+                  default='effi_pull_style.csv',
                   help='plot style [%default]')
 parser.add_option('--plot_style_dir', type=str,
                   default='input/plots/effi_pull_stat',
@@ -214,27 +420,49 @@ parser.add_option('--fields', type=str,
                   default='COSMOS,CDFS,XMM-LSS,ELAISS1,EDFS_a,EDFS_b',
                   help='fields to process [%default]')
 parser.add_option('--plots', type=str,
-                  default='effi_nsn,pull',
+                  default='effi_nsn,pull,plot_summary',
                   help='fields to process [%default]')
+
 
 opts, args = parser.parse_args()
 
 dbDir = opts.dbDir
-dbName = opts.dbName
+config = opts.config
 plot_style_file = opts.plot_style_file
 plot_style_dir = opts.plot_style_dir
 fields = opts.fields.split(',')
 plots = opts.plots.split(',')
 
+
+# load the config file
+df_config = pd.read_csv(config, comment='#')
+
 # load the plot style file
-thestyle = pd.read_csv('{}/{}'.format(plot_style_dir, plot_style_file))
+fName = '{}/{}'.format(plot_style_dir, plot_style_file)
+print('loading', fName)
+thestyle = pd.read_csv(fName, comment='#')
 
+# concat both
+
+df_config = df_config.merge(thestyle, left_on=['dbName'], right_on=[
+    'dbName'], suffixes=['', ''])
+dbNames = df_config['dbName'].unique()
 # load the data to plot
-data = pd.read_hdf('{}/{}.hdf5'.format(dbDir, dbName))
-
+data = pd.DataFrame()
+for i, row in df_config.iterrows():
+    dat_ = pd.read_hdf('{}/{}.hdf5'.format(dbDir, row['dbName']))
+    data = pd.concat((data, dat_))
 
 # plots here
-for field in fields:
-    plotIt(data, thestyle, field=field, plots=plots)
+for i, row in df_config.iterrows():
+    idx = data['dbName'] == row['dbName']
+    for field in fields:
+        plotIt(data[idx], row['plot_style_file'],
+               plot_style_dir, field=field, plots=plots)
+
+# make sum nsn
+
+if 'plot_summary' in plots:
+    get_summary(data, df_config)
 
 plt.show()
