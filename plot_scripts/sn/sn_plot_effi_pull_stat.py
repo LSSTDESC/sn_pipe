@@ -332,6 +332,23 @@ def get_summary(data, df_config):
 
     print(df_m[['dbName', 'field', 'nsn_x', 'nsn_y']])
 
+    latexIt(df_m)
+
+
+def latexIt(df_m):
+    """
+    Function to generate a table in latex format
+
+    Parameters
+    ----------
+    df_m : pandas df
+        Data to process.
+
+    Returns
+    -------
+    None.
+
+    """
     df_m['rat_nsn'] = 100.*df_m['nsn_x']/df_m['nsn_y']
 
     fields = df_m['field'].unique()
