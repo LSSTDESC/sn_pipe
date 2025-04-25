@@ -8,8 +8,9 @@ Created on Fri Apr 25 10:09:49 2025
 
 
 from optparse import OptionParser
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 import pandas as pd
+from sn_plotter_analysis import plt
 
 
 def rename_selection_criteria(df):

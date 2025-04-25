@@ -3,7 +3,7 @@ season,color,ls,marker
 2,r,solid,o
 3,r,solid,s
 4,r,solid,*
-5,r,dashed,^
+5,k,dashed,^
 6,k,dashed,v
 7,k,dashed,h
 8,k,dashed,P
