@@ -427,10 +427,11 @@ if prior != 'prior':
     dd['prior'] = 'no prior'
 
 dbNorm = ''
-figtit = ''
+figtit = comment_on_plot
 if ref_OS != 'None':
     dbNorm = ref_OS
     figtit = 'ref: {}'.format(dbNorm.split('_10yrs')[0])
+    figtit += '\n '+comment_on_plot
 if 'mom_year' in plots:
     legy = 'SMoM'
     if ref_OS != 'None':
@@ -447,17 +448,28 @@ if 'mom_survey' in plots:
     plot_allOS_survey(dbNorm=dbNorm)
 
 if 'sigma_w0' in plots:
+    legy = '\sigma_{w_0}'
+    if ref_OS != 'None':
+        legy = '$\\frac{\\Delta '+legy+'}{'+legy+'}$ [%]'
+    else:
+        legy = '$'+legy+'$'
     plot_allOS(data, df_conf, varx=timescale,
                legx=timescale, vary='sigma_w0_mean',
-               legy='$\sigma_{w_0}$', vary_std='sigma_w0_std', prior=prior,
-               figtitle=dd[prior], dbNorm='',
+               legy=legy, vary_std='sigma_w0_std', prior=prior,
+               figtitle=figtit, dbNorm=dbNorm,
                comment_on_plot=comment_on_plot,
                fill_between=fill_between)
 if 'sigma_wa' in plots:
+    legy = '\sigma_{w_a}'
+    if ref_OS != 'None':
+        legy = '$\\frac{\\Delta '+legy+'}{'+legy+'}$ [%]'
+    else:
+        legy = '$'+legy+'$'
+
     plot_allOS(data, df_conf, varx=timescale,
                legx=timescale, vary='sigma_wa_mean',
-               legy='$\sigma_{w_a}$', vary_std='sigma_wa_std', prior=prior,
-               figtitle=dd[prior], dbNorm='',
+               legy=legy, vary_std='sigma_wa_std', prior=prior,
+               figtitle=figtit, dbNorm=dbNorm,
                comment_on_plot=comment_on_plot,
                fill_between=fill_between)
 if 'nsn' in plots:
@@ -467,7 +479,7 @@ if 'nsn' in plots:
         plot_allOS(data, df_conf, varx=timescale,
                    legx=timescale, vary=fm,
                    legy='$N_{SN}$', vary_std=fstd, prior=prior,
-                   figtitle=field, dbNorm='',
+                   figtitle=field, dbNorm=dbNorm,
                    comment_on_plot=comment_on_plot,
                    fill_between=fill_between)
 
