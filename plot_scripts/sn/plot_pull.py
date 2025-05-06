@@ -43,6 +43,7 @@ def load_data(dbDir, dbName, runType, timescale, seasons):
     df = pd.DataFrame()
     for seas in seasons:
         path = '{}/*_{}_{}.hdf5'.format(mainDir, timescale, seas)
+        print('path', path)
         fis = glob.glob(path)
         for fi in fis:
             print('loading', fi)
@@ -134,8 +135,10 @@ def fit_pull(sel, pullvar):
     hist, bins = np.histogram(sel[pullvar], bins=80)
     bin_centres = (bins[:-1] + bins[1:])/2
     p0 = [1., 0., 1.]
-
-    coeff, var_matrix = curve_fit(gauss, bin_centres, hist, p0=p0)
+    try:
+        coeff, var_matrix = curve_fit(gauss, bin_centres, hist, p0=p0)
+    except Exception:
+        coeff = [-1, -1, -1]
 
     return coeff
 
@@ -174,15 +177,123 @@ def plot_nsn_hist(dfa):
 
 def plot_all_pull(df, seasons):
 
+    zmin = 0.5
+    zmax = 1.1
+    dz = 0.01
+    zrange = np.arange(zmin, zmax+dz, dz)
+
     print('seasons', seasons)
     for seas in seasons:
         idx = df['season'] == seas
-        sel = df[idx]
-        print('pull man', len(sel))
-        plot_pull(sel, 'pull_x1', figtitle='pull x1 - season {}'.format(seas))
-        plot_pull(sel, 'pull_c', figtitle='pull color - season {}'.format(seas))
-        plot_pull(sel, 'pull_daymax',
-                  figtitle='pull daymax - season {}'.format(seas))
+        sela = df[idx]
+        for z in zrange:
+            idxa = sela['z'] >= z
+            idxa &= sela['z'] < z+dz
+            sel = sela[idxa]
+            print('pull man', len(sel))
+            if len(sel) < 1:
+                continue
+            plot_pull(sel, 'pull_x1',
+                      figtitle='pull x1 - season {}'.format(seas))
+            plot_pull(sel, 'pull_c',
+                      figtitle='pull color - season {}'.format(seas))
+            plot_pull(sel, 'pull_daymax',
+                      figtitle='pull daymax - season {}'.format(seas))
+            plt.show()
+
+
+def fit_all_pulls_allz(df):
+
+    zmin = 0.0
+    zmax = 1.1
+    dz = 0.06
+    zrange = np.arange(zmin, zmax+dz, dz)
+    pullvars = ['x1', 'c']
+
+    pullvars_str = list(map(lambda x: 'pull_'+x, pullvars))
+    rt = []
+    for z in zrange:
+        idxa = df['z'] >= z
+        idxa &= df['z'] < z+dz
+        sel = df[idxa]
+        print('pull man', len(sel), z, z+dz)
+        if len(sel) < 2:
+            continue
+        r = [z, z+dz]
+        for pullvar in pullvars_str:
+            idx = np.abs(sel[pullvar]) <= 5
+            selb = sel[idx]
+            coeff = fit_pull(selb, pullvar)
+            mean = np.round(coeff[1], 3)
+            sigma = np.round(coeff[2], 3)
+            r += [mean, sigma]
+
+        rt.append(r)
+
+    columns = ['zmin', 'zmax']
+
+    for pullvar in pullvars:
+        columns += ['mean_{}'.format(pullvar), 'sigma_{}'.format(pullvar)]
+
+    res = pd.DataFrame(rt, columns=columns)
+
+    return res
+
+
+def KS_proba(df):
+
+    zmin = 0.2
+    zmax = 1.1
+    dz = 0.06
+    zrange = np.arange(zmin, zmax+dz, dz)
+    ks_vars = ['x1_fit', 'color_fit']
+    from scipy import stats
+    distrib_ref = {}
+    r = []
+
+    for vv in ks_vars:
+        df = df.round({'{}'.format(vv): 1})
+    for z in zrange:
+        idxa = df['z'] >= z
+        idxa &= df['z'] < z+dz
+        idxa &= df['x1'] >= -2
+        idxa &= np.abs(df['color']) <= 0.2
+
+        sel = df[idxa]
+        if len(sel) < 5:
+            continue
+        print('there man', z, z+dz, len(sel))
+        # grab (x1,c) distributions
+        ro = [z, z+dz]
+        distrib_current = {}
+        for vv in ks_vars:
+            # plt.hist(sel[vv], histtype='step')
+            # plt.show()
+            distrib_current[vv] = sel[vv]
+
+        if distrib_ref:
+            for vv in ks_vars:
+                res = stats.ks_2samp(
+                    distrib_ref[vv], distrib_current[vv])
+                print(vv, res.pvalue)
+                """
+                fig, ax = plt.subplots()
+                ax.hist(distrib_ref[vv], bins=20, histtype='step')
+                ax.hist(distrib_current[vv], bins=20, histtype='step')
+                plt.show()
+                """
+                ro.append(res.pvalue)
+        r.append(ro)
+        distrib_ref = distrib_current
+
+    columns = ['zmin', 'zmax']
+
+    for vv in ks_vars:
+        columns += ['pvalue_{}'.format(vv)]
+
+    res = pd.DataFrame(r, columns=columns)
+
+    return res
 
 
 def plot_vs(data, varx='chisq_ndof', vary='diff_x1'):
@@ -255,17 +366,40 @@ idx &= dfa['n_epochs_aft'] >= 10
 # idx &= dfa['n_epochs_phase_plus_20'] > 3
 # idx &= dfa['n_epochs_phase_minus_10'] >= 3
 # idx &= (dfa['Nfilt_10'] >= 2) | (dfa['Nfilt_20'] >= 1)
-idx &= (dfa['Nfilt_2'] >= 3)
-idx &= (dfa['Nfilt_10'] >= 2)
+# idx &= (dfa['Nfilt_2'] >= 3)
+# idx &= (dfa['Nfilt_10'] >= 2)
 
 dfa = dfa[idx]
 
+tt = dfa.groupby(['field', 'healpixID', 'season']).apply(
+    lambda x: KS_proba(x)).reset_index()
+
+"""
+tt = dfa.groupby(['field', 'healpixID', 'season']).apply(
+    lambda x: fit_all_pulls_allz(x)).reset_index()
+"""
+
+print(tt)
+
+hpixes = tt['healpixID'].unique()
+
+for hpix in hpixes:
+    fig, ax = plt.subplots()
+    ijk = tt['healpixID'] == hpix
+    sel = tt[ijk]
+    ax.plot(sel['zmin'], sel['pvalue_color_fit'])
+    plt.show()
+
+ax.grid()
+# plt.show()
+
+"""
 plot_hist(dfa, 'diff_mu', bins=100)
 
 nsn_filt = len(dfa)
 
 print('filt', nsn_filt/nsn)
-
+"""
 
 print(dfa['diff_mu'].mean(), dfa['diff_mu'].std())
 plt.show()
@@ -273,11 +407,12 @@ plt.show()
 
 plot_all_pull(dfa, seasons)
 
+"""
 print(dfa.columns)
 varx = 'n_epochs_phase_plus_20'
 plot_vs(dfa, varx='SNR')
 plot_vs(dfa, varx='Nfilt_5', vary='diff_c')
-
+"""
 plt.show()
 
 print(dfa.columns, len(dfa)/30.)
