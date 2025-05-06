@@ -42,6 +42,9 @@ parser.add_option('--nside', type=int,
 parser.add_option('--vartoplot', type=str,
                   default='nsn',
                   help='var to plot (nsn/nsn_cosmo) [%default]')
+parser.add_option('--OS_ref', type=str,
+                  default='None',
+                  help='ref OS for normalization [%default]')
 
 opts, args = parser.parse_args()
 
@@ -55,6 +58,7 @@ outDir = opts.outDir
 fName = opts.fName
 nside = opts.nside
 vartoplot = opts.vartoplot
+OS_ref = opts.OS_ref
 
 # read config file
 conf = pd.read_csv(config, comment='#')
@@ -74,6 +78,11 @@ for dbName in dbNames:
 if 'summary' in plots:
     from sn_plotter_analysis.sn_analyser_wdf import plot_summary_wfd
     plot_summary_wfd(wfd, conf, timescale, cumul=True)
+
+    if OS_ref != 'None':
+        from sn_plotter_analysis.sn_analyser_wdf import plot_summary_wfd_norm
+        plot_summary_wfd_norm(wfd, conf, timescale, cumul=True, dbNorm=OS_ref)
+        plot_summary_wfd_norm(wfd, conf, timescale, cumul=True)
 
 res = list(filter(lambda x: 'mollweid' in x, plots))
 if len(res) > 0:
