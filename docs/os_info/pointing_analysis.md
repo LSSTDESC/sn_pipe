@@ -7,7 +7,7 @@
 
 ### plot the data
 
-- use the script [run_scripts/metrics/stat_DD.py](usage_plot_DD.md)
+- use the script [plot_scripts/metrics/plot_DD_stat.py](usage_plot_DD.md)
 
 ## nightly pointing analysis (visits)
 

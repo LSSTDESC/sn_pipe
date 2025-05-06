@@ -20,7 +20,11 @@ Options:
   --timeslots=TIMESLOTS
                         time slot (season or year) to process [1-10]
   --dataType=DATATYPE   data type [DataFrame]
-  --cumul=CUMUL         for cumulative plots [0]
+  --plots=PLOTS         plots to draw [nsn_all,nsn_ud]
+  --ud_fields=UD_FIELDS
+                        UD fields to consider [COSMOS,XMM-LSS]
+  --dd_fields=DD_FIELDS
+                        DD fields to consider [CDFS,ELAISS1,EDFS_a,EDFS_b]
 
 </pre>
 

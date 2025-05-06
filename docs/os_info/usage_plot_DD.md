@@ -5,35 +5,33 @@ OS analysis plots from pointings
 
 Options:
   -h, --help            show this help message and exit
---dirFile=DIRFILE     file directory
+  --dirFile=DIRFILE     file directory
                         [../MetricOutput_DD_new_128_gnomonic_circular]
---nside=NSIDE         nside for healpixels [128]
---fieldType=FIELDTYPE
+  --nside=NSIDE         nside for healpixels [128]
+  --fieldType=FIELDTYPE
                         field type - DD, WFD, Fake [DD]
---dbList=DBLIST       list of cadences to display[List.csv]
---fieldNames=FIELDNAMES
-                        fields to process [COSMOS,CDFS,XMM-
+  --fieldNames=FIELDNAMES
+                        fields to process [COSMOS,CDFS,                  XMM-
                         LSS,ELAISS1,EDFSa,EDFSb,EDFS]
---metric=METRIC       metric name [NSNY]
---pointingFile=POINTINGFILE
+  --metric=METRIC       metric name [NSNY]
+  --pointingFile=POINTINGFILE
                         pointing file name [Summary_DD_pointings.hdf5]
---configGroup=CONFIGGROUP
-                        pointing file name [DD_fbs_2.99_plot.csv]
---addMetric=ADDMETRIC
+  --config=CONFIG       pointing file name [DD_fbs_2.99_plot.csv]
+  --addMetric=ADDMETRIC
                         to add metric correlation plots [0]
---plotSummary=PLOTSUMMARY
-                        to draw summary plots [0]
---dbName_night=DBNAME_NIGHT
+  --dbName_night=DBNAME_NIGHT
                         dbName for night plot stat [baseline_v3.0_10yrs]
---fieldName_night=FIELDNAME_NIGHT
+  --fieldName_night=FIELDNAME_NIGHT
                         field for night plot stat [COSMOS]
+  --plots=PLOTS         plots to draw [summary,field_cad_seasonlength,field_nv
+                        isits,field_nvisits_band,relative_depth]
 </pre>
 
 ##example
 
-python plot_scripts/metrics/plot_DD_stat.py --dirFile . --configGroup=DDF_fbs_multiple.csv --dbName_night=desc_ddf_v4.2.1_10yrs --plotSummary=1
+python plot_scripts/metrics/plot_DD_stat.py --dirFile . --config=config_ana_selplot.csv
 
-The DDF_fbs_multiple.csv file is available [here](DDF_fbs_multiple.csv).
+A config file example is available [here](config_ana_selplot.csv).
 
 Plots produced:
 
