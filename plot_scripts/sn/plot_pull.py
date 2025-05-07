@@ -5,6 +5,7 @@ Created on Fri Jun 14 10:20:30 2024
 
 @author: philippe.gris@clermont.in2p3.fr
 """
+from sn_analysis.sn_calc_plot import bin_it
 from optparse import OptionParser
 import glob
 import pandas as pd
@@ -242,9 +243,9 @@ def fit_all_pulls_allz(df):
 
 def KS_proba(df):
 
-    zmin = 0.2
+    zmin = 0.25
     zmax = 1.1
-    dz = 0.06
+    dz = 0.02
     zrange = np.arange(zmin, zmax+dz, dz)
     ks_vars = ['x1_fit', 'color_fit']
     from scipy import stats
@@ -252,7 +253,7 @@ def KS_proba(df):
     r = []
 
     for vv in ks_vars:
-        df = df.round({'{}'.format(vv): 1})
+        df = df.round({'{}'.format(vv): 2})
     for z in zrange:
         idxa = df['z'] >= z
         idxa &= df['z'] < z+dz
@@ -274,7 +275,7 @@ def KS_proba(df):
         if distrib_ref:
             for vv in ks_vars:
                 res = stats.ks_2samp(
-                    distrib_ref[vv], distrib_current[vv])
+                    distrib_ref[vv], distrib_current[vv], keepdims=True)
                 print(vv, res.pvalue)
                 """
                 fig, ax = plt.subplots()
@@ -284,7 +285,8 @@ def KS_proba(df):
                 """
                 ro.append(res.pvalue)
         r.append(ro)
-        distrib_ref = distrib_current
+        if np.abs(z-zmin) < 1.e-3:
+            distrib_ref = distrib_current
 
     columns = ['zmin', 'zmax']
 
@@ -371,13 +373,18 @@ idx &= dfa['n_epochs_aft'] >= 10
 
 dfa = dfa[idx]
 
+"""
 tt = dfa.groupby(['field', 'healpixID', 'season']).apply(
     lambda x: KS_proba(x)).reset_index()
 
-"""
+
 tt = dfa.groupby(['field', 'healpixID', 'season']).apply(
     lambda x: fit_all_pulls_allz(x)).reset_index()
 """
+
+tt = dfa.groupby(['field', 'healpixID', 'season']).apply(
+    lambda x: bin_it(x, norm_factor=1000.,
+                     bins=np.arange(0.2, 1.101, 0.05))).reset_index()
 
 print(tt)
 
@@ -387,7 +394,9 @@ for hpix in hpixes:
     fig, ax = plt.subplots()
     ijk = tt['healpixID'] == hpix
     sel = tt[ijk]
-    ax.plot(sel['zmin'], sel['pvalue_color_fit'])
+    # ax.plot(sel['zmin'], sel['pvalue_color_fit'])
+    ax.plot(sel['z'], sel['NSN'])
+    ax.grid()
     plt.show()
 
 ax.grid()
