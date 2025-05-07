@@ -1,4 +1,4 @@
-## Usage: plot_ddf_nightly.py [options]
+## Usage: plot_scripts/os_info/plot_ddf_nightly.py [options]
 
 <pre>
 Script to plot nightly filter dist for DDFs

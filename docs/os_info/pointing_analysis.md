@@ -20,4 +20,4 @@
 
 ## nightly filter allocation for DDFs.
 
-- use the script[plot_scripts/os_info/plot_ddf_nightly.py](usage_plot_ddf_nightly.md)
+- use the script [plot_scripts/os_info/plot_ddf_nightly.py](usage_plot_ddf_nightly.md)
