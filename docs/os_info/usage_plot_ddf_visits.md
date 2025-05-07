@@ -1,4 +1,4 @@
-## Usage: plot_ddf_visits_night.py [options]
+## Usage: plot_scripts/os_info/plot_ddf_visits_night.py [options]
 
 <pre>
 Script to analyse DDF visits on a nightly basis from pointings
