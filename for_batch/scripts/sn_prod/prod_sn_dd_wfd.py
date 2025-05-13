@@ -78,7 +78,14 @@ parser.add_option("--SN_minRFphaseQual", type=float,
                   help="min RF phase quality [%default]")
 parser.add_option("--SN_maxRFphaseQual", type=float, default=35.,
                   help="max RF phase quality [%default]")
-
+parser.add_option("--SN_x1_type", type=str, default='random',
+                  help="x1 simulation type [%default]")
+parser.add_option("--SN_x1_min", type=float, default=-2.0,
+                  help="x1 simulation min value [%default]")
+parser.add_option("--SN_color_type", type=str, default='random',
+                  help="color simulation type [%default]")
+parser.add_option("--SN_color_min", type=float, default=0.2,
+                  help="color min value [%default]")
 
 opts, args = parser.parse_args()
 
@@ -109,6 +116,10 @@ fit_remove_sat = opts.fit_remove_sat
 code = opts.code
 SN_minRFphaseQual = opts.SN_minRFphaseQual
 SN_maxRFphaseQual = opts.SN_maxRFphaseQual
+x1_type = opts.SN_x1_type
+x1_min = opts.SN_x1_min
+color_type = opts.SN_color_type
+color_min = opts.SN_color_min
 
 cmd_scr = 'python for_batch/scripts/sn_prod/loop_prod.py'
 cmd_scr += ' --SN_sigmaInt=0.0'
@@ -130,6 +141,11 @@ if dbList_DD != '':
     cmd_ddf += ' --code={}'.format(code)
     cmd_ddf += ' --SN_minRFphaseQual={}'.format(SN_minRFphaseQual)
     cmd_ddf += ' --SN_maxRFphaseQual={}'.format(SN_maxRFphaseQual)
+    cmd_ddf += ' --SN_x1_type={}'.format(x1_type)
+    cmd_ddf += ' --SN_x1_min={}'.format(x1_min)
+    cmd_ddf += ' --SN_color_type={}'.format(color_type)
+    cmd_ddf += ' --SN_color_min={}'.format(color_min)
+
     print(cmd_ddf)
     os.system(cmd_ddf)
 
@@ -155,5 +171,10 @@ if dbList_WFD != '':
     cmd_wfd += ' --code={}'.format(code)
     cmd_wfd += ' --SN_minRFphaseQual={}'.format(SN_minRFphaseQual)
     cmd_wfd += ' --SN_maxRFphaseQual={}'.format(SN_maxRFphaseQual)
+    cmd_wfd += ' --SN_x1_type={}'.format(x1_type)
+    cmd_wfd += ' --SN_x1_min={}'.format(x1_min)
+    cmd_wfd += ' --SN_color_type={}'.format(color_type)
+    cmd_wfd += ' --SN_color_min={}'.format(color_min)
+
     print(cmd_wfd)
     os.system(cmd_wfd)

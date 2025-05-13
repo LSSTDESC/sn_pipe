@@ -85,6 +85,14 @@ parser.add_option("--SN_minRFphaseQual", type=float,
                   help="min RF phase quality [%default]")
 parser.add_option("--SN_maxRFphaseQual", type=float, default=35.,
                   help="max RF phase quality [%default]")
+parser.add_option("--SN_x1_type", type=str, default='random',
+                  help="x1 simulation type [%default]")
+parser.add_option("--SN_x1_min", type=float, default=-2.0,
+                  help="x1 simulation min value [%default]")
+parser.add_option("--SN_color_type", type=str, default='random',
+                  help="color simulation type [%default]")
+parser.add_option("--SN_color_min", type=float, default=0.2,
+                  help="color min value [%default]")
 
 opts, args = parser.parse_args()
 
@@ -133,5 +141,9 @@ for i, row in df.iterrows():
     procDict['code'] = opts.code
     procDict['SN_minRFphaseQual'] = opts.SN_minRFphaseQual
     procDict['SN_maxRFphaseQual'] = opts.SN_maxRFphaseQual
+    procDict['SN_x1_type'] = opts.SN_x1_type
+    procDict['SN_x1_min'] = opts.SN_x1_min
+    procDict['SN_color_type'] = opts.SN_color_type
+    procDict['SN_color_min'] = opts.SN_color_min
 
     go_batch(script, procDict)
