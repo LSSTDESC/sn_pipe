@@ -181,6 +181,12 @@ wa = opts.wa
 alpha = opts.alpha
 beta = opts.beta
 recalc_sigmu = opts.recalc_sigmu
+prior_varname = opts.prior_varname.split(',')
+prior_refvalue = opts.prior_refvalue.split(',')
+prior_sigma = opts.prior_sigma.split(',')
+
+prior_refvalue = list(map(float, prior_refvalue))
+prior_sigma = list(map(float, prior_sigma))
 
 if '-' in seasons_cosmo:
     seas = seasons_cosmo.split('-')
@@ -269,10 +275,14 @@ if prior == 0:
     priors['noprior'] = pd.DataFrame()
 else:
 
-    priors['prior'] = pd.DataFrame({'varname': ['Om0'],
-                                    'refvalue': [0.3],
-                                    'sigma': [0.0073]})
-
+    priors['prior'] = pd.DataFrame({'varname': prior_varname,
+                                    'refvalue': prior_refvalue,
+                                    'sigma': prior_sigma})
+    """
+    priors['prior'] = pd.DataFrame({'varname': ['sigmaInt'],
+                                    'refvalue': [0.12],
+                                    'sigma': [0.1]})
+    """
 """
 outName = '{}/cosmo_{}_{}_{}_{}_{}.hdf5'.format(outDir,
                                                 dbName_DD,

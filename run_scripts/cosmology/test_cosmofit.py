@@ -55,6 +55,15 @@ parser.add_option('--outName', type=str,
 parser.add_option('--recalc_sigmu', type=int,
                   default=0,
                   help='to recalc sigma_mu [%default]')
+parser.add_option('--prior_varname', type=str,
+                  default='Om0',
+                  help='prior varname list[%default]')
+parser.add_option('--prior_refvalue', type=str,
+                  default='0.3',
+                  help='prior refvalue list[%default]')
+parser.add_option('--prior_sigma', type=str,
+                  default='0.0073',
+                  help='prior sigma list[%default]')
 
 opts, args = parser.parse_args()
 
@@ -79,5 +88,8 @@ cmd += ' --select_DDF={}'.format(opts.select_DDF)
 cmd += ' --select_WFD={}'.format(opts.select_WFD)
 cmd += ' --outName={}'.format(opts.outName)
 cmd += ' --recalc_sigmu={}'.format(opts.recalc_sigmu)
+cmd += ' --prior_varname={}'.format(opts.prior_varname)
+cmd += ' --prior_refvalue={}'.format(opts.prior_refvalue)
+cmd += ' --prior_sigma={}'.format(opts.prior_sigma)
 print(cmd)
 os.system(cmd)
