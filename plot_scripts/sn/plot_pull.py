@@ -5,7 +5,7 @@ Created on Fri Jun 14 10:20:30 2024
 
 @author: philippe.gris@clermont.in2p3.fr
 """
-from sn_analysis.sn_calc_plot import bin_it
+from sn_analysis.sn_calc_plot import bin_it, bin_it_mean
 from optparse import OptionParser
 import glob
 import pandas as pd
@@ -13,9 +13,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import curve_fit
 from sn_analysis.sn_tools import complete_df
+from scipy.interpolate import make_interp_spline
+from sn_analysis.sn_nsn_effi import getRates
+from scipy.interpolate import interp1d
 
 
-def load_data(dbDir, dbName, runType, timescale, seasons):
+def load_data(dbDir, dbName, runType, timescale, seasons, alpha=0.13, beta=3.1):
     """
     Function to load data
 
@@ -50,20 +53,22 @@ def load_data(dbDir, dbName, runType, timescale, seasons):
             print('loading', fi)
             tt = pd.read_hdf(fi)
             df = pd.concat((df, tt))
-            # pull estimation
-            df['pull_x1'] = (df['x1']-df['x1_fit'])/df['sigmax1']
-            df['pull_c'] = (df['color']-df['color_fit'])/df['sigma_c']
-            df['pull_daymax'] = (df['daymax']-df['t0_fit'])/df['sigma_t0']
-            df['diff_x1'] = (df['x1']-df['x1_fit'])
-            df['diff_c'] = (df['color']-df['color_fit'])
-            df['chisq_ndof'] = df['chisq']/df['ndof']
+
+        # pull estimation
+        df['pull_x1'] = (df['x1']-df['x1_fit'])/df['sigmax1']
+        df['pull_c'] = (df['color']-df['color_fit'])/df['sigma_c']
+        df['pull_daymax'] = (df['daymax']-df['t0_fit'])/df['sigma_t0']
+        df['diff_x1'] = (df['x1']-df['x1_fit'])
+        df['diff_c'] = (df['color']-df['color_fit'])
+        df['chisq_ndof'] = df['chisq']/df['ndof']
+        df['diff_x1_c'] = alpha*df['diff_x1']-beta*df['diff_c']
 
     return df
 
 
 def gauss(x, *p):
     """
-    gaussian function 
+    gaussian function
 
     Parameters
     ----------
@@ -305,6 +310,158 @@ def plot_vs(data, varx='chisq_ndof', vary='diff_x1'):
     ax.plot(data[varx], data[vary], 'ko')
 
 
+def get_zlim(grp, sigmaC_ref=0.04):
+
+    dz = 0.05
+    bins = np.arange(0.01, 1.1+dz, dz)
+    df = bin_it_mean(grp, xvar='zmeas', yvar='sigmaC', bins=bins)
+
+    fig, ax = plt.subplots()
+
+    df['sigmaC_plus'] = df['sigmaC']+df['sigmaC_std']
+    df['sigmaC_minus'] = df['sigmaC']-df['sigmaC_std']
+
+    # ax.errorbar(df['zmeas'], df['sigmaC'], yerr=df['sigmaC_std'])
+
+    ax.plot(df['sigmaC'], df['zmeas'])
+    ax.plot(df['sigmaC_plus'], df['zmeas'])
+
+    ax.plot(df['sigmaC_minus'], df['zmeas'])
+
+    zlim = interp1d(df['sigmaC'], df['zmeas'],
+                    bounds_error=False, fill_value=0.)
+    zlim_plus = interp1d(df['sigmaC_minus'], df['zmeas'],
+                         bounds_error=False, fill_value=0.)
+    zlim_minus = interp1d(df['sigmaC_plus'], df['zmeas'],
+                          bounds_error=False, fill_value=0.)
+
+    print(zlim(sigmaC_ref), zlim_plus(sigmaC_ref), zlim_minus(sigmaC_ref))
+    ax.grid(visible=True)
+    plt.show()
+
+
+def get_nsn(grp, norm_factor=200, zmin=0.1, zmax=1.1, dz=0.01):
+
+    norm_factor_bin = norm_factor*dz/0.01
+    bins = np.arange(zmin, zmax+dz, dz)
+    print('aoo', grp)
+    effis = bin_it(grp, xvar='zmeas', norm_factor=norm_factor_bin,
+                   bins=bins, outvar='effi')
+
+    print(effis)
+    hpix = int(grp['healpixID'].unique()[0])
+    fig, ax = plt.subplots()
+    fig.suptitle(hpix)
+    ax.errorbar(effis['zmeas'], effis['effi'], yerr=effis['effi_err'])
+
+    # plt.show()
+
+    zmin = np.min(bins)
+    zmax = np.max(bins)
+
+    # get snrates
+    zplot = np.arange(zmin, zmax, dz)
+    season_length = grp['season_length'].mean()
+    survey_area = grp['survey_area'].mean()
+    zz, rateInterp, rateInterp_err = getRates(zmin=zmin, zmax=zmax, dz=dz,
+                                              survey_area=survey_area,
+                                              season_length=season_length)
+    # interpolate efficiency vs z
+    effiInterp = interp1d(
+        effis['zmeas'], effis['effi'], kind='linear',
+        bounds_error=False, fill_value=0.)
+    # interpolate variance efficiency vs z
+    effiInterp_err = interp1d(
+        effis['zmeas'], effis['effi_err'], kind='linear',
+        bounds_error=False, fill_value=0.)
+
+    nsn = effiInterp(zz)*rateInterp(zz)
+    # get errors
+    nsn_err = []
+    for i in range(len(zz)):
+        siga = effiInterp_err(zz[:i+1])*rateInterp(zz[:i+1])
+        # sigb = effiInterp(zplot[:i+1])*rateInterp_err(zplot[:i+1])
+        sigb = 0.
+        nsn_err.append(np.sqrt(np.sum(siga**2 + sigb**2)))
+
+    df_nsn = pd.DataFrame(zz, columns=['zmeas'])
+    df_nsn['nsn'] = rateInterp(zz)
+    df_nsn['nsn_effi'] = nsn
+    df_nsn['nsn_effi_err'] = nsn_err
+
+    fig, ax = plt.subplots()
+
+    tp = np.cumsum(df_nsn['nsn_effi'].to_list())
+    print(tp, type(tp))
+    nsn = tp[-1]
+
+    tpb = np.cumsum(df_nsn['nsn'].to_list())
+    print(tp, type(tp))
+
+    nsnb = tpb[-1]
+
+    ax.plot(df_nsn['zmeas'], tpb/nsn-tp/nsnb)
+
+    # ax.plot(df_nsn['zmeas'], tpb/nsnb)
+    """
+
+    ax.plot(df_nsn['zmeas'], (tp/nsnb)/(tpb/nsnb))
+    """
+    ax.grid()
+    plt.show()
+
+
+def plot_mu_z(tt):
+
+    print(tt.columns)
+    dz = 0.1
+    bins = np.arange(0.01, 1.1+dz, dz)
+    hpixes = tt['healpixID'].unique()
+    xvar = 'zmeas'
+    yvar = 'diff_x1_c'
+    for hpix in hpixes:
+        fig, ax = plt.subplots()
+        ijk = tt['healpixID'] == hpix
+        sel = tt[ijk]
+        # sel = clean_bins(sel, xvar=xvar, yvar=yvar, bins=bins)
+        # ax.plot(sel['zmin'], sel['pvalue_color_fit'])
+        bb = bin_it_mean(sel, xvar=xvar, yvar=yvar, bins=bins)
+        ax.errorbar(bb[xvar], bb[yvar], yerr=bb['{}_std'.format(yvar)])
+
+        """
+        xnew = np.linspace(np.min(sel['z']), np.max(sel['z']), 100)
+        spl = make_interp_spline(sel['z'], sel['NSN'], k=5)  # type: BSpline
+        spl_smooth = spl(xnew)
+        ax.plot(xnew, spl_smooth)
+        """
+        ax.grid()
+        plt.show()
+
+
+def clean_bins(grp, xvar='zmeas', yvar='diff_mu', bins=np.arange(0.01, 1.11, 0.01), nsigma=5.):
+
+    bb = bins.tolist()
+
+    res = pd.DataFrame()
+    for i in range(len(bb)-1):
+        bxa = bb[i]
+        bxb = bb[i+1]
+        idx = grp[xvar] >= bxa
+        idx &= grp[xvar] < bxb
+
+        sel_bin = grp[idx]
+
+        mean = sel_bin[yvar].mean()
+        std = sel_bin[yvar].std()
+
+        idxb = sel_bin[yvar] >= mean-nsigma*std
+        idxb &= sel_bin[yvar] <= mean+nsigma*std
+
+        res = pd.concat((res, sel_bin[idxb]))
+
+    return res
+
+
 parser = OptionParser(description='Script to analyze SN prod')
 
 parser.add_option('--dbDir', type=str,
@@ -350,6 +507,8 @@ ninit = len(dfa)
 idx = dfa['field'].isin(fields)
 nsn = len(dfa[idx])
 """
+
+
 idx = dfa['sigma_c'] <= 0.04
 # idx &= dfa['Nfilt_10'] > 2
 """
@@ -382,12 +541,20 @@ tt = dfa.groupby(['field', 'healpixID', 'season']).apply(
     lambda x: fit_all_pulls_allz(x)).reset_index()
 """
 
+print(dfa.columns.to_list())
+
+"""
+print('again', dfa['diff_mu'])
+plot_mu_z(dfa)
+print(test)
+"""
+
 tt = dfa.groupby(['field', 'healpixID', 'season']).apply(
-    lambda x: bin_it(x, norm_factor=1000.,
-                     bins=np.arange(0.2, 1.101, 0.05))).reset_index()
+    lambda x: get_zlim(x)).reset_index()
 
 print(tt)
 
+print(test)
 hpixes = tt['healpixID'].unique()
 
 for hpix in hpixes:
@@ -396,6 +563,12 @@ for hpix in hpixes:
     sel = tt[ijk]
     # ax.plot(sel['zmin'], sel['pvalue_color_fit'])
     ax.plot(sel['z'], sel['NSN'])
+    xnew = np.linspace(np.min(sel['z']), np.max(sel['z']), 100)
+    spl = make_interp_spline(sel['z'], sel['NSN'], k=5)  # type: BSpline
+    spl_smooth = spl(xnew)
+
+    ax.plot(xnew, spl_smooth)
+
     ax.grid()
     plt.show()
 
