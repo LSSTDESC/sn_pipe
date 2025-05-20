@@ -80,12 +80,16 @@ def process(dbDir, dbName, runType, timescale, outDir, sigmaC=0.04, nproc=8):
 
     dfa = load_data(dbDir, dbName, runType, timescale)
 
-    params = {}
+    seasons = dfa['season'].unique()
 
-    params['data'] = dfa
-    hpixes = dfa['healpixID'].unique()
+    tt = pd.DataFrame()
 
-    tt = multiproc(hpixes, params, zlim_multiproc, nproc)
+    for seas in seasons:
+        idx = dfa['season'] == seas
+        sel = dfa[idx]
+        ttb = process_season(sel)
+        tt = pd.concat((tt, ttb))
+
     tt['dbName'] = dbName
 
     outName = '{}/{}.hdf5'.format(outDir, dbName)
@@ -98,6 +102,32 @@ def process(dbDir, dbName, runType, timescale, outDir, sigmaC=0.04, nproc=8):
     tt['dbName'] = dbName
     """
     # return tt
+
+
+def process_season(dfa):
+    """
+    Funtion to process a season
+
+    Parameters
+    ----------
+    dfa : pandas df
+        input data.
+
+    Returns
+    -------
+    tt : pandas df
+        processed data.
+
+    """
+
+    params = {}
+
+    params['data'] = dfa
+    hpixes = dfa['healpixID'].unique()
+
+    tt = multiproc(hpixes, params, zlim_multiproc, nproc)
+
+    return tt
 
 
 def zlim_multiproc(toproc, params, j=0, output_q=None):
