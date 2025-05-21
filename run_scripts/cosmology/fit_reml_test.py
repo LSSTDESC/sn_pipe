@@ -75,17 +75,18 @@ class REML_Fit:
 
         w = 1./cov_mu
 
-        Xmat = np.sum(w*(self.mu_bin-mubar)**2)
-        print('xx1', Xmat)
-        Xmat -= np.sum(np.log(w))
-        print('xx2', np.sum(np.log(w)))
-        Xmat += np.log(np.sum(w))
-        print('xx3', np.log(np.sum(w)))
+        vala = np.sum(w*(self.mu_SN-mubar)**2)
+        valb = np.sum(np.log(w)) - np.log(w[:1].values[0])
+        valc = np.log(np.sum(w)-w[:1].values[0])
 
-        print('allo', mubar, sigmaInt, Xmat)
+        Xmat = vala-valb+valc
+
+        print('allo', mubar, sigmaInt, Xmat, vala, valb, valc)
+        # print(test)
         return Xmat
 
 
+"""
 H0 = 70.
 Om0 = 0.3
 w0 = -1.
@@ -98,7 +99,7 @@ z = np.arange(0.01, 1.1, 0.001)
 
 df = pd.DataFrame(z, columns=['z'])
 df['mu_th'] = cosmology.distmod(z).value
-df['sigma_mu'] = np.random.normal(0., 0.00000005*df['mu_th'])
+df['sigma_mu'] = np.random.normal(0., 0.005*df['mu_th'])
 df['sigma_mu'] = np.abs(df['sigma_mu'])
 # df['sigma_mu'] = 0.01
 sigma_mu_int = np.sqrt(df['sigma_mu']**2+sigmaInt**2)
@@ -111,26 +112,32 @@ fig, ax = plt.subplots()
 ax.errorbar(df['z'], df['mu'], yerr=df['sigma_mu'])
 
 plt.show()
+"""
 
-zfit = np.arange(0.2, 1.1, 0.05)
+thefile = '../test_durvey/survey_sn_desc_ddf_gen_0.80_sn_v4.3.1_10yrs_desc_ddf_gen_0.80_sn_v4.3.1_10yrs_1_10_1_for_fit.hdf5'
+
+sigmaInt = 0.12
+df = pd.read_hdf(thefile)
+
+zfit = np.arange(0.2, 1.1, 0.1)
 
 for i in range(len(zfit)-1):
     zmin = zfit[i]
     zmax = zfit[i+1]
-    idx = df['z'] >= zmin
-    idx &= df['z'] < zmax
+    idx = df['z_fit'] >= zmin
+    idx &= df['z_fit'] < zmax
     sel = pd.DataFrame(df[idx])
     print(zmin, zmax, len(sel))
-    zzmin = sel['z'].min()
-    zzmax = sel['z'].max()
-    alpha = np.log(sel['z']/zzmin)/np.log(zzmax/zzmin)
+    zzmin = sel['z_fit'].min()
+    zzmax = sel['z_fit'].max()
+    alpha = np.log(sel['z_fit']/zzmin)/np.log(zzmax/zzmin)
 
-    idx = np.abs(sel['z']-zzmin) < 1.e-5
-    mu_b = sel[idx]['mu'].values[0]
+    idx = np.abs(sel['z_fit']-zzmin) < 1.e-5
+    mu_b = sel[idx]['mu_SN'].values[0]
     sig_b = sel[idx]['sigma_mu'].values[0]
 
-    idx = np.abs(sel['z']-zzmax) < 1.e-5
-    mu_b_plus = sel[idx]['mu'].values[0]
+    idx = np.abs(sel['z_fit']-zzmax) < 1.e-5
+    mu_b_plus = sel[idx]['mu_SN'].values[0]
     sig_b_plus = sel[idx]['sigma_mu'].values[0]
 
     print(mu_b, mu_b_plus, alpha)
@@ -141,10 +148,10 @@ for i in range(len(zfit)-1):
 
     # print(test)
 
-    fitparValues = [sel['mu_bin'].mean(), sigmaInt]
+    fitparValues = [sel['mu_SN'].mean(), sigmaInt]
     print('go', fitparValues, zmin, zmax, len(sel), sel['mu_bin'].mean())
-    myfit = REML_Fit(sel, ['mu', 'mu_bin', 'sigma_mu'],
+    myfit = REML_Fit(sel, ['mu_SN', 'mu_bin', 'sigma_mu'],
                      fitparValues=fitparValues)
 
     myfit()
-    break
+    # break

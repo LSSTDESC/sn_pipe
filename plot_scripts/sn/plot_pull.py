@@ -310,23 +310,14 @@ def plot_vs(data, varx='chisq_ndof', vary='diff_x1'):
     ax.plot(data[varx], data[vary], 'ko')
 
 
-def get_zlim(grp, sigmaC_ref=0.04):
+def get_zlim(grp, sigmaC_ref=0.04, plotIt=False):
 
     dz = 0.05
     bins = np.arange(0.01, 1.1+dz, dz)
     df = bin_it_mean(grp, xvar='zmeas', yvar='sigmaC', bins=bins)
 
-    fig, ax = plt.subplots()
-
     df['sigmaC_plus'] = df['sigmaC']+df['sigmaC_std']
     df['sigmaC_minus'] = df['sigmaC']-df['sigmaC_std']
-
-    # ax.errorbar(df['zmeas'], df['sigmaC'], yerr=df['sigmaC_std'])
-
-    ax.plot(df['sigmaC'], df['zmeas'])
-    ax.plot(df['sigmaC_plus'], df['zmeas'])
-
-    ax.plot(df['sigmaC_minus'], df['zmeas'])
 
     zlim = interp1d(df['sigmaC'], df['zmeas'],
                     bounds_error=False, fill_value=0.)
@@ -335,9 +326,32 @@ def get_zlim(grp, sigmaC_ref=0.04):
     zlim_minus = interp1d(df['sigmaC_plus'], df['zmeas'],
                           bounds_error=False, fill_value=0.)
 
-    print(zlim(sigmaC_ref), zlim_plus(sigmaC_ref), zlim_minus(sigmaC_ref))
-    ax.grid(visible=True)
-    plt.show()
+    zlim = zlim(sigmaC_ref)
+    zlim_p = zlim_plus(sigmaC_ref)
+    zlim_m = zlim_minus(sigmaC_ref)
+
+    res = pd.DataFrame([zlim], columns=['zlim'])
+    res['zlim_p'] = zlim_p
+    res['zlim_m'] = zlim_m
+
+    return res
+
+    if plotIt:
+        fig, ax = plt.subplots()
+
+        # ax.errorbar(df['zmeas'], df['sigmaC'], yerr=df['sigmaC_std'])
+        ax.fill_between(df['zmeas'], df['sigmaC_plus'],
+                        df['sigmaC_minus'], color='yellow')
+        ax.grid(visible=True)
+
+        fig, ax = plt.subplots()
+        ax.plot(df['sigmaC'], df['zmeas'])
+        ax.plot(df['sigmaC_plus'], df['zmeas'])
+
+        ax.plot(df['sigmaC_minus'], df['zmeas'])
+
+        ax.grid(visible=True)
+        plt.show()
 
 
 def get_nsn(grp, norm_factor=200, zmin=0.1, zmax=1.1, dz=0.01):
@@ -552,6 +566,7 @@ print(test)
 tt = dfa.groupby(['field', 'healpixID', 'season']).apply(
     lambda x: get_zlim(x)).reset_index()
 
+tt.to_hdf('res_new.hdf5', key='zlim')
 print(tt)
 
 print(test)
