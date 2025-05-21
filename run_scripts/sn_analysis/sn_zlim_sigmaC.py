@@ -15,7 +15,7 @@ from sn_tools.sn_utils import multiproc
 from sn_tools.sn_io import checkDir
 
 
-def load_data(dbDir, dbName, runType, timescale):
+def load_data(dbDir, dbName, runType, timescale, season):
     """
     Function to load data
 
@@ -29,6 +29,8 @@ def load_data(dbDir, dbName, runType, timescale):
         run type.
     timescale : str
         time scale.
+    season: int
+        season number.
 
     Returns
     -------
@@ -41,7 +43,8 @@ def load_data(dbDir, dbName, runType, timescale):
 
     df = pd.DataFrame()
 
-    fis = glob.glob('{}/*.hdf5'.format(mainDir))
+    print('loading', dbName, 'season', season)
+    fis = glob.glob('{}/*_season_{}.hdf5'.format(mainDir, season))
 
     for fi in fis:
         the_df = pd.read_hdf(fi)
@@ -50,7 +53,8 @@ def load_data(dbDir, dbName, runType, timescale):
     return df
 
 
-def process(dbDir, dbName, runType, timescale, outDir, sigmaC=0.04, nproc=8):
+def process(dbDir, dbName, runType, timescale, outDir, sigmaC=0.04, nproc=8,
+            seasons=range(1, 11)):
     """
     Function to process the data
 
@@ -70,6 +74,8 @@ def process(dbDir, dbName, runType, timescale, outDir, sigmaC=0.04, nproc=8):
            sigma color selection value. The default is 0.04.
     nproc: int, optional.
         number of procs for multiprocessing.
+    seasons: list(int)
+        list of seasons to process. The default is range(1,11)
 
     Returns
     -------
@@ -77,23 +83,20 @@ def process(dbDir, dbName, runType, timescale, outDir, sigmaC=0.04, nproc=8):
         processed data.
 
     """
-
-    dfa = load_data(dbDir, dbName, runType, timescale)
-
-    seasons = dfa['season'].unique()
-
     tt = pd.DataFrame()
 
     for seas in seasons:
-        idx = dfa['season'] == seas
-        sel = dfa[idx]
-        ttb = process_season(sel)
+
+        dfa = load_data(dbDir, dbName, runType, timescale, seas)
+
+        ttb = process_season(dfa)
         tt = pd.concat((tt, ttb))
 
     tt['dbName'] = dbName
 
     outName = '{}/{}.hdf5'.format(outDir, dbName)
     tt.to_hdf(outName, key='zlim')
+    del tt
 
     """
     tt = dfa.groupby(['field', 'healpixID', 'season']).apply(
