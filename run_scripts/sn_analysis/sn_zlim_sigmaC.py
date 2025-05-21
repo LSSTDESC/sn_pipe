@@ -159,11 +159,12 @@ def zlim_multiproc(toproc, params, j=0, output_q=None):
 
     idx = data['healpixID'].isin(toproc)
 
-    dfa = data[idx]
+    dfa = pd.DataFrame(data[idx])
 
     del data
+    print('there', len(dfa))
     tt = dfa.groupby(['field', 'healpixID', 'season']).apply(
-        lambda x: get_zlim(x, sigmaC=sigmaC), include_groups=False).reset_index()
+        lambda x: get_zlim(x, sigmaC=sigmaC)).reset_index()
 
     if output_q is not None:
         return output_q.put({j: tt})
