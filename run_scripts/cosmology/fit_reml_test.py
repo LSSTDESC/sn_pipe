@@ -15,8 +15,8 @@ from iminuit import Minuit
 
 class REML_Fit:
     def __init__(self, data, dataNames,
-                 fitparNames=['mubar', 'sigmaInt'],
-                 fitparValues=[40, 0.12]):
+                 fitparNames=['sigmaInt'],
+                 fitparValues=[0.12]):
 
         self.fitparNames = fitparNames
         dataValues = [data[key] for key in dataNames]
@@ -68,20 +68,27 @@ class REML_Fit:
 
     def xi_square(self, *parameters):
 
-        mubar = parameters[self.fitparNames.index('mubar')]
+        # mubar = parameters[self.fitparNames.index('mubar')]
         sigmaInt = parameters[self.fitparNames.index('sigmaInt')]
 
         cov_mu = self.sigma_mu**2+sigmaInt**2
 
         w = 1./cov_mu
 
-        vala = np.sum(w*(self.mu_SN-mubar)**2)
-        valb = np.sum(np.log(w)) - np.log(w[:1].values[0])
-        valc = np.log(np.sum(w)-w[:1].values[0])
+        mubar = self.mu_SN.mean()
+        vala = 0.5*np.sum(w*(self.mu_SN-mubar)**2)
+        """
+        valb = -0.5*np.sum(np.log(w))
+        valc = 0.
+        """
+        valb = 0.5*(self.ndata-1)*np.log(np.sum(cov_mu))
+        valc = np.log(np.sum(w))
+        valc = 0.5*(self.ndata-1)*np.log(2*np.pi)
+        # valc = 0.
 
-        Xmat = vala-valb+valc
+        Xmat = vala+valb+valc
 
-        print('allo', mubar, sigmaInt, Xmat, vala, valb, valc)
+        # print('allo', mubar, sigmaInt, Xmat, vala, valb, valc)
         # print(test)
         return Xmat
 
@@ -114,12 +121,33 @@ ax.errorbar(df['z'], df['mu'], yerr=df['sigma_mu'])
 plt.show()
 """
 
+# simple check on random gauss
+"""
+mu = 50.
+
+sigma = 0.12
+
+ndata = 1000
+
+rd = np.random.normal(mu, sigma, ndata)
+
+rr = pd.DataFrame(rd, columns=['mu_SN'])
+rr['sigma_mu'] = 0.0
+fitparValues = [sigma]
+myfit = REML_Fit(rr, ['mu_SN', 'sigma_mu'],
+                 fitparValues=fitparValues)
+
+myfit()
+
+print(test)
+"""
+
 thefile = '../test_durvey/survey_sn_desc_ddf_gen_0.80_sn_v4.3.1_10yrs_desc_ddf_gen_0.80_sn_v4.3.1_10yrs_1_10_1_for_fit.hdf5'
 
 sigmaInt = 0.12
 df = pd.read_hdf(thefile)
 
-zfit = np.arange(0.2, 1.1, 0.1)
+zfit = np.arange(0.2, 1.1, 0.05)
 
 for i in range(len(zfit)-1):
     zmin = zfit[i]
@@ -147,8 +175,9 @@ for i in range(len(zfit)-1):
     print(sel[['mu', 'mu_bin']])
 
     # print(test)
-
-    fitparValues = [sel['mu_SN'].mean(), sigmaInt]
+    print('allo', (sel['sigma_mu']**2).sum())
+    fitparValues = [(sel['sigma_mu']**2).sum()+sigmaInt**2]
+    sel['sigma_mu'] = 0.
     print('go', fitparValues, zmin, zmax, len(sel), sel['mu_bin'].mean())
     myfit = REML_Fit(sel, ['mu_SN', 'mu_bin', 'sigma_mu'],
                      fitparValues=fitparValues)
