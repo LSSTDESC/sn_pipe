@@ -11,6 +11,8 @@
 
 ### [z-percentiles](sn_zpercent.md)
 
+### [zlimit for sigmaC <= 0.04][sn_zlim_sigmaC.md]
+
 ## Wide Fast Deep survey
 
 ### [Number of SN - summary plots](wfd_summary.md)
