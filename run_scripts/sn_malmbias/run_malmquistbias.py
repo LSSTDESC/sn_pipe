@@ -15,7 +15,7 @@ from sn_analysis.sn_tools import complete_df
 from sn_analysis.sn_calc_plot import bin_it_mean
 
 
-def load_nosel(dbDir, dbName, spectroType, field):
+def load_nosel_deprecated(dbDir, dbName, spectroType, field):
     """
     Functon to load data
 
@@ -50,7 +50,7 @@ def load_nosel(dbDir, dbName, spectroType, field):
     return res
 
 
-def load_sel(dbDir, dbName, spectroType, field):
+def load_sel(dbDir, dbName, spectroType, season, field):
     """
     Functon to load data
 
@@ -73,7 +73,7 @@ def load_sel(dbDir, dbName, spectroType, field):
     """
     fDir = '{}/{}/{}'.format(dbDir, dbName, spectroType)
 
-    fis = glob.glob('{}/*.hdf5'.format(fDir))
+    fis = glob.glob('{}/*_season_{}.hdf5'.format(fDir, season))
 
     res = pd.DataFrame()
     for fi in fis:
@@ -81,9 +81,10 @@ def load_sel(dbDir, dbName, spectroType, field):
         df = pd.read_hdf(fi)
         res = pd.concat((res, df))
 
-    idx = res['field'] == field
+    print('fields', res['field'].unique())
+    # idx = res['field'] == field
 
-    return res[idx]
+    return res
 
 
 def plot_data(dfa, dfb, varx, vary):
@@ -134,14 +135,46 @@ def plot_data(dfa, dfb, varx, vary):
         plt.show()
 
 
+def plot_delta_mu(data):
+
+    print(data.columns)
+    ndeg = 8
+    bins = np.arange(0.01, 1.01, 0.01)
+    data_bin = bin_it_mean(data, xvar='z_fit', yvar='diff_mu', bins=bins)
+    print(data_bin)
+    fig, ax = plt.subplots(figsize=(12, 8))
+
+    ax.errorbar(data_bin['z_fit'], data_bin['diff_mu'],
+                yerr=data_bin['diff_mu_sigma'], lineStyle=None)
+
+    w = 1./data_bin['diff_mu_sigma']
+
+    z, V = np.polyfit(data_bin['z_fit'],
+                      data_bin['diff_mu'], ndeg, w=w, cov='unscaled')
+    print(z)
+    print(np.sqrt(np.diag(V)))
+    p = np.poly1d(z)
+    diff = p(data_bin['z_fit'])-data_bin['diff_mu']
+    sigma = data_bin['diff_mu_sigma']
+    ndof = data_bin['size'].sum()-ndeg-1
+    print('chi2', np.sum((diff/sigma)**2)/ndof)
+    bins = np.arange(0., 1.01, 0.01)
+    ax.plot(bins, p(bins))
+
+    ax.grid()
+    plt.show()
+
+
 parser = OptionParser(
     description='Script to study the malmquist bias on SNe Ia')
 
+"""
 parser.add_option('--dbDir_nosel', type=str,
                   default='../Output_SN_DD_sigmaInt_0.0_Hounsell_z_smflux_notelrot',
                   help='OS location dir - no selection[%default]')
+"""
 parser.add_option('--dbDir_sel', type=str,
-                  default='../Output_SN_DD_sigmaInt_0.0_Hounsell_z_smflux_notelrot_G10_JLA',
+                  default='../Output_SN_DD_sigmaInt_0.0_Hounsell_z_smflux_notelrot_zstep_G10_JLA',
                   help='OS location dir - with selection[%default]')
 parser.add_option('--fields', type=str,
                   default='COSMOS',
@@ -164,7 +197,7 @@ parser.add_option('--Mb', type=float,
 
 opts, args = parser.parse_args()
 
-dbDir_nosel = opts.dbDir_nosel
+# dbDir_nosel = opts.dbDir_nosel
 dbDir_sel = opts.dbDir_sel
 fields = opts.fields.split(',')
 dbName = opts.dbName
@@ -177,11 +210,11 @@ col = 'healpixID'
 
 
 for field in fields:
-    data_nosel = load_nosel(dbDir_nosel, dbName, spectroType, field)
-    print(len(data_nosel), data_nosel.columns)
+    # data_nosel = load_nosel(dbDir_nosel, dbName, spectroType, field)
+    # print(len(data_nosel), data_nosel.columns)
 
-    data_nosel = complete_df(data_nosel, alpha, beta, Mb)
-    data_sel = load_sel(dbDir_sel, dbName, spectroType, field)
+    # data_nosel = complete_df(data_nosel, alpha, beta, Mb)
+    data_sel = load_sel(dbDir_sel, dbName, spectroType, 1, field)
     """
     data_nosel['mb_fit'] = -2.5*np.log10(data_nosel['x0_fit']) + 10.635
     data_nosel['mu'] = alpha*data_nosel['x1_fit']-beta * \
@@ -189,15 +222,16 @@ for field in fields:
     """
     print(len(data_sel))
 
-    hpixes = data_nosel[col].unique()
+    hpixes = data_sel[col].unique()
 
     for hpix in hpixes:
-        idx = data_nosel[col] == hpix
+        # idx = data_nosel[col] == hpix
         idxs = data_sel[col] == hpix
 
-        d_nosel = data_nosel[idx]
+        # d_nosel = data_nosel[idx]
         d_sel = data_sel[idxs]
 
-        print(hpix, len(d_nosel), len(d_sel))
+        print(hpix, len(d_sel))
+        plot_delta_mu(d_sel)
 
-        plot_data(d_nosel, d_sel, varx='z_fit', vary='mu')
+        # plot_data(d_nosel, d_sel, varx='z_fit', vary='mu')

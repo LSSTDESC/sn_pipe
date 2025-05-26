@@ -71,22 +71,30 @@ class REML_Fit:
         # mubar = parameters[self.fitparNames.index('mubar')]
         sigmaInt = parameters[self.fitparNames.index('sigmaInt')]
 
-        cov_mu = self.sigma_mu**2+sigmaInt**2
+        cov_mu = self.sigma_mu**2+sigmaInt
+        # cov_mu = sigmaInt**2
 
         w = 1./cov_mu
 
         mubar = self.mu_SN.mean()
-        vala = 0.5*np.sum(w*(self.mu_SN-mubar)**2)
+        vala = np.sum(w*(self.mu_SN-mubar)**2)
+        valc = 2.*mubar*np.sum(w*(self.mu_SN-mubar))
+
+        # vala /= cov_mu
         """
         valb = -0.5*np.sum(np.log(w))
         valc = 0.
         """
         valb = 0.5*(self.ndata-1)*np.log(np.sum(cov_mu))
+        valb = np.sum(np.log(w))
+        # valb = 0.5*(self.ndata-1)*np.log(cov_mu)
+        """
         valc = np.log(np.sum(w))
         valc = 0.5*(self.ndata-1)*np.log(2*np.pi)
-        # valc = 0.
-
-        Xmat = vala+valb+valc
+        valc = 0.5*np.sum(np.log(w))
+        valc = 0.
+        """
+        Xmat = vala-valb+valc
 
         # print('allo', mubar, sigmaInt, Xmat, vala, valb, valc)
         # print(test)
@@ -122,32 +130,52 @@ plt.show()
 """
 
 # simple check on random gauss
-"""
-mu = 50.
+
+mu_mean = 50.
 
 sigma = 0.12
 
-ndata = 1000
+ndata = 100000
 
-rd = np.random.normal(mu, sigma, ndata)
+mu = np.random.normal(mu_mean, 0.50, ndata)
+# mu = mu_mean
+sigma_mu = 0.0
+sigma_mu = np.random.normal(0., 0.50, ndata)
+# sigma_mu = np.asarray([0.25]*ndata)
+# sigma_mu = 0.02
+sigmab = np.sqrt(sigma**2+sigma_mu**2)
 
+print('sigmab)', sigmab)
+
+rd = np.random.normal(mu, sigmab)
+
+
+print('allo', rd)
 rr = pd.DataFrame(rd, columns=['mu_SN'])
-rr['sigma_mu'] = 0.0
-fitparValues = [sigma]
+rr['sigma_mu'] = sigma_mu
+fitparValues = [sigma**2]
 myfit = REML_Fit(rr, ['mu_SN', 'sigma_mu'],
                  fitparValues=fitparValues)
 
 myfit()
 
-print(test)
 """
+mubar = rr['mu_SN'].mean()
+
+sigma = np.sum((rr['mu_SN']-mubar)**2)
+sigma /= len(rr)-1
+
+print('hello', np.sqrt(sigma))
+"""
+print(test)
+
 
 thefile = '../test_durvey/survey_sn_desc_ddf_gen_0.80_sn_v4.3.1_10yrs_desc_ddf_gen_0.80_sn_v4.3.1_10yrs_1_10_1_for_fit.hdf5'
 
 sigmaInt = 0.12
 df = pd.read_hdf(thefile)
 
-zfit = np.arange(0.2, 1.1, 0.05)
+zfit = np.arange(0.2, 1.1, 0.01)
 
 for i in range(len(zfit)-1):
     zmin = zfit[i]
@@ -168,19 +196,19 @@ for i in range(len(zfit)-1):
     mu_b_plus = sel[idx]['mu_SN'].values[0]
     sig_b_plus = sel[idx]['sigma_mu'].values[0]
 
-    print(mu_b, mu_b_plus, alpha)
+    # print(mu_b, mu_b_plus, alpha)
     sel['mu_bin'] = (1.-alpha)*mu_b+alpha*mu_b_plus
     # sel['sigma_mu'] = (1.-alpha)*sig_b+alpha*sig_b_plus
 
-    print(sel[['mu', 'mu_bin']])
+    # print(sel[['mu', 'mu_bin']])
 
     # print(test)
     print('allo', (sel['sigma_mu']**2).sum())
-    fitparValues = [(sel['sigma_mu']**2).sum()+sigmaInt**2]
+    fitparValues = [sigmaInt**2]
     sel['sigma_mu'] = 0.
     print('go', fitparValues, zmin, zmax, len(sel), sel['mu_bin'].mean())
     myfit = REML_Fit(sel, ['mu_SN', 'mu_bin', 'sigma_mu'],
                      fitparValues=fitparValues)
 
-    myfit()
+    out_res = myfit()
     # break
