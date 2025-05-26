@@ -482,7 +482,7 @@ for key, vals in confDict.items():
 # this is for DDFs
 if opts.fieldType == 'DD':
     if procDict['SN_NSNabsolute'] > 0.:
-        batch_DDF(procDict, mem='20Gb', deltaz=0.02)
+        batch_DDF(procDict, mem='20Gb', deltaz=0.01)
     else:
         batch_DDF_rate(procDict, mem='20Gb')
 
