@@ -230,8 +230,103 @@ def batch_WFD(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
             mybatch.go_batch()
 
 
-def batch_DDF_rate(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
+def batch_DDF_rate(theDict,
+                   scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
                    time='50:00:00', mem='40G'):
+    """
+
+    Function to launch sim_to_fit for DD fields
+
+     Parameters
+     ----------
+     theDict : dict
+         script parameters.
+     scriptref : str, optional
+         script to use for production. The default is
+             'run_scripts/sim_to_fit/run_sim_to_fit.py'.
+     time : str, optional
+           processing time per job. The default is '30:00:00'.
+     mem : str, optional
+           job mem. The default is '40G'.
+
+    Returns
+    -------
+    None.
+
+    """
+    DD_list = theDict['DD_list'].split(',')
+    dbName = theDict['dbName']
+    outDir = theDict['OutputSimu_directory']
+    reprocList = theDict['reprocList']
+    sigmaInt = theDict['SN_sigmaInt']
+    snrate = theDict['SN_z_rate']
+    smearFlux = theDict['SN_smearFlux']
+    season_min = 1
+    season_max = 14
+
+    tag_list = pd.DataFrame()
+    if 'None' not in reprocList:
+        tag_list = pd.read_csv(reprocList)
+
+    procDict = copy.deepcopy(theDict)
+
+    del procDict['DD_list']
+    del procDict['reprocList']
+    # procDict['nside'] = 128
+    # procDict['fieldType'] = 'DD'
+
+    # procDict['Fitter_parnames'] = 'z,t0,x1,c,x0'
+    tag_dir = '_spectroz'
+    # if 'z' in procDict['Fitter_parnames']:
+    if procDict['Fitter_sigmaz'] >= 1.e-3:
+        tag_dir = '_photz'
+    procDict['OutputSimu_directory'] = '{}/{}/DDF{}'.format(outDir,
+                                                            dbName, tag_dir)
+    checkDir(procDict['OutputSimu_directory'])
+    procDict['OutputFit_directory'] = procDict['OutputSimu_directory']
+    # procDict['SN_NSNfactor'] = 30
+    procDict['Pixelisation_nside'] = procDict['nside']
+
+    simu_fromFile = procDict['simuParams_fromFile']
+    simuParams_dir = procDict['simuParams_dir']
+    procDict.pop('simuParams_fromFile')
+    procDict.pop('simuParams_dir')
+
+    for fieldName in DD_list:
+        procDict['fieldName'] = fieldName
+        procName = 'DD_{}_{}{}_{}_{}_{}'.format(
+            dbName, fieldName, tag_dir, np.round(sigmaInt, 2),
+            snrate, smearFlux)
+        mybatch = BatchIt(processName=procName, time=time, mem=mem)
+
+        if not tag_list.empty:
+            idx = tag_list['ProductionID'] == procName
+            sel = tag_list[idx]
+            if len(sel) > 0:
+                season_min = sel['season_max'].max()
+                season_max = 11
+
+        seasons = '{}-{}'.format(season_min, season_max)
+
+        procDict['ProductionIDSimu'] = 'SN_{}_{}_{}'.format(
+            procName, season_min, season_max)
+        procDict['Observations_season'] = seasons
+
+        if simu_fromFile == 1:
+            ffi = 'SN_simu_params_DDF_{}_season_{}_{}.hdf5'.format(
+                dbName, season_min, season_max)
+            outDir_simuparams = '{}_simuparams'.format(simuParams_dir)
+            procDict['SN_simuFile'] = '{}/{}/DDF_spectroz/{}'.format(
+                outDir_simuparams, dbName, ffi)
+
+        mybatch.add_batch(scriptref, procDict)
+
+        # go for batch
+        mybatch.go_batch()
+
+
+def batch_DDF_rate_per_season(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
+                              time='50:00:00', mem='40G'):
     """
 
     Function to launch sim_to_fit for DD fields
