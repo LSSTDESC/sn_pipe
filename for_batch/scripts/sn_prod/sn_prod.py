@@ -573,9 +573,10 @@ procDict = {}
 for key, vals in confDict.items():
     procDict[key] = eval('opts.{}'.format(key))
 
-
+procDict.pop('mem')
 # this is for DDFs
 mem = opts.mem
+
 if opts.fieldType == 'DD':
     if procDict['SN_NSNabsolute'] > 0.:
         batch_DDF(procDict, mem=mem, deltaz=0.02)
