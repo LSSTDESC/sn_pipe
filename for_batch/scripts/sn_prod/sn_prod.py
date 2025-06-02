@@ -482,9 +482,9 @@ for key, vals in confDict.items():
 # this is for DDFs
 if opts.fieldType == 'DD':
     if procDict['SN_NSNabsolute'] > 0.:
-        batch_DDF(procDict, mem='20Gb', deltaz=0.02)
+        batch_DDF(procDict, mem='10Gb', deltaz=0.02)
     else:
-        batch_DDF_rate(procDict, mem='20Gb')
+        batch_DDF_rate(procDict, mem='10Gb')
 
 if opts.fieldType == 'WFD':
     if procDict['SN_NSNabsolute'] > 0.:
@@ -498,16 +498,16 @@ if opts.fieldType == 'WFD':
                     batch_WFD_rate(procDict,
                                    seas_min=seas[0], seas_max=seas[1],
                                    zmin=0.01, zmax=0.4,
-                                   mem='20Gb', runMode=runMode)
+                                   mem='10Gb', runMode=runMode)
                     batch_WFD_rate(procDict,
                                    seas_min=seas[0], seas_max=seas[1],
                                    zmin=0.4, zmax=0.8,
-                                   mem='20Gb', runMode=runMode)
+                                   mem='10Gb', runMode=runMode)
                 else:
                     batch_WFD_rate(procDict,
                                    seas_min=seas[0], seas_max=seas[1],
                                    zmin=0.01, zmax=opts.SN_z_max,
-                                   mem='20Gb', runMode=runMode, extend_rate=False)
+                                   mem='10Gb', runMode=runMode, extend_rate=False)
 
 
 # this is for WFD
