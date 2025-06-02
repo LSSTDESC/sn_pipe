@@ -114,7 +114,7 @@ def batch_DDF(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
 
 
 def batch_WFD(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
-              time='160:00:00', mem='40G',
+              time='160:00:00', mem='40Gb',
               zmin=0.00, zmax=0.8, deltaz=0.01):
     """
     Function to launch sim_to_fit for WFD
@@ -575,11 +575,12 @@ for key, vals in confDict.items():
 
 
 # this is for DDFs
+mem = opts.mem
 if opts.fieldType == 'DD':
     if procDict['SN_NSNabsolute'] > 0.:
-        batch_DDF(procDict, mem='10Gb', deltaz=0.02)
+        batch_DDF(procDict, mem=mem, deltaz=0.02)
     else:
-        batch_DDF_rate(procDict, mem='10Gb')
+        batch_DDF_rate(procDict, mem=mem)
 
 if opts.fieldType == 'WFD':
     if procDict['SN_NSNabsolute'] > 0.:
@@ -593,16 +594,16 @@ if opts.fieldType == 'WFD':
                     batch_WFD_rate(procDict,
                                    seas_min=seas[0], seas_max=seas[1],
                                    zmin=0.01, zmax=0.4,
-                                   mem='10Gb', runMode=runMode)
+                                   mem=mem, runMode=runMode)
                     batch_WFD_rate(procDict,
                                    seas_min=seas[0], seas_max=seas[1],
                                    zmin=0.4, zmax=0.8,
-                                   mem='10Gb', runMode=runMode)
+                                   mem=mem, runMode=runMode)
                 else:
                     batch_WFD_rate(procDict,
                                    seas_min=seas[0], seas_max=seas[1],
                                    zmin=0.01, zmax=opts.SN_z_max,
-                                   mem='10Gb', runMode=runMode, extend_rate=False)
+                                   mem=mem, runMode=runMode, extend_rate=False)
 
 
 # this is for WFD

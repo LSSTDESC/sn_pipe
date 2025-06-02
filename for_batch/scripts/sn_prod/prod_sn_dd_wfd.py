@@ -86,6 +86,8 @@ parser.add_option("--SN_color_type", type=str, default='random',
                   help="color simulation type [%default]")
 parser.add_option("--SN_color_min", type=float, default=0.2,
                   help="color min value [%default]")
+parser.add_option("--mem", type=str, default='8Gb',
+                  help="memore for batch jobs [%default]")
 
 opts, args = parser.parse_args()
 
@@ -121,6 +123,8 @@ x1_min = opts.SN_x1_min
 color_type = opts.SN_color_type
 color_min = opts.SN_color_min
 
+mem = opts.mem
+
 cmd_scr = 'python for_batch/scripts/sn_prod/loop_prod.py'
 cmd_scr += ' --SN_sigmaInt=0.0'
 
@@ -145,7 +149,7 @@ if dbList_DD != '':
     cmd_ddf += ' --SN_x1_min={}'.format(x1_min)
     cmd_ddf += ' --SN_color_type={}'.format(color_type)
     cmd_ddf += ' --SN_color_min={}'.format(color_min)
-
+    cmd_ddf += ' --mem={}'.format(mem)
     print(cmd_ddf)
     os.system(cmd_ddf)
 
@@ -175,6 +179,7 @@ if dbList_WFD != '':
     cmd_wfd += ' --SN_x1_min={}'.format(x1_min)
     cmd_wfd += ' --SN_color_type={}'.format(color_type)
     cmd_wfd += ' --SN_color_min={}'.format(color_min)
+    cmd_wfd += ' --mem={}'.format(mem)
 
     print(cmd_wfd)
     os.system(cmd_wfd)

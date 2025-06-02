@@ -93,6 +93,8 @@ parser.add_option("--SN_color_type", type=str, default='random',
                   help="color simulation type [%default]")
 parser.add_option("--SN_color_min", type=float, default=0.2,
                   help="color min value [%default]")
+parser.add_option("--mem", type=str, default='8Gb',
+                  help="memore for batch jobs [%default]")
 
 opts, args = parser.parse_args()
 
@@ -145,5 +147,6 @@ for i, row in df.iterrows():
     procDict['SN_x1_min'] = opts.SN_x1_min
     procDict['SN_color_type'] = opts.SN_color_type
     procDict['SN_color_min'] = opts.SN_color_min
+    procDict['mem'] = opts.mem
 
     go_batch(script, procDict)
