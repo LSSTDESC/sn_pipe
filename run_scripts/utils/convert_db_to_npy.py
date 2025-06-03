@@ -36,6 +36,9 @@ parser.add_option('--select_ddf', type='str',
 parser.add_option('--colSelect', type='str',
                   default='target_name',
                   help='col name selection [%default]')
+parser.add_option('--dbExtens', type='str',
+                  default='db',
+                  help='db extension [%default]')
 
 opts, args = parser.parse_args()
 
@@ -46,6 +49,7 @@ tableName = opts.tableName
 split_in_RA = opts.split_in_RA
 select_ddf = opts.select_ddf
 colSelect = opts.colSelect
+dbExtens = opts.dbExtens
 
 # open sqlite connexion
 # cnx = sqlite3.connect('{}/{}.db'.format(inputDir, dbName))
@@ -60,7 +64,7 @@ print(df.dtypes)
 np.save('{}/{}.npy'.format(outputDir, dbName), df.to_records(index=False))
 """
 
-obs = getObservations(inputDir, dbName, 'db')
+obs = getObservations(inputDir, dbName, dbExtens)
 
 print(obs.dtype, len(obs))
 
