@@ -134,6 +134,9 @@ parser.add_option("--dataType", type=str,
 parser.add_option("--ebvofMW", type=float,
                   default=0.25,
                   help="Max e(B-V). [%default]")
+parser.add_option("--seasons", type=str,
+                  default='1_14',
+                  help="seasons to process [%default]")
 
 opts, args = parser.parse_args()
 
@@ -149,11 +152,12 @@ timescale = opts.timescale
 dataType = opts.dataType
 ebvofMW = opts.ebvofMW
 outDir = opts.outDir
+seasons = opts.seasons.split(',')
 
 nproc = opts.nproc
 
 
-seasons = range(1, 13)
+# seasons = range(1, 13)
 
 sellist = selection_criteria()[selconfig]
 
