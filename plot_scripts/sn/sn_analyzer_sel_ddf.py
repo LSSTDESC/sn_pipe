@@ -16,7 +16,7 @@ from sn_plotter_analysis.sn_analyser_ddf import get_val
 from sn_plotter_analysis.sn_analyser_ddf import get_nsn, pixelSize
 from sn_plotter_analysis.sn_plot import plot_nsn_year_all
 from sn_plotter_analysis.sn_analyser_tools import Estimate_NSN, count_all
-from sn_plotter_analysis.sn_analyser_tools import clean_level
+from sn_plotter_analysis.sn_analyser_tools import clean_level, print_nsn_latex
 from sn_tools.sn_io import checkDir
 
 
@@ -225,6 +225,9 @@ parser.add_option('--dataType', type=str,
 parser.add_option('--plots', type=str,
                   default='nsn_all,nsn_ud',
                   help='plots to draw [%default]')
+parser.add_option('--print_nsn', type=int,
+                  default=0,
+                  help='to print nsn as a latex table [%default]')
 parser.add_option('--ud_fields', type=str,
                   default='COSMOS,XMM-LSS',
                   help='UD fields to consider [%default]')
@@ -253,6 +256,7 @@ timeslots = opts.timeslots
 timescale = opts.timescale
 timeslots = get_val(timeslots)
 plots = opts.plots.split(',')
+print_nsn = opts.print_nsn
 ud_fields = opts.ud_fields.split(',')
 dd_fields = opts.dd_fields.split(',')
 nside = opts.nside
@@ -282,6 +286,9 @@ if not os.path.isfile(fName):
 
 
 df_nsn = pd.read_hdf(fName)
+
+if print_nsn:
+    print_nsn_latex(df_nsn)
 
 
 # all fields
