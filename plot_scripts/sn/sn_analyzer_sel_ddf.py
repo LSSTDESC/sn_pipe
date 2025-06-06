@@ -11,13 +11,9 @@ from sn_analysis import plt
 import numpy as np
 import os
 
-from sn_plotter_analysis.sn_analyser_summary import process_DDF
-from sn_plotter_analysis.sn_analyser_ddf import get_val
-from sn_plotter_analysis.sn_analyser_ddf import get_nsn, pixelSize
 from sn_plotter_analysis.sn_plot import plot_nsn_year_all
-from sn_plotter_analysis.sn_analyser_tools import Estimate_NSN, count_all
+from sn_plotter_analysis.sn_analyser_tools import count_all
 from sn_plotter_analysis.sn_analyser_tools import clean_level, print_nsn_latex
-from sn_tools.sn_io import checkDir
 
 
 def plot_nsn_tot(nsn_a, config,
@@ -146,82 +142,11 @@ def plot_ddf_year(data, config,
                  cumul=False, fields=fields)
 
 
-def get_nsn(data, norm_factor, nside=128):
-    """
-    Function to estimate the number of SNe Ia + errors
+parser = OptionParser(description='Script to plot SN - DDF after selection')
 
-    Parameters
-    ----------
-    data : TYPE
-        DESCRIPTION.
-    norm_factor : TYPE
-        DESCRIPTION.
-
-    Returns
-    -------
-    res_fi : TYPE
-        DESCRIPTION.
-
-    """
-
-    nsn = Estimate_NSN(norm_factor=norm_factor)
-
-    # get nsn - no cuts
-    resa = nsn(data)
-    resa = clean_level(resa)
-
-    # get nsn - z >= 0.8
-    idx = data['z'] >= 0.8
-    sel = data[idx]
-    resb = nsn(sel)
-    resb = clean_level(resb)
-    resb = resb.rename(columns={'nsn': 'nsn_z_08', 'err_nsn': 'err_nsn_z_08'})
-
-    # get nsn - z >= 0.8 and sigmaC <= 0.04
-    idx = data['z'] >= 0.8
-    idx &= data['sigmaC'] <= 0.04
-    sel = data[idx]
-    resc = nsn(sel)
-    resc = clean_level(resc)
-    resc = resc.rename(
-        columns={'nsn': 'nsn_z_08_sigmaC', 'err_nsn': 'err_nsn_z_08_sigmaC'})
-
-    cols = ['dbName', 'field', 'healpixID', 'season', 'year']
-    res_fi = resa.merge(resb, left_on=cols, right_on=cols, suffixes=['', ''])
-
-    res_fi = res_fi.merge(resc, left_on=cols, right_on=cols, suffixes=['', ''])
-
-    res_fi['survey_area'] = pixelSize(nside)
-
-    return res_fi
-
-
-parser = OptionParser(description='Script to analyze SN - DDF after selection')
-
-parser.add_option('--dbDir', type=str,
-                  default='../Output_SN_sigmaInt_0.0_Hounsell_G10_JLA',
-                  help='OS location dir[%default]')
 parser.add_option('--config', type=str,
                   default='input/plots/config_ana.csv',
                   help='OS DD list[%default]')
-parser.add_option('--norm_factor', type=int,
-                  default=30,
-                  help='normalization factor [%default]')
-parser.add_option('--budget_DD', type=float,
-                  default=0.07,
-                  help='DD budget [%default]')
-parser.add_option('--runType', type=str,
-                  default='spectroz',
-                  help='run type  [%default]')
-parser.add_option('--timescale', type=str,
-                  default='year',
-                  help='timescale of the files to process [%default]')
-parser.add_option('--timeslots', type=str,
-                  default='1-10',
-                  help='time slot (season or year) to process [%default]')
-parser.add_option('--dataType', type=str,
-                  default='DataFrame',
-                  help='data type [%default]')
 parser.add_option('--plots', type=str,
                   default='nsn_all,nsn_ud',
                   help='plots to draw [%default]')
@@ -234,9 +159,6 @@ parser.add_option('--ud_fields', type=str,
 parser.add_option('--dd_fields', type=str,
                   default='CDFS,ELAISS1,EDFS_a,EDFS_b',
                   help='DD fields to consider [%default]')
-parser.add_option('--nside', type=int,
-                  default=128,
-                  help='nside healpix parameter [%default]')
 parser.add_option('--inputDir', type=str,
                   default='../sn_summary_ddf',
                   help='input dir for the file to draw [%default]')
@@ -247,26 +169,14 @@ parser.add_option('--fileName', type=str,
 
 opts, args = parser.parse_args()
 
-dbDir = opts.dbDir
-norm_factor = opts.norm_factor
-budget_DD = opts.budget_DD
-runType = opts.runType
+
 config = opts.config
-timeslots = opts.timeslots
-timescale = opts.timescale
-timeslots = get_val(timeslots)
 plots = opts.plots.split(',')
 print_nsn = opts.print_nsn
 ud_fields = opts.ud_fields.split(',')
 dd_fields = opts.dd_fields.split(',')
-nside = opts.nside
 inputDir = opts.inputDir
 fileName = opts.fileName
-dataType = opts.dataType
-
-
-# create dir if necessary
-checkDir(inputDir)
 
 
 # read config file
@@ -277,13 +187,6 @@ fName = '{}/{}'.format(inputDir, fileName)
 # process data
 if not os.path.isfile(fName):
     print('File not found! Processing data')
-    ddf = process_DDF(conf_df, dataType, dbDir, runType,
-                      timescale, timeslots, norm_factor)
-
-    df_nsn = get_nsn(ddf, norm_factor, nside)
-
-    df_nsn.to_hdf(fName, key='ddf')
-
 
 df_nsn = pd.read_hdf(fName)
 
