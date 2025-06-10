@@ -47,18 +47,33 @@ Options:
                         time slot (season or year) to process [1-10]
   --timescale=TIMESCALE
                         timescale of the files to process [year]
-  --plots=PLOTS         plots to draw [summary,mollweid,density,density_indiv,
-                        density_season]
+  --plots=PLOTS         plots to draw [summary,mollweid,mollweid_ffmpeg,densit
+                        y,density_indiv,density_season]
   --outDir=OUTDIR       output dir [../sn_wfd]
   --fName=FNAME         output name [nsn_wfd.hdf5]
   --nside=NSIDE         healpix nside parameter [64]
   --vartoplot=VARTOPLOT
                         var to plot (nsn/nsn_cosmo) [nsn]
+  --OS_ref=OS_REF       ref OS for normalization [None]
+  --print_nsn=PRINT_NSN
+                        to print nsn as a latex table [0]
 
 </pre>
 
-### Example
+### Examples
 
 python plot_scripts/sn/sn_analyzer_sel_wfd.py --config=[config_ana_selplot.csv](config_ana_selplot.csv) --plots=summary
 
 [NSN WFD summary plot](plote1.png)
+
+[NSN WFD summary plot - cosmology grade sample](plote2.png)
+
+[Relative NSN (cumul) variation vs year](plote3.png)
+
+python plot_scripts/sn/sn_analyzer_sel_wfd.py --config=config_ana_selplot.csv --plots=mollweid
+
+-> files located in outDir/Os_name
+
+[NSN vs year - Mollweid view](plote4.png)
+
+### the option --print_nsn=1 lead to the printing of (nsn, err_nsn) for each OS/year in latex format.
