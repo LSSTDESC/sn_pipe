@@ -12,6 +12,8 @@ from sn_analysis import plt
 from sn_tools.sn_io import checkDir
 from sn_tools.sn_utils import get_val
 import os
+from sn_plotter_analysis.sn_analyser_tools import print_nsn_latex
+
 
 parser = OptionParser(description='Script to analyze SN prod after selection')
 
@@ -45,6 +47,9 @@ parser.add_option('--vartoplot', type=str,
 parser.add_option('--OS_ref', type=str,
                   default='None',
                   help='ref OS for normalization [%default]')
+parser.add_option('--print_nsn', type=int,
+                  default=0,
+                  help='to print nsn as a latex table [%default]')
 
 opts, args = parser.parse_args()
 
@@ -59,6 +64,7 @@ fName = opts.fName
 nside = opts.nside
 vartoplot = opts.vartoplot
 OS_ref = opts.OS_ref
+print_nsn = opts.print_nsn
 
 # read config file
 conf = pd.read_csv(config, comment='#')
@@ -75,14 +81,20 @@ for dbName in dbNames:
         wfda = pd.read_hdf(fNameb)
         wfd = pd.concat((wfd, wfda))
 
+if print_nsn:
+    print_nsn_latex(wfd)
+    print_nsn_latex(wfd, nsn_var='nsn_cosmo', err_nsn_var='err_nsn_cosmo')
+
 if 'summary' in plots:
     from sn_plotter_analysis.sn_analyser_wdf import plot_summary_wfd
+    from sn_plotter_analysis.sn_analyser_wdf import plot_summary_wfd_norm
     plot_summary_wfd(wfd, conf, timescale, cumul=True)
+    plot_summary_wfd_norm(wfd, conf, timescale, cumul=True)
 
     if OS_ref != 'None':
-        from sn_plotter_analysis.sn_analyser_wdf import plot_summary_wfd_norm
-        plot_summary_wfd_norm(wfd, conf, timescale, cumul=True, dbNorm=OS_ref)
-        plot_summary_wfd_norm(wfd, conf, timescale, cumul=True)
+        plot_summary_wfd_norm(wfd, conf, timescale,
+                              yvar_err='None', cumul=True, dbNorm=OS_ref)
+
 
 res = list(filter(lambda x: 'mollweid' in x, plots))
 if len(res) > 0:
