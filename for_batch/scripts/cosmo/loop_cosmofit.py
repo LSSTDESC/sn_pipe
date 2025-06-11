@@ -103,8 +103,7 @@ for i, row in fis.iterrows():
     if 'dd_tagsurvey' in fis.columns:
         dd_tagsurvey = row['dd_tagsurvey']
 
-    processName = 'cosmo_{}_{}_{}'.format(
-        dbName_DD, wfd_tagsurvey, dd_tagsurvey)
+    processName = 'cosmo_{}_{}'.format(dbName_DD, tag)
     mybatch = BatchIt(processName=processName)
     params = {}
     params['dataDir_DD'] = inputDir_DD
