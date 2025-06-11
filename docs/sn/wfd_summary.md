@@ -76,4 +76,22 @@ python plot_scripts/sn/sn_analyzer_sel_wfd.py --config=config_ana_selplot.csv --
 
 [NSN vs year - Mollweid view](plote4.png)
 
+python plot_scripts/sn/sn_analyzer_sel_wfd.py --config=config_ana_selplot.csv --plots=density
+
+[NSN/deg2 vs Dec slices](plote5.png)
+
+[area vs dec slices](plote6.png)
+
+python plot_scripts/sn/sn_analyzer_sel_wfd.py --config=config_ana_selplot.csv --plots=density_season --vartoplot='nsn_cosmo'
+
+[NSN/deg2 per Dec slices for desc_ddf_gen_0.80_v4.3.1_10yrs vs year](plote7.png)
+
+[NSN/deg2 per Dec slices for baseline_v4.3.1_10yrs vs year](plote8.png)
+
+python plot_scripts/sn/sn_analyzer_sel_wfd.py --config=config_ana_selplot.csv --plots=density_indiv --vartoplot='nsn_cosmo'
+
+[NSN/deg2 per Dec slices for desc_ddf_gen_0.80_sn_v4.3.1_10yrs](plote9.png)
+
+[NSN/deg2 per Dec slices for baseline_v4.3.1_10yrs](plote10.png)
+
 ### the option --print_nsn=1 lead to the printing of (nsn, err_nsn) for each OS/year in latex format.
