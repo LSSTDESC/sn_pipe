@@ -12,7 +12,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 from sn_analysis.sn_tools import complete_df
-from sn_analysis.sn_calc_plot import bin_it_mean
+from sn_analysis.sn_calc_plot import bin_it_mean, bin_it_weighted
 from sn_tools.sn_utils import multiproc
 import time
 
@@ -144,14 +144,19 @@ def plot_delta_mu(data, fig=None, ax=None):
     if fig is None:
         fig, ax = plt.subplots(figsize=(12, 8))
 
+    plt.suptitle(data.name)
     print(data.columns)
     ndeg = 8
-    bins = np.arange(0.0, 1.01, 0.1)
-    data_bin = bin_it_mean(data, xvar='z_fit', yvar='diff_mu', bins=bins)
+    dz = 0.08
+    bins = np.arange(0.0, 1.1+dz, dz)
+    data_bin = bin_it_weighted(data, xvar='z_fit', yvar='diff_mu', bins=bins)
     print(data_bin)
 
-    ax.errorbar(data_bin['z_fit'], data_bin['diff_mu'],
+    ax.errorbar(data_bin['z_fit'], data_bin['diff_mu_weighted_mean'],
                 yerr=data_bin['diff_mu_sigma'], lineStyle=None)
+
+    # ax.plot(data['z_fit'], data['diff_mu'], 'ko', mfc='None')
+    plt.show()
 
     """
     w = 1./data_bin['diff_mu_sigma']
@@ -312,6 +317,49 @@ def plot_pull(data, xref='x1', xfit='x1_fit', sigma='sigma_x1', fig=None, ax=Non
     print('res pull', toplot[idx].mean(), toplot[idx].std())
 
 
+def bias_corr(data):
+
+    idx = data['field'] == 'COSMOS'
+    datab = pd.DataFrame(data[idx])
+
+    sn_var = ['x1_fit', 'color_fit', 'mb_fit']
+    sn_round = [1, 1, 0]
+    sn_var = ['x1_fit', 'color_fit']
+    sn_round = [1, 1]
+    dd = dict(zip(sn_var, sn_round))
+
+    datab = datab.round(dd)
+
+    print(datab[sn_var])
+
+    hpixes = datab['healpixID'].unique()
+    print('npixels', len(hpixes))
+    corr = datab.groupby(['healpixID', 'field', 'season']).apply(
+        lambda x: bias_corr_pixel(x, sn_var)).reset_index()
+
+
+def bias_corr_pixel(grp, sn_var):
+
+    dz = 0.02
+    z = np.arange(0., 1.1+dz, dz)
+
+    for i in range(len(z)-1):
+        zmin = z[i]
+        zmax = z[i]+dz
+        idx = grp['z_fit'] >= zmin
+        idx &= grp['z_fit'] < zmax
+
+        sel = grp[idx]
+        nsize = sel.groupby(sn_var).size()
+        print(zmin, zmax, len(sel), nsize)
+
+        import matplotlib.pyplot as plt
+        fig, ax = plt.subplots(nrows=2)
+        ax[0].hist(sel['x1_fit'], histtype='step')
+        ax[1].hist(sel['color_fit'], histtype='step')
+        plt.show()
+
+
 parser = OptionParser(
     description='Script to study the malmquist bias on SNe Ia')
 
@@ -351,21 +399,37 @@ alpha = opts.alpha
 beta = opts.beta
 Mb = opts.Mb
 
+"""
 tt = pd.read_hdf('test_corr.hdf')
 
 print(tt)
 plot_delta_mu_pixels(tt)
 print(test)
+"""
+
+# get zstep data
+data_zstep = load_data(dbDir_zstep, dbName, spectroType, 1, timescale='season')
+data_zstep = complete_df(data_zstep, alpha, beta, Mb)
+
+
+hpixes = data_zstep['healpixID'].unique()
+
+data_zstep.groupby(['healpixID', 'season']).apply(lambda x: plot_delta_mu(x))
+
+
+# get x1, color, mb corrections vs z
+
+# data_corr = bias_corr(data_zstep)
 
 
 data_survey = load_data(dbDir_survey, dbName, spectroType, 1, timescale='year')
-data_zstep = load_data(dbDir_zstep, dbName, spectroType, 1, timescale='season')
+
 data_survey = complete_df(data_survey, alpha, beta, Mb)
-data_zstep = complete_df(data_zstep, alpha, beta, Mb)
+
 
 fields = data_survey['field'].unique()
 
-
+"""
 for field in fields:
 
     idx = data_survey['field'] == field
@@ -388,9 +452,6 @@ for field in fields:
     data_zstep = load_data(dbDir_zstep, dbName, spectroType,
                            1, field, timescale='season')
 
- 
     plot_delta_mu_pixels(data_survey)
-    
 
     # plot_data(d_nosel, d_sel, varx='z_fit', vary='mu')
-"""
