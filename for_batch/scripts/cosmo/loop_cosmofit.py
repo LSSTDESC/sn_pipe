@@ -47,6 +47,15 @@ parser.add_option('--select_DDF', type=int,
 parser.add_option('--select_WFD', type=int,
                   default=0,
                   help='to apply (add) selection for WFDs [%default]')
+parser.add_option('--prior_varname', type=str,
+                  default='Om0',
+                  help='prior var names [%default]')
+parser.add_option('--prior_refvalue', type=str,
+                  default='0.3',
+                  help='prior ref values [%default]')
+parser.add_option('--prior_sigma', type=str,
+                  default='0.0073',
+                  help='prior sigma values [%default]')
 
 opts, args = parser.parse_args()
 
@@ -66,6 +75,9 @@ fitparam_values = opts.fitparam_values
 prior = opts.prior
 select_DDF = opts.select_DDF
 select_WFD = opts.select_WFD
+prior_varname = opts.prior_varname
+prior_refvalue = opts.prior_refvalue
+prior_sigma = opts.prior_sigma.split
 
 # load OS files to process
 fis = pd.read_csv(dbList, comment='#')
@@ -112,6 +124,10 @@ for i, row in fis.iterrows():
     params['prior'] = prior
     params['outName'] = 'cosmo_fit_{}'.format(dbName_DD)
     params['select_DDF'] = select_DDF
+    params['prior_varname'] = opts.prior_varname
+    params['prior_refvalue'] = opts.prior_refvalue
+    params['prior_sigma'] = opts.prior_sigma
+
     # params['select_WFD'] = select_WFD
     mybatch.add_batch(script, params)
     mybatch.go_batch()
