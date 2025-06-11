@@ -92,7 +92,7 @@ def plot_cosmo_summary(data, udfs, dfs, comment_on_plot, fill_between=False):
         List of ultradeep fields.
     dfs : list(str)
         List of deep fields (DF).
-    comment_on_plot :str 
+    comment_on_plot :str
         To add a comment on the plot
     fill_between : bool, optional
         To fill in area +-1sigma. The default is False.
@@ -247,10 +247,10 @@ def plot_pull(df, config, what='w0',
     what : str, optional
         The variable to plot. The default is 'w0'.
     ylabel_up : str, optional
-        ylabel (upper plot). 
+        ylabel (upper plot).
         The default is r'<$\frac{w_{0}-w_{0}^{fit}}{\sigma_{w_{0}}}$>'.
     ylabel_down : str, optional
-        ylabel (down plot). 
+        ylabel (down plot).
         The default is r'std($\frac{w_{0}-w_{0}^{fit}}{\sigma_{w_{0}}}$)'.
 
     Returns
@@ -417,7 +417,7 @@ data = data[idx]
 
 
 # save smom in csv file
-save_data(data, year_max=year_max)
+save_data(data, prior=prior, year_max=year_max)
 
 dd = {}
 
@@ -453,6 +453,7 @@ if 'sigma_w0' in plots:
         legy = '$\\frac{\\Delta '+legy+'}{'+legy+'}$ [%]'
     else:
         legy = '$'+legy+'$'
+
     plot_allOS(data, df_conf, varx=timescale,
                legx=timescale, vary='sigma_w0_mean',
                legy=legy, vary_std='sigma_w0_std', prior=prior,
