@@ -108,10 +108,14 @@ if len(res) > 0:
 if 'density' in plots:
     from sn_plotter_analysis.sn_analyser_wdf import plot_density_wfd
     plot_indiv = False
-    if 'density_indiv' in plots:
-        plot_indiv = True
     plot_density_wfd(wfd, timescale, timeslots, nside, conf,
                      varp=vartoplot, plot_indiv=plot_indiv)
+if 'density_indiv' in plots:
+    from sn_plotter_analysis.sn_analyser_wdf import plot_density_wfd
+    plot_indiv = True
+    plot_density_wfd(wfd, timescale, timeslots, nside, conf,
+                     varp=vartoplot, plot_indiv=plot_indiv)
+
 if 'density_season' in plots:
     from sn_plotter_analysis.sn_analyser_wdf import plot_density_wfd_season
     plot_density_wfd_season(wfd, timescale, timeslots, nside, conf,
