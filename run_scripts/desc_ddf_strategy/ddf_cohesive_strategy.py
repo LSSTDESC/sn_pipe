@@ -1,3 +1,4 @@
+from optparse import OptionParser
 import numpy.lib.recfunctions as rf
 from sn_desc_ddf_strategy.dd_scenario import DD_Scenario
 from sn_desc_ddf_strategy.dd_scenario import nvisits_from_m5, reshuffle
@@ -7,10 +8,29 @@ from sn_desc_ddf_strategy.dd_scenario import Delta_m5, Delta_nvisits
 from sn_desc_ddf_strategy.dd_scenario import Budget_time, Scenario_time
 from sn_desc_ddf_strategy.dd_scenario import reverse_df, uniformize
 from sn_desc_ddf_strategy.dd_scenario import FiveSigmaDepth_Nvisits
+from sn_desc_ddf_strategy.dd_scenario import Calc_UD_visits
 
 import pandas as pd
+import numpy as np
+import itertools
 
-from optparse import OptionParser
+
+def get_nfconfig(config):
+
+    nud = config['Nud'].to_list()
+    nsud = config['Nsud'].to_list()
+    z = list(itertools.zip_longest(nud, nsud))
+
+    return z
+
+
+def get_nvisits(df):
+
+    print(df.columns)
+
+    nvisits = np.sum(df['Nfields']*df['nvisits_band_season'])
+
+    print('hhhh', nvisits)
 
 
 parser = OptionParser(
@@ -84,176 +104,23 @@ parser.add_option("--Nv_DD_max", type=int,
 parser.add_option("--showPlot", type=int,
                   default=0,
                   help="to show plot or not [%default]")
-parser.add_option("--Nf_combi", type=str,
-                  default='(2,2),(2,3),(2,4)',
-                  help="to show plot or not [%default]")
-parser.add_option("--zcomp", type=str,
-                  default='0.80,0.75,0.70',
-                  help="redshift completeness configuration [%default]")
-parser.add_option("--scen_names", type=str,
-                  default='DDF_DESC_0.80,DDF_DESC_0.75,DDF_DESC_0.70',
-                  help="scenario names corresponding to zcomp [%default]")
+parser.add_option("--config_scenario", type=str,
+                  default='input/DESC_cohesive_strategy/scenario_to_generate/ddf_desc_scenario.csv',
+                  help="scenarios to consider [%default]")
 
 opts, args = parser.parse_args()
 
 pparams = vars(opts)
-pparams['Nf_combi'] = eval('[{}]'.format(pparams['Nf_combi']))
 
-bands = 'ugrizy'
+myclass = Calc_UD_visits(pparams)
 
-###############################################
-##### get Nvisits from m5 req.          #######
-## m5_dict: total number of visits (PZ req.) ##
-###############################################
+res = myclass()
 
-m5_single_band = {}
-frac_band = {}
-
-if pparams['m5_from_db']:
-    # getting m5 single exposure from a simulated OS
-    from sn_desc_ddf_strategy.dd_scenario import DB_Infos
-    db_info = DB_Infos(pparams['dbDir'], pparams['dbName'])
-    m5_single_band = db_info.m5_single
-    frac_band = db_info.filter_alloc
-else:
-    m5_fi = pd.read_csv(pparams['m5_single_file'])
-    for i, row in m5_fi.iterrows():
-        m5_single_band[row['band']] = row['m5_single']
-    frac_fi = pd.read_csv(pparams['filter_alloc_file'])
-    for i, row in frac_fi.iterrows():
-        frac_band[row['band']] = row['frac_band']
-
-
-m5class = FiveSigmaDepth_Nvisits(
-    requirements=pparams['pz_requirements'],
-    Nvisits_WL_season=pparams['Nvisits_WL_season'],
-    frac_band=frac_band,
-    m5_single=m5_single_band, Ns_y2_y10=opts.Ns_DD)
-
-
-msingle = m5class.msingle
-print('msingle', msingle)
-
-
-m5_summary = m5class.summary
-m5_nvisits = m5class.msingle_calc
-m5_dict = m5_summary.to_dict()
-
-print('m5_summary', m5_summary)
-print(m5_dict)
-vv = ['band', 'm5_med_single', 'Nvisits_y1', 'Nvisits_y2_y10']
-print('m5_nvisits', m5_nvisits[vv])
-
-## get (Nvisits_UD vs N_visits_DD for (Kf_UD, Ns_UD) combinations ####
-
-corresp = dict(zip(['Nvisits_y1', 'Nvisits_y2_y10'], ['PZ_y1', 'PZ_y2_y10']))
-nseasons = dict(zip(['Nvisits_y1', 'Nvisits_y2_y10'], [1, opts.Ns_DD]))
-corresp = dict(zip(['Nvisits_WL_PZ_y1', 'Nvisits_WL_PZ_y2_y10'], [
-    'WL_PZ_y1', 'WL_PZ_y2_y10']))
-nseasons = dict(
-    zip(['Nvisits_WL_PZ_y1', 'Nvisits_WL_PZ_y2_y10'], [1, opts.Ns_DD]))
-
-pz_wl_req = {}
-for key, vals in corresp.items():
-    pz_wl_req[vals] = [95, int(m5_dict[key]/nseasons[key])]
-
-# pz_wl_req['WL_10xWFD'] = [85, 800]
-pz_wl_req_err = {}
-# pz_wl_req_err['PZ_y2_y10'] = (m5_dict['Nvisits_y2_y10_m']/9.,
-#                              m5_dict['Nvisits_y2_y10_p']/9.)
-pz_wl_req_err['WL_PZ_y2_y10'] = (m5_dict['Nvisits_WL_PZ_y2_y10_m']/opts.Ns_DD,
-                                 m5_dict['Nvisits_WL_PZ_y2_y10_p']/opts.Ns_DD)
-# Parameters
-Nv_DD_y1 = int(m5_dict['Nvisits_WL_PZ_y1'])
-
-myclass = DD_Scenario(budget_DD=pparams['budget_DD'],
-                      Nf_combi=pparams['Nf_combi'],
-                      zcomp=list(map(float, pparams['zcomp'].split(','))),
-                      scen_names=pparams['scen_names'].split(','),
-                      m5_single_OS=msingle,
-                      Nf_DD_y1=pparams['Nf_DD_y1'],
-                      Nv_DD_y1=Nv_DD_y1,
-                      sl_UD=pparams['sl_UD'], cad_UD=pparams['cad_UD'],
-                      sl_DD=pparams['sl_DD'], cad_DD=pparams['cad_DD'],
-                      Ns_DD=pparams['Ns_DD'],
-                      NDDF=pparams['NDDF'], Nv_LSST=pparams['Nv_LSST'],
-                      frac_moon=pparams['frac_moon'],
-                      obs_UD_DD=pparams['obs_UD_DD'],
-                      Nv_DD_max=pparams['Nv_DD_max'])
-
-restot = myclass.get_combis()
-zcomp_req = myclass.get_zcomp_req()
-zcomp_req_err = myclass.get_zcomp_req_err()
-scenario = myclass.get_scenario()
-
-### plot the result and get scenarios ######
-
-nvisits = '$N_{visits}^{LSST}$'
-cadud = '$cad^{UDF}$'
-ftit = 'DD budget={}% - {}={} million'.format(int(100*myclass.budget_DD),
-                                              nvisits, myclass.Nv_LSST/1.e6)
-ffig = '{} \n'.format(ftit)
-ffiga = '{} \n'.format(ftit)
-ffig += '{}={} days, season length={} days'.format(cadud, myclass.cad_UD,
-                                                   int(myclass.sl_UD))
-ffigb = ffig
-# ffiga += 'season length={} days'.format(int(myclass.sl_UD))
-
-"""
-restot = rf.append_fields(restot, 'Nv_UD_season',
-                          restot['Nv_UD']/restot['Ns_UD'])
-"""
-myclass.plot(restot, varx='Nv_DD',
-             legx='N$_{v}^{DF}/season}$',
-             vary='Nv_UD',
-             legy='N$_{v}^{UDF}/season}$', figtitle=ffiga)
-
-myclass.plot(restot, varx='Nv_DD',
-             legx='N$_{v}^{DF}/season}$',
-             vary='Nv_UD_night',
-             legy='N$_{v}^{UDF}/obs.~night$', scenario={},
-             zcomp_req=zcomp_req, zcomp_req_err=zcomp_req_err,
-             pz_wl_req=pz_wl_req, pz_wl_req_err=pz_wl_req_err,
-             deep_universal={}, scoc_pII={},
-             figtitle=ffigb)
-
-# zcomp_req = {}
-# zcomp_req_err = {}
-# pz_wl_req = {}
-# pz_wl_req_err = {}
-# scenario = {}
-
-
-Nvisits_avail = myclass.budget_DD*myclass.Nv_LSST-myclass.Nf_DD_y1*myclass.Nv_DD_y1
-Nv_DD_SCOC_pII = Nvisits_avail/52.
-Nv_UD_SCOC_pII = (10*Nv_DD_SCOC_pII/3)*opts.cad_UD/opts.sl_UD
-deep_universal = {}
-scoc_pII = {}
-du_pos = 140
-if pparams['budget_DD'] < 0.06:
-    du_pos = 90
-deep_universal['Deep Universal'] = [
-    Nvisits_avail/(opts.Ns_DD*opts.NDDF), du_pos]
-scoc_pII['SCOC_p2'] = [Nv_DD_SCOC_pII, Nv_UD_SCOC_pII]
-
-
-res = myclass.plot(restot, varx='Nv_DD',
-                   legx='N$_{v}^{DF}/season}$',
-                   vary='Nv_UD_night',
-                   legy='N$_{v}^{UDF}/obs.~night$', scenario=scenario,
-                   zcomp_req=zcomp_req, zcomp_req_err=zcomp_req_err,
-                   pz_wl_req=pz_wl_req, pz_wl_req_err=pz_wl_req_err,
-                   deep_universal=deep_universal, scoc_pII=scoc_pII,
-                   figtitle=ffig)
-
-print(res)
 print(res.dtype)
-print(deep_universal)
-print(scoc_pII)
-print(Nvisits_avail)
+
 ### m5_resu ###
 
-m5_resu = nvisits_from_m5(res, m5class)
+m5_resu = nvisits_from_m5(res, myclass.m5class)
 print('m5_resu')
 print(m5_resu)
 print('res', res.dtype.names)
@@ -288,28 +155,33 @@ print(m5_resu[m5_resu['name'] == db_ref])
 df_resb = reshuffle(df_res, m5_resu,
                     pparams['sl_UD'], pparams['cad_UD'],
                     pparams['frac_moon'], pparams['swap_filter_moon'])
+print(df_resb)
 
 # get the final scenario
-m5single = m5class.msingle_calc
+m5single = myclass.m5class.msingle_calc
 
 vv = ['band', 'm5_med_single', 'Nvisits_WL_PZ_y1', 'Nvisits_WL_PZ_y2_y10',
       'm5_WL_PZ_y1', 'm5_WL_PZ_y2_y10']
 
 print(m5single[vv])
+print(m5single['Nvisits_WL_PZ_y2_y10'].sum())
 
+# print(test)
 
-resa, resb = m5class.m5_band_from_Nvisits(m5_resu, m5single,
-                                          sl_DD=pparams['sl_DD'],
-                                          cad_DD=pparams['cad_DD'],
-                                          frac_moon=pparams['frac_moon'],
-                                          swap_filter_moon=pparams['swap_filter_moon'])
-print(resa[resa['name'] == 'DDF_Univ_SN'])
-print(resb)
+resa, resb = myclass.m5class.m5_band_from_Nvisits(m5_resu, m5single,
+                                                  sl_DD=pparams['sl_DD'],
+                                                  cad_DD=pparams['cad_DD'],
+                                                  frac_moon=pparams['frac_moon'],
+                                                  swap_filter_moon=pparams['swap_filter_moon'])
+print('allllllllll')
+print(df_resb.columns)
 
 dfres = df_resb.groupby('name').apply(
     lambda x: get_final_scenario(x, pparams['NDDF'], resa, resb)).reset_index()
 
 dfres['nvisits_night'] = dfres['nvisits_night'].astype(int)
+
+pd.set_option('display.max_columns', None)
 print('before recovery', dfres)
 
 ll_norecover = ['DDF_SCOC_pII', 'DDF_Univ_SN', 'DDF_Univ_WZ']
@@ -354,6 +226,9 @@ if pparams['showPlot']:
 
 # check total number of visits
 print(dfres.columns)
+
+Nvisits = get_nvisits(dfres)
+print(test)
 dfres['cad'] = dfres['cad'].astype(int)
 pp = ['name', 'year', 'fieldType', 'cad', 'sl']
 tt = dfres.groupby(pp).apply(lambda x: reverse_df(x)).reset_index()
