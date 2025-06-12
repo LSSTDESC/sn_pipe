@@ -227,8 +227,8 @@ if pparams['showPlot']:
 # check total number of visits
 print(dfres.columns)
 
-Nvisits = get_nvisits(dfres)
-print(test)
+# Nvisits = get_nvisits(dfres)
+
 dfres['cad'] = dfres['cad'].astype(int)
 pp = ['name', 'year', 'fieldType', 'cad', 'sl']
 tt = dfres.groupby(pp).apply(lambda x: reverse_df(x)).reset_index()
