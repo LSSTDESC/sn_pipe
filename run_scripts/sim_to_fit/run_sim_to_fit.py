@@ -138,8 +138,8 @@ procDict['fieldName'] = opts.fieldName
 procDict['outDir'] = outDir
 procDict['pixelList'] = opts.pixelList
 procDict['nside'] = opts.nside
+procDict['noteCol'] = opts.noteCol
 
-# print('processing', procDict)
 """
 toimport = 'from sn_tools.sn_process import Process'
 
@@ -153,6 +153,7 @@ del procDict['code']
 if __name__ == '__main__':
     # set the start method
     # multiprocessing.set_start_method('forkserver')
+    # print('processing', procDict)
     process = Process(**procDict)
 
 # print('Processed')
