@@ -175,9 +175,9 @@ if 'nvisits_season' in plots:
     multiplot_season(sel, varx='season', legx='season',
                      vary='nvisits', legy='N$_{visits}$')
 if 'cadence_dist' in plots:
-    multiplot_dist(sel, dbName=dbName)
+    multiplot_dist(sel)
 if 'nvisits_dist' in plots:
-    multiplot_dist(sel, yvar='nvisits', yleg=r'N$_{visits}$', dbName=dbName)
+    multiplot_dist(sel, yvar='nvisits', yleg=r'N$_{visits}$')
 if 'mollview_cadence' in plots:
     plotMollview_seasons(nside, sel, dbName,
                          yvar='cadence', yleg='cadence [day]',
