@@ -35,7 +35,6 @@ def process_night(grp):
     resdict = {}
 
     resdict['nvisits'] = [len(grp)]
-    resdict['season'] = [int(grp['season'].mean())]
     resdict['moonPhase'] = [int(grp['moonPhase'].mean())]
     for b in bands:
         idx = grp['band'] == b
@@ -44,6 +43,7 @@ def process_night(grp):
 
     seq = []
     count = []
+    seq_tot = []
     grp = grp.sort_values(by='mjd')
 
     cb = 0
@@ -52,16 +52,30 @@ def process_night(grp):
         if len(seq) == 0:
             seq = [band]
         if band != seq[-1]:
+            seq_tot.append('{}{}'.format(cb, seq[-1]))
             seq.append(band)
             count.append(cb)
+
             cb = 0
         cb += 1
+
     # add the last one
     count.append(cb)
+    seq_tot.append('{}{}'.format(cb, band))
+
     resdict['seq'] = [''.join(seq)]
 
     count = list(map(str, count))
     resdict['seq_visits'] = ['/'.join(count)]
+
+    ro = []
+    for b in bands:
+        idx = grp['band'] == b
+        sel = grp[idx]
+        nn = len(sel)
+        ro.append('{}{}'.format(nn, b))
+
+    resdict['seq_tot'] = ['-'.join(ro)]
 
     res = pd.DataFrame.from_dict(resdict)
 
@@ -172,6 +186,34 @@ def merge_exp_simu(dbDir, dbName, configDir, configName):
     return ddf_moon
 
 
+def ana_simu(dbDir, dbName):
+
+    # get simu data
+    fName = '{}/{}.npy'.format(dbDir, dbName)
+
+    obs = np.load(fName)
+    idx = np.in1d(obs['target_name'], ddf_list)
+    obs = obs[idx]
+    obs = pd.DataFrame.from_records(obs)
+
+    nyears = 10
+
+    res = pd.DataFrame()
+    for i in range(nyears):
+        night_min = 365*i
+        night_max = 365*(i+1)
+        idx = obs['night'] >= night_min
+        idx &= obs['night'] < night_max
+        sel = pd.DataFrame(obs[idx])
+        sel['year'] = i+1
+        res = pd.concat((res, sel))
+
+    dd = res.groupby(['target_name', 'night', 'year']).apply(
+        lambda x: process_night(x)).reset_index()
+
+    return dd
+
+
 parser = OptionParser(
     description='Script to study DDF visits on a nightly basis from pointings')
 
@@ -208,7 +250,8 @@ checkDir(outDir)
 
 fName = '{}/{}.hdf5'.format(outDir, dbName)
 
-res = merge_exp_simu(dbDir, dbName, configDir, configName)
+# res = merge_exp_simu(dbDir, dbName, configDir, configName)
+res = ana_simu(dbDir, dbName)
 print(res)
 res['dbName'] = dbName
 res.to_hdf(fName, key='ddf')
