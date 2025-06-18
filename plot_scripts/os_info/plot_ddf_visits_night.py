@@ -14,28 +14,47 @@ from sn_plotter_metrics.plot4metric import plot_vs_OS
 
 
 def ana_seq(df, timescale='year'):
+    """
+    Function to analyze DDF sequences
 
-    ccols_m = ['target_name', timescale]
+    Parameters
+    ----------
+    df : pandas df
+        Data to process.
+    timescale : str, optional
+        Timescale. The default is 'year'.
+
+    Returns
+    -------
+    dfd : pandas df
+        Output data.
+
+    """
+
+    ccols_m = ['target_name', timescale,'dbName']
     ccols = ccols_m+['seq_tot']
 
     dfb = df.groupby(ccols)[ccols].apply(
         lambda x: get_nvisits(x)).reset_index()
     dfb = clean_level(dfb)
-
+    
+    
     bands = 'ugrizy'
+    colsb = ccols+list(bands)
+    #dfb = dfb.merge(df[colsb], left_on=ccols,right_on=ccols,suffixes=['',''])
+    
     for b in bands:
-        ccols = ccols_m+[b]
+        ccols = ccols_m+[b]+['seq_tot']
         ccob = 'nnights_{}'.format(b)
         dfe = df.groupby(ccols)[ccols].apply(
             lambda x: get_nvisits_band(x, b, ccob)).reset_index()
 
         dfe = clean_level(dfe)
-        print(dfe)
-        dfb = dfb.merge(dfe, left_on=ccols_m,
-                        right_on=ccols_m, suffixes=['', ''])
-        print(dfb)
-
-    print(dfb)
+        
+        dfb = dfb.merge(dfe, left_on=ccols_m+['seq_tot'],
+                        right_on=ccols_m+['seq_tot'], suffixes=['', ''])
+       
+    
     ccols = ccols_m+['night']
 
     dfc = df.groupby(ccols_m)[ccols].apply(
@@ -49,6 +68,22 @@ def ana_seq(df, timescale='year'):
 
 
 def get_nvisits(grp, thevar='nnights'):
+    """
+    Function to estimate the number of nights corresponding to a DDF sequence
+
+    Parameters
+    ----------
+    grp : pandas df
+        Data to process.
+    thevar : str, optional
+        output col name. The default is 'nnights'.
+
+    Returns
+    -------
+    res : pandas df
+        output data.
+
+    """
 
     dd = {}
 
@@ -56,21 +91,59 @@ def get_nvisits(grp, thevar='nnights'):
 
     res = pd.DataFrame.from_dict(dd)
 
+    res[thevar] = res[thevar].astype(int)
     return res
 
 
 def get_nvisits_band(grp, thevar, thevar_name='nnights'):
+    """
+    Function to get the number of visits per band
 
+
+    Parameters
+    ----------
+    grp : pandas df
+        Data to process.
+    thevar : str
+        col to process.
+    thevar_name : str, optional
+        col output name. The default is 'nnights'.
+
+    Returns
+    -------
+    res : pandas df
+        output result.
+
+    """
+   
+    
     dd = {}
 
     dd[thevar_name] = [grp[thevar].mean()]
 
     res = pd.DataFrame.from_dict(dd)
 
+    res[thevar_name] = res[thevar_name].astype(int)
     return res
 
 
 def get_nnights(grp, thevar='nnights_year'):
+    """
+    Function to estimate the total number of nights
+
+    Parameters
+    ----------
+    grp : pandas df
+        Data to process.
+    thevar : str, optional
+        output col name. The default is 'nnights_year'.
+
+    Returns
+    -------
+    res : pandas df
+        Result.
+
+    """
 
     dd = {}
     nights = grp['night'].unique()
@@ -78,11 +151,36 @@ def get_nnights(grp, thevar='nnights_year'):
 
     res = pd.DataFrame.from_dict(dd)
 
+    res[thevar] = res[thevar].astype(int)
+    
     return res
 
 
 def plot_seq_frac(data, dbName, field='COSMOS', season=1,
                   what='seq_frac', legy='sequence fraction [%]'):
+    """
+    Funtion to plot DDF sequence fraction
+
+    Parameters
+    ----------
+    data : pandas df
+        Data to process.
+    dbName : str
+        OS name.
+    field : str, optional
+        Field considered. The default is 'COSMOS'.
+    season : int, optional
+        season of interest. The default is 1.
+    what : str, optional
+        What to plot. The default is 'seq_frac'.
+    legy : str, optional
+        y-axis legend. The default is 'sequence fraction [%]'.
+
+    Returns
+    -------
+    None.
+
+    """
 
     idx = data['target_name'] == field
     idx &= data['year'] == season
@@ -100,9 +198,112 @@ def plot_seq_frac(data, dbName, field='COSMOS', season=1,
     selb = sel.sort_values(by=[what], ascending=False)
     print(selb[['seq_tot', what]][:2])
 
-    plt.show()
 
+def plot_all(ro,dbName,field='DD:COSMOS',season=3):
+    """
+    Function to plot a serie of results
 
+    Parameters
+    ----------
+    ro : pandas df
+        Data to process.
+    dbName : str
+        Db name.
+    field : str, optional
+        DDF field name. The default is 'DD:COSMOS'.
+    season : int, optional
+        season/year to show. The default is 3.
+
+    Returns
+    -------
+    None.
+
+    """
+    
+    plot_seq_frac(ro, dbName, field=field, season=season)
+    
+    idx = ro['y'] > 0
+    """
+    plot_seq_frac(ro[idx], dbName, field=field, season=season,
+                  what='nnights', legy='Number of nights')
+    """
+    plot_seq_frac(ro[idx], dbName, field=field, season=season,
+                  what='seq_frac')
+    
+    idx = ro['u'] > 0
+    """
+    plot_seq_frac(ro[idx], dbName, field=field, season=season,
+                  what='nnights', legy='Number of nights')
+    """
+    plot_seq_frac(ro[idx], dbName, field=field, season=season,
+                  what='seq_frac')
+    
+    idx = ro['u'] ==0
+    idx &= ro['y'] == 0
+    """
+    plot_seq_frac(ro[idx], dbName, field=field, season=season,
+                  what='nnights', legy='Number of nights')
+    """
+    plot_seq_frac(ro[idx], dbName, field=field, season=season,
+                  what='seq_frac')
+    
+def calc_summary(grp,col='y'):
+    """
+    Function to extract some result
+
+    Parameters
+    ----------
+    grp : pandas df
+        Data to process.
+    col : str, optional
+        col name to select. The default is 'y'.
+
+    Returns
+    -------
+    rr : pandas df
+        output result.
+
+    """
+    
+    
+    idx = grp[col] > 0
+    sel = grp[idx]
+    selb = sel.sort_values(by=['seq_frac'], ascending=False)
+    
+    rr = selb[['seq_tot', 'seq_frac',col]][:1]
+    rr['nvisits_{}'.format(col)] = sel[col].sum()
+    rr['frac_{}'.format(col)] = sel['seq_frac'].sum()
+    
+    rr = rr.rename(columns={'seq_tot':'seq_tot_{}'.format(col),
+                    'seq_frac':'seq_frac_{}'.format(col)})
+    return rr
+
+def summary_seq(grp):
+    """
+    function to estimate summery results
+
+    Parameters
+    ----------
+    grp : pandas df
+        Data to process.
+
+    Returns
+    -------
+    res : pandas df
+        output data.
+
+    """
+   
+    rr = calc_summary(grp,'y')
+   
+    bb = calc_summary(grp,'u')
+    
+    res = rr.merge(bb,how='cross')
+    
+    return res
+    
+    
+    
 parser = OptionParser(
     description='Script to analyse DDF visits on a nightly basis from pointings')
 
@@ -128,11 +329,20 @@ print(data)
 ro = ana_seq(data)
 
 print(ro.columns)
-print(test)
 
-plot_seq_frac(ro, dbName, field='DD:COSMOS', season=3)
+"""
+plot_all(ro,dbName,field='DD:COSMOS',season=1)
 
-idx = ro['y'] > 0
-plot_seq_frac(ro[idx], dbName, field='DD:COSMOS', season=3,
-              what='nnights', legy='Number of nights')
+plt.show()
+"""
+dft = ro.groupby(['dbName','target_name','year']).apply(lambda x:summary_seq(x)).reset_index()
+
+
+print(dft)
+
+
+fig, ax = plt.subplots()
+
+
+plt.show()
 # analyze_simu_exp(data)
