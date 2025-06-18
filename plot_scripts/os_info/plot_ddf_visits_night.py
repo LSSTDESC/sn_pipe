@@ -302,7 +302,24 @@ def summary_seq(grp):
     
     return res
     
+ 
+def plot_summary(data,field='DD:COSMOS'):
     
+    
+    fig, ax = plt.subplots(figsize=(12,8))
+    
+    idx = data['target_name'] == field
+    
+    sel = data[idx]
+
+    dbNames = sel['dbName'].unique()
+
+    for dbName in dbNames:
+        io = sel['dbName'] == dbName
+        selb = sel[io]
+        ax.plot(selb['year'],selb['seq_tot_y'])
+    
+    ax.grid(visible=True)
     
 parser = OptionParser(
     description='Script to analyse DDF visits on a nightly basis from pointings')
@@ -313,16 +330,26 @@ parser.add_option("--dbDir", type="str",
 parser.add_option("--dbName", type="str",
                   default='desc_ddf_v4.2.1_10yrs',
                   help="OS name [%default]")
+parser.add_option("--dbList", type="str",
+                  default='dbList.csv',
+                  help="dbList to process[%default]")
 
 opts, args = parser.parse_args()
 
 # Load parameters
 dbDir = opts.dbDir
 dbName = opts.dbName
+dbList = opts.dbList
 
-fName = '{}/{}.hdf5'.format(dbDir, dbName)
+# load dbNames
+df_db = pd.read_csv(dbList, comment='#')
 
-data = pd.read_hdf(fName)
+data = pd.DataFrame()
+for i, row in df_db.iterrows():
+    fName = '{}/{}.hdf5'.format(dbDir, row['dbName'])
+
+    dat_ = pd.read_hdf(fName)
+    data = pd.concat((data,dat_))
 
 print(data)
 
@@ -337,11 +364,10 @@ plt.show()
 """
 dft = ro.groupby(['dbName','target_name','year']).apply(lambda x:summary_seq(x)).reset_index()
 
-
+plot_summary(dft)
 print(dft)
 
 
-fig, ax = plt.subplots()
 
 
 plt.show()
