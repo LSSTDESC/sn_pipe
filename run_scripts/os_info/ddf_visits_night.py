@@ -12,6 +12,7 @@ import pandas as pd
 import yaml
 from sn_tools.sn_obs import season
 from sn_tools.sn_io import checkDir
+from sn_tools.sn_utils import multiproc
 
 
 def process_night(grp):
@@ -230,6 +231,44 @@ def ana_simu(dbDir, dbName):
     return dd
 
 
+def process(toproc, params, j=0, output_q=None):
+    """
+    Analysis function using multiprocessing
+
+    Parameters
+    ----------
+    toproc : list(str)
+         List of OS to process.
+    params : dict
+         parameters.
+    j : int, optional
+     internal tag for multiprocessing. The default is 0.
+    output_q : multiprocessing queue, optional
+     Where to put the data. The default is None.
+
+   Returns
+   -------
+   pandas df
+         Analyzed data.
+
+    """
+
+    for dbName in toproc:
+
+        fName = '{}/{}.hdf5'.format(outDir, dbName)
+
+        # res = merge_exp_simu(dbDir, dbName, configDir, configName)
+        res = ana_simu(dbDir, dbName)
+        print(res)
+        res['dbName'] = dbName
+        res.to_hdf(fName, key='ddf')
+
+    if output_q is not None:
+        return output_q.put({j: 0})
+    else:
+        return 0
+
+
 parser = OptionParser(
     description='Script to study DDF visits on a nightly basis from pointings')
 
@@ -251,6 +290,9 @@ parser.add_option("--configName", type="str",
 parser.add_option("--outDir", type="str",
                   default="../ddf_visits_night",
                   help="output directory [%default]")
+parser.add_option("--nproc", type=int,
+                  default="8",
+                  help="nproc for multiprocessing [%default]")
 
 
 opts, args = parser.parse_args()
@@ -262,12 +304,20 @@ ddf_list = opts.ddf_list.split(',')
 configDir = opts.configDir
 configName = opts.configName
 outDir = opts.outDir
+nproc = opts.nproc
 
 checkDir(outDir)
 
 # load OS to process
 dbNames = pd.read_csv(dbList, comment='#')
 
+vals = dbNames['dbName'].to_list()
+params = {}
+
+params = {}
+multiproc(vals, params, process, nproc)
+
+"""
 for i, row in dbNames.iterrows():
     dbName = row['dbName']
     fName = '{}/{}.hdf5'.format(outDir, dbName)
@@ -277,3 +327,4 @@ for i, row in dbNames.iterrows():
     print(res)
     res['dbName'] = dbName
     res.to_hdf(fName, key='ddf')
+"""

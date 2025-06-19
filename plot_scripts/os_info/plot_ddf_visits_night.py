@@ -11,6 +11,49 @@ from sn_plotter_os_info.ddf_visits_night import analyze_simu_exp
 from sn_plotter_analysis.sn_analyser_tools import clean_level
 import matplotlib.pyplot as plt
 from sn_plotter_metrics.plot4metric import plot_vs_OS
+from sn_tools.sn_utils import multiproc
+import numpy as np
+from sn_plotter_os_info.ddf_visits_night import plot_stat_visits_vs_exp
+import operator as op
+
+
+def ana_seq_multi(toproc, params, j=0, output_q=None):
+    """
+    Analysis function using multiprocessing
+
+    Parameters
+    ----------
+    toproc : list(str)
+        List of OS to process.
+    params : dict
+        parameters.
+    j : int, optional
+        internal tag for multiprocessing. The default is 0.
+    output_q : multiprocessing queue, optional
+        Where to put the data. The default is None.
+
+    Returns
+    -------
+    pandas df
+        Analyzed data.
+
+    """
+
+    timescale = params['timescale']
+    df = params['data']
+
+    idx = df['dbName'].isin(toproc)
+
+    sel = pd.DataFrame(df[idx])
+
+    del df
+
+    res = ana_seq(sel, timescale)
+
+    if output_q is not None:
+        return output_q.put({j: res})
+    else:
+        return res
 
 
 def ana_seq(df, timescale='year'):
@@ -31,18 +74,17 @@ def ana_seq(df, timescale='year'):
 
     """
 
-    ccols_m = ['target_name', timescale,'dbName']
+    ccols_m = ['target_name', timescale, 'dbName']
     ccols = ccols_m+['seq_tot']
 
     dfb = df.groupby(ccols)[ccols].apply(
         lambda x: get_nvisits(x)).reset_index()
     dfb = clean_level(dfb)
-    
-    
+
     bands = 'ugrizy'
     colsb = ccols+list(bands)
-    #dfb = dfb.merge(df[colsb], left_on=ccols,right_on=ccols,suffixes=['',''])
-    
+    # dfb = dfb.merge(df[colsb], left_on=ccols,right_on=ccols,suffixes=['',''])
+
     for b in bands:
         ccols = ccols_m+[b]+['seq_tot']
         ccob = 'nnights_{}'.format(b)
@@ -50,11 +92,10 @@ def ana_seq(df, timescale='year'):
             lambda x: get_nvisits_band(x, b, ccob)).reset_index()
 
         dfe = clean_level(dfe)
-        
+
         dfb = dfb.merge(dfe, left_on=ccols_m+['seq_tot'],
                         right_on=ccols_m+['seq_tot'], suffixes=['', ''])
-       
-    
+
     ccols = ccols_m+['night']
 
     dfc = df.groupby(ccols_m)[ccols].apply(
@@ -115,11 +156,13 @@ def get_nvisits_band(grp, thevar, thevar_name='nnights'):
         output result.
 
     """
-   
-    
+
     dd = {}
 
-    dd[thevar_name] = [grp[thevar].mean()]
+    idx = grp[thevar] > 0
+    sel = grp[idx]
+
+    dd[thevar_name] = [len(sel)]
 
     res = pd.DataFrame.from_dict(dd)
 
@@ -152,7 +195,7 @@ def get_nnights(grp, thevar='nnights_year'):
     res = pd.DataFrame.from_dict(dd)
 
     res[thevar] = res[thevar].astype(int)
-    
+
     return res
 
 
@@ -199,7 +242,7 @@ def plot_seq_frac(data, dbName, field='COSMOS', season=1,
     print(selb[['seq_tot', what]][:2])
 
 
-def plot_all(ro,dbName,field='DD:COSMOS',season=3):
+def plot_all(ro, dbName, field='DD:COSMOS', season=3):
     """
     Function to plot a serie of results
 
@@ -219,9 +262,9 @@ def plot_all(ro,dbName,field='DD:COSMOS',season=3):
     None.
 
     """
-    
+
     plot_seq_frac(ro, dbName, field=field, season=season)
-    
+
     idx = ro['y'] > 0
     """
     plot_seq_frac(ro[idx], dbName, field=field, season=season,
@@ -229,7 +272,7 @@ def plot_all(ro,dbName,field='DD:COSMOS',season=3):
     """
     plot_seq_frac(ro[idx], dbName, field=field, season=season,
                   what='seq_frac')
-    
+
     idx = ro['u'] > 0
     """
     plot_seq_frac(ro[idx], dbName, field=field, season=season,
@@ -237,8 +280,8 @@ def plot_all(ro,dbName,field='DD:COSMOS',season=3):
     """
     plot_seq_frac(ro[idx], dbName, field=field, season=season,
                   what='seq_frac')
-    
-    idx = ro['u'] ==0
+
+    idx = ro['u'] == 0
     idx &= ro['y'] == 0
     """
     plot_seq_frac(ro[idx], dbName, field=field, season=season,
@@ -246,8 +289,9 @@ def plot_all(ro,dbName,field='DD:COSMOS',season=3):
     """
     plot_seq_frac(ro[idx], dbName, field=field, season=season,
                   what='seq_frac')
-    
-def calc_summary(grp,col='y'):
+
+
+def calc_summary(grp, col='y'):
     """
     Function to extract some result
 
@@ -264,23 +308,27 @@ def calc_summary(grp,col='y'):
         output result.
 
     """
-    
-    
+
     idx = grp[col] > 0
     sel = grp[idx]
     selb = sel.sort_values(by=['seq_frac'], ascending=False)
-    
-    rr = selb[['seq_tot', 'seq_frac',col]][:1]
-    rr['nvisits_{}'.format(col)] = sel[col].sum()
+
+    rr = selb[['seq_tot', 'seq_frac', col]][:1]
+    rr['nvisits_{}'.format(col)] = selb[col].sum()
+    nnights_band = selb['nnights_{}'.format(col)].sum()
     rr['frac_{}'.format(col)] = sel['seq_frac'].sum()
-    
-    rr = rr.rename(columns={'seq_tot':'seq_tot_{}'.format(col),
-                    'seq_frac':'seq_frac_{}'.format(col)})
+    # correct to get the fraction of seq corresponding to the band
+    nnights_year = selb['nnights_year'][:1]
+    rr['seq_frac'] *= nnights_year/nnights_band
+
+    rr = rr.rename(columns={'seq_tot': 'seq_tot_{}'.format(col),
+                            'seq_frac': 'seq_frac_{}'.format(col)})
     return rr
+
 
 def summary_seq(grp):
     """
-    function to estimate summery results
+    function to estimate summary results
 
     Parameters
     ----------
@@ -293,23 +341,42 @@ def summary_seq(grp):
         output data.
 
     """
-   
-    rr = calc_summary(grp,'y')
-   
-    bb = calc_summary(grp,'u')
-    
-    res = rr.merge(bb,how='cross')
-    
+
+    rr = calc_summary(grp, 'y')
+
+    bb = calc_summary(grp, 'u')
+
+    res = rr.merge(bb, how='cross')
+
     return res
-    
- 
-def plot_summary(data,field='DD:COSMOS'):
-    
-    
-    fig, ax = plt.subplots(figsize=(12,8))
-    
+
+
+def plot_summary(data, field='DD:COSMOS',
+                 varx='year', labx='year',
+                 vary='seq_tot_y', laby='',
+                 df_config=pd.DataFrame()):
+    """
+    Summary plot
+
+    Parameters
+    ----------
+    data : pandas df
+        Data to process.
+    field : str, optional
+        Field type. The default is 'DD:COSMOS'.
+
+    Returns
+    -------
+    None.
+
+    """
+
+    fig, ax = plt.subplots(figsize=(16, 8))
+    fig.suptitle(field)
+    fig.subplots_adjust(right=0.75)
+
     idx = data['target_name'] == field
-    
+
     sel = data[idx]
 
     dbNames = sel['dbName'].unique()
@@ -317,10 +384,142 @@ def plot_summary(data,field='DD:COSMOS'):
     for dbName in dbNames:
         io = sel['dbName'] == dbName
         selb = sel[io]
-        ax.plot(selb['year'],selb['seq_tot_y'])
-    
+        idxb = df_config['dbName'] == dbName
+        selp = df_config[idxb]
+        ls = selp['ls'].values[0]
+        marker = selp['marker'].values[0]
+        color = selp['color'].values[0]
+        dbNameb = selp['dbName_plot'].values[0]
+        ax.plot(selb[varx], selb[vary],
+                ls=ls, marker=marker, color=color, mfc='None', label=dbNameb)
+
     ax.grid(visible=True)
-    
+    ax.set_xlabel(r'{}'.format(labx))
+    ax.set_ylabel(r'{}'.format(laby))
+    if laby == '':
+        ax.tick_params(axis='y', labelrotation=20, labelsize=10)
+
+    ax.legend(loc='upper center',
+              bbox_to_anchor=(1.20, 0.7),
+              ncol=1, fontsize=12, frameon=False)
+
+    # plt.tight_layout()
+
+
+def plot_fields(dft, config):
+    """
+    Function to make a set of plots
+
+    Parameters
+    ----------
+    dft : pandas df
+        Data to plot.
+    config : str
+        config file name for the plot.
+
+    Returns
+    -------
+    None.
+
+    """
+
+    # load config for the plot
+    df_config = pd.read_csv(config, comment='#')
+
+    field = 'DD:COSMOS'
+    plot_summary(dft, field=field, df_config=df_config)
+    plot_summary(dft, field=field, vary='seq_frac_y',
+                 laby='Fraction of nights [%]', df_config=df_config)
+    plot_summary(dft, field=field, vary='nvisits_y',
+                 laby='$N_{visits}^{y}$', df_config=df_config)
+
+    plt.show()
+    """
+    field = 'DD:XMM_LSS'
+    plot_summary(dft, field=field, df_config=df_config)
+    plot_summary(dft, field=field, vary='seq_frac_y',
+                 laby='Fraction of nights [%]', df_config=df_config)
+    plot_summary(dft, field=field, vary='nvisits_y',
+                 laby='$N_{visits}^{y}$', df_config=df_config)
+
+    """
+
+
+def analysis_sequences(df_summary, df_orig):
+
+    idx = df_summary['target_name'] == 'DD:COSMOS'
+    idx &= df_summary['year'] == 3
+
+    df_summary[idx].groupby(['dbName', 'target_name', 'year']).apply(
+        lambda x: get_ratios(x, df_orig))
+
+
+def get_ratios(grp, df_orig, band='y'):
+
+    print(grp.name, grp.name[0])
+
+    dbName = grp.name[0]
+    target_name = grp.name[1]
+    year = grp.name[2]
+
+    idx = df_orig['dbName'] == dbName
+    idx &= df_orig['target_name'] == target_name
+    idx &= df_orig['year'] == year
+    idx &= df_orig[band] > 0
+
+    sel_orig = pd.DataFrame(df_orig[idx])
+
+    del df_orig
+
+    seq = grp['seq_tot_{}'.format(band)].values[0]
+
+    print(seq)
+
+    spl = seq.split('-')
+
+    bands = [sp[-1] for sp in spl]
+    bands_ref = list(map(lambda el: el+'_ref', bands))
+    nv_ref = list(map(int, [sp[:-1] for sp in spl]))
+    nv_ref = list(map(lambda el: [el], nv_ref))
+    dd = dict(zip(bands_ref, nv_ref))
+    print(bands, nv_ref)
+    b_ref = pd.DataFrame.from_dict(dd)
+    print(b_ref)
+
+    print(sel_orig.columns)
+    print(sel_orig[['seq_tot', 'nvisits']])
+
+    nnights_y = len(sel_orig)
+    # select the sequence and nvisits_ref
+    ida = sel_orig['seq_tot'] == seq
+    print('allo', len(sel_orig[ida])/nnights_y)
+    nvisits_ref = sel_orig[ida]['nvisits'].mean()
+
+    # grab the nights with a higher/lower number of visits
+    idp = sel_orig['nvisits'] > nvisits_ref
+    sel_test = sel_orig[idp]
+
+    sel_test = sel_test.merge(b_ref, how='cross')
+
+    sel_test['diff_nvisits'] = nvisits_ref-sel_orig['nvisits']
+
+    for b in bands:
+        sel_test['ratio_{}'.format(
+            b)] = sel_test['{}_ref'.format(b)]/sel_test[b]
+
+    plot_stat_visits_vs_exp(sel_test, op.lt, '<')
+
+    plt.show()
+
+    print('plus', len(sel_orig[idp])/nnights_y,
+          np.mean(sel_orig[idp]['nvisits']/nvisits_ref))
+
+    idm = sel_orig['nvisits'] < nvisits_ref
+    print('minus', len(sel_orig[idm])/nnights_y)
+
+    print(test)
+
+
 parser = OptionParser(
     description='Script to analyse DDF visits on a nightly basis from pointings')
 
@@ -332,7 +531,13 @@ parser.add_option("--dbName", type="str",
                   help="OS name [%default]")
 parser.add_option("--dbList", type="str",
                   default='dbList.csv',
-                  help="dbList to process[%default]")
+                  help="dbList to process [%default]")
+parser.add_option("--nproc", type=int,
+                  default=8,
+                  help="number of procs for multiprocessing [%default]")
+parser.add_option("--configplot", type=str,
+                  default='config_ana_selplot.csv',
+                  help="configuration for the plot [%default]")
 
 opts, args = parser.parse_args()
 
@@ -340,6 +545,8 @@ opts, args = parser.parse_args()
 dbDir = opts.dbDir
 dbName = opts.dbName
 dbList = opts.dbList
+nproc = opts.nproc
+config = opts.configplot
 
 # load dbNames
 df_db = pd.read_csv(dbList, comment='#')
@@ -349,11 +556,20 @@ for i, row in df_db.iterrows():
     fName = '{}/{}.hdf5'.format(dbDir, row['dbName'])
 
     dat_ = pd.read_hdf(fName)
-    data = pd.concat((data,dat_))
+    data = pd.concat((data, dat_))
 
 print(data)
 
-ro = ana_seq(data)
+# ro = ana_seq(data)
+dbNames = data['dbName'].unique().tolist()
+
+params = {}
+
+params['timescale'] = 'year'
+params['data'] = data
+
+ro = multiproc(dbNames, params, ana_seq_multi, nproc)
+
 
 print(ro.columns)
 
@@ -362,13 +578,17 @@ plot_all(ro,dbName,field='DD:COSMOS',season=1)
 
 plt.show()
 """
-dft = ro.groupby(['dbName','target_name','year']).apply(lambda x:summary_seq(x)).reset_index()
+dft = ro.groupby(['dbName', 'target_name', 'year']).apply(
+    lambda x: summary_seq(x)).reset_index()
 
-plot_summary(dft)
+print(dft.columns)
+
+
+# plots here
+# plot_fields(dft, config)
+
 print(dft)
 
+analysis_sequences(dft, data)
 
-
-
-plt.show()
 # analyze_simu_exp(data)
