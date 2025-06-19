@@ -187,6 +187,22 @@ def merge_exp_simu(dbDir, dbName, configDir, configName):
 
 
 def ana_simu(dbDir, dbName):
+    """
+    Function to analyze the simulation
+
+    Parameters
+    ----------
+    dbDir : str
+        Data dir.
+    dbName : str
+        OS to process.
+
+    Returns
+    -------
+    dd : pandas df
+        output data.
+
+    """
 
     # get simu data
     fName = '{}/{}.npy'.format(dbDir, dbName)
@@ -209,7 +225,7 @@ def ana_simu(dbDir, dbName):
         res = pd.concat((res, sel))
 
     dd = res.groupby(['target_name', 'night', 'year']).apply(
-        lambda x: process_night(x)).reset_index()
+        lambda x: process_night(x), include_groups=False).reset_index()
 
     return dd
 
@@ -220,9 +236,9 @@ parser = OptionParser(
 parser.add_option("--dbDir", type="str",
                   default='../DB_Files',
                   help="file directory [%default]")
-parser.add_option("--dbName", type="str",
-                  default='desc_ddf_v4.2.1_10yrs',
-                  help="OS name [%default]")
+parser.add_option("--dbList", type="str",
+                  default='dbList.csv',
+                  help="liof OS to process [%default]")
 parser.add_option("--ddf_list", type="str",
                   default="DD:COSMOS,DD:ECDFS,DD:EDFS_a,DD:EDFS_b,DD:ELAISS1,DD:XMM_LSS",
                   help="list of ddf [%default]")
@@ -240,7 +256,8 @@ parser.add_option("--outDir", type="str",
 opts, args = parser.parse_args()
 # Load parameters
 dbDir = opts.dbDir
-dbName = opts.dbName
+# dbName = opts.dbName
+dbList = opts.dbList
 ddf_list = opts.ddf_list.split(',')
 configDir = opts.configDir
 configName = opts.configName
@@ -248,10 +265,15 @@ outDir = opts.outDir
 
 checkDir(outDir)
 
-fName = '{}/{}.hdf5'.format(outDir, dbName)
+# load OS to process
+dbNames = pd.read_csv(dbList, comment='#')
 
-# res = merge_exp_simu(dbDir, dbName, configDir, configName)
-res = ana_simu(dbDir, dbName)
-print(res)
-res['dbName'] = dbName
-res.to_hdf(fName, key='ddf')
+for i, row in dbNames.iterrows():
+    dbName = row['dbName']
+    fName = '{}/{}.hdf5'.format(outDir, dbName)
+
+    # res = merge_exp_simu(dbDir, dbName, configDir, configName)
+    res = ana_simu(dbDir, dbName)
+    print(res)
+    res['dbName'] = dbName
+    res.to_hdf(fName, key='ddf')
