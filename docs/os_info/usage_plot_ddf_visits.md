@@ -16,9 +16,9 @@ Options:
   
 </pre>
 
-##example
+## examples
 
-###python plot_scripts/os_info/plot_ddf_visits_night.py --plots=plot_indiv
+### python plot_scripts/os_info/plot_ddf_visits_night.py --plots=plot_indiv
 
 [Filter sequences](plotb1.png)
 
@@ -28,11 +28,11 @@ Options:
 
 [Filter sequences - with no u nor y obs.](plotb4.png)
 
-###python plot_scripts/os_info/plot_ddf_visits_night.py --plots=plot_night
+### python plot_scripts/os_info/plot_ddf_visits_night.py --plots=plot_night
 
 [DDF obs. time and NDDF observed vs night](plotb5.png)
 
-###python plot_scripts/os_info/plot_ddf_visits_night.py --plots=plot_ana
+### python plot_scripts/os_info/plot_ddf_visits_night.py --plots=plot_ana
 
 [Main filter sequences vs year - COSMOS](plotb6.png)
 
