@@ -354,6 +354,7 @@ def summary_seq(grp):
 def plot_summary(data, field='DD:COSMOS',
                  varx='year', labx='year',
                  vary='seq_tot_y', laby='',
+                 figtit='DD:COSMOS',
                  df_config=pd.DataFrame()):
     """
     Summary plot
@@ -364,6 +365,18 @@ def plot_summary(data, field='DD:COSMOS',
         Data to process.
     field : str, optional
         Field type. The default is 'DD:COSMOS'.
+    varx : str, optional
+        x-axis variable. The default is 'year'.
+    labx : str, optional
+        x-axis label. The default is 'year'.
+    vary : str, optional
+        y-axis variable. The default is 'seq_tot_y'.
+    laby : str, optional
+        y-axis label. The default is ''.
+    figtit : str, optional
+        Figure title. The default is 'DD:COSMOS'.
+    df_config : pandas df, optional
+        config for the plot. The default is pd.DataFrame().
 
     Returns
     -------
@@ -372,7 +385,7 @@ def plot_summary(data, field='DD:COSMOS',
     """
 
     fig, ax = plt.subplots(figsize=(16, 8))
-    fig.suptitle(field)
+    fig.suptitle(figtit)
     fig.subplots_adjust(right=0.75)
 
     idx = data['target_name'] == field
@@ -436,25 +449,197 @@ def plot_fields(dft, config):
     plt.show()
     """
     field = 'DD:XMM_LSS'
-    plot_summary(dft, field=field, df_config=df_config)
-    plot_summary(dft, field=field, vary='seq_frac_y',
+    plot_summary(dft, field=field, df_config=df_config,figtit=field)
+    plot_summary(dft, field=field,figtit=field, vary='seq_frac_y',
                  laby='Fraction of nights [%]', df_config=df_config)
-    plot_summary(dft, field=field, vary='nvisits_y',
+    plot_summary(dft, field=field,figtit=field, vary='nvisits_y',
                  laby='$N_{visits}^{y}$', df_config=df_config)
 
     """
 
 
-def analysis_sequences(df_summary, df_orig):
+def plot_stat(dft, config):
 
-    idx = df_summary['target_name'] == 'DD:COSMOS'
-    idx &= df_summary['year'] == 3
+    # load config for the plot
+    df_config = pd.read_csv(config, comment='#')
 
-    df_summary[idx].groupby(['dbName', 'target_name', 'year']).apply(
-        lambda x: get_ratios(x, df_orig))
+    field = 'DD:COSMOS'
+    figtot = field
+    figtit = figtot + '\n $\\frac{N_{visits}^{obs}}{N_{visits}^{exp}}$==1'
+    plot_summary(dft, field=field, figtit=figtit, df_config=df_config, vary='frac_equal',
+                 laby='Fraction of nights [%]')
+    figtit = figtot + '\n $\\frac{N_{visits}^{obs}}{N_{visits}^{exp}}$>1'
+    plot_summary(dft, field=field, figtit=figtit, vary='frac_plus',
+                 laby='Fraction of nights [%]', df_config=df_config)
+    figtit = figtot + '\n $\\frac{N_{visits}^{obs}}{N_{visits}^{exp}}$<1'
+    plot_summary(dft, field=field, figtit=figtit, vary='frac_minus',
+                 laby='Fraction of nights [%]', df_config=df_config)
+
+    plt.tight_layout()
+    plt.show()
+
+
+def get_stats(df_summary, df_orig):
+    """
+    Funtion to get the number of nights corresponding to a sequence
+    (ie nnights with the sequence, nnights with nvisits < n_sequence, 
+     and nnights with nvisits > n_sequence)
+
+    Parameters
+    ----------
+    df_summary : pandas df
+        Data to process.
+    df_orig : pandas df
+        Data to process.
+
+    Returns
+    -------
+    rr : pandas df
+        Result.
+
+    """
+
+    rr = df_summary.groupby(['dbName', 'target_name', 'year']).apply(
+        lambda x: get_stat_indiv(x, df_orig), include_groups=False).reset_index()
+
+    return rr
+
+
+def analysis_sequences(df_summary, df_orig, target_name='DD:COSMOS', year=3):
+    """
+    Function to analyze sequences for each field/season
+
+    Parameters
+    ----------
+    df_summary : pandas df
+        Summary results.
+    df_orig : pandas df
+        original results.
+    target_name : str, optional
+        field name. The default is 'DD:COSMOS'.
+    year : int, optional
+        year. The default is 3.
+    Returns
+    -------
+    None.
+
+    """
+
+    idx = df_summary['target_name'] == target_name
+    idx &= df_summary['year'] == year
+
+    rr = df_summary[idx].groupby(['dbName', 'target_name', 'year']).apply(
+        lambda x: get_ratios(x, df_orig), include_groups=False)
+
+    plot_stat_visits_vs_exp(rr, op.ge, '>', bins=np.arange(1.0, 2.5, 0.01))
+    plot_stat_visits_vs_exp(rr, op.le, '<', bins=np.arange(0.0, 1.1, 0.01))
+
+    plt.show()
 
 
 def get_ratios(grp, df_orig, band='y'):
+    """
+    Function to extract the ratios of the number of visits per band wrt ref
+
+    Parameters
+    ----------
+    grp : pandas df
+        Data to process.
+    df_orig : pandas df
+        Data to extract info from.
+    band : str, optional
+        band considered. The default is 'y'.
+
+    Returns
+    -------
+    sel_test : pandas df
+        The result.
+
+    """
+
+    dbName = grp.name[0]
+    target_name = grp.name[1]
+    year = grp.name[2]
+
+    idx = df_orig['dbName'] == dbName
+    idx &= df_orig['target_name'] == target_name
+    idx &= df_orig['year'] == year
+    idx &= df_orig[band] > 0
+
+    sel_orig = pd.DataFrame(df_orig[idx])
+
+    del df_orig
+
+    nnights_y = len(sel_orig)
+
+    b_ref = get_ref_sequence(grp, band)
+
+    b_ref = clean_level(b_ref)
+    sel_test = sel_orig.merge(b_ref, how='cross')
+
+    sel_test['diff_nvisits'] = sel_test['nvisits']-sel_test['nvisits_ref']
+    bands = 'grizy'
+    for b in bands:
+        sel_test['ratio_{}'.format(
+            b)] = sel_test[b]/sel_test['{}_ref'.format(b)]
+
+    sel_test = clean_level(sel_test)
+    return sel_test
+
+
+def get_ref_sequence(grp, band):
+    """
+    Function to extract the reference sequence as a df
+
+    Parameters
+    ----------
+    grp : pandas df
+        Data to process.
+    band : str
+        band to consider for the ref sequence.
+
+    Returns
+    -------
+    b_ref : pandas df
+        Reference df sequence.
+
+    """
+
+    seq = grp['seq_tot_{}'.format(band)].values[0]
+
+    spl = seq.split('-')
+
+    bands = [sp[-1] for sp in spl]
+    bands_ref = list(map(lambda el: el+'_ref', bands))
+    nv_ref = list(map(int, [sp[:-1] for sp in spl]))
+    nv_ref = list(map(lambda el: [el], nv_ref))
+    dd = dict(zip(bands_ref, nv_ref))
+    b_ref = pd.DataFrame.from_dict(dd)
+
+    b_ref['nvisits_ref'] = b_ref[bands_ref].sum(axis=1)
+
+    return b_ref
+
+
+def get_stat_indiv(grp, df_orig, band='y'):
+    """
+    Function to grab the number of nights corresponding to a sequence 
+
+    Parameters
+    ----------
+    grp : pandas df
+        Data to process.
+    df_orig : pandas df
+        Data to process.
+    band : str, optional
+        filter for the sequence. The default is 'y'.
+
+    Returns
+    -------
+    res : pandas df
+        Result.
+
+    """
 
     print(grp.name, grp.name[0])
 
@@ -471,6 +656,57 @@ def get_ratios(grp, df_orig, band='y'):
 
     del df_orig
 
+    b_ref = get_ref_sequence(grp, band)
+
+    b_ref = clean_level(b_ref)
+    sel_test = sel_orig.merge(b_ref, how='cross')
+
+    sel_test['diff_nvisits'] = sel_test['nvisits']-sel_test['nvisits_ref']
+    bands = 'grizy'
+    for b in bands:
+        sel_test['ratio_{}'.format(
+            b)] = sel_test[b]/sel_test['{}_ref'.format(b)]
+
+    # three types of nights
+    dd = {}
+    dd['frac_equal'] = [100.*get_val(sel_test, 'diff_nvisits', op.eq, 0)]
+    dd['frac_plus'] = [100.*get_val(sel_test, 'diff_nvisits', op.gt, 0)]
+    dd['frac_minus'] = [100.*get_val(sel_test, 'diff_nvisits', op.lt, 0)]
+
+    res = pd.DataFrame.from_dict(dd)
+
+    return res
+
+
+def get_val(df, col, op, selvalue):
+    """
+    Function to estimate values
+
+    Parameters
+    ----------
+    df : TYPE
+        DESCRIPTION.
+    col : TYPE
+        DESCRIPTION.
+    op : TYPE
+        DESCRIPTION.
+    selvalue : TYPE
+        DESCRIPTION.
+
+    Returns
+    -------
+    TYPE
+        DESCRIPTION.
+
+    """
+
+    idx = op(df[col], selvalue)
+    sel = df[idx]
+
+    return len(sel)/len(df)
+
+
+"""
     seq = grp['seq_tot_{}'.format(band)].values[0]
 
     print(seq)
@@ -518,7 +754,7 @@ def get_ratios(grp, df_orig, band='y'):
     print('minus', len(sel_orig[idm])/nnights_y)
 
     print(test)
-
+"""
 
 parser = OptionParser(
     description='Script to analyse DDF visits on a nightly basis from pointings')
@@ -589,6 +825,12 @@ print(dft.columns)
 
 print(dft)
 
-analysis_sequences(dft, data)
+rr = get_stats(dft, data)
+
+print(rr.columns)
+
+plot_stat(rr, config)
+
+# analysis_sequences(dft, data)
 
 # analyze_simu_exp(data)
