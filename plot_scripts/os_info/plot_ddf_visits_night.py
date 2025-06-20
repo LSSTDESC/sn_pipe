@@ -15,6 +15,7 @@ from sn_plotter_os_info.ddf_visits_night_tools import plot_stat_visits_vs_exp
 from sn_plotter_os_info.ddf_visits_night_tools import ana_seq_multi
 from sn_plotter_os_info.ddf_visits_night_tools import summary_seq, get_ratios
 from sn_plotter_os_info.ddf_visits_night_tools import get_stat_indiv
+from sn_plotter_os_info.ddf_visits_night_tools import plot_obs_time_night
 import operator as op
 
 
@@ -400,6 +401,36 @@ def ana_indiv(ro):
         plot_all(ro, dbName, field=target_name, season=year)
 
 
+def ana_night(data):
+    """
+    Function to plot the distrib of visits vs night
+
+    Parameters
+    ----------
+    data : pandas df
+        Data to process.
+
+    Returns
+    -------
+    None.
+
+    """
+    while 1:
+        print('******** Observations vs night********')
+        print('list of OS:')
+        print(data['dbName'].unique())
+        answer = input('dbName?')
+        dbName = answer
+        if answer == 'exit':
+            break
+        idxa = data['dbName'] == dbName
+        sela = data[idxa]
+
+        plot_obs_time_night(sela)
+
+        plt.show(block=False)
+
+
 parser = OptionParser(
     description='Script to analyse DDF visits on a nightly basis from pointings')
 
@@ -422,7 +453,7 @@ parser.add_option("--DDF", type=str,
                   default='DD:COSMOS,DD:XMM_LSS',
                   help="DDF to consider [%default]")
 parser.add_option("--plots", type=str,
-                  default='plot_indiv,plot_all',
+                  default='plot_indiv,plot_all,plot_night',
                   help="plots to make [%default]")
 
 opts, args = parser.parse_args()
@@ -445,6 +476,9 @@ for i, row in df_db.iterrows():
 
     dat_ = pd.read_hdf(fName)
     data = pd.concat((data, dat_))
+
+if 'plot_night' in plots:
+    ana_night(data)
 
 # ro = ana_seq(data)
 idx = data['target_name'].isin(fields)
