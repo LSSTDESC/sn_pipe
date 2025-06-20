@@ -16,4 +16,4 @@ Options:
 
 ## example
 
-Running by default python ddf_visits_night.py will generate output files in ../ddf_visits_night corresponding to the processing of the [dbList.csv](observing strategies).
+Running by default python ddf_visits_night.py will generate output files in ../ddf_visits_night corresponding to the processing of the [observing strategies](dbList.csv).
