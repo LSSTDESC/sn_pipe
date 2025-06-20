@@ -281,12 +281,14 @@ parser.add_option("--dbList", type="str",
 parser.add_option("--ddf_list", type="str",
                   default="DD:COSMOS,DD:ECDFS,DD:EDFS_a,DD:EDFS_b,DD:ELAISS1,DD:XMM_LSS",
                   help="list of ddf [%default]")
+"""
 parser.add_option("--configDir", type="str",
                   default="input/scheduler",
                   help="input config dir [%default]")
 parser.add_option("--configName", type="str",
                   default="ddf_desc_0.70_sn",
                   help="input config name [%default]")
+"""
 parser.add_option("--outDir", type="str",
                   default="../ddf_visits_night",
                   help="output directory [%default]")
@@ -301,8 +303,8 @@ dbDir = opts.dbDir
 # dbName = opts.dbName
 dbList = opts.dbList
 ddf_list = opts.ddf_list.split(',')
-configDir = opts.configDir
-configName = opts.configName
+# configDir = opts.configDir
+# configName = opts.configName
 outDir = opts.outDir
 nproc = opts.nproc
 
