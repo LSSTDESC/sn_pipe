@@ -1,0 +1,10 @@
+## Usage: run_scripts/os_info/ddf_visits_night.py [options]
+
+<pre>
+
+
+  </pre>
+
+## example
+
+Running by default python ddf_visits_night.py will generate output files in ../ddf_visits_night corresponding to the processing of the [observing strategies](dbList.csv).
