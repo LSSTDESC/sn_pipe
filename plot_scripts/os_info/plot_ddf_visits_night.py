@@ -82,6 +82,11 @@ def plot_all(ro, dbName, field='DD:COSMOS', season=3):
 
     """
 
+    idx = ro['dbName'] == dbName
+    idx &= ro['target_name'] == field
+    idx &= ro['year'] == season
+    ro = ro[idx]
+
     plot_seq_frac(ro, dbName, field=field, season=season)
 
     idx = ro['y'] > 0
