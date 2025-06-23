@@ -482,6 +482,9 @@ if addMetric:
 if 'relative_depth' in plots:
     plot_relative_depth(df)
 
+idx = df['field'].isin(fieldNames)
+df = df[idx]
+
 # summary plots
 if 'summary' in plots:
     summary_plots(df)

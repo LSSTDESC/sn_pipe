@@ -209,7 +209,8 @@ def plot_fields(dft, config, fields):
     df_config = pd.read_csv(config, comment='#')
 
     for field in fields:
-        plot_summary(dft, field=field, df_config=df_config)
+        plot_summary(dft, field=field, df_config=df_config,
+                     figtit=field.split(':')[-1])
         """
         plot_summary(dft, field=field, vary='seq_frac_y',
                      laby='Fraction of nights [%]', df_config=df_config)

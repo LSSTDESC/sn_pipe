@@ -44,6 +44,7 @@ def load_data(dbDir, dbName, runType, timescale, season):
     df = pd.DataFrame()
 
     print('loading', dbName, 'season', season)
+    print('from the dir', mainDir)
     fis = glob.glob('{}/*_season_{}.hdf5'.format(mainDir, season))
 
     for fi in fis:
