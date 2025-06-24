@@ -201,13 +201,21 @@ if 'nsn_all' in plots:
                   cols=['year', 'dbName'],
                   fields=fields)
 
-
+# UD only
 if 'nsn_ud' in plots:
-    # UD only
 
     fields = ud_fields
     plot_ddf_year(df_nsn, conf_df,
                   cols=['year', 'dbName'],
                   fields=fields)
+
+# DD only
+if 'nsn_dd' in plots:
+
+    fields = dd_fields
+    plot_ddf_year(df_nsn, conf_df,
+                  cols=['year', 'dbName'],
+                  fields=fields)
+
 
 plt.show()
