@@ -427,8 +427,7 @@ parser.add_option("--fieldType", type="str", default='DD',
 parser.add_option("--dbList", type="str", default='List.csv',
                   help="list of cadences to display[%default]")
 """
-parser.add_option("--fieldNames", type="str", default='COSMOS,CDFS,\
-                  XMM-LSS,ELAISS1,EDFSa,EDFSb,EDFS',
+parser.add_option("--fieldNames", type="str", default='COSMOS,CDFS,XMM_LSS,ELAISS1,EDFS_a,EDFS_b',
                   help="fields to process [%default]")
 parser.add_option("--metric", type="str", default='NSNY',
                   help="metric name [%default]")
