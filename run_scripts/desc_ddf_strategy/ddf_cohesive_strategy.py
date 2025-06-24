@@ -250,10 +250,11 @@ resc = dfres.groupby(['name'])[sumCols].sum().reset_index()
 
 print(resc)
 
-print(m5_nvisits)
+print(myclass.m5_nvisits)
 
-print(m5_nvisits['Nvisits_y2_y10']/m5_nvisits['nseason_y2_y10'])
-m5_nvisits.to_csv('resc.csv', index=False)
+print(myclass.m5_nvisits['Nvisits_y2_y10'] /
+      myclass.m5_nvisits['nseason_y2_y10'])
+myclass.m5_nvisits.to_csv('resc.csv', index=False)
 
 if pparams['showPlot']:
     plt.show()
