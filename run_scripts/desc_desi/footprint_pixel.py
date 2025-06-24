@@ -318,12 +318,12 @@ def footprint_DDF(nside=128):
 
     fcoord = dict(zip(fields, coords))
 
-    map_pixel = footprint_points(nside, fcoord)
+    # map_pixel = footprint_points(nside, fcoord)
 
     save_footprint(map_pixel, 'Subaru_DDF')
     plot_pixels(map_pixel)
 
-    fields = ['ECFDS', 'ELAISS1']
+    fields = ['ECDFS', 'ELAISS1']
     coords = [(53.16, -28.095), (9.467, -44.016)]
 
     fcoord = dict(zip(fields, coords))
