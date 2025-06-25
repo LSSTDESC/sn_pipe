@@ -27,7 +27,7 @@ Options:
                         isits,field_nvisits_band,relative_depth]
 </pre>
 
-##example
+## Example
 
 python plot_scripts/metrics/plot_DD_stat.py --dirFile . --config=config_ana_selplot.csv
 

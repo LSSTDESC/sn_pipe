@@ -21,3 +21,13 @@
 ## nightly filter allocation for DDFs.
 
 - use the script [plot_scripts/os_info/plot_ddf_nightly.py](usage_plot_ddf_nightly.md)
+
+### analysis of the calibration requirements (PZ, WL) and of AGN constraints
+
+## data analysis -> create outputfile with processed data
+
+- use the script [run_scripts/os_info/nvisits_m5.py](usage_nvisits_m5.md)
+
+## plot the results
+
+- use the script [plot_scripts/os_info/pz_wl_calib_reqs.py](usage_calib.md)
