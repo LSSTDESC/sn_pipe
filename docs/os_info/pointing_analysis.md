@@ -9,7 +9,7 @@
 
 - use the script [plot_scripts/metrics/plot_DD_stat.py](usage_plot_DD.md)
 
-## Nightly pointing analysis (visits)
+## $${\color{blue} Nightly \space pointing \space analysis (visits)}$$
 
 ### analysis of the data -> create outputfile with processed data
 - use the script [run_scripts/os_info/ddf_visits_night.py](usage_process_ddf_visits.md)
@@ -18,16 +18,16 @@
 
 - use the script [plot_scripts/os_info/plot_ddf_visits_night.py](usage_plot_ddf_visits.md)
 
-## nightly filter allocation for DDFs.
+##  $${\color{blue} Nightly \space filter \space allocation \space for \space DDFs}$$
 
 - use the script [plot_scripts/os_info/plot_ddf_nightly.py](usage_plot_ddf_nightly.md)
 
-### analysis of the calibration requirements (PZ, WL) and of AGN constraints
+##  $${\color{blue}  Calibration \space requirements \space (PZ, WL) \space and \space of \space AGN \space constraints}$$
 
-## data analysis -> create outputfile with processed data
+### data analysis -> create outputfile with processed data
 
 - use the script [run_scripts/os_info/nvisits_m5.py](usage_nvisits_m5.md)
 
-## plot the results
+### plot the results
 
 - use the script [plot_scripts/os_info/pz_wl_calib_reqs.py](usage_calib.md)
