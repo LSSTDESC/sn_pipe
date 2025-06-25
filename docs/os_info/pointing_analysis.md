@@ -1,6 +1,6 @@
 # OS pointing analysis
 
-## global pointing analysis
+## $${\color{red} Global pointing analysis}$$
 
 ### analysis of the data -> create outputfile with processed data
 - use the script [run_scripts/metrics/stat_DD.py](usage_stat_DD.md)
@@ -9,7 +9,7 @@
 
 - use the script [plot_scripts/metrics/plot_DD_stat.py](usage_plot_DD.md)
 
-## nightly pointing analysis (visits)
+## Nightly pointing analysis (visits)
 
 ### analysis of the data -> create outputfile with processed data
 - use the script [run_scripts/os_info/ddf_visits_night.py](usage_process_ddf_visits.md)
