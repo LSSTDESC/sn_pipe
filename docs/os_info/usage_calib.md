@@ -16,12 +16,17 @@ Options:
 
 ## Examples
 
-### python plot_scripts/os_info/pz_wl_calib_reqs.py --fields=DD:ECDFS --plots=plot_global_wl should lead to a set of plots (one per band) as [this one](plotf1.png)
+### python plot_scripts/os_info/pz_wl_calib_reqs.py --fields=DD:ECDFS --plots=plot_global_wl
+-> should lead to a set of plots (one per band) as [this one](plotf1.png)
 
-### python plot_scripts/os_info/pz_wl_calib_reqs.py --fields=DD:ECDFS --plots=plot_global_agn should lead to a set of plots (one per band) as [this one](plotf2.png)
+### python plot_scripts/os_info/pz_wl_calib_reqs.py --fields=DD:ECDFS --plots=plot_global_agn
+-> should lead to a set of plots (one per band) as [this one](plotf2.png)
 
-### python plot_scripts/os_info/pz_wl_calib_reqs.py --plots=summary_reqs_wl should lead to a set of plots (one per band) as [this one](plotf3.png)
+### python plot_scripts/os_info/pz_wl_calib_reqs.py --plots=summary_reqs_wl
+-> should lead to a set of plots (one per band) as [this one](plotf3.png)
 
-### python plot_scripts/os_info/pz_wl_calib_reqs.py --plots=summary_reqs_agn should lead to a set of plots (one per band) as [this one](plotf4.png)
+### python plot_scripts/os_info/pz_wl_calib_reqs.py --plots=summary_reqs_agn
+-> should lead to a set of plots (one per band) as [this one](plotf4.png)
 
-### python plot_scripts/os_info/pz_wl_calib_reqs.py --plots=summary_reqs_pz should lead to a set of plots (one per band) as [this one](plotf5.png)
+### python plot_scripts/os_info/pz_wl_calib_reqs.py --plots=summary_reqs_pz
+-> should lead to a set of plots (one per band) as [this one](plotf5.png)
