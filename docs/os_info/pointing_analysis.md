@@ -1,6 +1,6 @@
-# OS pointing analysis
+#  $${\color{red} OS \space pointing \space analysis}$$
 
-## $${\color{red} Global pointing analysis}$$
+## $${\color{blue} Global \space pointing \space analysis}$$
 
 ### analysis of the data -> create outputfile with processed data
 - use the script [run_scripts/metrics/stat_DD.py](usage_stat_DD.md)
