@@ -112,7 +112,7 @@ def get_infos(grp, bands='ugrizy'):
 
 
 parser = OptionParser(
-    description='Script to check calib requirements from PZ,WL from pointings')
+    description='Script to estimate cumulative Nvisits and m5 to check requirements from PZ,WL from pointings')
 
 parser.add_option("--dirFile", type="str",
                   default='../DB_Files',
