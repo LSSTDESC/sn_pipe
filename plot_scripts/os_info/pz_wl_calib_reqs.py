@@ -176,7 +176,7 @@ def ana_reqs(data, reqs,
 
     data = clean_level(data)
     # select years 5, 7 and 10
-    years = [5, 8, 10]
+    years = [1, 4, 8]
 
     idxa = reqs['year'].isin(years)
 
