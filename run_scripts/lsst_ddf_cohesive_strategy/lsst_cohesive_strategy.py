@@ -110,31 +110,6 @@ def get_df_config(visits, cad_df, sl_df, zcomp=[]):
     return df_config
 
 
-def get_nvisits(grp):
-    """
-    Function to estimate the number of visits per season
-
-    Parameters
-    ----------
-    grp : pandas df
-        Data to use for the estimation of Nvisits.
-
-    Returns
-    -------
-    df : pandas df
-        original data plus nvisits_season column.
-
-    """
-
-    grp['nvisits_season'] = grp['nvisits_night']*grp['sl']/grp['cad']
-
-    res = grp['nvisits_season'].sum()
-
-    df = pd.DataFrame([res], columns=['nvisits'])
-
-    return df
-
-
 def get_df(fName, cad_df, sl_df, zcomp):
     """
     Function to build df field
@@ -316,12 +291,15 @@ sl_ud = opts.sl_ud
 cad_df = opts.cad_df
 sl_df = opts.sl_df
 ddf_scenario = opts.ddf_scenario
-nvisits_lsst = opts.nvisits_LSST
+# nvisits_lsst = opts.nvisits_LSST
 nvisits_req = opts.nvisits_req
 nvisits_req_y1 = opts.nvisits_req_y1
 survey_type = opts.survey_type
 survey_output_name = opts.survey_output_name
 outDir = opts.outDir
+
+# create output dir if necessary
+checkDir(outDir)
 
 # all_ud fields
 field_config = get_ud_config(zcomp_file, cad_ud, sl_ud)
@@ -359,7 +337,7 @@ ddf_survey = ddf_survey[idx]
 # res = res.sort_values(by=['zcomp', 'field', 'year'])
 
 fName = '{}/{}'.format(outDir, survey_output_name)
-ddf_survey.to_csv(survey_output_name)
+ddf_survey.to_csv(fName)
 
 """
 # now process this data
