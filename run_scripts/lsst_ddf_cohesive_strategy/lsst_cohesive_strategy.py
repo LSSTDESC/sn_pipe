@@ -98,7 +98,7 @@ def get_df_config(visits, cad_df, sl_df, zcomp=[]):
         df_config[b] *= df_config['cad']/df_config['sl']
         # df_config[b] = np.ceil(df_config[b])
         # df_config[b] = df_config[b].astype(int)
-        df_config = df_config.round({b: 1})
+        df_config = df_config.round({b: 2})
 
     df_config['nvisits_night'] = df_config[bands].sum(axis=1)
     df_config = df_config.round({'nvisits_night': 1})
@@ -158,12 +158,21 @@ def complete_df(grp, req):
 
     bands = list('ugrizy')
 
-    # grab the total number of visits for each band/field
+    # grab the total number of visits for each band/field (observed)
+
+    idx = grp['fieldtype'].isin(['ud', 'df'])
+
+    selgrp = grp[idx]
+
     for b in bands:
-        grp['{}_season'.format(b)] = grp[b]*grp['sl']/grp['cad']
+        selgrp['{}_season'.format(b)] = selgrp[b]*selgrp['sl']/selgrp['cad']
 
     bbands = list(map(lambda x:  x+'_season', bands))
-    rr = grp.groupby(['field'])[bbands].sum().reset_index()
+
+    print(selgrp[['field', 'fieldtype']+bbands])
+
+    rr = selgrp.groupby(['field'])[bbands].sum().reset_index()
+    print('obs', rr[['field']+bbands])
     for b in bands:
         rr = rr.rename(columns={'{}_season'.format(b): '{}_obs'.format(b)})
 
@@ -171,10 +180,13 @@ def complete_df(grp, req):
     idx = req['zcomp'] == float(grp.name)
     idx &= req['fieldtype'] == 'df'
     sel_req = req[idx]
-    print(sel_req)
+    # print(sel_req)
+    bbou = list(map(lambda x:  x+'_survey', bands))
     for b in bands:
-        sel_req['{}_survey'.format(b)] = 9*sel_req[b] * \
+        ccol = '{}_survey'.format(b)
+        sel_req[ccol] = 9*sel_req[b] * \
             sel_req['sl']/sel_req['cad']
+    print(sel_req[bbou])
 
     # grab the field list
     fields = pd.DataFrame(grp['field'].unique(), columns=['field'])
@@ -197,13 +209,14 @@ def complete_df(grp, req):
     # if this number is negative, set it to 0!
     bboud = list(map(lambda x:  'delta_'+x, bands))
 
+    print(rr[['field']+bboud])
+
     pp = rr[bboud]
     idx = pp < 0
     rrr = rr[bboud+['field']]
     rr[idx] = 0
 
-    print(rr)
-
+    print(rr[bboud+['field']])
     # complete the df fields with these infos to complete the survey
     idx = grp['fieldtype'] == 'df'
 
@@ -211,7 +224,10 @@ def complete_df(grp, req):
         ['field']).size().to_frame('nseasons').reset_index()
 
     rr = rr.merge(ddf_season, left_on=['field'], right_on=[
-                  'field'], suffixes=['', ''])
+        'field'], suffixes=['', ''])
+
+    print('aaallll')
+    print(rr[['field', 'nseasons']])
 
     for b in bands:
         rr['{}_season'.format(b)] = rr['delta_{}'.format(b)]/rr['nseasons']
@@ -221,7 +237,7 @@ def complete_df(grp, req):
     # rr['nvisits'] = rr[bbb].sum(axis=1)
 
     thecols = ['field']+bbb
-    sel = grp[idx]
+    sel = selgrp[idx]
     sel = sel.merge(rr[thecols], left_on=['field'],
                     right_on=['field'], suffixes=['', '_y'])
 
@@ -231,7 +247,7 @@ def complete_df(grp, req):
         sel = sel.drop(columns=[thecol])
         sel = sel.rename(columns={'{}_y'.format(thecol): thecol})
         sel['{}'.format(b)] = sel[thecol]*sel['cad']/sel['sl']
-        sel = sel.round({thecol: 1, b: 1})
+        sel = sel.round({thecol: 2, b: 2})
 
     sel['nvisits_night'] = sel[bands].sum(axis=1)
     sel = sel.round({'nvisits_night': 1})
@@ -323,16 +339,13 @@ ddf_scen = pd.read_csv(ddf_scenario, comment='#')
 # construction of the survey for all zcomp
 
 ddf_survey = ddf_scen.merge(field_config, left_on=['fieldtype'], right_on=[
-                            'fieldtype'], suffixes=['', ''])
+    'fieldtype'], suffixes=['', ''])
 
 
 if survey_type == 'science_fiction':
     ddf_survey = ddf_survey.groupby(['zcomp']).apply(
         lambda x: complete_df(x, req_df))
 
-
-idx = ddf_survey['zcomp'] <= 0.8
-ddf_survey = ddf_survey[idx]
 
 # res = res.sort_values(by=['zcomp', 'field', 'year'])
 
