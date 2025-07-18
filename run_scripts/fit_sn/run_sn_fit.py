@@ -14,9 +14,48 @@ import os
 import sn_fit_input as simu_fit
 from sn_tools.sn_io import make_dict_from_config, make_dict_from_optparse
 from sn_tools.sn_io import loopStack, check_get_dir
+from sn_fit_wrapper.sn_wrapper_for_fit import FitWrapper
+from sn_tools.sn_io import checkDir
 
 
-class Fit_Simu:
+def load_lc_as_list(dirSimu, prodidSimu):
+    """
+    Function to make a list of lcs from astropy tables
+
+    Parameters
+    ----------
+    dirSimu : str
+        LC dir.
+    prodidSimu : str
+        LC tag.
+
+    Returns
+    -------
+    res : list(LC)
+        List of light curves.
+
+    """
+
+    search_path = '{}/LC_{}*2.hdf5'.format(dirSimu, prodidSimu)
+    print('searching', search_path)
+    lc_files = glob.glob(search_path)
+
+    res = []
+    for lc_name in lc_files:
+        fFile = h5py.File(lc_name, 'r')
+        keys = fFile.keys()
+        # print(keys)
+        for key in keys:
+            if 'table_column_meta' not in key:
+                lc = Table.read(lc_name, path=key)
+                lc.convert_bytestring_to_unicode()
+                # print(lc)
+                res.append(lc)
+
+    return res
+
+
+class Fit_Simu_deprecated:
     """
     class to fit simulated LC
 
@@ -106,7 +145,7 @@ class Fit_Simu:
                 simul_h = simul[t[kk]:t[kk+1]]
                 res_simul = self.process_multiproc(simul_h, lc_name)
                 res = vstack([res, res_simul])
-                ## dumping in file
+                # dumping in file
                 print('dumping results', len(res))
                 if len(res) > 0:
                     idump += 1
@@ -137,8 +176,8 @@ class Fit_Simu:
         for p in procs:
             p.start()
 
-        #start = time.time()
-        #bool_list = [True]*self.nproc
+        # start = time.time()
+        # bool_list = [True]*self.nproc
         resultdict = {}
         """
         while time.time() - start <= TIMEOUT:
@@ -175,7 +214,7 @@ class Fit_Simu:
         for ja in range(self.nproc):
             try:
                 resultdict.update(result_queue.get(timeout=self.timeout))
-            except(queue.Empty):
+            except (queue.Empty):
                 print('Warning: The process', ja, 'has crashed. No data here.')
 
         for p in multiprocessing.active_children():
@@ -196,13 +235,14 @@ class Fit_Simu:
         for ilc, simu in enumerate(simul):
             # print('fitting',j,ilc)
             lc = None
-            lc = Table.read(lc_name, path='lc_{}'.format(simu['index_hdf5']))
+            print('hh', simu, lc_name)
+            lc = Table.read(lc_name, path='{}'.format(simu['SNID']))
             lc.convert_bytestring_to_unicode()
             # print(type(lc))
             # self.plotLC(lc,10)
             if simu['status'] == 1:
                 # print('fitting',lc)
-                resfit = self.fit(lc)
+                resfit = self.fit.fit_lc(lc)
                 if resfit is not None:
                     res = vstack([res, resfit])
 
@@ -332,6 +372,8 @@ for key, vals in confDict.items():
 # new dict with configuration params
 yaml_params = make_dict_from_optparse(newDict)
 
+
+"""
 covmb = None
 mbCalc = yaml_params['mbcov']['estimate']
 
@@ -344,16 +386,24 @@ if mbCalc:
     check_get_dir(webPath, salt2Dir, salt2Dir)
     covmb = MbCov(salt2Dir, paramNames=dict(
         zip(['x0', 'x1', 'color'], ['x0', 'x1', 'c'])))
-
+"""
 # create outputdir if necessary
 outDir = yaml_params['OutputFit']['directory']
-if not os.path.isdir(outDir):
-    os.makedirs(outDir)
+checkDir(outDir)
 
 prodid = yaml_params['ProductionIDFit']
 yaml_name = '{}/Fit_{}.yaml'.format(outDir, prodid)
 with open(yaml_name, 'w') as f:
     data = yaml.dump(yaml_params, f)
+# get the simu files
+dirSimu = yaml_params['Simulations']['dirname']
+prodidSimu = yaml_params['Simulations']['prodid']
+
+print('dirsimu', dirSimu, prodidSimu)
+list_lc = load_lc_as_list(dirSimu, prodidSimu)
+
+fit_wrapper = FitWrapper(yaml_params)
+fitlc = fit_wrapper(list_lc)
 
 # now fit all this
-Fit_Simu(yaml_params, covmb)
+# Fit_Simu(yaml_params, covmb)
