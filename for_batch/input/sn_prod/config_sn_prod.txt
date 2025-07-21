@@ -54,3 +54,5 @@ code new str #code to use (old/new)
 SN_minRFphaseQual -10. float #SN min rf phase qual
 SN_maxRFphaseQual  35. float #SN max rf phase qual
 mem 8Gb str #memory for batch jobs
+atmosType const str #atmos type (const/dep)
+fit_coadded 0 int #to fit coadded LC points
