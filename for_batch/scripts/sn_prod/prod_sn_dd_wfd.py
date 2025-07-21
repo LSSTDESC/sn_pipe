@@ -87,7 +87,9 @@ parser.add_option("--SN_color_type", type=str, default='random',
 parser.add_option("--SN_color_min", type=float, default=0.2,
                   help="color min value [%default]")
 parser.add_option("--mem", type=str, default='8Gb',
-                  help="memore for batch jobs [%default]")
+                  help="memory for batch jobs [%default]")
+parser.add_option("--atmosType", type=str, default='const',
+                  help="atmos type (const/dep) [%default]")
 
 opts, args = parser.parse_args()
 
@@ -122,6 +124,7 @@ x1_type = opts.SN_x1_type
 x1_min = opts.SN_x1_min
 color_type = opts.SN_color_type
 color_min = opts.SN_color_min
+atmosType = opts.atmosType
 
 mem = opts.mem
 
@@ -150,6 +153,7 @@ if dbList_DD != '':
     cmd_ddf += ' --SN_color_type={}'.format(color_type)
     cmd_ddf += ' --SN_color_min={}'.format(color_min)
     cmd_ddf += ' --mem={}'.format(mem)
+    cmd_ddf += ' --atmosType={}'.format(atmosType)
     print(cmd_ddf)
     os.system(cmd_ddf)
 
@@ -180,6 +184,6 @@ if dbList_WFD != '':
     cmd_wfd += ' --SN_color_type={}'.format(color_type)
     cmd_wfd += ' --SN_color_min={}'.format(color_min)
     cmd_wfd += ' --mem={}'.format(mem)
-
+    cmd_wfd += ' --atmosType={}'.format(atmosType)
     print(cmd_wfd)
     os.system(cmd_wfd)

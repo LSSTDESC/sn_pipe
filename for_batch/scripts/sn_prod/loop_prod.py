@@ -95,6 +95,8 @@ parser.add_option("--SN_color_min", type=float, default=0.2,
                   help="color min value [%default]")
 parser.add_option("--mem", type=str, default='8Gb',
                   help="memore for batch jobs [%default]")
+parser.add_option("--atmosType", type=str, default='const',
+                  help="atmos type (const/dep) [%default]")
 
 opts, args = parser.parse_args()
 
@@ -137,8 +139,8 @@ for i, row in df.iterrows():
     procDict['SN_z_min'] = opts.SN_z_min
     procDict['SN_z_sigmaz'] = opts.SN_sigmaz
     procDict['fit_remove_sat'] = opts.fit_remove_sat
-    procDict['InstrumentSimu_airmassType'] = 'const'
-    procDict['InstrumentFit_airmassType'] = 'const'
+    # procDict['InstrumentSimu_airmassType'] = 'const'
+    # procDict['InstrumentFit_airmassType'] = 'const'
     procDict['LCSelection_snrmin'] = 1.
     procDict['code'] = opts.code
     procDict['SN_minRFphaseQual'] = opts.SN_minRFphaseQual
@@ -148,5 +150,6 @@ for i, row in df.iterrows():
     procDict['SN_color_type'] = opts.SN_color_type
     procDict['SN_color_min'] = opts.SN_color_min
     procDict['mem'] = opts.mem
+    procDict['atmosType'] = opts.atmosType
 
     go_batch(script, procDict)
