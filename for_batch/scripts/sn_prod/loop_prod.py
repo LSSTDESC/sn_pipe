@@ -152,7 +152,7 @@ for i, row in df.iterrows():
     procDict['SN_color_type'] = opts.SN_color_type
     procDict['SN_color_min'] = opts.SN_color_min
     procDict['mem'] = opts.mem
-    procDict['atmosType'] = opts.atmosType
+    procDict['InstrumentSimu_atmosType'] = opts.atmosType
     procDict['fit_coadded'] = opts.fit_coadded
 
     go_batch(script, procDict)
