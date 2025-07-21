@@ -97,6 +97,8 @@ parser.add_option("--mem", type=str, default='8Gb',
                   help="memore for batch jobs [%default]")
 parser.add_option("--atmosType", type=str, default='const',
                   help="atmos type (const/dep) [%default]")
+parser.add_option("--fit_coadded", type=int, default=0,
+                  help="to fitted coadded LC points [%default]")
 
 opts, args = parser.parse_args()
 
@@ -151,5 +153,6 @@ for i, row in df.iterrows():
     procDict['SN_color_min'] = opts.SN_color_min
     procDict['mem'] = opts.mem
     procDict['atmosType'] = opts.atmosType
+    procDict['fit_coadded'] = opts.fit_coadded
 
     go_batch(script, procDict)

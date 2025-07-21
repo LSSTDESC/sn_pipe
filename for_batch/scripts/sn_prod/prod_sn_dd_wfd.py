@@ -90,6 +90,8 @@ parser.add_option("--mem", type=str, default='8Gb',
                   help="memory for batch jobs [%default]")
 parser.add_option("--atmosType", type=str, default='const',
                   help="atmos type (const/dep) [%default]")
+parser.add_option("--fit_coadded", type=int, default=0,
+                  help="to fitted coadded LC points [%default]")
 
 opts, args = parser.parse_args()
 
@@ -124,9 +126,10 @@ x1_type = opts.SN_x1_type
 x1_min = opts.SN_x1_min
 color_type = opts.SN_color_type
 color_min = opts.SN_color_min
-atmosType = opts.atmosType
-
 mem = opts.mem
+atmosType = opts.atmosType
+fit_coadded = opts.fit_coadded
+
 
 cmd_scr = 'python for_batch/scripts/sn_prod/loop_prod.py'
 cmd_scr += ' --SN_sigmaInt=0.0'
@@ -154,6 +157,7 @@ if dbList_DD != '':
     cmd_ddf += ' --SN_color_min={}'.format(color_min)
     cmd_ddf += ' --mem={}'.format(mem)
     cmd_ddf += ' --atmosType={}'.format(atmosType)
+    cmd_ddf += ' --fit_coadded={}'.format(fit_coadded)
     print(cmd_ddf)
     os.system(cmd_ddf)
 
@@ -185,5 +189,6 @@ if dbList_WFD != '':
     cmd_wfd += ' --SN_color_min={}'.format(color_min)
     cmd_wfd += ' --mem={}'.format(mem)
     cmd_wfd += ' --atmosType={}'.format(atmosType)
+    cmd_wfd += ' --fit_coadded={}'.format(fit_coadded)
     print(cmd_wfd)
     os.system(cmd_wfd)
