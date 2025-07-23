@@ -99,6 +99,10 @@ parser.add_option("--atmosType", type=str, default='const',
                   help="atmos type (const/dep) [%default]")
 parser.add_option("--fit_coadded", type=int, default=0,
                   help="to fitted coadded LC points [%default]")
+parser.add_option("--w0", type=float, default=-1.0,
+                  help="w0 dark energy parameter [%default]")
+parser.add_option("--wa", type=float, default=-1.0,
+                  help="wa dark energy parameter [%default]")
 
 opts, args = parser.parse_args()
 
@@ -154,5 +158,7 @@ for i, row in df.iterrows():
     procDict['mem'] = opts.mem
     procDict['InstrumentSimu_atmosType'] = opts.atmosType
     procDict['fit_coadded'] = opts.fit_coadded
+    procDict['Cosmology_w0'] = opts.w0
+    procDict['Cosmology_wa'] = opts.wa
 
     go_batch(script, procDict)

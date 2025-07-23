@@ -55,3 +55,5 @@ SN_maxRFphaseQual  35. float #SN max rf phase qual
 mem 8Gb str #memory for batch jobs
 InstrumentSimu_atmosType const str #atmos type (const/dep)
 fit_coadded 0 int #to fit coadded LC points
+Cosmology_w0 -1.0 float #w0 DE parameter
+Cosmology_wa 0.0 float #wa DE param

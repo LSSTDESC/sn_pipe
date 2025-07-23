@@ -92,6 +92,10 @@ parser.add_option("--atmosType", type=str, default='const',
                   help="atmos type (const/dep) [%default]")
 parser.add_option("--fit_coadded", type=int, default=0,
                   help="to fitted coadded LC points [%default]")
+parser.add_option("--w0", type=float, default=-1.0,
+                  help="w0 dark energy parameter [%default]")
+parser.add_option("--wa", type=float, default=-1.0,
+                  help="wa dark energy parameter [%default]")
 
 opts, args = parser.parse_args()
 
@@ -129,7 +133,8 @@ color_min = opts.SN_color_min
 mem = opts.mem
 atmosType = opts.atmosType
 fit_coadded = opts.fit_coadded
-
+w0 = opts.w0
+wa = opts.wa
 
 cmd_scr = 'python for_batch/scripts/sn_prod/loop_prod.py'
 cmd_scr += ' --SN_sigmaInt=0.0'
@@ -158,6 +163,8 @@ if dbList_DD != '':
     cmd_ddf += ' --mem={}'.format(mem)
     cmd_ddf += ' --atmosType={}'.format(atmosType)
     cmd_ddf += ' --fit_coadded={}'.format(fit_coadded)
+    cmd_ddf += ' --w0={}'.format(w0)
+    cmd_ddf += ' --wa={}'.format(wa)
     print(cmd_ddf)
     os.system(cmd_ddf)
 
@@ -190,5 +197,7 @@ if dbList_WFD != '':
     cmd_wfd += ' --mem={}'.format(mem)
     cmd_wfd += ' --atmosType={}'.format(atmosType)
     cmd_wfd += ' --fit_coadded={}'.format(fit_coadded)
+    cmd_wfd += ' --w0={}'.format(w0)
+    cmd_wfd += ' --wa={}'.format(wa)
     print(cmd_wfd)
     os.system(cmd_wfd)
