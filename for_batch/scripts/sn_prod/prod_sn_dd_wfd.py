@@ -94,7 +94,7 @@ parser.add_option("--fit_coadded", type=int, default=0,
                   help="to fitted coadded LC points [%default]")
 parser.add_option("--w0", type=float, default=-1.0,
                   help="w0 dark energy parameter [%default]")
-parser.add_option("--wa", type=float, default=-1.0,
+parser.add_option("--wa", type=float, default=0.0,
                   help="wa dark energy parameter [%default]")
 
 opts, args = parser.parse_args()
