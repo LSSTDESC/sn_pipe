@@ -9,7 +9,7 @@ parser.add_option('--tel_dir', type=str, default='throughputs',
                   help='main throughputs location dir [%default]')
 parser.add_option('--throughputsDir', type=str, default='baseline',
                   help='throughputs location dir [%default]')
-parser.add_option('--atmosDir', type=str, default='atmos_new',
+parser.add_option('--atmosDir', type=str, default='atmos',
                   help='atmosphere location dir [%default]')
 parser.add_option('--tag', type=str, default='1.9',
                   help='tag version of the throughputs [%default]')
@@ -25,6 +25,8 @@ parser.add_option('--gain', type=float, default=2.5,
                   help='electronic gain [%default]')
 parser.add_option('--pressure', type=float, default=743.,
                   help='pressure on the Cerro Pachon [%default]')
+parser.add_option('--atmos_type', type=str, default='obsatmo',
+                  help='how is the atmos estimated (obsatmo, from_file) [%default]')
 opts, args = parser.parse_args()
 
 # config = dict(zip(['tag','label'],[['1.5','1.9'],['Al_Ag_Al','Ag_Ag_Ag']]))
@@ -39,6 +41,7 @@ aerosol = opts.aerosol
 pwv = opts.pwv
 ozone = opts.ozone
 pressure = opts.pressure
+atmos_type = opts.atmos_type
 
 telb = '{}_{}'.format(tel_dir, tag)
 through_dir = '{}/{}'.format(telb, throughputsDir)
@@ -46,6 +49,7 @@ atmos_dir = '{}/{}'.format(telb, atmosDir)
 telescope = get_telescope(tel_dir=telb,
                           through_dir=through_dir,
                           atmos_dir=atmos_dir,
+                          atmos_type=atmos_type,
                           tag=tag, load_components=True,
                           airmass=airmass, aerosol=aerosol,
                           pwv=pwv, ozone=ozone, gain=gain, pressure=pressure)
