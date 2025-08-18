@@ -15,7 +15,7 @@ atmos_trans_file.load_atmosphere()
 
 # from getObsAtmo
 atmos_trans_obsatmo = Atmos_Transmission(atmos_type='obsatmo')
-atmos_trans_obsatmo.load_atmosphere(aerosol=0.04)
+atmos_trans_obsatmo.load_atmosphere(aerosol=0.05)
 
 
 params = {}
