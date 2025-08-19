@@ -54,7 +54,7 @@ class REML_Fit:
         for pp in self.fitparNames:
             fitpars.append(dict_out['{}_fit'.format(pp)])
 
-        dict_out['Chi2_fit'] = myfit.xi_square(*fitpars)
+        dict_out['Chi2_fit'] = self.xi_square(*fitpars)
         dict_out['NDoF'] = self.ndata-len(self.fitparNames)
         dict_out['Chi2_fit_red'] = dict_out['Chi2_fit']/dict_out['NDoF']
         # covariance matrix
