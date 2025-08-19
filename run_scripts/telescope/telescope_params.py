@@ -62,3 +62,14 @@ nexp = 1
 plateScale = 0.2  # pixel size ''
 
 telescope.etc(exptime, plateScale, nexp)
+
+"""
+bands = 'ugrizy'
+m5_from_file = [23.697, 24.973, 24.516, 24.127, 23.556, 22.550]
+dict_m5_ref = dict(zip(bands, m5_from_file))
+
+for b in bands:
+    m5_res = telescope.data['m5'][b]
+    diff_m5 = m5_res-dict_m5_ref[b]
+    print(b, diff_m5, 10**(-0.4*diff_m5))
+"""
