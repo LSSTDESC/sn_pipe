@@ -98,7 +98,6 @@ class Fit_Atmos:
 
         for i, vv in enumerate(self.fitparNames):
             limits = self.fitparLimits[i]
-            print('limits', vv, limits)
             m.limits[vv] = limits
 
         m.migrad()
@@ -108,7 +107,6 @@ class Fit_Atmos:
         dict_out = {}
         res = m.values
 
-        print('alors', res)
         for name in self.fitparNames:
             dict_out['{}_fit'.format(name)] = res[name]
         fitpars = []
@@ -119,10 +117,9 @@ class Fit_Atmos:
         dict_out['NDoF'] = self.ndata-len(self.fitparNames)
         dict_out['Chi2_fit_red'] = dict_out['Chi2_fit']/dict_out['NDoF']
 
-        print(dict_out)
         # covariance matrix
         cov = m.covariance
-        print(cov)
+
         for i, vala in enumerate(self.fitparNames):
             for j, valb in enumerate(self.fitparNames):
                 if j <= i:
@@ -154,17 +151,6 @@ class Fit_Atmos:
             airmass = self.airmass
         else:
             airmass = parameters[self.fitparNames.index('airmass')]
-        """
-        ozone = parameters[self.fitparNames.index('ozone')]
-        pwv = parameters[self.fitparNames.index('pwv')]
-        aerosol = parameters[self.fitparNames.index('aerosol')]
-
-        
-        airmass = self.airmass
-        if 'airmass' in self.fitparNames:
-            airmass = parameters[self.fitparNames.index('airmass')]
-        """
-        print('allo', airmass, pwv, ozone, aerosol)
 
         atmos_trans_obsatmo = Atmos_Transmission(atmos_type='obsatmo')
         atmos_trans_obsatmo.load_atmosphere(
@@ -205,6 +191,10 @@ ozone = opts.ozone
 parNames = ['airmass', 'pwv', 'ozone', 'aerosol']
 parValues = [1.2, 4., 100, 0.1]
 parLimits = [(1., 3.), (0.5, 12.), (100., 500.), (0., 1.)]
+
+parNames = ['pwv', 'ozone', 'aerosol']
+parValues = [4., 100, 0.1]
+parLimits = [(0.5, 12.), (100., 500.), (0., 1.)]
 
 myfit = Fit_Atmos(airmass,
                   fitparNames=parNames,
