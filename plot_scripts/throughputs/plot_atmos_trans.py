@@ -73,6 +73,7 @@ atmos_trans_file.plot_atmospheric_transmission(
 atmos_trans_obsatmo.plot_atmospheric_transmission(
     plt, fig=fig, ax=ax, label=labelb, color='k', linestyle='dashed')
 
+"""
 # residuals
 vva = atmos_trans_file.atmosphere.sb
 vvb = atmos_trans_obsatmo.atmosphere.sb
@@ -81,5 +82,6 @@ figb, axb = plt.subplots(figsize=(12, 8))
 axb.plot(atmos_trans_file.atmosphere.wavelen, vva-vvb)
 
 print(np.sum((vva-vvb)**2))
+"""
 
 plt.show()
