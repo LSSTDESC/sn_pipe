@@ -18,6 +18,17 @@ from sn_cosmology.cosmo_tools import load_data_season, random_LSST
 from sn_cosmology.cosmo_tools import clean_survey, dump_survey, analyze_survey
 from sn_cosmology.random_hd import Random_survey
 
+
+def make_survey(sdict):
+
+    res = pd.DataFrame()
+
+    for key, vals in sdict.items():
+        res = pd.concat((res, vals))
+
+    return res
+
+
 # get all possible script parameters and put in a dict
 path_cosmo_input = cosmo_input.__path__
 confDict = make_dict_from_config(
@@ -131,8 +142,11 @@ for seas in seasons:
     rand_LSST = random_LSST(
         sn_simu_seas, simu_norm_factor, test_mode=pp['test_mode'])
 
-    print('rrr', rand_LSST)
+    print('rrr', type(rand_LSST))
 
+    full_survey = make_survey(rand_LSST)
+
+    analyze_survey(full_survey)
     # make a random survey for the season
     res, res_foot = rand_survey(rand_LSST, seas)
 
