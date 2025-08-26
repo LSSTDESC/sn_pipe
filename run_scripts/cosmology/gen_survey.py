@@ -16,6 +16,7 @@ import pandas as pd
 from sn_cosmology.cosmo_tools import load_footprints, load_host_effi
 from sn_cosmology.cosmo_tools import load_data_season, random_LSST
 from sn_cosmology.cosmo_tools import clean_survey, dump_survey, analyze_survey
+from sn_cosmology.cosmo_tools import get_seasons
 from sn_cosmology.random_hd import Random_survey
 
 
@@ -43,14 +44,7 @@ opts, args = parser.parse_args()
 
 pp = vars(opts)
 
-if '-' in pp['seasons']:
-    seas = pp['seasons'].split('-')
-    seas_min = int(seas[0])
-    seas_max = int(seas[1])
-    seasons = list(range(seas_min, seas_max+1))
-else:
-    seas = pp['seasons'].split(',')
-    seasons = list(map(int, seas))
+seasons = get_seasons(pp['seasons'])
 
 checkDir(pp['surveyDir'])
 
@@ -97,7 +91,8 @@ vardf = ['z_fit', 'x1_fit', 'color_fit', 'mbfit', 'Cov_x1x1',
          'Cov_x1color', 'Cov_colorcolor', 'Cov_mbmb',
          'Cov_x1mb', 'Cov_colormb', 'mu', 'sigma_mu',
          'field', 'healpixID', 'year', 'Cov_t0t0', 'x0_fit',
-         'Cov_x0x0', 'Cov_x0x1', 'Cov_x0color', 'x0', 'x1', 'color', 'SNID']
+         'Cov_x0x0', 'Cov_x0x1', 'Cov_x0color', 'x0', 'x1',
+         'color', 'SNID', 'season_length', 'survey_area']
 
 sn_simu_season = {}
 for seas in seasons:
@@ -163,3 +158,5 @@ for seas in seasons:
     year_max = sn_sample[pp['timescale']].max()
     dump_survey(sn_sample, year_min, year_max, sreal, pp['surveyDir'],
                 pp['dbName_DD'], pp['dbName_WFD'])
+    dump_survey(full_survey, year_min, year_max, sreal, pp['surveyDir'],
+                pp['dbName_DD'], pp['dbName_WFD'], add_str='_nospectroz')
