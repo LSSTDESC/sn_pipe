@@ -71,6 +71,8 @@ To uninstall the pipeline: python pip_sn_pack.py --action uninstall --package=al
 
 ### [Type Ia Supernovae production and analysis](docs/sn/sne_Ia.md)
 
+### [LSST SN survey generation](docs/gen_survey/sn_gen_survey.md)
+
 ### [Cosmology with Type Ia Supernovae](docs/sn_cosmology/sn_cosmology.md)
 
 ## sn_pipe structure
