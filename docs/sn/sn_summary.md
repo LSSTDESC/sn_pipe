@@ -51,7 +51,7 @@ Options:
 
 ## Example
 
-### python plot_scripts/sn/sn_analyzer_sel_ddf.py --dbDir=../Output_SN_DD_sigmaInt_0.0_Hounsell_z_smflux_notelrot_G10_JLA --config=[config_ana_selplot.csv](config_ana_selplot.csv)
+### python plot_scripts/sn/sn_analyzer_sel_ddf.py --config=[config_ana_selplot.csv](config_ana_selplot.csv)
 
 [sum(NSN) vs year - all DDFs](plota1.png)
 
