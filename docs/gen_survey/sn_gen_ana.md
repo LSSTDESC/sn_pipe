@@ -2,7 +2,7 @@
 
 ## Analysis
 
-# python run_scripts/sn_analysis/nsn_surveys.py
+### python run_scripts/sn_analysis/nsn_surveys.py
 
 Usage: script to analyze LSST SN surveys
 
@@ -15,13 +15,13 @@ Options:
 
 </pre>
 
-# Example
+### Example
 python run_scripts/sn_analysis/nsn_surveys.py  --dbList=[list_surveys.csv](list_surveys.csv)
 
 
 ## Results
 
-# python plot_scripts/cosmology/plot_sn_survey.py
+### python plot_scripts/cosmology/plot_sn_survey.py
 
 Usage: script to plot LSST SN surveys
 
@@ -42,6 +42,6 @@ Options:
 
 </pre>
 
-# Example
+### Example
 
 python plot_scripts/cosmology/plot_sn_survey.py --config=[config_ana_selplot.csv](config_ana_selplot.csv) --surveyList=[list_surveys_plot.csv](list_surveys_plot.csv)
