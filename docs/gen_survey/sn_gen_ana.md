@@ -10,10 +10,14 @@ Usage: script to analyze LSST SN surveys
 Options:
   -h, --help         show this help message and exit
   --dataDir=DATADIR  data directory [../sn_surveys]
-  --dbList=DBLIST    data directory [list_surveys.csv](list_surveys.csv)
+  --dbList=DBLIST    data directory [list_surveys.csv]
   --outDir=OUTDIR    output directory [../sn_summary_surveys]
 
 </pre>
+
+# Example
+python run_scripts/sn_analysis/nsn_surveys.py  --dbList=[list_surveys.csv](list_surveys.csv)
+
 
 ## Results
 
@@ -26,7 +30,7 @@ Options:
   -h, --help            show this help message and exit
   --dataDir=DATADIR     data directory [../sn_summary_surveys]
   --surveyList=SURVEYLIST
-                        OS for DD [list_surveys_plot.csv](list_surveys_plot.csv)
+                        OS for DD [list_surveys_plot.csv]
   --plots=PLOTS         plots to draw [nsn_all,nsn_ud]
   --print_nsn=PRINT_NSN
                         to print nsn as a latex table [0]
@@ -40,4 +44,4 @@ Options:
 
 # Example
 
-python plot_scripts/cosmology/plot_sn_survey.py --config=[config_ana_selplot.csv](config_ana_selplot.csv)
+python plot_scripts/cosmology/plot_sn_survey.py --config=[config_ana_selplot.csv](config_ana_selplot.csv) --surveyList=[list_surveys_plot.csv](list_surveys_plot.csv)
