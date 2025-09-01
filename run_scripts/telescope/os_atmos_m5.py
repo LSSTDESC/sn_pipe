@@ -10,6 +10,8 @@ from optparse import OptionParser
 import numpy as np
 from sn_telmodel.sn_throughputs import get_telescope
 import pandas as pd
+from rubin_sim.skybrightness import SkyModel
+from rubin_scheduler.utils import Site
 
 parser = OptionParser(
     description='Script to estimate m5 from atmos parameters')
@@ -67,13 +69,18 @@ throughput = get_telescope(tel_dir=telb,
                            tag=tag, load_components=True,
                            airmass=airmass, aerosol=aerosol,
                            pwv=pwv, ozone=ozone, gain=gain, pressure=pressure)
+# setup rubin tools
+# configure your Site, will default to Rubin if you use Site()
+site = Site()
+
+# sky model (Rubin)
+sky_model = SkyModel(observatory=site)
+
 
 # grab OS data
 fName = '{}/{}.npy'.format(fileDir, dbName)
 os_data = np.load(fName)
 
-idx = os_data['moonPhase'] < 0.5
-os_data = os_data[idx]
 io = 0
 for x in os_data:
     print(x.dtype.names)
@@ -87,7 +94,17 @@ for x in os_data:
     airmass = x['airmass']
     sky = x['sky']
     moonPhase = x['moonPhase']
+    lon = x['RA']
+    lat = x['Dec']
+    mjd = x['mjd']
 
+    sky_model.set_ra_dec_mjd(lon=lon, lat=lat, mjd=mjd, degrees=True)
+
+    # get sky spectrum
+    wave, spec = sky_model.return_wave_spec()
+
+    print(wave, spec)
+    print(test)
     throughput.data['FWHMeff'][b] = fwhmeff
     throughput.load_atmosphere(
         airmass=airmass, pwv=pwv, ozone=ozone, aerosol=aerosol)
