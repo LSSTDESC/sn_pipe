@@ -22,31 +22,6 @@ from sn_tools.sn_utils import multiproc
 from sn_cosmology.random_survey import Gen_Surveys
 import time
 
-
-def make_survey(sdict):
-    """
-    Function to transform a dict of df to a unique df
-
-    Parameters
-    ----------
-    sdict : dict
-        dict of DataFrames.
-
-    Returns
-    -------
-    res : pandas DataFrame
-        Result.
-
-    """
-
-    res = pd.DataFrame()
-
-    for key, vals in sdict.items():
-        res = pd.concat((res, vals))
-
-    return res
-
-
 # get all possible script parameters and put in a dict
 path_cosmo_input = cosmo_input.__path__
 confDict = make_dict_from_config(
