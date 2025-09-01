@@ -46,4 +46,4 @@ Options:
 
 python plot_scripts/cosmology/plot_sn_survey.py --config=[config_ana_selplot.csv](config_ana_selplot.csv) --surveyList=[list_surveys_plot.csv](list_surveys_plot.csv)
 
-Plots are similar to the ones [here](../docs/sn/sn_summary.md)
+Plots are similar to the ones [here](../sn/sn_summary.md)
