@@ -39,11 +39,19 @@ Options:
   --dd_fields=DD_FIELDS
                         DD fields to consider [CDFS,ELAISS1,EDFS_a,EDFS_b]
   --config=CONFIG       OS DD list[input/plots/config_ana.csv]
-
+  --genplot=GENPLOT     OS DD list [survey_spectro,survey_all,effi]
+  --effi_fields=EFFI_FIELDS
+                        list of fields for effi plots [COSMOS,WFD]
+  --effi_years=EFFI_YEARS
+                        list of years for effi plots [1,3]
 </pre>
 
 ### Example
 
 python plot_scripts/cosmology/plot_sn_survey.py --config=[config_ana_selplot.csv](config_ana_selplot.csv) --surveyList=[list_surveys_plot.csv](list_surveys_plot.csv)
 
-Plots are similar to the ones [here](../sn/sn_summary.md)
+Plots are similar to the ones [here](../sn/sn_summary.md). These plots are also available for the full survey if option --save_full_survey was set to 1 at the production level - see [survey generation](sn_gen.md). In this configuration it is also possible to estimate spectroscopic efficiencies.
+
+#### [Spectro efficiency for COSMOS year 1](plota.png)
+
+#### [Spectro efficiency for WFD year 1](plotb.png)
