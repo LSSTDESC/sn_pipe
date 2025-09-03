@@ -14,6 +14,7 @@ from sn_cosmology.cosmo_tools import transform
 from sn_tools.sn_utils import multiproc
 import pandas as pd
 import glob
+import time
 
 
 def make_df(ddict):
@@ -163,7 +164,7 @@ pp['dbName_WFD'] = dbName_WFD
 pp['yearmax'] = yearmax
 pp['hd_random'] = hd_random
 
-
+time_ref = time.time()
 cosmo_df = multiproc(n_real, pp, cosmo_fits, nproc=nproc)
 
 checkDir(outDir)
@@ -172,4 +173,4 @@ outName = '{}/cosmo_fit_{}_{}.hdf5'.format(outDir, dbName_DD, dbName_WFD)
 
 cosmo_df.to_hdf(outName, key='cosmo')
 
-print(cosmo_df)
+print('end fit cosmo', time.time()-time_ref)
