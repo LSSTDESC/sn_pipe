@@ -10,8 +10,90 @@ import sn_phystools_input as cosmo_input
 from sn_tools.sn_io import make_dict_from_config
 from sn_tools.sn_io import add_parser
 from sn_cosmology.random_hd import HD_random
+from sn_cosmology.cosmo_tools import transform
+from sn_tools.sn_utils import multiproc
 import pandas as pd
 import glob
+
+
+def make_df(ddict):
+    """
+    Function to transform a dict to pandas df
+
+    Parameters
+    ----------
+    ddict : dict
+        Data to process.
+
+    Returns
+    -------
+    res_df : pandas df
+        output data.
+
+    """
+
+    res_df = pd.DataFrame()
+    # fitted values in a df
+    for key, vals in ddict.items():
+        res = pd.DataFrame.from_dict(transform(vals))
+        res['config'] = [key]
+        res_df = pd.concat((res, res_df))
+
+    return res_df
+
+
+def cosmo_fits(nreal, params, j, output_q=None):
+    """
+    Function to perform cosmo_fits using multiprocessing
+
+    Parameters
+    ----------
+    nreal : list(int)
+        List of random surveys.
+    params : dict
+        parameters.
+    j : int
+        internal tag for multiprocessing.
+    output_q : multiprocessing_queue, optional
+        Where to put the results. The default is None.
+
+    Returns
+    -------
+    pandas df
+        Result.
+
+    """
+
+    dataDir = params['dataDir']
+    dbName_DD = params['dbName_DD']
+    dbName_WFD = params['dbName_WFD']
+    yearmax = params['yearmax']
+    hd_random = params['hd_random']
+
+    cosmo_df = pd.DataFrame()
+    print('processing', j, nreal)
+    for nn in nreal:
+        fis = glob.glob('{}/{}_{}/*_{}.hdf5'.format(dataDir,
+                                                    dbName_DD, dbName_WFD, nn))
+        sample_survey = pd.DataFrame()
+        for fi in fis:
+            rr = pd.read_hdf(fi)
+            sample_survey = pd.concat((sample_survey, rr))
+        # fit per year
+        for year in range(1, yearmax+1):
+            idx = sample_survey['year'] <= year
+            sel_sample = sample_survey[idx]
+            vv = hd_random(sel_sample)
+            df_ = make_df(vv)
+            df_['year'] = year+1
+            df_['real_survey'] = nn
+            cosmo_df = pd.concat((cosmo_df, df_))
+
+    if output_q is not None:
+        return output_q.put({j: cosmo_df})
+    else:
+        return cosmo_df
+
 
 # get all possible script parameters and put in a dict
 path_cosmo_input = cosmo_input.__path__
@@ -25,7 +107,7 @@ add_parser(parser, confDict)
 
 opts, args = parser.parse_args()
 
-#grab params
+# grab params
 fitparams_names = opts.fitparam_names.split(',')
 fitparams_values = list(map(float, opts.fitparam_values.split(',')))
 prior = opts.prior
@@ -43,56 +125,45 @@ prior_sigma = opts.prior_sigma.split(',')
 
 prior_refvalue = list(map(float, prior_refvalue))
 prior_sigma = list(map(float, prior_sigma))
-priors = {}
 
-if prior == 0:
-    priors['noprior'] = pd.DataFrame()
-else:
+priors = pd.DataFrame()
 
-    priors['prior'] = pd.DataFrame({'varname': prior_varname,
-                                    'refvalue': prior_refvalue,
-                                    'sigma': prior_sigma})
-
+if prior == 1:
+    priors = pd.DataFrame({'varname': prior_varname,
+                           'refvalue': prior_refvalue,
+                           'sigma': prior_sigma})
 
 dataDir = opts.dataDir
 dbName_DD = opts.dbName_DD
 dbName_WFD = opts.dbName_WFD
+yearmax = opts.yearmax
+nproc = opts.nproc
+
 
 fitconfig = {}
 
 fitconfig['fita'] = dict(zip(fitparams_names, fitparams_values))
 
-#random instance
-hd_random = HD_random(fitconfig=fitconfig)#,prior=priors)
+# random instance
+hd_random = HD_random(fitconfig=fitconfig, prior=priors)
 
 
 # loop on data and make the fit
 
-fis = glob.glob('{}/{}_{}/*.hdf5'.format(dataDir,dbName_DD,dbName_WFD))
-
-print(len(fis))
+fis = glob.glob('{}/{}_{}/*.hdf5'.format(dataDir, dbName_DD, dbName_WFD))
 
 n_random_surveys = int(len(fis)/10)
 
-for nn in range(1,n_random_surveys+1):
-    fis = glob.glob('{}/{}_{}/*_{}.hdf5'.format(dataDir,dbName_DD,dbName_WFD,nn))
-    print(len(fis))
-    sample_survey = pd.DataFrame()
-    for fi in fis:
-        rr = pd.read_hdf(fi)
-        sample_survey = pd.concat((sample_survey,rr))
-        print(len(sample_survey))
-    #fit per year
-    for year in range(1,11):
-        idx = sample_survey['year'] <= year
-        sel_sample = sample_survey[idx]
-        vv = hd_random(sel_sample)
-        print(vv)
-    break
-        
-        
-    
-    
-                                  
-    
-    
+n_real = list(range(1, n_random_surveys+1))
+
+pp = {}
+pp['dataDir'] = dataDir
+pp['dbName_DD'] = dbName_DD
+pp['dbName_WFD'] = dbName_WFD
+pp['yearmax'] = yearmax
+pp['hd_random'] = hd_random
+
+
+cosmo_df = multiproc(n_real, pp, cosmo_fits, nproc=nproc)
+
+print(cosmo_df)
