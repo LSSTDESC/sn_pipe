@@ -1,37 +1,26 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Sep  3 15:17:05 2025
+
+@author: philippe.gris@clermont.in2p3.fr
+"""
+
 import pandas as pd
 from optparse import OptionParser
 from sn_tools.sn_batchutils import BatchIt
-parser = OptionParser()
 
-parser.add_option("--dbName_DD", type="str",
-                  default='baseline_v3.6_10yrs',
-                  help="db Name DD to process [%default]")
-parser.add_option("--dbName_WFD", type="str",
-                  default='baseline_v3.6_10yrs',
-                  help="db Name WFD to process [%default]")
+parser = OptionParser('script to fit LSST SN surveys')
+
+parser.add_option("--dbList", type="str",
+                  default='list_OS_nsn_wfd.csv',
+                  help="db list to process [%default]")
 parser.add_option("--outDir", type="str",
-                  default='/sps/lsst/users/gris/cosmo_fit',
+                  default='/sps/lsst/users/gris/cosmo_fit_last',
                   help="output directory [%default]")
-parser.add_option("--inputDir_DD", type="str",
-                  default='/sps/lsst/users/gris/Output_SN_sigmaInt_0.0_Hounsell_G10_JLA',
-                  help="input directory for DD files[%default]")
-parser.add_option("--inputDir_WFD", type="str",
-                  default='/sps/lsst/users/gris/Output_SN_WFD_sigmaInt_0.0_Hounsell_G10_JLA',
-                  help="input directory for WFD files[%default]")
-parser.add_option("--surveyList", type=str,
-                  default='surveylist.csv',
-                  help=" survey list (+outName) to process [%default]")
-parser.add_option("--low_z_optimize", type=int,
-                  default=0,
-                  help="to optimize low-z sample  [%default]")
-parser.add_option('--timescale', type=str, default='year',
-                  help='timescale for the cosmology (year or season)[%default]')
-parser.add_option('--seasons_cosmo', type=str,
-                  default='1-10',
-                  help='Seasons to estimate cosmology params [%default]')
-parser.add_option('--nrandom', type=int,
-                  default=50,
-                  help='number of random sample (per season/year) to generate [%default]')
+parser.add_option("--inputDir", type="str",
+                  default='/sps/lsst/users/gris/sn_surveys',
+                  help="input directory for survey files[%default]")
 parser.add_option('--fitparam_names', type=str,
                   default='w0,wa,Om0',
                   help='fit parameter names [%default]')
@@ -41,71 +30,46 @@ parser.add_option('--fitparam_values', type=str,
 parser.add_option('--prior', type=int,
                   default=1,
                   help='prior for the fit [%default]')
+parser.add_option('--prior_varname', type=str, default='Om0',
+                  help='prior varname list')
+parser.add_option('--prior_refvalue', type=str, default='0.3',
+                  help='prior refvalue list')
+parser.add_option('--prior_sigma', type=str, default='0.0073',
+                  help='prior sigma list')
 
 opts, args = parser.parse_args()
 
-dbName_DD = opts.dbName_DD
-dbName_WFD = opts.dbName_WFD
+dbList = opts.dbList
 outDir = opts.outDir
-inputDir_DD = opts.inputDir_DD
-inputDir_WFD = opts.inputDir_WFD
-# dbName_WFD = opts.dbName_WFD
-surveyList = opts.surveyList
-# = opts.tag
-low_z_optimize = opts.low_z_optimize
-timescale = opts.timescale
-seasons_cosmo = opts.seasons_cosmo
-nrandom = opts.nrandom
 fitparam_names = opts.fitparam_names
 fitparam_values = opts.fitparam_values
 prior = opts.prior
+prior_varname = opts.prior_varname
+prior_refvalue = opts.prior_refvalue
+prior_sigma = opts.prior_sigma
 
 
 # load OS files to process
-fis = pd.read_csv(surveyList, comment='#')
+fis = pd.read_csv(dbList, comment='#')
+
+
+script = 'run_scripts/cosmology/cosmology_survey.py'
+
+pp = {}
+pp['fitparam_names'] = fitparam_names
+pp['fitparam_values'] = fitparam_values
+pp['prior'] = prior
+pp['prior_varname'] = prior_varname
+pp['prior_refvalue'] = prior_refvalue
+pp['prior_sigma'] = prior_sigma
 
 # loop on files and create batches
 
-seasons_cosmo = []
-for i in range(2, 12):
-    dd = list(range(1, i))
-    seasons_cosmo.append(dd)
-
-seasons_cosmo = list(range(1, 11))
-
-
-script = 'run_scripts/cosmology/cosmology.py'
 for i, row in fis.iterrows():
-    wfd_tagsurvey = 'notag'
-    dd_tagsurvey = 'notag'
-    """
-    if 'wfd_tagsurvey' in fis.columns:
-        wfd_tagsurvey = row['wfd_tagsurvey']
-    if 'dd_tagsurvey' in fis.columns:
-        dd_tagsurvey = row['dd_tagsurvey']
-
-    processName = 'cosmo_{}_{}_{}'.format(
-        dbName_DD, wfd_tagsurvey, dd_tagsurvey)
-    """
-    ttag = row['survey'].split('survey_scenario_')[-1]
-    processName = 'cosmo_fit_{}'.format(ttag)
+    dbName = row['dbName']
+    processName = 'cosmofit_survey_{}'.format(dbName)
     mybatch = BatchIt(processName=processName)
-    params = {}
-    params['dataDir_DD'] = inputDir_DD
-    params['dbName_DD'] = dbName_DD
-    params['dataDir_WFD'] = inputDir_WFD
-    params['dbName_WFD'] = dbName_WFD
-    params['outDir'] = outDir
-    params['survey'] = '{}.csv'.format(row['survey'])
-    params['outName'] = row['outName']
-    params['low_z_optimize'] = low_z_optimize
-    params['timescale'] = timescale
-    params['nrandom'] = nrandom
-    params['seasons_cosmo'] = ','.join(list(map(str, seasons_cosmo)))
-    params['wfd_tagsurvey'] = wfd_tagsurvey
-    params['dd_tagsurvey'] = dd_tagsurvey
-    params['fitparam_names'] = fitparam_names
-    params['fitparam_values'] = fitparam_values
-    params['prior'] = prior
-    mybatch.add_batch(script, params)
+    pp['dbName_DD'] = dbName
+    pp['dbName_WFD'] = dbName
+    mybatch.add_batch(script, pp)
     mybatch.go_batch()
