@@ -1,6 +1,6 @@
-# $${\color{red} Dark Energy parameters estimation from a Hubble diagram fit}$$
+# $${\color{red} Dark \space Energy \space parameters \space estimation \space from \space a \space Hubble \space diagram \space fit}$$
 
-## $${\color{blue} Cosmology from SNe Ia production}$$
+## $${\color{blue} Cosmology\space from \space SNe \space Ia \space production}$$
 
 ### Usage: run_scripts/cosmology/cosmology.py
 
@@ -79,11 +79,11 @@ Options:
 
 </pre>
 
-## $${\color{blue} Cosmology from SNe Ia LSST surveys}$$
+## $${\color{blue} Cosmology \space from \space SNe \space Ia \space LSST \space surveys}$$
 
 This step requires to generate SNe Ia LSST surveys as describe [here](../gen_survey/sn_gen_survey.md).
 
-### $${\color{orange} Interactive estimation}$$
+### $${\color{orange} Interactive \space estimation}$$
 
 #### script to fit cosmology parameters on SNe Ia surveys
 
@@ -125,7 +125,7 @@ Options:
 
 </pre>
 
-### $${\color{orange} Batch estimation}$$
+### $${\color{orange} Batch \space estimation}$$
 
 #### [Usage] for_batch/scripts/cosmo/loop_cosmofit_survey.py --help
 
