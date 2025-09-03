@@ -40,6 +40,8 @@ parser.add_option("--dbList", type=str,
 
 opts, args = parser.parse_args()
 
+dbList = opts.dbList
+
 params = vars(opts)
 
 del params['dbList']
@@ -50,7 +52,7 @@ for key, vals in params.items():
     cmd_base += ' --{}={}'.format(key,vals)
 """
 # grab list of dbs to process
-dbNames = pd.read_csv(opts.dbList, comment='#')
+dbNames = pd.read_csv(dbList, comment='#')
 
 # now build the batch
 processName = 'gen_survey'
