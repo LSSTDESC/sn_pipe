@@ -2,7 +2,7 @@
 
 ## Cosmology from SNe Ia production
 
-## Usage: run_scripts/cosmology/cosmology.py
+### Usage: run_scripts/cosmology/cosmology.py
 
 <pre>
 
@@ -81,7 +81,7 @@ Options:
 
 ## Cosmology from SNe Ia LSST surveys
 
-This step requires to generate SNe Ia LSST surveys as describe [here](docs/gen_survey/sn_gen_survey.md).
+This step requires to generate SNe Ia LSST surveys as describe [here](../gen_survey/sn_gen_survey.md).
 
 ### Interactive estimation
 
