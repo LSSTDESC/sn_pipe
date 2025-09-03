@@ -8,7 +8,7 @@ Created on Tue Sep  2 16:01:29 2025
 from optparse import OptionParser
 import sn_phystools_input as cosmo_input
 from sn_tools.sn_io import make_dict_from_config
-from sn_tools.sn_io import add_parser
+from sn_tools.sn_io import add_parser, checkDir
 from sn_cosmology.random_hd import HD_random
 from sn_cosmology.cosmo_tools import transform
 from sn_tools.sn_utils import multiproc
@@ -138,7 +138,7 @@ dbName_DD = opts.dbName_DD
 dbName_WFD = opts.dbName_WFD
 yearmax = opts.yearmax
 nproc = opts.nproc
-
+outDir = opts.outDir
 
 fitconfig = {}
 
@@ -165,5 +165,11 @@ pp['hd_random'] = hd_random
 
 
 cosmo_df = multiproc(n_real, pp, cosmo_fits, nproc=nproc)
+
+checkDir(outDir)
+
+outName = '{}/cosmo_fit_{}_{}.hdf5'.format(outDir, dbName_DD, dbName_WFD)
+
+cosmo_df.to_hdf(outName, key='cosmo')
 
 print(cosmo_df)
