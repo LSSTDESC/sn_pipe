@@ -13,7 +13,7 @@ from sn_tools.sn_batchutils import BatchIt
 parser = OptionParser('script to fit LSST SN surveys')
 
 parser.add_option("--dbList", type="str",
-                  default='list_OS_nsn_wfd.csv',
+                  default='list_OS_new_wfd.csv',
                   help="db list to process [%default]")
 parser.add_option("--outDir", type="str",
                   default='/sps/lsst/users/gris/cosmo_fit_last',
