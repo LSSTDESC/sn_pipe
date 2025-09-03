@@ -29,13 +29,13 @@ parser.add_option("--save_full_survey", type=int,
 parser.add_option("--n_random_survey", type=int,
                   default=50,
                   help='number of random surveys to generate [%default]')
-parser.add_option("--select_WFD", int, default=1,
+parser.add_option("--select_WFD", type=int, default=1,
                   help='to select WFD SNe Ia')
-parser.add_option("--surveyDir", str,
+parser.add_option("--surveyDir", type=str,
                   default='/sps/lsst/users/gris/sn_surveys',
                   help="output directory [%default]")
-parser.add_option("--dbList", str,
-                  default='',
+parser.add_option("--dbList", type=str,
+                  default='list_OS_new_wfd.csv',
                   help="list of db to process [%default]")
 
 opts, args = parser.parse_args()
