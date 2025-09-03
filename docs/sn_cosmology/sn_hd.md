@@ -1,4 +1,4 @@
-# $${\color{red} Dark \space Energy \space parameters \space estimation \space from \space a \space Hubble \space diagram \space fit}$$
+# $${\color{red} **Dark \space Energy \space parameters \space estimation \space from \space a \space Hubble \space diagram \space fit**}$$
 
 ## $${\color{blue} Cosmology\space from \space SNe \space Ia \space production}$$
 
