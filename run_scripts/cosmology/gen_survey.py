@@ -10,15 +10,6 @@ from optparse import OptionParser
 from sn_tools.sn_io import make_dict_from_config
 from sn_tools.sn_io import add_parser
 import sn_phystools_input as cosmo_input
-from sn_tools.sn_io import checkDir
-import numpy as np
-import pandas as pd
-from sn_cosmology.cosmo_tools import load_footprints, load_host_effi
-from sn_cosmology.cosmo_tools import load_data_season, random_LSST
-from sn_cosmology.cosmo_tools import clean_survey, dump_survey, analyze_survey
-from sn_cosmology.cosmo_tools import get_seasons, dump_survey_season
-from sn_cosmology.random_hd import Random_survey
-from sn_tools.sn_utils import multiproc
 from sn_cosmology.random_survey import Gen_Surveys
 import time
 
