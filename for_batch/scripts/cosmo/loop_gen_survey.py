@@ -34,6 +34,8 @@ parser.add_option("--select_WFD", type=int, default=1,
 parser.add_option("--surveyDir", type=str,
                   default='/sps/lsst/users/gris/sn_surveys',
                   help="output directory [%default]")
+parser.add_option("--low_z_optimize", type=int, default=0,
+                  help='to buil an optimize low-z WFD sample [%default]')
 parser.add_option("--dbList", type=str,
                   default='list_OS_new_wfd.csv',
                   help="list of db to process [%default]")
