@@ -18,7 +18,7 @@ parser.add_option("--dbList", type="str",
 parser.add_option("--outDir", type="str",
                   default='/sps/lsst/users/gris/cosmo_fit_last',
                   help="output directory [%default]")
-parser.add_option("--inputDir", type="str",
+parser.add_option("--dataDirDir", type="str",
                   default='/sps/lsst/users/gris/sn_surveys',
                   help="input directory for survey files[%default]")
 parser.add_option('--fitparam_names', type=str,
@@ -41,6 +41,7 @@ opts, args = parser.parse_args()
 
 dbList = opts.dbList
 outDir = opts.outDir
+dataDir = opts.dataDir
 fitparam_names = opts.fitparam_names
 fitparam_values = opts.fitparam_values
 prior = opts.prior
@@ -62,7 +63,8 @@ pp['prior'] = prior
 pp['prior_varname'] = prior_varname
 pp['prior_refvalue'] = prior_refvalue
 pp['prior_sigma'] = prior_sigma
-
+pp['outDir'] = outDir
+pp['dataDir'] = dataDir
 # loop on files and create batches
 
 for i, row in fis.iterrows():
