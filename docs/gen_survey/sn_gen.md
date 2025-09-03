@@ -80,3 +80,36 @@ python run_scripts/cosmology/gen_survey.py --dataDir_DD=../Output_SN_DD_sigmaInt
 ## Input files
 
 [survey_scenario_spectroz_TiDES_10_new.csv](survey_scenario_spectroz_TiDES_10_new.csv): spectroscopic scenario
+
+## Batch production
+It is possible to launch a batch production (for example: at ccin2p3) using the following script
+
+Usage: python for_batch/scripts/cosmo/loop_gen_survey.py [options]
+
+<pre>
+Options:
+  -h, --help            show this help message and exit
+  --dataDir_DD=DATADIR_DD
+                        db list to process  [/sps/lsst/users/gris/Output_SN_DD
+                        _sigmaInt_0.0_Hounsell_z_smflux_notelrot_airmass_G10_J
+                        LA]
+  --dataDir_WFD=DATADIR_WFD
+                        db list to process  [/sps/lsst/users/gris/Output_SN_WF
+                        D_sigmaInt_0.0_Hounsell_z_smflux_notelrot_airmass_G10_
+                        JLA]
+  --surveyFile=SURVEYFILE
+                        survey file [survey_scenario_spectroz_TiDES_5.csv]
+  --seasons=SEASONS     seasons/years to consider [1-10]
+  --save_full_survey=SAVE_FULL_SURVEY
+                        to save the full survey or not [0]
+  --n_random_survey=N_RANDOM_SURVEY
+                        number of random surveys to generate [50]
+  --select_WFD=SELECT_WFD
+                        to select WFD SNe Ia
+  --surveyDir=SURVEYDIR
+                        output directory [/sps/lsst/users/gris/sn_surveys]
+  --low_z_optimize=LOW_Z_OPTIMIZE
+                        to buil an optimize low-z WFD sample [0]
+  --dbList=DBLIST       list of db to process [list_OS_new_wfd.csv]
+
+</pre>
