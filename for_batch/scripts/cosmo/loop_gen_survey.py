@@ -13,10 +13,10 @@ parser = OptionParser()
 
 parser.add_option("--dataDir_DD", type="str",
                   default='/sps/lsst/users/gris/Output_SN_DD_sigmaInt_0.0_Hounsell_z_smflux_notelrot_airmass_G10_JLA',
-                  help="db list to process  [%default]")
+                  help="DD data dir[%default]")
 parser.add_option("--dataDir_WFD", type="str",
                   default='/sps/lsst/users/gris/Output_SN_WFD_sigmaInt_0.0_Hounsell_z_smflux_notelrot_airmass_G10_JLA',
-                  help="db list to process  [%default]")
+                  help="WFD data dir [%default]")
 parser.add_option("--surveyFile", type="str",
                   default='survey_scenario_spectroz_TiDES_5.csv',
                   help='survey file [%default]')

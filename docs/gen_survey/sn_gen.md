@@ -90,13 +90,11 @@ Usage: python for_batch/scripts/cosmo/loop_gen_survey.py [options]
 Options:
   -h, --help            show this help message and exit
   --dataDir_DD=DATADIR_DD
-                        db list to process  [/sps/lsst/users/gris/Output_SN_DD
-                        _sigmaInt_0.0_Hounsell_z_smflux_notelrot_airmass_G10_J
-                        LA]
+                        DD data dir[/sps/lsst/users/gris/Output_SN_DD_sigmaInt
+                        _0.0_Hounsell_z_smflux_notelrot_airmass_G10_JLA]
   --dataDir_WFD=DATADIR_WFD
-                        db list to process  [/sps/lsst/users/gris/Output_SN_WF
-                        D_sigmaInt_0.0_Hounsell_z_smflux_notelrot_airmass_G10_
-                        JLA]
+                        WFD data dir [/sps/lsst/users/gris/Output_SN_WFD_sigma
+                        Int_0.0_Hounsell_z_smflux_notelrot_airmass_G10_JLA]
   --surveyFile=SURVEYFILE
                         survey file [survey_scenario_spectroz_TiDES_5.csv]
   --seasons=SEASONS     seasons/years to consider [1-10]
