@@ -8,7 +8,9 @@ Created on Thu Sep  4 13:17:54 2025
 from optparse import OptionParser
 import numpy as np
 from sn_tools.sn_fp_pixel import get_pixels_in_window,FocalPlane,get_xy_pixels
-
+import matplotlib.pyplot as plt
+import matplotlib
+import healpy as hp
 
 class Pixels_in_FP(FocalPlane):
     def __init__(self,nside,deltaRA,deltaDec,
@@ -132,8 +134,68 @@ class Pixels_in_FP(FocalPlane):
         self.plot_fp_pixels(pixelList)
         
         
-        
+def plotMollview(pixels, axa, fig, night,nside,comment=''):
+    """
+    Method to display a Mollweid view
 
+    Parameters
+    --------------
+    pixels: pandas df
+      data to plots
+    axa: matplotlib axis
+      axis to use for the plot
+    fig: matplotlib figure
+      figure to use for plot
+    night: int
+      night number
+    """
+
+    xmin = 0.99999
+    xmax = np.max([np.max(pixels['color']), 1])
+
+    norm = plt.cm.colors.Normalize(xmin, xmax)
+    # cmap = plt.get_cmap('jet', int(xmax))
+    n = int(xmax)+1
+    n = 6
+    from_list = matplotlib.colors.LinearSegmentedColormap.from_list
+    cmap = from_list(None, plt.cm.Set1(range(1, n)), n-1)
+    cmap.set_under('w')
+
+    npixels = hp.nside2npix(nside)
+    hpxmap = np.zeros(npixels, dtype=int)
+    hpxmap = np.full(hpxmap.shape, -2)
+    hpxmap[pixels['healpixID']] = pixels['color'].astype(int)
+
+    # print('hello ',xmin,xmax)
+
+    dd = '$\Delta$T = current night-last obs night (gri) [days]'
+    hp.mollview(hpxmap, nest=True, cmap=cmap,
+                min=xmin, max=n, norm=norm, cbar=False,
+                title=comment, hold=True, badcolor='white', xsize=1600)
+
+    hp.graticule(verbose=False)
+    
+    """
+    ax = plt.gca()
+    image = ax.get_images()[0]
+    cbar = fig.colorbar(image, ax=ax, ticks=range(
+        1, n), orientation='horizontal')
+    # cbar = fig.colorbar(ax[0,0], ticks=range(0,n), orientation='horizontal')  # set some values to ticks
+
+    labels = list(range(1, n))
+
+    tick_label = list(map(str, labels))
+
+    tick_label[-1] = '>{}'.format(tick_label[-2])
+    # print(tick_label)
+    cbar.ax.set_xticklabels([])
+    cbar.ax.tick_params(size=0)
+    for j, lab in enumerate(tick_label):
+        cbar.ax.text(labels[j]+0.5, -10., lab)
+
+    #ax.text(-3.5, 0.9, self.dbName, fontsize=15, color='r')
+    ax.text(-3.5, 0.6, 'night {}'.format(night), fontsize=15, color='k')        
+    """
 
 
 parser = OptionParser(
@@ -166,6 +228,9 @@ nside = opts.nside
 deltaRA=opts.deltaRA
 deltaDec=opts.deltaDec
 fp_level=opts.fp_level
+
+#band index
+bbands = dict(zip('ugrizy',[1,2,3,4,5,6]))
 
 #class Pixels_in_FP
 pix_in_fp = Pixels_in_FP(nside, deltaRA, deltaDec,level=fp_level)
@@ -217,47 +282,25 @@ for night in range(1,nnights+1):
         print(dd[['RA','Dec','mjd']])
         RA=dd['RA']
         Dec = dd['Dec']
+        band = dd['filter']
+        mjd = np.round(dd['mjd'],3)
+        field = dd['target_name'].split(':')[-1]
         
         ppixels = pix_in_fp(dd,RA,Dec)
     
-        pix_in_fp.plot_pixels_in_FP(ppixels)
+        #pix_in_fp.plot_pixels_in_FP(ppixels)
         
         ppixels = ppixels[df_var]
         
-        print(ppixels,len(ppixels))
+        print(ppixels,len(ppixels),band)
         
-        """
-        #get pixels around the pointing
-        pixel_obs = get_pixels_in_window(nside, 
-                                          RA-deltaRA, RA+deltaRA, 
-                                          Dec-deltaRA, Dec+deltaRA)
-        print('hello',pixel_obs)
-        #gnomonic projection
-        pixel_proj = get_xy_pixels(dd,
-                           pixel_obs['healpixID'],
-                           pixel_obs['pixRA'],
-                           pixel_obs['pixDec'],
-                           RACol='RA',
-                           DecCol='Dec',
-                           telrot=True)
+        fig, ax = plt.subplots(figsize=(12,8))
         
-        print(pixel_proj)
-        #grab pixels that are inside the FP
-        pixel_fp = fp.pix_to_obs(pixel_proj)
+        ppixels['color'] = bbands[band]
+        comment = '{},night={},mjd={},{}-band'.format(field,night,mjd,band)
+        plotMollview(ppixels, ax, fig, night, nside,comment)
         
-        list_pixels_fp = pixel_fp['healpixID'].tolist()
-        ido = np.in1d(pixel_proj['healpixID'],list_pixels_fp)
-        print(pixel_fp)
-        #plot
-        fp.plot_fp_pixels(pixel_proj[ido])
-        """
+        plt.show()
+        
+        
     print(test)
-        
-        
-    
-    """
-    print(tt)
-    idb = np.core.defchararray.find(tt,'SSO')
-    print(idb)
-    print(test)
-    """
