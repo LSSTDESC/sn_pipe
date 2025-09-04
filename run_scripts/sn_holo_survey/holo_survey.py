@@ -11,6 +11,10 @@ from sn_tools.sn_fp_pixel import get_pixels_in_window,FocalPlane,get_xy_pixels
 import matplotlib.pyplot as plt
 import matplotlib
 import healpy as hp
+from astropy.time import Time
+from sn_scheduler.scheduler import StarAltTime
+import astropy.units as u
+import pandas as pd
 
 class Pixels_in_FP(FocalPlane):
     def __init__(self,nside,deltaRA,deltaDec,
@@ -197,7 +201,94 @@ def plotMollview(pixels, axa, fig, night,nside,comment=''):
     ax.text(-3.5, 0.6, 'night {}'.format(night), fontsize=15, color='k')        
     """
 
+def process_night(stars_alt, year, month, day, targets, plot_it=False):
+    """
 
+
+    Parameters
+    ----------
+    stars_alt : TYPE
+        DESCRIPTION.
+    year : TYPE
+        DESCRIPTION.
+    month : TYPE
+        DESCRIPTION.
+    day : TYPE
+        DESCRIPTION.
+    targets : TYPE
+        DESCRIPTION.
+    plot_it : TYPE, optional
+        DESCRIPTION. The default is False.
+
+    Returns
+    -------
+    targets_info : TYPE
+        DESCRIPTION.
+
+    """
+    """
+    Function to process targets
+
+    Parameters
+    ----------
+    stars_alt : StarAltTime instance
+        The class where the calculation is made.
+    year : int
+        year of observation.
+    month : int
+        month of observation.
+    day : int
+        day of observation.
+    targets : pandas df
+        List of targets to process.
+    plot_it : bool, optional
+        To plot the results. The default is False.
+
+    Returns
+    -------
+    targets_info : pandas df
+        Targets with obs. info.
+
+    """
+
+    # grab the targets
+    stars_alt.target_location(targets=targets)
+
+    # get stars alt
+    stars_alt(year=year, month=month, day=day)
+
+    # grab star infos
+    alt_min = 25.
+    alt_max = 86.5
+    airmass_max = 2.5
+
+    targets_info = stars_alt.target_info(star_alt_min=alt_min*u.deg,
+                                         star_alt_max=alt_max*u.deg,
+                                         star_airmass_max=airmass_max)
+
+    """
+    print(targets_info.columns)
+    print(targets_info[['target', 'mjd', 'mjd_per_min_p1',
+          'mjd_per_max_p1', 'obs_duration [h]']])
+    """
+    # plot result here
+    if plot_it:
+        stars_alt.plot(star_alt_min=alt_min*u.deg,
+                       star_alt_max=alt_max*u.deg,
+                       star_airmass_max=airmass_max)
+        # stars_alt.plot_airmass()
+        plt.show()
+
+    return targets_info
+
+def make_df(target,ra,dec):
+    
+    df = pd.DataFrame(target,columns=['target'])
+    df['ra'] = ra
+    df['dec'] = dec
+    
+    return df
+    
 parser = OptionParser(
     description='Script build an AuxTel survey')
 
@@ -232,6 +323,8 @@ fp_level=opts.fp_level
 #band index
 bbands = dict(zip('ugrizy',[1,2,3,4,5,6]))
 
+## StarAltTime instance
+stars_alt = StarAltTime()
 #class Pixels_in_FP
 pix_in_fp = Pixels_in_FP(nside, deltaRA, deltaDec,level=fp_level)
 
@@ -285,6 +378,13 @@ for night in range(1,nnights+1):
         band = dd['filter']
         mjd = np.round(dd['mjd'],3)
         field = dd['target_name'].split(':')[-1]
+        ttime = Time('{}'.format(mjd),format='mjd')
+        tdate = '{}'.format(ttime.datetime64)
+        spa = tdate.split('T')[0].split('-')
+        year=int(spa[0])
+        month = int(spa[1])
+        day = int(spa[2])
+        print(year,month,day)
         
         ppixels = pix_in_fp(dd,RA,Dec)
     
@@ -299,6 +399,10 @@ for night in range(1,nnights+1):
         ppixels['color'] = bbands[band]
         comment = '{},night={},mjd={},{}-band'.format(field,night,mjd,band)
         plotMollview(ppixels, ax, fig, night, nside,comment)
+        
+        targets = make_df([field],[RA], [Dec])
+                            
+        rr = process_night(stars_alt, year, month, day, targets, plot_it=True)
         
         plt.show()
         
