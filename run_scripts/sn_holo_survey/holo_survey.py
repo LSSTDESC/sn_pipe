@@ -465,21 +465,22 @@ for night in range(1, nnights+1):
         rr = pd.DataFrame(targets_nearest[tp])
         rr['g_mag'] = rr['g_mag'].astype(str)
         print(rr)
-        rr.style.hide(axis='index')
+        # rr.style.hide(axis='index')
         # rr = rr.reset_index()
         # rr = rr.to_string(index=False)
+        # rr = rr.set_index('source_id')
         table = pd.plotting.table(axc, rr,
                                   loc='center', cellLoc='center',
                                   colWidths=[0.35]+[0.1]*4)
         table.auto_set_font_size(False)
         table.set_fontsize(10)
-        table.scale(2, 2)
+        table.scale(1.8, 1.8)
         """
         axc.table(cellText=rr.values, colLabels=rr.keys(),
                   loc='center', cellLoc='center',
                   colWidths=[0.35]+[0.1]*4, fontsize=20, scale=(2, 2))
         """
-        # plt.tight_layout
+        plt.tight_layout
         plt.show()
 
     print(test)
