@@ -17,14 +17,33 @@ from sn_scheduler.scheduler import StarAltTime
 import astropy.units as u
 import pandas as pd
 from sn_tools.sn_obs import getPix
+from astropy.visualization import astropy_mpl_style, quantity_support
 
+plt.style.use(astropy_mpl_style)
+quantity_support()
+
+plt.rcParams["axes.labelsize"] = "medium"
+plt.rcParams["axes.labelweight"] = "bold"
+plt.rcParams["axes.linewidth"] = 2.0
+plt.rcParams["xtick.major.size"] = 8
+plt.rcParams["ytick.major.size"] = 8
+plt.rcParams["ytick.minor.size"] = 5
+plt.rcParams["xtick.labelsize"] = "large"
+plt.rcParams["ytick.labelsize"] = "large"
+
+# plt.rcParams["figure.figsize"] = (12, 8)
 plt.rcParams['axes.titlesize'] = 10
 plt.rcParams['axes.titleweight'] = 'bold'
+# plt.rcParams['axes.facecolor'] = 'blue'
+plt.rcParams['xtick.direction'] = 'out'
+plt.rcParams['ytick.direction'] = 'out'
+# the line width around the marker symbol
+plt.rcParams['lines.markeredgewidth'] = 0.3
+plt.rcParams['lines.markersize'] = 5  # markersize, in points
 plt.rcParams['grid.alpha'] = 0.75  # transparency, between 0.0 and 1.0
 plt.rcParams['grid.linestyle'] = '-'  # simple line
 plt.rcParams['grid.linewidth'] = 0.4  # in points
 plt.rcParams['font.size'] = 13
-plt.rcParams['font.weight'] = "bold"
 
 
 def plotMollview(pixels, axa, fig, night, nside, comment='', n=6):
@@ -59,7 +78,6 @@ def plotMollview(pixels, axa, fig, night, nside, comment='', n=6):
     hpxmap = np.full(hpxmap.shape, -2)
     hpxmap[pixels['healpixID']] = pixels['color'].astype(int)
 
-    # print('hello ',xmin,xmax)
     plt.axes(axa)
     hp.mollview(hpxmap, nest=True, cmap=cmap,
                 min=xmin, max=n, norm=norm, cbar=False,
@@ -67,30 +85,12 @@ def plotMollview(pixels, axa, fig, night, nside, comment='', n=6):
 
     hp.graticule(verbose=False)
 
-    """
-    ax = plt.gca()
-    image = ax.get_images()[0]
-    cbar = fig.colorbar(image, ax=ax, ticks=range(
-        1, n), orientation='horizontal')
-    # cbar = fig.colorbar(ax[0,0], ticks=range(0,n), orientation='horizontal')  # set some values to ticks
+    axb = axa.inset_axes([39., -7.2, 7, 5], projection='mollweide')
 
-    labels = list(range(1, n))
-
-    tick_label = list(map(str, labels))
-
-    tick_label[-1] = '>{}'.format(tick_label[-2])
-    # print(tick_label)
-    cbar.ax.set_xticklabels([])
-    cbar.ax.tick_params(size=0)
-    for j, lab in enumerate(tick_label):
-        cbar.ax.text(labels[j]+0.5, -10., lab)
-
-    # ax.text(-3.5, 0.9, self.dbName, fontsize=15, color='r')
-    ax.text(-3.5, 0.6, 'night {}'.format(night), fontsize=15, color='k')
-    """
+    axa.indicate_inset_zoom(axb, edgecolor="black")
 
 
-def process_night(stars_alt, mjd, targets, fig, ax):
+def process_night(stars_alt, mjd, targets, fig, ax, plt=None):
     """
 
 
@@ -158,11 +158,6 @@ def process_night(stars_alt, mjd, targets, fig, ax):
                                          star_alt_max=alt_max*u.deg,
                                          star_airmass_max=airmass_max)
 
-    """
-    print(targets_info.columns)
-    print(targets_info[['target', 'mjd', 'mjd_per_min_p1',
-          'mjd_per_max_p1', 'obs_duration [h]']])
-    """
     # plot result here
     stars_alt.plot(star_alt_min=alt_min*u.deg,
                    star_alt_max=alt_max*u.deg,
@@ -170,7 +165,7 @@ def process_night(stars_alt, mjd, targets, fig, ax):
                    time_obs=Time(mjd, format='mjd'),
                    hour_min=-6,
                    hour_max=8,
-                   fig=fig, ax=ax)
+                   fig=fig, ax=ax, myplt=plt)
 
     return targets_info
 
@@ -209,6 +204,8 @@ def target_to_pixel(nside, targets):
 
 def get_targets(pixels, targets):
 
+    print('hello', len(targets), targets.columns)
+
     tt = targets[['source_id', 'ra', 'dec']]
 
     # make all possible combinations pixels/targettarget
@@ -224,6 +221,83 @@ def get_targets(pixels, targets):
     combis = combis.sort_values(by='dist')
 
     print(combis[['healpixID', 'source_id', 'dist']])
+
+    tt = combis.groupby(['source_id']).apply(
+        lambda x: min_dist_source(x), include_groups=False).reset_index()
+
+    print(tt)
+
+    print(len(tt))
+
+    idx = tt['dist'] <= 5
+
+    res = tt[idx]
+
+    res['target'] = res['source_id']
+
+    vv = ['source_id', 'healpixID', 'pixRA', 'pixDec',
+          'raft', 'deltaRA', 'deltaDec', 'dist', 'target']
+
+    res = res[vv]
+
+    ll = res['source_id'].to_list()
+
+    idx = targets['source_id'].isin(ll)
+
+    sel_targets = targets[idx]
+
+    sel_targets = sel_targets.merge(res, left_on=['source_id'],
+                                    right_on=['source_id'], suffixes=['', ''])
+    return sel_targets
+
+
+def min_dist_source(grp):
+
+    grp = grp.sort_values(by=['dist'])
+
+    print('lll', grp[:1])
+    return pd.DataFrame(grp[:1])
+
+
+def plot_flat(pixels_FP, target_pixels, ra, dec,
+              width_ra=3.,
+              width_dec=3., fig=None, ax=None):
+
+    if fig is None:
+        fig, ax = plt.subplots(figsize=(8, 8))
+
+    ax.plot(pixels_FP['pixRA'], pixels_FP['pixDec'], marker='o', color='r',
+            mfc='None', linestyle='None', label='VRO FP')
+    ax.plot(target_pixels['pixRA'],
+            target_pixels['pixDec'], 'b*', label='target')
+
+    ax.set_xlim([ra-width_ra, ra+width_ra])
+
+    ax.set_ylim([dec-width_dec, dec+width_dec])
+
+    ax.grid(visible=True)
+
+    ax.set_xlabel(r'Right Ascension [deg]')
+    ax.set_ylabel(r'Declination [deg]')
+
+    ax.legend(loc='upper right', fontsize=10, frameon=False)
+    """,
+              bbox_to_anchor=(1.3, 0.8), fontsize=10,
+              frameon=False)
+    """
+
+
+def set_size(w, h, ax=None):
+    """ w, h: width, height in inches """
+    if not ax:
+        ax = plt.gca()
+    l = ax.figure.subplotpars.left
+    r = ax.figure.subplotpars.right
+    t = ax.figure.subplotpars.top
+    b = ax.figure.subplotpars.bottom
+    figw = float(w)/(r-l)
+    figh = float(h)/(t-b)
+    ax.figure.set_size_inches(figw, figh)
 
 
 parser = OptionParser(
@@ -278,6 +352,14 @@ pix_in_fp = Pixels_in_FP(nside, deltaRA, deltaDec, level=fp_level)
 # load targets
 
 targets = pd.read_parquet('{}/{}'.format(targetDir, targetFile))
+
+targets = targets.rename(
+    columns={'phot_g_mean_mag': 'g_mag', 'phot_variable_flag': 'var_flag'})
+
+targets = targets.round({'ra': 2, 'dec': 2, 'g_mag': 2})
+targets['var_flag'] = targets['var_flag'].str.replace(
+    'NOT_AVAILABLE', 'NA')
+
 
 print(targets)
 
@@ -347,7 +429,12 @@ for night in range(1, nnights+1):
 
         targets_nearest = get_targets(ppixels, targets)
 
-        fig, ax = plt.subplots(ncols=2, nrows=2, figsize=(12, 8))
+        print(targets_nearest.columns)
+
+        fig, ax = plt.subplots(ncols=2, nrows=2, figsize=(
+            10, 10))
+
+        fig.subplots_adjust(wspace=0.4)
 
         ppixels['color'] = bbands[band]
         comment = '{},night={},mjd={},{}-band'.format(field, night, mjd, band)
@@ -355,12 +442,43 @@ for night in range(1, nnights+1):
         all_pixels = pd.concat((ppixels, target_pixels))
         plotMollview(all_pixels, ax[0][0], fig, night, nside, comment, n=7)
 
+        # plot pixels (flat mode)
+        plot_flat(ppixels, target_pixels, RA, Dec, fig=fig, ax=ax[1][0])
+
         # grab the targets
-        targets = make_df([field], [RA], [Dec])
+        targets_b = make_df([field], [RA], [Dec])
 
         # plot the targets
-        rr = process_night(stars_alt, mjd, targets, fig, ax[0][1])
+        rr = process_night(stars_alt, mjd, targets_nearest, fig, ax[0][1], plt)
+        # set_size(5, 5, ax=ax[0][1])
 
+        # print target results
+
+        targets_nearest = targets_nearest.sort_values(by=['dist'])
+
+        tp = ['source_id', 'ra', 'dec', 'g_mag', 'var_flag']
+
+        axc = ax[1][1]
+
+        axc.axis('off')
+
+        rr = pd.DataFrame(targets_nearest[tp])
+        rr['g_mag'] = rr['g_mag'].astype(str)
+        print(rr)
+        rr.style.hide(axis='index')
+        # rr = rr.reset_index()
+        # rr = rr.to_string(index=False)
+        table = pd.plotting.table(axc, rr,
+                                  loc='center', cellLoc='center',
+                                  colWidths=[0.35]+[0.1]*4)
+        table.auto_set_font_size(False)
+        table.set_fontsize(10)
+        table.scale(2, 2)
+        """
+        axc.table(cellText=rr.values, colLabels=rr.keys(),
+                  loc='center', cellLoc='center',
+                  colWidths=[0.35]+[0.1]*4, fontsize=20, scale=(2, 2))
+        """
         # plt.tight_layout
         plt.show()
 
