@@ -8,6 +8,7 @@ Created on Mon Sep  8 11:07:25 2025
 
 from optparse import OptionParser
 from sn_holo_survey.holo_survey import HoloSurvey
+from sn_tools.sn_io import checkDir
 
 parser = OptionParser(
     description='Script build an AuxTel survey')
@@ -45,6 +46,12 @@ parser.add_option('--show_Plot', type=int,
 parser.add_option('--running_mode', type='str',
                   default='all_pointings',
                   help='running mode all_pointings/means_pointings [%default]')
+parser.add_option('--outDir', type='str',
+                  default='../sn_holo_survey',
+                  help='output directory [%default]')
+parser.add_option('--outName', type='str',
+                  default='holo_survey_mean_pointings.hdf5',
+                  help='output directory [%default]')
 
 opts, args = parser.parse_args()
 
@@ -59,6 +66,9 @@ targetFile = opts.targetFile
 nproc = opts.nproc
 show_Plot = opts.show_Plot
 running_mode = opts.running_mode
+outDir = opts.outDir
+outName = opts.outName
+
 
 myclass = HoloSurvey(nside,
                      deltaRA, deltaDec, fp_level,
@@ -69,4 +79,11 @@ myclass = HoloSurvey(nside,
 
 res = myclass()
 
-print(res)
+# outputdir
+outDir = '{}/{}'.format(outDir, dbName)
+
+checkDir(outDir)
+
+fName = '{}/{}'.format(outDir, outName)
+
+res.to_hdf(fName, key='survey')
