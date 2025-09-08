@@ -39,7 +39,12 @@ parser.add_option('--targetFile', type=str,
 parser.add_option('--nproc', type=int,
                   default=8,
                   help='number of procs for multiprocessing [%default]')
-
+parser.add_option('--show_Plot', type=int,
+                  default=0,
+                  help='to show plot [%default]')
+parser.add_option('--running_mode', type='str',
+                  default='all_pointings',
+                  help='running mode all_pointings/means_pointings [%default]')
 
 opts, args = parser.parse_args()
 
@@ -52,12 +57,15 @@ fp_level = opts.fp_level
 targetDir = opts.targetDir
 targetFile = opts.targetFile
 nproc = opts.nproc
-
+show_Plot = opts.show_Plot
+running_mode = opts.running_mode
 
 myclass = HoloSurvey(nside,
                      deltaRA, deltaDec, fp_level,
                      targetDir, targetFile,
-                     dbDir, dbName, nproc, show_Plot=True)
+                     dbDir, dbName, nproc,
+                     show_Plot=show_Plot,
+                     running_mode=opts.running_mode)
 
 res = myclass()
 
