@@ -12,6 +12,7 @@ from sn_telmodel.sn_throughputs import get_telescope
 import pandas as pd
 from rubin_sim.skybrightness import SkyModel
 from rubin_scheduler.utils import Site
+import matplotlib.pyplot as plt
 
 parser = OptionParser(
     description='Script to estimate m5 from atmos parameters')
@@ -71,7 +72,8 @@ throughput = get_telescope(tel_dir=telb,
                            pwv=pwv, ozone=ozone, gain=gain, pressure=pressure)
 # setup rubin tools
 # configure your Site, will default to Rubin if you use Site()
-site = Site()
+site = Site(name='LSST')
+# site = Site(latitude=33.35, longitude=116.85, height=1706)
 
 # sky model (Rubin)
 sky_model = SkyModel(observatory=site)
@@ -98,25 +100,52 @@ for x in os_data:
     lat = x['Dec']
     mjd = x['mjd']
 
+    print(lon, lat)
     sky_model.set_ra_dec_mjd(lon=lon, lat=lat, mjd=mjd, degrees=True)
 
     # get sky spectrum
-    wave, spec = sky_model.return_wave_spec()
+    wave, flux = sky_model.return_wave_spec()
 
-    print(wave, spec)
-    print(test)
+    """
+    fig, ax = plt.subplots()
+    throughput.plot_darksky(plt, fig, ax)
+    """
+    # load the night sky
+    throughput.load_darksky_wave_flux(wave, flux)
+
+    """
+    throughput.plot_darksky(plt, fig, ax)
+
+    plt.show()
+    """
+
     throughput.data['FWHMeff'][b] = fwhmeff
+    """
     throughput.load_atmosphere(
         airmass=airmass, pwv=pwv, ozone=ozone, aerosol=aerosol)
+    """
+    throughput.load_atmosphere_from_file(airmass)
 
     sky_new = throughput.mag_sky(b)
     m5_new = throughput.m5(b, exptime, nexp)
 
-    print(b, airmass, fwhmeff, m5, m5_new, m5-m5_new, sky-sky_new, moonPhase)
+    print(sky_model.get_computed_vals())
 
-    print('allo', throughput.data['FWHMeff'])
+    print(b, airmass, fwhmeff, m5, m5_new, m5-m5_new,
+          sky, sky_new, sky-sky_new, moonPhase)
+
+    # sky model (Rubin)
+    siteb = Site(latitude=33.35, longitude=116.85, height=1706)
+    siteb = Site(name='LSST')
+    sky_modelb = SkyModel(observatory=siteb, mags=True)
+    sky_modelb.set_ra_dec_mjd(lon=lon, lat=lat, mjd=mjd, degrees=True)
+    # sky_modelb.set_ra_dec_mjd(lon=270., lat=30., mjd=61200.75, degrees=True)
+    mags = sky_modelb.return_mags()
+
+    print(mags)
+
     # throughput.data['FWHMeff'][b] = fwhmeff
-    throughput.etc()
+    # throughput.etc()
 
     if io > 2:
         break
