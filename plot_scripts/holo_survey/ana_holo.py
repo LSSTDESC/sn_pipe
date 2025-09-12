@@ -111,13 +111,9 @@ tt_dist = data.groupby(['field']).apply(
     lambda x: get_tt_dist(x), include_groups=False).reset_index()
 
 
-tt_dist = data.groupby(['field', 'source_id'])['dist'].mean().reset_index()
+tt_dist = data.groupby(['field', 'source_id','sp_type'])['dist'].mean().reset_index()
 
 print(tt_dist)
-
-df_simbad = query_simbad(tt_dist['source_id'].to_list())
-
-print(df_simbad)
 
 
 fields = tt_dist['field'].unique()
@@ -135,6 +131,11 @@ fig, ax = plt.subplots()
 tt_nf = tt_nf.sort_values(by=['ntargets'])
 ax.plot(tt_nf['ntargets'], tt_nf['field'], 'k.')
 ax.set_xlabel(r'# targets')
+ax.grid(visible=True)
+
+fig, ax = plt.subplots(figsize=(15,9))
+tt_dist = tt_dist.sort_values(by=['sp_type'])
+ax.plot(tt_dist['sp_type'],tt_dist['field'],'k.')
 ax.grid(visible=True)
 
 plt.show()
