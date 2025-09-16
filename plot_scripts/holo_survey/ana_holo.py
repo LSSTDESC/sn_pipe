@@ -18,6 +18,8 @@ from astropy.table import unique, Table
 import aplpy
 import numpy as np
 import time
+from sn_tools.sn_utils import clean_level
+from sn_tools.sn_io import checkDir
 
 plt.rcParams['xtick.labelsize'] = 20
 plt.rcParams['ytick.labelsize'] = 20
@@ -88,29 +90,32 @@ def analyse_map(grp, radius=2):
     """
 
     # remove duplicates (if any)
-    grp = grp.drop_duplicates()
+    #grp = grp.drop_duplicates()
 
     # first thing: grab main_target
-    id_main = grp['main_target'].unique()[0]
+    #id_main = grp['main_target'].unique()[0]
+    id_main = grp.name
 
     # grab infos for this target
     main_target = get_ra_dec_from_name([id_main])
 
     # estimate distance wrt star_id
-    RA_ref = main_target['ra'].values[0]
-    Dec_ref = main_target['dec'].values[0]
+    ra_ref = main_target['ra'].values[0]
+    dec_ref = main_target['dec'].values[0]
 
     print('grp', grp)
     # search this target in the star list
-    idx = np.abs(grp['ra_deg']-RA_ref)*60. < 0.01
-    idx &= np.abs(grp['dec_deg']-Dec_ref)*60 < 0.01
+    idx = np.abs(grp['ra_deg']-ra_ref)*60. < 0.01
+    idx &= np.abs(grp['dec_deg']-dec_ref)*60 < 0.01
 
-    print(grp[['main_id', 'main_target']])
+    print(grp[['main_id']])
 
-    idx = grp['main_id'] == grp['main_target']
+    #idx = grp['main_id'] == grp['main_target']
 
     stars = grp[~idx]
     star_ref = grp[idx]
+    
+    """
     out_df = pd.DataFrame([id_main], columns=['target'])
 
     print(star_ref, star_ref.columns)
@@ -123,6 +128,7 @@ def analyse_map(grp, radius=2):
     else:
         print('eee', grp[ccols].values)
         out_df[ccols] = grp[ccols].values
+    """
     # remove planets and starid
     idx = stars['otype'] != 'Planet'
     # idx &= stars['target'] != star_id
@@ -130,23 +136,29 @@ def analyse_map(grp, radius=2):
     # number of stars
     nstars = len(stars)
 
+    """
     out_df['radius_arcmin'] = int(radius)
     out_df['Nobj_radius'] = nstars
+    """
 
     if len(stars) > 0:
-        stars['dra'] = (stars['ra_deg']-RA_ref)*np.cos(np.deg2rad(Dec_ref))
-        stars['ddec'] = (stars['dec_deg']-Dec_ref)
-        stars['dist_star[arcsec]'] = 3600. * \
+        stars['dra'] = (stars['ra_deg']-ra_ref)*np.cos(np.deg2rad(dec_ref))
+        stars['ddec'] = (stars['dec_deg']-dec_ref)
+        
+        stars['dist_star[arcmin]'] = 60. * \
             np.sqrt(stars['dra']**2+stars['ddec']**2)
 
         stars = stars.fillna(999.)
+        return stars
+        print('allo ici',stars[['dra','ddec','dist_star[arcmin]']])
+        stars = stars.fillna(999.)
         # print(stars[['OTYPE', 'dist_star[arcsec]']])
         # nearest star
-        idxmin = stars['dist_star[arcsec]'].idxmin()
+        idxmin = stars['dist_star[arcmin]'].idxmin()
         # print('nearest stars', stars.loc[idxmin])
         nearest_star = stars.loc[idxmin].to_frame().T
 
-        nn = nearest_star[['dist_star[arcsec]',
+        nn = nearest_star[['dist_star[arcmin]',
                            'flux_max', 'flux_max_type']]
         nn = nn.rename(columns={'flux_max': 'mag_min_dist',
                                 'flux_max_type': 'mag_min_dist_type'})
@@ -169,10 +181,11 @@ def analyse_map(grp, radius=2):
         # out_df[tt.columns] = tt[tt.columns].values.tolist()
         out_df = pd.concat([out_df, tt], axis=1)
     else:
-        out_df[['dist_star[arcsec]', 'mag_min_dist', 'mag_min_dist_type']] = 999.
-        out_df[['mag_min', 'mag_min_type']] = 999.
+        #out_df[['dist_star[arcmin]', 'mag_min_dist', 'mag_min_dist_type']] = 999.
+        #out_df[['mag_min', 'mag_min_type']] = 999.
+        return pd.DataFrame()
 
-    return out_df
+    return -1
 
 
 def sky_map_summary(df, radius=2):
@@ -208,10 +221,11 @@ def sky_map_summary(df, radius=2):
 
     print(stars.columns.tolist())
 
-    ccols = ['main_id', 'ra', 'dec', 'coo_err_maj',
-             'coo_err_min', 'coo_err_angle',
-             'coo_wavelength',
-             'coo_bibcode',
+    ccols = ['main_id', 'ra', 'dec', 
+             #'coo_err_maj',
+             #'coo_err_min', 'coo_err_angle',
+             #'coo_wavelength',
+             #'coo_bibcode',
              'K', 'z', 'I', 'i', 'r',
              'B', 'G', 'R', 'V', 'u', 'g', 'H', 'sp_type', 'sp_qual']
     print('resultat', stars[ccols])
@@ -219,8 +233,9 @@ def sky_map_summary(df, radius=2):
     ccols = 'main_target'
     # print(res[ccols], type(res))
 
+    stars = clean_level(stars)
     resb = stars.groupby(by=[ccols]).apply(
-        lambda x: analyse_map(x, radius=radius))
+        lambda x: analyse_map(x, radius=radius),include_groups=False).reset_index()
 
     return resb
 
@@ -252,17 +267,19 @@ def simbad_query_info(simbad, llist):
                   'K', 'H', 'u', 'g',
                   'r', 'i', 'z']
     ccols = ['ra', 'dec', 'sp_type',
-             'mesdistance.dist', 'mesdistance.unit', 'ra_deg',
+             'ra_deg',
              'dec_deg', 'otype']+ccols_flux
     # 'Diameter_diameter', 'Diameter_unit', 'Diameter_error']
 
     simbad.add_votable_fields('sp_type', 'sp_qual', 'B', 'V',
                               'R', 'I', 'G', 'K', 'H', 'u', 'g',
-                              'r', 'i', 'z', 'mesdistance', 'otype')
+                              'r', 'i', 'z', 'otype')
     tab = simbad.query_objects(llist)
 
+    
+    tab.remove_columns(['coo_err_maj', 'coo_err_min', 
+                        'coo_err_angle','coo_wavelength','coo_bibcode'])
     """
-    tab.remove_columns(['coo_err_maj', 'coo_err_min', 'coo_err_angle', 'r'])
     tab = unique(tab)
     """
     tab.convert_bytestring_to_unicode()
@@ -368,6 +385,7 @@ def get_stars(df, simbad, radius=2, idCol='target', RACol='ra', DecCol='dec'):
                     right_on='main_id', suffixes=['', ''])
     print(res[['main_id', 'user_specified_id']])
     # add the main target info
+    print('allo',df[['target', 'ra', 'dec']])
     dfb = df[['target', 'ra', 'dec']]
     dfb = dfb.rename(columns={'target': 'main_target',
                      'ra': 'ra_target', 'dec': 'dec_target'})
@@ -378,18 +396,18 @@ def get_stars(df, simbad, radius=2, idCol='target', RACol='ra', DecCol='dec'):
         np.cos(np.deg2rad(resb['dec_target']))
     vv_dec = resb['dec']-resb['dec_target']
 
-    resb['dist'] = np.sqrt(vv_ra**2+vv_dec**2)*60
+    resb['dist[arcmin]'] = np.sqrt(vv_ra**2+vv_dec**2)*60
 
-    print(resb[['main_id', 'main_target', 'dist']])
+    print(resb[['main_id','ra','ra_target','dist[arcmin]']])
 
     """
     res = res.merge(df_main, left_on=scrstr, right_on=scrstr,
                     suffixes=['', ''])
 
     """
-    idx = resb['dist'] <= 3.  # 3 arcmin
+    idx = resb['dist[arcmin]'] <= radius  # 3 arcmin
 
-    get_map(resb[idx], idCol='main_target')
+    #get_map(resb[idx], idCol='main_target')
     return resb[idx]
 
 
@@ -654,18 +672,23 @@ parser.add_option('--dbName', type=str, default='baseline_v4.3.1_10yrs',
                   help='OS name [%default]')
 parser.add_option('--surveyName', type=str, default='holo_survey_mean_pointings',
                   help='survey name [%default]')
+parser.add_option('--outDir', type=str, default='../sky_map_holo',
+                  help='output dir [%default]')
 
 opts, args = parser.parse_args()
 
 fileDir = opts.fileDir
 dbName = opts.dbName
 surveyName = opts.surveyName
+outDir = '{}/{}'.format(opts.outDir,dbName)
+
+checkDir(outDir)
 
 fName = '{}/{}/{}.hdf5'.format(fileDir, dbName, surveyName)
 
 data = pd.read_hdf(fName)
 
-print(data)
+print(data[['source_id','ra','dec']])
 
 tt_dist = data.groupby(['field', 'source_id', 'sp_type', 'ra', 'dec'])[
     'dist'].mean().reset_index()
@@ -673,17 +696,25 @@ tt_dist['target'] = 'Gaia DR3 '+tt_dist['source_id'].apply(str)
 print(tt_dist)
 # plot_data(data)
 
-tt_dist = tt_dist[10:11]
+#tt_dist = tt_dist[10:11]
 
+# get images here
 """
 for i, row in tt_dist.iterrows():
     fName = 'map_{}.png'.format(row['target'])
     print(fName.split(' '))
     fName = '_'.join(fName.split(' '))
     get_map_target(row.to_dict(),
-                   outName=fName, idCol='target', fov=5)
+                   outName='{}/{}'.format(outDir,fName), 
+                   idCol='target', fov=5)
 """
-
 res = sky_map_summary(tt_dist, radius=5)
 
-print(res)
+print(res.dtypes)
+import pprint
+pprint.pprint(res)
+
+res.to_hdf('{}/sky_map_summary.hdf5'.format(outDir),key='skymap')
+
+print(res,res.columns)
+print(res[['main_target','dist_star[arcmin]','G','sp_type','otype','flux_max','flux_max_type']])
