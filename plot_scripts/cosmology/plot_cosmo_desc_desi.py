@@ -88,7 +88,7 @@ def get_surveys(theDir):
         strip_list = list(map(lambda it: it.strip('WFD_'), surveys))
 
         survey = '/'.join(strip_list)
-        print('allo', scen, survey)
+        # print('allo', scen, survey)
 
         r.append([scen, survey])
 
@@ -138,15 +138,18 @@ def plot_summary(dfb, surveys='plot_surveys.csv',
                  ascending=True):
 
     plot_surveys = pd.read_csv(surveys, comment='#')
-    print('aoo', plot_surveys)
 
     idx = dfb['year'] == 11
     selb = dfb[idx]
+
     selb = selb.sort_values(by=[y_var], ascending=ascending)
 
     dfs = get_surveys('desc_desi_surveys')
 
+    iotest = dfs['survey'] == 'TiDES/desi_bgs/desi_lrg'
+
     selb = selb.merge(dfs, left_on=['survey'], right_on=['survey'])
+
     # df_tot = df.merge(dfs, left_on=['survey'], right_on=['survey'])
     idxb = selb['surveylist'].isin(plot_surveys['surveylist'].to_list())
     selb = selb[idxb]
@@ -155,6 +158,12 @@ def plot_summary(dfb, surveys='plot_surveys.csv',
 
     figb, axb = plt.subplots(figsize=(18, 9))
     figb.subplots_adjust(bottom=0.20)
+
+    res = selb[['nickname', y_var, '{}_plus'.format(
+        y_var), '{}_minus'.format(y_var)]]
+    print(res)
+    res.to_csv('{}.csv'.format(y_var), index=False)
+
     axb.plot(selb['nickname'], selb[y_var], color='r', lw=2)
     axb.fill_between(selb['nickname'], selb['{}_plus'.format(y_var)],
                      selb['{}_minus'.format(y_var)], color='yellow')
@@ -219,7 +228,7 @@ def get_ratio(df, var='MoM'):
     ref_df = pd.DataFrame(dfb[idx])
 
     dfb = dfb.merge(ref_df, left_on=['year'], right_on=[
-                    'year'], suffixes=['', '_ref'])
+        'year'], suffixes=['', '_ref'])
 
     print(dfb.columns)
 
@@ -300,6 +309,7 @@ for key, vals in pplots.items():
     plot_summary(dfc, y_var='{}_mean'.format(
         key), y_leg=vals, ascending=asc[key])
 
+"""
 pplots_r = dict(zip(var_r, leg_r))
 asc_r = dict(zip(var_r, ascl_r))
 
@@ -307,5 +317,5 @@ for key, vals in pplots_r.items():
     dfc = get_ratio(df, key)
     plot_summary(dfc, y_var='{}_ratio'.format(
         key), y_leg=vals, ascending=asc_r[key])
-
+"""
 plt.show()
