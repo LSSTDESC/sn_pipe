@@ -1,0 +1,110 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Sep 17 10:40:52 2025
+
+@author: philippe.gris@clermont.in2p3.fr
+"""
+
+import pandas as pd
+from matplotlib.offsetbox import TextArea, DrawingArea, OffsetImage, AnnotationBbox
+import matplotlib.pyplot as plt
+import numpy as np
+import glob
+from PIL import Image
+from astropy.coordinates import SkyCoord
+from astropy import units as u
+from astroquery.simbad import Simbad
+
+plt.rcParams['xtick.labelsize'] = 20
+plt.rcParams['ytick.labelsize'] = 20
+plt.rcParams['axes.labelsize'] = 20
+plt.rcParams['figure.titlesize'] = 20
+plt.rcParams['legend.fontsize'] = 20
+plt.rcParams['font.weight'] = 'bold'
+plt.rcParams['axes.labelweight'] = 'bold'
+# plt.rcParams['font.family'] = 'Arial'
+plt.rcParams['font.size'] = 20
+
+
+def plot_target(sky_map, target, theDir):
+
+    idx = sky_map['main_target'] == ' '.join(target.split('_'))
+
+    print(sky_map['main_target'])
+    sel_sky = sky_map[idx]
+
+    print(sel_sky.columns)
+    simbad = Simbad()
+    simbad.add_votable_fields('sp_type', 'sp_qual', 'G')
+    result_table = simbad.query_object(target)
+
+    print(result_table)
+    ra_ref = result_table['ra'].value[0]
+    dec_ref = result_table['dec'].value[0]
+
+    imgName = 'map_Gaia_DR3_2493243363030533632.png'
+    imgName = 'map_{}.png'.format(target)
+    img = np.asarray(Image.open('{}/{}'.format(theDir, imgName)))
+
+    # print(repr(img))
+
+    # imgplot = plt.imshow(img)
+
+    imagebox = OffsetImage(img, zoom=0.35)
+
+    ab = AnnotationBbox(imagebox, (0.4, 0.6))
+    fig, ax = plt.subplots(nrows=2, ncols=2, figsize=(12, 9))
+
+    sel_sky['ra_target'] = ra_ref
+    sel_sky['dec_target'] = dec_ref
+    sel_sky['dra_new'] = (sel_sky['ra']-ra_ref)*np.cos(np.deg2rad(dec_ref))
+    sel_sky['ddec_new'] = (sel_sky['dec']-dec_ref)
+    sel_sky['dist_new[arcmin]'] = 60. * \
+        np.sqrt(sel_sky['dra_new']**2+sel_sky['ddec_new']**2)
+
+    print(sel_sky[['ra_target', 'dec_target', 'ra',
+          'dec', 'dra', 'ddec', 'dist_star[arcmin]', 'dist_new[arcmin]', 'G']])
+
+    ax[0, 0].add_artist(ab)
+    ax[0, 0].set_axis_off()
+
+    ax[0, 1].hist(sel_sky['dist_star[arcmin]'], histtype='step', bins=20)
+
+    ax[1, 0].plot(sel_sky['ra'], sel_sky['dec'], 'b*')
+
+    ax[1, 0].plot(result_table['ra'], result_table['dec'], 'rP')
+
+    ax[1, 0].grid(visible=True)
+
+    radius = 1./60
+
+    circle1 = plt.Circle((ra_ref, dec_ref), radius, color='r', fill=False)
+    ax[1, 0].add_patch(circle1)
+    tt = SkyCoord(sel_sky['ra'],
+                  sel_sky['dec'], frame='icrs', unit='deg')
+
+    # tick_labels = ax[1, 0].xaxis.major.formatter.seq
+    # ax[1, 0].xaxis.major.formatter.seq = tt.ra.to_string(u.hour)
+    # ax[1, 0].xaxis.set_major_locator(tt.ra.to_string(u.hour))
+    # ax[1, 0].set_xticklabels(tt.ra.to_string(u.hour))
+    # ax[1, 0].tick_params(axis='x', labelrotation=20.)
+    # rr = tt.to_string('hmsdms')
+
+    """
+    print(tt[0])
+    ra_h = tt.ra.to_string(u.hour)
+    ra_h = tt.ra.hour
+    ax[1, 0].plot(ra_h, sel_sky['dec'], 'ko')
+    """
+    idxb = sel_sky['G'] < 900.
+    ax[1, 1].hist(sel_sky[idxb]['G'], histtype='step')
+    ax[1, 1].hist(result_table['G'], histtype='step')
+    plt.show()
+
+
+theDir = '../sky_map_holo/baseline_v4.3.1_10yrs'
+
+sky_map = pd.read_hdf('{}/sky_map_summary.hdf5'.format(theDir))
+
+plot_target(sky_map, 'Gaia_DR3_2493243363030533632', theDir)
