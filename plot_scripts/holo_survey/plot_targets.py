@@ -42,8 +42,7 @@ def plot_target(sky_map, target, theDir):
     print(result_table)
     ra_ref = result_table['ra'].value[0]
     dec_ref = result_table['dec'].value[0]
-
-    imgName = 'map_Gaia_DR3_2493243363030533632.png'
+    
     imgName = 'map_{}.png'.format(target)
     img = np.asarray(Image.open('{}/{}'.format(theDir, imgName)))
 
@@ -54,7 +53,7 @@ def plot_target(sky_map, target, theDir):
     imagebox = OffsetImage(img, zoom=0.35)
 
     ab = AnnotationBbox(imagebox, (0.4, 0.6))
-    fig, ax = plt.subplots(nrows=2, ncols=2, figsize=(11, 10))
+    fig, ax = plt.subplots(nrows=2, ncols=2, figsize=(14, 10))
 
     """
     sel_sky['ra_target'] = ra_ref
@@ -70,19 +69,14 @@ def plot_target(sky_map, target, theDir):
     """
 
     print(sel_sky[['ra','dec', 'otype','sp_type','G']])
-    ax[0, 0].add_artist(ab)
-    ax[0, 0].set_axis_off()
+    ax[0,0].add_artist(ab)
+    ax[0,0].set_axis_off()
 
-    ax[0, 1].hist(sel_sky['dist_star[arcmin]'], histtype='step', bins=20)
-    ax[0,1].grid(visible=True)
-    ax[0,1].set_xlabel(r'distance [arcmin]')
-    ax[0,1].set_ylabel(r'number of stars')
+    ax[1,0].plot(sel_sky['ra'], sel_sky['dec'], 'b*')
 
-    ax[1, 0].plot(sel_sky['ra'], sel_sky['dec'], 'b*')
+    ax[1,0].plot(result_table['ra'], result_table['dec'], 'rP')
 
-    ax[1, 0].plot(result_table['ra'], result_table['dec'], 'rP')
-
-    ax[1, 0].grid(visible=True)
+    ax[1,0].grid(visible=True)
     ax[1,0].set_xlabel(r'RA [deg]')
     ax[1,0].set_ylabel(r'Dec [deg]')
 
@@ -107,18 +101,25 @@ def plot_target(sky_map, target, theDir):
     ax[1, 0].plot(ra_h, sel_sky['dec'], 'ko')
     """
     idxb = sel_sky['G'] < 900.
+    sel_sky_mag = sel_sky[idxb]
+    """
     ax[1, 1].hist(sel_sky[idxb]['G'], histtype='step')
     ax[1, 1].hist(result_table['G'], histtype='step')
-    ax[1, 1].grid(visible=True)
-    ax[1,1].set_xlabel(r'G [mag]')
-    ax[1,1].set_ylabel(r'number of stars')
+    """
+    ax[0,1].plot(sel_sky_mag['dist[arcmin]'],sel_sky_mag['G'],'ko')
+    ax[0,1].grid(visible=True)
+    ax[0,1].set_xlabel(r'distance [arcmin]')
+    ax[0,1].set_ylabel(r'G [mag]')
     
-    
-    fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(8,8)) 
 
-    idx = sel_sky['G'] < 900.
-    p = ax.scatter(sel_sky[idx]['ra'], sel_sky[idx]['dec'], c=sel_sky[idx]['G'], cmap='viridis')
-    fig.colorbar(p,ax=ax,orientation='vertical',label='labelname')
+    p = ax[1,1].scatter(sel_sky_mag['ra'], sel_sky_mag['dec'], c=sel_sky_mag['G'], cmap='viridis')
+    fig.colorbar(p,ax=ax[1,1],orientation='vertical',label='G [mag]')
+    ax[1,1].plot(result_table['ra'], result_table['dec'], 'rP')
+    circle2 = plt.Circle((ra_ref, dec_ref), radius, color='r', fill=False)
+    ax[1,1].add_patch(circle2)
+    ax[1,1].grid(visible=True)
+    ax[1,1].set_xlabel(r'RA [deg]')
+    ax[1,1].set_ylabel(r'Dec [deg]')
     
     plt.tight_layout()
     plt.show()
@@ -128,4 +129,8 @@ theDir = '../sky_map_holo/baseline_v4.3.1_10yrs'
 
 sky_map = pd.read_hdf('{}/sky_map_summary.hdf5'.format(theDir))
 
-plot_target(sky_map, 'Gaia_DR3_2493243363030533632', theDir)
+pngs = glob.glob('{}/map*.png'.format(theDir))
+
+for png in pngs:
+    starid = png.split('map_')[-1].split('.png')[0]    
+    plot_target(sky_map, starid, theDir)
