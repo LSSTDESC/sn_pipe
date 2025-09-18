@@ -54,8 +54,9 @@ def plot_target(sky_map, target, theDir):
     imagebox = OffsetImage(img, zoom=0.35)
 
     ab = AnnotationBbox(imagebox, (0.4, 0.6))
-    fig, ax = plt.subplots(nrows=2, ncols=2, figsize=(12, 9))
+    fig, ax = plt.subplots(nrows=2, ncols=2, figsize=(11, 10))
 
+    """
     sel_sky['ra_target'] = ra_ref
     sel_sky['dec_target'] = dec_ref
     sel_sky['dra_new'] = (sel_sky['ra']-ra_ref)*np.cos(np.deg2rad(dec_ref))
@@ -63,19 +64,27 @@ def plot_target(sky_map, target, theDir):
     sel_sky['dist_new[arcmin]'] = 60. * \
         np.sqrt(sel_sky['dra_new']**2+sel_sky['ddec_new']**2)
 
+    
     print(sel_sky[['ra_target', 'dec_target', 'ra',
-          'dec', 'dra', 'ddec', 'dist_star[arcmin]', 'dist_new[arcmin]', 'G']])
+          'dec', 'otype','sp_type','dra', 'ddec', 'dist_star[arcmin]', 'dist_new[arcmin]', 'G']])
+    """
 
+    print(sel_sky[['ra','dec', 'otype','sp_type','G']])
     ax[0, 0].add_artist(ab)
     ax[0, 0].set_axis_off()
 
     ax[0, 1].hist(sel_sky['dist_star[arcmin]'], histtype='step', bins=20)
+    ax[0,1].grid(visible=True)
+    ax[0,1].set_xlabel(r'distance [arcmin]')
+    ax[0,1].set_ylabel(r'number of stars')
 
     ax[1, 0].plot(sel_sky['ra'], sel_sky['dec'], 'b*')
 
     ax[1, 0].plot(result_table['ra'], result_table['dec'], 'rP')
 
     ax[1, 0].grid(visible=True)
+    ax[1,0].set_xlabel(r'RA [deg]')
+    ax[1,0].set_ylabel(r'Dec [deg]')
 
     radius = 1./60
 
@@ -100,6 +109,18 @@ def plot_target(sky_map, target, theDir):
     idxb = sel_sky['G'] < 900.
     ax[1, 1].hist(sel_sky[idxb]['G'], histtype='step')
     ax[1, 1].hist(result_table['G'], histtype='step')
+    ax[1, 1].grid(visible=True)
+    ax[1,1].set_xlabel(r'G [mag]')
+    ax[1,1].set_ylabel(r'number of stars')
+    
+    
+    fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(8,8)) 
+
+    idx = sel_sky['G'] < 900.
+    p = ax.scatter(sel_sky[idx]['ra'], sel_sky[idx]['dec'], c=sel_sky[idx]['G'], cmap='viridis')
+    fig.colorbar(p,ax=ax,orientation='vertical',label='labelname')
+    
+    plt.tight_layout()
     plt.show()
 
 
