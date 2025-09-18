@@ -700,10 +700,10 @@ tt_dist['target'] = 'Gaia DR3 '+tt_dist['source_id'].apply(str)
 print(tt_dist)
 # plot_data(data)
 
-idxt = tt_dist['target'] == ' '.join('Gaia_DR3_2493243363030533632'.split('_'))
+#idxt = tt_dist['target'] == ' '.join('Gaia_DR3_2493243363030533632'.split('_'))
 #tt_dist = tt_dist[10:11]
 
-tt_dist = tt_dist[idxt]
+#tt_dist = tt_dist[idxt]
 # get images here
 
 for i, row in tt_dist.iterrows():
