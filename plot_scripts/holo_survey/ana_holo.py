@@ -64,11 +64,14 @@ def get_ra_dec_from_name(nameList=["hd111980", "hd101452",
         ra = result_table[0]['ra']
         dec = result_table[0]['dec']
         coords = '{} {}'.format(ra, dec)
-        c = SkyCoord(coords, frame='fk4', unit=(u.hourangle, u.deg))
+        c = SkyCoord(coords, frame='fk5', unit=(u.deg, u.deg))
 
-        r.append((starName, c.ra.degree, c.dec.degree, c.ra, c.dec))
+        r.append((starName, c.ra.degree, c.dec.degree,
+                  c.ra.to_string(u.hour), c.dec.to_string(u.hour)))
 
     res = pd.DataFrame(r, columns=['target', 'ra', 'dec', 'ra_h', 'dec_h'])
+    
+    print('iii',res,ra,dec)
     return res
 
 
@@ -105,9 +108,10 @@ def analyse_map(grp, radius=2):
     dec_ref = main_target['dec'].values[0]
 
     print('grp', grp)
+    print('ref',ra_ref,dec_ref)
     # search this target in the star list
-    idx = np.abs(grp['ra_deg']-ra_ref)*60. < 0.01
-    idx &= np.abs(grp['dec_deg']-dec_ref)*60 < 0.01
+    idx = np.abs(grp['ra']-ra_ref)*60. < 0.01
+    idx &= np.abs(grp['dec']-dec_ref)*60 < 0.01
 
     print(grp[['main_id']])
 
@@ -143,8 +147,8 @@ def analyse_map(grp, radius=2):
     """
 
     if len(stars) > 0:
-        stars['dra'] = (stars['ra_deg']-ra_ref)*np.cos(np.deg2rad(dec_ref))
-        stars['ddec'] = (stars['dec_deg']-dec_ref)
+        stars['dra'] = (stars['ra']-ra_ref)*np.cos(np.deg2rad(dec_ref))
+        stars['ddec'] = (stars['dec']-dec_ref)
 
         stars['dist_star[arcmin]'] = 60. * \
             np.sqrt(stars['dra']**2+stars['ddec']**2)
@@ -696,8 +700,10 @@ tt_dist['target'] = 'Gaia DR3 '+tt_dist['source_id'].apply(str)
 print(tt_dist)
 # plot_data(data)
 
-# tt_dist = tt_dist[10:11]
+idxt = tt_dist['target'] == ' '.join('Gaia_DR3_2493243363030533632'.split('_'))
+#tt_dist = tt_dist[10:11]
 
+tt_dist = tt_dist[idxt]
 # get images here
 
 for i, row in tt_dist.iterrows():
