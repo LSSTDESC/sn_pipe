@@ -650,7 +650,7 @@ def plot_data(data):
     ax.set_ylabel('Number of entries')
 
     tt_nf = tt_dist.groupby(['field']).apply(
-        lambda x: pd.DataFrame({'ntargets': [len(x)]})).reset_index()
+        lambda x: pd.DataFrame({'ntargets': [len(x)]}),include_groups=False).reset_index()
 
     fig, ax = plt.subplots(figsize=(12, 8))
     tt_nf = tt_nf.sort_values(by=['ntargets'])
@@ -665,6 +665,20 @@ def plot_data(data):
             color='k', marker='o', linestyle='None')
     ax.grid(visible=True)
     ax.tick_params(axis='x', labelrotation=20., labelsize=15)
+    
+    
+    print(data.columns)
+    fig, ax = plt.subplots(figsize=(15, 9))
+    ax.plot(data['field'], data['g_mag'],
+            color='k', marker='o', linestyle='None')
+    """
+    ax.plot(tt_dist['field'], tt_dist['I'],
+            color='r', marker='o', linestyle='None')
+    """
+    ax.grid(visible=True)
+    ax.set_ylabel(r'g [mag]')
+    #ax.tick_params(axis='x', labelrotation=20., labelsize=15)
+    
     plt.show()
 
 
@@ -694,6 +708,10 @@ data = pd.read_hdf(fName)
 
 print(data[['source_id', 'ra', 'dec']])
 
+
+plot_data(data)
+
+print(test)
 tt_dist = data.groupby(['field', 'source_id', 'sp_type', 'ra', 'dec'])[
     'dist'].mean().reset_index()
 tt_dist['target'] = 'Gaia DR3 '+tt_dist['source_id'].apply(str)
