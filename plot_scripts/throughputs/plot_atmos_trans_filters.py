@@ -16,8 +16,8 @@ atmos_trans_obsatmo.load_atmosphere(aerosol=0.04)
 
 
 params = {}
-par_names = ['airmass', 'aerosol', 'pwv', 'oz', 'beta', 'pressure']
-par_plotnames = ['am', 'aer', 'pwv', 'oz', 'beta', 'P']
+par_names = ['airmass', 'aerosol', 'pwv', 'ozone', 'beta', 'pressure']
+par_plotnames = ['am', 'aer', 'pwv', 'ozone', 'beta', 'P']
 pars = dict(zip(par_names, par_plotnames))
 for key, vals in pars.items():
     sstr = 'params[\'{}\'] = atmos_trans_obsatmo.{}'.format(vals, key)
