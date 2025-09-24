@@ -70,8 +70,8 @@ def get_ra_dec_from_name(nameList=["hd111980", "hd101452",
                   c.ra.to_string(u.hour), c.dec.to_string(u.hour)))
 
     res = pd.DataFrame(r, columns=['target', 'ra', 'dec', 'ra_h', 'dec_h'])
-    
-    print('iii',res,ra,dec)
+
+    print('iii', res, ra, dec)
     return res
 
 
@@ -108,7 +108,7 @@ def analyse_map(grp, radius=2):
     dec_ref = main_target['dec'].values[0]
 
     print('grp', grp)
-    print('ref',ra_ref,dec_ref)
+    print('ref', ra_ref, dec_ref)
     # search this target in the star list
     idx = np.abs(grp['ra']-ra_ref)*60. < 0.01
     idx &= np.abs(grp['dec']-dec_ref)*60 < 0.01
@@ -155,42 +155,6 @@ def analyse_map(grp, radius=2):
 
         stars = stars.fillna(999.)
         return stars
-        print('allo ici', stars[['dra', 'ddec', 'dist_star[arcmin]']])
-        stars = stars.fillna(999.)
-        # print(stars[['OTYPE', 'dist_star[arcsec]']])
-        # nearest star
-        idxmin = stars['dist_star[arcmin]'].idxmin()
-        # print('nearest stars', stars.loc[idxmin])
-        nearest_star = stars.loc[idxmin].to_frame().T
-
-        nn = nearest_star[['dist_star[arcmin]',
-                           'flux_max', 'flux_max_type']]
-        nn = nn.rename(columns={'flux_max': 'mag_min_dist',
-                                'flux_max_type': 'mag_min_dist_type'})
-        # out_df[nn.columns] = nn[nn.columns].values.tolist()
-        out_df = pd.concat([out_df, nn], axis=1)
-
-        idxmin = stars['flux_max'].idxmin()
-        star_high_flux = stars.loc[idxmin].to_frame().T
-        """
-        if len(stars) == 1:
-            star_high_flux = stars.loc[idxmin].to_frame().T
-        else:
-            star_high_flux = stars.loc[idxmin][:1]
-        """
-        tt = star_high_flux[['flux_max', 'flux_max_type']]
-        tt = tt.rename(columns={'flux_max': 'mag_min',
-                                'flux_max_type': 'mag_min_type'})
-
-        # out_df = pd.concat((out_df, tt), axis=1)
-        # out_df[tt.columns] = tt[tt.columns].values.tolist()
-        out_df = pd.concat([out_df, tt], axis=1)
-    else:
-        # out_df[['dist_star[arcmin]', 'mag_min_dist', 'mag_min_dist_type']] = 999.
-        # out_df[['mag_min', 'mag_min_type']] = 999.
-        return pd.DataFrame()
-
-    return -1
 
 
 def sky_map_summary(df, radius=2):
@@ -650,7 +614,7 @@ def plot_data(data):
     ax.set_ylabel('Number of entries')
 
     tt_nf = tt_dist.groupby(['field']).apply(
-        lambda x: pd.DataFrame({'ntargets': [len(x)]}),include_groups=False).reset_index()
+        lambda x: pd.DataFrame({'ntargets': [len(x)]}), include_groups=False).reset_index()
 
     fig, ax = plt.subplots(figsize=(12, 8))
     tt_nf = tt_nf.sort_values(by=['ntargets'])
@@ -665,8 +629,7 @@ def plot_data(data):
             color='k', marker='o', linestyle='None')
     ax.grid(visible=True)
     ax.tick_params(axis='x', labelrotation=20., labelsize=15)
-    
-    
+
     print(data.columns)
     fig, ax = plt.subplots(figsize=(15, 9))
     ax.plot(data['field'], data['g_mag'],
@@ -677,8 +640,8 @@ def plot_data(data):
     """
     ax.grid(visible=True)
     ax.set_ylabel(r'g [mag]')
-    #ax.tick_params(axis='x', labelrotation=20., labelsize=15)
-    
+    # ax.tick_params(axis='x', labelrotation=20., labelsize=15)
+
     plt.show()
 
 
@@ -711,18 +674,21 @@ print(data[['source_id', 'ra', 'dec']])
 
 plot_data(data)
 
-print(test)
 tt_dist = data.groupby(['field', 'source_id', 'sp_type', 'ra', 'dec'])[
     'dist'].mean().reset_index()
 tt_dist['target'] = 'Gaia DR3 '+tt_dist['source_id'].apply(str)
 print(tt_dist)
 # plot_data(data)
 
-#idxt = tt_dist['target'] == ' '.join('Gaia_DR3_2493243363030533632'.split('_'))
-#tt_dist = tt_dist[10:11]
+# idxt = tt_dist['target'] == ' '.join('Gaia_DR3_2493243363030533632'.split('_'))
+# tt_dist = tt_dist[10:11]
 
-#tt_dist = tt_dist[idxt]
+# tt_dist = tt_dist[idxt]
 # get images here
+print(len(tt_dist))
+
+tt_dist.to_hdf('{}/targets.hdf5'.format(outDir), key='targets')
+print(test)
 
 for i, row in tt_dist.iterrows():
     fName = 'map_{}.png'.format(row['target'])
@@ -732,6 +698,7 @@ for i, row in tt_dist.iterrows():
                    outName='{}/{}'.format(outDir, fName),
                    idCol='target', fov=5)
 
+# sky map summary
 res = sky_map_summary(tt_dist, radius=5)
 
 print(res.dtypes)

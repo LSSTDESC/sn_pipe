@@ -28,6 +28,23 @@ plt.rcParams['font.size'] = 20
 
 
 def plot_target(sky_map, target, theDir):
+    """
+    Function to plot target star map
+
+    Parameters
+    ----------
+    sky_map : pandas df
+        Sky map around the target.
+    target : int
+        target id.
+    theDir : str
+        Dir with png file for the target.
+
+    Returns
+    -------
+    None.
+
+    """
 
     idx = sky_map['main_target'] == ' '.join(target.split('_'))
 
@@ -42,7 +59,7 @@ def plot_target(sky_map, target, theDir):
     print(result_table)
     ra_ref = result_table['ra'].value[0]
     dec_ref = result_table['dec'].value[0]
-    
+
     imgName = 'map_{}.png'.format(target)
     img = np.asarray(Image.open('{}/{}'.format(theDir, imgName)))
 
@@ -68,17 +85,17 @@ def plot_target(sky_map, target, theDir):
           'dec', 'otype','sp_type','dra', 'ddec', 'dist_star[arcmin]', 'dist_new[arcmin]', 'G']])
     """
 
-    print(sel_sky[['ra','dec', 'otype','sp_type','G']])
-    ax[0,0].add_artist(ab)
-    ax[0,0].set_axis_off()
+    print(sel_sky[['ra', 'dec', 'otype', 'sp_type', 'G']])
+    ax[0, 0].add_artist(ab)
+    ax[0, 0].set_axis_off()
 
-    ax[1,0].plot(sel_sky['ra'], sel_sky['dec'], 'b*')
+    ax[1, 0].plot(sel_sky['ra'], sel_sky['dec'], 'b*')
 
-    ax[1,0].plot(result_table['ra'], result_table['dec'], 'rP')
+    ax[1, 0].plot(result_table['ra'], result_table['dec'], 'rP')
 
-    ax[1,0].grid(visible=True)
-    ax[1,0].set_xlabel(r'RA [deg]')
-    ax[1,0].set_ylabel(r'Dec [deg]')
+    ax[1, 0].grid(visible=True)
+    ax[1, 0].set_xlabel(r'RA [deg]')
+    ax[1, 0].set_ylabel(r'Dec [deg]')
 
     radius = 1./60
 
@@ -106,23 +123,76 @@ def plot_target(sky_map, target, theDir):
     ax[1, 1].hist(sel_sky[idxb]['G'], histtype='step')
     ax[1, 1].hist(result_table['G'], histtype='step')
     """
-    ax[0,1].plot(sel_sky_mag['dist[arcmin]'],sel_sky_mag['G'],'ko')
-    ax[0,1].grid(visible=True)
-    ax[0,1].set_xlabel(r'distance [arcmin]')
-    ax[0,1].set_ylabel(r'G [mag]')
-    
+    ax[0, 1].plot(sel_sky_mag['dist[arcmin]'], sel_sky_mag['G'], 'ko')
+    ax[0, 1].grid(visible=True)
+    ax[0, 1].set_xlabel(r'distance [arcmin]')
+    ax[0, 1].set_ylabel(r'G [mag]')
 
-    p = ax[1,1].scatter(sel_sky_mag['ra'], sel_sky_mag['dec'], c=sel_sky_mag['G'], cmap='viridis')
-    fig.colorbar(p,ax=ax[1,1],orientation='vertical',label='G [mag]')
-    ax[1,1].plot(result_table['ra'], result_table['dec'], 'rP')
+    p = ax[1, 1].scatter(sel_sky_mag['ra'], sel_sky_mag['dec'],
+                         c=sel_sky_mag['G'], cmap='viridis')
+    fig.colorbar(p, ax=ax[1, 1], orientation='vertical', label='G [mag]')
+    ax[1, 1].plot(result_table['ra'], result_table['dec'], 'rP')
     circle2 = plt.Circle((ra_ref, dec_ref), radius, color='r', fill=False)
-    ax[1,1].add_patch(circle2)
-    ax[1,1].grid(visible=True)
-    ax[1,1].set_xlabel(r'RA [deg]')
-    ax[1,1].set_ylabel(r'Dec [deg]')
-    
+    ax[1, 1].add_patch(circle2)
+    ax[1, 1].grid(visible=True)
+    ax[1, 1].set_xlabel(r'RA [deg]')
+    ax[1, 1].set_ylabel(r'Dec [deg]')
+
     plt.tight_layout()
     plt.show()
+
+
+def ana_sky_map(grp, skymap, radius=10):
+    """
+    Function to analyze the sky map around  target
+
+    Parameters
+    ----------
+    skymap : pandas df
+        sky map.
+    target : str
+        target.
+    radius : float, optional
+        radius arouns the target (in arcsec). The default is 10.
+
+    Returns
+    -------
+    res : pandas df
+        nstars inside radius+mag.
+
+    """
+
+    target = grp.name[1]
+    idx = sky_map['main_target'] == ' '.join(target.split('_'))
+
+    # print(sky_map['main_target'])
+    sel_sky = pd.DataFrame(sky_map[idx])
+
+    # print(sel_sky.columns)
+
+    sel_sky['dist[arcsec]'] = sel_sky['dist[arcmin]']*60.  # distance in arcsec
+
+    # print(sel_sky)
+
+    idxb = sel_sky['dist[arcsec]'] <= radius
+
+    sel_stars = sel_sky[idxb]
+
+    mag_G = -999.
+    fmax_type = 'NA'
+    if len(sel_stars) >= 1:
+        print(sel_stars['r'])
+        mag_G = sel_stars['flux_max'].max()
+        print(sel_stars[['flux_max', 'flux_max_type']])
+
+    ddict = {}
+    ddict['main_target'] = [target]
+    ddict['n_stars'] = [len(sel_stars)]
+    ddict['flux_max'] = [mag_G]
+
+    res = pd.DataFrame.from_dict(ddict)
+
+    return res
 
 
 theDir = '../sky_map_holo/baseline_v4.3.1_10yrs'
@@ -131,6 +201,19 @@ sky_map = pd.read_hdf('{}/sky_map_summary.hdf5'.format(theDir))
 
 pngs = glob.glob('{}/map*.png'.format(theDir))
 
+targets = pd.read_hdf('{}/targets.hdf5'.format(theDir))
+
+df = targets.groupby(['field', 'target']).apply(
+    lambda x: ana_sky_map(x, sky_map), include_groups=False).reset_index()
+
+print(df)
+"""
+df = pd.DataFrame()
 for png in pngs:
-    starid = png.split('map_')[-1].split('.png')[0]    
-    plot_target(sky_map, starid, theDir)
+    starid = png.split('map_')[-1].split('.png')[0]
+    # plot_target(sky_map, starid, theDir)
+    dfb = ana_sky_map(sky_map, starid)
+    df = pd.concat((df, dfb))
+
+print(df)
+"""
