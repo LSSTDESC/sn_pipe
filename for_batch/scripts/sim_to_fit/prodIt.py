@@ -71,3 +71,4 @@ for vv in cct:
     scr_ += ' --{}={}'.format(vv, params[vv])
 
 print(scr_)
+os.system(scr_)
