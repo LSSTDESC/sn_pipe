@@ -181,10 +181,12 @@ def complete_pointing(df, dfgroup):
     torep = dict(zip(['ECDFS', 'EDFS, a', 'EDFS, b', 'EDFS_a', 'EDFS_b', 'XMM_LSS'], [
         'CDFS', 'EDFSa', 'EDFSb', 'EDFSa', 'EDFSb', 'XMM-LSS']))
 
+    """
     for key, vals in torep.items():
         df['field'] = df['field'].str.replace(
             key, vals)
     df['field'] = df['field'].str.split(':', expand=True)[1]
+    """
 
     return df
 
@@ -414,10 +416,40 @@ def get_relative_depth(grp, data, fields=['COSMOS'], fieldref='ELAISS1'):
     return pd.DataFrame(res, columns=['depth'])
 
 
+def load_data(dirFile, dbList):
+    """
+    Function to load data
+
+    Parameters
+    ----------
+    dirFile : str
+        dir files.
+    dbList : list(str)
+        db list.
+
+    Returns
+    -------
+    data : pandas df
+        output data.
+
+    """
+
+    data = pd.DataFrame()
+    for dbName in dbList:
+        fName = '{}/{}/Summary_DD_pointings.hdf5'.format(dirFile, dbName)
+        print(fName)
+        df_ = pd.read_hdf(fName)
+        print(df_.columns)
+        df_['dbName'] = dbName
+        data = pd.concat((data, df_))
+
+    return data
+
+
 parser = OptionParser(
     description='OS analysis plots from pointings')
 parser.add_option("--dirFile", type="str",
-                  default='../MetricOutput_DD_new_128_gnomonic_circular',
+                  default='../summary_DD_pointings',
                   help="file directory [%default]")
 parser.add_option("--nside", type="int", default=128,
                   help="nside for healpixels [%default]")
@@ -463,7 +495,8 @@ fieldName_night = opts.fieldName_night
 plots = opts.plots.split(',')
 
 df_conf = pd.read_csv(config, comment='#')  # load list of db+plot infos
-df = pd.read_hdf(pointingFile)  # load pointing data
+# df = pd.read_hdf(pointingFile)  # load pointing data
+df = load_data(dirFile, df_conf['dbName'].to_list())
 
 df = complete_pointing(df, df_conf)  # merge pointing data+plot data
 
