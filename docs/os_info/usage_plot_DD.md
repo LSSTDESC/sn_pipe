@@ -5,14 +5,13 @@ OS analysis plots from pointings
 
 Options:
   -h, --help            show this help message and exit
-  --dirFile=DIRFILE     file directory
-                        [../MetricOutput_DD_new_128_gnomonic_circular]
+  --dirFile=DIRFILE     file directory [../summary_DD_pointings]
   --nside=NSIDE         nside for healpixels [128]
   --fieldType=FIELDTYPE
                         field type - DD, WFD, Fake [DD]
   --fieldNames=FIELDNAMES
-                        fields to process [COSMOS,CDFS,                  XMM-
-                        LSS,ELAISS1,EDFSa,EDFSb,EDFS]
+                        fields to process
+                        [COSMOS,CDFS,XMM_LSS,ELAISS1,EDFS_a,EDFS_b]
   --metric=METRIC       metric name [NSNY]
   --pointingFile=POINTINGFILE
                         pointing file name [Summary_DD_pointings.hdf5]
@@ -29,7 +28,7 @@ Options:
 
 ## Example
 
-python plot_scripts/metrics/plot_DD_stat.py --dirFile . --config=config_ana_selplot.csv
+python plot_scripts/metrics/plot_DD_stat.py --config=config_ana_selplot.csv
 
 A config file example is available [here](config_ana_selplot.csv).
 
