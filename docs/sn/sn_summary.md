@@ -3,14 +3,13 @@
 ## Usage: run_scripts/sn_analysis/nsn_ddf.py [options]
 
 <pre>
-
 Script to estimate SN - DDF after selection
 
 Options:
   -h, --help            show this help message and exit
   --dbDir=DBDIR         OS location dir[../Output_SN_DD_sigmaInt_0.0_Hounsell_
                         z_smflux_notelrot_G10_JLA]
-  --list_os=LIST_OS     OS DD list[ddf_list.csv]
+  --dbList=DBLIST       OS DD list[ddf_list.csv]
   --norm_factor=NORM_FACTOR
                         normalization factor [30]
   --runType=RUNTYPE     run type  [spectroz]
@@ -20,8 +19,7 @@ Options:
                         time slot (season or year) to process [1-10]
   --dataType=DATATYPE   data type [DataFrame]
   --nside=NSIDE         nside healpix parameter [128]
-  --outputDir=OUTPUTDIR
-                        output dir for the file to store [../sn_summary_ddf]
+  --outDir=OUTDIR       output dir for the file to store [../sn_summary_ddf]
   --fileName=FILENAME   sn file name to draw [sn_summary_ddf.hdf5]
 
 </pre>
