@@ -7,7 +7,7 @@ Created on Fri Jun  6 16:25:03 2025
 """
 from optparse import OptionParser
 import pandas as pd
-from sn_plotter_analysis.sn_analyser_summary import process_DDF
+from sn_plotter_analysis.sn_analyser_summary import process_DDF_db
 from sn_plotter_analysis.sn_analyser_ddf import get_val
 from sn_plotter_analysis.sn_analyser_tools import Estimate_NSN
 from sn_plotter_analysis.sn_analyser_tools import clean_level
@@ -70,7 +70,7 @@ parser = OptionParser(
 parser.add_option('--dbDir', type=str,
                   default='../Output_SN_DD_sigmaInt_0.0_Hounsell_z_smflux_notelrot_G10_JLA',
                   help='OS location dir[%default]')
-parser.add_option('--list_os', type=str,
+parser.add_option('--dbList', type=str,
                   default='ddf_list.csv',
                   help='OS DD list[%default]')
 parser.add_option('--norm_factor', type=int,
@@ -91,7 +91,7 @@ parser.add_option('--dataType', type=str,
 parser.add_option('--nside', type=int,
                   default=128,
                   help='nside healpix parameter [%default]')
-parser.add_option('--outputDir', type=str,
+parser.add_option('--outDir', type=str,
                   default='../sn_summary_ddf',
                   help='output dir for the file to store [%default]')
 parser.add_option('--fileName', type=str,
@@ -104,12 +104,12 @@ opts, args = parser.parse_args()
 dbDir = opts.dbDir
 norm_factor = opts.norm_factor
 runType = opts.runType
-list_os = opts.list_os
+dbList = opts.dbList
 timeslots = opts.timeslots
 timescale = opts.timescale
 timeslots = get_val(timeslots)
 nside = opts.nside
-outputDir = opts.outputDir
+outputDir = opts.outDir
 fileName = opts.fileName
 dataType = opts.dataType
 
@@ -118,12 +118,16 @@ dataType = opts.dataType
 checkDir(outputDir)
 
 # load os to process
-conf_df = pd.read_csv(list_os, comment='#')
+conf_df = pd.read_csv(dbList, comment='#')
 
-ddf = process_DDF(conf_df, dataType, dbDir, runType,
-                  timescale, timeslots, norm_factor)
+for i, row in conf_df.iterrows():
+    dbName = row['dbName']
+    ddf = process_DDF_db(dbName, dataType, dbDir, runType,
+                         timescale, timeslots, norm_factor)
 
-df_nsn = get_nsn(ddf, norm_factor, nside)
+    df_nsn = get_nsn(ddf, norm_factor, nside)
 
-fName = '{}/{}'.format(outputDir, fileName)
-df_nsn.to_hdf(fName, key='ddf')
+    outt = '{}/{}'.format(outputDir, dbName)
+    checkDir(outt)
+    fName = '{}/{}'.format(outt, fileName)
+    df_nsn.to_hdf(fName, key='ddf')
