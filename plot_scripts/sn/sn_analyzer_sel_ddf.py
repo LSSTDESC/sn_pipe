@@ -31,7 +31,7 @@ parser.add_option('--dd_fields', type=str,
                   default='CDFS,ELAISS1,EDFS_a,EDFS_b',
                   help='DD fields to consider [%default]')
 parser.add_option('--inputDir', type=str,
-                  default='../sn_summary_ddf',
+                  default='../sn_dd_airmass',
                   help='input dir for the file to draw [%default]')
 parser.add_option('--fileName', type=str,
                   default='sn_summary_ddf.hdf5',
@@ -53,17 +53,24 @@ fileName = opts.fileName
 # read config file
 conf_df = pd.read_csv(config, comment='#')
 
-fName = '{}/{}'.format(inputDir, fileName)
+# load the data
 
-# process data
-if not os.path.isfile(fName):
-    print('File not found! Processing data')
+dbNames = conf_df['dbName'].unique()
 
-df_nsn = pd.read_hdf(fName)
+df_nsn = pd.DataFrame()
+for dbName in dbNames:
+    fName = '{}/{}/{}'.format(inputDir, dbName, fileName)
+
+    # process data
+    if not os.path.isfile(fName):
+        print('File not found!', fName)
+        print('Please consider processing the data!')
+    else:
+        df_ = pd.read_hdf(fName)
+        df_nsn = pd.concat((df_nsn, df_))
 
 if print_nsn:
     print_nsn_latex(df_nsn)
-
 
 # all fields
 if 'nsn_all' in plots:
