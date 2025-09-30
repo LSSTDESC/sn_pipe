@@ -208,6 +208,8 @@ def summary_plots(df):
     df['time_budget'] *= 100.
     df['time_budget_field'] *= 100.
     plot_series(df)
+    tt = df.groupby(['dbName','dbName_plot'])['nvisits'].mean().reset_index()
+    plot_series(tt, what=['nvisits'], leg=['$N_{visits}$'])
     df['time_budget_rel'] = df['time_budget_field']/df['time_budget']
     df['time_budget_rel'] *= 100.
     df_noseas = df.groupby(['dbName', 'field', 'dbName_plot'])[
@@ -222,7 +224,39 @@ def summary_plots(df):
         'Number of filter changes', 'Overhead (filter changes) [h]'])
     # plot_hist_OS(df, what='cadence_median')
 
+    tf = df.groupby(['dbName','dbName_plot','field']).apply(lambda x:nv_f(x)).reset_index()
 
+    plot_series_fields(tf,what=['nvisits_field'],leg=['$N_{visits}^{field}$'])
+
+    tb = tf.groupby(['dbName','dbName_plot'])['nvisits_field'].sum().reset_index(name='nvisits')
+    
+    print(tb)
+
+    plot_series(tb,what=['nvisits'],leg=['$N_{visits}^{DDF}$'])
+
+def nv_f(grp):
+    """
+    function to estimate the number of visits
+
+    Parameters
+    ----------
+    grp : pandas df
+        Data to process.
+
+    Returns
+    -------
+    res : pandas df
+        result.
+
+    """
+    
+    bands = list('ugrizy')
+    nvisits = grp[bands].sum(axis=1).to_list()
+    
+    res = pd.DataFrame([np.sum(nvisits)],columns=['nvisits_field'])
+    
+    return res
+    
 def flat_this(grp, cols=['filter_alloc', 'filter_frac']):
     """
     Function to flatten some df columns
@@ -249,7 +283,7 @@ def flat_this(grp, cols=['filter_alloc', 'filter_frac']):
     return pd.DataFrame.from_dict(dictout)
 
 
-def plot_relative_depth(df):
+def plot_relative_depth(dfb):
     """
     Function to plot the relative depth of the UD vs DD
 
@@ -264,6 +298,7 @@ def plot_relative_depth(df):
 
     """
 
+    df = pd.DataFrame(dfb)
     bands = list('ugrizy')
     df['nvisits'] = df[bands].sum(axis=1).to_list()
 
@@ -322,7 +357,7 @@ def get_seasons(grp):
     """
 
     dd = grp.groupby(['field']).apply(
-        lambda x: get_high_season(x)).reset_index()
+        lambda x: get_high_season(x),include_groups=False).reset_index()
 
     return dd
 
@@ -384,7 +419,7 @@ def get_relative_depth(grp, data, fields=['COSMOS'], fieldref='ELAISS1'):
 
     """
 
-    print('database', grp.name)
+    #print('database', grp.name)
     if 'desc_ddf' in grp.name:
         fields += ['XMM-LSS']
 
@@ -394,7 +429,7 @@ def get_relative_depth(grp, data, fields=['COSMOS'], fieldref='ELAISS1'):
 
     seasons = sel['seasons'].to_list()[0]
     ll = seasons.split(',')
-    print('alll', ll)
+    #print('alll', ll)
     ll = list(map(int, ll))
 
     idxb = data['field'].isin(fields)
@@ -403,14 +438,14 @@ def get_relative_depth(grp, data, fields=['COSMOS'], fieldref='ELAISS1'):
 
     nvisits = data[idxb]['nvisits'].sum()
 
-    print('hohoho', data['field'].unique())
+    #print('hohoho', data['field'].unique())
     idxc = data['field'] == fieldref
     idxc &= data['dbName'] == grp.name
     selc = data[idxc]
 
     nvisits_ref = selc['nvisits'].sum()
 
-    print('aoo', nvisits, nvisits_ref)
+    #print('aoo', nvisits, nvisits_ref)
     res = [nvisits/nvisits_ref]
 
     return pd.DataFrame(res, columns=['depth'])
@@ -439,8 +474,9 @@ def load_data(dirFile, dbList):
         fName = '{}/{}/Summary_DD_pointings.hdf5'.format(dirFile, dbName)
         print(fName)
         df_ = pd.read_hdf(fName)
-        print(df_.columns)
+        #print(df_.columns)
         df_['dbName'] = dbName
+        
         data = pd.concat((data, df_))
 
     return data
@@ -459,7 +495,7 @@ parser.add_option("--fieldType", type="str", default='DD',
 parser.add_option("--dbList", type="str", default='List.csv',
                   help="list of cadences to display[%default]")
 """
-parser.add_option("--fieldNames", type="str", default='COSMOS,CDFS,XMM_LSS,ELAISS1,EDFS_a,EDFS_b',
+parser.add_option("--fieldNames", type="str", default='COSMOS,CDFS,XMM-LSS,ELAISS1,EDFS_a,EDFS_b',
                   help="fields to process [%default]")
 parser.add_option("--metric", type="str", default='NSNY',
                   help="metric name [%default]")
@@ -500,8 +536,6 @@ df = load_data(dirFile, df_conf['dbName'].to_list())
 
 df = complete_pointing(df, df_conf)  # merge pointing data+plot data
 
-print(df_conf)
-
 metric = pd.DataFrame()
 if addMetric:
     # load metric data here
@@ -510,10 +544,9 @@ if addMetric:
                          fieldType, fieldNames, nside)
     metric = merge_with_pointing(metric, df)
 
-
 if 'relative_depth' in plots:
     plot_relative_depth(df)
-
+    
 idx = df['field'].isin(fieldNames)
 df = df[idx]
 
