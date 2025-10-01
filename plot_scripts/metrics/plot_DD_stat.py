@@ -208,7 +208,7 @@ def summary_plots(df):
     df['time_budget'] *= 100.
     df['time_budget_field'] *= 100.
     plot_series(df)
-    tt = df.groupby(['dbName','dbName_plot'])['nvisits'].mean().reset_index()
+    tt = df.groupby(['dbName', 'dbName_plot'])['nvisits'].mean().reset_index()
     plot_series(tt, what=['nvisits'], leg=['$N_{visits}$'])
     df['time_budget_rel'] = df['time_budget_field']/df['time_budget']
     df['time_budget_rel'] *= 100.
@@ -220,19 +220,23 @@ def summary_plots(df):
         'Number of filter changes', 'Overhead (filter changes) [h]'])
     df_fi = df.groupby(['dbName', 'dbName_plot'])['Nfc'].sum().reset_index()
     df_fi['overhead'] = df_fi['Nfc']*2./60  # 2min overhead per filter swap
-    plot_series(df_fi, config, what=['Nfc', 'overhead'], leg=[
+    plot_series(df_fi, what=['Nfc', 'overhead'], leg=[
         'Number of filter changes', 'Overhead (filter changes) [h]'])
     # plot_hist_OS(df, what='cadence_median')
 
-    tf = df.groupby(['dbName','dbName_plot','field']).apply(lambda x:nv_f(x)).reset_index()
+    tf = df.groupby(['dbName', 'dbName_plot', 'field']).apply(
+        lambda x: nv_f(x), include_groups=False).reset_index()
 
-    plot_series_fields(tf,what=['nvisits_field'],leg=['$N_{visits}^{field}$'])
+    plot_series_fields(tf, what=['nvisits_field'],
+                       leg=['$N_{visits}^{field}$'])
 
-    tb = tf.groupby(['dbName','dbName_plot'])['nvisits_field'].sum().reset_index(name='nvisits')
-    
+    tb = tf.groupby(['dbName', 'dbName_plot'])[
+        'nvisits_field'].sum().reset_index(name='nvisits')
+
     print(tb)
 
-    plot_series(tb,what=['nvisits'],leg=['$N_{visits}^{DDF}$'])
+    plot_series(tb, what=['nvisits'], leg=['$N_{visits}^{DDF}$'])
+
 
 def nv_f(grp):
     """
@@ -249,14 +253,15 @@ def nv_f(grp):
         result.
 
     """
-    
+
     bands = list('ugrizy')
     nvisits = grp[bands].sum(axis=1).to_list()
-    
-    res = pd.DataFrame([np.sum(nvisits)],columns=['nvisits_field'])
-    
+
+    res = pd.DataFrame([np.sum(nvisits)], columns=['nvisits_field'])
+
     return res
-    
+
+
 def flat_this(grp, cols=['filter_alloc', 'filter_frac']):
     """
     Function to flatten some df columns
@@ -357,7 +362,7 @@ def get_seasons(grp):
     """
 
     dd = grp.groupby(['field']).apply(
-        lambda x: get_high_season(x),include_groups=False).reset_index()
+        lambda x: get_high_season(x), include_groups=False).reset_index()
 
     return dd
 
@@ -419,7 +424,7 @@ def get_relative_depth(grp, data, fields=['COSMOS'], fieldref='ELAISS1'):
 
     """
 
-    #print('database', grp.name)
+    # print('database', grp.name)
     if 'desc_ddf' in grp.name:
         fields += ['XMM-LSS']
 
@@ -429,7 +434,7 @@ def get_relative_depth(grp, data, fields=['COSMOS'], fieldref='ELAISS1'):
 
     seasons = sel['seasons'].to_list()[0]
     ll = seasons.split(',')
-    #print('alll', ll)
+    # print('alll', ll)
     ll = list(map(int, ll))
 
     idxb = data['field'].isin(fields)
@@ -438,14 +443,14 @@ def get_relative_depth(grp, data, fields=['COSMOS'], fieldref='ELAISS1'):
 
     nvisits = data[idxb]['nvisits'].sum()
 
-    #print('hohoho', data['field'].unique())
+    # print('hohoho', data['field'].unique())
     idxc = data['field'] == fieldref
     idxc &= data['dbName'] == grp.name
     selc = data[idxc]
 
     nvisits_ref = selc['nvisits'].sum()
 
-    #print('aoo', nvisits, nvisits_ref)
+    # print('aoo', nvisits, nvisits_ref)
     res = [nvisits/nvisits_ref]
 
     return pd.DataFrame(res, columns=['depth'])
@@ -474,12 +479,132 @@ def load_data(dirFile, dbList):
         fName = '{}/{}/Summary_DD_pointings.hdf5'.format(dirFile, dbName)
         print(fName)
         df_ = pd.read_hdf(fName)
-        #print(df_.columns)
+        # print(df_.columns)
         df_['dbName'] = dbName
-        
+
         data = pd.concat((data, df_))
 
     return data
+
+
+def identify_ud_scenario(grp, colName='nvisits_field', nseason=5, thresh=3000):
+    """
+    Function to identify ud scenarios
+
+    Parameters
+    ----------
+    grp : pandas df
+        Data to process.
+    colName : str, optional
+        column of interest. The default is 'nvisits_field'.
+    nseason : int, optional
+        number of seasons to use to estimate <Nvisits>. The default is 5.
+    thresh : float, optional
+        threshold for a season to be considered as a ud season. The default is 3000.
+
+    Returns
+    -------
+    res : pandas df
+        Result.
+
+    """
+
+    # take the nseason lowest seasons for nvisits_fields
+
+    grp = grp.sort_values(by=[colName])
+    mysel = grp[colName][:nseason]
+    mean_visits = mysel.mean()
+    rms_visits = mysel.std()
+    median_visits = mysel.median()
+
+    """
+    res = pd.DataFrame([mean_visits], columns=['mean_visits'])
+    res['median_visits'] = median_visits
+    res['rms_visits'] = rms_visits
+    """
+
+    diff_visits = grp['nvisits_field']-mean_visits
+    idx = diff_visits >= thresh
+
+    res_ud = grp[idx]
+
+    nseason_ud = len(res_ud)
+    theseas = ''
+    if len(res_ud) > 0:
+        res_ud = res_ud.sort_values(by=['season'])
+        res_ud['season'] = res_ud['season'].astype(int)
+        seasons_ud = res_ud['season'].to_list()
+        seasons_ud = list(map(str, seasons_ud))
+        theseas = ','.join(seasons_ud)
+
+    res = pd.DataFrame([nseason_ud], columns=['nseason_ud'])
+    res['seasons_ud'] = theseas
+
+    return res
+
+
+def get_ud_scenario(df, thresh=3000):
+    """
+    Function to analyse the ud scenario
+
+    Parameters
+    ----------
+    df : pandas df
+        Data to process.
+    thresh : float, optional
+        threshold (nvisits) to identify ud seasons. The default is 3000.
+
+    Returns
+    -------
+    None.
+
+    """
+
+    # grab the number if visits per field/season
+    tt = df.groupby(['dbName', 'field', 'season']).apply(
+        lambda x: nv_f(x), include_groups=True).reset_index()
+
+    # get which ud scenario it is
+    bb = tt.groupby(['dbName', 'field']).apply(
+        lambda x: identify_ud_scenario(x, thresh=thresh),
+        include_groups=False).reset_index()
+
+    res = bb.groupby(['dbName']).apply(
+        lambda x: ana_ud_scenario(x), include_groups=False).reset_index()
+
+    bb = bb.merge(res, left_on=['dbName'], right_on=[
+                  'dbName'], suffixes=['', ''])
+
+    print(bb)
+
+
+def ana_ud_scenario(grp):
+    """
+    Function to analyze dbName/field ud scenario
+
+    Parameters
+    ----------
+    grp : pandas df
+        Data to process.
+
+    Returns
+    -------
+    res : pandas df
+        result.
+
+    """
+
+    nseason_ud = grp['nseason_ud'].sum()
+
+    idx = grp['nseason_ud'] > 0
+    sel = grp[idx]
+
+    nfield_ud = len(sel['field'].unique())
+
+    res = pd.DataFrame([nseason_ud], columns=['ns_ud'])
+    res['nf_ud'] = [nfield_ud]
+
+    return res
 
 
 parser = OptionParser(
@@ -511,7 +636,7 @@ parser.add_option("--dbName_night", type=str, default='baseline_v3.0_10yrs',
 parser.add_option("--fieldName_night", type=str, default='COSMOS',
                   help="field for night plot stat [%default]")
 parser.add_option("--plots", type=str,
-                  default='summary,field_cad_seasonlength,field_nvisits,field_nvisits_band,relative_depth',
+                  default='summary,field_cad_seasonlength,field_nvisits,field_nvisits_band,relative_depth,filter_alloc',
                   help="plots to draw [%default]")
 
 
@@ -546,7 +671,7 @@ if addMetric:
 
 if 'relative_depth' in plots:
     plot_relative_depth(df)
-    
+
 idx = df['field'].isin(fieldNames)
 df = df[idx]
 
@@ -634,20 +759,26 @@ plt.show()
 """
 
 # this is to plot fraction of filter alloc per night - for one OS only
+if 'filter_alloc' in plots:
+    flat = df.groupby(['dbName', 'dbName_plot', 'field', 'season']).apply(
+        lambda x: flat_this(x, cols=['filter_alloc', 'filter_frac']),
+        include_groups=False).reset_index()
 
-flat = df.groupby(['dbName', 'dbName_plot', 'field', 'season']).apply(
-    lambda x: flat_this(x, cols=['filter_alloc', 'filter_frac'])).reset_index()
+    flat = flat.groupby(['dbName', 'dbName_plot', 'field', 'filter_alloc', 'season'])[
+        'filter_frac'].median().reset_index()
 
-flat = flat.groupby(['dbName', 'dbName_plot', 'field', 'filter_alloc', 'season'])[
-    'filter_frac'].median().reset_index()
+    idx = df_conf['dbName'] == dbName_night
 
-idx = df_conf['dbName'] == dbName_night
+    family = df_conf[idx]['dbName_plot'].to_list()[0]
 
-family = df_conf[idx]['dbName_plot'].to_list()[0]
+    plot_filter_alloc(flat, family, fieldName_night)
 
-plot_filter_alloc(flat, family, fieldName_night)
+    # plot_night(
+    #    df, dbName=dbName_night, field=fieldName_night)
 
-# plot_night(
-#    df, dbName=dbName_night, field=fieldName_night)
 
-plt.show()
+get_ud_scenario(df)
+
+if len(plots) > 0:
+    plt.tight_layout()
+    plt.show()
