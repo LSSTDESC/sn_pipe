@@ -529,7 +529,7 @@ def identify_ud_scenario(grp, colName='nvisits_field', nseason=5, thresh=3000):
     res_ud = grp[idx]
 
     nseason_ud = len(res_ud)
-    theseas = ''
+    theseas = '---'
     if len(res_ud) > 0:
         res_ud = res_ud.sort_values(by=['season'])
         res_ud['season'] = res_ud['season'].astype(int)
@@ -577,6 +577,11 @@ def get_ud_scenario(df, thresh=3000):
 
     print(bb)
 
+    fi = bb.groupby(['dbName']).apply(lambda x: reformat(x),
+                                      include_groups=False).reset_index()
+
+    print(fi)
+
 
 def ana_ud_scenario(grp):
     """
@@ -603,6 +608,47 @@ def ana_ud_scenario(grp):
 
     res = pd.DataFrame([nseason_ud], columns=['ns_ud'])
     res['nf_ud'] = [nfield_ud]
+
+    return res
+
+
+def reformat(grp,
+             fields=['COSMOS', 'XMM-LSS',
+                     'ELAISS1', 'CDFS', 'EDFS_a', 'EDFS_b']):
+    """
+    Function to re-format the df
+
+    Parameters
+    ----------
+    grp : pandas df
+        Data to process.
+    fields : list(str), optional
+        DDf list. The default is 
+        ['COSMOS', 'XMM-LSS','ELAISS1', 'CDFS', 'EDFS_a', 'EDFS_b'].
+
+    Returns
+    -------
+    res : pandas df
+        re-formatted df.
+
+    """
+
+    dd = {}
+    dd['ns_ud'] = [grp['ns_ud'].unique()[0]]
+    dd['nf_ud'] = [grp['nf_ud'].unique()[0]]
+
+    print(grp['field'].tolist())
+
+    rrb = []
+    for i, field in enumerate(fields):
+        idx = grp['field'] == field
+        sel = grp[idx]
+        rrb.append(sel['seasons_ud'].to_list()[0])
+        seasons = sel['seasons_ud'].to_list()[0]
+        dd[field] = [seasons]
+    # dd['/'.join(fields)] = ['/'.join(rrb)]
+
+    res = pd.DataFrame.from_dict(dd)
 
     return res
 
@@ -780,5 +826,4 @@ if 'filter_alloc' in plots:
 get_ud_scenario(df)
 
 if len(plots) > 0:
-    plt.tight_layout()
     plt.show()
