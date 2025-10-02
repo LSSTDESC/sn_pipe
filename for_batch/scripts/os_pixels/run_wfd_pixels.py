@@ -24,7 +24,10 @@ parser.add_option('--proctime', type=str,
                   help='max processing time [%default]')
 parser.add_option('--procmem', type=str,
                   default='20G',
-                  help='mem for processing')
+                  help='mem for processing [%default]')
+parser.add_option('--procmode', type=str,
+                  default='batch',
+                  help='mode of processing: batch/script_only [%default]')
 
 opts, args = parser.parse_args()
 
@@ -32,6 +35,7 @@ dbList = opts.dbList
 outDir = opts.outDir
 proctime = opts.proctime
 procmem = opts.procmem
+procmode = opts.procmode
 
 # params
 nside = 64
@@ -58,6 +62,9 @@ for i, row in dbs.iterrows():
     procDict['nside'] = nside
     procDict['fieldType'] = fieldType
     procDict['outDir'] = '{}/{}'.format(outDir, row['dbName'])
+    procName = 'WFD_pixels_{}'.format(row['dbName'])
+
+    mybatch = BatchIt(processName=procName, time=proctime, mem=procmem)
 
     for j in range(len(RAs)-1):
         RA_min = RAs[j]
@@ -65,15 +72,15 @@ for i, row in dbs.iterrows():
 
         RA_min = np.round(RA_min, 2)
         RA_max = np.round(RA_max, 2)
-        procName = 'WFDpix_{}_{}_{}'.format(row['dbName'], RA_min, RA_max)
-
-        mybatch = BatchIt(processName=procName, time=proctime, mem=procmem)
-
+        
         procDict['RAmin'] = RA_min
         procDict['RAmax'] = RA_max
-        procDict['prodID'] = '{}.hdf5'.format(procName)
+        procDict['prodID'] = '{}_{}_{}'.format(procName,RA_min,RA_max)
 
         mybatch.add_batch(scriptref, procDict)
 
-        # go for batch
+    # go for batch
+    if procmode == 'batch':
         mybatch.go_batch()
+    else:
+        print('bash script',' available in ',mybatch.scriptDir)
