@@ -243,9 +243,10 @@ if 'nvisits_season' in plots:
     multiplot_season(sel, varx=timescale, legx=timescale,
                      vary='nvisits', legy='N$_{visits}$')
 if 'cadence_dist' in plots:
-    multiplot_dist(sel)
+    multiplot_dist(sel, timescale=timescale)
 if 'nvisits_dist' in plots:
-    multiplot_dist(sel, yvar='nvisits', yleg=r'N$_{visits}$')
+    multiplot_dist(sel, yvar='nvisits',
+                   yleg=r'N$_{visits}$', timescale=timescale)
 if 'mollview_cadence' in plots:
     plotMollview_seasons(nside, sel, dbName,
                          yvar='cadence', yleg='cadence [day]',
