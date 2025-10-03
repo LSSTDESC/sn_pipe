@@ -198,6 +198,9 @@ parser.add_option('--fields', type=str,
 parser.add_option('--fieldType', type=str,
                   default='DD',
                   help='type of field to process (DD/WFD) [%default]')
+parser.add_option('--timescale', type=str,
+                  default='year',
+                  help='time scale for the plots (year/season) [%default]')
 
 opts, args = parser.parse_args()
 
@@ -208,6 +211,7 @@ plots = opts.plots.split(',')
 mollview_seasons = opts.mollview_seasons
 fields = opts.fields.split(',')
 fieldType = opts.fieldType
+timescale = opts.timescale
 
 if '-' in mollview_seasons:
     cad_brk = mollview_seasons.split('-')
@@ -226,17 +230,17 @@ df['dbName'] = dbName
 print(df.columns)
 # print(test)
 
-idx = df['season'] > 0
-idx &= df['season'] < 11
+idx = df[timescale] > 0
+idx &= df[timescale] < 11
 idx &= df['cadence'] > 0.
 sel = df[idx]
 
 
 if 'cadence_season' in plots:
-    multiplot_season(sel, varx='season', legx='season',
+    multiplot_season(sel, varx=timescale, legx=timescale,
                      vary='cadence', legy='cadence [day]')
 if 'nvisits_season' in plots:
-    multiplot_season(sel, varx='season', legx='season',
+    multiplot_season(sel, varx=timescale, legx=timescale,
                      vary='nvisits', legy='N$_{visits}$')
 if 'cadence_dist' in plots:
     multiplot_dist(sel)
