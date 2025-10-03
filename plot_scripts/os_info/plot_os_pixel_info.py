@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 from sn_plotter_metrics.plot4metric import multiplot_dist
 from sn_plotter_metrics.plot4metric import plotMollview_seasons
 import numpy as np
+import glob
 
 
 def plot_var_mean(datam, figtitle='', varx='season',
@@ -126,6 +127,57 @@ def print_pixel_info(sel, healpixID):
     print(selnc[['healpixID', 'pixRA', 'pixDec', 'nvisits', 'cadence', 'season']])
 
 
+def load_data(dbDir, dbName, fields, fieldType='DD'):
+    """
+    Function to load the data
+
+    Parameters
+    ----------
+    dbDir : str
+        data main directory.
+    dbName : str
+        OS to analyze.
+    fields : list(str)
+        list of fields to process.
+    fieldType : str, optional
+        type of field (DD/WFD). The default is 'DD'.
+
+    Returns
+    -------
+    df : pandas df
+        output data.
+
+    """
+
+    theDir = '{}/{}'.format(dbDir, dbName)
+    prefix = '{}_pixels_{}'.format(fieldType, dbName)
+
+    # grab the list of data
+    list_data = []
+    if fieldType == 'DD':
+        # loop on ddfs
+        for field in fields:
+            fName = '{}/{}_{}*.hdf5'.format(theDir, prefix, field)
+            fis = glob.glob(fName)
+            if len(fis) == 0:
+                print('data not found', fName)
+            list_data += fis
+    if fieldType == 'WFD':
+        fName = '{}/{}_*.hdf5'.format(theDir, prefix)
+        fis = glob.glob(fName)
+        if len(fis) == 0:
+            print('data not found', fName)
+        list_data += fis
+
+    # load the data
+    df = pd.DataFrame()
+    for fi in list_data:
+        dd = pd.read_hdf(fi)
+        df = pd.concat((df, dd))
+
+    return df
+
+
 parser = OptionParser(description='Script to plot pixel level OS infos')
 
 parser.add_option('--dbName', type=str, default='test_newb',
@@ -136,10 +188,16 @@ parser.add_option('--nside', type=int, default=128,
                   help='healpix nside parameter [%default]')
 parser.add_option('--plots', type=str,
                   default='cadence_season,nvisits_season,cadence_dist,nvisits_dist,mollview_cadence,mollview_nvisits',
-                  help='plots to show[%default]')
+                  help='plots to show [%default]')
 parser.add_option('--mollview_seasons', type=str,
                   default='1-5',
-                  help='plots to show[%default]')
+                  help='plots to show [%default]')
+parser.add_option('--fields', type=str,
+                  default='COSMOS,XMM-LSS,CDFS,ELAISS1,EDFS_a,EDFS_b',
+                  help='plots to show [%default]')
+parser.add_option('--fieldType', type=str,
+                  default='DD',
+                  help='type of field to process (DD/WFD) [%default]')
 
 opts, args = parser.parse_args()
 
@@ -148,6 +206,9 @@ dbName = opts.dbName
 nside = opts.nside
 plots = opts.plots.split(',')
 mollview_seasons = opts.mollview_seasons
+fields = opts.fields.split(',')
+fieldType = opts.fieldType
+
 if '-' in mollview_seasons:
     cad_brk = mollview_seasons.split('-')
     moll_seasons = list(range(int(cad_brk[0]), int(cad_brk[1])+1))
@@ -156,11 +217,14 @@ else:
 
 print('seasons moll', moll_seasons)
 
-fName = '{}/{}.hdf5'.format(dbDir, dbName)
+# fName = '{}/{}.hdf5'.format(dbDir, dbName)
 
-df = pd.read_hdf(fName)
+df = load_data(dbDir, dbName, fields, fieldType=fieldType)
+
+# df = pd.read_hdf(fName)
 df['dbName'] = dbName
 print(df.columns)
+# print(test)
 
 idx = df['season'] > 0
 idx &= df['season'] < 11
