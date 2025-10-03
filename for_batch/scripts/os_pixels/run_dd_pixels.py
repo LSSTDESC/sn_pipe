@@ -31,6 +31,9 @@ parser.add_option('--fields', type=str,
 parser.add_option('--procmode', type=str,
                   default='batch',
                   help='mode of processing: batch/script_only [%default]')
+parser.add_option('--nproc', type=int,
+                  default=8,
+                  help='nproc for multiprocessing [%default]')
 
 opts, args = parser.parse_args()
 
@@ -40,6 +43,7 @@ proctime = opts.proctime
 procmem = opts.procmem
 fields = opts.fields.split(',')
 procmode = opts.procmode
+nproc = opts.nproc
 
 # params
 nside = 128
@@ -63,19 +67,20 @@ for i, row in dbs.iterrows():
 
     procName = 'DD_pixels_{}'.format(row['dbName'])
     mybatch = BatchIt(processName=procName, time=proctime, mem=procmem)
-    
+
     for field in fields:
 
         procDict['fieldName'] = field
-        prodId = '{}_{}'.format(procName,field)
-        
+        prodId = '{}_{}'.format(procName, field)
+
         procDict['prodID'] = prodId
+        procDict['nproc'] = nproc
+        procDict['nproc_pixels'] = 0
 
         mybatch.add_batch(scriptref, procDict)
-
 
     # go for batch
     if procmode == 'batch':
         mybatch.go_batch()
     else:
-        print('bash script',' available in ',mybatch.scriptDir)
+        print('bash script', ' available in ', mybatch.scriptDir)
