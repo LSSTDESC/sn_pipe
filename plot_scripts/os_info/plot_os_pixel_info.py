@@ -187,7 +187,7 @@ parser.add_option('--dbDir', type=str, default='../test_metric',
 parser.add_option('--nside', type=int, default=128,
                   help='healpix nside parameter [%default]')
 parser.add_option('--plots', type=str,
-                  default='cadence_season,nvisits_season,cadence_dist,nvisits_dist,mollview',
+                  default='gen_plots,mollview',
                   help='plots to show [%default]')
 parser.add_option('--mollview_seasons', type=str,
                   default='1-5',
@@ -204,6 +204,12 @@ parser.add_option('--timescale', type=str,
 parser.add_option('--mollview_var', type=str,
                   default='cadence,nvisits',
                   help='var to plot in Mollview [%default]')
+parser.add_option('--gen_var', type=str,
+                  default='cadence_year,nvisits_year,cadence_dist',
+                  help='gen var to plot [%default]')
+parser.add_option('--hist_var', type=str,
+                  default='nvisits_10yrs',
+                  help='hist var to plot [%default]')
 
 opts, args = parser.parse_args()
 
@@ -213,6 +219,7 @@ nside = opts.nside
 plots = opts.plots.split(',')
 mollview_seasons = opts.mollview_seasons
 mollview_var = opts.mollview_var.split(',')
+gen_var = opts.gen_var.split(',')
 fields = opts.fields.split(',')
 fieldType = opts.fieldType
 timescale = opts.timescale
@@ -243,32 +250,34 @@ vvar = ['cadence', 'nvisits', 'm5_i']
 legvar = ['cadence [day]', 'N$_{visits}$', '$m_{5}^{i}$']
 dict_leg = dict(zip(vvar, legvar))
 
-if 'cadence_season' in plots:
-    multiplot_season(sel, varx=timescale, legx=timescale,
-                     vary='cadence', legy='cadence [day]')
-if 'nvisits_season' in plots:
-    multiplot_season(sel, varx=timescale, legx=timescale,
-                     vary='nvisits', legy='N$_{visits}$')
-if 'cadence_dist' in plots:
-    multiplot_dist(sel, timescale=timescale)
-if 'nvisits_dist' in plots:
-    multiplot_dist(sel, yvar='nvisits',
-                   yleg=r'N$_{visits}$', timescale=timescale)
+if 'gen_plots' in plots:
+    for vv in gen_var:
+        vary = vv.split('_')[0]
+        varx = vv.split('_')[1]
+        if varx == timescale:
+            multiplot_season(sel, varx=timescale, legx=timescale,
+                             vary=vary, legy=dict_leg[vary])
+        if varx == 'dist':
+            multiplot_dist(sel, yvar=vary,
+                           yleg=r'{}'.format(dict_leg[vary]), timescale=timescale)
+
 if 'mollview' in plots:
     for vv in mollview_var:
         plotMollview_seasons(nside, sel, dbName,
                              yvar=vv, yleg=dict_leg[vv],
                              op=np.mean, seasons=moll_seasons)
-"""
-if 'mollview_cadence' in plots:
-    plotMollview_seasons(nside, sel, dbName,
-                         yvar='cadence', yleg='cadence [day]',
-                         op=np.mean, seasons=moll_seasons)
-if 'mollview_nvisits' in plots:
-    plotMollview_seasons(nside, sel, dbName,
-                         yvar='nvisits', yleg='N$_{visits}$',
-                         op=None, seasons=moll_seasons)
-"""
+
+if 'hist' in plots:
+    print(sel.columns)
+    bb = sel.groupby(['healpixID'])['nvisits'].sum().reset_index()
+    fig, ax = plt.subplots(figsize=(12, 8))
+    idx = bb['nvisits'] < 1000.
+    ax.hist(bb[idx]['nvisits'], histtype='step', bins=50)
+    ax.set_xlabel(r'$N_{visits}$')
+    ax.set_ylabel(r'Number of entries')
+    ax.grid(visible=True)
+    ax.set_xlim([0., None])
+
 """
 print_pixel_info(sel, 109384)
 print_pixel_info(sel, 109031)
