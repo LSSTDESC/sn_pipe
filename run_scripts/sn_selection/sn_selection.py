@@ -10,6 +10,8 @@ from sn_analysis.sn_selection import selection_criteria
 from optparse import OptionParser
 import pandas as pd
 import numpy as np
+import glob
+import os
 
 
 def get_stat(sel_data, nsn_factor, timescale='year'):
