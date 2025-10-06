@@ -99,6 +99,64 @@ def nsn_estimate(grp, zmin=0., zmax=1.1, nsn_factor=1, varname='nsn'):
     return pd.DataFrame({varname: [res]})
 
 
+def process(dataDir, timescale):
+    """
+    Function to process data
+
+    Parameters
+    ----------
+    dbDir : str
+        Data dir.
+    timescale : str
+        Timescale (year/season).
+
+    Returns
+    -------
+    None.
+
+    """
+    for season in range(1, 15, 1):
+        fis = glob.glob('{}/*{}_{}.hdf5'.format(dataDir, timescale, season))
+        print(season, len(fis))
+        if len(fis) > 0:
+            r = []
+            for bb in fis:
+                r.append(bb)
+            common_substring = os.path.commonprefix(
+                [fis[0], fis[1], fis[2], fis[4]])
+
+            outName = '_'.join(common_substring.split('/')[-1].split('_')[:-1])
+            outName = '{}/{}_{}_{}.hdf5'.format(dataDir,
+                                                outName, timescale, season)
+            df = pd.DataFrame()
+            for fi in fis:
+                dd = pd.read_hdf(fi)
+                df = pd.concat((df, dd))
+            df.to_hdf(outName, key='sn')
+
+            clean_dir(fis)
+
+
+def clean_dir(fis):
+    """
+    Function to remove files
+
+    Parameters
+    ----------
+    fis : list(str)
+        List of files to remove.
+
+    Returns
+    -------
+    None.
+
+    """
+
+    for fi in fis:
+        cmd_ = 'rm {}'.format(fi)
+        os.system(cmd_)
+
+
 parser = OptionParser()
 
 parser.add_option("--dataDir", type=str,
@@ -177,3 +235,7 @@ Select_filt(dataDir, dbName, sellist, seasons=seasons,
             timescale=timescale,
             dataType=dataType,
             ebvofMW=ebvofMW)
+if fieldType == 'WFD':
+    # merge and clean
+    print('merging and cleaning', outDir)
+    process(outDir, timescale)
