@@ -35,6 +35,8 @@ python plot_scripts/os_info/plot_os_pixel_info.py --dbDir=../wfd_pixels --dbName
 
 [Nvisits 10 yrs - WFD - histogram](plotd3.png)
 
+[cadence all years - WFD - histogram](plotd6.png)
+
 [Nvisits year 1 - WFD - Mollweid view](plotd4.png)
 
 [cadence year 1- WFD - Mollweid view](plotd5.png)

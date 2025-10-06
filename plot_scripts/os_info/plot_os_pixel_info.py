@@ -205,10 +205,10 @@ parser.add_option('--mollview_var', type=str,
                   default='cadence,nvisits',
                   help='var to plot in Mollview [%default]')
 parser.add_option('--gen_var', type=str,
-                  default='cadence_year,nvisits_year,cadence_dist',
+                  default='cadence_year,nvisits_year,cadence_dist,nvisits_dist',
                   help='gen var to plot [%default]')
 parser.add_option('--hist_var', type=str,
-                  default='nvisits_10yrs',
+                  default='nvisits_10yrs,cadence_year',
                   help='hist var to plot [%default]')
 
 opts, args = parser.parse_args()
@@ -220,6 +220,7 @@ plots = opts.plots.split(',')
 mollview_seasons = opts.mollview_seasons
 mollview_var = opts.mollview_var.split(',')
 gen_var = opts.gen_var.split(',')
+hist_var = opts.hist_var.split(',')
 fields = opts.fields.split(',')
 fieldType = opts.fieldType
 timescale = opts.timescale
@@ -269,14 +270,26 @@ if 'mollview' in plots:
 
 if 'hist' in plots:
     print(sel.columns)
-    bb = sel.groupby(['healpixID'])['nvisits'].sum().reset_index()
-    fig, ax = plt.subplots(figsize=(12, 8))
-    idx = bb['nvisits'] < 1000.
-    ax.hist(bb[idx]['nvisits'], histtype='step', bins=50)
-    ax.set_xlabel(r'$N_{visits}$')
-    ax.set_ylabel(r'Number of entries')
-    ax.grid(visible=True)
-    ax.set_xlim([0., None])
+    for vv in hist_var:
+        varx = vv.split('_')[0]
+        vary = vv.split('_')[1]
+        fig, ax = plt.subplots(figsize=(12, 8))
+        if '10yrs' in vv:
+            bb = sel.groupby(['healpixID'])[varx].sum().reset_index()
+            idx = bb['nvisits'] < 1000.
+            ax.hist(bb[idx][varx], histtype='step', bins=50)
+        if vary == timescale:
+            for year in sel[vary].unique():
+                idxb = sel[vary] == year
+                if varx == 'cadence':
+                    idxb &= sel[varx] < 25.
+                selb = sel[idxb]
+                ax.hist(selb[varx], histtype='step', bins=50)
+
+        ax.set_xlabel(r'{}'.format(dict_leg[varx]))
+        ax.set_ylabel(r'Number of entries')
+        ax.grid(visible=True)
+        ax.set_xlim([0., None])
 
 """
 print_pixel_info(sel, 109384)
