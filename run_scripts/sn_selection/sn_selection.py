@@ -240,4 +240,6 @@ Select_filt(dataDir, dbName, sellist, seasons=seasons,
 if fieldType == 'WFD':
     # merge and clean
     print('merging and cleaning', outDir)
-    process(outDir, timescale)
+    dataDir = '{}/{}/{}_{}'.format(outDir, dbName, fieldType, zType)
+    print('merging and cleaning', dataDir)
+    process(dataDir, timescale)
