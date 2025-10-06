@@ -82,5 +82,6 @@ script.close()
 cmd_e = 'sh srun_test.sh {}'.format(scriptName)
 
 if runIt:
-    os.chmod(scriptName, 0o0100)
+    st = os.stat(scriptName)
+    os.chmod(scriptName, st.st_mode | 0o111)
     os.system(cmd_e)
