@@ -82,4 +82,5 @@ script.close()
 cmd_e = 'sh srun_test.sh {}'.format(scriptName)
 
 if runIt:
+    os.chmod(scriptName, 0o0100)
     os.system(cmd_e)
