@@ -187,7 +187,7 @@ parser.add_option('--dbDir', type=str, default='../test_metric',
 parser.add_option('--nside', type=int, default=128,
                   help='healpix nside parameter [%default]')
 parser.add_option('--plots', type=str,
-                  default='cadence_season,nvisits_season,cadence_dist,nvisits_dist,mollview_cadence,mollview_nvisits',
+                  default='cadence_season,nvisits_season,cadence_dist,nvisits_dist,mollview',
                   help='plots to show [%default]')
 parser.add_option('--mollview_seasons', type=str,
                   default='1-5',
@@ -201,6 +201,9 @@ parser.add_option('--fieldType', type=str,
 parser.add_option('--timescale', type=str,
                   default='year',
                   help='time scale for the plots (year/season) [%default]')
+parser.add_option('--mollview_var', type=str,
+                  default='cadence,nvisits',
+                  help='var to plot in Mollview [%default]')
 
 opts, args = parser.parse_args()
 
@@ -209,6 +212,7 @@ dbName = opts.dbName
 nside = opts.nside
 plots = opts.plots.split(',')
 mollview_seasons = opts.mollview_seasons
+mollview_var = opts.mollview_var.split(',')
 fields = opts.fields.split(',')
 fieldType = opts.fieldType
 timescale = opts.timescale
@@ -235,6 +239,9 @@ idx &= df[timescale] < 11
 idx &= df['cadence'] > 0.
 sel = df[idx]
 
+vvar = ['cadence', 'nvisits', 'm5_i']
+legvar = ['cadence [day]', 'N$_{visits}$', '$m_{5}^{i}$']
+dict_leg = dict(zip(vvar, legvar))
 
 if 'cadence_season' in plots:
     multiplot_season(sel, varx=timescale, legx=timescale,
@@ -247,6 +254,12 @@ if 'cadence_dist' in plots:
 if 'nvisits_dist' in plots:
     multiplot_dist(sel, yvar='nvisits',
                    yleg=r'N$_{visits}$', timescale=timescale)
+if 'mollview' in plots:
+    for vv in mollview_var:
+        plotMollview_seasons(nside, sel, dbName,
+                             yvar=vv, yleg=dict_leg[vv],
+                             op=np.mean, seasons=moll_seasons)
+"""
 if 'mollview_cadence' in plots:
     plotMollview_seasons(nside, sel, dbName,
                          yvar='cadence', yleg='cadence [day]',
@@ -255,7 +268,7 @@ if 'mollview_nvisits' in plots:
     plotMollview_seasons(nside, sel, dbName,
                          yvar='nvisits', yleg='N$_{visits}$',
                          op=None, seasons=moll_seasons)
-
+"""
 """
 print_pixel_info(sel, 109384)
 print_pixel_info(sel, 109031)
