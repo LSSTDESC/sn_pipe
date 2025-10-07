@@ -9,6 +9,7 @@ Created on Tue Oct  7 15:15:21 2025
 from optparse import OptionParser
 import pandas as pd
 from sn_tools.sn_batchutils import BatchIt
+import numpy as np
 
 def make_batch(dbList,procDict,time='5:00:00', mem='5G',inum=0):
     
@@ -43,6 +44,10 @@ outDir = opts.outDir
 
 dbNames = pd.read_csv(dbList,comment='#')
 
+
+chunks = np.array_split(dbNames,3)
+
+print(chunks)
 # loop and batch
 for i, row in dbNames.iterrows():
     print(row)
