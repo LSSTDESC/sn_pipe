@@ -12,7 +12,7 @@ from sn_tools.sn_batchutils import BatchIt
 import numpy as np
 
 
-def make_batch(dbList, procDict, time='5:00:00', mem='30G', inum=0):
+def make_batch(dbList, procDict, time='5:00:00', mem='50G', inum=0):
     """
     Function to launch batch
 
@@ -49,7 +49,7 @@ def make_batch(dbList, procDict, time='5:00:00', mem='30G', inum=0):
     procDict['dbList'] = csvName
     mybatch.add_batch(scriptref, procDict)
 
-    mybatch.go_batch()
+    # mybatch.go_batch()
 
 
 parser = OptionParser(description='Script to estimate nsn for WFD - in batch')
@@ -64,6 +64,7 @@ parser.add_option('--outDir', type=str,
                   default='../sn_wfd',
                   help='output dir [%default]')
 
+
 opts, args = parser.parse_args()
 
 procDict = vars(opts)
@@ -72,7 +73,9 @@ procDict = vars(opts)
 
 dbNames = pd.read_csv(procDict['dbList'], comment='#')
 
-n_split = int(len(dbNames)/4)
+n_split = 1
+if len(dbNames) >= 4:
+    n_split = int(len(dbNames)/4)
 chunks = np.array_split(dbNames, n_split)
 
 print(chunks)
