@@ -195,6 +195,36 @@ def ana_sky_map(grp, skymap, radius=10):
     return res
 
 
+def load_gaia_stars(fis, params, j=0, output_q=None):
+
+    df = pd.DataFrame()
+
+    for fi in fis:
+        tt = pd.read_hdf(fi)
+        idx = tt['parallax']/tt['parallax_error'] > 10.
+        df = pd.concat((df, tt[idx]))
+        del tt
+    if output_q is not None:
+        return output_q.put({j: df})
+    else:
+        return df
+
+
+def load_gaia_stars_multiproc(theDir='/home/philippe/astro_cat/auxtel/catalogs',
+                              gaiadr='gaiadr2'):
+
+    fName = '{}/cat_gaia_{}*.hdf5'.format(theDir, gaiadr)
+
+    fis = list(glob.glob(fName))
+
+    params = {}
+
+    from sn_tools.sn_utils import multiproc
+    df = multiproc(fis, params, load_gaia_stars, nproc=8)
+
+    return df
+
+
 theDir = '../sky_map_holo/baseline_v4.3.1_10yrs'
 
 sky_map = pd.read_hdf('{}/sky_map_summary.hdf5'.format(theDir))
@@ -206,7 +236,24 @@ targets = pd.read_hdf('{}/targets.hdf5'.format(theDir))
 df = targets.groupby(['field', 'target']).apply(
     lambda x: ana_sky_map(x, sky_map), include_groups=False).reset_index()
 
+gaiaDir = '~/Bureau'
+gaiaFile = 'gaia_source_file_ddf_v0.parquet'
+gaia_stars = pd.read_parquet('{}/{}'.format(gaiaDir, gaiaFile))
 print(df)
+
+print(gaia_stars.columns)
+gaia_stars_cat = load_gaia_stars_multiproc()
+print(gaia_stars_cat.columns)
+fig, ax = plt.subplots()
+gaia_stars['BP'] = gaia_stars['phot_bp_mean_mag'] - \
+    gaia_stars['phot_rp_mean_mag']
+ax.plot(gaia_stars['BP'], gaia_stars['phot_g_mean_mag'], 'r*')
+gaia_stars_cat['BP'] = gaia_stars_cat['phot_bp_mean_mag'] - \
+    gaia_stars_cat['phot_rp_mean_mag']
+ax.plot(gaia_stars_cat['MG'], gaia_stars_cat['BP'],  'ko')
+print(len(gaia_stars_cat))
+plt.show()
+
 """
 df = pd.DataFrame()
 for png in pngs:
