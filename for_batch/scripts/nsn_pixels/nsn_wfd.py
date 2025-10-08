@@ -11,16 +11,46 @@ import pandas as pd
 from sn_tools.sn_batchutils import BatchIt
 import numpy as np
 
-def make_batch(dbList,procDict,time='5:00:00', mem='5G',inum=0):
-    
+
+def make_batch(dbList, procDict, time='5:00:00', mem='5G', inum=0):
+    """
+    Function to launch batch
+
+    Parameters
+    ----------
+    dbList : pandas df
+        List of OS to process.
+    procDict : dict
+        parameter dict.
+    time : str, optional
+        Time for the batch. The default is '5:00:00'.
+    mem : str, optional
+        memory for the batch. The default is '5G'.
+    inum : int, optional
+        tag for the process. The default is 0.
+
+    Returns
+    -------
+    None.
+
+    """
+
     procName = 'nsn_wfd_{}'.format(inum)
+
     mybatch = BatchIt(processName=procName, time=time, mem=mem)
 
+    csvDir = mybatch.logDir
+    csvName = '{}/WFD_list_{}.csv'.format(csvDir, inum)
+    print('allo', csvName)
+    dbList.to_csv(csvName, index=None)
+
     scriptref = 'run_scripts/sn_analysis/nsn_wfd.py'
-    for vv in dbList:
-        mybatch.add_batch(scriptref, procDict)
+    # for vv in dbList:
+    procDict['dbList'] = csvName
+    mybatch.add_batch(scriptref, procDict)
 
     mybatch.go_batch()
+
 
 parser = OptionParser(description='Script to estimate nsn for WFD - in batch')
 
@@ -36,22 +66,22 @@ parser.add_option('--outDir', type=str,
 
 opts, args = parser.parse_args()
 
-dbDir = opts.dbDir
-dbList = opts.dbList
-outDir = opts.outDir
+procDict = vars(opts)
 
-#load data
+# load data
 
-dbNames = pd.read_csv(dbList,comment='#')
+dbNames = pd.read_csv(procDict['dbList'], comment='#')
 
-
-chunks = np.array_split(dbNames,3)
+n_split = int(len(dbNames)/4)
+chunks = np.array_split(dbNames, n_split)
 
 print(chunks)
+
+for i, val in enumerate(chunks):
+    print(i, val)
+    make_batch(val, procDict, inum=i)
+"""
 # loop and batch
 for i, row in dbNames.iterrows():
     print(row)
-    
-    
-    
-    
+"""
