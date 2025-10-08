@@ -12,7 +12,7 @@ from sn_tools.sn_batchutils import BatchIt
 import numpy as np
 
 
-def make_batch(dbList, procDict, time='5:00:00', mem='10G', inum=0):
+def make_batch(dbList, procDict, time='5:00:00', mem='30G', inum=0):
     """
     Function to launch batch
 
@@ -25,7 +25,7 @@ def make_batch(dbList, procDict, time='5:00:00', mem='10G', inum=0):
     time : str, optional
         Time for the batch. The default is '5:00:00'.
     mem : str, optional
-        memory for the batch. The default is '5G'.
+        memory for the batch. The default is '30G'.
     inum : int, optional
         tag for the process. The default is 0.
 
