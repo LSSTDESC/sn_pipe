@@ -49,7 +49,7 @@ def make_batch(dbList, procDict, time='5:00:00', mem='50G', inum=0):
     procDict['dbList'] = csvName
     mybatch.add_batch(scriptref, procDict)
 
-    # mybatch.go_batch()
+    mybatch.go_batch()
 
 
 parser = OptionParser(description='Script to estimate nsn for WFD - in batch')
