@@ -152,6 +152,9 @@ parser.add_option('--print_nsn', type=int,
 parser.add_option('--cumul', type=int,
                   default=0,
                   help='to plot sum(nsn) [%default]')
+parser.add_option('--savepng', type=int,
+                  default=1,
+                  help='to save the plot (Mollview) [%default]')
 
 opts, args = parser.parse_args()
 
@@ -168,6 +171,7 @@ vartoplot = opts.vartoplot
 OS_ref = opts.OS_ref
 print_nsn = opts.print_nsn
 cumul = opts.cumul
+savepng = opts.savepng
 
 # read config file
 conf = pd.read_csv(config, comment='#')
@@ -215,7 +219,7 @@ if len(res) > 0:
         pp = '$\Sigma$'+pp
     plot_mollview_wfd(wfd, timescale, timeslots, nside,
                       varp=vartoplot, varleg=pp,
-                      outDir=outDir, for_ffmpeg=for_ffmpeg)
+                      outDir=outDir, for_ffmpeg=for_ffmpeg, savepng=savepng)
 
 if 'density' in plots:
     from sn_plotter_analysis.sn_analyser_wdf import plot_density_wfd
