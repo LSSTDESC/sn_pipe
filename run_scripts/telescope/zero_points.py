@@ -6,7 +6,8 @@ Created on Wed Jan 18 09:10:52 2023
 @author: gris
 """
 from sn_telmodel import plt, filtercolors
-from sn_telmodel.sn_telescope import Zeropoint_airmass
+from sn_telmodel.sn_transtools import Zeropoint_airmass
+from sn_telmodel.sn_throughputs import get_telescope
 import numpy as np
 from optparse import OptionParser
 # import os
@@ -83,6 +84,10 @@ parser.add_option('--pwv', type=float, default=4.0,
                   help='precipitable water vapor value [%default]')
 parser.add_option('--ozone', type=float, default=300.,
                   help='ozone value [%default]')
+parser.add_option('--exptime', type=float, default=30.,
+                  help='exposure time [%default]')
+parser.add_option('--nexp', type=int, default=1,
+                  help='number of exposures [%default]')
 
 opts, args = parser.parse_args()
 
@@ -93,12 +98,25 @@ tag = opts.tag
 aerosol = opts.aerosol
 pwv = opts.pwv
 ozone = opts.ozone
+exptime = opts.exptime
+nexp = opts.nexp
+
 outName = 'zp_airmass_v{}.npy'.format(tag)
 
-zp = Zeropoint_airmass(tel_dir=telDir,
-                       through_dir=throughputsDir,
-                       atmos_dir=atmosDir, tag=tag,
-                       aerosol=aerosol, pwv=pwv, oz=ozone)
+airmass=1.2
+telb = '{}_{}'.format(telDir, tag)
+through_dir = '{}/{}'.format(telb, throughputsDir)
+atmos_dir = '{}/{}'.format(telb, atmosDir)
+atmos_type = 'obsatmo'
+throughput = get_telescope(tel_dir=telb,
+                           through_dir=through_dir,
+                           atmos_dir=atmos_dir,
+                           atmos_type=atmos_type,
+                           tag=tag, load_components=True,
+                           airmass=airmass, aerosol=aerosol,
+                           pwv=pwv, ozone=ozone)
+
+zp = Zeropoint_airmass(throughput,exptime=exptime,nexp=nexp)
 
 res = zp.get_data()
 np.save('data_{}'.format(outName), res)
