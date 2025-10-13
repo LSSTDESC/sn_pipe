@@ -55,13 +55,13 @@ def make_batch(dbList, procDict, time='5:00:00', mem='50G', inum=0):
 parser = OptionParser(description='Script to estimate nsn for WFD - in batch')
 
 parser.add_option('--dbDir', type=str,
-                  default='../Output_SN_WFD_sigmaInt_0.0_Hounsell_G10_JLA',
+                  default='/sps/lsst/users/gris/Output_SN_WFD_sigmaInt_0.0_Hounsell_z_smflux_notelrot_airmass_G10_JLA',
                   help='OS location dir[%default]')
 parser.add_option('--dbList', type=str,
                   default='list_wfd.csv',
                   help='list of OS to process [%default]')
 parser.add_option('--outDir', type=str,
-                  default='../sn_wfd',
+                  default='/sps/lsst/users/gris/sn_wfd_airmass',
                   help='output dir [%default]')
 
 
