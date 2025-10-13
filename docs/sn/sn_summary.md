@@ -24,6 +24,29 @@ Options:
 
 </pre>
 
+## Run @ccin2p3 (interactive/batch)
+
+Usage: for_batch/scripts/nsn_pixels/nsn_dd.py [options]
+
+<pre>
+
+Script to estimate nsn for WFD - in batch/interactive
+
+Options:
+  -h, --help            show this help message and exit
+  --dbDir=DBDIR         OS location dir[/sps/lsst/users/gris/Output_SN_DD_sigm
+                        aInt_0.0_Hounsell_z_smflux_notelrot_airmass_G10_JLA]
+  --dbList=DBLIST       list of OS to process [list_dd.csv]
+  --outDir=OUTDIR       output dir [/sps/lsst/users/gris/sn_dd_airmass]
+  --scriptName=SCRIPTNAME
+                        output sh script [nsn_dd.sh]
+  --scriptDir=SCRIPTDIR
+                        output sh script dir [sh_scripts]
+  --runIt=RUNIT         to run the sh script [1]
+  --runMode=RUNMODE     run mode (interactive/batch) [interactive]
+
+</pre>
+
 # Make figures
 
 ## Usage: plot_scripts/sn/sn_analyzer_sel_ddf.py [options]

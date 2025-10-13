@@ -97,7 +97,8 @@ def runBatch(procDict):
         make_batch(val, procDict, inum=i)
 
 
-parser = OptionParser(description='Script to estimate nsn for WFD - in batch')
+parser = OptionParser(
+    description='Script to estimate nsn for DD - in batch/interactive')
 
 parser.add_option('--dbDir', type=str,
                   default='/sps/lsst/users/gris/Output_SN_DD_sigmaInt_0.0_Hounsell_z_smflux_notelrot_airmass_G10_JLA',
