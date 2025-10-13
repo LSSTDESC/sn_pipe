@@ -2,7 +2,7 @@
 
 ## SNe Ia production
 
-### The main script to produce SNe Ia is [run_sim_to_fit.py](sim_to_fit.md). It correspond to the simulation and fit of SNe Ia light curves.
+The main script to produce SNe Ia is [run_sim_to_fit.py](sim_to_fit.md). It correspond to the simulation and fit of SNe Ia light curves.
 
 It is possible to use the batch system @ccin2p3 through the script [prodIt.py](sn_batch_prod.md)
 
