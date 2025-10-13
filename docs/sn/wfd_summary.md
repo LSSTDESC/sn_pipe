@@ -32,6 +32,24 @@ python run_scripts/sn_analysis/nsn_wfd.py --dbDir=/sps/lsst/users/gris/Output_SN
 
 -> a set of files (nsn_wfd.hdf5) will be produced in the dir /sps/lsst/users/gris/sn_wfd/dbName
 
+### Batch@ccin2p3
+
+It is possible to use the batch system @ccin2p3 for the estimation of nsn.
+
+Usage: for_batch/scripts/nsn_pixels/nsn_wfd.py [options]
+
+<pre>
+Script to estimate nsn for WFD - in batch
+
+Options:
+  -h, --help       show this help message and exit
+  --dbDir=DBDIR    OS location dir[/sps/lsst/users/gris/Output_SN_WFD_sigmaInt
+                   _0.0_Hounsell_z_smflux_notelrot_airmass_G10_JLA]
+  --dbList=DBLIST  list of OS to process [list_wfd.csv]
+  --outDir=OUTDIR  output dir [/sps/lsst/users/gris/sn_wfd_airmass]
+  
+</pre>
+
 ## Plot summary
 
 ### Usage: plot_scripts/sn/sn_analyzer_sel_wfd.py [options]
