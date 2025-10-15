@@ -12,16 +12,16 @@ from sn_tools.sn_io import checkDir
 parser = OptionParser(description='script to select SNe Ia')
 
 parser.add_option("--dataDir", type="str",
-                  default='/sps/lsst/groups/cadence/LSST_SN_PhG/prod_simu/Output_SN_WFD_sigmaInt_0.0_Hounsell_z_smflux_notelrot_airmass',
+                  default='/sps/lsst/groups/cadence/LSST_SN_PhG/prod_simu/Output_SN_DD_sigmaInt_0.0_Hounsell_z_smflux_notelrot_airmass',
                   help="data dir [%default]")
 parser.add_option("--listFields", type="str",
-                  default='WFD',
+                  default='COSMOS,CDFS,XMM-LSS,ELAISS1,EDFS_a,EDFS_b',
                   help="list of fields to process [%default]")
 parser.add_option("--fieldType", type="str",
-                  default='WFD',
+                  default='DDF',
                   help="Type of fields to process [%default]")
 parser.add_option("--dbList", type="str",
-                  default='list_OS_new_wfd.csv',
+                  default='list_OS_new.csv',
                   help="List of OS to process [%default]")
 parser.add_option("--timescale", type="str",
                   default='year',
@@ -30,10 +30,10 @@ parser.add_option("--selconfig", type="str",
                   default='G10_JLA',
                   help="selection criteria [%default]")
 parser.add_option("--outDir_pre", type="str",
-                  default='/sps/lsst/users/gris/Output_SN_WFD_sigmaInt_0.0_Hounsell_z_smflux_notelrot_airmass',
+                  default='/sps/lsst/users/gris/Output_SN_DD_sigmaInt_0.0_Hounsell_z_smflux_notelrot_airmass',
                   help="main output directory [%default]")
 parser.add_option("--scriptName", type="str",
-                  default='select_wfd.sh',
+                  default='select_dd.sh',
                   help="output sh script [%default]")
 parser.add_option("--runIt", type=int,
                   default=1,
