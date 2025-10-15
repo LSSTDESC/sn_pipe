@@ -45,7 +45,7 @@ def make_script(scriptDir, scriptName, **pp):
     # fill the script
     script = open(scriptName, "w")
 
-    main_script = 'run_scripts/sn_analysis/nsn_ddf.py'
+    main_script = 'python run_scripts/sn_analysis/nsn_ddf.py'
 
     cmd = main_script
 
