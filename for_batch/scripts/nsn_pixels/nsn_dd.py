@@ -15,6 +15,23 @@ from sn_tools.sn_io import checkDir
 
 
 def make_script(scriptDir, scriptName, **pp):
+    """
+    Function to write a script to be used in interactive
+
+    Parameters
+    ----------
+    scriptDir : str
+        script directory.
+    scriptName : str
+        script name.
+    **pp : dict
+        script parameters.
+
+    Returns
+    -------
+    None.
+
+    """
 
     # get current directory
     cwd = os.getcwd()
@@ -82,6 +99,19 @@ def make_batch(dbList, procDict, time='5:00:00', mem='50G', inum=0):
 
 
 def runBatch(procDict):
+    """
+    Function to run in batch
+
+    Parameters
+    ----------
+    procDict : dict
+        parameter dict.
+
+    Returns
+    -------
+    None.
+
+    """
 
     dbNames = pd.read_csv(procDict['dbList'], comment='#')
 
@@ -141,9 +171,10 @@ else:
 
     # execute
     if runIt:
-        cmd_e = 'sh srun_test.sh {}'.format(scriptName)
-        st = os.stat(scriptName)
-        os.chmod(scriptName, st.st_mode | 0o111)
+        fName = '{}/{}'.format(scriptDir, scriptName)
+        cmd_e = 'sh srun_test.sh {}'.format(fName)
+        st = os.stat(fName)
+        os.chmod(fName, st.st_mode | 0o111)
         os.system(cmd_e)
 
 
