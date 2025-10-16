@@ -682,7 +682,10 @@ parser.add_option("--dbName_night", type=str, default='baseline_v3.0_10yrs',
 parser.add_option("--fieldName_night", type=str, default='COSMOS',
                   help="field for night plot stat [%default]")
 parser.add_option("--plots", type=str,
-                  default='summary,field_cad_seasonlength,field_nvisits,field_nvisits_band,relative_depth,filter_alloc',
+                  default='summary,field_cad_seasonlength,field_nvisits,\
+                          field_nvisits_band,relative_depth,filter_alloc,\
+                          field_dithering_season,field_dithering_night,\
+                          field_weather',
                   help="plots to draw [%default]")
 
 
@@ -743,6 +746,29 @@ for field in fields:
                    xlab=['season', 'season'],
                    yvars=['nvisits', 'gap_5_10'],
                    ylab=['N$_{visits}$', 'N$_{gaps}^{5-10}$'],
+                   title='{} pointings'.format(field))
+    if 'field_dithering_season' in plots:
+        plot_field(sel, xvars=['season', 'season'],
+                   xlab=['season', 'season'],
+                   yvars=['RA_std', 'Dec_std'],
+                   ylab=['std(RA)', 'std(Dec)'],
+                   title='{} pointings'.format(field))
+    if 'field_dithering_night' in plots:
+        plot_field(sel, xvars=['season', 'season'],
+                   xlab=['season', 'season'],
+                   yvars=['RA_mean_std_night', 'Dec_mean_std_night'],
+                   ylab=['<std(RA)>$_{night}$', '<std(Dec)>$_{night}$'],
+                   title='{} pointings'.format(field))
+    if 'field_weather' in plots:
+        plot_field(sel, xvars=['season', 'season'],
+                   xlab=['season', 'season'],
+                   yvars=['m5_z_mean', 'm5_z_std'],
+                   ylab=['$<m_5^z>$', '$std(m_5^z)$'],
+                   title='{} pointings'.format(field))
+        plot_field(sel, xvars=['season', 'season'],
+                   xlab=['season', 'season'],
+                   yvars=['m5_y_mean', 'm5_y_std'],
+                   ylab=['$<m_5^y>$', '$std(m_5^y)$'],
                    title='{} pointings'.format(field))
     if 'field_nvisits_band' in plots:
         for b in [['u', 'g'], ['r', 'i'], ['z', 'y']]:
