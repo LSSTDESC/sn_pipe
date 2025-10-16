@@ -57,7 +57,7 @@ def add_script(script, main_cmd, pp):
 
     """
 
-    cmd = main_cmd
+    cmd = 'python {}'.format(main_cmd)
 
     for key, vals in pp.items():
         cmd += ' --{}={}'.format(key, vals)
