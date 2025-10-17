@@ -1,3 +1,5 @@
+# per OS
+
 ## Usage: plot_scripts/os_info/plot_os_pixel_info.py [options]
 <pre>
 Script to plot pixel level OS infos
@@ -40,3 +42,28 @@ python plot_scripts/os_info/plot_os_pixel_info.py --dbDir=../wfd_pixels --dbName
 [Nvisits year 1 - WFD - Mollweid view](plotd4.png)
 
 [cadence year 1- WFD - Mollweid view](plotd5.png)
+
+## Summary plots (DDF)
+
+### Usage: plot_scripts/os_info/plot_dd_pixels_summary.py [options]
+
+<pre>
+Script to plot pixel level OS infos
+
+Options:
+  -h, --help            show this help message and exit
+  --config=CONFIG       config file [config_ana_selplot_part1.csv]
+  --dbDir=DBDIR         data dir [../dd_pixels]
+  --fields=FIELDS       fields to show [COSMOS,XMM-
+                        LSS,CDFS,ELAISS1,EDFS_a,EDFS_b]
+  --timescale=TIMESCALE
+                        timescale for the plots (year/season) [year]
+  --nside=NSIDE         nside healpix parameter [128]
+
+</pre>
+
+### Example
+
+[area (per year) vs OS](ploth1.png)
+
+[mean area vs dither parameter](ploth2.png)
