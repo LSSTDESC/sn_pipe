@@ -4,7 +4,8 @@
 Two steps:
 
 ### analysis of the data -> create outputfile with processed data
-- use the script [run_scripts/os_info/run_obs_strat_pixels.py](usage_stat_pixel.md)
+- main script [run_scripts/os_info/run_obs_strat_pixels.py](usage_stat_pixel.md)
+- @ccin2p3: [scripts](usage_dd_wfd_pixel.md) to process DD and WFD pixels.
 
 ### plot the data
 
