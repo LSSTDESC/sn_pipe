@@ -60,7 +60,7 @@ checkDir(outDir)
 conf = pd.read_csv(dbList, comment='#')
 
 for i, row in conf.iterrows():
-    dbName = row['dbName_WFD']
+    dbName = row['dbName']
     # check outputdir
     fName = f'{outDir}/{dbName}/{outName}'
 
