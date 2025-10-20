@@ -229,10 +229,14 @@ for field in fields:
     print(dfb)
     plot_timescale(dfb, figtitle=field)
 
+    """
     dfc = dfb.groupby(['dbName', 'dbName_plot', 'dither', 'dither_type'])[
         'area'].mean().reset_index()
-
+    """
+    dfc = df.groupby(['dbName', 'dbName_plot', 'dither', 'dither_type']).apply(
+        lambda x: get_info_pixels(x, pixArea=pixArea), include_groups=False).reset_index()
     print(dfc)
+
     plot_dither(dfc, figtitle=field)
 
 plt.show()
