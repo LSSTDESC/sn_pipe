@@ -119,6 +119,7 @@ w0 = opts.w0
 wa = opts.wa
 alpha = opts.alpha
 beta = opts.beta
+sigmaInt = opts.sigmaInt
 recalc_sigmu = opts.recalc_sigmu
 prior_varname = opts.prior_varname.split(',')
 prior_refvalue = opts.prior_refvalue.split(',')
