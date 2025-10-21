@@ -10,7 +10,7 @@ import pandas as pd
 from optparse import OptionParser
 from sn_tools.sn_batchutils import BatchIt
 
-parser = OptionParser('script to fit LSST SN surveys')
+parser = OptionParser('script to fit (cosmo) LSST SN surveys')
 
 parser.add_option("--dbList", type="str",
                   default='list_OS_new_wfd.csv',
@@ -31,11 +31,11 @@ parser.add_option('--prior', type=int,
                   default=1,
                   help='prior for the fit [%default]')
 parser.add_option('--prior_varname', type=str, default='Om0',
-                  help='prior varname list')
+                  help='prior varname list [%default]')
 parser.add_option('--prior_refvalue', type=str, default='0.3',
-                  help='prior refvalue list')
+                  help='prior refvalue list [%default]')
 parser.add_option('--prior_sigma', type=str, default='0.0073',
-                  help='prior sigma list')
+                  help='prior sigma list [%default]')
 
 opts, args = parser.parse_args()
 
