@@ -121,9 +121,6 @@ def plot_cosmo_summary(data, udfs, dfs, comment_on_plot, fill_between=False):
     for tt in ['DDF', 'UD', 'DD', 'WFD']:
         resdf['{}_std'.format(tt)] = 0
 
-    print(resdf, config)
-    print(resdf.columns)
-
     vvars = ['MoM', 'sigma_w0', 'sigma_wa']
     leg = dict(zip(vvars, [r'$SMoM$',
                r'$\sigma_{w_0}$ [%]', r'$\sigma_{w_a}$ [%]']))
@@ -349,8 +346,8 @@ parser.add_option('--comment_on_plot', type=str,
 parser.add_option('--fill_between', type=int,
                   default=0,
                   help='to fill +-1 sigma area with yellow [%default]')
-parser.add_option('--prior', type=str,
-                  default='prior',
+parser.add_option('--prior', type=int,
+                  default=1,
                   help='data were processed with or withuot prior [%default]')
 parser.add_option('--plots', type=str,
                   default='mom_year,mom_survey,sigma_w0,sigma_wa,nsn',
@@ -414,7 +411,6 @@ data = process_cosmo(dbDir, df_conf, spectro_config,
 # select year max
 idx = data[timescale] <= year_max
 data = data[idx]
-
 
 # save smom in csv file
 save_data(data, prior=prior, year_max=year_max)
