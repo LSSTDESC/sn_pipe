@@ -70,6 +70,7 @@ def cosmo_fits(nreal, params, j, output_q=None):
     dbName_WFD = params['dbName_WFD']
     yearmax = params['yearmax']
     hd_random = params['hd_random']
+    prior = params['prior']
 
     cosmo_df = pd.DataFrame()
     print('processing', j, nreal)
@@ -88,6 +89,9 @@ def cosmo_fits(nreal, params, j, output_q=None):
             df_ = make_df(vv)
             df_['year'] = year+1
             df_['real_survey'] = nn
+            df_['dbName_DD'] = dbName_DD
+            df_['dbName_WFD'] = dbName_WFD
+            df_['prior'] = prior
             cosmo_df = pd.concat((cosmo_df, df_))
 
     if output_q is not None:
@@ -164,6 +168,7 @@ pp['dbName_DD'] = dbName_DD
 pp['dbName_WFD'] = dbName_WFD
 pp['yearmax'] = yearmax
 pp['hd_random'] = hd_random
+pp['prior'] = prior
 
 time_ref = time.time()
 cosmo_df = multiproc(n_real, pp, cosmo_fits, nproc=nproc)
