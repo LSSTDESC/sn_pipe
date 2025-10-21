@@ -188,13 +188,13 @@ def ana_reqs(data, reqs,
 
     data_m = data_sel.merge(reqs_sel, left_on=['year'], right_on=[
                             'year'], suffixes=['', '_ref'])
-
     for b in bands:
         data_m['diff_sum_{}'.format(b)] = data_m['Nvisits_sum_{}'.format(
             b)]-data_m['Nvisits_sum_{}_ref'.format(b)]
 
+    return data_m
     # select ddf_ocean_ocean6_v4.3.5_10yrs
-    idx = data_m['dbName'] == 'ddf_ocean_ocean6_v4.3.5_10yrs'
+    idx = data_m['dbName'] == dbName
 
     sel_m = data_m[idx]
 
@@ -256,7 +256,8 @@ def ana_reqs_m5(data, reqs,
     sel_m = data_m[idx]
 
     plot_calib(sel_m, bands=bands, req_name=req_name,
-               prefix='diff_fiveSigmaDepth', laby='$\Delta m_5=m_5^{obs}-m_5^{req}$')
+               prefix='diff_fiveSigmaDepth',
+               laby='$\Delta m_5=m_5^{obs}-m_5^{req}$')
 
 
 def get_cum_m5(grp, bands, years=[[1, 1], [2, 10]]):
@@ -351,9 +352,9 @@ def plot_calib(data, bands, req_name,
 
     """
 
-    fields = ['DD:COSMOS', 'DD:ECDFS',
-              'DD:XMM_LSS', 'DD:ELAISS1',
-              'DD:EDFS_a', 'DD:EDFS_b']
+    fields = ['COSMOS', 'ECDFS',
+              'XMM_LSS', 'ELAISS1',
+              'EDFS_a', 'EDFS_b']
 
     colors = ['r', 'g', 'r', 'm', 'k', 'b']
     linestyles = ['solid', 'dashed', 'dotted', 'solid', 'dashed', 'dotted']
@@ -387,6 +388,120 @@ def plot_calib(data, bands, req_name,
                   ncol=1, fontsize=12, frameon=False)
 
 
+def plot_calib_db(data, req_name, conf_df, field='COSMOS',
+                  prefix='diff_sum',
+                  laby='$\Delta N_{visits}=N_{visits}^{obs}-N_{visits}^{req}$'):
+    """
+    Function to plot calb req results
+
+    Parameters
+    ----------
+    data : pandas df
+        Data to process.
+    bands : list(str)
+        Filters to consider.
+    req_name : str
+        req name (for the plot).
+    prefix : str, optional
+        What to plot. The default is 'diff_sum'.
+    Returns
+    -------
+    None.
+
+    """
+
+    idx = data['field'] == field
+    sel = data[idx]
+
+    dbNames = sel['dbName'].unique()
+
+    fig, ax = plt.subplots(figsize=(16, 8))
+    fig.subplots_adjust(right=0.75)
+    figtit = '{} - {}'.format(field, req_name)
+    fig.suptitle(figtit)
+    for dbName in dbNames:
+        ido = sel['dbName'] == dbName
+        selb = sel[ido]
+        idc = conf_df['dbName'] == dbName
+        selp = conf_df[idc]
+        ls = selp['ls'].values[0]
+        marker = selp['marker'].values[0]
+        color = selp['color'].values[0]
+        dbNameb = selp['dbName_plot'].values[0]
+        for b in bands:
+            if b == 'u':
+                ax.plot(selb['year'], selb['{}_{}'.format(prefix, b)],
+                        ls='None', marker=marker, color=color, mfc='None',
+                        label=dbNameb)
+            else:
+                ax.plot(selb['year'], selb['{}_{}'.format(prefix, b)],
+                        ls=ls, marker=marker, color=color, mfc='None')
+
+    ax.grid(visible=True)
+    ax.set_xlabel(r'year')
+    ax.set_ylabel(r'{}'.format(laby))
+    ax.set_xlim([0.9, 8.1])
+    ax.legend(loc='upper center',
+              bbox_to_anchor=(1.20, 0.7),
+              ncol=1, fontsize=12, frameon=False)
+
+
+def print_latex_calib(res, tit, prefix='diff_sum',):
+
+    df = pd.DataFrame()
+
+    for b in 'ugrizy':
+        idx = res['{}_{}'.format(prefix, b)] < 0
+        sel = res[idx]
+        sel['filter'] = b
+        df = pd.concat((df, sel))
+
+    dbNames = df['dbName'].unique()
+
+    print(df[['dbName', 'field', 'filter', 'year']])
+
+    fields = df['field'].unique()
+    bands = 'ugrizy'
+
+    dfb = df.groupby(['field', 'dbName', 'filter']).apply(
+        lambda x: get_years(x), include_groups=False).reset_index()
+
+    dfc = dfb.groupby(['field', 'dbName']).apply(
+        lambda x: get_format(x), include_groups=False).reset_index()
+    print(dfc)
+
+
+def get_years(grp):
+
+    # grab the years
+    ll = grp['year'].to_list()
+    # transform to str
+    ll = list(map(str, ll))
+
+    res = [','.join(ll)]
+
+    df = pd.DataFrame(res, columns=['years'])
+
+    return df
+
+
+def get_format(grp):
+
+    bands = grp['filter'].to_list()
+    years = grp['years'].to_list()
+
+    bb = '/'.join(bands)
+    yy = '/'.join(years)
+
+    dd = {}
+    dd['filters'] = [bb]
+    dd['years'] = [yy]
+
+    res = pd.DataFrame.from_dict(dd)
+
+    return res
+
+
 parser = OptionParser(description='Script to plot calib reqs from PZ and WL')
 
 parser.add_option('--config', type=str,
@@ -395,7 +510,7 @@ parser.add_option('--config', type=str,
 parser.add_option("--dirFile", type="str",
                   default='../nvisits_m5',
                   help="file directory [%default]")
-parser.add_option("--fields", type="str", default='DD:COSMOS,DD:ECDFS,DD:XMM_LSS,DD:ELAISS1,DD:EDFS_a,DD:EDFS_b',
+parser.add_option("--fields", type="str", default='COSMOS,ECDFS,XMM_LSS,ELAISS1,EDFS_a,EDFS_b',
                   help="fields to process [%default]")
 parser.add_option("--plots", type="str", default='plot_global_wl,plot_global_agn,summary_reqs_wl,summary_reqs_agn,summary_reqs_pz',
                   help="plots to draw [%default]")
@@ -434,8 +549,10 @@ if 'summary_reqs_wl' in plots:
     ana_reqs(data, df_wl, req_name='WL reqs.', fields=fields)
 
 if 'summary_reqs_agn' in plots:
-    ana_reqs(data, df_agn, req_name='AGN reqs.', fields=fields)
-
+    res = ana_reqs(data, df_agn, req_name='AGN reqs.',
+                   dbName='baseline_v5.0.0_10yrs', fields=fields)
+    plot_calib_db(res, 'AGN reqs.', df_config)
+    print_latex_calib(res, 'AGN reqs.')
 
 # pz requirements
 
