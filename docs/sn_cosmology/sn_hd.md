@@ -139,15 +139,15 @@ Options:
   --dataDir=DATADIR     input directory for survey
                         files[/sps/lsst/users/gris/sn_surveys]
   --fitparam_names=FITPARAM_NAMES
-                        fit parameter names [w0,wa,Om0]
+                        fit parameter names [w0,wa,Om0,sigmaInt]
   --fitparam_values=FITPARAM_VALUES
-                        fit parameter values [-1.0,0.0,0.3]
+                        fit parameter values [-1.0,0.0,0.3,0.12]
   --prior=PRIOR         prior for the fit [1]
   --prior_varname=PRIOR_VARNAME
-                        prior varname list
+                        prior varname list [Om0]
   --prior_refvalue=PRIOR_REFVALUE
-                        prior refvalue list
+                        prior refvalue list [0.3]
   --prior_sigma=PRIOR_SIGMA
-                        prior sigma list
+                        prior sigma list [0.0073]
 
 </pre>
