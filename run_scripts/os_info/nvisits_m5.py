@@ -9,6 +9,7 @@ from optparse import OptionParser
 import pandas as pd
 import numpy as np
 from sn_tools.sn_io import checkDir
+from sn_tools.sn_obs import get_fields
 
 
 def load_data(dirFile, dbName, fieldlist):
@@ -39,7 +40,9 @@ def load_data(dirFile, dbName, fieldlist):
 
     idx = res['target_name'].isin(fieldlist)
 
-    res = pd.DataFrame(res[idx])
+    res = get_fields(tt, lookuptable='input/simulation/lookup_ddf.csv')
+
+    res = pd.DataFrame(res)
 
     res['dbName'] = dbName
 
@@ -144,9 +147,10 @@ for i, row in df_list.iterrows():
     data = load_data(dirFile, row['dbName'], fields)
     print(len(data))
     print(data.columns)
+    data['target_name'] = data['field']
     print(data['target_name'].unique())
-    df_info = data.groupby(['dbName', 'target_name', 'year']).apply(
-        lambda x: get_infos(x)).reset_index()
+    df_info = data.groupby(['dbName', 'target_name', 'year', 'field']).apply(
+        lambda x: get_infos(x), include_groups=False).reset_index()
     print(df_info)
     outName = '{}/{}.hdf5'.format(outDir, row['dbName'])
     df_info.to_hdf(outName, key='nvisits_m5')
