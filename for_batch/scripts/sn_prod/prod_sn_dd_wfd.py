@@ -52,6 +52,15 @@ parser.add_option("--saturation_ccdfullwell", type=float,
 parser.add_option("--SN_z_max", type=float,
                   default=1.1,
                   help="zmax for sn prod [%default]")
+parser.add_option("--SN_z_min", type=float,
+                  default=0.01,
+                  help="zmin for sn prod [%default]")
+parser.add_option("--SN_z_step", type=float,
+                  default=0.1,
+                  help="zstep for sn prod [%default]")
+parser.add_option("--SN_z_type", type=str,
+                  default='random',
+                  help="z choice value for sn prod [%default]")
 parser.add_option("--SN_NSNfactor_DDF", type=int,
                   default=30,
                   help="nsn factor for DDF production[%default]")
@@ -116,6 +125,9 @@ saturation_effect = opts.saturation_effect
 saturation_psf = opts.saturation_psf
 saturation_ccdfullwell = opts.saturation_ccdfullwell
 sn_z_max = opts.SN_z_max
+sn_z_min = opts.SN_z_min
+sn_z_step = opts.SN_z_step
+sn_z_type = opts.SN_z_type
 sn_nsn_factor_dd = opts.SN_NSNfactor_DDF
 sn_nsn_factor_wfd = opts.SN_NSNfactor_WFD
 sn_nsn_abs_dd = opts.SN_NSNabsolute_DDF
@@ -156,6 +168,10 @@ if dbList_DD != '':
     cmd_ddf += ' --code={}'.format(code)
     cmd_ddf += ' --SN_minRFphaseQual={}'.format(SN_minRFphaseQual)
     cmd_ddf += ' --SN_maxRFphaseQual={}'.format(SN_maxRFphaseQual)
+    cmd_ddf += ' --SN_z_max={}'.format(sn_z_max)
+    cmd_ddf += ' --SN_z_min={}'.format(sn_z_min)
+    cmd_ddf += ' --SN_z_step={}'.format(sn_z_step)
+    cmd_ddf += ' --SN_z_type={}'.format(sn_z_type)    
     cmd_ddf += ' --SN_x1_type={}'.format(x1_type)
     cmd_ddf += ' --SN_x1_min={}'.format(x1_min)
     cmd_ddf += ' --SN_color_type={}'.format(color_type)
@@ -182,6 +198,9 @@ if dbList_WFD != '':
     cmd_wfd += ' --saturation_psf={}'.format(saturation_psf)
     cmd_wfd += ' --saturation_ccdfullwell={}'.format(saturation_ccdfullwell)
     cmd_wfd += ' --SN_z_max={}'.format(sn_z_max)
+    cmd_wfd += ' --SN_z_min={}'.format(sn_z_min)
+    cmd_wfd += ' --SN_z_step={}'.format(sn_z_step)
+    cmd_wfd += ' --SN_z_type={}'.format(sn_z_type) 
     cmd_wfd += ' --SN_NSNfactor={}'.format(sn_nsn_factor_wfd)
     cmd_wfd += ' --SN_NSNabsolute={}'.format(sn_nsn_abs_wfd)
     cmd_wfd += ' --Observations_coadd={}'.format(obs_coadd)

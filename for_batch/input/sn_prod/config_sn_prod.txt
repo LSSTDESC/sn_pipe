@@ -10,6 +10,7 @@ SN_color_min 0.2 float # color min for LC prod
 SN_z_type random str # z prod for LC prod
 SN_z_min 0.01 float # min z for LC prod
 SN_z_max 1.1 float # max z for LC prod
+SN_z_step 0.1 float #zstep for prod in uniform mode
 SN_sigmaInt 0.0 float #SN intrinsic dispersion
 SN_z_rate Hounsell str # SN production rate
 SN_daymax_type random str # T0 dist for LC prod

@@ -72,6 +72,12 @@ parser.add_option("--SN_z_max", type=float,
 parser.add_option("--SN_z_min", type=float,
                   default=0.01,
                   help="zmin for sn prod [%default]")
+parser.add_option("--SN_z_step", type=float,
+                  default=0.1,
+                  help="zstep for sn prod [%default]")
+parser.add_option("--SN_z_type", type=str,
+                  default='random',
+                  help="z type for sn prod [%default]")
 parser.add_option("--SN_sigmaz", type=float, default=1.e-5,
                   help="sigmaz for LC zsim [%default]")
 parser.add_option("--fit_remove_sat", type=str,
@@ -143,6 +149,8 @@ for i, row in df.iterrows():
     procDict['saturation_ccdfullwell'] = opts.saturation_ccdfullwell
     procDict['SN_z_max'] = opts.SN_z_max
     procDict['SN_z_min'] = opts.SN_z_min
+    procDict['SN_z_step'] = opts.SN_z_step
+    procDict['SN_z_type'] = opts.SN_z_type
     procDict['SN_z_sigmaz'] = opts.SN_sigmaz
     procDict['fit_remove_sat'] = opts.fit_remove_sat
     # procDict['InstrumentSimu_airmassType'] = 'const'
