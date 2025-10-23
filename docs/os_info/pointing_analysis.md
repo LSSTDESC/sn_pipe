@@ -9,7 +9,7 @@
 ### analysis of the data -> create outputfile with processed data
 - use the script [run_scripts/metrics/stat_DD.py](usage_stat_DD.md)
 - @ccin2p3, it is possible to use the [anaos.sh](anaos.sh) script using
-sh srun_test.sh nvisits_m5.sh
+sh srun_test.sh anaos.sh
 
 An example of the srun_tesh.sh is given [here](srun_test.sh).
 
