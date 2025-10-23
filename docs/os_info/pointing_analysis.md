@@ -2,7 +2,7 @@
 
 ## $${\color{blue} Nightly \space DDF \space pointings \space }$$
 
-- use the script [plot_scripts/os_info/plot_ddf_nightly.py](usage_plot_nightly.py)
+- use the script [plot_scripts/os_info/plot_ddf_nightly.py](usage_plot_nightly.md)
 
 ## $${\color{blue} Global \space pointing \space analysis}$$
 
