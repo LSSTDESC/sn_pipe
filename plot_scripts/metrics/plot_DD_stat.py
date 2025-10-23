@@ -5,6 +5,7 @@ from sn_plotter_metrics.utils import get_dist
 from sn_plotter_metrics.plot4metric import plot_night, plot_series
 from sn_plotter_metrics.plot4metric import plot_series_fields, plot_filter_alloc
 from sn_plotter_metrics.plot4metric import plot_field, plot_cumsum
+from sn_tools.sn_utils import clean_level
 from optparse import OptionParser
 
 
@@ -575,12 +576,10 @@ def get_ud_scenario(df, thresh=3000):
     bb = bb.merge(res, left_on=['dbName'], right_on=[
                   'dbName'], suffixes=['', ''])
 
-    print(bb)
-
     fi = bb.groupby(['dbName']).apply(lambda x: reformat(x),
                                       include_groups=False).reset_index()
 
-    print(fi)
+    return fi
 
 
 def ana_ud_scenario(grp):
@@ -685,7 +684,7 @@ parser.add_option("--plots", type=str,
                   default='summary,field_cad_seasonlength,field_nvisits,\
                           field_nvisits_band,relative_depth,filter_alloc,\
                           field_dithering_season,field_dithering_night,\
-                          field_weather',
+                          field_weather,get_ud_scenario',
                   help="plots to draw [%default]")
 
 
@@ -848,8 +847,10 @@ if 'filter_alloc' in plots:
     # plot_night(
     #    df, dbName=dbName_night, field=fieldName_night)
 
-
-get_ud_scenario(df)
+if 'get_ud_scenario' in plots:
+    res = get_ud_scenario(df)
+    res = clean_level(res)
+    res.to_csv('ddf_ud_scenario.csv', index=False)
 
 if len(plots) > 0:
     plt.show()
