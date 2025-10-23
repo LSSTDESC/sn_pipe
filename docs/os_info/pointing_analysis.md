@@ -1,5 +1,9 @@
 #  $${\color{red} OS \space pointing \space analysis}$$
 
+## $${\color{blue} Nightly \space DDF \space pointings \space }$$
+
+- use the script [plot_scripts/os_info/plot_ddf_nightly.py](usage_plot_nightly.py)
+
 ## $${\color{blue} Global \space pointing \space analysis}$$
 
 ### analysis of the data -> create outputfile with processed data
