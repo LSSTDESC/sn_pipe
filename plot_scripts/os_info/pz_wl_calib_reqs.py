@@ -134,7 +134,6 @@ def get_reqs(bands='ugrizy',
 def ana_reqs(data, reqs,
              req_name='WL reqs',
              bands='ugrizy',
-             dbName='ddf_ocean_ocean6_v4.3.5_10yrs',
              fields=['DD:COSMOS']):
     """
     Function to analyse reqs wrt OS results
@@ -149,8 +148,8 @@ def ana_reqs(data, reqs,
         Req name (for the plot). The default is 'WL reqs'.
     bands : list(str), optional
         Bands to consider. The default is 'ugrizy'.
-    dbName : str, optional
-        OS of interest. The default is 'ddf_ocean_ocean6_v4.3.5_10yrs'.
+    fields: list(str), optional
+      list of DDF to analyze. The default is ['DD:COSMOS'].
 
     Returns
     -------
@@ -158,7 +157,6 @@ def ana_reqs(data, reqs,
 
     """
 
-    idx = data['dbName'] == dbName
     idx = data['target_name'].isin(fields)
 
     data = pd.DataFrame(data[idx])
@@ -193,18 +191,11 @@ def ana_reqs(data, reqs,
             b)]-data_m['Nvisits_sum_{}_ref'.format(b)]
 
     return data_m
-    # select ddf_ocean_ocean6_v4.3.5_10yrs
-    idx = data_m['dbName'] == dbName
-
-    sel_m = data_m[idx]
-
-    plot_calib(sel_m, bands=bands, req_name=req_name)
 
 
 def ana_reqs_m5(data, reqs,
                 req_name='PZ reqs',
-                bands='ugrizy',
-                dbName='ddf_ocean_ocean6_v4.3.5_10yrs',):
+                bands='ugrizy'):
     """
     Function to analyse reqs wrt OS results
 
@@ -218,8 +209,6 @@ def ana_reqs_m5(data, reqs,
         Req name (for the plot). The default is 'WL reqs'.
     bands : list(str), optional
         Bands to consider. The default is 'ugrizy'.
-    dbName : str, optional
-        OS of interest. The default is 'ddf_ocean_ocean6_v4.3.5_10yrs'.
 
     Returns
     -------
@@ -227,14 +216,12 @@ def ana_reqs_m5(data, reqs,
 
     """
 
-    idx = data['dbName'] == dbName
-    data = pd.DataFrame(data[idx])
-
     data = clean_level(data)
     data = data.sort_values(by=['year'])
-    datab = data.groupby(['dbName', 'target_name']
+    datab = data.groupby(['dbName', 'target_name', 'field']
                          ).apply(lambda x: get_cum_m5(x, bands), include_groups=False).reset_index()
-    cols = ['year', 'target_name', 'fiveSigmaDepth_r', 'fiveSigmaDepth_z']
+    cols = ['year', 'target_name', 'field',
+            'fiveSigmaDepth_r', 'fiveSigmaDepth_z']
     # print(datab[cols])
 
     data = clean_level(data)
@@ -250,6 +237,8 @@ def ana_reqs_m5(data, reqs,
 
     # print(data_m)
 
+    print(data_m.columns)
+    return data_m
     # select ddf_ocean_ocean6_v4.3.5_10yrs
     idx = data_m['dbName'] == 'ddf_ocean_ocean6_v4.3.5_10yrs'
 
@@ -390,20 +379,28 @@ def plot_calib(data, bands, req_name,
 
 def plot_calib_db(data, req_name, conf_df, field='COSMOS',
                   prefix='diff_sum',
-                  laby='$\Delta N_{visits}=N_{visits}^{obs}-N_{visits}^{req}$'):
+                  laby='$\Delta N_{visits}=N_{visits}^{obs}-N_{visits}^{req}$',
+                  bands='ugrizy'):
     """
-    Function to plot calb req results
+    Function to plot calib req results
 
     Parameters
     ----------
     data : pandas df
         Data to process.
-    bands : list(str)
-        Filters to consider.
     req_name : str
-        req name (for the plot).
+        tag req name.
+    conf_df : pandas df
+        config file.
+    field : str, optional
+        field to plot. The default is 'COSMOS'.
     prefix : str, optional
-        What to plot. The default is 'diff_sum'.
+        var prefix to plot. The default is 'diff_sum'.
+    laby : str, optional
+        y-axis label. The default is '$\Delta N_{visits}=N_{visits}^{obs}-N_{visits}^{req}$'.
+    bands : str, optional
+        List of filters to consider. The default is 'ugrizy'.
+
     Returns
     -------
     None.
@@ -428,13 +425,15 @@ def plot_calib_db(data, req_name, conf_df, field='COSMOS',
         marker = selp['marker'].values[0]
         color = selp['color'].values[0]
         dbNameb = selp['dbName_plot'].values[0]
+
         for b in bands:
+            vrtp = '{}_{}'.format(prefix, b)
             if b == 'u':
-                ax.plot(selb['year'], selb['{}_{}'.format(prefix, b)],
-                        ls='None', marker=marker, color=color, mfc='None',
+                ax.plot(selb['year'], selb[vrtp],
+                        ls=ls, marker=marker, color=color, mfc='None',
                         label=dbNameb)
             else:
-                ax.plot(selb['year'], selb['{}_{}'.format(prefix, b)],
+                ax.plot(selb['year'], selb[vrtp],
                         ls=ls, marker=marker, color=color, mfc='None')
 
     ax.grid(visible=True)
@@ -446,7 +445,7 @@ def plot_calib_db(data, req_name, conf_df, field='COSMOS',
               ncol=1, fontsize=12, frameon=False)
 
 
-def print_latex_calib(res, tit, prefix='diff_sum',):
+def print_csv_reqs(res, tit, prefix='diff_sum',):
 
     df = pd.DataFrame()
 
@@ -460,6 +459,10 @@ def print_latex_calib(res, tit, prefix='diff_sum',):
 
     print(df[['dbName', 'field', 'filter', 'year']])
 
+    idxx = df['dbName'] == 'ddf_acc_early_v5.0.0_10yrs'
+    sel = df[idxx]
+    print('ooooo', sel)
+
     fields = df['field'].unique()
     bands = 'ugrizy'
 
@@ -468,7 +471,12 @@ def print_latex_calib(res, tit, prefix='diff_sum',):
 
     dfc = dfb.groupby(['field', 'dbName']).apply(
         lambda x: get_format(x), include_groups=False).reset_index()
-    print(dfc)
+
+    dfc = clean_level(dfc)
+
+    tit_csv = '_'.join(tit.split(' '))
+    tit_csv = 'constraints_{}.csv'.format(tit_csv.lower())
+    dfc.to_csv(tit_csv, index=False)
 
 
 def get_years(grp):
@@ -510,7 +518,7 @@ parser.add_option('--config', type=str,
 parser.add_option("--dirFile", type="str",
                   default='../nvisits_m5',
                   help="file directory [%default]")
-parser.add_option("--fields", type="str", default='COSMOS,ECDFS,XMM_LSS,ELAISS1,EDFS_a,EDFS_b',
+parser.add_option("--fields", type="str", default='COSMOS,CDFS,XMM-LSS,ELAISS1,EDFS_a,EDFS_b',
                   help="fields to process [%default]")
 parser.add_option("--plots", type="str", default='plot_global_wl,plot_global_agn,summary_reqs_wl,summary_reqs_agn,summary_reqs_pz',
                   help="plots to draw [%default]")
@@ -546,13 +554,14 @@ if 'plot_global_agn' in plots:
     plot_nvisits_all(data, df_config, fields, df_agn, calib_label='AGN reqs')
 
 if 'summary_reqs_wl' in plots:
-    ana_reqs(data, df_wl, req_name='WL reqs.', fields=fields)
+    res = ana_reqs(data, df_wl, req_name='WL reqs.', fields=fields)
+    plot_calib_db(res, 'WL reqs.', df_config, field='XMM-LSS')
+    print_csv_reqs(res, 'WL reqs')
 
 if 'summary_reqs_agn' in plots:
-    res = ana_reqs(data, df_agn, req_name='AGN reqs.',
-                   dbName='baseline_v5.0.0_10yrs', fields=fields)
+    res = ana_reqs(data, df_agn, req_name='AGN reqs.', fields=fields)
     plot_calib_db(res, 'AGN reqs.', df_config)
-    print_latex_calib(res, 'AGN reqs.')
+    print_csv_reqs(res, 'AGN reqs')
 
 # pz requirements
 
@@ -566,6 +575,10 @@ req_pz_y10 = get_reqs(bands, pz_y10, years=[10])
 req_pz = pd.concat((req_pz_y1, req_pz_y10))
 
 if 'summary_reqs_pz' in plots:
-    ana_reqs_m5(data, req_pz, req_name='PZ reqs.')
+    res = ana_reqs_m5(data, req_pz, req_name='PZ reqs.')
+    plot_calib_db(res, 'PZ reqs.', df_config, field='XMM-LSS',
+                  laby='$\Delta m_5=m_5^{obs}-m_5^{req}$',
+                  prefix='diff_fiveSigmaDepth')
+    print_csv_reqs(res, 'PZ reqs', prefix='diff_fiveSigmaDepth')
 
 plt.show()
