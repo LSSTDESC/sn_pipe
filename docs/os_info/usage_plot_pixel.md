@@ -74,12 +74,8 @@ Options:
 
 #### data processing
 
-python run_scripts/os_info/calc_radius_dd_pixels.py --help
-
+Usage: run_scripts/os_info/calc_radius_dd_pixels.py [options]
 <pre>
-
-Usage: calc_radius_dd_pixels.py [options]
-
 Script to plot pixel level OS infos
 
 Options:
@@ -90,4 +86,24 @@ Options:
 
 </pre>
 
-@ccin2p3: use the script [radius_pixel.sh](radius_pixel.sh) using "sh [srun_test.sh](srun_test.sh) radius_pixel.sh" 
+@ccin2p3: use the script [radius_pixel.sh](radius_pixel.sh) using "sh [srun_test.sh](srun_test.sh) radius_pixel.sh"
+
+#### display results
+
+Usage: plot_scripts/os_info/plot_dd_radius.py [options]
+
+<pre>
+Script to plot pixel level OS radius
+
+Options:
+  -h, --help       show this help message and exit
+  --fName=FNAME    file name to process [data_radius.hdf5]
+  --config=CONFIG  config file [config_ana_selplot_part2.csv]
+</pre>
+
+[Nvisits and cadence vs radius - COSMOS - year 1](plotj1.png)
+
+[Nvisits and cadence vs radius - COSMOS - year 2](plotj2.png)
+
+[Nvisits and cadence vs radius - COSMOS - year 3](plotj3.png)
+
