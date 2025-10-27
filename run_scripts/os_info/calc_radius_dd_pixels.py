@@ -43,7 +43,7 @@ def load_db(dbDir):
     return df
 
 
-def rebin(df_dist, distval='dist_center', yvar='cadence', xmin=0.0, xmax=2.6):
+def rebin(df_dist, distval='dist_center', yvar='cadence', xmin=0.0, xmax=3.5):
     """
     Function used to rebin data
 
@@ -65,7 +65,7 @@ def rebin(df_dist, distval='dist_center', yvar='cadence', xmin=0.0, xmax=2.6):
 
     # rebin to have a "better" plot
     # xmin, xmax = df_dist[distval].min(), df_dist[distval].max()
-    bins = np.linspace(xmin, xmax, 12)
+    bins = np.linspace(xmin, xmax, 15)
     # bins = np.arange(0.1, 2.22, 0.22)
     group = df_dist.groupby(pd.cut(df_dist[distval], bins), observed=False)
     plot_centers = (bins[:-1] + bins[1:])/2
@@ -81,7 +81,7 @@ def rebin(df_dist, distval='dist_center', yvar='cadence', xmin=0.0, xmax=2.6):
     return dd
 
 
-def rebin_sum(df_dist, distval='dist_center', yvar='nvisits', xmin=0., xmax=2.6):
+def rebin_sum(df_dist, distval='dist_center', yvar='nvisits', xmin=0., xmax=3.5):
     """
     Function used to rebin data
 
@@ -103,7 +103,7 @@ def rebin_sum(df_dist, distval='dist_center', yvar='nvisits', xmin=0., xmax=2.6)
 
     # rebin to have a "better" plot
     # xmin, xmax = df_dist[distval].min(), df_dist[distval].max()
-    bins = np.linspace(xmin, xmax, 12)
+    bins = np.linspace(xmin, xmax, 15)
     # bins = np.arange(0.1, 2.22, 0.22)
     group = df_dist.groupby(pd.cut(df_dist[distval], bins), observed=False)
     plot_centers = (bins[:-1] + bins[1:])/2
