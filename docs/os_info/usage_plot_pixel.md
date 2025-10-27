@@ -45,7 +45,9 @@ python plot_scripts/os_info/plot_os_pixel_info.py --dbDir=../wfd_pixels --dbName
 
 ## Summary plots (DDF)
 
-### Usage: plot_scripts/os_info/plot_dd_pixels_summary.py [options]
+### area ve OS
+
+#### Usage: plot_scripts/os_info/plot_dd_pixels_summary.py [options]
 
 <pre>
 Script to plot pixel level OS infos
@@ -62,8 +64,30 @@ Options:
 
 </pre>
 
-### Example
+#### Example
 
 [area (per year) vs OS](ploth1.png)
 
 [mean area vs dither parameter](ploth2.png)
+
+### (Nvisits,cadence) vs radius
+
+#### data processing
+
+python run_scripts/os_info/calc_radius_dd_pixels.py --help
+
+<pre>
+
+Usage: calc_radius_dd_pixels.py [options]
+
+Script to plot pixel level OS infos
+
+Options:
+  -h, --help         show this help message and exit
+  --dbList=DBLIST    dblist to process [list_db.csv]
+  --dbDir=DBDIR      dbDir of the OS to process [../dd_pixels]
+  --outName=OUTNAME  output file name [data_radius.hdf5]
+
+</pre>
+
+@ccin2p3: use the script [radius_pixel.sh](radius_pixel.sh) using "sh [srun_test.sh](srun_test.sh) radius_pixel.sh" 
