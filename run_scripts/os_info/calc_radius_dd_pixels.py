@@ -102,8 +102,8 @@ def rebin_sum(df_dist, distval='dist_center', yvar='nvisits', xmin=0., xmax=2.6)
     """
 
     # rebin to have a "better" plot
-    xmin, xmax = df_dist[distval].min(), df_dist[distval].max()
-    bins = np.linspace(xmin-1.e-6, xmax, 12)
+    # xmin, xmax = df_dist[distval].min(), df_dist[distval].max()
+    bins = np.linspace(xmin, xmax, 12)
     # bins = np.arange(0.1, 2.22, 0.22)
     group = df_dist.groupby(pd.cut(df_dist[distval], bins), observed=False)
     plot_centers = (bins[:-1] + bins[1:])/2
@@ -117,6 +117,7 @@ def rebin_sum(df_dist, distval='dist_center', yvar='nvisits', xmin=0., xmax=2.6)
     dd = pd.DataFrame(plot_centers, columns=[distval])
 
     dd[yvar] = plot_values.to_list()
+    dd['{}_tot'.format(yvar)] = ntot
     # dd['{}_std'.format(yvar)] = std_n
     dd = dd.dropna()
 
