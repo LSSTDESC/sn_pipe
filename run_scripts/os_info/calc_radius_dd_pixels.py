@@ -43,7 +43,7 @@ def load_db(dbDir):
     return df
 
 
-def rebin(df_dist, distval='dist_center', yvar='nvisits'):
+def rebin(df_dist, distval='dist_center', yvar='cadence'):
     """
     Function used to rebin data
 
@@ -70,9 +70,52 @@ def rebin(df_dist, distval='dist_center', yvar='nvisits'):
     group = df_dist.groupby(pd.cut(df_dist[distval], bins), observed=False)
     plot_centers = (bins[:-1] + bins[1:])/2
     plot_values = group[yvar].mean()
+    plot_std = group[yvar].std().to_list()
+
     dd = pd.DataFrame(plot_centers, columns=[distval])
 
     dd[yvar] = plot_values.to_list()
+    dd['{}_std'.format(yvar)] = plot_std
+    dd = dd.dropna()
+
+    return dd
+
+
+def rebin_sum(df_dist, distval='dist_center', yvar='nvisits'):
+    """
+    Function used to rebin data
+
+    Parameters
+    ----------
+    df_dist : pandas df
+        Data to rebin.
+    distval : str, optional
+        x-axis value. The default is 'dist_center'.
+    yvar : str, optional
+        y-axis value. The default is 'nvisits'.
+
+    Returns
+    -------
+    dd : pandas df
+        Rebinned data.
+
+    """
+
+    # rebin to have a "better" plot
+    xmin, xmax = df_dist[distval].min(), df_dist[distval].max()
+    bins = np.linspace(xmin-1.e-6, xmax, 12)
+    # bins = np.arange(0.1, 2.22, 0.22)
+    group = df_dist.groupby(pd.cut(df_dist[distval], bins), observed=False)
+    plot_centers = (bins[:-1] + bins[1:])/2
+    plot_values = group[yvar].sum()
+    ntot = np.sum(plot_values)
+    n = group[yvar].std()
+    p = n/ntot
+    std_n = n*p*(1-p)
+    dd = pd.DataFrame(plot_centers, columns=[distval])
+
+    dd[yvar] = plot_values.to_list()
+    dd['{}_std'.format(yvar)] = std_n
     dd = dd.dropna()
 
     return dd
@@ -111,7 +154,10 @@ def get_radius(grp, distval='dist_center', yvar=['nvisits', 'cadence']):
     """
     dd = {}
     for i, val in enumerate(yvar):
-        dd[i] = rebin(df_dist, yvar=val)
+        if val == 'cadence':
+            dd[i] = rebin(df_dist, yvar=val)
+        if val == 'nvisits':
+            dd[i] = rebin_sum(df_dist, yvar=val)
 
     ddc = dd[0].merge(dd[1], left_on=[distval], right_on=[
         distval], suffixes=['', ''])
@@ -172,7 +218,6 @@ for i, row in df_db.iterrows():
     dbName = row['dbName']
     dbName_dir = '{}/{}'.format(dbDir, dbName)
     data = load_db(dbName_dir)
-    # print(data)
     idx = data['year'] >= 0
     idx &= data['year'] <= 10
     data = data[idx]
