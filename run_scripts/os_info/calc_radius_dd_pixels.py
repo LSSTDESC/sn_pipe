@@ -70,12 +70,12 @@ def rebin(df_dist, distval='dist_center', yvar='cadence', xmin=0.0, xmax=2.6):
     group = df_dist.groupby(pd.cut(df_dist[distval], bins), observed=False)
     plot_centers = (bins[:-1] + bins[1:])/2
     plot_values = group[yvar].mean()
-    # plot_std = group[yvar].std().to_list()
+    plot_std = group[yvar].std().to_list()
 
     dd = pd.DataFrame(plot_centers, columns=[distval])
 
     dd[yvar] = plot_values.to_list()
-    # dd['{}_std'.format(yvar)] = plot_std
+    dd['{}_std'.format(yvar)] = plot_std
     dd = dd.dropna()
 
     return dd
