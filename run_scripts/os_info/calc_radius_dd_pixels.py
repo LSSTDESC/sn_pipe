@@ -154,16 +154,20 @@ parser.add_option('--dbList', type=str, default='list_db.csv',
                   help='dblist to process [%default]')
 parser.add_option('--dbDir', type=str, default='../dd_pixels',
                   help='dbDir of the OS to process [%default]')
+parser.add_option('--outName', type=str, default='data_radius.hdf5',
+                  help='output file name [%default]')
 
 opts, args = parser.parse_args()
 
 dbList = opts.dbList
 dbDir = opts.dbDir
+outName = opts.outName
 
 # load dbList
 df_db = pd.read_csv(dbList, comment='#')
 
 df_tot = pd.DataFrame()
+
 for i, row in df_db.iterrows():
     dbName = row['dbName']
     dbName_dir = '{}/{}'.format(dbDir, dbName)
@@ -177,4 +181,4 @@ for i, row in df_db.iterrows():
     dd['dbName'] = dbName
     df_tot = pd.concat((df_tot, dd))
 
-df_tot.to_hdf('data_radius.hdf5', key='radius')
+df_tot.to_hdf(outName, key='radius')
