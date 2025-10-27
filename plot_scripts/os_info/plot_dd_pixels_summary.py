@@ -125,6 +125,7 @@ def plot_timescale(df, varx='dbName_plot', legx='',
     fig.suptitle(figtitle)
 
     ida = df[timescale] > 0
+    ida &= df[timescale] <= 10
     df = df[ida]
     timescales = df[timescale].unique()
 
