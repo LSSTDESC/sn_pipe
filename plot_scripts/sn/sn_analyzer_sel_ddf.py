@@ -36,6 +36,9 @@ parser.add_option('--inputDir', type=str,
 parser.add_option('--fileName', type=str,
                   default='sn_summary_ddf.hdf5',
                   help='sn file name to draw [%default]')
+parser.add_option('--ref_os', type=str,
+                  default='None',
+                  help='ref OS to normalize the results[%default]')
 
 
 opts, args = parser.parse_args()
@@ -48,7 +51,7 @@ ud_fields = opts.ud_fields.split(',')
 dd_fields = opts.dd_fields.split(',')
 inputDir = opts.inputDir
 fileName = opts.fileName
-
+os_ref = opts.ref_os
 
 # read config file
 conf_df = pd.read_csv(config, comment='#')
@@ -77,7 +80,7 @@ if 'nsn_all' in plots:
     fields = ud_fields+dd_fields
     plot_ddf_year(df_nsn, conf_df,
                   cols=['year', 'dbName'],
-                  fields=fields)
+                  fields=fields, os_ref=os_ref)
 
 # UD only
 if 'nsn_ud' in plots:
@@ -85,7 +88,7 @@ if 'nsn_ud' in plots:
     fields = ud_fields
     plot_ddf_year(df_nsn, conf_df,
                   cols=['year', 'dbName'],
-                  fields=fields)
+                  fields=fields, os_ref=os_ref)
 
 # DD only
 if 'nsn_dd' in plots:
@@ -93,7 +96,7 @@ if 'nsn_dd' in plots:
     fields = dd_fields
     plot_ddf_year(df_nsn, conf_df,
                   cols=['year', 'dbName'],
-                  fields=fields)
+                  fields=fields, os_ref=os_ref)
 
 
 plt.show()
