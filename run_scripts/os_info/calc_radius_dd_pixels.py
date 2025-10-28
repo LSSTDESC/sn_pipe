@@ -74,51 +74,14 @@ def rebin(df_dist, distval='dist_center', yvar='cadence', xmin=0.0, xmax=3.5):
 
     dd = pd.DataFrame(plot_centers, columns=[distval])
 
-    dd[yvar] = plot_values.to_list()
+    dd['{}_mean'.format(yvar)] = plot_values.to_list()
     dd['{}_std'.format(yvar)] = plot_std
-    dd = dd.dropna()
 
-    return dd
-
-
-def rebin_sum(df_dist, distval='dist_center', yvar='nvisits', xmin=0., xmax=3.5):
-    """
-    Function used to rebin data
-
-    Parameters
-    ----------
-    df_dist : pandas df
-        Data to rebin.
-    distval : str, optional
-        x-axis value. The default is 'dist_center'.
-    yvar : str, optional
-        y-axis value. The default is 'nvisits'.
-
-    Returns
-    -------
-    dd : pandas df
-        Rebinned data.
-
-    """
-
-    # rebin to have a "better" plot
-    # xmin, xmax = df_dist[distval].min(), df_dist[distval].max()
-    bins = np.linspace(xmin, xmax, 15)
-    # bins = np.arange(0.1, 2.22, 0.22)
-    group = df_dist.groupby(pd.cut(df_dist[distval], bins), observed=False)
-    plot_centers = (bins[:-1] + bins[1:])/2
-    plot_values = group[yvar].sum()
-    ntot = np.sum(plot_values)
-    """
-    n = group[yvar].std()
-    p = n/ntot
-    std_n = n*p*(1-p)
-    """
-    dd = pd.DataFrame(plot_centers, columns=[distval])
-
-    dd[yvar] = plot_values.to_list()
-    dd['{}_tot'.format(yvar)] = ntot
-    # dd['{}_std'.format(yvar)] = std_n
+    if yvar == 'nvisits':
+        plot_values = group[yvar].sum()
+        ntot = np.sum(plot_values)
+        dd['{}_sum'.format(yvar)] = plot_values.to_list()
+        dd['{}_tot'.format(yvar)] = ntot
     dd = dd.dropna()
 
     return dd
@@ -157,10 +120,7 @@ def get_radius(grp, distval='dist_center', yvar=['nvisits', 'cadence']):
     """
     dd = {}
     for i, val in enumerate(yvar):
-        if val == 'cadence':
-            dd[i] = rebin(df_dist, yvar=val)
-        if val == 'nvisits':
-            dd[i] = rebin_sum(df_dist, yvar=val)
+        dd[i] = rebin(df_dist, yvar=val)
 
     ddc = dd[0].merge(dd[1], left_on=[distval], right_on=[
         distval], suffixes=['', ''])
@@ -229,4 +189,5 @@ for i, row in df_db.iterrows():
     dd['dbName'] = dbName
     df_tot = pd.concat((df_tot, dd))
 
+# print(df_tot)
 df_tot.to_hdf(outName, key='radius')
