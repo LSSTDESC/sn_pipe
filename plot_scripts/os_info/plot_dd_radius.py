@@ -51,7 +51,7 @@ def plot_radius(data, df_config, year=1, field='COSMOS'):
         idxb = sel['dbName'] == row['dbName']
         selb = sel[idxb]
 
-        vv = np.array(np.cumsum(selb['nvisits']))
+        # vv = np.array(np.cumsum(selb['nvisits']))
         # vv = np.array(selb['nvisits'])
         mean_radius = selb['dist_center'].diff()
 
@@ -59,11 +59,11 @@ def plot_radius(data, df_config, year=1, field='COSMOS'):
         areas = area.diff()
         areas = areas.fillna(np.pi*0.375**2)
 
-        ax[0].plot(selb['dist_center'], vv,
-                   label=family, marker=marker, color=color, ls=ls, mfc='None')
+        ax[0].errorbar(selb['dist_center'], selb['nvisits_mean'], yerr=selb['nvisits_std'],
+                       label=family, marker=marker, color=color, ls=ls, mfc='None')
         idx = selb['dist_center'] <= 1.5
-        cad_low_dist = selb[idx]['cadence'].mean()
-        ax[1].errorbar(selb['dist_center'], selb['cadence']-cad_low_dist, yerr=selb['cadence_std'],
+        cad_low_dist = selb[idx]['cadence_mean'].mean()
+        ax[1].errorbar(selb['dist_center'], selb['cadence_mean']-cad_low_dist, yerr=selb['cadence_std'],
                        label=family, marker=marker, color=color, ls=ls, mfc='None')
 
     ax[1].legend(bbox_to_anchor=(1., 1.5), ncol=1, frameon=False, fontsize=15)
@@ -76,8 +76,8 @@ def plot_radius(data, df_config, year=1, field='COSMOS'):
         ax[i].grid()
 
     ax[1].set_xlabel(r'distance w.r.t center [deg]')
-    ax[0].set_ylabel(r'$\Sigma N_{visits}$')
-    ax[1].set_ylabel(r'cadence [day]')
+    ax[0].set_ylabel(r'<$N_{visits}$>')
+    ax[1].set_ylabel(r'<cadence> [day]')
     ax[0].get_xaxis().set_visible(False)
 
 
