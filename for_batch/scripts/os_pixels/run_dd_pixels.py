@@ -92,6 +92,9 @@ parser.add_option('--nproc', type=int,
 parser.add_option('--shDir', type=str,
                   default='sh_scripts',
                   help='dir for sh scripts [%default]')
+parser.add_option('--timescale', type=str,
+                  default='year',
+                  help='timescale for processing (year/season) [%default]')
 
 opts, args = parser.parse_args()
 
@@ -103,6 +106,7 @@ fields = opts.fields.split(',')
 procmode = opts.procmode
 nproc = opts.nproc
 shDir = opts.shDir
+timescale = opts.timescale
 
 if procmode == 'interact':
     checkDir(shDir)
