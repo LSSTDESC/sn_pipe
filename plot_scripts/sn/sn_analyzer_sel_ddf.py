@@ -10,7 +10,7 @@ import pandas as pd
 from sn_analysis import plt
 import os
 
-from sn_plotter_analysis.sn_plot import plot_ddf_year
+from sn_plotter_analysis.sn_plot import plot_ddf_year, get_weather_correction
 from sn_plotter_analysis.sn_analyser_tools import print_nsn_latex
 
 parser = OptionParser(description='Script to plot SN - DDF after selection')
@@ -98,5 +98,5 @@ if 'nsn_dd' in plots:
                   cols=['year', 'dbName'],
                   fields=fields, os_ref=os_ref)
 
-
+get_weather_correction(df_nsn, os_ref)
 plt.show()
