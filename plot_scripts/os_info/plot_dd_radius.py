@@ -72,12 +72,14 @@ def plot_radius(data, df_config, year=1, field='COSMOS'):
         ymin, ymax = ax[i].get_ylim()
         ax[i].plot([1.75]*2, [ymin, ymax], linestyle='dashed', color='r')
         ax[i].plot([2.0]*2, [ymin, ymax], linestyle='dashed', color='r')
+        ax[i].fill_between([1.75, 2.0], [ymin]*2, [ymax]
+                           * 2, color='yellow', alpha=0.1)
         ax[i].set_ylim([ymin, ymax])
         ax[i].grid()
 
-    ax[1].set_xlabel(r'distance w.r.t center [deg]')
+    ax[1].set_xlabel(r'distance [deg]')
     ax[0].set_ylabel(r'<$N_{visits}$>')
-    ax[1].set_ylabel(r'<cadence> [day]')
+    ax[1].set_ylabel(r'<cad>-<cad$^{dist\leq 1.5~ deg}$> [day]')
     ax[0].get_xaxis().set_visible(False)
 
 
