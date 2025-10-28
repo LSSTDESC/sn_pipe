@@ -31,6 +31,9 @@ parser.add_option('--procmode', type=str,
 parser.add_option('--nproc', type=int,
                   default=8,
                   help='nproc for multiprocessing [%default]')
+parser.add_option('--timescale', type=str,
+                  default='year',
+                  help='timescale for processing (year/season) [%default]')
 
 opts, args = parser.parse_args()
 
@@ -40,6 +43,7 @@ proctime = opts.proctime
 procmem = opts.procmem
 procmode = opts.procmode
 nproc = opts.nproc
+timescale = opts.timescale
 
 # params
 nside = 64
@@ -82,6 +86,7 @@ for i, row in dbs.iterrows():
         procDict['prodID'] = '{}_{}_{}'.format(procName, RA_min, RA_max)
         procDict['nproc'] = nproc
         procDict['nproc_pixels'] = 0
+        procDict['timescale'] = timescale
 
         mybatch.add_batch(scriptref, procDict)
 

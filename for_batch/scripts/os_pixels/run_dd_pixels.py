@@ -149,6 +149,7 @@ for i, row in dbs.iterrows():
         procDict['prodID'] = prodId
         procDict['nproc'] = nproc
         procDict['nproc_pixels'] = 0
+        procDict['timescale'] = timescale
 
         if procmode == 'batch':
             mybatch.add_batch(scriptref, procDict)
