@@ -10,7 +10,7 @@ import pandas as pd
 from sn_analysis import plt
 import os
 
-from sn_plotter_analysis.sn_plot import plot_ddf_year, get_weather_correction
+from sn_plotter_analysis.sn_plot import plot_ddf_year, get_weather_impact
 from sn_plotter_analysis.sn_analyser_tools import print_nsn_latex
 
 parser = OptionParser(description='Script to plot SN - DDF after selection')
@@ -38,8 +38,10 @@ parser.add_option('--fileName', type=str,
                   help='sn file name to draw [%default]')
 parser.add_option('--ref_os', type=str,
                   default='None',
-                  help='ref OS to normalize the results[%default]')
-
+                  help='ref OS to normalize the results [%default]')
+parser.add_option('--get_info', type=str,
+                  default='None',
+                  help='to estimate infos (weather_impact)[%default]')
 
 opts, args = parser.parse_args()
 
@@ -52,7 +54,7 @@ dd_fields = opts.dd_fields.split(',')
 inputDir = opts.inputDir
 fileName = opts.fileName
 os_ref = opts.ref_os
-
+get_info = opts.get_info.split(',')
 # read config file
 conf_df = pd.read_csv(config, comment='#')
 
@@ -97,6 +99,10 @@ if 'nsn_dd' in plots:
     plot_ddf_year(df_nsn, conf_df,
                   cols=['year', 'dbName'],
                   fields=fields, os_ref=os_ref)
-
-get_weather_correction(df_nsn, os_ref)
+if 'weather_impact' in get_info:
+    if os_ref == 'None':
+        print('pb: a reference OS is expected!')
+    else:
+        fields = ud_fields+dd_fields
+        get_weather_impact(df_nsn, os_ref,fields=fields)
 plt.show()
