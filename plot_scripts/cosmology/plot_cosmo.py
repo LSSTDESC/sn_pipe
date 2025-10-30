@@ -324,7 +324,7 @@ def process_cosmo(dbDir, config, spectro_config, cols_group,
     return df_tot
 
 
-parser = OptionParser(description='Script to analyze SN prod')
+parser = OptionParser(description='Script to plot cosmology from SNe Ia')
 
 parser.add_option('--dbDir', type=str, default='../cosmo_fit_TiDES_notelrot_TiDES_5',
                   help='OS location dir[%default]')

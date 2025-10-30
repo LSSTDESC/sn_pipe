@@ -4,7 +4,7 @@
 
 <pre>
 
-Script to analyze SN prod
+Script to plot cosmology from SNe Ia
 
 Options:
   -h, --help            show this help message and exit
