@@ -8,19 +8,23 @@ Script to analyze SN prod
 
 Options:
   -h, --help            show this help message and exit
-  --dbList=DBLIST       OS name[input/DESC_cohesive_strategy/config_ana.csv]
+  --dbDir=DBDIR         OS location dir[../cosmo_fit_TiDES_notelrot_TiDES_5]
+  --config=CONFIG       config for the plots [config_ana_selplot.csv]
   --timescale=TIMESCALE
                         timescale for plot - year or season [year]
   --UDFs=UDFS           UD fields [COSMOS,XMM-LSS]
-  --DFs=DFS             Deep fields [CDFS,EDFS,ELAISS1]
+  --DFs=DFS             Deep fields [CDFS,EDFS,ELAISS1,EDFS_a,EDFS_b]
   --comment_on_plot=COMMENT_ON_PLOT
                         comment for the SMoM plot [Host spectro-z only]
   --fill_between=FILL_BETWEEN
                         to fill +-1 sigma area with yellow [0]
-  --prior=PRIOR         data were processed with or withuot prior [prior]
+  --prior=PRIOR         data were processed with or withuot prior [1]
   --plots=PLOTS         plots to make
-                        [mom_year,mom_10yrs,sigma_w0,sigma_wa,nsn]
+                        [mom_year,mom_survey,sigma_w0,sigma_wa,nsn]
   --ref_OS=REF_OS       ref os to normalize the plots [None]
+  --spectro_config=SPECTRO_CONFIG
+                        spectro config [WFD_TiDES]
+  --year_max=YEAR_MAX   year max for the display [6]
 
 </pre>
 
