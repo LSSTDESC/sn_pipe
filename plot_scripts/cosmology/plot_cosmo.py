@@ -350,7 +350,7 @@ parser.add_option('--prior', type=int,
                   default=1,
                   help='data were processed with or withuot prior [%default]')
 parser.add_option('--plots', type=str,
-                  default='mom_year,mom_survey,sigma_w0,sigma_wa,nsn',
+                  default='mom_year,mom_survey,sigma_w0,sigma_wa,nsn,check_fit',
                   help='plots to make [%default]')
 parser.add_option('--ref_OS', type=str,
                   default='None',
@@ -403,6 +403,7 @@ cols = ['MoM', 'all_Fields',
         'nsn_z_0.8', 'nsn_z_0.8_sigma_mu', 'nsn_rat_highz', 'sigma_w0', 'sigma_wa']
 
 cols += fields
+cols += ['sigmaInt_fit', 'Chi2_fit_red']
 
 data = process_cosmo(dbDir, df_conf, spectro_config,
                      [timescale, 'prior', 'dbName_DD', 'dbName_WFD'],
@@ -479,8 +480,23 @@ if 'nsn' in plots:
                    figtitle=field, dbNorm=dbNorm,
                    comment_on_plot=comment_on_plot,
                    fill_between=fill_between)
-
-
+if 'check_fit' in plots:
+    fm = 'sigmaInt_fit_mean'
+    fstd = 'sigmaInt_fit_std'
+    plot_allOS(data, df_conf, varx=timescale,
+               legx=timescale, vary=fm,
+               legy='$\sigma_{int}$', vary_std=fstd, prior=prior,
+               figtitle=figtit, dbNorm=dbNorm,
+               comment_on_plot=comment_on_plot,
+               fill_between=fill_between)
+    fm = 'Chi2_fit_red_mean'
+    fstd = 'Chi2_fit_red_std'
+    plot_allOS(data, df_conf, varx=timescale,
+               legx=timescale, vary=fm,
+               legy='$\chi^2/NDoF$', vary_std=fstd, prior=prior,
+               figtitle=figtit, dbNorm=dbNorm,
+               comment_on_plot=comment_on_plot,
+               fill_between=fill_between)
 """
 plot_allOS(data, config, varx=timescale, legx=timescale,
            vary='WFD_TiDES_mean',
