@@ -9,6 +9,7 @@ from optparse import OptionParser
 from sn_tools.sn_cadence_tools import get_fields
 import numpy as np
 from sn_plotter_metrics import plt
+import pandas as pd
 
 parser = OptionParser(
     description='Script to analyse DDFs on a nightly basis from pointings')
@@ -34,6 +35,19 @@ obs = np.load(fName)
 # grab the DDFs
 ddf = get_fields(obs, lookuptable='input/simulation/lookup_ddf.csv')
 
+# get (ra,dec) of all the fields
+
+fields = np.unique(ddf['field'])
+
+r = []
+for field in fields:
+    idx = ddf['field'] == field
+    sel = ddf[idx]
+    print(field, sel['RA'].mean(), sel['Dec'].mean())
+    r.append([field, sel['RA'].mean(), sel['Dec'].mean()])
+
+rr = pd.DataFrame(r, columns=['field', 'RA', 'Dec'])
+rr.to_csv('ddf_ra_dec.csv', index=False)
 print(type(ddf))
 
 field = 'COSMOS'
