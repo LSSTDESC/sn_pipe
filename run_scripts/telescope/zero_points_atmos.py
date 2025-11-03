@@ -85,7 +85,7 @@ for i, row in combi_sigma.iterrows():
                                  par_names, par_means, par_sigmas,
                                  save_throughputs_dir='ty_through')
 
-    res = sigma_zp(ntrials=10, nproc=1)
+    res = sigma_zp(ntrials=100, nproc=1)
 
     df = pd.concat((df, res))
 
@@ -93,12 +93,13 @@ for i, row in combi_sigma.iterrows():
 print('finally', time.time()-time_ref)
 print('end of processing', time.time()-time_ref)
 
-print(df)
+print(df[['std_zp_y', 'std_zp_z', 'std_mean_wave_y', 'std_mean_wave_z']])
+
 """
 for b in bands:
     fig, ax = plt.subplots(figsize=(12, 9), ncols=2)
-    ax[0].hist(df['std_zp_{}'.format(b)], histtype='step', bins=20)
-    ax[1].hist(df['std_mean_wave_{}'.format(b)], histtype='step', bins=20)
+    ax[0].hist(df['std_zp_{}'.format(b)], histtype='step', bins=200)
+    ax[1].hist(df['std_mean_wave_{}'.format(b)], histtype='step', bins=200)
     ax[0].set_xlabel(r'$\Delta z_p$')
     ax[1].set_xlabel(r'$\Delta \bar{\lambda}$')
     ax[0].set_ylabel(r'Number of Entries')
