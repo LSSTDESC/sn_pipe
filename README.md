@@ -75,11 +75,11 @@ To uninstall the pipeline: python pip_sn_pack.py --action uninstall --package=al
 
 ### [Cosmology with Type Ia Supernovae](docs/sn_cosmology/sn_cosmology.md)
 
+### [Holo survey design for SNe Ia](docs/sn_holo_survey/sn_holo_survey.md)
+
 ## sn_pipe structure
 
 ### [sn_pipe content](docs/gen/sn_pipe.md)
 
 ###  [sn_pipe full tree](docs/gen/sn_pipe_fulltree.md)
-
-##
 
