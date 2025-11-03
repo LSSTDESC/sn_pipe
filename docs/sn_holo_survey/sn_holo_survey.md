@@ -1,4 +1,4 @@
-# Design of a Holo survey design for SNe Ia
+# Holo survey design for SNe Ia
 
 Goal: identify a set of Gaia stars close to DDF position. These stars could be observed with AuxTel to measure atmospheric parameters simultaneous to LSST pointings
 
