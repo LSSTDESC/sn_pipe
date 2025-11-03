@@ -5,7 +5,7 @@ Created on Wed Sep 17 10:40:52 2025
 
 @author: philippe.gris@clermont.in2p3.fr
 """
-
+from optparse import OptionParser
 import pandas as pd
 from matplotlib.offsetbox import TextArea, DrawingArea, OffsetImage, AnnotationBbox
 import matplotlib.pyplot as plt
@@ -196,6 +196,26 @@ def ana_sky_map(grp, skymap, radius=10):
 
 
 def load_gaia_stars(fis, params, j=0, output_q=None):
+    """
+    Function to load Gaia stars using multiproc
+
+    Parameters
+    ----------
+    fis : list(str)
+        List of files to load.
+    params : dict
+        Parameters.
+    j : int, optional
+        internal tag for multiproc. The default is 0.
+    output_q : multiprocessing queue, optional
+        where to load the results. The default is None.
+
+    Returns
+    -------
+    pandas df
+        Output data.
+
+    """
 
     df = pd.DataFrame()
 
@@ -210,10 +230,29 @@ def load_gaia_stars(fis, params, j=0, output_q=None):
         return df
 
 
-def load_gaia_stars_multiproc(theDir='/home/philippe/astro_cat/auxtel/catalogs',
-                              gaiadr='gaiadr2'):
+def load_gaia_stars_multiproc(theDir='../gaia_files',
+                              gaiadr='gaiadr3',
+                              catDir='gold_sample_oba_gaia_source'):
+    """
+    Function to load Gaia stars
 
-    fName = '{}/cat_gaia_{}*.hdf5'.format(theDir, gaiadr)
+    Parameters
+    ----------
+    theDir : str, optional
+        Main data dir. The default is '../gaia_files'.
+    gaiadr : str, optional
+        gaia dir. The default is 'gaiadr3'.
+    catDir : str, optional
+        cat dir. The default is 'gold_sample_oba_gaia_source'.
+
+    Returns
+    -------
+    df : pandas df
+        Loaded data.
+
+    """
+
+    fName = '{}/{}/{}/*.hdf5'.format(theDir, gaiadr, catDir)
 
     fis = list(glob.glob(fName))
 
@@ -225,7 +264,16 @@ def load_gaia_stars_multiproc(theDir='/home/philippe/astro_cat/auxtel/catalogs',
     return df
 
 
-theDir = '../sky_map_holo/baseline_v4.3.1_10yrs'
+parser = OptionParser(
+    description='Script to analyse (Gaia) stars matching DDFs')
+
+parser.add_option("--theDir", type="str",
+                  default='../sky_map_holo/baseline_v4.3.1_10yrs',
+                  help="file directory [%default]")
+
+opts, args = parser.parse_args()
+
+theDir = opts.theDir
 
 sky_map = pd.read_hdf('{}/sky_map_summary.hdf5'.format(theDir))
 
@@ -236,10 +284,15 @@ targets = pd.read_hdf('{}/targets.hdf5'.format(theDir))
 df = targets.groupby(['field', 'target']).apply(
     lambda x: ana_sky_map(x, sky_map), include_groups=False).reset_index()
 
+print(df)
+print(test)
+
 gaiaDir = '~/Bureau'
 gaiaFile = 'gaia_source_file_ddf_v0.parquet'
+gaiaDir = 'notebooks'
+gaiaFile = 'A_stars.parquet'
 gaia_stars = pd.read_parquet('{}/{}'.format(gaiaDir, gaiaFile))
-print(df)
+
 
 print(gaia_stars.columns)
 gaia_stars_cat = load_gaia_stars_multiproc()

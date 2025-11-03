@@ -1,11 +1,12 @@
-from astropy.cosmology import w0waCDM,FLRW
+from astropy.cosmology import w0waCDM, FLRW
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 from numpy import exp
 import astropy.units as u
 from astropy.cosmology.parameter import Parameter
-from astropy.cosmology.utils import aszarr
+# from astropy.cosmology.utils import aszarr
+from astropy.cosmology._utils import aszarr
 from astropy.cosmology.flrw import scalar_inv_efuncs
 from scipy.integrate import quad
 
@@ -21,7 +22,6 @@ plt.rcParams['axes.titleweight'] = 'bold'
 plt.rcParams['figure.titleweight'] = 'bold'
 # plt.rcParams['font.family'] = 'Arial'
 plt.rcParams['font.size'] = 20
-
 
 
 class w0waDDE(FLRW):
@@ -99,7 +99,8 @@ class w0waDDE(FLRW):
            Universe. Phys. Rev. Lett., 90, 091301.
     """
 
-    w0 = Parameter(doc="Dark energy equation of state at z=0.", fvalidate="float")
+    w0 = Parameter(doc="Dark energy equation of state at z=0.",
+                   fvalidate="float")
     wa = Parameter(
         doc="Negative derivative of dark energy equation of state w.r.t. a.",
         fvalidate="float",
@@ -139,37 +140,37 @@ class w0waDDE(FLRW):
 
         # Please see :ref:`astropy-cosmology-fast-integrals` for discussion
         # about what is being done here.
-        if self._Tcmb0.value == 0:
+        if self.Tcmb0.value == 0:
             self._inv_efunc_scalar = scalar_inv_efuncs.w0wacdm_inv_efunc_norel
             self._inv_efunc_scalar_args = (
-                self._Om0,
-                self._Ode0,
-                self._Ok0,
-                self._w0,
-                self._wa,
+                self.Om0,
+                self.Ode0,
+                self.Ok0,
+                self.w0,
+                self.wa,
             )
         elif not self._massivenu:
             self._inv_efunc_scalar = scalar_inv_efuncs.w0wacdm_inv_efunc_nomnu
             self._inv_efunc_scalar_args = (
-                self._Om0,
-                self._Ode0,
-                self._Ok0,
-                self._Ogamma0 + self._Onu0,
-                self._w0,
-                self._wa,
+                self.Om0,
+                self.Ode0,
+                self.Ok0,
+                self.Ogamma0 + self._Onu0,
+                self.w0,
+                self.wa,
             )
         else:
             self._inv_efunc_scalar = scalar_inv_efuncs.w0wacdm_inv_efunc
             self._inv_efunc_scalar_args = (
-                self._Om0,
-                self._Ode0,
-                self._Ok0,
-                self._Ogamma0,
-                self._neff_per_nu,
-                self._nmasslessnu,
-                self._nu_y_list,
-                self._w0,
-                self._wa,
+                self.Om0,
+                self.Ode0,
+                self.Ok0,
+                self.Ogamma0,
+                self.neff_per_nu,
+                self.nmasslessnu,
+                self.nu_y_list,
+                self.w0,
+                self.wa,
             )
 
     def w(self, z):
@@ -195,13 +196,13 @@ class w0waDDE(FLRW):
         :math:`w(z) = w_0 + w_a (1 - a) = w_0 + w_a \frac{z}{1+z}`.
         """
         z = aszarr(z)
-        
+
         if self.model == 1:
-            res = self._w0 + self._wa * z / (z + 1.0)
+            res = self.w0 + self.wa * z / (z + 1.0)
 
         if self.model == 2:
-            res = -1.+ self.w0*np.sin(self.wa*z)/(1.+z**2)            
-            
+            res = -1. + self.w0*np.sin(self.wa*z)/(1.+z**2)
+
         return res
 
     def de_density_scale(self, z):
@@ -230,14 +231,14 @@ class w0waDDE(FLRW):
         """
         z = aszarr(z)
         zp1 = z + 1.0  # (converts z [unit] -> z [dimensionless])
-    
+
         if self.model == 1:
-            res = zp1 ** (3 * (1 + self._w0 + self._wa)) * exp(-3 * self._wa * z / zp1)
+            res = zp1 ** (3 * (1 + self._w0 + self._wa)) * \
+                exp(-3 * self._wa * z / zp1)
             return res
         else:
             return self.de_density_scale_int(z)
-    
-    
+
     def de_density_scale_int(self, z):
         """
         Method to estimate DE density from integral
@@ -253,18 +254,17 @@ class w0waDDE(FLRW):
             DESCRIPTION.
 
         """
-        
+
         a = aszarr(z)
-        
-        
+
         r = []
-        
+
         for zz in a:
             rr = self.de_density_scale_z(zz)
             r.append(rr)
-            
+
         return np.asarray(r)
-        
+
     def de_density_scale_z(self, z):
         """
         Method to estimate de density scale using integ
@@ -280,12 +280,12 @@ class w0waDDE(FLRW):
             DE density.
 
         """
-        
-        res = quad(self.integrand,0,z)[0]
-        
+
+        res = quad(self.integrand, 0, z)[0]
+
         return np.exp(3.*res)
-        
-    def integrand(self,x):
+
+    def integrand(self, x):
         """
         Integrand for DE
 
@@ -300,10 +300,11 @@ class w0waDDE(FLRW):
             DESCRIPTION.
 
         """
-        
+
         return (1.+self.w(x))/(1.+x)
 
-def dist_mod(H0,Om0,w0,wa,config,z=np.arange(0.01,1.101,0.01),model=1):
+
+def dist_mod(H0, Om0, w0, wa, config, z=np.arange(0.01, 1.101, 0.01), model=1):
     """
     Function to estimate the distance modulus
 
@@ -329,12 +330,12 @@ def dist_mod(H0,Om0,w0,wa,config,z=np.arange(0.01,1.101,0.01),model=1):
 
     """
 
-    cosmology = w0waDDE(H0=H0,Om0=Om0,Ode0=1.-Om0,w0=w0,wa=wa,model=model)
-    
+    cosmology = w0waDDE(H0=H0, Om0=Om0, Ode0=1.-Om0, w0=w0, wa=wa, model=model)
+
     distmod = cosmology.distmod(z).value
     lumidist = cosmology.luminosity_distance(z).value*1.e3
     wz = cosmology.w(z)
-    
+
     res = pd.DataFrame(z, columns=['z'])
     res['mu'] = distmod
     res['w0'] = w0
@@ -342,8 +343,9 @@ def dist_mod(H0,Om0,w0,wa,config,z=np.arange(0.01,1.101,0.01),model=1):
     res['config'] = config
     res['dl'] = lumidist
     res['wz'] = wz
-    
+
     return res
+
 
 """
 def dist_mod_test(H0,Om0,w0,wa,config,z=np.arange(0.01,1.101,0.01)):
@@ -364,35 +366,35 @@ def dist_mod_test(H0,Om0,w0,wa,config,z=np.arange(0.01,1.101,0.01)):
    
    return res
 """
-   
-def plot(res,yvar='wz',yleg='$w_{DE}$'):
-    
+
+
+def plot(res, yvar='wz', yleg='$w_{DE}$'):
+
     configs_pl = res['config'].unique()
-    
-    fig, ax = plt.subplots(figsize=(12,8))
+
+    fig, ax = plt.subplots(figsize=(12, 8))
     res = res.sort_values(by=['config'])
-    
-    mark = ['o','s','*','h']
-    ls = ['solid','dotted','dashed','dashdot']
-    col = ['b','r','g','k']
-    
-    
-    for i,conf in enumerate(configs_pl):
+
+    mark = ['o', 's', '*', 'h']
+    ls = ['solid', 'dotted', 'dashed', 'dashdot']
+    col = ['b', 'r', 'g', 'k']
+
+    for i, conf in enumerate(configs_pl):
         idx = res['config'] == conf
         sel = res[idx]
         sel = sel.sort_values(by=['z'])
         w0 = sel['w0'].unique().tolist()[0]
         wa = sel['wa'].unique().tolist()[0]
-        label = '$(w_0,w_a)$=({},{})'.format(np.round(w0,1),np.round(wa,1))
-        ax.plot(sel['z'],sel[yvar],label=label,marker=mark[i],color=col[i],linestyle=ls[i])
-    
-    #ax.set_xscale('log')
-    ax.set_xlim([0.01,1.1])
+        label = '$(w_0,w_a)$=({},{})'.format(np.round(w0, 1), np.round(wa, 1))
+        ax.plot(sel['z'], sel[yvar], label=label,
+                marker=mark[i], color=col[i], linestyle=ls[i])
+
+    # ax.set_xscale('log')
+    ax.set_xlim([0.01, 1.1])
     ax.set_xlabel(r'$z$')
     ax.set_ylabel(r'{}'.format(yleg))
-    ax.grid(visible=True)    
+    ax.grid(visible=True)
     ax.legend()
-
 
 
 H0 = 70.0
@@ -414,24 +416,25 @@ print(rrb)
 Parameter(doc="Dark energy equation of state at z=0.", fvalidate="float")
 print(toast)
 """
-de_params=[(-1.0,0.0,1),(-0.84,-0.62,1),(-0.67,-1.09,1),(-0.72,3.29,2)]
-#de_params=[(-1.0,0.0,1),(-0.84,-0.62,1),(-0.67,-1.09,1),(-0.75,-0.52,1)]
+de_params = [(-1.0, 0.0, 1), (-0.84, -0.62, 1),
+             (-0.67, -1.09, 1), (-0.72, 3.29, 2)]
+# de_params=[(-1.0,0.0,1),(-0.84,-0.62,1),(-0.67,-1.09,1),(-0.75,-0.52,1)]
 
-names = ['config1','config2','config3','config4']
+names = ['config1', 'config2', 'config3', 'config4']
 
 configs = dict(zip(names, de_params))
 
 res = pd.DataFrame()
 
 for key, vals in configs.items():
-    df_ = dist_mod(H0,Om0,vals[0],vals[1],key,model=vals[2])
-    res = pd.concat((res,df_))
+    df_ = dist_mod(H0, Om0, vals[0], vals[1], key, model=vals[2])
+    res = pd.concat((res, df_))
 
 idx = res['config'] == 'config1'
 
 ref = res[idx]
 
-res = res.merge(ref,left_on=['z'],right_on=['z'],suffixes=['','_ref'])
+res = res.merge(ref, left_on=['z'], right_on=['z'], suffixes=['', '_ref'])
 
 res['delta_mu'] = res['mu']-res['mu_ref']
 res['ratio_dl'] = res['dl']/res['dl_ref']
@@ -439,6 +442,6 @@ res['flux_ratio'] = 10**(-0.4*res['delta_mu'])
 
 plot(res)
 
-plot(res,yvar='delta_mu',yleg='$\Delta \mu$ [mag]')
-plot(res,yvar='flux_ratio',yleg='$\\frac{\Delta flux}{flux}$')
+plot(res, yvar='delta_mu', yleg='$\Delta \mu$ [mag]')
+plot(res, yvar='flux_ratio', yleg='$\\frac{\Delta flux}{flux}$')
 plt.show()

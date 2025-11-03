@@ -580,10 +580,14 @@ def get_tt_dist(grp):
 
     tt_dist = grp['target'].unique()
 
+    """
     vvals = ['ra', 'dec', 'pmra', 'pmdec', 'parallax', 'g_mag', 'phot_bp_mean_mag',
              'phot_rp_mean_mag', 'l', 'b', 'var_flag', 'ref_epoch',
              'rv_template_teff', 'teff_gspphot', 'source_id']
-
+    """
+    vvals = ['ra', 'dec', 'pmra', 'pmdec', 'parallax', 'g_mag', 'phot_bp_mean_mag',
+             'phot_rp_mean_mag', 'l', 'b', 'var_flag', 'ref_epoch',
+             'teff_gspphot', 'source_id']
     tt = grp[vvals]
 
     tt = tt.drop_duplicates()
@@ -688,7 +692,6 @@ print(tt_dist)
 print(len(tt_dist))
 
 tt_dist.to_hdf('{}/targets.hdf5'.format(outDir), key='targets')
-print(test)
 
 for i, row in tt_dist.iterrows():
     fName = 'map_{}.png'.format(row['target'])
