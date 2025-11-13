@@ -15,7 +15,7 @@ from optparse import OptionParser
 from sn_tools.sn_io import make_dict_from_config, add_parser
 
 
-def get_combi(thedict, parList):
+def get_combi(dict_mean, dict_sigma, parList):
     """
     Function to build a df of combination of parameters
 
@@ -33,9 +33,21 @@ def get_combi(thedict, parList):
 
     """
 
+    dfa = get_df(dict_mean, parList)
+    dfb = get_df(dict_sigma, parList)
+
+    for vv in parList:
+        dfb = dfb.rename(columns={vv: 'sigma_{}'.format(vv)})
+    dfc = dfa.merge(dfb, how='cross')
+
+    return dfc
+
+
+def get_df(theDict, parList):
+
     df = pd.DataFrame()
     for vv in parList:
-        dfa = pd.DataFrame(thedict[vv], columns=[vv])
+        dfa = pd.DataFrame(theDict[vv], columns=[vv])
         if len(df) > 0:
             df = df.merge(dfa, how='cross')
         else:
@@ -77,7 +89,7 @@ for vv in par_names:
     par_means.append(params[vv])
     par_sigmas.append(params['sigma_{}'.format(vv)])
 """
-dict_means = {}
+dict_mean = {}
 dict_sigma = {}
 for vv in par_names:
     xmin = '{}_min'.format(vv)
@@ -90,7 +102,7 @@ for vv in par_names:
     if params[xstep] > 1.e-8:
         vval = list(
             np.arange(params[xmin], params[xmax]+params[xstep], params[xstep]))
-    dict_means[vv] = vval
+    dict_mean[vv] = vval
     sig = [params[sigma_min]]
     if params[sigma_step] > 1.e-8:
         sig = list(
@@ -99,27 +111,14 @@ for vv in par_names:
                       params[sigma_step]))
     dict_sigma[vv] = sig
 
-print(dict_means)
+print(dict_mean)
 print(dict_sigma)
-print(test)
 
 
-dict_sigma = {}
-dict_sigma['airmass'] = list(np.arange(0.01, 0.11, 0.01))
-dict_sigma['pwv'] = list(np.arange(0.01, 0.5, 0.01))
-dict_sigma['ozone'] = list(np.arange(8., 21, 1.))
-dict_sigma['aerosol'] = list(np.arange(0.01, 0.06, 0.01))
-dict_sigma['beta'] = [0.]
-
-dict_sigma['airmass'] = [0.]
-dict_sigma['pwv'] = [0.2]
-dict_sigma['ozone'] = [0.]
-dict_sigma['aerosol'] = [0.]
-dict_sigma['beta'] = [0.]
-
-combi_sigma = get_combi(dict_sigma, par_names)
+combi_sigma = get_combi(dict_mean, dict_sigma, par_names)
 
 print(combi_sigma)
+
 
 df = pd.DataFrame()
 
@@ -127,7 +126,11 @@ print('nb de combinaisons', len(combi_sigma), combi_sigma.columns)
 time_ref = time.time()
 for i, row in combi_sigma.iterrows():
 
+    par_means = row[par_names].to_list()
+    colsb = list(map(lambda x: 'sigma_' + x, par_names))
+    par_sigmas = row[colsb].to_list()
     print(par_means)
+    print(par_sigmas)
     sigma_zp = Sigma_zp_meanwave(through_dir, site_name, pressure,
                                  par_names, par_means, par_sigmas,
                                  save_throughputs_dir='ty_through')
