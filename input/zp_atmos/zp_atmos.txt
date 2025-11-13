@@ -1,0 +1,38 @@
+telDir throughputs str #tel main dir
+throughDir baseline str #throughput dir
+tag 1.9 str #tag version of the throughputs
+#airmass
+airmass_min 1.0 float #airmass min value
+airmass_max 3.0 float #airmass max value
+airmass_step 0. float #airmass step value
+sigma_airmass_min 0.02 float #sigma airmass min value
+sigma_airmass_max 0.02 float #sigma airmass max value
+sigma_airmass_step 0.00 float #sigma airmass step value
+# pwv
+pwv_min 4.0 float #pwv min value
+pwv_max 7.0 float #pwv max value
+pwv_step 1.0 float #pwv step value
+sigma_pwv_min 0.2 float #sigma pwv min value
+sigma_pwv_max 0.3 float #sigma pwv max value
+sigma_pwv_step 0. float #sigma pwv step value
+#ozone
+ozone_min 300 float #ozone min value
+ozone_max 300 float #ozone max value
+ozone_step 0 float #ozone step value
+sigma_ozone_min 10. float #sigma ozone min value
+sigma_ozone_max 20. float #sigma ozone max value
+sigma_ozone_step 0. float #sigma ozone step value
+#aerosol
+aerosol_min 0.1 float #aerosol min value
+aerosol_max 0.1 float #aerosol max value
+aerosol_step 0. float #aerosol step value
+sigma_aerosol_min 0.01 float #sigma aerosol min value
+sigma_aerosol_max 0.02 float #sigma aerosol max value
+sigma_aerosol_step 0.0 float #sigma aerosol step value
+#beta
+beta_min 0.2 float #beta min value
+beta_max 0.4 float #beta max value
+beta_step 0.0 float #beta step value
+sigma_beta_min 0.0 float #sigma beta min value
+sigma_beta_max 0.4 float #sigma beta max value
+sigma_beta_step 0.0 float #sigma beta step value
