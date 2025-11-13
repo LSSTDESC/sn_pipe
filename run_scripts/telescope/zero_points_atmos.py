@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 import time
 from sn_telmodel.sn_throughtools import Sigma_zp_meanwave
+from optparse import OptionParser
 
 
 def get_combi(thedict, parList):
@@ -42,10 +43,43 @@ def get_combi(thedict, parList):
     return df
 
 
+parser = OptionParser(
+    description='Script to estimate zp and mean_wave from atmos parameters')
+parser.add_option('--telDir', type=str, default='throughputs',
+                  help='tel main dir [%default]')
+parser.add_option('--tag', type=str, default='1.9',
+                  help='tag version of the throughputs [%default]')
+parser.add_option('--throughDir', type=str, default='baseline',
+                  help='throughput dir [%default]')
+parser.add_option('--airmass', type=float, default=1.2,
+                  help='airmass value [%default]')
+parser.add_option('--sigma_airmass', type=float, default=0.01,
+                  help='airmass sigma value [%default]')
+parser.add_option('--pwv', type=float, default=4.0,
+                  help='airmass value [%default]')
+parser.add_option('--sigma_pwv', type=float, default=0.2,
+                  help='pwv sigma value [%default]')
+parser.add_option('--ozone', type=float, default=300,
+                  help='ozone value [%default]')
+parser.add_option('--sigma_ozone', type=float, default=10.,
+                  help='ozone sigma value [%default]')
+parser.add_option('--aerosol', type=float, default=0.1,
+                  help='airmass value [%default]')
+parser.add_option('--sigma_aerosol', type=float, default=0.001,
+                  help='aerosol sigma value [%default]')
+parser.add_option('--beta', type=float, default=0.2,
+                  help='beta value [%default]')
+parser.add_option('--sigma_beta', type=float, default=0.00,
+                  help='beta sigma value [%default]')
+
+opts, args = parser.parse_args()
+
+params = vars(opts)
+
 time_ref = time.time()
-tel_dir = 'throughputs'
-through_dir = 'baseline'
-tag = '1.9'
+tel_dir = params['telDir']
+through_dir = params['throughDir']
+tag = params['tag']
 
 tel_dir = '{}_{}'.format(tel_dir, tag)
 through_dir = '{}/{}'.format(tel_dir, through_dir)
@@ -55,45 +89,23 @@ pressure = 743.
 bands = 'ugrizy'
 
 par_names = ['airmass', 'pwv', 'ozone', 'beta', 'aerosol']
-par_means = [1.2, 4.0, 300., 0.1, 0.1]
-par_sigmas = [0.01, 0.2, 10., 0.0, 0.001]
 
-dict_sigma = {}
-dict_sigma['airmass'] = list(np.arange(0.01, 0.11, 0.01))
-dict_sigma['pwv'] = list(np.arange(0.01, 0.5, 0.01))
-dict_sigma['ozone'] = list(np.arange(8., 21, 1.))
-dict_sigma['aerosol'] = list(np.arange(0.01, 0.06, 0.01))
-dict_sigma['beta'] = [0.]
+par_means = []
+par_sigmas = []
+for vv in par_names:
+    par_means.append(params[vv])
+    par_sigmas.append(params['sigma_{}'.format(vv)])
 
-dict_sigma['airmass'] = [0.]
-dict_sigma['pwv'] = [0.2]
-dict_sigma['ozone'] = [0.]
-dict_sigma['aerosol'] = [0.]
-dict_sigma['beta'] = [0.]
+sigma_zp = Sigma_zp_meanwave(through_dir, site_name, pressure,
+                             par_names, par_means, par_sigmas,
+                             save_throughputs_dir='ty_through')
 
-combi_sigma = get_combi(dict_sigma, par_names)
-
-print(combi_sigma)
-
-df = pd.DataFrame()
-
-print('nb de combinaisons', len(combi_sigma), combi_sigma.columns)
-time_ref = time.time()
-for i, row in combi_sigma.iterrows():
-    par_sigmas = row[par_names].to_list()
-    sigma_zp = Sigma_zp_meanwave(through_dir, site_name, pressure,
-                                 par_names, par_means, par_sigmas,
-                                 save_throughputs_dir='ty_through')
-
-    res = sigma_zp(ntrials=100, nproc=1)
-
-    df = pd.concat((df, res))
-
+res = sigma_zp(ntrials=1000, nproc=8)
 
 print('finally', time.time()-time_ref)
 print('end of processing', time.time()-time_ref)
 
-print(df[['std_zp_y', 'std_zp_z', 'std_mean_wave_y', 'std_mean_wave_z']])
+print(res[['std_zp_y', 'std_zp_z', 'std_mean_wave_y', 'std_mean_wave_z']])
 
 """
 for b in bands:
