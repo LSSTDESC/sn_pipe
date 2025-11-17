@@ -71,7 +71,8 @@ parser.add_option('--beta', type=float, default=0.2,
                   help='beta value [%default]')
 parser.add_option('--sigma_beta', type=float, default=0.00,
                   help='beta sigma value [%default]')
-
+parser.add_option('--ntrial', type=int, default=1000,
+                  help='number of trials [%default]')
 opts, args = parser.parse_args()
 
 params = vars(opts)
@@ -100,7 +101,7 @@ sigma_zp = Sigma_zp_meanwave(through_dir, site_name, pressure,
                              par_names, par_means, par_sigmas,
                              save_throughputs_dir='ty_through')
 
-res = sigma_zp(ntrials=1000, nproc=8)
+res = sigma_zp(ntrials=params['ntrial'], nproc=8)
 
 print('finally', time.time()-time_ref)
 print('end of processing', time.time()-time_ref)
