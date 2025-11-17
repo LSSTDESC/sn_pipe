@@ -155,7 +155,7 @@ for i, row in combi_sigma.iterrows():
                                  par_names, par_means, par_sigmas,
                                  save_throughputs_dir='ty_through')
 
-    res = sigma_zp(ntrials=1000, nproc=8)
+    res = sigma_zp(ntrials=params['ntrial'], nproc=8)
 
     df = pd.concat((df, res))
 
