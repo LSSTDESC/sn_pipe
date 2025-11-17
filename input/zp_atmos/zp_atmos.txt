@@ -3,7 +3,7 @@ throughDir baseline str #throughput dir
 tag 1.9 str #tag version of the throughputs
 #airmass
 airmass_min 1.0 float #airmass min value
-airmass_max 3.0 float #airmass max value
+airmass_max 2.8 float #airmass max value
 airmass_step 0. float #airmass step value
 sigma_airmass_min 0.02 float #sigma airmass min value
 sigma_airmass_max 0.02 float #sigma airmass max value
@@ -11,7 +11,7 @@ sigma_airmass_step 0.00 float #sigma airmass step value
 # pwv
 pwv_min 4.0 float #pwv min value
 pwv_max 7.0 float #pwv max value
-pwv_step 1.0 float #pwv step value
+pwv_step 0.0 float #pwv step value
 sigma_pwv_min 0.2 float #sigma pwv min value
 sigma_pwv_max 0.3 float #sigma pwv max value
 sigma_pwv_step 0. float #sigma pwv step value
@@ -39,3 +39,5 @@ sigma_beta_step 0.0 float #sigma beta step value
 #output
 outDir ../zp_atmos str #outputDir
 outName zp_atmos_config1.hdf5 str #outName
+#number of test
+ntrial 10000 int #number of trials
