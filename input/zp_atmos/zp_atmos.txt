@@ -36,3 +36,6 @@ beta_step 0.0 float #beta step value
 sigma_beta_min 0.0 float #sigma beta min value
 sigma_beta_max 0.4 float #sigma beta max value
 sigma_beta_step 0.0 float #sigma beta step value
+#output
+outDir ../zp_atmos str #outputDir
+outName zp_atmos_config1.hdf5 str #outName
