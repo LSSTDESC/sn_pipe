@@ -103,11 +103,7 @@ def process_combi(combi_sigma, params, num_combi, outName):
         par_means = row[par_names].to_list()
         colsb = list(map(lambda x: 'sigma_' + x, par_names))
         par_sigmas = row[colsb].to_list()
-        """
-        print(par_names)
-        print(par_means)
-        print(par_sigmas)
-        """
+
         sigma_zp = Sigma_zp_meanwave(through_dir, site_name, pressure,
                                      par_names, par_means, par_sigmas,
                                      save_throughputs_dir='ty_through')
@@ -121,28 +117,7 @@ def process_combi(combi_sigma, params, num_combi, outName):
     df['num_combi'] = num_combi
 
     # dump in file
-    # dump(df, outName)
     store.append('zp_atmos', df)
-
-
-def dump(df, outName):
-    """
-    Function to dump df in file
-
-    Parameters
-    ----------
-    df : pandas df
-        Data to dump.
-    outName : str
-        File name.
-
-    Returns
-    -------
-    None.
-
-    """
-
-    df.to_hdf(outName, key='zp_atmos', append=True, mode='r+', format='t')
 
 
 # get all possible simulation parameters and put in a dict
