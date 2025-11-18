@@ -75,6 +75,51 @@ def get_df(theDict, parList):
     return df
 
 
+def prepare_dict(par_names, params):
+    """
+    Function to estimate the parameter space for means and sigmas
+
+    Parameters
+    ----------
+    par_names : list(str)
+        List of parameters to consider.
+    params : dict
+        script parameters.
+
+    Returns
+    -------
+    dict_mean : dict
+        dict of mean values.
+    dict_sigma : dict
+        dict of sigma values.
+
+    """
+
+    dict_mean = {}
+    dict_sigma = {}
+    for vv in par_names:
+        xmin = '{}_min'.format(vv)
+        xmax = '{}_max'.format(vv)
+        xstep = '{}_step'.format(vv)
+        sigma_min = 'sigma_{}_min'.format(vv)
+        sigma_max = 'sigma_{}_max'.format(vv)
+        sigma_step = 'sigma_{}_step'.format(vv)
+        vval = [params[xmin]]
+        if params[xstep] > 1.e-8:
+            vval = list(
+                np.arange(params[xmin], params[xmax]+params[xstep], params[xstep]))
+        dict_mean[vv] = vval
+        sig = [params[sigma_min]]
+        if params[sigma_step] > 1.e-8:
+            sig = list(
+                np.arange(params[sigma_min],
+                          params[sigma_max]+params[sigma_step],
+                          params[sigma_step]))
+        dict_sigma[vv] = sig
+
+    return dict_mean, dict_sigma
+
+
 def process_combi(combi_sigma, params, num_combi, outName):
     """
     Fonction to process a set of parameters
@@ -149,35 +194,8 @@ pressure = 743.
 bands = 'ugrizy'
 
 par_names = ['airmass', 'pwv', 'ozone', 'beta', 'aerosol']
-"""
-par_means = []
-par_sigmas = []
-for vv in par_names:
-    par_means.append(params[vv])
-    par_sigmas.append(params['sigma_{}'.format(vv)])
-"""
-dict_mean = {}
-dict_sigma = {}
-for vv in par_names:
-    xmin = '{}_min'.format(vv)
-    xmax = '{}_max'.format(vv)
-    xstep = '{}_step'.format(vv)
-    sigma_min = 'sigma_{}_min'.format(vv)
-    sigma_max = 'sigma_{}_max'.format(vv)
-    sigma_step = 'sigma_{}_step'.format(vv)
-    vval = [params[xmin]]
-    if params[xstep] > 1.e-8:
-        vval = list(
-            np.arange(params[xmin], params[xmax]+params[xstep], params[xstep]))
-    dict_mean[vv] = vval
-    sig = [params[sigma_min]]
-    if params[sigma_step] > 1.e-8:
-        sig = list(
-            np.arange(params[sigma_min],
-                      params[sigma_max]+params[sigma_step],
-                      params[sigma_step]))
-    dict_sigma[vv] = sig
 
+dict_mean, dict_sigma = prepare_dict(par_names, params)
 
 combi_sigma = get_combi(dict_mean, dict_sigma, par_names)
 
