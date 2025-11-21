@@ -52,6 +52,9 @@ parser.add_option('--outDir', type='str',
 parser.add_option('--outName', type='str',
                   default='holo_survey_mean_pointings.hdf5',
                   help='output directory [%default]')
+parser.add_option('--outFigDir', type='str',
+                  default='../sn_holo_survey_figs',
+                  help='output directory for survey figs [%default]')
 
 opts, args = parser.parse_args()
 
@@ -68,6 +71,11 @@ show_Plot = opts.show_Plot
 running_mode = opts.running_mode
 outDir = opts.outDir
 outName = opts.outName
+outFigDir = opts.outFigDir
+
+if outFigDir != 'None':
+    outFigDir = '{}/{}'.format(outFigDir, dbName)
+    checkDir(outFigDir)
 
 
 myclass = HoloSurvey(nside,
@@ -75,7 +83,8 @@ myclass = HoloSurvey(nside,
                      targetDir, targetFile,
                      dbDir, dbName, nproc,
                      show_Plot=show_Plot,
-                     running_mode=opts.running_mode)
+                     running_mode=opts.running_mode,
+                     outFigDir=outFigDir)
 
 res = myclass()
 
