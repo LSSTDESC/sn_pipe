@@ -123,6 +123,73 @@ def process_multi(toproc, params, j=0, output_q=None):
         return res
 
 
+def plot_this(dft, varx='mean_airmass', xlabel='airmass',
+              vary='delta_zp_y', ylabel='$\Delta zp_y$',
+              varz='sigma_aerosol', zlabel='$\sigma_{aerosol}$', figtitle=''):
+    """
+    Function to plot results
+
+    Parameters
+    ----------
+    dft : pandas df
+        Data to plot.
+    varx : str, optional
+        x-axis var. The default is 'mean_airmass'.
+    xlabel : str, optional
+        x-axis label. The default is 'airmass'.
+    vary : str, optional
+        y-axis var. The default is 'delta_zp_y'.
+    ylabel : str, optional
+        y-axis label. The default is '$\Delta zp_y$'.       
+    varz : str, optional
+        z-axis (third dim) var. The default is 'sigma_aerosol'.
+    zlabel : str, optional
+        z-axis label. The default is '$\sigma_{aerosol}$'.
+    figtitle: str, optional.
+      Figure title. The default is ''
+
+    Returns
+    -------
+    None.
+
+    """
+
+    fig, ax = plt.subplots(figsize=(12, 8))
+    if figtitle != '':
+        fig.suptitle(figtitle)
+
+    print(dft.columns)
+
+    dft = dft.round({varx: 5, varz: 5})
+    print(dft[varz].unique())
+
+    dft = dft.sort_values(by=[varz])
+    sigmas = dft[varz].unique().tolist()
+    markers = ['+', 'x', 'X', 's', 'P', '1', 'o']
+    colors = ['yellow', 'orange', 'violet',
+              'cyan', 'red', 'orange', 'lightgrey']
+    mm = dict(zip(sigmas, markers))
+    ccolors = dict(zip(sigmas, colors))
+
+    print(ccolors)
+    for sig in sigmas:
+        idx = dft[varz] == sig
+        sel = dft[idx]
+        sel_m = sel.groupby([varx])[vary].max().reset_index()
+        sel_p = sel.groupby([varx])[vary].min().reset_index()
+
+        ax.fill_between(sel_m[varx], sel_m[vary],
+                        sel_p[vary], color=ccolors[sig], label='{}={}'.format(zlabel, sig))
+        """
+        ax.plot(sel[varx], sel[vary],
+                marker=mm[sig], color='k', linestyle='None', label='{}'.format(sig))
+        """
+    ax.legend()
+    ax.grid(visible=True)
+    ax.set_xlabel(r'{}'.format(xlabel))
+    ax.set_ylabel(r'{}'.format(ylabel))
+
+
 parser = OptionParser(
     description='Script to draw zp_sigma and mean_wave_eff vs atmos param errors')
 
@@ -140,21 +207,15 @@ dft = multiproc(fis, params, process_multi, nproc=8)
 
 print(dft)
 
-fig, ax = plt.subplots()
+plot_this(dft)
 
-print(dft.columns)
-var = 'sigma_aerosol'
-dft = dft.round({var: 5})
-print(dft[var].unique())
 
-sigmas_pwv = dft[var].unique()
-markers = ['+', 'x', 'X', 's', 'P', '1', 'o']
-mm = dict(zip(sigmas_pwv, markers))
+idx = dft['mean_airmass'] > 1.15
+idx &= dft['mean_airmass'] < 1.25
+sel = dft[idx]
 
-for sig in sigmas_pwv:
-    idx = dft[var] == sig
-    sel = dft[idx]
-    ax.plot(sel['mean_airmass'], sel['delta_zp_y'],
-            marker=mm[sig], color='k', linestyle='None', label='{}'.format(sig))
-ax.legend()
+plot_this(sel, varx='sigma_pwv',
+          xlabel='$\sigma_{PWV}$', figtitle='airmass=1.2')
+
+
 plt.show()
