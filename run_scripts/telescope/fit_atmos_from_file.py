@@ -14,7 +14,7 @@ from iminuit import Minuit
 
 
 class Fit_Atmos:
-    def __init__(self, airmass=1.0,
+    def __init__(self, airmass=1.0, beta=1.2,
                  fitparNames=['ozone', 'aerosol', 'pwv'],
                  fitparValues=[300., 0.05, 4.],
                  fitparLimits=[(100., 500.), (0., 1.), (0.5, 12.)]):
@@ -40,6 +40,7 @@ class Fit_Atmos:
         """
 
         self.airmass = airmass
+        self.beta = beta
 
         self.fitparNames = fitparNames
         self.fitparLimits = fitparLimits
@@ -52,7 +53,8 @@ class Fit_Atmos:
         # grab data from file
         self.atmos_trans_file = Atmos_Transmission(
             atmos_dir=atmosDir, atmos_type='from_file')
-        self.atmos_trans_file.load_atmosphere(airmass=airmass)
+        self.atmos_trans_file.load_atmosphere(airmass=airmass,
+                                              atmos_type='from_file')
 
         self.ndata = len(self.atmos_trans_file.atmosphere.wavelen)
 
@@ -152,9 +154,14 @@ class Fit_Atmos:
         else:
             airmass = parameters[self.fitparNames.index('airmass')]
 
+        if 'beta' not in self.fitparNames:
+            beta = self.beta
+        else:
+            beta = parameters[self.fitparNames.index('beta')]
+
         atmos_trans_obsatmo = Atmos_Transmission(atmos_type='obsatmo')
         atmos_trans_obsatmo.load_atmosphere(
-            airmass=airmass, pwv=pwv, ozone=ozone, aerosol=aerosol)
+            airmass=airmass, pwv=pwv, ozone=ozone, aerosol=aerosol, beta=beta)
 
         vva = self.atmos_trans_file.atmosphere.sb
         vvb = atmos_trans_obsatmo.atmosphere.sb
@@ -171,7 +178,7 @@ parser.add_option('--atmosDir', type=str, default='atmos',
                   help='atmosphere location dir [%default]')
 parser.add_option('--tag', type=str, default='1.9',
                   help='tag version of the throughputs [%default]')
-parser.add_option('--airmass', type=float, default=1.0,
+parser.add_option('--airmass', type=float, default=1.2,
                   help='airmass value [%default]')
 parser.add_option('--aerosol', type=float, default=0.0,
                   help='aerosol value [%default]')
@@ -179,6 +186,8 @@ parser.add_option('--pwv', type=float, default=4.0,
                   help='precipitable water vapor value [%default]')
 parser.add_option('--ozone', type=float, default=300.,
                   help='ozone value [%default]')
+parser.add_option('--beta', type=float, default=1.4,
+                  help='beta value [%default]')
 
 opts, args = parser.parse_args()
 
@@ -187,16 +196,17 @@ airmass = opts.airmass
 aerosol = opts.aerosol
 pwv = opts.pwv
 ozone = opts.ozone
+beta = opts.beta
 
-parNames = ['airmass', 'pwv', 'ozone', 'aerosol']
-parValues = [1.2, 4., 100, 0.1]
-parLimits = [(1., 3.), (0.5, 12.), (100., 500.), (0., 1.)]
+parNames = ['airmass', 'pwv', 'ozone', 'aerosol', 'beta']
+parValues = [1.2, 4., 100, 0.1, 1.4]
+parLimits = [(1., 3.), (0.5, 12.), (100., 500.), (0., 1.), (0., 5.)]
 
 parNames = ['pwv', 'ozone', 'aerosol']
-parValues = [4., 100, 0.1]
+parValues = [4., 270, 0.1]
 parLimits = [(0.5, 12.), (100., 500.), (0., 1.)]
 
-myfit = Fit_Atmos(airmass,
+myfit = Fit_Atmos(airmass, beta,
                   fitparNames=parNames,
                   fitparValues=parValues,
                   fitparLimits=parLimits)
@@ -207,7 +217,7 @@ resfit = myfit()
 # from file
 atmos_trans_file = Atmos_Transmission(
     atmos_dir=atmosDir, atmos_type='from_file')
-atmos_trans_file.load_atmosphere(airmass=airmass)
+atmos_trans_file.load_atmosphere(airmass=airmass, atmos_type='from_file')
 
 # from getObsAtmo
 pwv = resfit['pwv_fit']
