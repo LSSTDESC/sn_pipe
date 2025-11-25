@@ -11,6 +11,8 @@ import glob
 from optparse import OptionParser
 from sn_tools.sn_utils import multiproc
 from sn_plotter_analysis import plt
+import warnings
+warnings.simplefilter("ignore", category=SyntaxWarning)
 
 
 def process(fName):
@@ -155,6 +157,7 @@ def plot_this(dft, varx='mean_airmass', xlabel='airmass',
     """
 
     fig, ax = plt.subplots(figsize=(12, 8))
+    fig.subplots_adjust(right=0.75)
     if figtitle != '':
         fig.suptitle(figtitle)
 
@@ -167,7 +170,7 @@ def plot_this(dft, varx='mean_airmass', xlabel='airmass',
     sigmas = dft[varz].unique().tolist()
     markers = ['+', 'x', 'X', 's', 'P', '1', 'o']
     colors = ['yellow', 'orange', 'violet',
-              'cyan', 'red', 'orange', 'lightgrey']
+              'cyan', 'red', 'green', 'lightgrey']
     mm = dict(zip(sigmas, markers))
     ccolors = dict(zip(sigmas, colors))
 
@@ -184,10 +187,15 @@ def plot_this(dft, varx='mean_airmass', xlabel='airmass',
         ax.plot(sel[varx], sel[vary],
                 marker=mm[sig], color='k', linestyle='None', label='{}'.format(sig))
         """
-    ax.legend()
+    ax.legend(loc='upper right',
+              bbox_to_anchor=(1.4, 0.9), fontsize=15,
+              frameon=False)
     ax.grid(visible=True)
     ax.set_xlabel(r'{}'.format(xlabel))
     ax.set_ylabel(r'{}'.format(ylabel))
+
+    xmin, xmax = dft[varx].min(), dft[varx].max()
+    ax.set_xlim(xmin, xmax)
 
 
 parser = OptionParser(
@@ -207,15 +215,21 @@ dft = multiproc(fis, params, process_multi, nproc=8)
 
 print(dft)
 
-plot_this(dft)
+# plot_this(dft)
 
 
 idx = dft['mean_airmass'] > 1.15
 idx &= dft['mean_airmass'] < 1.25
 sel = dft[idx]
 
-plot_this(sel, varx='sigma_pwv',
-          xlabel='$\sigma_{PWV}$', figtitle='airmass=1.2')
+for b in 'ugrizy':
+    vary = 'delta_zp_'+b
+    ylabel = '$\Delta zp_'+b+'$'
+    print(vary, ylabel)
+    plot_this(sel,
+              varx='sigma_pwv', xlabel='$\sigma_{PWV}$',
+              vary=vary, ylabel=ylabel,
+              figtitle='airmass=1.2')
 
 
 plt.show()
