@@ -10,7 +10,7 @@ from sn_tools.sn_batchutils import BatchIt
 from optparse import OptionParser
 
 
-def get_combi(params, relat_err=[0.5, 1, 3, 5, 10, 15, 20]):
+def get_combi(params, relat_err=[0.0, 0.5, 1, 3, 5, 7, 10, 12, 15, 20]):
     """
     Function to get combi of parameters
 
@@ -58,13 +58,13 @@ parser.add_option('--throughDir', type=str, default='baseline',
                   help='throughput dir [%default]')
 parser.add_option('--airmass', type=float, default=1.2,
                   help='airmass value [%default]')
-parser.add_option('--pwv', type=float, default=4.0,
+parser.add_option('--pwv', type=float, default=5.0,
                   help='airmass value [%default]')
-parser.add_option('--ozone', type=float, default=300,
+parser.add_option('--ozone', type=float, default=329,
                   help='ozone value [%default]')
-parser.add_option('--aerosol', type=float, default=0.1,
+parser.add_option('--aerosol', type=float, default=0.044,
                   help='airmass value [%default]')
-parser.add_option('--beta', type=float, default=0.2,
+parser.add_option('--beta', type=float, default=1.4,
                   help='beta value [%default]')
 parser.add_option('--ntrial', type=int, default=20,
                   help='number of trials [%default]')

@@ -30,7 +30,7 @@ sigma_aerosol_min 0.01 float #sigma aerosol min value
 sigma_aerosol_max 0.02 float #sigma aerosol max value
 sigma_aerosol_step 0.0 float #sigma aerosol step value
 #beta
-beta_min 0.2 float #beta min value
+beta_min 1.4 float #beta min value
 beta_max 0.4 float #beta max value
 beta_step 0.0 float #beta step value
 sigma_beta_min 0.0 float #sigma beta min value
