@@ -14,7 +14,7 @@ from iminuit import Minuit
 
 
 class Fit_Atmos:
-    def __init__(self, airmass=1.0, beta=1.2,
+    def __init__(self, params,
                  fitparNames=['ozone', 'aerosol', 'pwv'],
                  fitparValues=[300., 0.05, 4.],
                  fitparLimits=[(100., 500.), (0., 1.), (0.5, 12.)]):
@@ -23,8 +23,8 @@ class Fit_Atmos:
 
         Parameters
         ----------
-        airmass : float, optional
-            airmass value. The default is 1.0.
+        params : dict.
+            parameter values.
         fitparNames : list(str), optional
             List of the names of the parameters to fit. 
             The default is ['ozone', 'aerosol', 'pwv'].
@@ -39,8 +39,7 @@ class Fit_Atmos:
 
         """
 
-        self.airmass = airmass
-        self.beta = beta
+        self.params = params
 
         self.fitparNames = fitparNames
         self.fitparLimits = fitparLimits
@@ -145,23 +144,25 @@ class Fit_Atmos:
 
         """
 
-        ozone = parameters[self.fitparNames.index('ozone')]
-        pwv = parameters[self.fitparNames.index('pwv')]
-        aerosol = parameters[self.fitparNames.index('aerosol')]
+        ppfit = {}
+        # get fit parameters values
+        for key in self.fitparNames:
+            ppfit[key] = parameters[self.fitparNames.index(key)]
 
-        if 'airmass' not in self.fitparNames:
-            airmass = self.airmass
-        else:
-            airmass = parameters[self.fitparNames.index('airmass')]
+        # complete with fixed parameters
+        lla = self.params.keys()
+        bb = list(set(self.params.keys()) - set(self.fitparNames))
+        ppfit_b = {k: self.params[k] for k in bb}
 
-        if 'beta' not in self.fitparNames:
-            beta = self.beta
-        else:
-            beta = parameters[self.fitparNames.index('beta')]
+        # merge dicts
+        ppfit = ppfit | ppfit_b
+
+        print(ppfit)
 
         atmos_trans_obsatmo = Atmos_Transmission(atmos_type='obsatmo')
         atmos_trans_obsatmo.load_atmosphere(
-            airmass=airmass, pwv=pwv, ozone=ozone, aerosol=aerosol, beta=beta)
+            airmass=ppfit['airmass'], pwv=ppfit['pwv'],
+            ozone=ppfit['ozone'], aerosol=ppfit['aerosol'], beta=ppfit['beta'])
 
         vva = self.atmos_trans_file.atmosphere.sb
         vvb = atmos_trans_obsatmo.atmosphere.sb
@@ -170,6 +171,74 @@ class Fit_Atmos:
         Xmat = np.sum((vva-vvb)**2/sigma**2)
 
         return Xmat
+
+
+def plot_atmos_trans(atmosDir, resfit):
+    """
+    Function to plot atmos transmission
+
+    Parameters
+    ----------
+    atmosDir : str
+        atmos dir.
+    resfit : dict
+        atmos params for getObsAtmo.
+
+    Returns
+    -------
+    None.
+
+    """
+    # from file
+    atmos_trans_file = Atmos_Transmission(
+        atmos_dir=atmosDir, atmos_type='from_file')
+    atmos_trans_file.load_atmosphere(airmass=airmass, atmos_type='from_file')
+
+    # from getObsAtmo
+    pwv = resfit['pwv_fit']
+    ozone = resfit['ozone_fit']
+    aerosol = resfit['aerosol_fit']
+    atmos_trans_obsatmo = Atmos_Transmission(atmos_type='obsatmo')
+    atmos_trans_obsatmo.load_atmosphere(
+        airmass=airmass, pwv=pwv, ozone=ozone, aerosol=aerosol)
+
+    params = {}
+    par_names = ['airmass', 'aerosol', 'pwv', 'ozone', 'beta', 'pressure']
+    par_plotnames = ['am', 'aer', 'pwv', 'ozone', 'beta', 'P']
+    pars = dict(zip(par_names, par_plotnames))
+    for key, vals in pars.items():
+        sstr = 'params[\'{}\'] = atmos_trans_obsatmo.{}'.format(vals, key)
+        exec(sstr)
+
+    ra = []
+    rb = []
+    for key, vals in params.items():
+        ra.append(key)
+        rb.append(np.round(vals, 3))
+
+    ran = ','.join(ra)
+    rb = list(map(str, rb))
+    rbn = ','.join(rb)
+
+    # superimpose atmospheric transmission curves
+    labela = 'from file airmass({})+aerosol'.format(atmos_trans_file.airmass)
+    labelb = '({})=({})'.format(ran, rbn)
+
+    fig, ax = plt.subplots(figsize=(15, 8))
+    atmos_trans_file.plot_atmospheric_transmission(
+        plt, fig=fig, ax=ax, label=labela)
+    atmos_trans_obsatmo.plot_atmospheric_transmission(
+        plt, fig=fig, ax=ax, label=labelb, color='k', linestyle='dashed')
+
+    # residuals
+    vva = atmos_trans_file.atmosphere.sb
+    vvb = atmos_trans_obsatmo.atmosphere.sb
+
+    figb, axb = plt.subplots(figsize=(12, 8))
+    axb.plot(atmos_trans_file.atmosphere.wavelen, (vva-vvb)/vva)
+    axb.grid(visible=True)
+
+    plt.show()
 
 
 parser = OptionParser(description='Script to plot a&tmos transmission')
@@ -188,6 +257,8 @@ parser.add_option('--ozone', type=float, default=300.,
                   help='ozone value [%default]')
 parser.add_option('--beta', type=float, default=1.4,
                   help='beta value [%default]')
+parser.add_option('--plot_results', type=int, default=0,
+                  help='to plot fit results [%default]')
 
 opts, args = parser.parse_args()
 
@@ -197,72 +268,29 @@ aerosol = opts.aerosol
 pwv = opts.pwv
 ozone = opts.ozone
 beta = opts.beta
+plot_results = opts.plot_results
 
-parNames = ['airmass', 'pwv', 'ozone', 'aerosol', 'beta']
-parValues = [1.2, 4., 100, 0.1, 1.4]
-parLimits = [(1., 3.), (0.5, 12.), (100., 500.), (0., 1.), (0., 5.)]
+#
+parNames = ['airmass', 'pwv', 'aerosol', 'ozone', 'beta']
+parValues = [airmass, pwv, aerosol, ozone, beta]
+params = dict(zip(parNames, parValues))
 
-parNames = ['pwv', 'ozone', 'aerosol']
-parValues = [4., 270, 0.1]
-parLimits = [(0.5, 12.), (100., 500.), (0., 1.)]
+# fit
+fitparNames = ['airmass', 'pwv', 'ozone', 'aerosol', 'beta']
+fitparValues = [1.2, 4., 100, 0.1, 1.4]
+fitparLimits = [(1., 3.), (0.5, 12.), (100., 500.), (0., 1.), (0., 5.)]
 
-myfit = Fit_Atmos(airmass, beta,
-                  fitparNames=parNames,
-                  fitparValues=parValues,
-                  fitparLimits=parLimits)
+fitparNames = ['pwv', 'ozone', 'aerosol']
+fitparValues = [4., 270, 0.1]
+fitparLimits = [(0.5, 12.), (100., 500.), (0., 1.)]
+
+myfit = Fit_Atmos(params,
+                  fitparNames=fitparNames,
+                  fitparValues=fitparValues,
+                  fitparLimits=fitparLimits)
 
 resfit = myfit()
 
-
-# from file
-atmos_trans_file = Atmos_Transmission(
-    atmos_dir=atmosDir, atmos_type='from_file')
-atmos_trans_file.load_atmosphere(airmass=airmass, atmos_type='from_file')
-
-# from getObsAtmo
-pwv = resfit['pwv_fit']
-ozone = resfit['ozone_fit']
-aerosol = resfit['aerosol_fit']
-atmos_trans_obsatmo = Atmos_Transmission(atmos_type='obsatmo')
-atmos_trans_obsatmo.load_atmosphere(
-    airmass=airmass, pwv=pwv, ozone=ozone, aerosol=aerosol)
-
-
-params = {}
-par_names = ['airmass', 'aerosol', 'pwv', 'ozone', 'beta', 'pressure']
-par_plotnames = ['am', 'aer', 'pwv', 'ozone', 'beta', 'P']
-pars = dict(zip(par_names, par_plotnames))
-for key, vals in pars.items():
-    sstr = 'params[\'{}\'] = atmos_trans_obsatmo.{}'.format(vals, key)
-    exec(sstr)
-
-ra = []
-rb = []
-for key, vals in params.items():
-    ra.append(key)
-    rb.append(vals)
-
-ran = ','.join(ra)
-rb = list(map(str, rb))
-rbn = ','.join(rb)
-
-# superimpose atmospheric transmission curves
-labela = 'from file airmass({})+aerosol'.format(atmos_trans_file.airmass)
-labelb = '({})=({})'.format(ran, rbn)
-
-fig, ax = plt.subplots(figsize=(12, 8))
-atmos_trans_file.plot_atmospheric_transmission(
-    plt, fig=fig, ax=ax, label=labela)
-atmos_trans_obsatmo.plot_atmospheric_transmission(
-    plt, fig=fig, ax=ax, label=labelb, color='k', linestyle='dashed')
-
-# residuals
-vva = atmos_trans_file.atmosphere.sb
-vvb = atmos_trans_obsatmo.atmosphere.sb
-
-figb, axb = plt.subplots(figsize=(12, 8))
-axb.plot(atmos_trans_file.atmosphere.wavelen, vva-vvb)
-
-print(np.sum((vva-vvb)**2))
-
-plt.show()
+# plot results
+if plot_results:
+    plot_atmos_trans(atmosDir, resfit)
