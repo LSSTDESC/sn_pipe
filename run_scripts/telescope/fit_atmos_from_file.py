@@ -6,11 +6,15 @@ Created on Wed Nov 20 11:15:04 2024
 @author: philippe.gris@clermont.in2p3.fr
 """
 
-import numpy as np
+
 from sn_telmodel.sn_atmosphere import Atmos_Transmission
+from sn_tools.sn_io import checkDir
+
 import matplotlib.pyplot as plt
 from optparse import OptionParser
 from iminuit import Minuit
+import pandas as pd
+import numpy as np
 
 
 class Fit_Atmos:
@@ -157,8 +161,6 @@ class Fit_Atmos:
         # merge dicts
         ppfit = ppfit | ppfit_b
 
-        print(ppfit)
-
         atmos_trans_obsatmo = Atmos_Transmission(atmos_type='obsatmo')
         atmos_trans_obsatmo.load_atmosphere(
             airmass=ppfit['airmass'], pwv=ppfit['pwv'],
@@ -173,7 +175,7 @@ class Fit_Atmos:
         return Xmat
 
 
-def plot_atmos_trans(atmosDir, resfit):
+def plot_atmos_trans(atmosDir, resfit, params, fitparNames):
     """
     Function to plot atmos transmission
 
@@ -189,18 +191,27 @@ def plot_atmos_trans(atmosDir, resfit):
     None.
 
     """
+    listpars = params.keys()
+
+    for ll in listpars:
+        llfit = '{}_fit'.format(ll)
+        if llfit in resfit.keys():
+            params[ll] = resfit[llfit]
+
     # from file
     atmos_trans_file = Atmos_Transmission(
         atmos_dir=atmosDir, atmos_type='from_file')
-    atmos_trans_file.load_atmosphere(airmass=airmass, atmos_type='from_file')
+    atmos_trans_file.load_atmosphere(
+        airmass=params['airmass'], atmos_type='from_file')
 
     # from getObsAtmo
-    pwv = resfit['pwv_fit']
-    ozone = resfit['ozone_fit']
-    aerosol = resfit['aerosol_fit']
     atmos_trans_obsatmo = Atmos_Transmission(atmos_type='obsatmo')
     atmos_trans_obsatmo.load_atmosphere(
-        airmass=airmass, pwv=pwv, ozone=ozone, aerosol=aerosol)
+        airmass=params['airmass'],
+        pwv=params['pwv'],
+        ozone=params['ozone'],
+        aerosol=params['aerosol'],
+        beta=params['beta'])
 
     params = {}
     par_names = ['airmass', 'aerosol', 'pwv', 'ozone', 'beta', 'pressure']
@@ -251,7 +262,7 @@ parser.add_option('--airmass', type=float, default=1.2,
                   help='airmass value [%default]')
 parser.add_option('--aerosol', type=float, default=0.0,
                   help='aerosol value [%default]')
-parser.add_option('--pwv', type=float, default=4.0,
+parser.add_option('--pwv', type=float, default=5.0,
                   help='precipitable water vapor value [%default]')
 parser.add_option('--ozone', type=float, default=300.,
                   help='ozone value [%default]')
@@ -259,6 +270,10 @@ parser.add_option('--beta', type=float, default=1.4,
                   help='beta value [%default]')
 parser.add_option('--plot_results', type=int, default=0,
                   help='to plot fit results [%default]')
+parser.add_option('--outName', type=str, default='None',
+                  help='output file name [%default]')
+parser.add_option('--outDir', type=str, default='../fit_lsst_atmos',
+                  help='output dir [%default]')
 
 opts, args = parser.parse_args()
 
@@ -269,6 +284,11 @@ pwv = opts.pwv
 ozone = opts.ozone
 beta = opts.beta
 plot_results = opts.plot_results
+outName = opts.outName
+outDir = opts.outDir
+
+if outName != 'None':
+    checkDir(outDir)
 
 #
 parNames = ['airmass', 'pwv', 'aerosol', 'ozone', 'beta']
@@ -284,6 +304,10 @@ fitparNames = ['pwv', 'ozone', 'aerosol']
 fitparValues = [4., 270, 0.1]
 fitparLimits = [(0.5, 12.), (100., 500.), (0., 1.)]
 
+fitparNames = ['pwv', 'ozone', 'aerosol']
+fitparValues = [4.0, 270, 0.1]
+fitparLimits = [(1., 12.), (100., 500.), (0., 1.)]
+
 myfit = Fit_Atmos(params,
                   fitparNames=fitparNames,
                   fitparValues=fitparValues,
@@ -291,6 +315,16 @@ myfit = Fit_Atmos(params,
 
 resfit = myfit()
 
+if outName != 'None':
+    pp = {}
+    for key, vals in resfit.items():
+        pp[key] = [vals]
+    for key, vals in params.items():
+        pp[key] = [vals]
+    df = pd.DataFrame.from_dict(pp)
+    fullOut = '{}/{}'.format(outDir, outName)
+    df.to_hdf(fullOut, key='fit_atmos')
+
 # plot results
 if plot_results:
-    plot_atmos_trans(atmosDir, resfit)
+    plot_atmos_trans(atmosDir, resfit, params, fitparNames)
