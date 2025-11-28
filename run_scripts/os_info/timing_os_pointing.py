@@ -235,4 +235,5 @@ df.loc[idx, 'fieldType'] = 'DDF'
 
 print(df.columns)
 
+df = df.sort_values(by=['night'])
 dfb = df.groupby(['night']).apply(lambda x: ana_night(x))
