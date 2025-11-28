@@ -149,9 +149,13 @@ def process_combi(combi_sigma, params, num_combi, outName):
         colsb = list(map(lambda x: 'sigma_' + x, par_names))
         par_sigmas = row[colsb].to_list()
 
+        airmass = np.round(row['airmass'], 1)
+        param_outName = 'params_airmass_{}_{}'.format(airmass, num_combi)
         sigma_zp = Sigma_zp_meanwave(through_dir, site_name, pressure,
                                      par_names, par_means, par_sigmas,
-                                     save_throughputs_dir='')
+                                     save_throughputs_dir='',
+                                     param_outDir=params['param_outDir'],
+                                     param_outName=param_outName)
 
         res = sigma_zp(ntrials=params['nsample'], nproc=8)
 
