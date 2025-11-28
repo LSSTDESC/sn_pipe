@@ -15,6 +15,19 @@ filtercolors = dict(zip('ugrizy', ['b', 'c', 'g', 'y', 'r', 'm']))
 
 
 def ana_gaps(df):
+    """
+    Function to analyze time gaps
+
+    Parameters
+    ----------
+    df : pandas df
+        Data to process.
+
+    Returns
+    -------
+    None.
+
+    """
 
     # filter changes
 
@@ -43,6 +56,20 @@ def ana_gaps(df):
 
 
 def filter_swap(df):
+    """
+    Function to estimete filter swap timing
+
+    Parameters
+    ----------
+    df : pandas df
+        Data to process.
+
+    Returns
+    -------
+    r : list(int)
+        List of obsId corresponding to filter swaps.
+
+    """
 
     r = []
     filt_prev = 'u'
@@ -58,6 +85,25 @@ def filter_swap(df):
 
 
 def info(df, llist, colName='observationId', name='what'):
+    """
+    Function to estimate mean and std
+
+    Parameters
+    ----------
+    df : pandas df
+        Data to process.
+    llist : list(int)
+        list of obs id.
+    colName : str, optional
+        column for selection. The default is 'observationId'.
+    name : str, optional
+        config for estimation. The default is 'what'.
+
+    Returns
+    -------
+    None.
+
+    """
 
     idx = df[colName].isin(llist)
 
@@ -69,19 +115,56 @@ def info(df, llist, colName='observationId', name='what'):
         print(name, 0.0, 0.0)
 
 
-def select(df, tmin, tmax):
+def select(df, tmin, tmax, sel_colName='mjd_diff', out_colName='observationId'):
+    """
+    data selection
 
-    idx = df['mjd_diff'] >= tmin
-    idx &= df['mjd_diff'] <= tmax
+    Parameters
+    ----------
+    df : pandas df
+        Data to process.
+    tmin : float
+        time min.
+    tmax : float
+        time max.
+    sel_colName : str, optional
+        column name for selection. The default is 'mjd_diff'.
+    out_colName : str, optional
+        col name for output list. The default is 'observationId'.
+
+    Returns
+    -------
+    res : list(int)
+        list of out_colName selected.
+
+    """
+
+    idx = df[sel_colName] >= tmin
+    idx &= df[sel_colName] <= tmax
 
     sel = df[idx]
 
-    res = sel['observationId'].to_list()
+    res = sel[out_colName].to_list()
 
     return res
 
 
 def ana_night(grp, mjdCol='mjd'):
+    """
+    Function to analyze an observing night
+
+    Parameters
+    ----------
+    grp : pandas df
+        data to process.
+    mjdCol : str, optional
+        MJD column name. The default is 'mjd'.
+
+    Returns
+    -------
+    None.
+
+    """
 
     dd = grp.sort_values(by=['mjd'])
 
