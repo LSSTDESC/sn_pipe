@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from optparse import OptionParser
-
+from sn_tools.sn_obs import get_fields
 filtercolors = dict(zip('ugrizy', ['b', 'c', 'g', 'y', 'r', 'm']))
 
 
@@ -168,23 +168,34 @@ def ana_night(grp, mjdCol='mjd'):
 
     dd = grp.sort_values(by=['mjd'])
 
-    fig, ax = plt.subplots()
-
     dd['mjd_diff'] = dd['mjd'].diff()
     dd['mjd_diff'] *= 24.*3600
 
     ana_gaps(dd)
 
+    plot(dd)
+
+
+def plot(dd):
+
+    fig, ax = plt.subplots()
+
+    markers = dict(zip(['WFD', 'DDF'], ['o', 's']))
     for b in 'ugrizy':
         idx = dd['filter'] == b
         sel = dd[idx]
-        ax.plot(sel['mjd'], sel['mjd_diff'], color=filtercolors[b],
-                marker='o', linestyle='None')
+        for ftype in ['WFD', 'DDF']:
+            idxb = sel['fieldType'] == ftype
+            selb = sel[idxb]
+            print(ftype, selb[['fieldType', 'scheduler_note']])
+            ax.plot(selb['mjd'], selb['mjd_diff'], color=filtercolors[b],
+                    marker=markers[ftype], linestyle='None', mfc='None')
 
+    """
     figb, axb = plt.subplots()
 
     axb.hist(dd['mjd_diff'], histtype='step', bins=1000)
-
+    """
     plt.show()
 
 
@@ -204,9 +215,23 @@ fName = '{}/{}.npy'.format(dbDir, dbName)
 
 tt = np.load(fName)
 
+# get DDFs
+ddf = get_fields(tt, 'input/simulation/lookup_ddf.csv')
+
+print(ddf)
+
+ddf_obsid = ddf['observationId'].tolist()
+print(ddf_obsid)
+
 print(tt.dtype)
 
 df = pd.DataFrame.from_records(tt)
+
+df['fieldType'] = 'WFD'
+
+idx = df['observationId'].isin(ddf_obsid)
+
+df.loc[idx, 'fieldType'] = 'DDF'
 
 print(df.columns)
 
