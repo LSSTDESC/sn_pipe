@@ -8,6 +8,7 @@ Created on Tue Nov 18 10:41:11 2025
 import pandas as pd
 from sn_tools.sn_batchutils import BatchIt
 from optparse import OptionParser
+import numpy as np
 
 
 def get_combi(params, relat_err=[0.0, 0.5, 1, 3, 5, 7, 10, 12, 15, 20]):
@@ -43,6 +44,7 @@ def get_combi(params, relat_err=[0.0, 0.5, 1, 3, 5, 7, 10, 12, 15, 20]):
 
     df = df_dict['pwv'].merge(df_dict['ozone'], how='cross')
     df = df.merge(df_dict['aerosol'], how='cross')
+
     df['num_combi'] = df.index+1
 
     return df
@@ -89,16 +91,22 @@ dd['ntrial'] = ntrial
 dd['outDir'] = outDir
 dd['airmass_step'] = airmass_step
 
+
+ibatch = 0
 for i, row in df.iterrows():
+    ibatch += 1
     num_combi = int(row['num_combi'])
-    processName = 'zp_atmos_{}'.format(num_combi)
-    mybatch = BatchIt(processName=processName)
+    if ibatch == 1:
+        processName = 'zp_atmos_{}'.format(num_combi)
+        mybatch = BatchIt(processName=processName, time='40:00:00', mem='5G')
 
     for tt in ['pwv', 'ozone', 'aerosol']:
-        dd['sigma_{}_min'.format(tt)] = row['sigma_{}'.format(tt)]
+        dd['sigma_{}_min'.format(tt)] = np.round(row['sigma_{}'.format(tt)], 5)
 
     dd['outName'] = 'zp_atmos_config{}.hdf5'.format(num_combi)
 
     mybatch.add_batch(script, dd)
 
-    mybatch.go_batch()
+    if ibatch == 2:
+        mybatch.go_batch()
+        ibatch = 0

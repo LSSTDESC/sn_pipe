@@ -5,7 +5,7 @@ tag 1.9 str #tag version of the throughputs
 airmass_min 1.0 float #airmass min value
 airmass_max 2.8 float #airmass max value
 airmass_step 0. float #airmass step value
-sigma_airmass_min 0.02 float #sigma airmass min value
+sigma_airmass_min 0.005 float #sigma airmass min value
 sigma_airmass_max 0.02 float #sigma airmass max value
 sigma_airmass_step 0.00 float #sigma airmass step value
 # pwv
