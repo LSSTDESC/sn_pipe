@@ -73,6 +73,8 @@ Script to analyse (Gaia) stars matching DDFs
 
 Options:
   -h, --help       show this help message and exit
-  --theDir=THEDIR  file directory [../sky_map_holo/baseline_v4.3.1_10yrs]
+  --theDirs=THEDIRS  file directory
+                     [../sky_map_holo_A_stars,../sky_map_holo_F_stars]
+  --dbName=DBNAME    dbName directory [baseline_v4.3.1_10yrs]
 
 </pre>
