@@ -27,6 +27,52 @@ plt.rcParams['axes.labelweight'] = 'bold'
 plt.rcParams['font.size'] = 20
 
 
+def plot_data(tt_dist):
+
+    fields = tt_dist['field'].unique()
+
+    fig, ax = plt.subplots(figsize=(12, 8))
+    for field in fields:
+        idx = tt_dist['field'] == field
+        sel = tt_dist[idx]
+        ax.hist(sel['dist_field[deg]'], histtype='step')
+
+    ax.grid(visible=True)
+    ax.set_xlabel(r'dist [deg]')
+    ax.set_ylabel('Number of entries')
+
+    tt_nf = tt_dist.groupby(['field']).apply(
+        lambda x: pd.DataFrame({'ntargets': [len(x)]}), include_groups=False).reset_index()
+
+    fig, ax = plt.subplots(figsize=(12, 8))
+    tt_nf = tt_nf.sort_values(by=['ntargets'])
+    ax.plot(tt_nf['ntargets'], tt_nf['field'],
+            color='k', marker='o', linestyle='None')
+    ax.set_xlabel(r'# targets')
+    ax.grid(visible=True)
+
+    fig, ax = plt.subplots(figsize=(15, 9))
+    tt_dist = tt_dist.sort_values(by=['sp_type_orig'])
+    ax.plot(tt_dist['sp_type_orig'], tt_dist['field'],
+            color='k', marker='o', linestyle='None')
+    ax.grid(visible=True)
+    ax.tick_params(axis='x', labelrotation=20., labelsize=10)
+    print(tt_dist['sp_type_orig'].unique())
+
+    fig, ax = plt.subplots(figsize=(15, 9))
+    ax.plot(tt_dist['field'], tt_dist['g_mag'],
+            color='k', marker='o', linestyle='None')
+    """
+    ax.plot(tt_dist['field'], tt_dist['I'],
+            color='r', marker='o', linestyle='None')
+    """
+    ax.grid(visible=True)
+    ax.set_ylabel(r'g [mag]')
+    # ax.tick_params(axis='x', labelrotation=20., labelsize=15)
+
+    plt.show()
+
+
 def plot_target(sky_map, target, theDir):
     """
     Function to plot target star map
@@ -267,13 +313,35 @@ def load_gaia_stars_multiproc(theDir='../gaia_files',
 parser = OptionParser(
     description='Script to analyse (Gaia) stars matching DDFs')
 
-parser.add_option("--theDir", type="str",
-                  default='../sky_map_holo/baseline_v4.3.1_10yrs',
+parser.add_option("--theDirs", type=str,
+                  default='../sky_map_holo_A_stars,../sky_map_holo_F_stars',
                   help="file directory [%default]")
+parser.add_option("--dbName", type=str,
+                  default='baseline_v4.3.1_10yrs',
+                  help="dbName directory [%default]")
 
 opts, args = parser.parse_args()
 
-theDir = opts.theDir
+theDirs = opts.theDirs.split(',')
+dbName = opts.dbName
+
+
+df = pd.DataFrame()
+for theDir in theDirs:
+    fName = '{}/{}/targets.hdf5'.format(theDir, dbName)
+    dfa = pd.read_hdf(fName)
+    df = pd.concat((df, dfa))
+
+# select sptypes
+list_sptypes = ['F9VFe-0.8CH-0.5', 'kA2hA6mF2']
+idx = df['sp_type_orig'].isin(list_sptypes)
+
+df = pd.DataFrame(df[~idx])
+
+print(df.columns)
+plot_data(df)
+print(test)
+
 
 sky_map = pd.read_hdf('{}/sky_map_summary.hdf5'.format(theDir))
 
@@ -284,7 +352,10 @@ targets = pd.read_hdf('{}/targets.hdf5'.format(theDir))
 df = targets.groupby(['field', 'target']).apply(
     lambda x: ana_sky_map(x, sky_map), include_groups=False).reset_index()
 
-print(df)
+print(df.columns)
+print(test)
+
+plot_data(df)
 print(test)
 
 gaiaDir = '~/Bureau'

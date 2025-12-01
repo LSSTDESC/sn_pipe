@@ -339,7 +339,7 @@ def get_stars(df, simbad, radius=2, idCol='target', RACol='ra', DecCol='dec'):
                                          unit=(u.deg, u.deg), frame='fk5'),
                                 radius=[radius * u.arcmin]*len(df))
 
-    print('stars in radius', stars.columns, len(stars), stars)
+    print('stars in radius', len(df), stars.columns, len(stars), stars)
 
     stars = stars.to_pandas()
     # grab star infos
@@ -366,8 +366,6 @@ def get_stars(df, simbad, radius=2, idCol='target', RACol='ra', DecCol='dec'):
 
     resb['dist[arcmin]'] = np.sqrt(vv_ra**2+vv_dec**2)*60
 
-    print(resb[['main_id', 'ra', 'ra_target', 'dist[arcmin]']])
-
     """
     res = res.merge(df_main, left_on=scrstr, right_on=scrstr,
                     suffixes=['', ''])
@@ -375,8 +373,11 @@ def get_stars(df, simbad, radius=2, idCol='target', RACol='ra', DecCol='dec'):
     """
     idx = resb['dist[arcmin]'] <= radius  # 3 arcmin
 
+    res = pd.DataFrame(resb[idx])
     # get_map(resb[idx], idCol='main_target')
-    return resb[idx]
+    print(res[['main_id', 'ra', 'ra_target', 'dist[arcmin]']])
+
+    return res
 
 
 def get_map(query_results, outName='map.png',
@@ -649,6 +650,22 @@ def plot_data(data):
     plt.show()
 
 
+def check_iso_target(grp, dist=10/60.):
+
+    idx = grp['dist_star[arcmin]'] <= dist
+
+    sel = grp[idx]
+
+    rr = [True]
+
+    if len(sel) > 1:
+        rr = [False]
+
+    res = pd.DataFrame(rr, columns=['iso_status'])
+
+    return res
+
+
 parser = OptionParser(
     description='Script to analyze the holo survey')
 parser.add_option('--fileDir', type=str, default='../sn_holo_survey',
@@ -676,12 +693,17 @@ data = pd.read_hdf(fName)
 print(data[['source_id', 'ra', 'dec']])
 
 
-plot_data(data)
+# plot_data(data)
 
+print(data.columns)
+
+ccols = ['dist', 'parallax', 'parallax_error',
+         'g_mag', 'phot_bp_mean_mag', 'phot_rp_mean_mag']
 tt_dist = data.groupby(['field', 'source_id', 'sp_type', 'ra', 'dec'])[
-    'dist'].mean().reset_index()
+    ccols].mean().reset_index()
 tt_dist['target'] = 'Gaia DR3 '+tt_dist['source_id'].apply(str)
 print(tt_dist)
+
 # plot_data(data)
 
 # idxt = tt_dist['target'] == ' '.join('Gaia_DR3_2493243363030533632'.split('_'))
@@ -691,8 +713,9 @@ print(tt_dist)
 # get images here
 print(len(tt_dist))
 
-tt_dist.to_hdf('{}/targets.hdf5'.format(outDir), key='targets')
+# tt_dist.to_hdf('{}/targets.hdf5'.format(outDir), key='targets')
 
+"""
 for i, row in tt_dist.iterrows():
     fName = 'map_{}.png'.format(row['target'])
     print(fName.split(' '))
@@ -700,15 +723,48 @@ for i, row in tt_dist.iterrows():
     get_map_target(row.to_dict(),
                    outName='{}/{}'.format(outDir, fName),
                    idCol='target', fov=5)
-
+"""
 # sky map summary
 res = sky_map_summary(tt_dist, radius=5)
 
 print(res.dtypes)
 pprint.pprint(res)
 
-res.to_hdf('{}/sky_map_summary.hdf5'.format(outDir), key='skymap')
+# res.to_hdf('{}/sky_map_summary.hdf5'.format(outDir), key='skymap')
 
-print(res, res.columns)
-print(res[['main_target', 'dist_star[arcmin]', 'G',
-      'sp_type', 'otype', 'flux_max', 'flux_max_type']])
+
+df_targets = res.groupby(['main_target']).apply(
+    lambda x: check_iso_target(x), include_groups=False).reset_index()
+
+# get list of isolated targets
+idx = df_targets['iso_status'] == True
+sel_targets = df_targets[idx]
+list_targets = sel_targets['main_target'].to_list()
+
+# select targets in original file
+print('before', len(tt_dist))
+idx = tt_dist['target'].isin(list_targets)
+tt_dist = pd.DataFrame(tt_dist[idx])
+tt_dist = tt_dist.rename(columns={'ra': 'ra_field',
+                                  'dec': 'dec_field',
+                                  'sp_type': 'sp_type_orig',
+                                  'dist': 'dist_field[deg]',
+                                  'target': 'main_target'})
+# select targets with info
+idx = res['main_target'].isin(list_targets)
+
+print('merging', tt_dist)
+tt_dist = tt_dist.merge(
+    res[idx], left_on=['main_target'], right_on=['main_target'])
+
+
+print('after', tt_dist)
+
+print(sel_targets.columns)
+print(tt_dist.columns)
+print(res.columns)
+
+tt_dist.to_hdf('{}/targets.hdf5'.format(outDir), key='targets')
+
+# print(res[['main_target', 'dist_star[arcmin]', 'G',
+# 'sp_type', 'otype', 'flux_max', 'flux_max_type']])
