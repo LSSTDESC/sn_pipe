@@ -653,7 +653,7 @@ parser.add_option("--addMetric", type=int, default=0,
                   help="to add metric correlation plots [%default]")
 parser.add_option("--plots", type=str,
                   default='summary,field_cad_seasonlength,field_nvisits,\
-                          field_nvisits_band,relative_depth,filter_alloc,\
+                          field_nvisits_band,relative_depth,\
                           field_dithering_season,field_dithering_night,\
                           field_weather,get_ud_scenario',
                   help="plots to draw [%default]")
