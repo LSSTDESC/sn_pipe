@@ -3,7 +3,8 @@ from sn_plotter_metrics import plt
 import numpy as np
 from sn_plotter_metrics.utils import get_dist
 from sn_plotter_metrics.plot4metric import plot_night, plot_series
-from sn_plotter_metrics.plot4metric import plot_series_fields, plot_filter_alloc
+from sn_plotter_metrics.plot4metric import plot_series_fields
+# plot_filter_alloc
 from sn_plotter_metrics.plot4metric import plot_field, plot_cumsum
 from sn_tools.sn_utils import clean_level
 from optparse import OptionParser
@@ -261,32 +262,6 @@ def nv_f(grp):
     res = pd.DataFrame([np.sum(nvisits)], columns=['nvisits_field'])
 
     return res
-
-
-def flat_this(grp, cols=['filter_alloc', 'filter_frac']):
-    """
-    Function to flatten some df columns
-
-    Parameters
-    ----------
-    grp : pandas df
-        data to process
-    cols : list(str), optional
-        list of cols to flatten. The default is ['filter_alloc', 'filter_frac'].
-
-    Returns
-    -------
-    pandas df
-        data with flattened cols
-
-    """
-
-    dictout = {}
-
-    for vv in cols:
-        dictout[vv] = sum(grp[vv].to_list(), [])
-
-    return pd.DataFrame.from_dict(dictout)
 
 
 def plot_relative_depth(dfb):
@@ -676,10 +651,6 @@ parser.add_option("--config", type="str", default='DD_fbs_2.99_plot.csv',
                   help="pointing file name [%default]")
 parser.add_option("--addMetric", type=int, default=0,
                   help="to add metric correlation plots [%default]")
-parser.add_option("--dbName_night", type=str, default='baseline_v3.0_10yrs',
-                  help="dbName for night plot stat [%default]")
-parser.add_option("--fieldName_night", type=str, default='COSMOS',
-                  help="field for night plot stat [%default]")
 parser.add_option("--plots", type=str,
                   default='summary,field_cad_seasonlength,field_nvisits,\
                           field_nvisits_band,relative_depth,filter_alloc,\
@@ -699,8 +670,6 @@ fieldNames = opts.fieldNames.split(',')
 pointingFile = opts.pointingFile
 config = opts.config
 addMetric = opts.addMetric
-dbName_night = opts.dbName_night
-fieldName_night = opts.fieldName_night
 plots = opts.plots.split(',')
 
 df_conf = pd.read_csv(config, comment='#')  # load list of db+plot infos
@@ -828,24 +797,6 @@ dfb = df.groupby(['family', 'field'])[toplot].median().reset_index()
 plot_series_fields(dfb, what=toplot, leg=leg)
 plt.show()
 """
-
-# this is to plot fraction of filter alloc per night - for one OS only
-if 'filter_alloc' in plots:
-    flat = df.groupby(['dbName', 'dbName_plot', 'field', 'season']).apply(
-        lambda x: flat_this(x, cols=['filter_alloc', 'filter_frac']),
-        include_groups=False).reset_index()
-
-    flat = flat.groupby(['dbName', 'dbName_plot', 'field', 'filter_alloc', 'season'])[
-        'filter_frac'].median().reset_index()
-
-    idx = df_conf['dbName'] == dbName_night
-
-    family = df_conf[idx]['dbName_plot'].to_list()[0]
-
-    plot_filter_alloc(flat, family, fieldName_night)
-
-    # plot_night(
-    #    df, dbName=dbName_night, field=fieldName_night)
 
 if 'get_ud_scenario' in plots:
     res = get_ud_scenario(df)
