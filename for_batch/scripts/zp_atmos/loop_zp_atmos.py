@@ -45,6 +45,7 @@ def get_combi(params, relat_err=[0.0, 0.5, 1, 3, 5, 7, 10, 12, 15, 20]):
     df = df_dict['pwv'].merge(df_dict['ozone'], how='cross')
     df = df.merge(df_dict['aerosol'], how='cross')
 
+    df['sigma_airmass'] = params['sigma_airmass_min']
     df['num_combi'] = df.index+1
 
     return df
@@ -60,6 +61,8 @@ parser.add_option('--throughDir', type=str, default='baseline',
                   help='throughput dir [%default]')
 parser.add_option('--airmass', type=float, default=1.2,
                   help='airmass value [%default]')
+parser.add_option('--sigma_airmass_min', type=float, default=0.0,
+                  help='sigma airmass value [%default]')
 parser.add_option('--pwv', type=float, default=5.0,
                   help='airmass value [%default]')
 parser.add_option('--ozone', type=float, default=329,
@@ -100,7 +103,7 @@ for i, row in df.iterrows():
         processName = 'zp_atmos_{}'.format(num_combi)
         mybatch = BatchIt(processName=processName, time='40:00:00', mem='5G')
 
-    for tt in ['pwv', 'ozone', 'aerosol']:
+    for tt in ['pwv', 'ozone', 'aerosol','airmass']:
         dd['sigma_{}_min'.format(tt)] = np.round(row['sigma_{}'.format(tt)], 5)
 
     dd['outName'] = 'zp_atmos_config{}.hdf5'.format(num_combi)
