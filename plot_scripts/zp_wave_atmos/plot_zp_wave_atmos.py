@@ -168,9 +168,9 @@ def plot_this(dft, varx='mean_airmass', xlabel='airmass',
 
     dft = dft.sort_values(by=[varz])
     sigmas = dft[varz].unique().tolist()
-    markers = ['+', 'x', 'X', 's', 'P', '1', 'o']
+    markers = ['+', 'x', 'X', 's', 'P', '1', 'o','^','v','2']
     colors = ['yellow', 'orange', 'violet',
-              'cyan', 'red', 'green', 'lightgrey']
+              'cyan', 'red', 'green', 'lightgrey','beige','cornsilk','black']
     mm = dict(zip(sigmas, markers))
     ccolors = dict(zip(sigmas, colors))
 
