@@ -95,6 +95,9 @@ parser.add_option('--shDir', type=str,
 parser.add_option('--timescale', type=str,
                   default='year',
                   help='timescale for processing (year/season) [%default]')
+parser.add_option('--nside', type=int,
+                  default=128,
+                  help='nside healpix parameter [%default]')
 
 opts, args = parser.parse_args()
 
@@ -107,13 +110,13 @@ procmode = opts.procmode
 nproc = opts.nproc
 shDir = opts.shDir
 timescale = opts.timescale
+nside = opts.nside
 
 if procmode == 'interact':
     checkDir(shDir)
 
 
 # params
-nside = 128
 fieldType = 'DD'
 scriptref = 'run_scripts/os_info/run_obs_strat_pixels.py'
 
