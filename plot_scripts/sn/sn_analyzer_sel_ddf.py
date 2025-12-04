@@ -10,8 +10,35 @@ import pandas as pd
 from sn_analysis import plt
 import os
 
-from sn_plotter_analysis.sn_plot import plot_ddf_year, get_weather_impact
+from sn_plotter_analysis.sn_plot import plot_ddf_year, plot_ddf_area
+from sn_plotter_analysis.sn_plot import get_weather_impact
 from sn_plotter_analysis.sn_analyser_tools import print_nsn_latex
+
+
+def survey_area(grp):
+    """
+    Function to estimate survey area
+
+    Parameters
+    ----------
+    grp : pandas df
+        Data to process.
+
+    Returns
+    -------
+    res : pandas df
+        output data.
+
+    """
+
+    npixels = len(grp['healpixID'].unique())
+
+    area = npixels*grp['survey_area'].mean()
+
+    res = pd.DataFrame([area], columns=['survey_area'])
+
+    return res
+
 
 parser = OptionParser(description='Script to plot SN - DDF after selection')
 
@@ -19,7 +46,7 @@ parser.add_option('--config', type=str,
                   default='input/plots/config_ana.csv',
                   help='OS DD list[%default]')
 parser.add_option('--plots', type=str,
-                  default='nsn_all,nsn_ud',
+                  default='nsn_all,nsn_ud,survey_area',
                   help='plots to draw [%default]')
 parser.add_option('--print_nsn', type=int,
                   default=0,
@@ -99,10 +126,19 @@ if 'nsn_dd' in plots:
     plot_ddf_year(df_nsn, conf_df,
                   cols=['year', 'dbName'],
                   fields=fields, os_ref=os_ref)
+
 if 'weather_impact' in get_info:
     if os_ref == 'None':
         print('pb: a reference OS is expected!')
     else:
         fields = ud_fields+dd_fields
-        get_weather_impact(df_nsn, os_ref,fields=fields)
+        get_weather_impact(df_nsn, os_ref, fields=fields)
+
+if 'survey_area' in plots:
+
+    plot_ddf_area(df_nsn, conf_df,
+                  cols=['year', 'dbName', 'field'],
+                  fields=['COSMOS'])
+
+
 plt.show()
