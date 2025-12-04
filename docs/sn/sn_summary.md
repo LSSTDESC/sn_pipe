@@ -58,15 +58,18 @@ Script to analyze SN - DDF after selection
 Options:
   -h, --help            show this help message and exit
   --config=CONFIG       OS DD list[input/plots/config_ana.csv]
-  --plots=PLOTS         plots to draw [nsn_all,nsn_ud]
+  --plots=PLOTS         plots to draw [nsn_all,nsn_ud,survey_area]
   --print_nsn=PRINT_NSN
                         to print nsn as a latex table [0]
   --ud_fields=UD_FIELDS
                         UD fields to consider [COSMOS,XMM-LSS]
   --dd_fields=DD_FIELDS
                         DD fields to consider [CDFS,ELAISS1,EDFS_a,EDFS_b]
-  --inputDir=INPUTDIR   input dir for the file to draw [../sn_summary_ddf]
+  --inputDir=INPUTDIR   input dir for the file to draw [../sn_dd_airmass]
   --fileName=FILENAME   sn file name to draw [sn_summary_ddf.hdf5]
+  --ref_os=REF_OS       ref OS to normalize the results [None]
+  --get_info=GET_INFO   to estimate infos (weather_impact)[None]
+
 
 </pre>
 
