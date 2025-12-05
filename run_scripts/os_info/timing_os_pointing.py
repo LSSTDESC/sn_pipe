@@ -149,7 +149,7 @@ def select(df, tmin, tmax, sel_colName='mjd_diff', out_colName='observationId'):
     return res
 
 
-def ana_night(grp, mjdCol='mjd'):
+def ana_night(grp, mjdCol='mjd', plotIt=False):
     """
     Function to analyze an observing night
 
@@ -173,10 +173,24 @@ def ana_night(grp, mjdCol='mjd'):
 
     ana_gaps(dd)
 
-    plot(dd)
+    if plotIt:
+        plot(dd)
 
 
 def plot(dd):
+    """
+    Function to plot nightly visits
+
+    Parameters
+    ----------
+    dd : pandas df
+        Data to plot.
+
+    Returns
+    -------
+    None.
+
+    """
 
     fig, ax = plt.subplots()
 
@@ -196,6 +210,36 @@ def plot(dd):
 
     axb.hist(dd['mjd_diff'], histtype='step', bins=1000)
     """
+    plt.show()
+
+
+def ana_night_ddf(grp):
+
+    dd = {}
+    dd['nvisits'] = len(grp)
+
+    for b in 'ugrizy':
+        idx = grp['filter'] == b
+        sel = grp[idx]
+        dd['nvisits_{}'.format(b)] = [len(sel)]
+
+    res = pd.DataFrame.from_dict(dd)
+    return res
+
+
+def plot_nvisits(df, field='COSMOS'):
+
+    idx = df['field'] == field
+
+    sel = df[idx]
+
+    fig, ax = plt.subplots()
+
+    for b in 'ugrizy':
+        vName = 'nvisits_{}'.format(b)
+        ax.plot(sel['night'], sel[vName])
+
+    ax.plot(sel['night'], sel['nvisits'], color='k')
     plt.show()
 
 
@@ -235,5 +279,21 @@ df.loc[idx, 'fieldType'] = 'DDF'
 
 print(df.columns)
 
+"""
 df = df.sort_values(by=['night'])
 dfb = df.groupby(['night']).apply(lambda x: ana_night(x))
+"""
+# analyze ddf nights
+df_ddf = pd.DataFrame.from_records(ddf)
+
+ffield = 'COSMOS'
+ffield = 'XMM-LSS'
+idx = df_ddf['field'] == ffield
+df_ddf = pd.DataFrame(df_ddf[idx])
+print(df_ddf.columns)
+dfc = df_ddf.groupby(['night', 'field']).apply(
+    lambda x: ana_night_ddf(x), include_groups=False).reset_index()
+
+print(dfc)
+
+plot_nvisits(dfc, field=ffield)
