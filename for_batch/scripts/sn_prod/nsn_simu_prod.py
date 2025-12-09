@@ -13,9 +13,13 @@ from sn_tools.sn_batchutils import open_script,add_script
 
 parser = OptionParser(
     description='Script to estimate the total number of simulated SNe Ia on a set of files')
+
+parser.add_option('--dbDir_main', type=str,
+                  default='/sps/lsst/groups/cadence/LSST_SN_PhG/prod_simu',
+                  help='OS location main dir [%default]')
 parser.add_option('--dbDir', type=str,
-                  default='/sps/lsst/groups/cadence/LSST_PhG/prod_simu/Output_SN_WFD_sigmaInt_0.0_Hounsell_z_smflux_notelrot_airmass',
-                  help='OS location dir [%default]')
+                  default='Output_SN_WFD_sigmaInt_0.0_Hounsell_z_smflux_notelrot_airmass',
+                  help='OS location subdir [%default]')
 parser.add_option('--dbList', type=str,
                   default='dbList.csv',
                   help='OS to process [%default]')
@@ -40,6 +44,7 @@ parser.add_option('--shDir', type=str,
 
 opts, args = parser.parse_args()
 
+dbDir_main = opts.dbDir_main
 dbDir = opts.dbDir
 dbList = opts.dbList
 runType = opts.runType
@@ -60,7 +65,7 @@ print(df_db)
 #create the scripts
 scriptref = 'run_scripts/sn_analysis/nsn_simu.py'
 procDict = {}
-procDict['dbDir'] = opts.dbDir
+procDict['dbDir'] = '{}/{}'.format(dbDir_main,dbDir)
 procDict['runType'] = opts.runType
 procDict['outDir'] = outDir
 procDict['nproc'] = nproc
