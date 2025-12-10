@@ -43,7 +43,7 @@ def load_db(dbDir):
     return df
 
 
-def rebin(df_dist, distval='dist_center', yvar='cadence', xmin=0.0, xmax=3.5):
+def rebin(df_dist, distval='dist_center', yvar='cadence', xmin=0.0, xmax=3.5, nbins=15):
     """
     Function used to rebin data
 
@@ -55,6 +55,8 @@ def rebin(df_dist, distval='dist_center', yvar='cadence', xmin=0.0, xmax=3.5):
         x-axis value. The default is 'dist_center'.
     yvar : str, optional
         y-axis value. The default is 'nvisits'.
+    nbins: int, optional
+        number of bins for rebining. The defauls is 15.
 
     Returns
     -------
@@ -65,7 +67,7 @@ def rebin(df_dist, distval='dist_center', yvar='cadence', xmin=0.0, xmax=3.5):
 
     # rebin to have a "better" plot
     # xmin, xmax = df_dist[distval].min(), df_dist[distval].max()
-    bins = np.linspace(xmin, xmax, 15)
+    bins = np.linspace(xmin, xmax, nbins)
     # bins = np.arange(0.1, 2.22, 0.22)
     group = df_dist.groupby(pd.cut(df_dist[distval], bins), observed=False)
     plot_centers = (bins[:-1] + bins[1:])/2
@@ -87,7 +89,7 @@ def rebin(df_dist, distval='dist_center', yvar='cadence', xmin=0.0, xmax=3.5):
     return dd
 
 
-def get_radius(grp, distval='dist_center', yvar=['nvisits', 'cadence']):
+def get_radius(grp, distval='dist_center', yvar=['nvisits', 'cadence'], nbins=15):
     """
     Function to estimate nvisits and cadence vs radius
 
@@ -99,7 +101,8 @@ def get_radius(grp, distval='dist_center', yvar=['nvisits', 'cadence']):
         distance to use. The default is 'dist_center'.
     yvar : str, optional
         columns to estimate. The default is ['nvisits','cadence'].
-
+    nbins: int, optional
+        number of bins for rebining. The defauls is 15.
     Returns
     -------
     ddc : pandas df
@@ -120,7 +123,7 @@ def get_radius(grp, distval='dist_center', yvar=['nvisits', 'cadence']):
     """
     dd = {}
     for i, val in enumerate(yvar):
-        dd[i] = rebin(df_dist, yvar=val)
+        dd[i] = rebin(df_dist, yvar=val, nbins=nbins)
 
     ddc = dd[0].merge(dd[1], left_on=[distval], right_on=[
         distval], suffixes=['', ''])
@@ -165,12 +168,15 @@ parser.add_option('--dbDir', type=str, default='../dd_pixels',
                   help='dbDir of the OS to process [%default]')
 parser.add_option('--outName', type=str, default='data_radius.hdf5',
                   help='output file name [%default]')
+parser.add_option('--nbins', type=int, default=15,
+                  help='nbins for rebinning [%default]')
 
 opts, args = parser.parse_args()
 
 dbList = opts.dbList
 dbDir = opts.dbDir
 outName = opts.outName
+nbins = opts.nbins
 
 # load dbList
 df_db = pd.read_csv(dbList, comment='#')
@@ -185,7 +191,7 @@ for i, row in df_db.iterrows():
     idx &= data['year'] <= 10
     data = data[idx]
     dd = data.groupby(['field', 'year']).apply(
-        lambda x: get_radius(x), include_groups=False).reset_index()
+        lambda x: get_radius(x, nbins=nbins), include_groups=False).reset_index()
     dd['dbName'] = dbName
     df_tot = pd.concat((df_tot, dd))
 
