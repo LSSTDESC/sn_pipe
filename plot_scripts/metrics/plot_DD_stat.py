@@ -652,7 +652,7 @@ parser.add_option("--config", type="str", default='DD_fbs_2.99_plot.csv',
 parser.add_option("--addMetric", type=int, default=0,
                   help="to add metric correlation plots [%default]")
 parser.add_option("--plots", type=str,
-                  default='summary,field_cad_seasonlength,field_nvisits,\
+                  default='summary,field_cad_nvisits,field_seasonlength_gap,\
                           field_nvisits_band,relative_depth,\
                           field_dithering_season,field_dithering_night,\
                           field_weather,get_ud_scenario',
@@ -707,13 +707,17 @@ prefix = 'N$_{visits}$'
 for field in fields:
     idx = df['field'] == field
     sel = df[idx]
-    if 'field_cad_seasonlength' in plots:
-        plot_field(sel, title='{} pointings'.format(field))
-    if 'field_nvisits' in plots:
+    if 'field_cad_nvisits' in plots:
+        plot_field(sel, xvars=['season', 'season'],
+                   xlab=['Season', 'Season'],
+                   yvars=['nvisits', 'cadence_mean'],
+                   ylab=['N$_{visits}$', 'Cadence [day]'],
+                   title='{} pointings'.format(field))
+    if 'field_seasonlength_gap' in plots:
         plot_field(sel, xvars=['season', 'season'],
                    xlab=['season', 'season'],
-                   yvars=['nvisits', 'gap_5_10'],
-                   ylab=['N$_{visits}$', 'N$_{gaps}^{5-10}$'],
+                   yvars=['season_length', 'gap_5_10'],
+                   ylab=['Season length [day]', 'N$_{gaps}^{5-10}$'],
                    title='{} pointings'.format(field))
     if 'field_dithering_season' in plots:
         plot_field(sel, xvars=['season', 'season'],

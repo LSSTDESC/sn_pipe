@@ -21,7 +21,7 @@ Options:
   --addMetric=ADDMETRIC
                         to add metric correlation plots [0]
   --plots=PLOTS         plots to draw
-                        [summary,field_cad_seasonlength,field_nvisits,
+                        [summary,field_cad_nvisits,field_seasonlength_gap,
                         field_nvisits_band,relative_depth,
                         field_dithering_season,field_dithering_night,
                         field_weather,get_ud_scenario]
