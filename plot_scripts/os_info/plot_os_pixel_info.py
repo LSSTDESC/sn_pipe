@@ -210,6 +210,9 @@ parser.add_option('--gen_var', type=str,
 parser.add_option('--hist_var', type=str,
                   default='nvisits_10yrs,cadence_year',
                   help='hist var to plot [%default]')
+parser.add_option('--mollview_outDir', type=str,
+                  default='None',
+                  help='output dir for mollview figures [%default]')
 
 opts, args = parser.parse_args()
 
@@ -224,6 +227,7 @@ hist_var = opts.hist_var.split(',')
 fields = opts.fields.split(',')
 fieldType = opts.fieldType
 timescale = opts.timescale
+mollview_outDir = opts.mollview_outDir
 
 if '-' in mollview_seasons:
     cad_brk = mollview_seasons.split('-')
@@ -241,6 +245,10 @@ df = load_data(dbDir, dbName, fields, fieldType=fieldType)
 df['dbName'] = dbName
 print(df.columns)
 # print(test)
+
+if mollview_outDir != 'None':
+    from sn_tools.sn_io import checkDir
+    checkDir(mollview_outDir)
 
 idx = df[timescale] > 0
 idx &= df[timescale] < 11
@@ -266,7 +274,7 @@ if 'mollview' in plots:
     for vv in mollview_var:
         plotMollview_seasons(nside, sel, dbName,
                              yvar=vv, yleg=dict_leg[vv],
-                             op=np.mean, seasons=moll_seasons)
+                             op=np.mean, seasons=moll_seasons,outDir=mollview_outDir)
 
 if 'hist' in plots:
     print(sel.columns)

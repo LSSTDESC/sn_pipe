@@ -5,14 +5,14 @@
 Script to plot pixel level OS infos
 
 Options:
-   -h, --help            show this help message and exit
+  -h, --help            show this help message and exit
   --dbName=DBNAME       dbName to process [test_newb]
   --dbDir=DBDIR         dbDir of the OS to process [../test_metric]
   --nside=NSIDE         healpix nside parameter [128]
   --plots=PLOTS         plots to show [gen_plots,mollview]
   --mollview_seasons=MOLLVIEW_SEASONS
                         plots to show [1-5]
-  --fields=FIELDS       plots to show [COSMOS,XMM-
+  --fields=FIELDS       fields to show [COSMOS,XMM-
                         LSS,CDFS,ELAISS1,EDFS_a,EDFS_b]
   --fieldType=FIELDTYPE
                         type of field to process (DD/WFD) [DD]
@@ -21,8 +21,11 @@ Options:
   --mollview_var=MOLLVIEW_VAR
                         var to plot in Mollview [cadence,nvisits]
   --gen_var=GEN_VAR     gen var to plot
-                        [cadence_year,nvisits_year,cadence_dist]
-  --hist_var=HIST_VAR   hist var to plot [nvisits_10yrs]			
+                        [cadence_year,nvisits_year,cadence_dist,nvisits_dist]
+  --hist_var=HIST_VAR   hist var to plot [nvisits_10yrs,cadence_year]
+  --mollview_outDir=MOLLVIEW_OUTDIR
+                        output dir for mollview figures [None]
+		
 </pre>
 
 ## example
