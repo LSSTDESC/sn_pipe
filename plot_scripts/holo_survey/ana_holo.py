@@ -651,6 +651,22 @@ def plot_data(data):
 
 
 def check_iso_target(grp, dist=10/60.):
+    """
+    Method to check if the star is isolated
+
+    Parameters
+    ----------
+    grp : pandas df
+        Data to process.
+    dist : float, optional
+        reference distance. The default is 10/60..
+
+    Returns
+    -------
+    res : pandas df
+        output df.
+
+    """
 
     idx = grp['dist_star[arcmin]'] <= dist
 

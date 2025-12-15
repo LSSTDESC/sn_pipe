@@ -28,6 +28,19 @@ plt.rcParams['font.size'] = 20
 
 
 def plot_data(tt_dist):
+    """
+    Function to plot data infos
+
+    Parameters
+    ----------
+    tt_dist : pandas df
+        Data to plot.
+
+    Returns
+    -------
+    None.
+
+    """
 
     fields = tt_dist['field'].unique()
 
@@ -69,6 +82,16 @@ def plot_data(tt_dist):
     ax.grid(visible=True)
     ax.set_ylabel(r'g [mag]')
     # ax.tick_params(axis='x', labelrotation=20., labelsize=15)
+
+    fig, ax = plt.subplots(figsize=(12, 8))
+    for field in fields:
+        idx = tt_dist['field'] == field
+        sel = tt_dist[idx]
+        ax.hist(sel['dist_star[arcmin]'], histtype='step')
+
+    ax.grid(visible=True)
+    ax.set_xlabel(r'dist nearest star [\''']')
+    ax.set_ylabel('Number of entries')
 
     plt.show()
 
@@ -340,8 +363,8 @@ df = pd.DataFrame(df[~idx])
 
 print(df.columns)
 plot_data(df)
-print(test)
 
+print(test)
 
 sky_map = pd.read_hdf('{}/sky_map_summary.hdf5'.format(theDir))
 
@@ -353,7 +376,6 @@ df = targets.groupby(['field', 'target']).apply(
     lambda x: ana_sky_map(x, sky_map), include_groups=False).reset_index()
 
 print(df.columns)
-print(test)
 
 plot_data(df)
 print(test)
