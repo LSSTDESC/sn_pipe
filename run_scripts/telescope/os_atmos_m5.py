@@ -71,12 +71,20 @@ throughput = get_telescope(tel_dir=telb,
                            airmass=airmass, aerosol=aerosol,
                            pwv=pwv, ozone=ozone, gain=gain, pressure=pressure)
 # setup rubin tools
+throughput.etc()
 # configure your Site, will default to Rubin if you use Site()
 site = Site(name='LSST')
 # site = Site(latitude=33.35, longitude=116.85, height=1706)
 
 # sky model (Rubin)
-sky_model = SkyModel(observatory=site)
+sky_model = SkyModel(observatory=site,
+                     twilight=True,
+                     zodiacal=False,
+                     moon=False,
+                     airglow=False,
+                     merged_spec=False,
+                     lower_atm=False,
+                     upper_atm=False)
 
 
 # grab OS data
@@ -106,12 +114,13 @@ for x in os_data:
     # get sky spectrum
     wave, flux = sky_model.return_wave_spec()
 
+    # print('fff', flux)
     """
     fig, ax = plt.subplots()
     throughput.plot_darksky(plt, fig, ax)
     """
     # load the night sky
-    throughput.load_darksky_wave_flux(wave, flux)
+    # throughput.load_nightsky(wave, flux)
 
     """
     throughput.plot_darksky(plt, fig, ax)
@@ -120,29 +129,47 @@ for x in os_data:
     """
 
     throughput.data['FWHMeff'][b] = fwhmeff
+    throughput.data['FWHMeff'][b] = 0.83
     """
     throughput.load_atmosphere(
         airmass=airmass, pwv=pwv, ozone=ozone, aerosol=aerosol)
     """
-    throughput.load_atmosphere_from_file(airmass)
+    throughput.new_atmosphere(
+        airmass=1.2, atmos_type='from_file')
 
+    # throughput.plot_throughputs(plt)
+
+    # plt.show()
     sky_new = throughput.mag_sky(b)
-    m5_new = throughput.m5(b, exptime, nexp)
+    # m5_new = throughput.m5(b, exptime*nexp, nexp)
+    m5_new = throughput.m5(b, 30, 1)
 
+    # sky_last = throughput.mag_sky(b)
+    print('new sky', sky_new, m5_new, exptime, nexp)
+
+    """
     print(sky_model.get_computed_vals())
 
-    print(b, airmass, fwhmeff, m5, m5_new, m5-m5_new,
+    print(np.deg2rad(lon), np.deg2rad(lat), b, airmass, fwhmeff, m5, m5_new, m5-m5_new,
           sky, sky_new, sky-sky_new, moonPhase)
 
     # sky model (Rubin)
-    siteb = Site(latitude=33.35, longitude=116.85, height=1706)
+    """
     siteb = Site(name='LSST')
-    sky_modelb = SkyModel(observatory=siteb, mags=True)
+    sky_modelb = SkyModel(observatory=siteb, mags=True,
+                          twilight=True,
+                          zodiacal=False,
+                          moon=False,
+                          airglow=False,
+                          merged_spec=False,
+                          lower_atm=False,
+                          upper_atm=False,
+                          scattered_star=False)
     sky_modelb.set_ra_dec_mjd(lon=lon, lat=lat, mjd=mjd, degrees=True)
     # sky_modelb.set_ra_dec_mjd(lon=270., lat=30., mjd=61200.75, degrees=True)
     mags = sky_modelb.return_mags()
 
-    print(mags)
+    print(mags[b])
 
     # throughput.data['FWHMeff'][b] = fwhmeff
     # throughput.etc()
