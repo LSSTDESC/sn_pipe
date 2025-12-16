@@ -76,5 +76,6 @@ Options:
   --theDirs=THEDIRS  file directory
                      [../sky_map_holo_A_stars,../sky_map_holo_F_stars]
   --dbName=DBNAME    dbName directory [baseline_v4.3.1_10yrs]
-
+  --outDir=OUTDIR    output dir [../holo_survey]
+  --outName=OUTNAME  output file name [targets.hdf5]
 </pre>
