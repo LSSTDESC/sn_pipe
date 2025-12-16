@@ -404,7 +404,6 @@ def get_map(query_results, outName='map.png',
     None.
 
     """
-    print('alllll', idCol, query_results)
     object_main_id = query_results.iloc[0][idCol]
     # decode('ascii')
     object_coords = SkyCoord(ra=query_results[RACol],
@@ -598,6 +597,19 @@ def get_tt_dist(grp):
 
 
 def plot_data(data):
+    """
+    Function to plot data
+
+    Parameters
+    ----------
+    data : pandas df
+        Data to plot.
+
+    Returns
+    -------
+    None.
+
+    """
     tt_dist = data.groupby(['field']).apply(
         lambda x: get_tt_dist(x), include_groups=False).reset_index()
 
@@ -650,16 +662,14 @@ def plot_data(data):
     plt.show()
 
 
-def check_iso_target(grp, dist=10/60.):
+def get_min_dist_target(grp):
     """
-    Method to check if the star is isolated
+    Method get the nearest star dist to target
 
     Parameters
     ----------
     grp : pandas df
         Data to process.
-    dist : float, optional
-        reference distance. The default is 10/60..
 
     Returns
     -------
@@ -668,18 +678,12 @@ def check_iso_target(grp, dist=10/60.):
 
     """
 
-    idx = grp['dist_star[arcmin]'] <= dist
+    print('allo', grp)
+    idx = grp['dist_star[arcmin]'].idxmin()
 
-    sel = grp[idx]
+    sel = grp.loc[idx].to_frame().T
 
-    rr = [True]
-
-    if len(sel) > 1:
-        rr = [False]
-
-    res = pd.DataFrame(rr, columns=['iso_status'])
-
-    return res
+    return sel
 
 
 parser = OptionParser(
@@ -711,14 +715,14 @@ print(data[['source_id', 'ra', 'dec']])
 
 # plot_data(data)
 
-print(data.columns)
+print(data.columns, len(data['source_id'].unique()))
 
 ccols = ['dist', 'parallax', 'parallax_error',
-         'g_mag', 'phot_bp_mean_mag', 'phot_rp_mean_mag']
-tt_dist = data.groupby(['field', 'source_id', 'sp_type', 'ra', 'dec'])[
-    ccols].mean().reset_index()
+         'g_mag', 'phot_bp_mean_mag', 'phot_rp_mean_mag', 'ra', 'dec']
+ccols_grp = ['field', 'source_id', 'sp_type']
+
+tt_dist = data.groupby(ccols_grp)[ccols].mean().reset_index()
 tt_dist['target'] = 'Gaia DR3 '+tt_dist['source_id'].apply(str)
-print(tt_dist)
 
 # plot_data(data)
 
@@ -727,7 +731,6 @@ print(tt_dist)
 
 # tt_dist = tt_dist[idxt]
 # get images here
-print(len(tt_dist))
 
 # tt_dist.to_hdf('{}/targets.hdf5'.format(outDir), key='targets')
 
@@ -742,43 +745,32 @@ for i, row in tt_dist.iterrows():
 """
 # sky map summary
 res = sky_map_summary(tt_dist, radius=5)
+res = clean_level(res)
+# select min dist target
 
-print(res.dtypes)
+res = res.groupby(['main_target']).apply(
+    lambda x: get_min_dist_target(x), include_groups=False).reset_index()
+
 pprint.pprint(res)
 
 # res.to_hdf('{}/sky_map_summary.hdf5'.format(outDir), key='skymap')
 
-
-df_targets = res.groupby(['main_target']).apply(
-    lambda x: check_iso_target(x), include_groups=False).reset_index()
-
-# get list of isolated targets
-idx = df_targets['iso_status'] == True
-sel_targets = df_targets[idx]
-list_targets = sel_targets['main_target'].to_list()
-
 # select targets in original file
 print('before', len(tt_dist))
-idx = tt_dist['target'].isin(list_targets)
-tt_dist = pd.DataFrame(tt_dist[idx])
 tt_dist = tt_dist.rename(columns={'ra': 'ra_field',
                                   'dec': 'dec_field',
                                   'sp_type': 'sp_type_orig',
                                   'dist': 'dist_field[deg]',
                                   'target': 'main_target'})
-# select targets with info
-idx = res['main_target'].isin(list_targets)
+# merge with target info
 
 print('merging', tt_dist)
 tt_dist = tt_dist.merge(
-    res[idx], left_on=['main_target'], right_on=['main_target'])
+    res, left_on=['main_target'], right_on=['main_target'])
 
 
 print('after', tt_dist)
 
-print(sel_targets.columns)
-print(tt_dist.columns)
-print(res.columns)
 
 tt_dist.to_hdf('{}/targets.hdf5'.format(outDir), key='targets')
 
