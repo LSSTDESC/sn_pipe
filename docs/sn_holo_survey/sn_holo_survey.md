@@ -79,3 +79,26 @@ Options:
   --outDir=OUTDIR    output dir [../holo_survey]
   --outName=OUTNAME  output file name [targets.hdf5]
 </pre>
+
+## Get star spectra
+
+### use the notebook get_gaia_spectra.ipynb (notebooks directory of sn_pipe)
+
+## Plot spectra
+
+### Usage: plot_scripts/holo_survey/plot_spectra.py [options]
+
+<pre>
+Script to plot spectra from  (Gaia) stars matching DDFs
+
+Options:
+  -h, --help            show this help message and exit
+  --starDir=STARDIR     file directory for Gaia stars [../holo_survey]
+  --dbName=DBNAME       dbName directory [baseline_v4.3.1_10yrs]
+  --fName=FNAME         targets file [targets.hdf5]
+  --spectraDir=SPECTRADIR
+                        file directory for Gaia spectra
+                        [../gaia_spectra/A_stars]
+</pre>
+
+[Gaia star spectra (spectral type: A)](fig_a1.png)
