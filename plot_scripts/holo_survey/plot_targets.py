@@ -15,6 +15,7 @@ from PIL import Image
 from astropy.coordinates import SkyCoord
 from astropy import units as u
 from astroquery.simbad import Simbad
+from sn_tools.sn_io import checkDir
 
 plt.rcParams['xtick.labelsize'] = 20
 plt.rcParams['ytick.labelsize'] = 20
@@ -149,7 +150,7 @@ def plot_target(sky_map, target, theDir):
     sel_sky['dist_new[arcmin]'] = 60. * \
         np.sqrt(sel_sky['dra_new']**2+sel_sky['ddec_new']**2)
 
-    
+
     print(sel_sky[['ra_target', 'dec_target', 'ra',
           'dec', 'otype','sp_type','dra', 'ddec', 'dist_star[arcmin]', 'dist_new[arcmin]', 'G']])
     """
@@ -211,7 +212,7 @@ def plot_target(sky_map, target, theDir):
     plt.show()
 
 
-def ana_sky_map(grp, skymap, radius=10):
+def ana_sky_map_deprecated(grp, skymap, radius=10):
     """
     Function to analyze the sky map around  target
 
@@ -264,7 +265,7 @@ def ana_sky_map(grp, skymap, radius=10):
     return res
 
 
-def load_gaia_stars(fis, params, j=0, output_q=None):
+def load_gaia_stars_deprecated(fis, params, j=0, output_q=None):
     """
     Function to load Gaia stars using multiproc
 
@@ -299,9 +300,9 @@ def load_gaia_stars(fis, params, j=0, output_q=None):
         return df
 
 
-def load_gaia_stars_multiproc(theDir='../gaia_files',
-                              gaiadr='gaiadr3',
-                              catDir='gold_sample_oba_gaia_source'):
+def load_gaia_stars_multiproc_deprecated(theDir='../gaia_files',
+                                         gaiadr='gaiadr3',
+                                         catDir='gold_sample_oba_gaia_source'):
     """
     Function to load Gaia stars
 
@@ -333,6 +334,53 @@ def load_gaia_stars_multiproc(theDir='../gaia_files',
     return df
 
 
+def load_stars(theDir, dbName,
+               lrm_sptypes=['F9VFe-0.8CH-0.5',
+                            'kA2hA6mF2', 'A1mA5-F2', 'A3/5mA5-A9'],
+               dist_min=10/60.):
+    """
+    Function to load stars and to remove some sptypes
+
+    Parameters
+    ----------
+    theDir : str
+        File location dir.
+    dbName : str
+        OS to process.
+    lrm_sptypes : list(str), optional
+        List of sptypes to remove. 
+        The default is ['F9VFe-0.8CH-0.5','kA2hA6mF2', 
+                        'A1mA5-F2', 'A3/5mA5-A9'].
+    dist_min: float, opt
+        min distance wrt the nearest star
+
+    Returns
+    -------
+    df : pandas df
+        Resulting data.
+
+    """
+    # grab target data
+    df = pd.DataFrame()
+    for theDir in theDirs:
+        fName = '{}/{}/targets.hdf5'.format(theDir, dbName)
+        dfa = pd.read_hdf(fName)
+        df = pd.concat((df, dfa))
+
+    # select sptypes
+    idx = df['sp_type_orig'].isin(lrm_sptypes)
+
+    df = pd.DataFrame(df[~idx])
+
+    print(len(df), len(df['source_id'].unique()))
+
+    idx = df['dist_star[arcmin]'] <= dist_min
+
+    df = pd.DataFrame(df[~idx])
+
+    return df
+
+
 parser = OptionParser(
     description='Script to analyse (Gaia) stars matching DDFs')
 
@@ -342,71 +390,29 @@ parser.add_option("--theDirs", type=str,
 parser.add_option("--dbName", type=str,
                   default='baseline_v4.3.1_10yrs',
                   help="dbName directory [%default]")
+parser.add_option("--outDir", type=str,
+                  default='../holo_survey',
+                  help="output dir [%default]")
+parser.add_option("--outName", type=str,
+                  default='targets.hdf5',
+                  help="output file name [%default]")
 
 opts, args = parser.parse_args()
 
 theDirs = opts.theDirs.split(',')
 dbName = opts.dbName
+outDir = '{}/{}'.format(opts.outDir, dbName)
+outName = opts.outName
+
+checkDir(outDir)
 
 
-df = pd.DataFrame()
-for theDir in theDirs:
-    fName = '{}/{}/targets.hdf5'.format(theDir, dbName)
-    dfa = pd.read_hdf(fName)
-    df = pd.concat((df, dfa))
+# load stars
 
-# select sptypes
-list_sptypes = ['F9VFe-0.8CH-0.5', 'kA2hA6mF2']
-idx = df['sp_type_orig'].isin(list_sptypes)
+df = load_stars(theDirs, dbName)
 
-df = pd.DataFrame(df[~idx])
+fName = '{}/{}'.format(outDir, outName)
 
-print(df.columns)
-plot_data(df)
-
-print(test)
-
-sky_map = pd.read_hdf('{}/sky_map_summary.hdf5'.format(theDir))
-
-pngs = glob.glob('{}/map*.png'.format(theDir))
-
-targets = pd.read_hdf('{}/targets.hdf5'.format(theDir))
-
-df = targets.groupby(['field', 'target']).apply(
-    lambda x: ana_sky_map(x, sky_map), include_groups=False).reset_index()
-
-print(df.columns)
+df.to_hdf(fName, key='targets')
 
 plot_data(df)
-print(test)
-
-gaiaDir = '~/Bureau'
-gaiaFile = 'gaia_source_file_ddf_v0.parquet'
-gaiaDir = 'notebooks'
-gaiaFile = 'A_stars.parquet'
-gaia_stars = pd.read_parquet('{}/{}'.format(gaiaDir, gaiaFile))
-
-
-print(gaia_stars.columns)
-gaia_stars_cat = load_gaia_stars_multiproc()
-print(gaia_stars_cat.columns)
-fig, ax = plt.subplots()
-gaia_stars['BP'] = gaia_stars['phot_bp_mean_mag'] - \
-    gaia_stars['phot_rp_mean_mag']
-ax.plot(gaia_stars['BP'], gaia_stars['phot_g_mean_mag'], 'r*')
-gaia_stars_cat['BP'] = gaia_stars_cat['phot_bp_mean_mag'] - \
-    gaia_stars_cat['phot_rp_mean_mag']
-ax.plot(gaia_stars_cat['MG'], gaia_stars_cat['BP'],  'ko')
-print(len(gaia_stars_cat))
-plt.show()
-
-"""
-df = pd.DataFrame()
-for png in pngs:
-    starid = png.split('map_')[-1].split('.png')[0]
-    # plot_target(sky_map, starid, theDir)
-    dfb = ana_sky_map(sky_map, starid)
-    df = pd.concat((df, dfb))
-
-print(df)
-"""
