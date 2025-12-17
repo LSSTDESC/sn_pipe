@@ -2,7 +2,7 @@
 
 ## Overview of the pipeline
 
-![Image description](docs/sn_holo_survey/holo_survey_design.png)
+![Image description](holo_survey_design.png)
 
 ## Scripts to run this pipeline
 
