@@ -109,6 +109,21 @@ parser.add_option("--w0", type=float, default=-1.0,
                   help="w0 dark energy parameter [%default]")
 parser.add_option("--wa", type=float, default=-1.0,
                   help="wa dark energy parameter [%default]")
+parser.add_option("--sigma_airmass", type=float,
+                  default=0.0,
+                  help="sigma airmass [%default]")
+parser.add_option("--sigma_pwv", type=float,
+                  default=0.0,
+                  help="sigma pwv [%default]")
+parser.add_option("--sigma_ozone", type=float,
+                  default=0.0,
+                  help="sigma ozone [%default]")
+parser.add_option("--sigma_aerosol", type=float,
+                  default=0.0,
+                  help="sigma aerosol [%default]")
+parser.add_option("--InstrumentSimu_ntrial_zp", type=int,
+                  default=1,
+                  help="ntrials to estimate zp values [%default]")
 
 opts, args = parser.parse_args()
 
@@ -168,5 +183,10 @@ for i, row in df.iterrows():
     procDict['fit_coadded'] = opts.fit_coadded
     procDict['Cosmology_w0'] = opts.w0
     procDict['Cosmology_wa'] = opts.wa
+    procDict['InstrumentSimu_sigma_airmass'] = opts.sigma_airmass
+    procDict['InstrumentSimu_sigma_pwv'] = opts.sigma_pwv
+    procDict['InstrumentSimu_sigma_aerosol'] = opts.sigma_aerosol
+    procDict['InstrumentSimu_sigma_ozone'] = opts.sigma_ozone
+    procDict['InstrumentSimu_ntrial_zp'] = opts.InstrumentSimu_ntrial_zp
 
     go_batch(script, procDict)

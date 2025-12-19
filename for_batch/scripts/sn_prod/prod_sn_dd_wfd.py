@@ -105,6 +105,22 @@ parser.add_option("--w0", type=float, default=-1.0,
                   help="w0 dark energy parameter [%default]")
 parser.add_option("--wa", type=float, default=0.0,
                   help="wa dark energy parameter [%default]")
+parser.add_option("--sigma_airmass", type=float,
+                  default=0.0,
+                  help="sigma airmass [%default]")
+parser.add_option("--sigma_pwv", type=float,
+                  default=0.0,
+                  help="sigma pwv [%default]")
+parser.add_option("--sigma_ozone", type=float,
+                  default=0.0,
+                  help="sigma ozone [%default]")
+parser.add_option("--sigma_aerosol", type=float,
+                  default=0.0,
+                  help="sigma aerosol [%default]")
+parser.add_option("--InstrumentSimu_ntrial_zp", type=int,
+                  default=1,
+                  help="ntrials to estimate zp values [%default]")
+
 
 opts, args = parser.parse_args()
 
@@ -147,6 +163,11 @@ atmosType = opts.atmosType
 fit_coadded = opts.fit_coadded
 w0 = opts.w0
 wa = opts.wa
+sigma_airmass = opts.sigma_airmass
+sigma_pwv = opts.sigma_pwv
+sigma_aerosol = opts.sigma_aerosol
+sigma_ozone = opts.sigma_ozone
+InstrumentSimu_ntrial_zp = opts.InstrumentSimu_ntrial_zp
 
 cmd_scr = 'python for_batch/scripts/sn_prod/loop_prod.py'
 cmd_scr += ' --SN_sigmaInt=0.0'
@@ -171,7 +192,7 @@ if dbList_DD != '':
     cmd_ddf += ' --SN_z_max={}'.format(sn_z_max)
     cmd_ddf += ' --SN_z_min={}'.format(sn_z_min)
     cmd_ddf += ' --SN_z_step={}'.format(sn_z_step)
-    cmd_ddf += ' --SN_z_type={}'.format(sn_z_type)    
+    cmd_ddf += ' --SN_z_type={}'.format(sn_z_type)
     cmd_ddf += ' --SN_x1_type={}'.format(x1_type)
     cmd_ddf += ' --SN_x1_min={}'.format(x1_min)
     cmd_ddf += ' --SN_color_type={}'.format(color_type)
@@ -181,6 +202,13 @@ if dbList_DD != '':
     cmd_ddf += ' --fit_coadded={}'.format(fit_coadded)
     cmd_ddf += ' --w0={}'.format(w0)
     cmd_ddf += ' --wa={}'.format(wa)
+    cmd_ddf += ' --sigma_aerosol={}'.format(sigma_aerosol)
+    cmd_ddf += ' --sigma_pwv={}'.format(sigma_pwv)
+    cmd_ddf += ' --sigma_airmass={}'.format(sigma_airmass)
+    cmd_ddf += ' --sigma_ozone={}'.format(sigma_ozone)
+    cmd_ddf += ' --InstrumentSimu_ntrial_zp={}'.format(
+        InstrumentSimu_ntrial_zp)
+
     print(cmd_ddf)
     os.system(cmd_ddf)
 
@@ -200,7 +228,7 @@ if dbList_WFD != '':
     cmd_wfd += ' --SN_z_max={}'.format(sn_z_max)
     cmd_wfd += ' --SN_z_min={}'.format(sn_z_min)
     cmd_wfd += ' --SN_z_step={}'.format(sn_z_step)
-    cmd_wfd += ' --SN_z_type={}'.format(sn_z_type) 
+    cmd_wfd += ' --SN_z_type={}'.format(sn_z_type)
     cmd_wfd += ' --SN_NSNfactor={}'.format(sn_nsn_factor_wfd)
     cmd_wfd += ' --SN_NSNabsolute={}'.format(sn_nsn_abs_wfd)
     cmd_wfd += ' --Observations_coadd={}'.format(obs_coadd)
@@ -218,5 +246,12 @@ if dbList_WFD != '':
     cmd_wfd += ' --fit_coadded={}'.format(fit_coadded)
     cmd_wfd += ' --w0={}'.format(w0)
     cmd_wfd += ' --wa={}'.format(wa)
+    cmd_wfd += ' --sigma_aerosol={}'.format(sigma_aerosol)
+    cmd_wfd += ' --sigma_pwv={}'.format(sigma_pwv)
+    cmd_wfd += ' --sigma_airmass={}'.format(sigma_airmass)
+    cmd_wfd += ' --sigma_ozone={}'.format(sigma_ozone)
+    cmd_wfd += ' --InstrumentSimu_ntrial_zp={}'.format(
+        InstrumentSimu_ntrial_zp)
+
     print(cmd_wfd)
     os.system(cmd_wfd)

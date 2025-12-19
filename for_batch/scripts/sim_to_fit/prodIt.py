@@ -38,6 +38,21 @@ parser.add_option("--Observations_coadd", type=int,
 parser.add_option("--saturation_effect", type=int,
                   default=0,
                   help="to include saturation effects [%default]")
+parser.add_option("--sigma_airmass", type=float,
+                  default=0.0,
+                  help="sigma airmass [%default]")
+parser.add_option("--sigma_pwv", type=float,
+                  default=0.0,
+                  help="sigma pwv [%default]")
+parser.add_option("--sigma_ozone", type=float,
+                  default=0.0,
+                  help="sigma ozone [%default]")
+parser.add_option("--sigma_aerosol", type=float,
+                  default=0.0,
+                  help="sigma aerosol [%default]")
+parser.add_option("--InstrumentSimu_ntrial_zp", type=int,
+                  default=1,
+                  help="ntrials to estimate zp values [%default]")
 
 opts, args = parser.parse_args()
 
@@ -61,12 +76,16 @@ if 'WFD' in params['runType']:
 script = 'python for_batch/scripts/sn_prod/prod_sn_dd_wfd.py'
 
 cct = ['SN_smearFlux', 'Fitter_sigmaz',
-       'Observations_coadd', 'saturation_effect']
+       'Observations_coadd', 'saturation_effect', 'InstrumentSimu_ntrial_zp']
+for vv in ['airmass', 'pwv', 'ozone', 'aerosol']:
+    cct.append('sigma_{}'.format(vv))
+
 scr_ = script
 scr_ += ' --outDir_DD={}'.format(outDir_DD)
 scr_ += ' --dbList_DD={}'.format(dbList_DD)
 scr_ += ' --outDir_WFD={}'.format(outDir_WFD)
 scr_ += ' --dbList_WFD={}'.format(dbList_WFD)
+
 for vv in cct:
     scr_ += ' --{}={}'.format(vv, params[vv])
 
