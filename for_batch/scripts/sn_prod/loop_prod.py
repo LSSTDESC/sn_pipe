@@ -124,6 +124,9 @@ parser.add_option("--sigma_aerosol", type=float,
 parser.add_option("--InstrumentSimu_ntrial_zp", type=int,
                   default=1,
                   help="ntrials to estimate zp values [%default]")
+parser.add_option("--tag_script", type=str,
+                  default='no_tag',
+                  help="script name tag [%default]")
 
 opts, args = parser.parse_args()
 
@@ -188,5 +191,6 @@ for i, row in df.iterrows():
     procDict['InstrumentSimu_sigma_aerosol'] = opts.sigma_aerosol
     procDict['InstrumentSimu_sigma_ozone'] = opts.sigma_ozone
     procDict['InstrumentSimu_ntrial_zp'] = opts.InstrumentSimu_ntrial_zp
+    procDict['tag_script'] = opts.tag_script
 
     go_batch(script, procDict)

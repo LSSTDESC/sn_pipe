@@ -64,8 +64,10 @@ def batch_DDF(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
 
     simu_fromFile = procDict['simuParams_fromFile']
     simuParams_dir = procDict['simuParams_dir']
+    tag_script = procDict['tag_script']
     procDict.pop('simuParams_fromFile')
     procDict.pop('simuParams_dir')
+    procDict.pop('tag_script')
 
     if deltaz == 0.01:
         zmin = 0.01
@@ -83,9 +85,9 @@ def batch_DDF(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
             procDict['SN_z_min'] = zvmin
             procDict['SN_z_max'] = zvmax
 
-            procName = 'DD_{}_{}{}_{}_{}_{}_{}_{}'.format(
+            procName = 'DD_{}_{}{}_{}_{}_{}_{}_{}_{}'.format(
                 dbName, fieldName, tag_dir, np.round(sigmaInt, 2),
-                snrate, smearFlux, zvmin, zvmax)
+                snrate, smearFlux, zvmin, zvmax, tag_script)
             mybatch = BatchIt(processName=procName, time=time, mem=mem)
             seasons = range(1, 14)
             if not tag_list.empty:
@@ -185,10 +187,18 @@ def batch_WFD(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
     procDict['OutputFit_directory'] = procDict['OutputSimu_directory']
     # procDict['SN_NSNfactor'] = 30
 
+    """
     simu_fromFile = procDict['simuParams_fromFile']
     simuParams_dir = procDict['simuParams_dir']
     procDict.pop('simuParams_fromFile')
     procDict.pop('simuParams_dir')
+    """
+    simu_fromFile = procDict['simuParams_fromFile']
+    simuParams_dir = procDict['simuParams_dir']
+    tag_script = procDict['tag_script']
+    procDict.pop('simuParams_fromFile')
+    procDict.pop('simuParams_dir')
+    procDict.pop('tag_script')
 
     deltaRA = 10.
 
@@ -209,8 +219,8 @@ def batch_WFD(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
             zmax = np.round(zvalues[iz+1], 2)
             procNamea = '{}_{}_{}'.format(
                 procName, zmin, zmax)
-            sprocName = 'SN_WFD_{}_{}_{}{}_{}'.format(dbName, RAmin, RAmax,
-                                                      tag_dir, smearFlux)
+            sprocName = 'SN_WFD_{}_{}_{}{}_{}_{}'.format(dbName, RAmin, RAmax,
+                                                         tag_dir, smearFlux, tag_script)
             mybatch = BatchIt(processName=procNamea, time=time, mem=mem)
             procDict['RAmin'] = RAmin
             procDict['RAmax'] = RAmax
@@ -287,16 +297,24 @@ def batch_DDF_rate(theDict,
     # procDict['SN_NSNfactor'] = 30
     procDict['Pixelisation_nside'] = procDict['nside']
 
+    """
     simu_fromFile = procDict['simuParams_fromFile']
     simuParams_dir = procDict['simuParams_dir']
     procDict.pop('simuParams_fromFile')
     procDict.pop('simuParams_dir')
+    """
+    simu_fromFile = procDict['simuParams_fromFile']
+    simuParams_dir = procDict['simuParams_dir']
+    tag_script = procDict['tag_script']
+    procDict.pop('simuParams_fromFile')
+    procDict.pop('simuParams_dir')
+    procDict.pop('tag_script')
 
     for fieldName in DD_list:
         procDict['fieldName'] = fieldName
-        procName = 'DD_{}_{}{}_{}_{}_{}'.format(
+        procName = 'DD_{}_{}{}_{}_{}_{}_{}'.format(
             dbName, fieldName, tag_dir, np.round(sigmaInt, 2),
-            snrate, smearFlux)
+            snrate, smearFlux, tag_script)
         mybatch = BatchIt(processName=procName, time=time, mem=mem)
 
         if not tag_list.empty:
@@ -379,16 +397,24 @@ def batch_DDF_rate_per_season(theDict, scriptref='run_scripts/sim_to_fit/run_sim
     # procDict['SN_NSNfactor'] = 30
     procDict['Pixelisation_nside'] = procDict['nside']
 
+    """
     simu_fromFile = procDict['simuParams_fromFile']
     simuParams_dir = procDict['simuParams_dir']
     procDict.pop('simuParams_fromFile')
     procDict.pop('simuParams_dir')
+    """
+    simu_fromFile = procDict['simuParams_fromFile']
+    simuParams_dir = procDict['simuParams_dir']
+    tag_script = procDict['tag_script']
+    procDict.pop('simuParams_fromFile')
+    procDict.pop('simuParams_dir')
+    procDict.pop('tag_script')
 
     for fieldName in DD_list:
         procDict['fieldName'] = fieldName
-        procName = 'DD_{}_{}{}_{}_{}_{}'.format(
+        procName = 'DD_{}_{}{}_{}_{}_{}_{}'.format(
             dbName, fieldName, tag_dir, np.round(sigmaInt, 2),
-            snrate, smearFlux)
+            snrate, smearFlux, tag_script)
         mybatch = BatchIt(processName=procName, time=time, mem=mem)
         seasons = range(1, 14)
         if not tag_list.empty:
@@ -483,10 +509,18 @@ def batch_WFD_rate(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py'
     procDict['OutputFit_directory'] = procDict['OutputSimu_directory']
     # procDict['SN_NSNfactor'] = 30
 
+    """
     simu_fromFile = procDict['simuParams_fromFile']
     simuParams_dir = procDict['simuParams_dir']
     procDict.pop('simuParams_fromFile')
     procDict.pop('simuParams_dir')
+    """
+    simu_fromFile = procDict['simuParams_fromFile']
+    simuParams_dir = procDict['simuParams_dir']
+    tag_script = procDict['tag_script']
+    procDict.pop('simuParams_fromFile')
+    procDict.pop('simuParams_dir')
+    procDict.pop('tag_script')
 
     deltaRA = 10.
 
@@ -499,8 +533,8 @@ def batch_WFD_rate(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py'
         RAmax = np.round(RAmax, 1)
         procName = 'WFD_{}_{}_{}{}_{}_{}'.format(
             dbName, RAmin, RAmax, tag_dir, np.round(sigmaInt, 2), snrate)
-        procNamea = '{}_{}_{}_{}_{}'.format(
-            procName, seas_min, seas_max, zmin, zmax)
+        procNamea = '{}_{}_{}_{}_{}_{}'.format(
+            procName, seas_min, seas_max, zmin, zmax, tag_script)
         sprocName = 'SN_WFD_{}_{}_{}{}_{}'.format(dbName, RAmin, RAmax,
                                                   tag_dir, smearFlux)
         mybatch = BatchIt(processName=procNamea, time=time, mem=mem)
@@ -543,8 +577,8 @@ def batch_WFD_rate(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py'
 
         else:
 
-            tttag = 'SN_{}_{}_{}_{}_{}'.format(
-                procName, seas_min, seas_max, zmin, zmax)
+            tttag = 'SN_{}_{}_{}_{}_{}_{}'.format(
+                procName, seas_min, seas_max, zmin, zmax, tag_script)
             procDict['ProductionIDSimu'] = tttag
             procDict['Observations_season'] = '{}-{}'.format(
                 seas_min, seas_max)

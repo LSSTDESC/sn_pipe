@@ -120,7 +120,9 @@ parser.add_option("--sigma_aerosol", type=float,
 parser.add_option("--InstrumentSimu_ntrial_zp", type=int,
                   default=1,
                   help="ntrials to estimate zp values [%default]")
-
+parser.add_option("--tag_script", type=str,
+                  default='no_tag',
+                  help="script name tag [%default]")
 
 opts, args = parser.parse_args()
 
@@ -168,6 +170,7 @@ sigma_pwv = opts.sigma_pwv
 sigma_aerosol = opts.sigma_aerosol
 sigma_ozone = opts.sigma_ozone
 InstrumentSimu_ntrial_zp = opts.InstrumentSimu_ntrial_zp
+tag_script = opts.tag_script
 
 cmd_scr = 'python for_batch/scripts/sn_prod/loop_prod.py'
 cmd_scr += ' --SN_sigmaInt=0.0'
@@ -208,6 +211,7 @@ if dbList_DD != '':
     cmd_ddf += ' --sigma_ozone={}'.format(sigma_ozone)
     cmd_ddf += ' --InstrumentSimu_ntrial_zp={}'.format(
         InstrumentSimu_ntrial_zp)
+    cmd_ddf += ' --tag_script={}'.format(tag_script)
 
     print(cmd_ddf)
     os.system(cmd_ddf)
@@ -252,6 +256,7 @@ if dbList_WFD != '':
     cmd_wfd += ' --sigma_ozone={}'.format(sigma_ozone)
     cmd_wfd += ' --InstrumentSimu_ntrial_zp={}'.format(
         InstrumentSimu_ntrial_zp)
+    cmd_wfd += ' --tag_script={}'.format(tag_script)
 
     print(cmd_wfd)
     os.system(cmd_wfd)
