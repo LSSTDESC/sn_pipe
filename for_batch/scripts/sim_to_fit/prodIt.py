@@ -79,7 +79,8 @@ if 'WFD' in params['runType']:
 script = 'python for_batch/scripts/sn_prod/prod_sn_dd_wfd.py'
 
 cct = ['SN_smearFlux', 'Fitter_sigmaz',
-       'Observations_coadd', 'saturation_effect', 'InstrumentSimu_ntrial_zp']
+       'Observations_coadd', 'saturation_effect',
+       'InstrumentSimu_ntrial_zp', 'tag_script']
 for vv in ['airmass', 'pwv', 'ozone', 'aerosol']:
     cct.append('sigma_{}'.format(vv))
 
