@@ -140,14 +140,30 @@ ll_spectra = get_spectra_ids(spectraDir)
 print(df['source_id'])
 
 idx = df['source_id'].isin(ll_spectra)
-
+idx &= df['dist_star[arcmin]'] > 0.16
 sel = df[idx]
 
+
+cols = ['field', 'source_id', 'sp_type_orig', 'parallax',
+        'parallax_error', 'g_mag', 'phot_bp_mean_mag', 'phot_rp_mean_mag',
+        'ra_field', 'dec_field', 'main_target', 'level_1', 'main_id', 'ra',
+        'dec', 'u', 'K', 'B', 'i', 'z', 'G', 'R', 'V', 'H', 'I', 'r', 'g',
+        'sp_type', 'otype', 'sp_qual']
+
+sel = sel[cols]
+
 print(sel)
+
+# drop duplicates
+
+sel = sel.drop_duplicates(subset='source_id')
+
+print(sel)
+
 print('nspectra', len(df['source_id'].unique()),
       len(sel['source_id'].unique()))
 
-print(sel[['source_id', 'sp_type_orig']])
+print(sel[['field', 'source_id', 'sp_type_orig']])
 
 fig, ax = plt.subplots(figsize=(12, 8))
 
