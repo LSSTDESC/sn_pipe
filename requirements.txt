@@ -1,0 +1,5 @@
+###### Requirements without Version Specifiers ######
+
+#### git packages
+#git+https://github.com/lsstdesc/getObsAtmo#egg=getObsAtmo
+#git+https://github.com/lsst/rubin_sim.git#egg=rubin_sim
