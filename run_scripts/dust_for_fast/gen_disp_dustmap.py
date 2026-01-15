@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 from optparse import OptionParser
+from sn_tools.sn_io import checkDir
 
 plt.rcParams['xtick.labelsize'] = 12
 plt.rcParams['ytick.labelsize'] = 12
@@ -141,16 +142,25 @@ parser.add_option("--ebvofMW_max", type=float, default=0.25,
                   help="E(B-V) max [%default]")
 parser.add_option("--Dec_min", type=float, default=-80,
                   help="Minimal declination (deg) [%default]")
-
 parser.add_option("--Dec_max", type=float, default=90,
                   help="Maximal declination (deg) [%default]")
+parser.add_option("--outDir", type=str, default='../dust_maps',
+                  help="output dir for the dust map [%default]")
 
 opts, args = parser.parse_args()
 
-dustmap = getDustMap(nside=opts.nside)
+nside = opts.nside
 ebvofMW_max = opts.ebvofMW_max
 Dec_min = opts.Dec_min
 Dec_max = opts.Dec_max
+outDir = opts.outDir
+
+# generate dust map
+dustmap = getDustMap(nside=nside)
+# save the map
+checkDir(outDir)
+outName = '{}/dustmap_{}.hdf5'.format(outDir, nside)
+dustmap.to_hdf(outName, key='dust')
 
 idx = dustmap['healpixID'] == opts.healpixID
 
