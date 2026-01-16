@@ -58,7 +58,7 @@ def get_simu_params_DDF(dataDir, dbName, seasons,
     timescale = 'season'
     ccols = ['healpixID', 'z', 'x1', 'color', 'daymax', 'x0', 'season',
              'epsilon_x0', 'epsilon_x1', 'epsilon_color', 'epsilon_daymax',
-             'SNID']
+             'SNID', 'minRFphase', 'minRFphaseQual', 'maxRFphase', 'maxRFphaseQual']
 
     for seas in seasons:
         # load DDFs
@@ -124,7 +124,7 @@ def get_simu_params_WFD(dataDir, dbName, seasons,
     timescale = 'season'
     ccols = ['healpixID', 'z', 'x1', 'color', 'daymax', 'x0', 'season',
              'epsilon_x0', 'epsilon_x1', 'epsilon_color', 'epsilon_daymax',
-             'SNID']
+             'SNID', 'minRFphase', 'minRFphaseQual', 'maxRFphase', 'maxRFphaseQual']
 
     ddataDir = '{}/{}/{}'.format(dataDir, dbName, runType)
     print('looking at', ddataDir)
