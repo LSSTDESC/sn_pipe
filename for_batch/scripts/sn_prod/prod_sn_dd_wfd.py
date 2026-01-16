@@ -74,8 +74,11 @@ parser.add_option("--SN_NSNabsolute_WFD", type=int,
                   default=-1,
                   help="absolute nsn for WFD production[%default]")
 parser.add_option("--Observations_coadd", type=int,
-                  default=1,
+                  default=0,
                   help="obs coadd [%default]")
+parser.add_option("--LC_coadd", type=int,
+                  default=1,
+                  help="coadd lc points [%default]")
 parser.add_option("--fit_remove_sat", type=str,
                   default='0',
                   help="to remove LC saturated points [%default]")
@@ -151,6 +154,7 @@ sn_nsn_factor_wfd = opts.SN_NSNfactor_WFD
 sn_nsn_abs_dd = opts.SN_NSNabsolute_DDF
 sn_nsn_abs_wfd = opts.SN_NSNabsolute_WFD
 obs_coadd = opts.Observations_coadd
+lc_coadd = opts.LC_coadd
 sn_sigmaz = opts.SN_sigmaz
 fit_remove_sat = opts.fit_remove_sat
 code = opts.code
@@ -188,6 +192,7 @@ if dbList_DD != '':
     cmd_ddf += ' --SN_NSNfactor={}'.format(sn_nsn_factor_dd)
     cmd_ddf += ' --SN_NSNabsolute={}'.format(sn_nsn_abs_dd)
     cmd_ddf += ' --Observations_coadd={}'.format(obs_coadd)
+    cmd_ddf += ' --LC_coadd={}'.format(lc_coadd)
     cmd_ddf += ' --SN_sigmaz={}'.format(sn_sigmaz)
     cmd_ddf += ' --code={}'.format(code)
     cmd_ddf += ' --SN_minRFphaseQual={}'.format(SN_minRFphaseQual)
@@ -236,6 +241,7 @@ if dbList_WFD != '':
     cmd_wfd += ' --SN_NSNfactor={}'.format(sn_nsn_factor_wfd)
     cmd_wfd += ' --SN_NSNabsolute={}'.format(sn_nsn_abs_wfd)
     cmd_wfd += ' --Observations_coadd={}'.format(obs_coadd)
+    cmd_wfd += ' --LC_coadd={}'.format(lc_coadd)
     cmd_wfd += ' --SN_sigmaz={}'.format(sn_sigmaz)
     cmd_wfd += ' --fit_remove_sat={}'.format(fit_remove_sat)
     cmd_wfd += ' --code={}'.format(code)

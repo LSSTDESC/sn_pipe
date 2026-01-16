@@ -35,6 +35,9 @@ parser.add_option("--Fitter_sigmaz", type=float,
 parser.add_option("--Observations_coadd", type=int,
                   default=0,
                   help="coadd observations [%default]")
+parser.add_option("--LC_coadd", type=int,
+                  default=1,
+                  help="coadd lc points [%default]")
 parser.add_option("--saturation_effect", type=int,
                   default=0,
                   help="to include saturation effects [%default]")
@@ -81,7 +84,7 @@ if 'WFD' in params['runType']:
 script = 'python for_batch/scripts/sn_prod/prod_sn_dd_wfd.py'
 
 cct = ['SN_smearFlux', 'Fitter_sigmaz',
-       'Observations_coadd', 'saturation_effect',
+       'Observations_coadd', 'LC_coadd', 'saturation_effect',
        'InstrumentSimu_ntrial_zp', 'tag_script', 'mem']
 for vv in ['airmass', 'pwv', 'ozone', 'aerosol']:
     cct.append('sigma_{}'.format(vv))

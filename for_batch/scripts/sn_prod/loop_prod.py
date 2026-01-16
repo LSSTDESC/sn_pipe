@@ -42,6 +42,9 @@ parser.add_option("--SN_NSNabsolute", type=int,
                   help="absolute nsn for production[%default]")
 parser.add_option("--Observations_coadd", type=int, default=1,
                   help="Coadd obs per night [%default]")
+parser.add_option("--LC_coadd", type=int,
+                  default=1,
+                  help="coadd lc points [%default]")
 parser.add_option("--SN_smearFlux", type=int, default=1,
                   help="LC flux smearing [%default]")
 parser.add_option("--Fitter_sigmaz", type=float, default=1.e-5,
@@ -154,6 +157,7 @@ for i, row in df.iterrows():
     procDict['SN_NSNfactor'] = opts.SN_NSNfactor
     procDict['SN_NSNabsolute'] = opts.SN_NSNabsolute
     procDict['Observations_coadd'] = opts.Observations_coadd
+    procDict['LC_coadd'] = opts.LC_coadd
     procDict['InstrumentSimu_telescope_tag'] = row['teltag']
     procDict['InstrumentFit_telescope_tag'] = row['teltag']
     procDict['SN_smearFlux'] = opts.SN_smearFlux
