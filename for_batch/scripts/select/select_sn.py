@@ -72,6 +72,7 @@ print(cmd)
 # scriptDir = '{}/{}'.format(cwd, pp['outDir_script'])
 scriptDir = pp['outDir_script']
 checkDir(scriptDir)
+del pp['outDir_script']
 
 scriptName = '{}/{}'.format(scriptDir, scriptName)
 
