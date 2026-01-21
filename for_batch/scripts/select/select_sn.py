@@ -46,6 +46,15 @@ opts, args = parser.parse_args()
 
 pp = vars(opts)
 
+# get current directory
+# cwd = os.getcwd()
+
+# script dir
+# scriptDir = '{}/{}'.format(cwd, pp['outDir_script'])
+scriptDir = pp['outDir_script']
+checkDir(scriptDir)
+del pp['outDir_script']
+
 main_script = 'python run_scripts/sn_selection/loop_selection.py'
 
 if pp['fieldType'] == 'DDF':
@@ -65,14 +74,7 @@ for key, vals in pp.items():
     cmd += to
 
 print(cmd)
-# get current directory
-# cwd = os.getcwd()
 
-# script dir
-# scriptDir = '{}/{}'.format(cwd, pp['outDir_script'])
-scriptDir = pp['outDir_script']
-checkDir(scriptDir)
-del pp['outDir_script']
 
 scriptName = '{}/{}'.format(scriptDir, scriptName)
 
