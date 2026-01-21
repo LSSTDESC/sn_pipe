@@ -42,6 +42,7 @@ parser.add_option('--shDir', type=str,
                   default='sh_scripts_run',
                   help='dir for sh scripts [%default]')
 
+
 opts, args = parser.parse_args()
 
 dbDir_main = opts.dbDir_main
