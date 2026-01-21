@@ -200,6 +200,55 @@ def process_season(data, seas, field, norm_factor):
     return df_effi
 
 
+def process_season_field_pixel(grp, norm_factor):
+    """
+    Function to process a season
+
+    Parameters
+    ----------
+    data : pandas df
+        Data to process.
+    norm_factor : float
+        normalization factor.
+
+    Returns
+    -------
+    df_effi : pandas df
+        processed data.
+
+    """
+
+    n_nosel = int(len(grp)/norm_factor)
+    print('no sel', n_nosel)
+    ra = get_pulls(grp)
+    ra['sel_str'] = 'nosel'
+    # dfa = pd.concat((dfa, ra))
+    print('hh', ra)
+    ro = get_nsn(len(grp), len(grp), norm_factor)
+    ro['sel_str'] = 'nosel'
+    # dfb = pd.concat((dfb, ro))
+    # get_pulls(mysel)
+    for i in range(1, len(sellist)+1):
+        # ro = [field, int(seas)]
+        mystr, sel = select_str(grp, sellist[:i])
+        rasel = get_pulls(sel)
+        rasel['sel_str'] = mystr
+        ra = pd.concat((ra, rasel))
+        rosel = get_nsn(len(sel), len(grp), norm_factor)
+        rosel['sel_str'] = mystr
+        # dfb = pd.concat((dfb, ro))
+        ro = pd.concat((ro, rosel))
+
+    # merge the two Dataframes
+
+    df_effi = ro.merge(ra,
+                       left_on=['sel_str'],
+                       right_on=['sel_str'],
+                       suffixes=['', ''])
+
+    return df_effi
+
+
 def process_db(dbDir, dbName, runType, fields,
                norm_factor, zmin=0.01, zmax=1.1):
     """
@@ -243,14 +292,21 @@ def process_db(dbDir, dbName, runType, fields,
 
         seasons = data['season'].unique()
 
+        idx = data['healpixID'] == 108958
+
+        print('fff', data.columns)
+        df_effi = data[idx].groupby(['healpixID', 'season']).apply(
+            lambda x: process_season_field_pixel(x, norm_factor), include_groups=False).reset_index()
+        """
         for seas in seasons:
             # print('processing', zmin, zmax, seas)
             dd = process_season(data, seas, field, norm_factor)
             df_effi = pd.concat((df_effi, dd))
-
+        """
     df_effi['dbName'] = dbName
     df_effi['zmin'] = np.round(zmin, 2)
     df_effi['zmax'] = np.round(zmax, 2)
+    df_effi['field'] = field
 
     return df_effi
 

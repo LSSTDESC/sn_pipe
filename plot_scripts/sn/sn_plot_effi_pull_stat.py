@@ -64,7 +64,7 @@ def rename_selection_criteria(df):
     return df
 
 
-def plot_effi(data, field, thestyle,
+def lot_effi(data, field, thestyle,
               varx='sel_str', legx='',
               varya='effi', err_varya='err_effi',
               legya='Observing Efficiency [%]',
@@ -208,6 +208,55 @@ def plotIt(df_effi, plot_style_file, plot_style_dir,
 
     thestyle = pd.read_csv(
         '{}/{}'.format(plot_style_dir, plot_style_file), comment='#')
+
+    if 'effi_nsn' in plots:
+        plot_effi(df_effi, field, thestyle)
+    if 'pull' in plots:
+        plot_effi(df_effi, field, thestyle,
+                  varya='mu_mu', err_varya='', legya='mu',
+                  varyb='sigma_mu', err_varyb='', legyb='sigma_mu')
+        plot_effi(df_effi, field, thestyle,
+                  varya='mean_mu', err_varya='', legya='mean mu',
+                  varyb='std_mu', err_varyb='', legyb='std mu')
+        plot_effi(df_effi, field, thestyle,
+                  varya='mu_color', err_varya='', legya='$\mu_{pull}^{color}$',
+                  varyb='sigma_color', err_varyb='', legyb='$\sigma_{pull}^{color}$')
+        plot_effi(df_effi, field, thestyle,
+                  varya='mean_color', err_varya='', legya='$<pull^{color}>$',
+                  varyb='std_mu', err_varyb='', legyb='$std(pull^{color})$')
+        plot_effi(df_effi, field, thestyle,
+                  varya='mean_x1', err_varya='', legya='$<pull^{x1}>$',
+                  varyb='std_x1', err_varyb='', legyb='$std(pull^{x1})$')
+        plot_effi(df_effi, field, thestyle,
+                  varya='pvalue_kurtosis_mu', err_varya='', legya='mu - kurtosis pv',
+                  varyb='pvalue_kurtosis_color', err_varyb='', legyb='color kurtosis pv')
+        plot_effi(df_effi, field, thestyle,
+                  varya='kurtosis_mu', err_varya='', legya='mu - kurtosis',
+                  varyb='kurtosis_color', err_varyb='', legyb='color kurtosis')
+
+
+def plotIt_new(df_effi, thestyle, field='COSMOS', plots=['effi_nsn']):
+    """
+    Function to draw a set of plots
+
+    Parameters
+    ----------
+    df_effi : pandas df
+        Data to plot.
+    plot_style_file : csv file
+        plot style.
+    plot_style_dir: str.
+         loc dir of the plot style files.
+    field : str, optional
+        field to plot. The default is 'COSMOS'.
+    plots: list(str)
+        list of plots to be drawned
+
+    Returns
+    -------
+    None.
+
+    """
 
     if 'effi_nsn' in plots:
         plot_effi(df_effi, field, thestyle)
@@ -427,12 +476,14 @@ parser.add_option('--dbDir', type=str,
 parser.add_option('--config', type=str,
                   default='config_ana_selplot.csv',
                   help='config file [%default]')
+"""
 parser.add_option('--plot_style_file', type=str,
                   default='effi_pull_style.csv',
                   help='plot style [%default]')
 parser.add_option('--plot_style_dir', type=str,
                   default='input/plots/effi_pull_stat',
                   help='plot style [%default]')
+"""
 parser.add_option('--fields', type=str,
                   default='COSMOS,CDFS,XMM-LSS,ELAISS1,EDFS_a,EDFS_b',
                   help='fields to process [%default]')
@@ -454,6 +505,7 @@ plots = opts.plots.split(',')
 # load the config file
 df_config = pd.read_csv(config, comment='#')
 
+"""
 # load the plot style file
 fName = '{}/{}'.format(plot_style_dir, plot_style_file)
 print('loading', fName)
@@ -463,6 +515,7 @@ thestyle = pd.read_csv(fName, comment='#')
 
 df_config = df_config.merge(thestyle, left_on=['dbName'], right_on=[
     'dbName'], suffixes=['', ''])
+"""
 dbNames = df_config['dbName'].unique()
 # load the data to plot
 data = pd.DataFrame()
