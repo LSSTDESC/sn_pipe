@@ -9,7 +9,7 @@ from optparse import OptionParser
 import pandas as pd
 import os
 from sn_tools.sn_io import checkDir
-from sn_tools.sn_batchutils import open_script,add_script
+from sn_tools.sn_batchutils import open_script, add_script
 
 parser = OptionParser(
     description='Script to estimate the total number of simulated SNe Ia on a set of files')
@@ -39,7 +39,7 @@ parser.add_option('--nproc', type=int,
                   default=8,
                   help='number of procs for multiprocessing [%default]')
 parser.add_option('--shDir', type=str,
-                  default='sh_scripts',
+                  default='sh_scripts_run',
                   help='dir for sh scripts [%default]')
 
 opts, args = parser.parse_args()
@@ -54,18 +54,18 @@ nproc = opts.nproc
 shDir = opts.shDir
 fieldType = opts.fieldType
 
-#check shdir
+# check shdir
 checkDir(shDir)
 
-#load the DBs to process
+# load the DBs to process
 
-df_db = pd.read_csv(dbList,comment='#')
+df_db = pd.read_csv(dbList, comment='#')
 
 print(df_db)
-#create the scripts
+# create the scripts
 scriptref = 'run_scripts/sn_analysis/nsn_simu.py'
 procDict = {}
-procDict['dbDir'] = '{}/{}'.format(dbDir_main,dbDir)
+procDict['dbDir'] = '{}/{}'.format(dbDir_main, dbDir)
 procDict['runType'] = opts.runType
 procDict['outDir'] = outDir
 procDict['nproc'] = nproc
@@ -76,10 +76,10 @@ script = open_script(scriptName)
 
 for i, row in df_db.iterrows():
     dbName = row['dbName']
-    procName = 'nsn_simu_{}_{}'.format(fieldType,dbName)
+    procName = 'nsn_simu_{}_{}'.format(fieldType, dbName)
     procDict['dbName'] = dbName
-    procDict['outName'] = '{}_{}_{}.csv'.format(outName_pre,fieldType,dbName)
-    add_script(script,scriptref,procDict)
+    procDict['outName'] = '{}_{}_{}.csv'.format(outName_pre, fieldType, dbName)
+    add_script(script, scriptref, procDict)
 
 script.close()
 st = os.stat(scriptName)

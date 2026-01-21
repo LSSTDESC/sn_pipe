@@ -38,6 +38,9 @@ parser.add_option("--scriptName", type="str",
 parser.add_option("--runIt", type=int,
                   default=1,
                   help="to run the sh script [%default]")
+parser.add_option("--outDir_script", type=str,
+                  default='sh_scripts_run',
+                  help="sh script dir [%default]")
 
 opts, args = parser.parse_args()
 
@@ -63,10 +66,11 @@ for key, vals in pp.items():
 
 print(cmd)
 # get current directory
-cwd = os.getcwd()
+# cwd = os.getcwd()
 
 # script dir
-scriptDir = '{}/{}'.format(cwd, 'sh_scripts')
+# scriptDir = '{}/{}'.format(cwd, pp['outDir_script'])
+scriptDir = pp['outDir_script']
 checkDir(scriptDir)
 
 scriptName = '{}/{}'.format(scriptDir, scriptName)

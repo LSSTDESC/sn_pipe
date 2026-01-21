@@ -11,7 +11,7 @@ import numpy as np
 import os
 from sn_tools.sn_batchutils import BatchIt
 from sn_tools.sn_io import checkDir
-from sn_tools.sn_batchutils import open_script,add_script
+from sn_tools.sn_batchutils import open_script, add_script
 
 
 parser = OptionParser(
@@ -39,7 +39,7 @@ parser.add_option('--nproc', type=int,
                   default=8,
                   help='nproc for multiprocessing [%default]')
 parser.add_option('--shDir', type=str,
-                  default='sh_scripts',
+                  default='sh_scripts_run',
                   help='dir for sh scripts [%default]')
 parser.add_option('--timescale', type=str,
                   default='year',
