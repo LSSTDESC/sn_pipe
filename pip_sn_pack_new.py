@@ -1,0 +1,329 @@
+import os
+import subprocess
+from optparse import OptionParser
+import numpy as np
+
+
+def cmd_uninstall(pack):
+    """
+    Function to generate the command to uinstall a package using pip
+
+    Parameters
+    --------------
+    pack: str
+      name of the package to uninstall
+
+    Returns
+    -----------
+    cmd: str
+      cmd to apply
+    """
+    pack = pack.replace('-', '_')
+    version = get_version(pack, available_packs)
+    cmd = "pip uninstall {}".format(pack)
+
+    cmd += ' -r https://raw.githubusercontent.com/lsstdesc/{}/refs/heads/{}/requirements.txt'.format(
+        pack, version)
+
+    return cmd
+
+
+def cmd_list():
+    """
+    Function to to generate the command giving the list of
+    packages installed with pip
+
+    Returns
+    -----------
+    cmd: str
+      cmd to apply
+    """
+    # cmd = "pip freeze | grep sn- | cut -d \'=\' -f1"
+    cmd = "pip freeze | egrep \'sn-|sn_\'"
+    return cmd
+
+
+def cmd_install(package, verbose, available_packs, other_packs,user):
+    """
+    Function to generate the command to install a list of packages using pip
+
+    Parameters
+    ----------
+    package : str
+        List of packages to install.
+    verbose : int
+        verbose mode.
+    available_packs : array
+        array of available (pack,version).
+    user : int
+        For the user mode.
+
+    Returns
+    -------
+    list(str)
+        List of cmd to execute.
+
+    """
+
+    package = package.split(',')
+
+    if 'sn_pipe' in package and len(package) > 1:
+        package = swap(package, 'sn_pipe')
+
+    av_packs = available_packs['packname'].tolist()
+    av_packs.append('sn_pipe')
+    av_packs.append('all')
+    av_packs = swap(av_packs, 'sn_pipe')
+
+    packs = list(set(package) & set(av_packs))
+    diff = list(set(package)-set(av_packs))
+
+    if diff:
+        print('The following package(s) do not exist', diff)
+        print('the list of available packages is \n', av_packs)
+
+    if not packs:
+        return []
+
+    if 'sn_pipe' in packs:
+        packs = swap(packs, 'sn_pipe')
+
+    if 'all' in packs:
+        packs = av_packs
+        packs.remove('all')
+
+    vv = ''
+    if verbose:
+        vv = '-v'
+
+    cmdlist = []
+
+    for pack in packs:
+        cmdlist += get_install_list(pack, user)
+
+    gitpath = other_packs['gitpath'].tolist()
+    packs = other_packs['package'].tolist()
+    versions = other_packs['version'].tolist()
+        
+    for i in range(len(gitpath)):
+        cmdlist += cmd_install_pack_gitonly(gitpath[i],packs[i],versions[i])
+
+    
+    return cmdlist
+
+
+def swap(ll, what):
+    """
+    Function to swap list values
+
+    Parameters
+    ----------
+    ll : list(str)
+        initial list.
+    what : str
+        val to set at the position 0.
+
+    Returns
+    -------
+    ll : list
+        new list.
+
+    """
+
+    ip = ll.index(what)
+    ll[ip] = ll[0]
+    ll[0] = what
+
+    return ll
+
+
+def get_install_list(package, user):
+    """
+    Function to get the list of installation to perform
+
+    Parameters
+    ----------
+    package : str
+        package to install.
+    user : int
+        for --user installation.
+
+    Returns
+    -------
+    cmdlist : list(str)
+        List of cmd to execute for installation.
+
+    """
+
+    add_user = ' '
+    if user:
+        add_user = ' --user '
+
+    cmdlist = []
+    
+    if package == 'sn_pipe':
+        #cmd = 'pip install{} -r requirements.txt --no-deps'.format(add_user)
+        # cmdlist.append(cmd)
+        # sn_tools to install by default
+        version = get_version('sn_tools', available_packs)
+        cmd = cmd_install_pack('sn_tools', version, add_user)
+        cmdlist.append(cmd)
+        # sn_telmodel to install by default
+        version = get_version('sn_telmodel', available_packs)
+        cmd = cmd_install_pack('sn_telmodel', version, add_user)
+        cmdlist.append(cmd)
+        cmdlist.append("pip install -r requirements.txt")
+    else:
+        version = get_version(package, available_packs)
+        cmd = cmd_install_pack(package, version, add_user)
+        cmdlist.append(cmd)
+
+    return cmdlist
+
+def get_version(pack, packages):
+    """
+    Function to grab the package version
+
+    Parameters
+    ----------
+    pack : str
+        package name.
+    packages : array
+        array of (package,version).
+
+    Returns
+    -------
+    version : str
+        package version.
+
+    """
+
+    idx = packages['packname'] == pack
+    version = packages[idx]['version'][0]
+
+    return version
+
+
+def cmd_install_pack(package, version, user):
+    """
+    Function returning the command to install a package
+
+    Parameters
+    ----------
+    package : str
+        package name.
+    version : str
+        package version.
+    user : str
+        user option.
+
+    Returns
+    -------
+    cmd : str
+
+    """
+
+    cmd = 'pip install{}git+https://github.com/lsstdesc/{}.git@{}#egg={}'.format(
+        user,
+        package, version, package)
+    # add requirements.txt
+
+    cmd += ' -r https://raw.githubusercontent.com/lsstdesc/{}/refs/heads/{}/requirements.txt'.format(
+        package, version)
+
+    return cmd
+
+def cmd_install_pack_gitonly(gitpath,pack,version):
+    """
+    Function to install git packages that can not be installed with pip
+
+    Parameters
+    ----------
+    user : str
+        user option.
+    gitpath : str
+        git path to the package.
+
+    Returns
+    -------
+    cmd : str
+        the command.
+
+    """
+    
+    cmd = ['git clone {}/{}'.format(gitpath,pack)]
+    newName = '{}_{}'.format(pack,version)
+    cmd += ['mv {} {}'.format(pack,newName)]
+    cmd += ['os.chdir({})'.format(newName)]
+    cmd += ['echo $PWD']
+    cmd += ['git checkout tags/{}'.format(version)]
+    cmd += ['cd ..']
+    return cmd
+
+def cmd_install_pack_pip(packname):
+
+    cmd = 'pip install {}'.format(packname)
+
+
+    return cmd
+    
+
+parser = OptionParser()
+
+parser.add_option("--package", type="str", default='sn_pipe',
+                  help="package name to install [%default]")
+parser.add_option("--verbose", type=int, default=0,
+                  help="verbose mode for pip installation [%default]")
+parser.add_option("--action", type="str", default='list',
+                  help="action to perform: list, install,\
+                  uninstall,list_available [%default]")
+parser.add_option("--user", type=int, default=1,
+                  help="to set --user in pip install [%default]")
+
+opts, args = parser.parse_args()
+
+
+pack = opts.package
+verbose = opts.verbose
+action = opts.action
+user = opts.user
+
+available_packs = np.loadtxt('pack_version.txt', dtype={'names': (
+    'packname', 'version'), 'formats': ('U18', 'U15')})
+
+other_packs = np.loadtxt('pack_git_notpip.txt',ndmin=1,
+                          dtype={'names':('gitpath','package','version'),
+                                 'formats':('U23','U11','U3')})
+    
+if action == 'install':
+    cmd = cmd_install(pack, verbose, available_packs, other_packs,user)
+    if cmd is not None:
+        for cm in cmd:
+            print('there man',cm)
+            os.system(cm)
+
+if action == 'list':
+    os.system(cmd_list())
+
+if action == 'uninstall':
+    if pack != 'all':
+        if pack != 'sn_pipe':
+            pp = pack.split(',')
+        else:
+            pp = ['sn_tools', 'sn_telmodel']
+        for pa in pp:
+            os.system(cmd_uninstall(pa))
+    else:
+        # this will uninstall the entire pipeline
+        # get all the packages
+        packgs = subprocess.Popen(
+            cmd_list(), shell=True, stdout=subprocess.PIPE).stdout.read()
+        listpk = packgs.decode().split('\n')
+        for pp in listpk:
+            if pp != '':
+                tt = pp.split(' ')[0]
+                os.system(cmd_uninstall(tt))
+
+if action == 'list_available':
+    print('The list of available packages is ',
+          available_packs['packname'].tolist())
