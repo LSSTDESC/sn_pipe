@@ -48,7 +48,8 @@ def plot_pull_vs(data, fig=None, ax=None, figtit=''):
 
     for i, vv in enumerate(['x1', 'color', 'mb', 'daymax']):
         pp = ipos[i]
-        ax[pp[0], pp[1]].plot(data['z'], data['pull_{}'.format(vv)], 'ko')
+        ax[pp[0], pp[1]].plot(
+            data['n_epochs_phase_minus_10'], data['pull_{}'.format(vv)], 'ko')
 
     for i in range(2):
         for j in range(2):
@@ -87,24 +88,44 @@ fields = opts.fields.split(',')
 
 df = load_data(dbDir, dbName, runType)
 
-idx = df['fitstatus'] == 'fitok'
-# idx &= df['z'] < 0.7
-df = df[idx]
-# rint(df)
 
 # complete data
 df = complete_df(df)
+df['SNR_red'] = df['SNR_i']+df['SNR_z']+df['SNR_y']
 
+print('before', len(df))
+idx = df['fitstatus'] == 'fitok'
+
+df = df[idx]
+# rint(df)
+
+print('after', len(df))
 # estimate pull
 df = pull_it(df)
 
-print(df.columns)
+print(df.columns.to_list())
 
 idx = df['field'] == 'COSMOS'
 idx &= df['healpixID'] == 108958
 
 sel = df[idx]
+seasons = sel['season'].unique()
+seasons = [3]
 
-for seas in sel['season'].unique():
+ccols = ['healpixID', 'z', 'x1', 'color', 'daymax', 'x0', 'season', 'epsilon_x0',
+         'epsilon_x1', 'epsilon_color', 'epsilon_daymax', 'SNID',
+         'minRFphase', 'minRFphaseQual', 'maxRFphase', 'maxRFphaseQual']
+for seas in seasons:
     figtit = 'season {}'.format(seas)
-    plot_pull_vs(sel, figtit=figtit)
+    idxb = sel['season'] == seas
+    selb = sel[idxb]
+    plot_pull_hist(selb, figtit=figtit)
+
+    ido = selb['pull_color'] < -4.
+    seld = selb[ido]
+    if len(seld) >= 1:
+        snids = seld['SNID'].to_list()
+        # select df data
+        idf = df['SNID'].isin(snids)
+        seldf = df[idf]
+        seldf[ccols].to_hdf('simuparams_COSMOS.hdf5', key='simuparams')
