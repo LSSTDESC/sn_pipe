@@ -101,12 +101,13 @@ def cmd_install(package, verbose, available_packs, other_packs,user):
     for pack in packs:
         cmdlist += get_install_list(pack, user)
 
-    gitpath = other_packs['gitpath'].tolist()
-    packs = other_packs['package'].tolist()
-    versions = other_packs['version'].tolist()
+    if 'sn_pipe' in packs:
+        gitpath = other_packs['gitpath'].tolist()
+        packs = other_packs['package'].tolist()
+        versions = other_packs['version'].tolist()
         
-    for i in range(len(gitpath)):
-        cmdlist += cmd_install_pack_gitonly(gitpath[i],packs[i],versions[i])
+        for i in range(len(gitpath)):
+            cmdlist += cmd_install_pack_gitonly(gitpath[i],packs[i],versions[i])
 
     
     return cmdlist
@@ -315,6 +316,12 @@ if action == 'uninstall':
             pp = ['sn_tools', 'sn_telmodel']
         for pa in pp:
             os.system(cmd_uninstall(pa))
+        if pack == 'sn_pipe':
+            os.system('pip uninstall -r requirements.txt')
+            #remove residual packages
+            for ppo in other_packs:
+                packname = '{}_{}'.format(ppo['package'],ppo['version'])
+                os.system('rm -rf {}'.format(packname))
         
     else:
         # this will uninstall the entire pipeline
@@ -326,8 +333,9 @@ if action == 'uninstall':
             if pp != '':
                 tt = pp.split(' ')[0]
                 os.system(cmd_uninstall(tt))
+        os.system('pip uninstall -r requirements.txt')
     # removing package from requirements.txt
-    os.system('pip uninstall -r requirements.txt')
+    
     
 if action == 'list_available':
     print('The list of available packages is ',
