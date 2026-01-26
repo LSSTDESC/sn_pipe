@@ -254,7 +254,7 @@ def cmd_install_pack_gitonly(gitpath,pack,version):
     cmd = ['git clone {}/{}'.format(gitpath,pack)]
     newName = '{}_{}'.format(pack,version)
     cmd += ['mv {} {}'.format(pack,newName)]
-    cmd += ['os.chdir({})'.format(newName)]
+    cmd += ['os.chdir(\"{}\")'.format(newName)]
     cmd += ['echo $PWD']
     cmd += ['git checkout tags/{}'.format(version)]
     cmd += ['cd ..']
@@ -299,8 +299,10 @@ if action == 'install':
     cmd = cmd_install(pack, verbose, available_packs, other_packs,user)
     if cmd is not None:
         for cm in cmd:
-            print('there man',cm)
-            os.system(cm)
+            if 'chdir' not in cm:
+                os.system(cm)
+            else:
+                eval(cm)
 
 if action == 'list':
     os.system(cmd_list())
@@ -313,6 +315,7 @@ if action == 'uninstall':
             pp = ['sn_tools', 'sn_telmodel']
         for pa in pp:
             os.system(cmd_uninstall(pa))
+        
     else:
         # this will uninstall the entire pipeline
         # get all the packages
@@ -323,7 +326,9 @@ if action == 'uninstall':
             if pp != '':
                 tt = pp.split(' ')[0]
                 os.system(cmd_uninstall(tt))
-
+    # removing package from requirements.txt
+    os.system('pip uninstall -r requirements.txt')
+    
 if action == 'list_available':
     print('The list of available packages is ',
           available_packs['packname'].tolist())
