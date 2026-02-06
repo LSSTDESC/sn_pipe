@@ -35,7 +35,7 @@ def plot_pull_hist(data, fig=None, ax=None, figtit=''):
     plt.show()
 
 
-def plot_pull_vs(data, fig=None, ax=None, figtit=''):
+def plot_pull_vs(data, fig=None, ax=None, figtit='',varx='sigma_x1'):
 
     if fig is None:
         fig, ax = plt.subplots(nrows=2, ncols=2, figsize=(12, 8))
@@ -49,7 +49,11 @@ def plot_pull_vs(data, fig=None, ax=None, figtit=''):
     for i, vv in enumerate(['x1', 'color', 'mb', 'daymax']):
         pp = ipos[i]
         ax[pp[0], pp[1]].plot(
-            data['n_epochs_phase_minus_10'], data['pull_{}'.format(vv)], 'ko')
+            data[varx], data['pull_{}'.format(vv)], 'ko')
+        
+        ax[pp[0], pp[1]].set_xlabel(r'{}'.format(varx))
+        ax[pp[0], pp[1]].set_ylabel(r'pull {}'.format(vv))
+        
 
     for i in range(2):
         for j in range(2):
@@ -120,7 +124,8 @@ for seas in seasons:
     idxb = sel['season'] == seas
     selb = sel[idxb]
     plot_pull_hist(selb, figtit=figtit)
-
+    plot_pull_vs(selb, figtit=figtit)
+    
     ido = selb['pull_color'] < -4.
     seld = selb[ido]
     if len(seld) >= 1:
