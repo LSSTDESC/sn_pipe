@@ -43,7 +43,7 @@ def cmd_list():
     return cmd
 
 
-def cmd_install(package, verbose, available_packs, other_packs,user):
+def cmd_install(package, verbose, available_packs, user):
     """
     Function to generate the command to install a list of packages using pip
 
@@ -101,15 +101,6 @@ def cmd_install(package, verbose, available_packs, other_packs,user):
     for pack in packs:
         cmdlist += get_install_list(pack, user)
 
-    if 'sn_pipe' in packs:
-        gitpath = other_packs['gitpath'].tolist()
-        packs = other_packs['package'].tolist()
-        versions = other_packs['version'].tolist()
-        
-        for i in range(len(gitpath)):
-            cmdlist += cmd_install_pack_gitonly(gitpath[i],packs[i],versions[i])
-
-    
     return cmdlist
 
 
@@ -161,7 +152,6 @@ def get_install_list(package, user):
         add_user = ' --user '
 
     cmdlist = []
-    
     if package == 'sn_pipe':
         #cmd = 'pip install{} -r requirements.txt --no-deps'.format(add_user)
         # cmdlist.append(cmd)
@@ -173,13 +163,14 @@ def get_install_list(package, user):
         version = get_version('sn_telmodel', available_packs)
         cmd = cmd_install_pack('sn_telmodel', version, add_user)
         cmdlist.append(cmd)
-        cmdlist.append("pip install -r requirements.txt")
+
     else:
         version = get_version(package, available_packs)
         cmd = cmd_install_pack(package, version, add_user)
         cmdlist.append(cmd)
 
     return cmdlist
+
 
 def get_version(pack, packages):
     """
@@ -220,7 +211,8 @@ def cmd_install_pack(package, version, user):
 
     Returns
     -------
-    cmd : str
+    cmd : TYPE
+        DESCRIPTION.
 
     """
 
@@ -234,40 +226,6 @@ def cmd_install_pack(package, version, user):
 
     return cmd
 
-def cmd_install_pack_gitonly(gitpath,pack,version):
-    """
-    Function to install git packages that can not be installed with pip
-
-    Parameters
-    ----------
-    user : str
-        user option.
-    gitpath : str
-        git path to the package.
-
-    Returns
-    -------
-    cmd : str
-        the command.
-
-    """
-    
-    cmd = ['git clone {}/{}'.format(gitpath,pack)]
-    newName = '{}_{}'.format(pack,version)
-    cmd += ['mv {} {}'.format(pack,newName)]
-    cmd += ['os.chdir(\"{}\")'.format(newName)]
-    cmd += ['echo $PWD']
-    cmd += ['git checkout tags/{}'.format(version)]
-    cmd += ['cd ..']
-    return cmd
-
-def cmd_install_pack_pip(packname):
-
-    cmd = 'pip install {}'.format(packname)
-
-
-    return cmd
-    
 
 parser = OptionParser()
 
@@ -292,18 +250,11 @@ user = opts.user
 available_packs = np.loadtxt('pack_version.txt', dtype={'names': (
     'packname', 'version'), 'formats': ('U18', 'U15')})
 
-other_packs = np.loadtxt('pack_git_notpip.txt',ndmin=1,
-                          dtype={'names':('gitpath','package','version'),
-                                 'formats':('U23','U11','U3')})
-    
 if action == 'install':
-    cmd = cmd_install(pack, verbose, available_packs, other_packs,user)
+    cmd = cmd_install(pack, verbose, available_packs, user)
     if cmd is not None:
         for cm in cmd:
-            if 'chdir' not in cm:
-                os.system(cm)
-            else:
-                eval(cm)
+            os.system(cm)
 
 if action == 'list':
     os.system(cmd_list())
@@ -316,13 +267,6 @@ if action == 'uninstall':
             pp = ['sn_tools', 'sn_telmodel']
         for pa in pp:
             os.system(cmd_uninstall(pa))
-        if pack == 'sn_pipe':
-            os.system('pip uninstall -r requirements.txt')
-            #remove residual packages
-            for ppo in other_packs:
-                packname = '{}_{}'.format(ppo['package'],ppo['version'])
-                os.system('rm -rf {}'.format(packname))
-        
     else:
         # this will uninstall the entire pipeline
         # get all the packages
@@ -333,10 +277,7 @@ if action == 'uninstall':
             if pp != '':
                 tt = pp.split(' ')[0]
                 os.system(cmd_uninstall(tt))
-        os.system('pip uninstall -r requirements.txt')
-    # removing package from requirements.txt
-    
-    
+
 if action == 'list_available':
     print('The list of available packages is ',
           available_packs['packname'].tolist())
