@@ -47,6 +47,9 @@ parser.add_option('--timescale', type=str,
 parser.add_option('--nside', type=int,
                   default=128,
                   help='nside healpix parameter [%default]')
+parser.add_option('--FoV', type=float,
+                  default=9.6,
+                  help='telescope field-of-view [%default]')
 
 opts, args = parser.parse_args()
 
@@ -60,6 +63,7 @@ nproc = opts.nproc
 shDir = opts.shDir
 timescale = opts.timescale
 nside = opts.nside
+fov = opts.FoV
 
 if procmode == 'interact':
     checkDir(shDir)
@@ -102,6 +106,7 @@ for i, row in dbs.iterrows():
         procDict['nproc'] = nproc
         procDict['nproc_pixels'] = 0
         procDict['timescale'] = timescale
+        procDict['FoV'] = fov
 
         if procmode == 'batch':
             mybatch.add_batch(scriptref, procDict)
