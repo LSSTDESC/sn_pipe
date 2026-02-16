@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def plot_pull_hist(data, fig=None, ax=None, figtit=''):
+def plot_pull_hist(data, fig=None, ax=None, figtit='',fitgauss=True):
 
     if fig is None:
         fig, ax = plt.subplots(nrows=2, ncols=2, figsize=(12, 8))
@@ -25,16 +25,50 @@ def plot_pull_hist(data, fig=None, ax=None, figtit=''):
 
     for i, vv in enumerate(['x1', 'color', 'mb', 'daymax']):
         pp = ipos[i]
-        ax[pp[0], pp[1]].hist(data['pull_{}'.format(vv)],
-                              bins, histtype='step')
-
+        xp = pp[0]
+        yp = pp[1]
+        pullvar = 'pull_{}'.format(vv)
+        ax[xp, yp].hist(data[pullvar],bins, histtype='step')
+        ax[xp, yp].set_ylabel('Number of Entries')
+        ax[xp, yp].set_xlabel(r'{}'.format(vv))
+        
+        idx = np.abs(data[pullvar]) <= 5.
+        sel = data[idx]
+        print('result',vv)
+        print('stat',sel[pullvar].mean(),sel[pullvar].std())
+        # Get the fitted curve
+        if fitgauss:
+            coeff = fit_pull(sel, pullvar,bins=bins)
+            xmin = sel[pullvar].min()
+            xmax = sel[pullvar].max()
+            newbins = np.arange(xmin, xmax, 0.01)
+            hist_fit = gauss(newbins, *coeff)
+            mean = np.round(coeff[1], 2)
+            sigma = np.round(coeff[2], 2)
+            leg = 'pull= {} +- {}'.format(mean, sigma)
+            ax[xp, yp].plot(newbins, hist_fit, label=leg)
+            print('fit', coeff[0], coeff[1], coeff[2])
+        
+        
+        
     for i in range(2):
         for j in range(2):
             ax[i, j].grid(visible=True)
 
     plt.show()
 
+def fit_pull(sel, pullvar,bins):
 
+    from scipy.optimize import curve_fit
+    hist, bins_h = np.histogram(sel[pullvar], bins=bins)
+    bin_centres = (bins_h[:-1] + bins_h[1:])/2
+    p0 = [1., 0., 1.]
+    try:
+        coeff, var_matrix = curve_fit(gauss, bin_centres, hist, p0=p0)
+    except Exception:
+        coeff = [-1, -1, -1]
+
+    return coeff
 def plot_pull_vs(data, fig=None, ax=None, figtit='',varx='sigma_x1'):
 
     if fig is None:
@@ -61,7 +95,25 @@ def plot_pull_vs(data, fig=None, ax=None, figtit='',varx='sigma_x1'):
 
     plt.show()
 
+def gauss(x, *p):
+    """
+    gaussian function
 
+    Parameters
+    ----------
+    x : float
+        x values.
+    *p : list(float)
+        gaussian parameters.
+
+    Returns
+    -------
+    list(float)
+        function values.
+
+    """
+    A, mu, sigma = p
+    return A/np.sqrt(sigma)*np.exp(-(x-mu)**2/(2.*sigma**2))
 parser = OptionParser(description='Script to plot SN parameter pulls')
 
 parser.add_option('--dbDir', type=str,
@@ -114,7 +166,7 @@ idx &= df['healpixID'] == 108958
 
 sel = df[idx]
 seasons = sel['season'].unique()
-seasons = [3]
+seasons = [1,2,3,4,5]
 
 ccols = ['healpixID', 'z', 'x1', 'color', 'daymax', 'x0', 'season', 'epsilon_x0',
          'epsilon_x1', 'epsilon_color', 'epsilon_daymax', 'SNID',
@@ -124,6 +176,7 @@ for seas in seasons:
     idxb = sel['season'] == seas
     selb = sel[idxb]
     plot_pull_hist(selb, figtit=figtit)
+    """
     plot_pull_vs(selb, figtit=figtit)
     
     ido = selb['pull_color'] < -4.
@@ -134,3 +187,4 @@ for seas in seasons:
         idf = df['SNID'].isin(snids)
         seldf = df[idf]
         seldf[ccols].to_hdf('simuparams_COSMOS.hdf5', key='simuparams')
+    """
