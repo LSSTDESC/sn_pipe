@@ -61,6 +61,8 @@ parser.add_option("--tag_script", type=str,
                   help="script name tag [%default]")
 parser.add_option("--mem", type=str, default='8Gb',
                   help="memory for batch jobs [%default]")
+parser.add_option("--FoV", type=float, default=9.6,
+                  help="telescope field of view [%default]")
 
 opts, args = parser.parse_args()
 
@@ -85,7 +87,7 @@ script = 'python for_batch/scripts/sn_prod/prod_sn_dd_wfd.py'
 
 cct = ['SN_smearFlux', 'Fitter_sigmaz',
        'Observations_coadd', 'LC_coadd', 'saturation_effect',
-       'InstrumentSimu_ntrial_zp', 'tag_script', 'mem']
+       'InstrumentSimu_ntrial_zp', 'tag_script', 'mem','FoV']
 for vv in ['airmass', 'pwv', 'ozone', 'aerosol']:
     cct.append('sigma_{}'.format(vv))
 

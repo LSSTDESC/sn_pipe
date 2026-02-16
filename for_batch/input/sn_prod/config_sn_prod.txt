@@ -65,3 +65,4 @@ InstrumentSimu sigma_pwv 0.0 float #instrument sigma precipit. water vapor
 InstrumentSimu sigma_ozone 0. float #sigma_ozone
 InstrumentSimu ntrial_zp 1 int #ntrial to estimate zp vs airmass
 tag_script no_tag str #tag script name
+FoV 9.6 float #telescope fov

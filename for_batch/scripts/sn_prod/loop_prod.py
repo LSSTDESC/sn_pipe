@@ -130,6 +130,8 @@ parser.add_option("--InstrumentSimu_ntrial_zp", type=int,
 parser.add_option("--tag_script", type=str,
                   default='no_tag',
                   help="script name tag [%default]")
+parser.add_option("--FoV", type=float, default=9.6,
+                  help="telescope field of view [%default]")
 
 opts, args = parser.parse_args()
 
@@ -196,5 +198,6 @@ for i, row in df.iterrows():
     procDict['InstrumentSimu_sigma_ozone'] = opts.sigma_ozone
     procDict['InstrumentSimu_ntrial_zp'] = opts.InstrumentSimu_ntrial_zp
     procDict['tag_script'] = opts.tag_script
+    procDict['FoV'] = opts.FoV
 
     go_batch(script, procDict)

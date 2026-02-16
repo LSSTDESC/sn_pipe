@@ -126,6 +126,8 @@ parser.add_option("--InstrumentSimu_ntrial_zp", type=int,
 parser.add_option("--tag_script", type=str,
                   default='no_tag',
                   help="script name tag [%default]")
+parser.add_option("--FoV", type=float, default=9.6,
+                  help="telescope field of view [%default]")
 
 opts, args = parser.parse_args()
 
@@ -175,6 +177,7 @@ sigma_aerosol = opts.sigma_aerosol
 sigma_ozone = opts.sigma_ozone
 InstrumentSimu_ntrial_zp = opts.InstrumentSimu_ntrial_zp
 tag_script = opts.tag_script
+FoV = opts.FoV
 
 cmd_scr = 'python for_batch/scripts/sn_prod/loop_prod.py'
 cmd_scr += ' --SN_sigmaInt=0.0'
@@ -217,7 +220,7 @@ if dbList_DD != '':
     cmd_ddf += ' --InstrumentSimu_ntrial_zp={}'.format(
         InstrumentSimu_ntrial_zp)
     cmd_ddf += ' --tag_script={}'.format(tag_script)
-
+    cmd_ddf += ' --FoV={}'.format(FoV)
     print(cmd_ddf)
     os.system(cmd_ddf)
 
@@ -263,6 +266,6 @@ if dbList_WFD != '':
     cmd_wfd += ' --InstrumentSimu_ntrial_zp={}'.format(
         InstrumentSimu_ntrial_zp)
     cmd_wfd += ' --tag_script={}'.format(tag_script)
-
+    cmd_wfd += ' --FoV={}'.format(FoV)
     print(cmd_wfd)
     os.system(cmd_wfd)
