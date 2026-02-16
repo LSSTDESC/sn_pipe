@@ -15,7 +15,11 @@ Options:
                        LSS,CDFS,ELAISS1,EDFS_a,EDFS_b]
   --procmode=PROCMODE  mode of processing: batch/interact [batch]
   --nproc=NPROC        nproc for multiprocessing [8]
-  --shDir=SHDIR        dir for sh scripts [sh_scripts]
+  --shDir=SHDIR         dir for sh scripts [sh_scripts_run]
+  --timescale=TIMESCALE
+                        timescale for processing (year/season) [year]
+  --nside=NSIDE         nside healpix parameter [128]
+  --FoV=FOV             telescope field-of-view [9.6]
 
 </pre>
 
@@ -35,5 +39,5 @@ Options:
   --procmem=PROCMEM    mem for processing [20G]
   --procmode=PROCMODE  mode of processing: batch/script_only [batch]
   --nproc=NPROC        nproc for multiprocessing [8]
-
+  --timescale=TIMESCALE timescale for processing (year/season) [year]
 </pre>
