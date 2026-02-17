@@ -58,7 +58,9 @@ parser.add_option("--LC_coadd", type=int,
                   help="coadd lc points [%default]")
 parser.add_option("--mem", type=str, default='5Gb',
                   help="memory for batch jobs [%default]")
-
+parser.add_option("--tag_script", type=str,
+                  default='no_tag',
+                  help="script name tag [%default]")
 opts, args = parser.parse_args()
 
 params = vars(opts)
@@ -81,7 +83,7 @@ if 'WFD' in params['runType']:
 script = 'python for_batch/scripts/sn_prod/prod_sn_dd_wfd.py'
 
 cct = ['SN_smearFlux', 'Fitter_sigmaz',
-       'Observations_coadd', 'saturation_effect','LC_coadd',
+       'Observations_coadd', 'saturation_effect','LC_coadd','tag_script',
        'SN_z_min','SN_z_max','SN_z_step','SN_x1_min','SN_color_min','mem']
 
 nsn_fact_str = 'SN_NSNabsolute_DD'
