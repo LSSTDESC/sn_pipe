@@ -7,69 +7,141 @@ Created on Wed Jan 21 15:46:58 2026
 """
 from optparse import OptionParser
 from sn_analysis.sn_tools import load_data, complete_df, pull_it
+from sn_analysis.sn_fit_tools import fit_hist,gauss
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 
 
-def plot_pull_hist(data, fig=None, ax=None, figtit='',fitgauss=True):
+def plot_pull_hists(data, fig=None, ax=None, figtit='',fitgauss=True):
+    """
+    Function to plot (and fit) pulls
+
+    Parameters
+    ----------
+    data : pandas df
+        Data to plot.
+    fig : matplotlib figure, optional
+        Figure for the plot. The default is None.
+    ax : matplotlib axis, optional
+        Axis for the plot. The default is None.
+    figtit : str, optional
+        Figure title. The default is ''.
+    fitgauss : bool, optional
+        To fit the pulls (gauss). The default is True.
+
+    Returns
+    -------
+    None.
+
+    """
 
     if fig is None:
-        fig, ax = plt.subplots(nrows=2, ncols=2, figsize=(12, 8))
+        fig, ax = plt.subplots(nrows=2, ncols=2, figsize=(12, 10))
 
     if figtit != '':
         fig.suptitle(figtit)
 
     ipos = [(0, 0), (0, 1), (1, 0), (1, 1)]
     bins = np.arange(-5, 5, 0.5)
-
+    bins='auto'
+    fit_with_errors = False
+    
     for i, vv in enumerate(['x1', 'color', 'mb', 'daymax']):
         pp = ipos[i]
         xp = pp[0]
         yp = pp[1]
         pullvar = 'pull_{}'.format(vv)
-        ax[xp, yp].hist(data[pullvar],bins, histtype='step')
-        ax[xp, yp].set_ylabel('Number of Entries')
-        ax[xp, yp].set_xlabel(r'{}'.format(vv))
-        
-        idx = np.abs(data[pullvar]) <= 5.
-        sel = data[idx]
-        print('result',vv)
-        print('stat',sel[pullvar].mean(),sel[pullvar].std())
-        # Get the fitted curve
-        if fitgauss:
-            coeff = fit_pull(sel, pullvar,bins=bins)
-            xmin = sel[pullvar].min()
-            xmax = sel[pullvar].max()
-            newbins = np.arange(xmin, xmax, 0.01)
-            hist_fit = gauss(newbins, *coeff)
-            mean = np.round(coeff[1], 2)
-            sigma = np.round(coeff[2], 2)
-            leg = 'pull= {} +- {}'.format(mean, sigma)
-            ax[xp, yp].plot(newbins, hist_fit, label=leg)
-            print('fit', coeff[0], coeff[1], coeff[2])
-        
-        
-        
-    for i in range(2):
-        for j in range(2):
-            ax[i, j].grid(visible=True)
+        axa = ax[xp,yp]
+        plot_pull_hist(data,vv,pullvar,fig=fig,ax=axa,bins=bins,
+                       fitgauss=fitgauss,fit_with_errors=fit_with_errors)
 
-    plt.show()
 
-def fit_pull(sel, pullvar,bins):
+def plot_pull_hist(data,varx,pullvar,
+                   fig=None,ax=None,figtit='',
+                   bins='auto',fitgauss=True,fit_with_errors=False):
+    """
+    Function to plot (and fit) a single pull histo
 
-    from scipy.optimize import curve_fit
-    hist, bins_h = np.histogram(sel[pullvar], bins=bins)
-    bin_centres = (bins_h[:-1] + bins_h[1:])/2
-    p0 = [1., 0., 1.]
-    try:
-        coeff, var_matrix = curve_fit(gauss, bin_centres, hist, p0=p0)
-    except Exception:
-        coeff = [-1, -1, -1]
+    Parameters
+    ----------
+    data : pandas df
+        Data to plot.
+    varx : str
+        variable to plot.
+    pullvar : str
+        pull variable name.
+    fig : matplotlib figure, optional
+        figure for the plot. The default is None
+    ax : matplotlib axis, optional
+        axis for the plot. The default is None
+    bins : str,array(float), or int, optional
+        bins for histogram. The default is 'auto'.
+    fitgauss : bool, optional
+        to fit the distribution or not. The default is True.
+    fit_with_errors : bool, optional
+        to include bin errors in the fit. The default is False.
 
-    return coeff
-def plot_pull_vs(data, fig=None, ax=None, figtit='',varx='sigma_x1'):
+    Returns
+    -------
+    None.
+
+    """
+    
+    if fig is None:
+        fig, ax = plt.subplots(figsize=(12,8))
+        
+    if figtit != '':
+        fig.suptitle(figtit)
+    
+    idx = np.abs(data[pullvar]) <= 5.
+    sel = data[idx]
+    ax.hist(sel[pullvar],bins=bins, histtype='step')
+    ax.set_ylabel('Number of Entries',fontweight='bold',fontsize=15)
+    ax.set_xlabel(r'{}'.format(varx),fontweight='bold',fontsize=15)
+    
+    # Get the fitted curve
+    if fitgauss:
+        coeff,err_coeff,chi_square,ndof = fit_hist(sel, pullvar,bins=bins,
+                                                   fit_with_errors=fit_with_errors)
+        xmin = sel[pullvar].min()
+        xmax = sel[pullvar].max()
+        newbins = np.arange(xmin, xmax, 0.01)
+        hist_fit = gauss(newbins, *coeff)
+        mean = np.round(coeff[1], 2)
+        sigma = np.round(coeff[2], 2)
+        leg = 'pull= {} +- {}'.format(mean, sigma)
+        ax.plot(newbins, hist_fit, label=leg)
+        leg_str = '$\mu$='+'{}'.format(np.round(coeff[1],1))
+        leg_str +='$\pm$'+'{}'.format(np.round(err_coeff[1],1))
+        leg_str += '\n $\sigma$='+'{}'.format(np.round(coeff[2],1))
+        leg_str +='$\pm$'+'{}'.format(np.round(err_coeff[2],1))
+        ax.text(0.65,0.8,leg_str,transform=ax.transAxes,fontsize=15)
+
+    ax.grid(visible=True)
+    
+def plot_pull_vs(data, fig=None, ax=None, figtit='',varx='z'):
+    """
+    Function to plot a set of pull var vs varx
+
+    Parameters
+    ----------
+    data : pandas df
+        Data to process.
+    fig : matplotlib figure, optional
+        Figure for the plot. The default is None.
+    ax : matplotlib axis, optional
+        axis for the plot. The default is None.
+    figtit : str, optional
+        Figure title. The default is ''.
+    varx : str, optional
+        x-axis variable. The default is 'z'.
+
+    Returns
+    -------
+    None.
+
+    """
 
     if fig is None:
         fig, ax = plt.subplots(nrows=2, ncols=2, figsize=(12, 8))
@@ -78,42 +150,70 @@ def plot_pull_vs(data, fig=None, ax=None, figtit='',varx='sigma_x1'):
         fig.suptitle(figtit)
 
     ipos = [(0, 0), (0, 1), (1, 0), (1, 1)]
-    bins = np.arange(-5, 5, 0.5)
 
     for i, vv in enumerate(['x1', 'color', 'mb', 'daymax']):
         pp = ipos[i]
-        ax[pp[0], pp[1]].plot(
-            data[varx], data['pull_{}'.format(vv)], 'ko')
-        
-        ax[pp[0], pp[1]].set_xlabel(r'{}'.format(varx))
-        ax[pp[0], pp[1]].set_ylabel(r'pull {}'.format(vv))
+        axa = ax[pp[0], pp[1]]
+        vary = 'pull_{}'.format(vv)
+        plot_pull_vs_indiv(data,'z','z',vary,vary,fig=fig,ax=axa)
         
 
-    for i in range(2):
-        for j in range(2):
-            ax[i, j].grid(visible=True)
-
-    plt.show()
-
-def gauss(x, *p):
+def plot_pull_vs_indiv(data,varx,legx,
+                       pullvar,legy,fig=None,ax=None,figtit='',binIt=True):
     """
-    gaussian function
+    Function to plot pull vs varx plus binned data
 
     Parameters
     ----------
-    x : float
-        x values.
-    *p : list(float)
-        gaussian parameters.
+    data : pandas df
+        Data to plot.
+    varx : str
+        x-axis variable.
+    legx : str
+        x-axis label.
+    pullvar : str
+        pull variable.
+    legy : str
+        y-axis label.
+    fig : matplotlib figure, optional
+        plot figure. The default is None.
+    ax : matplotlib axis, optional
+        plot axis. The default is None.
+    figtit : str, optional
+        figure title. The default is ''.
+    binIt : bool, optional
+        to plot binned data. The default is True.
 
     Returns
     -------
-    list(float)
-        function values.
+    None.
 
     """
-    A, mu, sigma = p
-    return A/np.sqrt(sigma)*np.exp(-(x-mu)**2/(2.*sigma**2))
+
+    if fig is None:
+          fig, ax = plt.subplots(figsize=(12,8))
+            
+    if figtit != '':
+        fig.suptitle(figtit)
+    
+    idx = np.abs(data[pullvar]) <= 5.
+    sel = data[idx]
+    
+    if binIt:
+        from sn_analysis.sn_calc_plot import bin_it_mean
+        tt = bin_it_mean(sel,
+                         xvar=varx,yvar=pullvar,
+                         bins=np.arange(0.01, 1.1, 0.05))
+        yerr ='{}_std'.format(pullvar)
+        ax.errorbar(tt[varx],tt[pullvar],yerr=tt[yerr],color='r')
+    
+    ax.plot(sel[varx], sel[pullvar], 
+            color='k',marker='o',mfc='None',
+            markersize=5,linestyle='None')
+    ax.set_ylabel(r'{}'.format(legy),fontweight='bold',fontsize=15)
+    ax.set_xlabel(r'{}'.format(legx),fontweight='bold',fontsize=15)
+    ax.grid(visible=True)
+    
 parser = OptionParser(description='Script to plot SN parameter pulls')
 
 parser.add_option('--dbDir', type=str,
@@ -128,9 +228,15 @@ parser.add_option('--runType', type=str,
 parser.add_option('--timescale', type=str,
                   default='season',
                   help='timescale [%default]')
-parser.add_option('--fields', type=str,
-                  default='COSMOS,CDFS,XMM-LSS,ELAISS1,EDFS_a,EDFS_b',
-                  help='fields to process [%default]')
+parser.add_option('--field', type=str,
+                  default='COSMOS',
+                  help='field to display [%default]')
+parser.add_option('--healpixID', type=int,
+                  default=108958,
+                  help='pixel to display [%default]')
+parser.add_option('--plots', type=str,
+                  default='pull_hist,pull_vs_z',
+                  help='plots to show [%default]')
 
 opts, args = parser.parse_args()
 
@@ -138,47 +244,46 @@ dbDir = opts.dbDir
 dbName = opts.dbName
 runType = opts.runType
 timescale = opts.timescale
-fields = opts.fields.split(',')
+field = opts.field
+healpixID = opts.healpixID
+plots = opts.plots.split(',')
 
 # load data
 
 df = load_data(dbDir, dbName, runType)
 
-
 # complete data
 df = complete_df(df)
 df['SNR_red'] = df['SNR_i']+df['SNR_z']+df['SNR_y']
 
-print('before', len(df))
 idx = df['fitstatus'] == 'fitok'
 
 df = df[idx]
-# rint(df)
 
-print('after', len(df))
 # estimate pull
 df = pull_it(df)
 
-print(df.columns.to_list())
-
-idx = df['field'] == 'COSMOS'
-idx &= df['healpixID'] == 108958
+idx = df['field'] == field
+idx &= df['healpixID'] == healpixID
 
 sel = df[idx]
+sel = sel.sort_values(by=['season'])
 seasons = sel['season'].unique()
-seasons = [1,2,3,4,5]
 
 ccols = ['healpixID', 'z', 'x1', 'color', 'daymax', 'x0', 'season', 'epsilon_x0',
          'epsilon_x1', 'epsilon_color', 'epsilon_daymax', 'SNID',
          'minRFphase', 'minRFphaseQual', 'maxRFphase', 'maxRFphaseQual']
+
 for seas in seasons:
-    figtit = 'season {}'.format(seas)
+    figtit = '{} - pixel {} \n season {}'.format(field,healpixID,seas)
     idxb = sel['season'] == seas
     selb = sel[idxb]
-    plot_pull_hist(selb, figtit=figtit)
+    if 'pull_hist' in plots:
+        plot_pull_hists(selb, figtit=figtit)
+    if 'pull_vs_z' in plots:
+        plot_pull_vs(selb, figtit=figtit,varx='z')
+    plt.show()
     """
-    plot_pull_vs(selb, figtit=figtit)
-    
     ido = selb['pull_color'] < -4.
     seld = selb[ido]
     if len(seld) >= 1:
