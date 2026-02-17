@@ -53,6 +53,9 @@ parser.add_option("--SN_x1_min", type=float,
 parser.add_option("--SN_color_min", type=float,
                   default=0.2,
                   help="color SN unique value [%default]")
+parser.add_option("--LC_coadd", type=int,
+                  default=0,
+                  help="coadd lc points [%default]")
 
 opts, args = parser.parse_args()
 
@@ -76,7 +79,7 @@ if 'WFD' in params['runType']:
 script = 'python for_batch/scripts/sn_prod/prod_sn_dd_wfd.py'
 
 cct = ['SN_smearFlux', 'Fitter_sigmaz',
-       'Observations_coadd', 'saturation_effect',
+       'Observations_coadd', 'saturation_effect','LC_coadd',
        'SN_z_min','SN_z_max','SN_z_step','SN_x1_min','SN_color_min']
 
 nsn_fact_str = 'SN_NSNabsolute_DD'
