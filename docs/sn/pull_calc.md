@@ -2,7 +2,7 @@
 
 ## Estimation
 
-### usage Usage: run_scripts/sn_analysis/sn_calc_pull.py [options]
+### Usage: run_scripts/sn_analysis/sn_calc_pull.py [options]
 
 <pre>
 Script to estimate SN parameter pulls
