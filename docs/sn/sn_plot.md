@@ -22,3 +22,5 @@
 ## Pull analysis
 
 ### [Pull histogram](pull_hist.md)
+
+### [Pull (mu, sigma)](pull_calc.md)
