@@ -18,3 +18,7 @@
 ### [Number of SN - summary plots](wfd_summary.md)
 
 ### [Number of SN - Mollweide proj. - movies](wfd_movies.md)
+
+## Pull analysis
+
+### [Pull histogram](pull_hist.md)
