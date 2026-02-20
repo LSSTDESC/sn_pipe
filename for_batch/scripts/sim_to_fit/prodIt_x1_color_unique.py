@@ -61,6 +61,12 @@ parser.add_option("--mem", type=str, default='5Gb',
 parser.add_option("--tag_script", type=str,
                   default='no_tag',
                   help="script name tag [%default]")
+parser.add_option("--SN_minRFphaseQual", type=float,
+                  default=-10.,
+                  help="min RF phase quality [%default]")
+parser.add_option("--SN_maxRFphaseQual", type=float, default=35.,
+                  help="max RF phase quality [%default]")
+
 opts, args = parser.parse_args()
 
 params = vars(opts)
@@ -84,6 +90,7 @@ script = 'python for_batch/scripts/sn_prod/prod_sn_dd_wfd.py'
 
 cct = ['SN_smearFlux', 'Fitter_sigmaz',
        'Observations_coadd', 'saturation_effect','LC_coadd','tag_script',
+       'SN_maxRFphaseQual','SN_minRFphaseQual',
        'SN_z_min','SN_z_max','SN_z_step','SN_x1_min','SN_color_min','mem']
 
 nsn_fact_str = 'SN_NSNabsolute_DD'
