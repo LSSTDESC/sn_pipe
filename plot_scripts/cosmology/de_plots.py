@@ -6,8 +6,8 @@ from numpy import exp
 import astropy.units as u
 from astropy.cosmology.parameter import Parameter
 # from astropy.cosmology.utils import aszarr
-from astropy.cosmology._utils import aszarr
-from astropy.cosmology.flrw import scalar_inv_efuncs
+from astropy.cosmology._src.utils import aszarr
+from astropy.cosmology._src.flrw import scalar_inv_efuncs
 from scipy.integrate import quad
 
 plt.rcParams['xtick.labelsize'] = 20
