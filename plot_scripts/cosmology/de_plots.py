@@ -79,6 +79,9 @@ class w0waDDE(FLRW):
 
     meta : mapping or None (optional, keyword-only)
         Metadata for the cosmology, e.g., a reference.
+        
+    model: int
+           DE model (1=w0wa, 2=other). The default is 1
 
     Examples
     --------
@@ -250,8 +253,8 @@ class w0waDDE(FLRW):
 
         Returns
         -------
-        TYPE
-            DESCRIPTION.
+        array
+            density scale vs z.
 
         """
 
@@ -296,8 +299,8 @@ class w0waDDE(FLRW):
 
         Returns
         -------
-        TYPE
-            DESCRIPTION.
+        float
+            integrant dor DE density.
 
         """
 
