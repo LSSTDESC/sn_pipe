@@ -8,15 +8,17 @@ Created on Tue Apr 22 10:58:22 2025
 from optparse import OptionParser
 import glob
 import pandas as pd
-from sn_analysis.sn_selection import selection_criteria
+from sn_analysis.sn_selection import selection_criteria,select
 from sn_analysis.sn_tools import complete_df, get_pulls
+from sn_analysis.sn_calc_plot import effi
 import numpy as np
 import re
 import operator
 from sn_tools.sn_io import checkDir
+from sn_tools.sn_utils import multiproc
+import time
 
-
-def load_data(dbDir, dbName, runType, field):
+def load_data(dbDir, dbName, runType, field,nproc=16):
     """
     Function to load the data
 
@@ -40,18 +42,30 @@ def load_data(dbDir, dbName, runType, field):
 
     theDir = '{}/{}/{}'.format(dbDir, dbName, runType)
 
-    ('scanning', theDir)
+    print('scanning', theDir)
     fis = glob.glob('{}/*{}*.hdf5'.format(theDir, field))
 
+    print('files to load',len(fis))
+    params = {}
+    df = multiproc(fis,params,load_data_set,nproc)
+    
+    return df
+
+
+def load_data_set(toproc, params, j=0, output_q=None):
+    
+    
     df = pd.DataFrame()
 
-    for fi in fis:
-
+    for fi in toproc:
         df_ = pd.read_hdf(fi)
-
         df = pd.concat((df, df_))
-
-    return df
+        
+    if output_q is not None:
+            return output_q.put({j: df})
+    else:
+        return df
+    
 
 
 def get_nsn(vala, valb, norm_factor):
@@ -199,8 +213,55 @@ def process_season(data, seas, field, norm_factor):
 
     return df_effi
 
-
 def process_season_field_pixel(grp, norm_factor):
+    """
+    Function to process a season
+
+    Parameters
+    ----------
+    data : pandas df
+        Data to process.
+    norm_factor : float
+        normalization factor.
+
+    Returns
+    -------
+    df_effi : pandas df
+        processed data.
+
+    """
+
+    print(test)
+    n_nosel = int(len(grp)/norm_factor)
+    print('no sel', n_nosel)
+    ra = get_pulls(grp)
+    ra['sel_str'] = 'nosel'
+    # dfa = pd.concat((dfa, ra))
+    print('hh', ra)
+    ro = get_nsn(len(grp), len(grp), norm_factor)
+    ro['sel_str'] = 'nosel'
+    # dfb = pd.concat((dfb, ro))
+    # get_pulls(mysel)
+    for i in range(1, len(sellist)+1):
+        # ro = [field, int(seas)]
+        mystr, sel = select_str(grp, sellist[:i])
+        rasel = get_pulls(sel)
+        rasel['sel_str'] = mystr
+        ra = pd.concat((ra, rasel))
+        rosel = get_nsn(len(sel), len(grp), norm_factor)
+        rosel['sel_str'] = mystr
+        # dfb = pd.concat((dfb, ro))
+        ro = pd.concat((ro, rosel))
+
+    # merge the two Dataframes
+
+    df_effi = ro.merge(ra,
+                       left_on=['sel_str'],
+                       right_on=['sel_str'],
+                       suffixes=['', ''])
+
+    return df_effi
+def process_season_field_pixel_deprecated(grp, norm_factor):
     """
     Function to process a season
 
@@ -250,7 +311,7 @@ def process_season_field_pixel(grp, norm_factor):
 
 
 def process_db(dbDir, dbName, runType, fields,
-               norm_factor, zmin=0.01, zmax=1.1):
+               norm_factor, zmin=0.01, zmax=1.1,sellist=None):
     """
     Function to process OS data
 
@@ -281,8 +342,20 @@ def process_db(dbDir, dbName, runType, fields,
     df_effi = pd.DataFrame()
 
     for field in fields:
+        print('processing',field)
+        time_ref = time.time()
         data = load_data(dbDir, dbName, runType, field)
+        print('loaded',time.time()-time_ref)
+        data['field'] = field
         data = complete_df(data)
+
+        print('there',len(data),data['healpixID'].unique())
+        print(data.columns)
+        df_effi = data.groupby(['field','healpixID', 'season']).apply(
+           lambda x: process_season_pixel(x, norm_factor,sellist), include_groups=False).reset_index()
+        
+        print(test)
+        
 
         idxz = data['z'] >= zmin
         idxz &= data['z'] <= zmax
@@ -310,14 +383,50 @@ def process_db(dbDir, dbName, runType, fields,
 
     return df_effi
 
+def process_season_pixel(grp, norm_factor,sellist):
+    
+    print(len(grp))
+    
+    print(grp['minRFphase'].unique(),grp['maxRFphase'].unique())
+    
+    grp_sel = select(grp,sellist)
+    
+    print(len(grp_sel))
+    import matplotlib.pyplot as plt
+    fig, ax = plt.subplots()
+    idx = grp_sel['chisq_red']<2
+    grp_sel = grp_sel[idx]
+    print(len(grp_sel))
+    ax.hist(grp_sel['chisq_red'],histtype='step',bins=20)
+    
+    deltab=0.1
+    bins = np.arange(0.01,1.1+deltab,deltab)
+    grp_effi=effi(grp,grp_sel,xvar='z_fit',bins=bins)
+    
+    grp_effi['nsn_bin'] = 30
+    grp_effi['nsn'] = grp_effi['nsn_bin']*grp_effi['effi']
+    
+    
+    print(grp.name)
+    fig, ax = plt.subplots()
+    ax.errorbar(grp_effi['z_fit'],grp_effi['effi'],yerr=grp_effi['effi_err'])
+    nsn = grp_effi['nsn']
+
+    nsn_tot = np.max(np.cumsum(nsn))
+    axb = ax.twinx()
+    axb.plot(grp_effi['z_fit'],np.cumsum(nsn)/nsn_tot)
+    plt.show()
+    
+    
+    
 
 parser = OptionParser(description='Script to analyze SN selection criteria')
 
 parser.add_option('--dbDir', type=str,
-                  default='../Output_SN_DD_sigmaInt_0.0_Hounsell_z_smflux_notelrot',
+                  default='../Output_SN_DD_sigmaInt_0.0_Hounsell_z_smflux_notelrot_airmass_zfaint',
                   help='OS location dir[%default]')
 parser.add_option('--dbName', type=str,
-                  default='baseline_v4.3.1_10yrs',
+                  default='baseline_v5.0.0_10yrs',
                   help='OS name [%default]')
 parser.add_option('--runType', type=str,
                   default='DDF_spectroz',
@@ -364,7 +473,7 @@ checkDir(outDir)
 sellist = selection_criteria()[selconfig]
 
 # add criteria
-sellist.append(('Nfilt_2', operator.ge, 3, 7))
+#sellist.append(('Nfilt_2', operator.ge, 3, 7))
 # sellist.append(('Nfilt_5', operator.ge, 2, 7))
 # sellist.append(('sigmaC', operator.le, 0.04, 7))
 
@@ -391,7 +500,7 @@ for vv in zvals:
         zmi = 0.01
     zma = vv+deltaz
     df_effi = process_db(dbDir, dbName, runType, fields,
-                         norm_factor, zmin=zmi, zmax=zma)
+                         norm_factor, zmin=zmi, zmax=zma,sellist=sellist)
 
 
 # save the data
