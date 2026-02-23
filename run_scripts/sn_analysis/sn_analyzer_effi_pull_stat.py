@@ -10,6 +10,7 @@ import glob
 import pandas as pd
 from sn_analysis.sn_selection import selection_criteria,select
 from sn_analysis.sn_tools import complete_df, get_pulls
+from sn_analysis.sn_fit_tools import fit_linear,lin
 from sn_analysis.sn_calc_plot import effi
 import numpy as np
 import re
@@ -17,6 +18,8 @@ import operator
 from sn_tools.sn_io import checkDir
 from sn_tools.sn_utils import multiproc
 import time
+from sn_analysis.sn_nsn_effi import getRates
+from scipy.interpolate import interp1d
 
 def load_data(dbDir, dbName, runType, field,nproc=16):
     """
@@ -383,41 +386,210 @@ def process_db(dbDir, dbName, runType, fields,
 
     return df_effi
 
-def process_season_pixel(grp, norm_factor,sellist):
+def process_season_pixel(grp, norm_factor,sellist,plot=False):
     
-    print(len(grp))
-    
-    print(grp['minRFphase'].unique(),grp['maxRFphase'].unique())
-    
+    #get selected group
     grp_sel = select(grp,sellist)
     
-    print(len(grp_sel))
-    import matplotlib.pyplot as plt
-    fig, ax = plt.subplots()
-    idx = grp_sel['chisq_red']<2
-    grp_sel = grp_sel[idx]
-    print(len(grp_sel))
-    ax.hist(grp_sel['chisq_red'],histtype='step',bins=20)
-    
+    #get selection efficiencies
     deltab=0.1
     bins = np.arange(0.01,1.1+deltab,deltab)
     grp_effi=effi(grp,grp_sel,xvar='z_fit',bins=bins)
     
-    grp_effi['nsn_bin'] = 30
-    grp_effi['nsn'] = grp_effi['nsn_bin']*grp_effi['effi']
-    
-    
-    print(grp.name)
-    fig, ax = plt.subplots()
-    ax.errorbar(grp_effi['z_fit'],grp_effi['effi'],yerr=grp_effi['effi_err'])
+    """
+    print('alors',grp_effi)
+    print(test)
     nsn = grp_effi['nsn']
 
     nsn_tot = np.max(np.cumsum(nsn))
-    axb = ax.twinx()
-    axb.plot(grp_effi['z_fit'],np.cumsum(nsn)/nsn_tot)
-    plt.show()
+    """
+    zmin=0.01
+    zmax = 1.1
+    dz = 0.001
+    #get the number of SN from the rate of explosion
+    df_nsn_rate, sel_sn=get_all_nsn_from_rate(grp,grp_effi, zmin, zmax, dz)
+   
+    if plot:
+        import matplotlib.pyplot as plt
+        fig, ax = plt.subplots()
+        ax.hist(grp_sel['chisq_red'],histtype='step',bins=20)
+        fig, ax = plt.subplots()
+        ax.errorbar(grp_effi['z_fit'],grp_effi['effi'],yerr=grp_effi['effi_err'])
+        axb = ax.twinx()
+        nsn_tot_rate = np.max(np.cumsum(df_nsn_rate['nsn']))
+        #axb.plot(grp_effi['z_fit'],np.cumsum(nsn)/nsn_tot,color='k')
+        axb.plot(df_nsn_rate['z_fit'],np.cumsum(df_nsn_rate['nsn'])/nsn_tot_rate,color='r')
+        axb.plot(df_nsn_rate['z_fit'],np.cumsum(df_nsn_rate['nsn_effi'])/nsn_tot_rate,color='b')
+        ax.grid(visible='True')
+        plt.show()
+ 
+    """
+    idx = grp_effi['z_fit']<=0.45
+    rrx = grp_effi[idx]['z_fit']
+    nsn_sel = grp_effi[idx]['nsn']
+    rry = np.cumsum(nsn_sel)/nsn_tot
+    
+    coeff,cov = fit_linear(rrx,rry)
+    
+    zvals = np.arange(0.01,1.11,0.01)
+    
+    yvals = lin(zvals,*coeff)
+    
+    axb.plot(zvals,yvals,color='b')
+    
+    print(coeff)
+    """
+    """
+    zmin=0.01
+    zmax = 1.1
+    dz = 0.001
+    df_nsn_rate = get_nsn_from_rate(grp,grp_effi,zmin,zmax,dz)
+    nsn_tot_rate = np.max(np.cumsum(df_nsn_rate['nsn']))
+    """
+   
+
+    """
+    idx = df_nsn_rate['z_fit']>0.1
+    sel_sn = pd.DataFrame(df_nsn_rate[idx])
+    sel_sn['nsn_effi_sum'] = np.cumsum(sel_sn['nsn_effi'])
+    sel_sn['nsn_sum'] = np.cumsum(sel_sn['nsn'])
+    sel_sn['nsn_effi_sum_err'] = np.sqrt(np.cumsum(sel_sn['nsn_effi_err']*sel_sn['nsn_effi_err']))
+    sel_sn['ratio_nsn'] = sel_sn['nsn_effi_sum']/sel_sn['nsn_sum']
+    sel_sn['ratio_nsn_err'] = sel_sn['nsn_effi_sum_err']/sel_sn['nsn_sum']
+    
+    ido = sel_sn['z_fit']<=0.5
+    sel_norm = sel_sn[ido]
+    norm = np.max(sel_sn['ratio_nsn'])
+    
+    sel_sn['ratio_nsn_norm']=sel_sn['ratio_nsn']/norm
+    sel_sn['ratio_nsn_norm_p'] = sel_sn['ratio_nsn_norm']+sel_sn['ratio_nsn_err']
+    sel_sn['ratio_nsn_norm_m'] = sel_sn['ratio_nsn_norm']-sel_sn['ratio_nsn_err']
+    """
+    #axa.errorbar(sel_sn['z_fit'],sel_sn['ratio_nsn_norm'],yerr=sel_sn['ratio_nsn_err'])
+    #axa.fill_between(sel_sn['z_fit'],sel_sn['ratio_nsn_norm_p'],sel_sn['ratio_nsn_norm_m'],color='yellow')
+    nsn_accepted_loss=0.02
+    nsn_inside = 1.-nsn_accepted_loss
+    #axa.plot([0.1,1.1],[nsn_inside]*2)
+    
+    plot_test(sel_sn,nsn_inside=nsn_inside)
+    thedict = dict(zip(['zlim','zlim_p','zlim_m'],
+                       ['ratio_nsn_norm',
+                        'ratio_nsn_norm_p',
+                        'ratio_nsn_norm_m']))
+    
+    bins=np.arange(0.0,1.3,0.2)
+    sel_sn['range'] = pd.cut(sel_sn['z_fit'],bins=bins,right=False,include_lowest=True)
+    sel_sn['range'] = sel_sn['range'].astype(str)
+    zlim_t = sel_sn.groupby('range').apply(lambda x: \
+                                          get_zlim_from_df(x),include_groups=False).reset_index()
+    print(sel_sn)
+    print(zlim_t.max())
+    
+    """
+    zlim = {}
+    for key, vals in thedict.items():
+        zlim[key] = interp1d(sel_sn[vals],sel_sn['z_fit'])
+    
+    for key, vals in zlim.items():
+        print(key,vals(nsn_inside))
+    """
+    
+
+def get_all_nsn_from_rate(grp,grp_effi,zmin,zmax,dz):
+    
+    zmin=0.01
+    zmax = 1.1
+    dz = 0.001
+    df_nsn_rate = get_nsn_from_rate(grp,grp_effi,zmin,zmax,dz)
+    
+    idx = df_nsn_rate['z_fit']>0.1
+    sel_sn = pd.DataFrame(df_nsn_rate[idx])
+    sel_sn['nsn_effi_sum'] = np.cumsum(sel_sn['nsn_effi'])
+    sel_sn['nsn_sum'] = np.cumsum(sel_sn['nsn'])
+    sel_sn['nsn_effi_sum_err'] = np.sqrt(np.cumsum(sel_sn['nsn_effi_err']*sel_sn['nsn_effi_err']))
+    sel_sn['ratio_nsn'] = sel_sn['nsn_effi_sum']/sel_sn['nsn_sum']
+    sel_sn['ratio_nsn_err'] = sel_sn['nsn_effi_sum_err']/sel_sn['nsn_sum']
+    
+    ido = sel_sn['z_fit']<=0.5
+    sel_norm = sel_sn[ido]
+    norm = np.max(sel_sn['ratio_nsn'])
+    
+    sel_sn['ratio_nsn_norm']=sel_sn['ratio_nsn']/norm
+    sel_sn['ratio_nsn_norm_p'] = sel_sn['ratio_nsn_norm']+sel_sn['ratio_nsn_err']
+    sel_sn['ratio_nsn_norm_m'] = sel_sn['ratio_nsn_norm']-sel_sn['ratio_nsn_err']
+    
+    return df_nsn_rate,sel_sn
+    
+def plot_test(sel_sn,
+              varx='z_fit',legx='z',
+              vary='ratio_nsn_norm',legy='$N_{SN}$ ratio',
+              vary_err='ratio_nsn_err',
+              vary_p='ratio_nsn_norm_p',
+              vary_m='ratio_nsn_norm_m',
+              fig=None,ax=None,nsn_inside=0.98):
+    
+    if fig is None:
+        import matplotlib.pyplot as plt
+        fig, ax = plt.subplots()
+        
+    ax.errorbar(sel_sn[varx],
+                sel_sn[vary],
+                yerr=sel_sn[vary_err])
+    ax.fill_between(sel_sn[varx],sel_sn[vary_p],sel_sn[vary_m],color='yellow')   
+    
+    ax.plot([0.1,1.1],[nsn_inside]*2)
+    
+    ax.grid()
+    
+def get_zlim_from_df(gra,thedict = dict(zip(['zlim','zlim_p','zlim_m'],
+                       ['ratio_nsn_norm',
+                        'ratio_nsn_norm_p',
+                        'ratio_nsn_norm_m'])),nsn_inside=0.98):
+    
+    res = pd.DataFrame()
+    if len(gra)< 3:
+        return res
+    zlim = {}
+    import matplotlib.pyplot as plt
+    for key, vals in thedict.items():
+        myinterp = interp1d(gra[vals],gra['z_fit'],
+                            bounds_error=False, fill_value=0.)
+        zlim[key] = [myinterp(nsn_inside)]
+      
+    res = pd.DataFrame.from_dict(zlim)
+       
+    return res
     
     
+def get_nsn_from_rate(grp,effis,zmin,zmax,dz):
+    
+    season_length = grp['season_length'].mean()
+    survey_area = grp['survey_area'].mean()
+    zz, rateInterp, rateInterp_err = getRates(zmin=zmin, zmax=zmax, dz=dz,
+                                              survey_area=survey_area,
+                                              season_length=season_length)
+    # interpolate efficiency vs z
+    effiInterp = interp1d(effis['z_fit'], effis['effi'], kind='linear',
+                bounds_error=False, fill_value=0.)
+    # interpolate variance efficiency vs z
+    effiInterp_err = interp1d(effis['z_fit'], effis['effi_err'], kind='linear',
+        bounds_error=False, fill_value=0.)
+    
+    nsn = effiInterp(zz)*rateInterp(zz)
+    # get errors
+    nsn_err = []
+    for i in range(len(zz)):
+        siga = effiInterp_err(zz[:i+1])*rateInterp(zz[:i+1])
+        # sigb = effiInterp(zplot[:i+1])*rateInterp_err(zplot[:i+1])
+        sigb = 0.
+        nsn_err.append(np.sqrt(np.sum(siga**2 + sigb**2)))
+    
+    df_nsn = pd.DataFrame(zz, columns=['z_fit'])
+    df_nsn['nsn'] = rateInterp(zz)
+    df_nsn['nsn_effi'] = nsn
+    df_nsn['nsn_effi_err'] = nsn_err
+    
+    return df_nsn
     
 
 parser = OptionParser(description='Script to analyze SN selection criteria')
