@@ -152,18 +152,25 @@ cols = ['field', 'source_id', 'sp_type_orig', 'parallax',
 
 sel = sel[cols]
 
-print(sel)
+#print(sel)
 
 # drop duplicates
 
-sel = sel.drop_duplicates(subset='source_id')
+#sel = sel.drop_duplicates(subset='source_id')
 
 print(sel)
 
 print('nspectra', len(df['source_id'].unique()),
       len(sel['source_id'].unique()))
+vv = pd.DataFrame(sel[['source_id','ra','dec','sp_type_orig','field']])
 
-print(sel[['field', 'source_id', 'sp_type_orig']])
+for val in ['ra','dec']:
+    vv[val] = vv[val].astype(float).round(2)
+
+vv = vv.rename(columns={"field":"DDF","sp_type_orig":"sp_type"})
+vv['source_id'] = 'GAIA DR3 '+vv['source_id'].astype(str)
+
+vv.to_csv('gaia_ddf_target.csv',index=False)
 
 fig, ax = plt.subplots(figsize=(12, 8))
 
