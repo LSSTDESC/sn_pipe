@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 from sn_tools.sn_cosmo_model import w0waDDE
+import time
 
 plt.rcParams['xtick.labelsize'] = 20
 plt.rcParams['ytick.labelsize'] = 20
@@ -60,7 +61,7 @@ def dist_mod(H0, Om0, w0, wa, config, z=np.arange(0.01, 1.101, 0.01), model=1):
 
     return res
 
-def dist_mod_new(de_class,params, config, z=np.arange(0.01, 1.101, 0.01)):
+def dist_mod_new(de_class,params, config, z=np.arange(0.01, 1.101, 0.05)):
     """
     Function to estimate the distance modulus
 
@@ -98,6 +99,7 @@ def dist_mod_new(de_class,params, config, z=np.arange(0.01, 1.101, 0.01)):
         from astropy.cosmology import w0waCDM
         cosmology = eval(to_eval)
         distmod = cosmology.distmod(z).value
+        print(distmod)
     
     if de_class == 'custom':
         from sn_tools.sn_cosmo_model import DDE_FLRW
@@ -247,7 +249,7 @@ core_packs = ['astropy','custom']
 
 cosmo_params = {}
 
-de_params = dict(zip(['w0','wa'],[-1,0]))
+de_params = dict(zip(['w0','wa'],[-0.6,0.1]))
 
 vv = 'astropy'
 cosmo_params[vv] = {}
@@ -271,7 +273,9 @@ cosmo_params[vv]['Ode0'] = Ode0
 print(cosmo_params)
 
 for key, vals in cosmo_params.items():
+    time_ref = time.time()
     dist_mod_new(key,vals,'toto')
+    print('after',time.time()-time_ref)
 print(test)
 
 """
