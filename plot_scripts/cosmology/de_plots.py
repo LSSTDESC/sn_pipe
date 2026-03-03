@@ -21,6 +21,23 @@ plt.rcParams['font.size'] = 20
 
 
 def plot_loop(res, yvar='w', yleg='$w_{DE}$'):
+    """
+    Function to plot cosmo results
+
+    Parameters
+    ----------
+    res : pandas df
+        Data to plot.
+    yvar : str, optional
+        y-axis variable. The default is 'w'.
+    yleg : str, optional
+        y-axis legend. The default is '$w_{DE}$'.
+
+    Returns
+    -------
+    None.
+
+    """
 
     configs_pl = res['config'].unique()
 
