@@ -7,12 +7,10 @@ parser.add_option('--metaDir', type=str, default='dataLC',
                   help='meta dir [%default]')
 parser.add_option('--metaFile', type=str, default='Meta_fit.hdf5',
                   help='meta file name to process [%default]')
+parser.add_option('--snFile', type=str, default='None',
+                  help='sn directory [%default]')
 parser.add_option('--prodID', type=str, default='SN_DD_baseline_v4.0_10yrs_spectroz',
                   help='prodID to process [%default]')
-parser.add_option('--SNFile', type=str, default='None',
-                  help='SN file[%default]')
-parser.add_option('--SNDir', type=str, default='None',
-                  help='SN dir [%default]')
 parser.add_option('--airmassType', type=str, default='const',
                   help='airmass type [%default]')
 parser.add_option('--tag_tel', type=str, default='1.9',
