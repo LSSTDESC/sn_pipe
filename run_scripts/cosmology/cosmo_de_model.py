@@ -12,6 +12,20 @@ import numpy as np
 import pandas as pd
 
 def stat(grp):
+    """
+    Function to estimate some stat
+
+    Parameters
+    ----------
+    grp : pandas df
+        Data to process.
+
+    Returns
+    -------
+    res : pandas df
+        results.
+
+    """
     
     dout = {}
     
@@ -54,8 +68,11 @@ parser.add_option('--Om0', type=float,
                   default=0.30,
                   help='Omega_matter [%default]')
 parser.add_option('--ntrials', type=int,
-                  default=100,
+                  default=1000,
                   help='n random trials to estimate cosmo [%default]')
+parser.add_option('--outName', type='str',
+                  default='cosmo_simu',
+                  help='output file name [%default]')
 
 opts, args = parser.parse_args()
 
@@ -70,13 +87,13 @@ de_sigma_values = list(map(float,de_sigma_values))
 de_sigmas = dict(zip(de_params,de_sigma_values))
 ntrials = opt_dict['ntrials']
 
-print(opt_dict)
 params = copy.deepcopy(opt_dict)
 
 del params['de_values']
 del params['de_sigma_values']
 del params['de_params']
 del params['ntrials']
+del params['outName']
 params['de_params'] = dict(zip(de_params,de_values))
 params['Ode0'] = 1.-params['Om0']
 
@@ -88,12 +105,11 @@ dict_params = {}
 for key, vals in params['de_params'].items():
     sigma = de_sigmas[key]
     vv = np.random.normal(vals,sigma,ntrials)
-    dict_params[key] = vv
+    dict_params[key] = np.round(vv,3)
     
 df_params = pd.DataFrame.from_dict(dict_params)
-print(df_params)
+#print(df_params)
     
-
 de_p = df_params.columns
 dft = pd.DataFrame()
 z = np.arange(0.01,1.11,0.01)
@@ -103,10 +119,16 @@ for i,row in df_params.iterrows():
     df = cosmo_values(params,z=z)
     dft = pd.concat((df,dft))
 
-print(dft)
+#print(dft.columns)
 
 res = dft.groupby('z').apply(lambda x:stat(x),include_groups=False).reset_index()
 
-ccols = ['z','de_params','de_eos','de_values']
-print(dft[ccols].drop_duplicates())
-print(res.columns)
+ccols = ['z','de_params','de_eos','de_class','class_loc', 'de_model']
+
+tt = dft[ccols].drop_duplicates()
+res = res.merge(tt,left_on=['z'],right_on=['z'])
+res['de_values'] = opt_dict['de_values']
+res['de_sigma_values'] = opt_dict['de_sigma_values']
+fName = '{}.hdf5'.format(opt_dict['outName'])
+
+res.to_hdf(fName,key='cosmology')
