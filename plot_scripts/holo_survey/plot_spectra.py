@@ -161,8 +161,8 @@ sel = sel[cols]
 print(sel)
 
 print('nspectra', len(df['source_id'].unique()),
-      len(sel['source_id'].unique()))
-vv = pd.DataFrame(sel[['source_id','ra','dec','sp_type_orig','field']])
+      len(sel['source_id'].unique()),sel.columns)
+vv = pd.DataFrame(sel[['source_id','ra','dec','sp_type_orig','field','g_mag']])
 
 for val in ['ra','dec']:
     vv[val] = vv[val].astype(float).round(2)
@@ -170,6 +170,7 @@ for val in ['ra','dec']:
 vv = vv.rename(columns={"field":"DDF","sp_type_orig":"sp_type"})
 vv['source_id'] = 'GAIA DR3 '+vv['source_id'].astype(str)
 
+vv = vv.sort_values(by=['DDF','g_mag'])
 vv.to_csv('gaia_ddf_target.csv',index=False)
 
 fig, ax = plt.subplots(figsize=(12, 8))
