@@ -77,7 +77,7 @@ To uninstall the pipeline: python pip_sn_pack.py --action uninstall --package=al
 
 ### [Holo survey design for SNe Ia](docs/sn_holo_survey/sn_holo_survey.md)
 
-### [SN light curves and spectra generation](docs/docs/sn_flux_spectra/sn_flux_spectra.md)
+### [SN light curves and spectra generation](docs/sn_flux_spectra/sn_flux_spectra.md)
 
 ## sn_pipe structure
 
