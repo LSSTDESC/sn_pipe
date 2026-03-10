@@ -8,7 +8,7 @@ Created on Mon Mar  9 13:23:46 2026
 from optparse import OptionParser
 from sn_analysis.sn_flux import SNflux
 from sn_plotter_simu.plot_sn_simu import plot_flux_spectra 
-from astropy.table import Table
+from astropy.table import Table,vstack
 import astropy
 from sn_tools.sn_io import checkDir
 
@@ -63,19 +63,34 @@ outName_f = '{}/sn_flux_{}.hdf5'.format(pp['outDir'],pp['outName'])
 astropy.io.misc.hdf5.write_table_hdf5(sn_flux, 
                                       outName_f, 
                                       path='sn_flux',
-                                      append=True, serialize_meta=True)
+                                      append=True, 
+                                      serialize_meta=True,
+                                      overwrite=True)
 #grab seds
 
 if pp['sed'] == 1:
     sn_sed = snflux.get_sed()
     outName_s = '{}/sn_sed_{}.hdf5'.format(pp['outDir'],pp['outName'])
+    tab = Table()
     for sed in sn_sed:
+        """
         sed.meta.update(pp)
         print(sed.meta)
         key = 'sn_sed_{}'.format(sed.meta['phase'])
         astropy.io.misc.hdf5.write_table_hdf5(sed, outName_s,path=key,
-                                      append=True, serialize_meta=True)
-
+                                      append=True, serialize_meta=False,
+                                      overwrite=True)
+        """
+        sed['phase'] = sed.meta['phase']
+        sed['mjd'] = sed.meta['mjd']
+        
+        tab = vstack([tab,sed],metadata_conflicts='silent')
+        
+    tab.meta = pp
+    astropy.io.misc.hdf5.write_table_hdf5(tab, outName_s,path='sn_sed',
+                                      append=True, serialize_meta=True,
+                                      overwrite=True)
+    
 
 #plot_flux_spectra(sn_flux,sn_sed)
 
