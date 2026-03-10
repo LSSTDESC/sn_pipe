@@ -7,7 +7,10 @@ Created on Mon Mar  9 13:23:46 2026
 """
 from optparse import OptionParser
 from sn_analysis.sn_flux import SNflux
-
+from sn_plotter_simu.plot_sn_simu import plot_flux_spectra 
+from astropy.table import Table
+import astropy
+from sn_tools.sn_io import checkDir
 
 parser = OptionParser(description='script to generate LC and spectra for SNe Ia')
 
@@ -29,10 +32,20 @@ parser.add_option('--ozone', type=float, default=300.,
                   help='ozone [dobson] [%default]')
 parser.add_option('--aerosol', type=float, default=0.01,
                   help='aerosol value  [%default]')
+parser.add_option('--sed', type=int, default=0,
+                  help='to estimate sn sed [%default]')
+parser.add_option('--outDir', type=str, default='../sn_flux_spectra',
+                  help='output directory [%default]')
+parser.add_option('--outName', type=str, default='simu1',
+                  help='output file name [%default]')
 
 opts, args = parser.parse_args()
 
 pp = vars(opts)
+
+#create outputdir (if necessary)
+
+checkDir(pp['outDir'])
 
 #class instance
 snflux = SNflux(pp['x1'],pp['color'],pp['daymax'],pp['z'],
@@ -40,51 +53,30 @@ snflux = SNflux(pp['x1'],pp['color'],pp['daymax'],pp['z'],
                 airmass=pp['airmass'],
                 pwv=pp['pwv'],ozone=pp['ozone'],aerosol=pp['aerosol'])
 
-#grab fluxes
+#grab fluxes and save output
 
-sn_flux = snflux.get_flux()
+df_flux = snflux.get_flux()
+sn_flux = Table.from_pandas(df_flux)
+sn_flux.meta = pp
 
+outName_f = '{}/sn_flux_{}.hdf5'.format(pp['outDir'],pp['outName'])
+astropy.io.misc.hdf5.write_table_hdf5(sn_flux, 
+                                      outName_f, 
+                                      path='sn_flux',
+                                      append=True, serialize_meta=True)
 #grab seds
 
-sn_sed = snflux.get_sed()
+if pp['sed'] == 1:
+    sn_sed = snflux.get_sed()
+    outName_s = '{}/sn_sed_{}.hdf5'.format(pp['outDir'],pp['outName'])
+    for sed in sn_sed:
+        sed.meta.update(pp)
+        print(sed.meta)
+        key = 'sn_sed_{}'.format(sed.meta['phase'])
+        astropy.io.misc.hdf5.write_table_hdf5(sed, outName_s,path=key,
+                                      append=True, serialize_meta=True)
 
-print(sn_sed)
 
-import matplotlib.pyplot as plt
+#plot_flux_spectra(sn_flux,sn_sed)
 
-bands = 'izy'
 
-"""
-idx = sn_flux['filter'].isin(bands)
-sel_flux = sn_flux[idx]
-"""
-print(sn_flux)
-mjd_min = sn_flux['phase'].min()
-mjd_max = sn_flux['phase'].max()
-flux_min={}
-flux_max={}
-
-for b in bands:
-    idx = sn_flux['filter'] == 'LSST:'+b
-    sel = sn_flux[idx]
-    flux_min[b] = sel['flux'].min()
-    flux_max[b] = sel['flux'].max()
-    
-for sed in sn_sed:
-    fig = plt.figure(figsize=(12,8))
-    ax1 = fig.add_subplot(2,1,1)
-    mjd = sed.meta['mjd']
-    fig.suptitle('MJD:{}'.format(mjd))
-    ax1.plot(sed['wavelength'],sed['flux'],'k.')
-    ax1.grid(visible=True)
-    ax1.set_xlim([4500.,20000.])
-    for i,b in enumerate(bands):
-        idx = sn_flux['filter'] == 'LSST:'+b
-        idx &= sn_flux['time'] <= mjd
-        sel_flux = sn_flux[idx]
-        ax = fig.add_subplot(2,3,i+4)
-        ax.plot(sel_flux['phase'],sel_flux['flux'],'ko')
-        ax.set_xlim([mjd_min,mjd_max])
-        ax.set_ylim([flux_min[b],flux_max[b]])
-        ax.grid(visible=True)
-    plt.show()
