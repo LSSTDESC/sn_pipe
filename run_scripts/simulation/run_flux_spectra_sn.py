@@ -7,7 +7,6 @@ Created on Mon Mar  9 13:23:46 2026
 """
 from optparse import OptionParser
 from sn_analysis.sn_flux import SNflux
-from sn_plotter_simu.plot_sn_simu import plot_flux_spectra 
 from astropy.table import Table,vstack
 import astropy
 from sn_tools.sn_io import checkDir
@@ -38,6 +37,8 @@ parser.add_option('--outDir', type=str, default='../sn_flux_spectra',
                   help='output directory [%default]')
 parser.add_option('--outName', type=str, default='simu1',
                   help='output file name [%default]')
+parser.add_option('--outDir_display', type=str, default='None',
+                  help='output dir for SN displays [%default]')
 
 opts, args = parser.parse_args()
 
@@ -60,12 +61,14 @@ sn_flux = Table.from_pandas(df_flux)
 sn_flux.meta = pp
 
 outName_f = '{}/sn_flux_{}.hdf5'.format(pp['outDir'],pp['outName'])
-astropy.io.misc.hdf5.write_table_hdf5(sn_flux, 
-                                      outName_f, 
-                                      path='sn_flux',
-                                      append=True, 
-                                      serialize_meta=True,
-                                      overwrite=True)
+
+if pp['outName'] != 'None':
+    astropy.io.misc.hdf5.write_table_hdf5(sn_flux, 
+                                          outName_f, 
+                                          path='sn_flux',
+                                          append=True, 
+                                          serialize_meta=True,
+                                          overwrite=True)
 #grab seds
 
 if pp['sed'] == 1:
@@ -87,11 +90,14 @@ if pp['sed'] == 1:
         tab = vstack([tab,sed],metadata_conflicts='silent')
         
     tab.meta = pp
-    astropy.io.misc.hdf5.write_table_hdf5(tab, outName_s,path='sn_sed',
-                                      append=True, serialize_meta=True,
-                                      overwrite=True)
+    if pp['outName'] != 'None':
+        astropy.io.misc.hdf5.write_table_hdf5(tab, outName_s,path='sn_sed',
+                                              append=True, serialize_meta=True,
+                                              overwrite=True)
     
-
-#plot_flux_spectra(sn_flux,sn_sed)
+if pp['outDir_display'] != 'None':
+    checkDir(pp['outDir_display'])
+    from sn_plotter_simu.plot_sn_simu import plot_flux_spectra 
+    plot_flux_spectra(sn_flux,tab,outDir=pp['outDir_display'])
 
 
