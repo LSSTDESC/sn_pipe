@@ -1,8 +1,8 @@
-#How to generate SN Ia flux and SED vs time
+# How to generate SN Ia flux and SED vs time
 
 ## Usage: run_scripts/simulation/run_flux_spectra_sn.py [options]
 
-</pre>
+<pre>
 script to generate LC and spectra for SNe Ia
 
 Options:
