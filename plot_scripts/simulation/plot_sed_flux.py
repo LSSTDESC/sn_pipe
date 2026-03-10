@@ -10,6 +10,7 @@ from astropy.table import Table, vstack
 from optparse import OptionParser
 from sn_plotter_simu.plot_sn_simu import plot_flux_spectra
 import astropy
+from sn_tools.sn_io import checkDir
 
 def get_table(file,path):
     """
@@ -93,19 +94,23 @@ parser.add_option("--fileDir", type="str", default='../sn_flux_spectra',
                   help="file directory [%default]")
 parser.add_option("--fileName", type="str", default='simu1',
                   help="file name [%default]")
+parser.add_option("--outDir", type="str", default='../plot_flux_spectra',
+                  help="output dir [%default]")
 
 opts, args = parser.parse_args()
 
 fDir = opts.fileDir
 fName = opts.fileName
+outDir = opts.outDir
 
+if outDir != 'None':
+    checkDir(outDir)
 
 file_flux = '{}/sn_flux_{}.hdf5'.format(fDir,fName)
 file_sed = '{}/sn_sed_{}.hdf5'.format(fDir,fName)
 
 sn_flux = load_flux(file_flux)
-print('oo',sn_flux)
 
 sn_sed = load_flux(file_sed)
 
-plot_flux_spectra(sn_flux,sn_sed)
+plot_flux_spectra(sn_flux,sn_sed,outDir=outDir)
