@@ -1,9 +1,13 @@
 #!/bin/bash
 
+x1=${1:-2}
+color=${2:-0.2}
+z=${3:-0.8}
+
 echo "processing data"
+cmd="python run_scripts/simulation/run_flux_spectra_sn.py --x1=$x1 --color=$color --z=$z --sed=1 --outDirDisplay=../plot_flux_spectra"
 
-cmd="python run_scripts/simulation/run_flux_spectra_sn.py --sed=1 --outDir_display=../plot_flux_spectra"
-
+echo $cmd
 $cmd
 
 echo "creating movie"
