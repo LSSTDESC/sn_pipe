@@ -54,7 +54,9 @@ def load_flux(fName):
     
     data = Table()
     for key in keys:
-        data = vstack([data, Table.read(fFile, path=key)])
+        tab = get_table(fFile,key)
+        #data = vstack([data, Table.read(fFile, path=key)])
+        data = vstack([data,tab])
         
     return data
 
@@ -94,7 +96,7 @@ parser.add_option("--fileDir", type="str", default='../sn_flux_spectra',
                   help="file directory [%default]")
 parser.add_option("--fileName", type="str", default='simu1',
                   help="file name [%default]")
-parser.add_option("--outDir", type="str", default='../plot_flux_spectra',
+parser.add_option("--outDir", type="str", default='None',
                   help="output dir [%default]")
 
 opts, args = parser.parse_args()
@@ -113,4 +115,7 @@ sn_flux = load_flux(file_flux)
 
 sn_sed = load_flux(file_sed)
 
-plot_flux_spectra(sn_flux,sn_sed,outDir=outDir)
+print(sn_flux)
+print(sn_sed)
+phase_to_draw = [-10,0.,10]
+plot_flux_spectra(sn_flux,sn_sed,outDir=outDir,phase_to_draw=phase_to_draw)
