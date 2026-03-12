@@ -1,0 +1,52 @@
+## SN Ia parameters
+x1 0.0 float #SN Ia strech
+color 0.0 float #SN Ia color
+daymax 68000. float #SN Ia T0
+z 0.8 float #SN Ia redshift
+ebvofMW 0.01 float #E(B-V) of MW
+
+##SN Ia model
+model salt3 str #SN model
+version 2.0 str #SN model version
+absmag -19.0906 float #SN abs mag
+magsys vega str #SN mag sys 
+band bessellB str #SN band
+
+##throughput
+tel_dir throughputs str #tel dir
+throughputsDir baseline str #throughput dir
+atmosDir atmos str #atmos dir
+tag_tel 1.9 str #tel_tag
+
+##atmospheric parameters
+airmass 1.2 float #airmass
+aerosol 0.01 float #aerosol
+pwv 4.0 float #precipitable water vapor [mm]
+ozone 300. float #ozone [dobson]
+
+##cosmology parameters
+
+de_params w0,wa str #DE eos parameters
+de_values -1.0,0. str #DE eos parameter values
+de_class w0waCDM str #DE class to use
+de_model CPL str #DE eos model name
+de_eos w0+wa*z/(1+z) str #DE eos model
+H0 70. float #DE eos model 
+Om0 0.30 float #Omega_matter
+Ode0 0.70 float #Omega_Ode0
+class_loc astropy.cosmology str #DE class location
+
+##SN files
+x0_file x0_norm_-19.0906_salt3.npy str #fluxes at 10 pc
+x0_dir reference_files str #location dir of x0_norm file
+web_path https://me.lsst.eu/gris/DESC_SN_pipeline str #where to grab the x0_norm file
+
+
+
+##SED production or not
+sed 0 int #to estimate sn sed
+
+##Outputs
+outDir ../sn_flux_spectra str #output directory
+outName simu1 str #output file name
+outDirDisplay None str #output dir for SN displays

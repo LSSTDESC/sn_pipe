@@ -10,35 +10,57 @@ from sn_analysis.sn_flux import SNflux
 from astropy.table import Table,vstack
 import astropy
 from sn_tools.sn_io import checkDir
+from sn_tools.sn_io import make_dict_from_config
+from sn_tools.sn_io import add_parser
+from sn_tools.sn_lcana import get_bands_vs_z
+import copy
+import os
 
+def get_dict_for_class(prodDict):
+    """
+    Function to generate a dict for the SNflux class params
+
+    Parameters
+    ----------
+    prodDict : dict
+        input dict.
+
+    Returns
+    -------
+    dict
+        output dict.
+
+    """
+    params = copy.deepcopy(procDict)
+    
+    #drop unnecessary for snflux
+    for vv in ['sed', 'outDir','outName','outDirDisplay']:
+        del params[vv]
+    
+    #some modif of the cosmo part
+    de_values = params['de_values'].split(',')
+    de_params = params['de_params'].split(',')
+    
+    de_values = list(map(float,de_values))
+    ppn = {}
+    ppn['de_params'] = dict(zip(de_params,de_values))
+    
+    for vv in ['de_values','de_class','de_model','de_eos','H0','Om0','Ode0','class_loc']:
+        ppn[vv] = params[vv]
+        del params[vv]
+    del params['de_params']
+    
+    params['cosmo_params'] = ppn
+
+    return copy.deepcopy(params)
+
+
+    
 parser = OptionParser(description='script to generate LC and spectra for SNe Ia')
 
-parser.add_option('--x1', type=float, default=0.0,
-                  help='SN Ia strech [%default]')
-parser.add_option('--color', type=float, default=0.0,
-                  help='SN Ia color [%default]')
-parser.add_option('--daymax', type=float, default=68000,
-                  help='SN Ia T0 [%default]')
-parser.add_option('--z', type=float, default=0.8,
-                  help='SN Ia redshift [%default]')
-parser.add_option('--ebvofMW', type=float, default=0.01,
-                  help='E(B-V) of MW'' [%default]')
-parser.add_option('--airmass', type=float, default=1.2,
-                  help='airmass [%default]')
-parser.add_option('--pwv', type=float, default=4.0,
-                  help='precipitable water vapor [mm] [%default]')
-parser.add_option('--ozone', type=float, default=300.,
-                  help='ozone [dobson] [%default]')
-parser.add_option('--aerosol', type=float, default=0.01,
-                  help='aerosol value  [%default]')
-parser.add_option('--sed', type=int, default=0,
-                  help='to estimate sn sed [%default]')
-parser.add_option('--outDir', type=str, default='../sn_flux_spectra',
-                  help='output directory [%default]')
-parser.add_option('--outName', type=str, default='simu1',
-                  help='output file name [%default]')
-parser.add_option('--outDir_display', type=str, default='None',
-                  help='output dir for SN displays [%default]')
+confDict = make_dict_from_config('input_script', 'config_sn_flux_spectra.txt')
+
+add_parser(parser, confDict)
 
 opts, args = parser.parse_args()
 
@@ -48,11 +70,18 @@ pp = vars(opts)
 
 checkDir(pp['outDir'])
 
+procDict = {}
+for key, vals in confDict.items():
+    # simuDict[key] = eval('opts.{}'.format(key))
+    newval = eval('opts.{}'.format(key))
+    #procDict[key] = (vals[0], newval)
+    procDict[key] = newval
+ 
+
+params = get_dict_for_class(procDict)
+
 #class instance
-snflux = SNflux(pp['x1'],pp['color'],pp['daymax'],pp['z'],
-                pp['ebvofMW'],
-                airmass=pp['airmass'],
-                pwv=pp['pwv'],ozone=pp['ozone'],aerosol=pp['aerosol'])
+snflux = SNflux(**params)
 
 #grab fluxes and save output
 
@@ -60,9 +89,13 @@ df_flux = snflux.get_flux()
 sn_flux = Table.from_pandas(df_flux)
 sn_flux.meta = pp
 
-outName_f = '{}/sn_flux_{}.hdf5'.format(pp['outDir'],pp['outName'])
 
 if pp['outName'] != 'None':
+    outName_f = '{}/sn_flux_{}.hdf5'.format(pp['outDir'],pp['outName'])
+    #if the file already exist: remove it!
+    if os.path.isfile(outName_f):
+        os.system('rm {}'.format(outName_f))
+    #save data here
     astropy.io.misc.hdf5.write_table_hdf5(sn_flux, 
                                           outName_f, 
                                           path='sn_flux',
@@ -73,7 +106,7 @@ if pp['outName'] != 'None':
 
 if pp['sed'] == 1:
     sn_sed = snflux.get_sed()
-    outName_s = '{}/sn_sed_{}.hdf5'.format(pp['outDir'],pp['outName'])
+   
     tab = Table()
     for sed in sn_sed:
         """
@@ -91,13 +124,23 @@ if pp['sed'] == 1:
         
     tab.meta = pp
     if pp['outName'] != 'None':
+        outName_s = '{}/sn_sed_{}.hdf5'.format(pp['outDir'],pp['outName'])
+        #if the file already exist: remove it!
+        if os.path.isfile(outName_s):
+            os.system('rm {}'.format(outName_s))
+        #save data here
         astropy.io.misc.hdf5.write_table_hdf5(tab, outName_s,path='sn_sed',
                                               append=True, serialize_meta=True,
                                               overwrite=True)
     
-if pp['outDir_display'] != 'None':
-    checkDir(pp['outDir_display'])
-    from sn_plotter_simu.plot_sn_simu import plot_flux_spectra 
-    plot_flux_spectra(sn_flux,tab,outDir=pp['outDir_display'])
+if pp['outDirDisplay'] != 'None':
+    #check if outdir already exist: if yes, remove it!
+    if os.path.exists(pp['outDirDisplay']):
+        os.system('rm -rf {}'.format(pp['outDirDisplay']))    
+    
+    checkDir(pp['outDirDisplay'])
+    from sn_plotter_simu.plot_sn_simu import plot_flux_spectra
+    bands = get_bands_vs_z(pp['z'])
+    plot_flux_spectra(sn_flux,tab,outDir=pp['outDirDisplay'],bands=bands)
 
 
