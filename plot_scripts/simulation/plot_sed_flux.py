@@ -6,59 +6,13 @@ Created on Tue Mar 10 09:41:26 2026
 @author: philippe.gris@clermont.in2p3.fr
 """
 import h5py
-from astropy.table import Table, vstack
+#from astropy.table import Table, vstack
 from optparse import OptionParser
 from sn_plotter_simu.plot_sn_simu import plot_flux_spectra
-import astropy
-from sn_tools.sn_io import checkDir
+#import astropy
+from sn_tools.sn_io import checkDir,load_astro_table
 
-def get_table(file,path):
-    """
-    Parameters
-    ----------
-    path : str
-        hdf5 path for light curve.
 
-    Returns
-    -------
-    AstropyTable
-        Returns the reading of an .hdf5 file as an AstropyTable.
-    """
-
-    tab = Table()
-    try:
-        tab = astropy.io.misc.hdf5.read_table_hdf5(
-            file, path=path, character_as_bytes=False)
-    except (OSError, KeyError):
-        pass
-
-    return tab
-def load_flux(fName):
-    """
-    Function to load sn flux
-
-    Parameters
-    ----------
-    fName : str
-        File name.
-
-    Returns
-    -------
-    data : astropy table
-        output data.
-
-    """
-    
-    fFile = h5py.File(fName, 'r')
-    keys = list(fFile.keys())
-    
-    data = Table()
-    for key in keys:
-        tab = get_table(fFile,key)
-        #data = vstack([data, Table.read(fFile, path=key)])
-        data = vstack([data,tab])
-        
-    return data
 
 def load_sed(fName):
     """
@@ -111,9 +65,9 @@ if outDir != 'None':
 file_flux = '{}/sn_flux_{}.hdf5'.format(fDir,fName)
 file_sed = '{}/sn_sed_{}.hdf5'.format(fDir,fName)
 
-sn_flux = load_flux(file_flux)
+sn_flux = load_astro_table(file_flux)
 
-sn_sed = load_flux(file_sed)
+sn_sed = load_astro_table(file_sed)
 
 print(sn_flux)
 print(sn_sed)
