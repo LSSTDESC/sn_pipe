@@ -1,7 +1,7 @@
 #!/bin/bash
 
-x1=${1:-2}
-color=${2:-0.2}
+x1=${1:-0}
+color=${2:-0}
 z=${3:-0.8}
 
 echo "processing data"
