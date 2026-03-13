@@ -5,44 +5,9 @@ Created on Tue Mar 10 09:41:26 2026
 
 @author: philippe.gris@clermont.in2p3.fr
 """
-import h5py
-#from astropy.table import Table, vstack
 from optparse import OptionParser
 from sn_plotter_simu.plot_sn_simu import plot_flux_spectra
-#import astropy
-from sn_tools.sn_io import checkDir,load_astro_table
-
-
-
-def load_sed(fName):
-    """
-    Function to load sn SED
-
-    Parameters
-    ----------
-    fName : str
-        file name.
-
-    Returns
-    -------
-    r : list(astropy table)
-        list of SEDs.
-
-    """
-    
-    fFile = h5py.File(fName, 'r')
-    keys = list(fFile.keys())
-    
-    r = []
-    for key in keys:
-        tab = get_table(fFile, key)
-        if tab.meta:
-            r.append(tab)
-        
-    return r
-    
-    
-    
+from sn_tools.sn_io import checkDir,load_astro_table    
 
 parser = OptionParser(description='display SN SED and corresponding flux')
 
