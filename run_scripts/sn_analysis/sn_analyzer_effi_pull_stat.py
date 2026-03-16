@@ -312,6 +312,53 @@ def process_season_field_pixel_deprecated(grp, norm_factor):
 
     return df_effi
 
+def zlim_field(field,dbDir,dbName,runType):
+    
+    print('processing',field)
+    time_ref = time.time()
+    data = load_data(dbDir, dbName, runType, field)
+    print('loaded',time.time()-time_ref)
+    data['field'] = field
+    data = complete_df(data)
+
+    print('there',len(data),data['healpixID'].unique())
+    print(data.columns)
+    
+    params = {}
+    
+    params['data'] = data
+    from sn_tools.sn_utils import multiproc
+    
+    obs = data['healpixID'].unique().tolist()
+    
+    res = multiproc(obs,params,zlim_field_multiproc,nproc=1)
+    
+    return res
+    """
+    df_effi = data.groupby(['field','healpixID', 'season']).apply(
+       lambda x: process_season_pixel(x, norm_factor,sellist,plot=False), include_groups=False).reset_index()
+    
+    return df_effi
+    """
+    
+def zlim_field_multiproc(toproc, params, j=0, output_q=None):
+    
+    data = params['data']
+    
+    idx = data['healpixID'].isin(toproc)
+    sel_data = pd.DataFrame(data[idx])
+    
+    df_zlim = sel_data.groupby(['field','healpixID', 'season']).apply(
+     lambda x: process_season_pixel(x, norm_factor,sellist,plot=True), 
+       include_groups=False).reset_index()
+    
+    if output_q is not None:
+        return output_q.put({j: df_zlim})
+    else:
+        return df_zlim
+    
+    
+    
 
 def process_db(dbDir, dbName, runType, fields,
                norm_factor, zmin=0.01, zmax=1.1,sellist=None):
@@ -342,24 +389,16 @@ def process_db(dbDir, dbName, runType, fields,
 
     """
 
-    df_effi = pd.DataFrame()
+    df_zlim = pd.DataFrame()
 
     for field in fields:
-        print('processing',field)
-        time_ref = time.time()
-        data = load_data(dbDir, dbName, runType, field)
-        print('loaded',time.time()-time_ref)
-        data['field'] = field
-        data = complete_df(data)
-
-        print('there',len(data),data['healpixID'].unique())
-        print(data.columns)
-        df_effi = data.groupby(['field','healpixID', 'season']).apply(
-           lambda x: process_season_pixel(x, norm_factor,sellist), include_groups=False).reset_index()
+        
+        df_zlim_ = zlim_field(field, dbDir, dbName, runType)
+        df_zlim = pd.concat((df_zlim,df_zlim_))
+        print(df_zlim.columns)
         
         print(test)
-        
-
+        """
         idxz = data['z'] >= zmin
         idxz &= data['z'] <= zmax
 
@@ -374,17 +413,21 @@ def process_db(dbDir, dbName, runType, fields,
         df_effi = data[idx].groupby(['healpixID', 'season']).apply(
             lambda x: process_season_field_pixel(x, norm_factor), include_groups=False).reset_index()
         """
+        """
         for seas in seasons:
             # print('processing', zmin, zmax, seas)
             dd = process_season(data, seas, field, norm_factor)
             df_effi = pd.concat((df_effi, dd))
         """
+    """
     df_effi['dbName'] = dbName
     df_effi['zmin'] = np.round(zmin, 2)
     df_effi['zmax'] = np.round(zmax, 2)
     df_effi['field'] = field
+    """
+    
 
-    return df_effi
+    return df_zlim
 
 def process_season_pixel(grp, norm_factor,sellist,plot=False):
     
@@ -394,6 +437,7 @@ def process_season_pixel(grp, norm_factor,sellist,plot=False):
     #get selection efficiencies
     deltab=0.1
     bins = np.arange(0.01,1.1+deltab,deltab)
+    print('there man',len(grp_sel),len(grp))
     grp_effi=effi(grp,grp_sel,xvar='z_fit',bins=bins)
     
     """
@@ -485,6 +529,7 @@ def process_season_pixel(grp, norm_factor,sellist,plot=False):
     print(sel_sn)
     print(zlim_t.max())
     
+    return zlim_t
     """
     zlim = {}
     for key, vals in thedict.items():
@@ -671,10 +716,13 @@ for vv in zvals:
     if zmi < 0.001:
         zmi = 0.01
     zma = vv+deltaz
-    df_effi = process_db(dbDir, dbName, runType, fields,
+    df_zlim = process_db(dbDir, dbName, runType, fields,
                          norm_factor, zmin=zmi, zmax=zma,sellist=sellist)
 
 
+print(df_zlim)
+"""
 # save the data
 outName = '{}/{}.hdf5'.format(outDir, dbName)
 df_effi.to_hdf(outName, key='effi_pull')
+"""
