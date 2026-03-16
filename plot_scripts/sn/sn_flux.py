@@ -16,6 +16,22 @@ from scipy.interpolate import interp1d
 import pandas as pd
 
 def get_flux_sum_band(grp,exptime=30):
+    """
+    Function to estimate the integrated flux per band
+
+    Parameters
+    ----------
+    grp : pandas df
+        Data to process.
+    exptime : float, optional
+        exposure time. The default is 30.
+
+    Returns
+    -------
+    pandas df
+        flux and err.
+
+    """
     
     phase_min = grp['phase'].min()
     phase_max = grp['phase'].max()
@@ -39,7 +55,7 @@ def get_flux_sum_band(grp,exptime=30):
     
 
 
-def get_flux_sum(tab,z,exptime=30.):
+def get_flux_sum_deprecated(tab,z,exptime=30.):
     
     #grab the bands of interest
     bands = get_bands_vs_z(z)
@@ -73,6 +89,22 @@ def get_flux_sum(tab,z,exptime=30.):
     return df
 
 def process_data(z,fis):
+    """
+    Function to process data
+
+    Parameters
+    ----------
+    z : float
+        Redshift value.
+    fis : list(str)
+        List of files to (potentially) process.
+
+    Returns
+    -------
+    dft : pandas df
+        Processed data.
+
+    """
     
     dft = pd.DataFrame()
     colby = 'filter_notel'
