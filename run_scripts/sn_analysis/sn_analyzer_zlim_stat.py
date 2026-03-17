@@ -203,7 +203,7 @@ def zlim_field_multiproc(toproc, params, j=0, output_q=None):
     idx = data['healpixID'].isin(toproc)
     sel_data = pd.DataFrame(data[idx])
     
-    df_zlim = sel_data.groupby(['field','healpixID', 'season']).apply(
+    df_zlim = sel_data.groupby(['field','healpixID','pixRA','pixDec','season']).apply(
      lambda x: process_season_pixel(x, sellist,plot=False), 
        include_groups=False).reset_index()
     

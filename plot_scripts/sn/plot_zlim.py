@@ -53,6 +53,24 @@ def plot_zlim(df, yvar='zlim_0.98',
     ax.set_ylabel(r'{}'.format(yleg))
     ax.legend()
 
+def get_dist(grp,distval='dist_center',yvar='zlim_0.98'):
+    
+    from sn_plotter_metrics.utils import get_dist
+    import numpy as np
+    df_dist = get_dist(grp)
+    
+    xmin, xmax = df_dist[distval].min(), df_dist[distval].max()
+    bins = np.linspace(xmin-1.e-6, xmax, 12)
+    # bins = np.arange(0.1, 2.22, 0.22)
+    group = df_dist.groupby(pd.cut(df_dist[distval], bins), observed=False)
+    plot_centers = (bins[:-1] + bins[1:])/2
+    plot_values = group[yvar].mean()
+    dd = pd.DataFrame(plot_centers, columns=[distval])
+
+    dd[yvar] = plot_values.to_list()
+    
+    return dd
+
 parser = OptionParser(description='Script to plot z lim values')
 
 parser.add_option('--dbDir', type=str,
@@ -85,15 +103,35 @@ df = df.dropna()
 dfb = df.groupby(['field','season'])[['zlim_0.98','zlim_0.95']].mean().reset_index()
 print(dfb)
 
-fig, ax = plt.subplots(figsize=(12,8))
+
 
 markers=['s','o','P','h','v','^']
 colors = ['r','b','green','orange','violet','violet']
 mmarkers = dict(zip(fields,markers))
 ccolors = dict(zip(fields,colors))
 
+# show zlim vs season
+"""
+fig, ax = plt.subplots(figsize=(12,8))
 for field in fields:
     plot_zlim(dfb,field=field,fig=fig,ax=ax,
               color=ccolors[field],marker=mmarkers[field])
+"""
+
+#grab mean zlim vs dist
+
+df_dist = df.groupby(['field','season']).apply(lambda x:get_dist(x),
+                                                include_groups=False).reset_index()
+
+print(df_dist)
+idx = df_dist['field'] == 'COSMOS'
+idx &= df_dist['season'] == 4
+
+sel = df_dist[idx]
+
+fig, ax = plt.subplots()
+
+ax.plot(sel['dist_center'],sel['zlim_0.98'],'ko')
+
 
 plt.show()
