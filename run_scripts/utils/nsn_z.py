@@ -1,39 +1,10 @@
-from sn_tools.sn_rate import SN_Rate
-import matplotlib.pyplot as plt
+from sn_tools.sn_rate import get_nsn
 import numpy as np
 from optparse import OptionParser
 import pandas as pd
+from sn_plotter_analysis import plt
 
 
-def getNSN(rate='Perrett', H0=70, Om0=0.3,
-           zmin=0.01, zmax=1.1, dz=0.01,
-           season_length=180,
-           survey_area=9.6, account_for_edges=False,
-           min_rf_phase=-15, max_rf_phase=30):
-
-    sn_rate = SN_Rate(rate=rate, H0=H0, Om0=Om0,
-                      min_rf_phase=min_rf_phase,
-                      max_rf_phase=max_rf_phase)
-    zmax += dz/2
-
-    zz, rateb, err_rate, nsn, err_nsn, age_universe = sn_rate(
-        zmin=zmin, zmax=zmax, dz=dz,
-        account_for_edges=account_for_edges,
-        duration=season_length, survey_area=survey_area)
-
-    nsn_sum = np.cumsum(nsn)
-    err_nsn_sum = np.sqrt(np.cumsum(err_nsn**2))
-
-    res = pd.DataFrame(nsn_sum, columns=['nsn'])
-    res['err_nsn'] = err_nsn_sum
-    res['z'] = zz
-    res['age_universe'] = age_universe
-    res['rate'] = rate
-    res['edges'] = account_for_edges
-    res['min_rf_phase'] = min_rf_phase
-    res['max_rf_phase'] = max_rf_phase
-
-    return res
 
 
 def effi(grp, grp_ref):
@@ -105,7 +76,7 @@ for rr in rates:
         params['account_for_edges'] = vv
         params['min_rf_phase'] = edges[i][0]
         params['max_rf_phase'] = edges[i][1]
-        tt = getNSN(**params)
+        tt = get_nsn(**params)
         df = pd.concat((df, tt))
 
 
