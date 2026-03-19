@@ -13,4 +13,4 @@ Options:
 
 </pre>
 
-[COSMOS, season 1, hpix=108957](plot_obs_rate.png]
+[COSMOS, season 1, hpix=108957](plot_obs_rate.png)
