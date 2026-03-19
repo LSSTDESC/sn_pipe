@@ -276,6 +276,15 @@ def batch_DDF_rate(theDict,
     smearFlux = theDict['SN_smearFlux']
     season_min = 1
     season_max = 14
+    zmin = theDict['SN_z_min']
+    zmax = theDict['SN_z_max']
+    zint = np.min([0.6,zmax])
+    
+    zmin = np.round(zmin,2)
+    zmax = np.round(zmax,2)
+    zint = np.round(zint,2)
+    
+    zranges = [[zmin,zint],[zint,zmax]]
 
     tag_list = pd.DataFrame()
     if 'None' not in reprocList:
@@ -329,8 +338,7 @@ def batch_DDF_rate(theDict,
 
         seasons = '{}-{}'.format(season_min, season_max)
 
-        procDict['ProductionIDSimu'] = 'SN_{}_{}_{}'.format(
-            procName, season_min, season_max)
+        
         procDict['Observations_season'] = seasons
 
         if simu_fromFile == 1:
@@ -340,7 +348,12 @@ def batch_DDF_rate(theDict,
             procDict['SN_simuFile'] = '{}/{}/DDF_spectroz/{}'.format(
                 outDir_simuparams, dbName, ffi)
 
-        mybatch.add_batch(scriptref, procDict)
+        for z in zranges:
+            procDict['ProductionIDSimu'] = 'SN_{}_{}_{}_{}_{}'.format(
+                procName, season_min, season_max,z[0],z[1])
+            procDict['SN_z_min'] = z[0]
+            procDict['SN_z_max'] = z[1]
+            mybatch.add_batch(scriptref, procDict)
 
         # go for batch
         mybatch.go_batch()
