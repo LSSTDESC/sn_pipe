@@ -605,9 +605,6 @@ sellist = selection_criteria()[selconfig]
 
 df_zlim = process_db(dbDir, dbName, runType, fields,sellist=sellist)
 
-
-print(df_zlim)
-
 # save the data
 outName = '{}/zlim_{}.hdf5'.format(outDir, dbName)
 df_zlim.to_hdf(outName, key='zlim')
