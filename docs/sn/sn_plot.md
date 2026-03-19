@@ -24,3 +24,7 @@
 ### [Pull histogram](pull_hist.md)
 
 ### [Pull (mu, sigma)](pull_calc.md)
+
+## Cross-check SNe Ia production rate
+
+### [Observation vs expected rate](sn_obs_rate.md)
