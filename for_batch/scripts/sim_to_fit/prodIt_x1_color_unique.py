@@ -50,9 +50,13 @@ parser.add_option("--SN_z_step", type=float,
 parser.add_option("--SN_x1_min", type=float,
                   default=-2.0,
                   help="x1 SN unique value [%default]")
+parser.add_option("--SN_x1_type", type=str, default='unique',
+                  help="x1 simulation type [%default]")
 parser.add_option("--SN_color_min", type=float,
                   default=0.2,
                   help="color SN unique value [%default]")
+parser.add_option("--SN_color_type", type=str, default='unique',
+                  help="color simulation type [%default]")
 parser.add_option("--LC_coadd", type=int,
                   default=0,
                   help="coadd lc points [%default]")
@@ -91,7 +95,9 @@ script = 'python for_batch/scripts/sn_prod/prod_sn_dd_wfd.py'
 cct = ['SN_smearFlux', 'Fitter_sigmaz',
        'Observations_coadd', 'saturation_effect','LC_coadd','tag_script',
        'SN_maxRFphaseQual','SN_minRFphaseQual',
-       'SN_z_min','SN_z_max','SN_z_step','SN_x1_min','SN_color_min','mem']
+       'SN_z_min','SN_z_max','SN_z_step',
+       'SN_x1_min','SN_color_min','SN_x1_type','SN_color_type',
+       'mem']
 
 nsn_fact_str = 'SN_NSNabsolute_DD'
 if 'WFD' in params['runType']:
