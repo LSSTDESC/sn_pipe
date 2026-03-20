@@ -1,4 +1,4 @@
-# How to generate SN Ia flux and SED vs time
+# How to generate (and display) SN Ia flux and SED vs time
 
 ## Usage: run_scripts/simulation/run_flux_spectra_sn.py [options]
 
@@ -31,3 +31,21 @@ python run_scripts/simulation/run_flux_spectra_sn.py --sed=1
 should lead to the generation of 2 files in the default output directory (../sn_flux_spectra):
 - sn_flux_simu1.hdf5: SN Ia light curves
 - sn_sed_simu1.hdf5: SN Ia SED
+
+## Display the results
+
+Usage: plot_scripts/sn/plot_flux_sed.py [options]
+
+<pre>
+script to plot LC and spectra for SNe Ia
+
+Options:
+  -h, --help           show this help message and exit
+  --dataDir=DATADIR    data dir [../sn_flux_spectra]
+  --fluxFile=FLUXFILE  flux file [sn_flux_simu1.hdf5]
+  --sedFile=SEDFILE    sed file [sn_sed_simu1.hdf5]
+  --phases=PHASES      phases to plot [-10,0,20]
+
+</pre>
+
+[SED and fluxes vs phase](fig1.png)
