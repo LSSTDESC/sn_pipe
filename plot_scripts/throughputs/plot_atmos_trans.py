@@ -37,7 +37,7 @@ ozone = opts.ozone
 # from file
 atmos_trans_file = Atmos_Transmission(
     atmos_dir=atmosDir, atmos_type='from_file')
-atmos_trans_file.load_atmosphere(airmass=airmass)
+atmos_trans_file.load_atmosphere(airmass=airmass,atmos_type='from_file')
 
 # from getObsAtmo
 atmos_trans_obsatmo = Atmos_Transmission(atmos_type='obsatmo')
