@@ -43,9 +43,10 @@ def plots(throughputs):
 
 throughputs = Throughputs()
 
-# plot throughputs
-# plots(throughputs)
+throughputs.new_atmosphere(airmass=1.2)
 
+# plot throughputs
+#plots(throughputs)
 
 # get etc
 throughputs.etc()
@@ -60,4 +61,4 @@ throughputs.new_atmosphere(airmass=1.5)
 
 throughputs.etc()
 
-plt.show()
+#plt.show()
