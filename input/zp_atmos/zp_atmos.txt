@@ -9,21 +9,21 @@ sigma_airmass_min 0.005 float #sigma airmass min value
 sigma_airmass_max 0.02 float #sigma airmass max value
 sigma_airmass_step 0.00 float #sigma airmass step value
 # pwv
-pwv_min 4.0 float #pwv min value
+pwv_min 5.0 float #pwv min value
 pwv_max 7.0 float #pwv max value
 pwv_step 0.0 float #pwv step value
 sigma_pwv_min 0.2 float #sigma pwv min value
 sigma_pwv_max 0.3 float #sigma pwv max value
 sigma_pwv_step 0. float #sigma pwv step value
 #ozone
-ozone_min 300 float #ozone min value
+ozone_min 330 float #ozone min value
 ozone_max 300 float #ozone max value
 ozone_step 0 float #ozone step value
 sigma_ozone_min 10. float #sigma ozone min value
 sigma_ozone_max 20. float #sigma ozone max value
 sigma_ozone_step 0. float #sigma ozone step value
 #aerosol
-aerosol_min 0.1 float #aerosol min value
+aerosol_min 0.05 float #aerosol min value
 aerosol_max 0.1 float #aerosol max value
 aerosol_step 0. float #aerosol step value
 sigma_aerosol_min 0.01 float #sigma aerosol min value
@@ -43,3 +43,5 @@ param_outDir None str #output dir for params
 #number of test
 ntrial 1 int #number of trials
 nsample 1000 int #number of sample per trial
+#nproc for the processing
+nproc 8 int #number of procs
