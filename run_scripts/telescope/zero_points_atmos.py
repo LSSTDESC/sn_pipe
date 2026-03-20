@@ -120,7 +120,7 @@ def prepare_dict(par_names, params):
     return dict_mean, dict_sigma
 
 
-def process_combi(combi_sigma, params, num_combi, outName):
+def process_combi(combi_sigma, params, num_combi, outName,nproc=8):
     """
     Fonction to process a set of parameters
 
@@ -132,6 +132,8 @@ def process_combi(combi_sigma, params, num_combi, outName):
         script parameters.
     num_combi : int
         combi number.
+    nproc: int, optional
+        number of procs
 
     Returns
     -------
@@ -156,8 +158,8 @@ def process_combi(combi_sigma, params, num_combi, outName):
                                      save_throughputs_dir='',
                                      param_outDir=params['param_outDir'],
                                      param_outName=param_outName)
-
-        res = sigma_zp(ntrials=params['nsample'], nproc=8)
+        
+        res = sigma_zp(ntrials=params['nsample'], nproc=nproc)
 
         df = pd.concat((df, res))
 
@@ -207,6 +209,6 @@ combi_sigma = get_combi(dict_mean, dict_sigma, par_names)
 outName = '{}/{}'.format(params['outDir'], params['outName'])
 store = pd.HDFStore(outName, 'w')
 for i in range(params['ntrial']):
-    process_combi(combi_sigma, params, i+1, store)
+    process_combi(combi_sigma, params, i+1, store,params['nproc'])
 
 store.close()
