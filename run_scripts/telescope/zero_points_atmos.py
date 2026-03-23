@@ -144,6 +144,8 @@ def process_combi(combi_sigma, params, num_combi, outName,nproc=8):
 
     time_ref = time.time()
     df = pd.DataFrame()
+    ncombi = len(combi_sigma)
+    print('ncombi:',ncombi)
     for i, row in combi_sigma.iterrows():
 
         time_ref_b = time.time()
@@ -163,7 +165,7 @@ def process_combi(combi_sigma, params, num_combi, outName,nproc=8):
 
         df = pd.concat((df, res))
 
-        print('combi', time.time()-time_ref_b)
+        print('combi', time.time()-time_ref_b,i/ncombi)
     print('finally', time.time()-time_ref)
     df['num_combi'] = num_combi
 
