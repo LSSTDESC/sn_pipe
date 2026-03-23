@@ -51,10 +51,11 @@ parser.add_option('--de_sigma_values', type=str,
                   help='DE eos parameter sigma values [%default]')
 parser.add_option('--de_class', type=str,
                   default='w0waCDM',
-                  help='DE class to use [%default]')
+                  help='DE class to use (w0waCDM/DDE_FLRW) [%default]')
 parser.add_option('--class_loc', type=str,
                   default='astropy.cosmology',
-                  help='DE class location [%default]')
+                  help='DE class location \
+                        (astropy.cosmology/sn_tools.sn_cosmo_model) [%default]')
 parser.add_option('--de_model', type=str,
                   default='CPL',
                   help='DE eos model name [%default]')
