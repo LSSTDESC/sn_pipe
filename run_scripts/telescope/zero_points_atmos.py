@@ -165,7 +165,9 @@ def process_combi(combi_sigma, params, num_combi, outName,nproc=8):
 
         df = pd.concat((df, res))
 
-        print('combi', time.time()-time_ref_b,i/ncombi)
+        rat = np.round(100.*i/ncombi,1)
+        deltat = time.time()-time_ref_b
+        print('combi', np.round(deltat,2),'s',rat,"%")
     print('finally', time.time()-time_ref)
     df['num_combi'] = num_combi
 
