@@ -29,9 +29,9 @@ def stat(grp):
     
     dout = {}
     
-    for vv in ['mu','dl','w']:
+    for vv in ['mu','dL [Mpc]','w']:
         dout[vv] = [grp[vv].mean()]
-        dout['{}_std'.format(vv)] = [grp[vv].std]
+        dout['{}_std'.format(vv)] = [grp[vv].std()]
     
     res = pd.DataFrame.from_dict(dout)
     
