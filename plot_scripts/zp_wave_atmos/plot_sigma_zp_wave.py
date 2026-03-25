@@ -18,6 +18,39 @@ def plot_grid(tab, varx='airmass',xlabel='airmass',
               iso=[1.,2.,5.],
               txt_iso=['1 mmag','2 mmag','5 mmag'],
               x_iso=[1.5]*3,smoothIt=True):
+    """
+    Function to make meshgrid plots
+
+    Parameters
+    ----------
+    tab : astropy table
+        Data to process
+    varx : str, optional
+        x-axis variable. The default is 'airmass'.
+    xlabel : str, optional
+        x-axis label. The default is 'airmass'.
+    vary : str, optional
+        y-axis variable. The default is 'sigma_pwv'.
+    ylabel : str, optional
+        y-axis label. The default is '$\sigma_{PWV}$ [mm]'.
+    varz : str, optional
+        z-axis variable. The default is 'std_zp_y'.
+    figtitle : str, optional
+        Figure title. The default is '$\sigma_{ZP}^{y}$'.
+    iso : list(float), optional
+        List of isocurve variables. The default is [1.,2.,5.].
+    txt_iso : str, optional
+        List of text for iso curves. The default is ['1 mmag','2 mmag','5 mmag'].
+    x_iso : list(float), optional
+        x-positions for txt_iso. The default is [1.5]*3.
+    smoothIt : bool, optional
+        To smooth the iso curves. The default is True.
+
+    Returns
+    -------
+    None.
+
+    """
 
     fig,ax = plt.subplots(figsize=(12,8))
     fig.suptitle(figtitle)
