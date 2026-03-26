@@ -77,8 +77,8 @@ def plot_grid(tab, varx='airmass',xlabel='airmass',
                                  method='linear', 
                                  bounds_error=False, fill_value=0.)
     #print(grid(()))
-    xvp = np.linspace(xmin, xmax, 50*nx)
-    yvp = np.linspace(ymin, ymax, 50*ny)
+    xvp = np.linspace(xmin, xmax, 100*nx)
+    yvp = np.linspace(ymin, ymax, 100*ny)
     
     X,Y = np.meshgrid(xvp,yvp)
     
@@ -97,7 +97,7 @@ def plot_grid(tab, varx='airmass',xlabel='airmass',
                    cmap=plt.cm.jet,aspect='auto',origin='lower')
     
     for io,vv in enumerate(iso):
-        solutions = np.argwhere((fluxpixels>=vv)&(fluxpixels<=1.05*vv))
+        solutions = np.argwhere((fluxpixels>=vv)&(fluxpixels<=1.1*vv))
         ival = solutions[:,0].tolist()
         jval = solutions[:,1].tolist()
         x_iso = X[ival,jval]
@@ -175,7 +175,8 @@ def plot_airmass(df,varx='sigma_pwv',xlabel='$\sigma_{PWV}$ [mm]',
                  vary_prefix='std_zp',ylabel='$\sigma_{ZP}$ [mmag]',
                  airmass=[1.2,2.5],
                  y_iso=[1,2,5],
-                 txt_iso=['1 mmag','2 mmag','5 mmag']):
+                 txt_iso=['1 mmag','2 mmag','5 mmag'],
+                 ymax=6,deltay_txt=0.03):
     
     df = df.round({'mean_airmass':2})
     fig, ax = plt.subplots(figsize=(12,8))
@@ -194,7 +195,7 @@ def plot_airmass(df,varx='sigma_pwv',xlabel='$\sigma_{PWV}$ [mm]',
             lab = '{} band'.format(b)
             if airm > 1.5:
                 lab=None
-            plot_indiv(sel,xvar='sigma_pwv',yvar=yvar,label=lab,
+            plot_indiv(sel,xvar=varx,yvar=yvar,label=lab,
                        color=filtercolors[b],
                        marker=mm[b],lstyle=ls[airm],
                        fig=fig,ax=ax,smoothIt=True)
@@ -203,16 +204,18 @@ def plot_airmass(df,varx='sigma_pwv',xlabel='$\sigma_{PWV}$ [mm]',
     
     idx = df['mean_airmass'].isin(airmass)
     sel = df[idx]
-    xmin = sel['sigma_pwv'].min()
-    xmax = sel['sigma_pwv'].max()
+    xmin = sel[varx].min()
+    xmax = sel[varx].max()
     ax.set_xlim([xmin,xmax])
-    ax.set_ylim([0,6])
+    ax.set_ylim([0,ymax])
     for io,yvals in enumerate(y_iso):
         ax.plot([xmin,xmax],[yvals]*2,linestyle='dashed',color='k')
-        ax.text(0.015,yvals+0.03,txt_iso[io],fontsize=12)
+        ax.text(0.015,yvals+deltay_txt,txt_iso[io],fontsize=12)
     ax.set_xlabel(r'{}'.format(xlabel))
     ax.set_ylabel(r'{}'.format(ylabel))
     ax.legend()
+    
+    
 def plot_indiv(df,
                xvar='z', xlabel='z', 
                yvar='N', ylabel='NSN',label='',
@@ -228,15 +231,16 @@ def plot_indiv(df,
                 marker=marker,linestyle=lstyle,
                 color=color,markersize=8,mfc='None',label=label)
     else:
-       xnew, spl_smooth = get_spline(df,xvar,yvar,nx=10)
-       ax.plot(xnew, spl_smooth,color=color,
-               marker=marker,linestyle=lstyle,
-               markersize=10,mfc='None',label=label) 
+        df = df.sort_values(by=[xvar])
+        xnew, spl_smooth = get_spline(df,xvar,yvar,nx=10)
+        ax.plot(xnew, spl_smooth,color=color,
+                marker=marker,linestyle=lstyle,
+                markersize=10,mfc='None',label=label) 
     
 
 theDir = '../zp_atmos'
 
-theFile = 'zp_atmos_pwv.hdf5'
+theFile = 'zp_atmos_ozone.hdf5'
 
 fName = '{}/{}'.format(theDir,theFile)
 
@@ -251,21 +255,39 @@ for b in 'grizy':
     
 #grid plots
 
-"""
+vary='sigma_pwv'
+ylabel='$\sigma_{PWV}$ [mm]'
+vary='sigma_aerosol'
+ylabel='$\sigma_{aerosol}$'
+b='z'
 tab = Table.from_pandas(df,index=False)
-plot_grid(tab,varx='mean_airmass',vary='sigma_pwv',varz='std_zp_y',smoothIt=True)
-plot_grid(tab,varx='mean_airmass',vary='sigma_pwv',varz='std_mean_wave_y',
-          figtitle='$\sigma_{mean wave}^{y}$',iso=[0.05,0.1,0.15],
-              txt_iso=['0.05 nm','0.1 nm','0.15 nm'],
-              x_iso=[1.5]*3,smoothIt=True)
 """
-
-plot_airmass(df,varx='sigma_pwv',vary_prefix='std_zp')
-plot_airmass(df,varx='sigma_pwv',xlabel='$\sigma_{PWV}$ [mm]',
+plot_grid(tab,varx='mean_airmass',
+          vary=vary,ylabel=ylabel,
+          varz='std_zp_{}'.format(b),smoothIt=True)
+plot_grid(tab,varx='mean_airmass',
+          vary=vary,ylabel=ylabel,
+          varz='std_mean_wave_{}'.format(b),
+          figtitle='$\sigma_{mean wave}^{z}$',iso=[0.05,0.1,0.15],
+              txt_iso=['0.05 nm','0.1 nm','0.15 nm'],
+              x_iso=[1.5]*3,smoothIt=False)
+"""
+varx = 'sigma_pwv'
+xlabel = '$\sigma_{PWV}$ [mm]'
+varx = 'sigma_aerosol'
+xlabel = '$\sigma_{aerosol}$'
+varx = 'sigma_airmass'
+xlabel = '$\sigma_{airmass}$'
+varx = 'sigma_ozone'
+xlabel = '$\sigma_{ozone}$'
+plot_airmass(df,varx=varx,xlabel=xlabel,vary_prefix='std_zp')
+plot_airmass(df,varx=varx,xlabel=xlabel,
                  vary_prefix='std_mean_wave',ylabel='$\sigma_{meanwave}$ [mm]',
                  airmass=[1.2,2.5],
                  y_iso=[0.05,0.1,0.15],
-                 txt_iso=['0.05 nm','0.1 nm','0.15 nm'])
+                 txt_iso=['0.05 nm','0.1 nm','0.15 nm'],
+                 ymax=0.2,deltay_txt=0.005)
+
 plt.show()
 
 
