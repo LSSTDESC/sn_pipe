@@ -176,7 +176,7 @@ def plot_airmass(df,varx='sigma_pwv',xlabel='$\sigma_{PWV}$ [mm]',
                  airmass=[1.2,2.5],
                  y_iso=[1,2,5],
                  txt_iso=['1 mmag','2 mmag','5 mmag'],
-                 ymax=6,deltay_txt=0.03):
+                 ymax=6,deltay_txt=0.03,xtext=0.015):
     
     df = df.round({'mean_airmass':2})
     fig, ax = plt.subplots(figsize=(12,8))
@@ -200,7 +200,7 @@ def plot_airmass(df,varx='sigma_pwv',xlabel='$\sigma_{PWV}$ [mm]',
                        marker=mm[b],lstyle=ls[airm],
                        fig=fig,ax=ax,smoothIt=True)
     
-    ax.grid(visible=True)
+    
     
     idx = df['mean_airmass'].isin(airmass)
     sel = df[idx]
@@ -210,11 +210,27 @@ def plot_airmass(df,varx='sigma_pwv',xlabel='$\sigma_{PWV}$ [mm]',
     ax.set_ylim([0,ymax])
     for io,yvals in enumerate(y_iso):
         ax.plot([xmin,xmax],[yvals]*2,linestyle='dashed',color='k')
-        ax.text(0.015,yvals+deltay_txt,txt_iso[io],fontsize=12)
+        #ax.text(xtext,yvals+deltay_txt,txt_iso[io],fontsize=12)
+        #ax.lines(x=xtext, ymin=, ymax=250, color = 'black', linestyles="dashed")
+        ax.text(x=xtext, y=yvals, s=txt_iso[io], 
+                ha='center', va='center', backgroundcolor='white',fontsize=12)
+        
     ax.set_xlabel(r'{}'.format(xlabel))
     ax.set_ylabel(r'{}'.format(ylabel))
-    ax.legend()
+    ax.legend(loc='upper left',
+              bbox_to_anchor=(0., 1.15), ncol=5, frameon=False, fontsize=15)
+    ax.grid(visible=True)
+    #ax.text(0.2,1.05,'.... airmass=2.5 ',fontsize=12,transform=ax.transAxes)
     
+    x_trans=0.25
+    ax.annotate('', xy=(x_trans+0.,1.05), 
+                xycoords='axes fraction', xytext=(x_trans+0.05, 1.05),
+                arrowprops=dict(arrowstyle="-", color='k'))
+    ax.text(x_trans+0.055,1.04,'airmass=1.2',fontsize=12,transform=ax.transAxes)
+    ax.annotate('', xy=(x_trans+0.2,1.05), xycoords='axes fraction',
+                xytext=(x_trans+0.25, 1.05),
+               arrowprops=dict(arrowstyle="-", color='k',linestyle='dotted'))
+    ax.text(x_trans+0.255,1.04,'airmass=2.5',fontsize=12,transform=ax.transAxes)
     
 def plot_indiv(df,
                xvar='z', xlabel='z', 
@@ -279,14 +295,15 @@ xlabel = '$\sigma_{aerosol}$'
 varx = 'sigma_airmass'
 xlabel = '$\sigma_{airmass}$'
 varx = 'sigma_ozone'
-xlabel = '$\sigma_{ozone}$'
-plot_airmass(df,varx=varx,xlabel=xlabel,vary_prefix='std_zp')
+xlabel = '$\sigma_{ozone}$ [DU]'
+xtext=25
+plot_airmass(df,varx=varx,xlabel=xlabel,vary_prefix='std_zp',xtext=xtext)
 plot_airmass(df,varx=varx,xlabel=xlabel,
                  vary_prefix='std_mean_wave',ylabel='$\sigma_{meanwave}$ [mm]',
                  airmass=[1.2,2.5],
                  y_iso=[0.05,0.1,0.15],
                  txt_iso=['0.05 nm','0.1 nm','0.15 nm'],
-                 ymax=0.2,deltay_txt=0.005)
+                 ymax=0.2,deltay_txt=0.005,xtext=xtext)
 
 plt.show()
 
