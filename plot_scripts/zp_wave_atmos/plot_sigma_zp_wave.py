@@ -6,11 +6,11 @@ Created on Wed Mar 25 10:12:26 2026
 @author: philippe.gris@clermont.in2p3.fr
 """
 import pandas as pd
-import matplotlib.pyplot as plt
 import numpy as np
 from scipy.interpolate import RegularGridInterpolator
 from astropy.table import Table
 from sn_analysis.sn_tools import get_spline
+from sn_plotter_tools import plt,filtercolors
 
 def plot_grid(tab, varx='airmass',xlabel='airmass',
               vary='sigma_pwv',ylabel='$\sigma_{PWV}$ [mm]',
@@ -88,34 +88,37 @@ def plot_grid(tab, varx='airmass',xlabel='airmass',
     ymax = np.max(yvp)
 
     fluxpixels = grid((X,Y))
-    print(fluxpixels)
+    #print(fluxpixels)
     #fluxpixels = np.round(fluxpixels,2)
-    print(fluxpixels)
+    #print(fluxpixels)
     im = ax.imshow(fluxpixels,
                    extent=[xmin,xmax,ymin,ymax],
                    #vmin=np.min(fluxpixels),vmax=np.max(fluxpixels),
                    cmap=plt.cm.jet,aspect='auto',origin='lower')
     
     for io,vv in enumerate(iso):
-        solutions = np.argwhere((fluxpixels>=vv)&(fluxpixels<=vv+0.02))
+        solutions = np.argwhere((fluxpixels>=vv)&(fluxpixels<=1.05*vv))
         ival = solutions[:,0].tolist()
         jval = solutions[:,1].tolist()
         x_iso = X[ival,jval]
         y_iso = Y[ival,jval]
         df_iso = pd.DataFrame(x_iso,columns=[varx])
         df_iso[vary] = y_iso
+        df_iso = df_iso.sort_values(by=[varx])
+        df_iso = df_iso.groupby(varx)[vary].mean().reset_index()
         
         if not smoothIt:
-            ax.plot(x_iso,y_iso,'k.')
+            ax.plot(df_iso[varx],df_iso[vary],
+                    color='k',marker='.',markersize=0.05)
         else:
-            df_iso = df_iso.sort_values(by=[varx])
-            df_iso = df_iso.groupby(varx)[vary].mean().reset_index()
-        
-            xnew, spl_smooth = get_spline(df_iso,varx,vary)
+            """
+            ax.plot(df_iso[varx],df_iso[vary],
+                    color='r',marker='*',markersize=0.05)
+            """
+            xnew, spl_smooth = get_spline(df_iso,varx,vary,nx=10)
             ax.plot(xnew, spl_smooth,color='k',marker='.',markersize=0.05)
         
             ytext = df_iso[vary].max()+0.00005
-            idx = df_iso[varx] >= x_iso[io]
             idd = np.argmin(np.abs(df_iso[varx]-x_iso[io]))
             ytext = df_iso.loc[idd,vary]*1.30
             ax.text(1.6,ytext,txt_iso[io])
@@ -168,19 +171,67 @@ def limVals(lc, field):
 
     return vmin, vmax, vstep, len(vals)
 
-def plot_airmass(df,varx='sigma_pwv',vary_prefix='std_zp',airmass=1.2):
+def plot_airmass(df,varx='sigma_pwv',xlabel='$\sigma_{PWV}$ [mm]',
+                 vary_prefix='std_zp',ylabel='$\sigma_{ZP}$ [mmag]',
+                 airmass=[1.2,2.5],
+                 y_iso=[1,2,5],
+                 txt_iso=['1 mmag','2 mmag','5 mmag']):
     
-    idx = df['mean_airmass'] == airmass
-    
-    sel = df[idx]
-    
+    df = df.round({'mean_airmass':2})
     fig, ax = plt.subplots(figsize=(12,8))
     
+    bands = 'grizy'
+    markers = ['o','P','s','*','h']
+    mm = dict(zip(bands,markers))
+    lstyle = ['solid','dotted']
+    ls = dict(zip(airmass,lstyle))
     
-    for b in 'grizy':
-        plot_indiv(sel,)
+    for airm in airmass:
+        idx = df['mean_airmass'] == airm
+        sel = df[idx]
+        for b in bands:
+            yvar = '{}_{}'.format(vary_prefix,b)
+            lab = '{} band'.format(b)
+            if airm > 1.5:
+                lab=None
+            plot_indiv(sel,xvar='sigma_pwv',yvar=yvar,label=lab,
+                       color=filtercolors[b],
+                       marker=mm[b],lstyle=ls[airm],
+                       fig=fig,ax=ax,smoothIt=True)
+    
+    ax.grid(visible=True)
+    
+    idx = df['mean_airmass'].isin(airmass)
+    sel = df[idx]
+    xmin = sel['sigma_pwv'].min()
+    xmax = sel['sigma_pwv'].max()
+    ax.set_xlim([xmin,xmax])
+    ax.set_ylim([0,6])
+    for io,yvals in enumerate(y_iso):
+        ax.plot([xmin,xmax],[yvals]*2,linestyle='dashed',color='k')
+        ax.text(0.015,yvals+0.03,txt_iso[io],fontsize=12)
+    ax.set_xlabel(r'{}'.format(xlabel))
+    ax.set_ylabel(r'{}'.format(ylabel))
+    ax.legend()
+def plot_indiv(df,
+               xvar='z', xlabel='z', 
+               yvar='N', ylabel='NSN',label='',
+               lstyle='solid',color='k',marker='o',
+               figtitle='',fig=None, ax=None,smoothIt=False): 
+    
+    if fig is None:
+        fig, ax = plt.subplots(figsize=(12,8))
     
     
+    if not smoothIt:
+        ax.plot(df[xvar],df[yvar],
+                marker=marker,linestyle=lstyle,
+                color=color,markersize=8,mfc='None',label=label)
+    else:
+       xnew, spl_smooth = get_spline(df,xvar,yvar,nx=10)
+       ax.plot(xnew, spl_smooth,color=color,
+               marker=marker,linestyle=lstyle,
+               markersize=10,mfc='None',label=label) 
     
 
 theDir = '../zp_atmos'
@@ -194,20 +245,27 @@ df = pd.read_hdf(fName)
 print(df.columns)
 
 print(df[['mean_airmass','sigma_pwv','mean_mean_wave_z', 'std_mean_wave_z']])
-print(test)
+
 for b in 'grizy':
     df['std_zp_{}'.format(b)] *= 1000 # in mmag
     
 #grid plots
+
 """
 tab = Table.from_pandas(df,index=False)
-plot_grid(tab,varx='mean_airmass',vary='sigma_pwv',varz='std_zp_y')
+plot_grid(tab,varx='mean_airmass',vary='sigma_pwv',varz='std_zp_y',smoothIt=True)
 plot_grid(tab,varx='mean_airmass',vary='sigma_pwv',varz='std_mean_wave_y',
-          figtitle='$\sigma_{mean wave}^{y}$',smoothIt=False)
+          figtitle='$\sigma_{mean wave}^{y}$',iso=[0.05,0.1,0.15],
+              txt_iso=['0.05 nm','0.1 nm','0.15 nm'],
+              x_iso=[1.5]*3,smoothIt=True)
 """
 
 plot_airmass(df,varx='sigma_pwv',vary_prefix='std_zp')
-
+plot_airmass(df,varx='sigma_pwv',xlabel='$\sigma_{PWV}$ [mm]',
+                 vary_prefix='std_mean_wave',ylabel='$\sigma_{meanwave}$ [mm]',
+                 airmass=[1.2,2.5],
+                 y_iso=[0.05,0.1,0.15],
+                 txt_iso=['0.05 nm','0.1 nm','0.15 nm'])
 plt.show()
 
 
