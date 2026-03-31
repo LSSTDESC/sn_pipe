@@ -70,21 +70,27 @@ if 'map' in plots:
     plot_grid(tab,varx='mean_airmass',
               vary=thevar,ylabel=labdict[thevar],
               varz='std_mean_wave_{}'.format(theband),
-              figtitle='$\sigma_{mean wave}^{'+theband+'}$ [nm]',iso=[0.05,0.1,0.15],
-                  txt_iso=['0.05 nm','0.1 nm','0.15 nm'],
-                  x_iso=[1.5]*3,smoothIt=True)
+              figtitle='$\sigma_{mean wave}^{'+theband+'}$ [nm]',
+              iso=[0.05,0.1,0.15],
+              txt_iso=['0.05 nm','0.1 nm','0.15 nm'],
+              x_iso=[1.5]*3,smoothIt=True)
 
 if 'sigma' in plots:
+    airmass=[1.2,2.0]
     plot_airmass(df,varx=thevar,xlabel=labdict[thevar],
-                 vary_prefix='std_zp',xtext=xtext[thevar],smoothIt=True)
+                 vary_prefix='std_zp',airmass=airmass, 
+                 y_iso=[1,2,3,5],
+                 txt_iso=['1 mmag','2 mmag','3 mmag','5 mmag'],
+                 xtext=xtext[thevar],smoothIt=True)
 
     plot_airmass(df,varx=thevar,xlabel=labdict[thevar],
                      vary_prefix='std_mean_wave',
                      ylabel='$\sigma_{meanwave}$ [mm]',
-                     airmass=[1.2,2.5],
+                     airmass=airmass,
                      y_iso=[0.05,0.1,0.15],
                      txt_iso=['0.05 nm','0.1 nm','0.15 nm'],
-                     ymax=0.2,deltay_txt=0.005,xtext=xtext[thevar],smoothIt=True)
+                     ymax=0.2,deltay_txt=0.005,
+                     xtext=xtext[thevar],smoothIt=True)
 
 plt.show()
 
