@@ -79,6 +79,8 @@ To uninstall the pipeline: python pip_sn_pack.py --action uninstall --package=al
 
 ### [SN light curves and spectra generation](docs/sn_flux_spectra/sn_flux_spectra.md)
 
+### [Atmospheric parameter impact](docs/atmos_study/atmos_study.md)
+
 ## sn_pipe structure
 
 ### [sn_pipe content](docs/gen/sn_pipe.md)
