@@ -159,7 +159,8 @@ def process_combi(combi_sigma, params, num_combi, outName,nproc=8):
                                      par_names, par_means, par_sigmas,
                                      save_throughputs_dir='',
                                      param_outDir=params['param_outDir'],
-                                     param_outName=param_outName)
+                                     param_outName=param_outName,
+                                     save_random_dir=params['save_random_dir'])
         
         res = sigma_zp(ntrials=params['nsample'], nproc=nproc)
 
