@@ -621,7 +621,13 @@ opts, args = parser.parse_args()
 # load the new values
 procDict = {}
 for key, vals in confDict.items():
-    procDict[key] = eval('opts.{}'.format(key))
+    myval = eval('opts.{}'.format(key))
+    if key != 'Cosmology_deeos':
+        procDict[key] = myval
+    else:
+        procDict[key] = f'\'{myval}\''
+
+
 
 procDict.pop('mem')
 # this is for DDFs
