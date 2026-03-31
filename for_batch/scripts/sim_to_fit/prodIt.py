@@ -63,6 +63,34 @@ parser.add_option("--mem", type=str, default='8Gb',
                   help="memory for batch jobs [%default]")
 parser.add_option("--FoV", type=float, default=9.6,
                   help="telescope field of view [%default]")
+parser.add_option('--Cosmology_deparams', type=str,
+                  default='w0,wa',
+                  help='DE eos parameters [%default]')
+parser.add_option('--Cosmology_devalues', type=str,
+                  default='-1.,0.',
+                  help='DE eos parameter values [%default]')
+parser.add_option('--Cosmology_declass', type=str,
+                  default='w0waCDM',
+                  help='DE class to use (w0waCDM/DDE_FLRW) [%default]')
+parser.add_option('--Cosmology_classloc', type=str,
+                  default='astropy.cosmology',
+                  help='DE class location \
+                        (astropy.cosmology/sn_tools.sn_cosmo_model) [%default]')
+parser.add_option('--Cosmology_demodel', type=str,
+                  default='CPL',
+                  help='DE eos model name [%default]')
+parser.add_option('--Cosmology_deeos', type=str,
+                  default='w0+wa*z/(1+z)',
+                  help='DE eos model [%default]')
+parser.add_option('--Cosmology_H0', type=float,
+                  default=70.,
+                  help='DE eos model [%default]')
+parser.add_option('--Cosmology_Om0', type=float,
+                  default=0.30,
+                  help='Omega_matter [%default]')
+parser.add_option('--Cosmology_Ode0', type=float,
+                  default=0.30,
+                  help='Omega_DE [%default]')
 
 opts, args = parser.parse_args()
 
@@ -88,6 +116,12 @@ script = 'python for_batch/scripts/sn_prod/prod_sn_dd_wfd.py'
 cct = ['SN_smearFlux', 'Fitter_sigmaz',
        'Observations_coadd', 'LC_coadd', 'saturation_effect',
        'InstrumentSimu_ntrial_zp', 'tag_script', 'mem','FoV']
+cosmo_params=['Cosmology_deparams', 'Cosmology_devalues', 'Cosmology_declass', 
+       'Cosmology_classloc','Cosmology_demodel', 'Cosmology_deeos', 
+       'Cosmology_H0', 'Cosmology_Om0', 'Cosmology_Ode0']
+
+cct += cosmo_params
+
 for vv in ['airmass', 'pwv', 'ozone', 'aerosol']:
     cct.append('sigma_{}'.format(vv))
 
@@ -98,7 +132,10 @@ scr_ += ' --outDir_WFD={}'.format(outDir_WFD)
 scr_ += ' --dbList_WFD={}'.format(dbList_WFD)
 
 for vv in cct:
-    scr_ += ' --{}={}'.format(vv, params[vv])
+    if isinstance(params[vv],str):
+        scr_ += ' --{}=\'{}\''.format(vv, params[vv])
+    else:
+        scr_ += ' --{}={}'.format(vv, params[vv])
 
 print(scr_)
 os.system(scr_)

@@ -66,3 +66,16 @@ InstrumentSimu sigma_ozone 0. float #sigma_ozone
 InstrumentSimu ntrial_zp 1 int #ntrial to estimate zp vs airmass
 tag_script no_tag str #tag script name
 FoV 9.6 float #telescope fov
+## Cosmology parameters
+#Cosmology Model w0waCDM str #cosmology model
+Cosmology Om0 0.30 float #cosmology Omegam
+Cosmology Ode0 0.70 float #cosmology Omegall
+Cosmology H0 70.0 float #cosmology H0
+#Cosmology w0 -1.0 float #cosmology w0
+#Cosmology wa 0.0 float #cosmology wa
+Cosmology deparams w0,wa str #cosmo param names
+Cosmology devalues -1.,0. str #cosmo param values
+Cosmology declass w0waCDM str #DE class to use (w0waCDM/DDE_FLRW)
+Cosmology classloc astropy.cosmology str #DE class location(astropy.cosmology/sn_tools.sn_cosmo_model)
+Cosmology demodel CPL str #DE eos model name
+Cosmology deeos w0+wa*z/(1+z) str #DE eos model

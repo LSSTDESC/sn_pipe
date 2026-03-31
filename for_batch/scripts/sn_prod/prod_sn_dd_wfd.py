@@ -128,6 +128,35 @@ parser.add_option("--tag_script", type=str,
                   help="script name tag [%default]")
 parser.add_option("--FoV", type=float, default=9.6,
                   help="telescope field of view [%default]")
+parser.add_option('--Cosmology_deparams', type=str,
+                  default='w0,wa',
+                  help='DE eos parameters [%default]')
+parser.add_option('--Cosmology_devalues', type=str,
+                  default='-1.,0.',
+                  help='DE eos parameter values [%default]')
+parser.add_option('--Cosmology_declass', type=str,
+                  default='w0waCDM',
+                  help='DE class to use (w0waCDM/DDE_FLRW) [%default]')
+parser.add_option('--Cosmology_classloc', type=str,
+                  default='astropy.cosmology',
+                  help='DE class location \
+                        (astropy.cosmology/sn_tools.sn_cosmo_model) [%default]')
+parser.add_option('--Cosmology_demodel', type=str,
+                  default='CPL',
+                  help='DE eos model name [%default]')
+parser.add_option('--Cosmology_deeos', type=str,
+                  default='w0+wa*z/(1+z)',
+                  help='DE eos model [%default]')
+parser.add_option('--Cosmology_H0', type=float,
+                  default=70.,
+                  help='DE eos model [%default]')
+parser.add_option('--Cosmology_Om0', type=float,
+                  default=0.30,
+                  help='Omega_matter [%default]')
+parser.add_option('--Cosmology_Ode0', type=float,
+                  default=0.30,
+                  help='Omega_DE [%default]')
+
 
 opts, args = parser.parse_args()
 
@@ -179,9 +208,15 @@ InstrumentSimu_ntrial_zp = opts.InstrumentSimu_ntrial_zp
 tag_script = opts.tag_script
 FoV = opts.FoV
 
+params = vars(opts)
+
+print(params)
 cmd_scr = 'python for_batch/scripts/sn_prod/loop_prod.py'
 cmd_scr += ' --SN_sigmaInt=0.0'
+search_key = 'Cosmology'
+cosmo_dict = dict(filter(lambda item: search_key in item[0], params.items()))
 
+cosmo_list = list(cosmo_dict.keys())
 # DDF production
 if dbList_DD != '':
     cmd_ddf = '{} --dbList={}'.format(cmd_scr, dbList_DD)
@@ -211,8 +246,8 @@ if dbList_DD != '':
     cmd_ddf += ' --mem={}'.format(mem)
     cmd_ddf += ' --atmosType={}'.format(atmosType)
     cmd_ddf += ' --fit_coadded={}'.format(fit_coadded)
-    cmd_ddf += ' --w0={}'.format(w0)
-    cmd_ddf += ' --wa={}'.format(wa)
+    #cmd_ddf += ' --w0={}'.format(w0)
+    #cmd_ddf += ' --wa={}'.format(wa)
     cmd_ddf += ' --sigma_aerosol={}'.format(sigma_aerosol)
     cmd_ddf += ' --sigma_pwv={}'.format(sigma_pwv)
     cmd_ddf += ' --sigma_airmass={}'.format(sigma_airmass)
@@ -221,6 +256,13 @@ if dbList_DD != '':
         InstrumentSimu_ntrial_zp)
     cmd_ddf += ' --tag_script={}'.format(tag_script)
     cmd_ddf += ' --FoV={}'.format(FoV)
+   
+    for vv in cosmo_list: 
+        if isinstance(params[vv],str):
+            cmd_ddf += ' --{}=\'{}\''.format(vv,params[vv])
+        else:
+            cmd_ddf += ' --{}={}'.format(vv,params[vv])
+    
     print(cmd_ddf)
     os.system(cmd_ddf)
 
@@ -267,5 +309,11 @@ if dbList_WFD != '':
         InstrumentSimu_ntrial_zp)
     cmd_wfd += ' --tag_script={}'.format(tag_script)
     cmd_wfd += ' --FoV={}'.format(FoV)
+    for vv in cosmo_list: 
+        if isinstance(params[vv],str):
+            cmd_wfd += ' --{}=\'{}\''.format(vv,params[vv])
+        else:
+            cmd_wfd += ' --{}={}'.format(vv,params[vv])
+    
     print(cmd_wfd)
     os.system(cmd_wfd)

@@ -132,9 +132,45 @@ parser.add_option("--tag_script", type=str,
                   help="script name tag [%default]")
 parser.add_option("--FoV", type=float, default=9.6,
                   help="telescope field of view [%default]")
+parser.add_option('--Cosmology_deparams', type=str,
+                  default='w0,wa',
+                  help='DE eos parameters [%default]')
+parser.add_option('--Cosmology_devalues', type=str,
+                  default='-1.,0.',
+                  help='DE eos parameter values [%default]')
+parser.add_option('--Cosmology_declass', type=str,
+                  default='w0waCDM',
+                  help='DE class to use (w0waCDM/DDE_FLRW) [%default]')
+parser.add_option('--Cosmology_classloc', type=str,
+                  default='astropy.cosmology',
+                  help='DE class location \
+                        (astropy.cosmology/sn_tools.sn_cosmo_model) [%default]')
+parser.add_option('--Cosmology_demodel', type=str,
+                  default='CPL',
+                  help='DE eos model name [%default]')
+parser.add_option('--Cosmology_deeos', type=str,
+                  default='w0+wa*z/(1+z)',
+                  help='DE eos model [%default]')
+parser.add_option('--Cosmology_H0', type=float,
+                  default=70.,
+                  help='DE eos model [%default]')
+parser.add_option('--Cosmology_Om0', type=float,
+                  default=0.30,
+                  help='Omega_matter [%default]')
+parser.add_option('--Cosmology_Ode0', type=float,
+                  default=0.30,
+                  help='Omega_DE [%default]')
 
 opts, args = parser.parse_args()
 
+params = vars(opts)
+
+cmd_scr = 'python for_batch/scripts/sn_prod/loop_prod.py'
+cmd_scr += ' --SN_sigmaInt=0.0'
+search_key = 'Cosmology'
+cosmo_dict = dict(filter(lambda item: search_key in item[0], params.items()))
+
+cosmo_list = list(cosmo_dict.keys())
 # load csv file
 
 df = pd.read_csv(opts.dbList, comment='#')
@@ -199,5 +235,11 @@ for i, row in df.iterrows():
     procDict['InstrumentSimu_ntrial_zp'] = opts.InstrumentSimu_ntrial_zp
     procDict['tag_script'] = opts.tag_script
     procDict['FoV'] = opts.FoV
+    for vv in cosmo_list: 
+        if isinstance(params[vv],str):
+            procDict[vv]= '\'{}\''.format(params[vv])
+        else:
+            procDict[vv]= params[vv]
+
 
     go_batch(script, procDict)
