@@ -40,6 +40,7 @@ sigma_beta_step 0.0 float #sigma beta step value
 outDir ../zp_atmos str #outputDir
 outName zp_atmos_config1.hdf5 str #outName
 param_outDir None str #output dir for params
+save_random_dir '' str #outputDir for random trials
 #number of test
 ntrial 1 int #number of trials
 nsample 1000 int #number of sample per trial
