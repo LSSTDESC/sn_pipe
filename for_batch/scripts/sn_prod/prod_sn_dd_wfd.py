@@ -104,10 +104,6 @@ parser.add_option("--atmosType", type=str, default='const',
                   help="atmos type (const/dep) [%default]")
 parser.add_option("--fit_coadded", type=int, default=0,
                   help="to fitted coadded LC points [%default]")
-parser.add_option("--w0", type=float, default=-1.0,
-                  help="w0 dark energy parameter [%default]")
-parser.add_option("--wa", type=float, default=0.0,
-                  help="wa dark energy parameter [%default]")
 parser.add_option("--sigma_airmass", type=float,
                   default=0.0,
                   help="sigma airmass [%default]")
@@ -198,8 +194,6 @@ color_min = opts.SN_color_min
 mem = opts.mem
 atmosType = opts.atmosType
 fit_coadded = opts.fit_coadded
-w0 = opts.w0
-wa = opts.wa
 sigma_airmass = opts.sigma_airmass
 sigma_pwv = opts.sigma_pwv
 sigma_aerosol = opts.sigma_aerosol
@@ -299,8 +293,6 @@ if dbList_WFD != '':
     cmd_wfd += ' --mem={}'.format(mem)
     cmd_wfd += ' --atmosType={}'.format(atmosType)
     cmd_wfd += ' --fit_coadded={}'.format(fit_coadded)
-    cmd_wfd += ' --w0={}'.format(w0)
-    cmd_wfd += ' --wa={}'.format(wa)
     cmd_wfd += ' --sigma_aerosol={}'.format(sigma_aerosol)
     cmd_wfd += ' --sigma_pwv={}'.format(sigma_pwv)
     cmd_wfd += ' --sigma_airmass={}'.format(sigma_airmass)
