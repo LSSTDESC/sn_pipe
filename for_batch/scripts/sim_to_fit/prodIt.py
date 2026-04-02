@@ -89,7 +89,7 @@ parser.add_option('--Cosmology_Om0', type=float,
                   default=0.30,
                   help='Omega_matter [%default]')
 parser.add_option('--Cosmology_Ode0', type=float,
-                  default=0.30,
+                  default=0.70,
                   help='Omega_DE [%default]')
 
 opts, args = parser.parse_args()
