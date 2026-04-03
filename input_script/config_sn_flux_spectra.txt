@@ -45,6 +45,7 @@ web_path https://me.lsst.eu/gris/DESC_SN_pipeline str #where to grab the x0_norm
 
 ##SED production or not
 sed 0 int #to estimate sn sed
+phases_sed -10,0,20 str #phases to estimated seds
 
 ##Outputs
 outDir ../sn_flux_spectra str #output directory

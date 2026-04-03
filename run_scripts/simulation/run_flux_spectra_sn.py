@@ -80,6 +80,11 @@ for key, vals in confDict.items():
 
 params = get_dict_for_class(procDict)
 
+if params['phases_sed'] == '':
+    params['phases_sed'] = []
+else:
+    params['phases_sed'] = list(map(float,params['phases_sed'].split(',')))
+
 #class instance
 snflux = SNflux(**params)
 
