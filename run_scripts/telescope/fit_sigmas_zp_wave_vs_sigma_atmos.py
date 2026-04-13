@@ -13,7 +13,11 @@ from sn_plotter_tools.plot_tools import plot_airmass
 import numpy as np
 from scipy.interpolate import interp1d
 
-def load_data(theDir,atmos_params):
+atm_ref = ['airmass','pwv','ozone','aerosol','total']
+markers = ['o','s','P','h','v']
+marks = dict(zip(atm_ref,markers))
+
+def load_atmos_data(theDir,atmos_params):
     """
     Function to load data (zp, mean_wave) vs sigma_atmos_params
 
@@ -77,16 +81,16 @@ def linfit_atmos(df,varxp='pwv',
     """
     
     ro = []
-    print(df.columns)
+    #print(df.columns)
     varx = 'sigma_{}'.format(varxp)
     for airm in airmass:
         idx = df['mean_airmass'] == airm
-        sel = df[idx]
+        sel = pd.DataFrame(df[idx])
         for b in bands:
             yvar = 'std_{}_{}'.format(vary_prefix,b)
             yvar_rel = 'std_{}_{}_rel'.format(vary_prefix,b)
             sel[yvar_rel] = sel[yvar]/sel['mean_{}'.format(varxp)]
-            print('fitting',sel[[varx,yvar,yvar_rel]])
+            #print('fitting',sel[[varx,yvar,yvar_rel]])
             res = list(fit_lin(sel,varx,yvar))
             res += [b,airm]
             ro.append(res)
@@ -452,6 +456,167 @@ def calc_combi(grp):
     return res
 
     
+def plot_perf(data,x_main='sigma',
+              obs_param='zp',unit='mmag',ylabel='zp',
+              atmos_params=['airmass','ozone','aerosol','pwv','total'],
+              airmass=[1.2,2.],ylines=[1,5,10],
+              yannot=['1 mmag','5 mmag','10 mmag'],extra_leg=''):
+    """
+    Function to draw a perf plot
+
+    Parameters
+    ----------
+    data : pandas df
+        Data to plot.
+    x_main : str, optional
+        prefix var. The default is 'sigma'.
+    obs_param : str, optional
+        obs param. The default is 'zp'.
+    unit : str, optional
+        obs param unit. The default is 'mmag'.
+    ylabel : str, optional
+        y-axis label. The default is 'zp'.
+    atmos_params : list(str), optional
+        list of atmos params. 
+        The default is ['airmass','ozone','aerosol','pwv','total'].
+    airmass : list(float), optional
+        List of airmass to consider. The default is [1.2,2.].
+    ylines : list(float), optional
+        y-values of lines to draw. The default is [1,5,10].
+    yannot : list(str), optional
+        ylines annot. The default is ['1 mmag','5 mmag','10 mmag'].
+    extra_leg: str, optional.
+        extra legend to add to the plot. The default is ''.
+
+    Returns
+    -------
+    None.
+
+    """
+    
+    fig, ax = plt.subplots(figsize=(12,8))
+    
+    ls = dict(zip(airmass,['solid','dotted']))
+    color = dict(zip(airmass,['black','red']))
+    
+    for airm in airmass:
+        idx = data['airmass'] == airm
+        sel = data[idx]
+        
+        for atm_param in atmos_params:
+            label =atm_param
+            if airm > 1.2:
+                label = None
+            obs_str = '{}_{}_{}'.format(x_main,obs_param,atm_param)
+            ax.plot(sel['band'],sel[obs_str],
+                    marker=marks[atm_param],mfc='None',
+                    linestyle=ls[airm],color=color[airm],label=label)
+    
+    xmin,xmax = ax.get_xlim()
+    for io,yl in enumerate(ylines):
+        ax.plot([xmin,xmax],[yl]*2,linestyle='dashed',color='b')
+        ax.text(1.02*xmax,yl,'{}'.format(yannot[io]),
+            fontsize=12,color='b')       
+    ax.grid(visible=True)
+    
+    if x_main == 'sigma':
+        ylabel = '$\\'+x_main+'_{'+ylabel+'}$ ['+unit+']'
+    else:
+        #ylabel = x_main+'$_{\sigma_{'+ylabel+'}}$ ['+unit+']'
+        ylabel = '$\sigma_{'+ylabel+'}$'+' budget ['+unit+']'
+    ax.set_ylabel(r'{}'.format(ylabel))
+    ax.set_xlabel(r'band')
+    
+    ax.legend(loc='upper left',
+                 bbox_to_anchor=(0.1, 1.15), 
+                 ncol=5, frameon=False, fontsize=15)
+    
+    x_trans=0.25
+    ax.annotate('', xy=(x_trans+0.,1.05), 
+                xycoords='axes fraction', xytext=(x_trans+0.05, 1.05),
+                arrowprops=dict(arrowstyle="-", color='k'))
+    ax.text(x_trans+0.055,1.04,'airmass={}'.format(airmass[0]),
+            fontsize=12,transform=ax.transAxes)
+    ax.annotate('', xy=(x_trans+0.2,1.05), xycoords='axes fraction',
+                xytext=(x_trans+0.25, 1.05),
+               arrowprops=dict(arrowstyle="-", color='k',linestyle='dotted'))
+    ax.text(x_trans+0.255,1.04,'airmass={}'.format(airmass[1]),
+            fontsize=12,transform=ax.transAxes)
+    
+    ax.set_xlim([xmin,xmax])
+    
+    if extra_leg != '':
+       ax.text(-0.15,0.97,extra_leg,
+            fontsize=12,transform=ax.transAxes,color='b') 
+    
+def plot_perf_obs_param(df_zp,sigmas,unit_atmos,
+                    obs_param='zp',unit='nm',ylabel='zp',
+                    ylines=[1,5,10],
+                    yannot=['1 mmag','5 mmag','10 mmag']):
+    """
+    Function to draw perf plots for an obs_param
+
+    Parameters
+    ----------
+    df_zp : pandas df
+        Data to plot.
+    sigmas : dict
+        sigmas of atmos params.
+    unit_atmos : dict
+        unit for sigmas of atmos params.    
+    obs_param : str, optional
+        obs param. The default is 'zp'.
+    unit : str, optional
+        obs param unit. The default is 'nm'.
+    ylabel : str, optional
+        y-axis label. The default is 'zp'.
+    ylines : list(float), optional
+        y-values of lines to draw. The default is [1,5,10].
+    yannot : list(str), optional
+        y-lines annot. The default is ['1 mmag','5 mmag','10 mmag'].
+
+    Returns
+    -------
+    None.
+
+    """
+    
+    bands = 'grizy'
+    b_index = [0,1,2,3,4]
+    dfb = pd.DataFrame(list(bands),columns=['band'])
+    dfb['band_index'] = b_index
+  
+    
+    extra_leg = ''
+    
+    for key,vals in sigmas.items():
+        vvar = '$\sigma_{'+key+'}$='+'{}'.format(vals)
+        extra_leg += vvar + ' ' +unit_atmos[key]+'\n'
+        
+    rr_zp = get_atmos_data(df_zp)
+    res_zp = get_values(rr_zp,sigmas=sigmas)
+  
+    res_zp = res_zp.merge(dfb,left_on=['band'],right_on=['band'])
+  
+    res_zp = res_zp.sort_values(by=['band_index'])
+  
+  
+    res_zp['frac_check'] = 0
+    vart = 'sigma_{}_total'.format(obs_param)
+    for atm_param in atmos_params:
+        fracx = 'frac_{}_{}'.format(obs_param,atm_param)
+        varx = 'sigma_{}_{}'.format(obs_param,atm_param)
+        res_zp[fracx] = 100.*res_zp[varx]**2/res_zp[vart]**2
+        res_zp['frac_check'] += res_zp[fracx]
+  
+    plot_perf(res_zp,obs_param=obs_param,unit =unit,
+            ylabel=ylabel,ylines=ylines,yannot=yannot,extra_leg=extra_leg)
+    
+    plot_perf(res_zp,x_main='frac',obs_param=obs_param,unit='%',ylabel=ylabel,
+              atmos_params=['airmass','ozone','aerosol','pwv'],ylines=[],
+              extra_leg=extra_leg) 
+  
+  
 parser = OptionParser(description='Fit sigma_zp and sigma_mean_wave \
                       vs sigma of atmos params')
                       
@@ -459,32 +624,35 @@ parser.add_option('--dataDir', type=str, default='../zp_atmos',
                   help='data dir [%default]')
 parser.add_option('--atmos_param', type=str, default='airmass,ozone,aerosol,pwv',
                   help='atmospheric parameters [%default]')
-parser.add_option('--plots', type=str, default='vs_airmass,summary',
+parser.add_option('--plots', type=str, default='vs_airmass,summary,from_sigmas',
                   help='plots [%default]')
+parser.add_option('--sigmas', type=str, default='3e-3,20,5e-3,0.2',
+                  help='sigmas of atmos params [%default]')
+parser.add_option('--unit', type=str, default=',DU,,mm',
+                  help='unit of sigmas of atmos params [%default]')
 
 opts, args = parser.parse_args()
 
 theDir = opts.dataDir
 atmos_params= opts.atmos_param.split(',')
 plots = opts.plots.split(',')
+sigmas = opts.sigmas.split(',')
+unit = opts.unit.split(',')
+sigmas = list(map(float, sigmas))
+sigmas = dict(zip(atmos_params,sigmas))
+unit = dict(zip(atmos_params,unit))
 
-df_zp, df_wave = load_data(theDir, atmos_params)
-rr = get_atmos_data(df_zp)
-
-print(rr)
+df_zp, df_wave = load_atmos_data(theDir, atmos_params)
 
 if 'summary' in plots:
     plot_all_summary(df_zp, df_wave)
   
-#print('go',atmos_params)
 if 'vs_airmass' in plots:
     plot_atmos_data_airmass(theDir,atmos_params)
 
-#print(df_zp)
-
-
-fres = get_values(rr)
-print(fres)
-
+if 'from_sigmas':
+    plot_perf_obs_param(df_zp,sigmas,unit)
+    plot_perf_obs_param(df_wave,sigmas,unit,obs_param='mean_wave',unit = 'nm',
+                    ylabel='mean\ wave',ylines=[0.1],yannot=['0.1 nm'])
 
 plt.show()
