@@ -14,6 +14,24 @@ import numpy as np
 from scipy.interpolate import interp1d
 
 def load_data(theDir,atmos_params):
+    """
+    Function to load data (zp, mean_wave) vs sigma_atmos_params
+
+    Parameters
+    ----------
+    theDir : str
+        Data dir.
+    atmos_params : list(str)
+        List of atmospheric parameters.
+
+    Returns
+    -------
+    df_zp : pandas df
+        zp data.
+    df_wave : pandas df
+        mean wave data.
+
+    """
     df_zp = pd.DataFrame()
     df_wave = pd.DataFrame()
     for atm in atmos_params:
@@ -33,7 +51,30 @@ def load_data(theDir,atmos_params):
 
     return df_zp,df_wave
 
-def linfit_atmos(df,varxp='pwv',vary_prefix='zp',airmass=[1.2,2.0],bands='grizy'):
+def linfit_atmos(df,varxp='pwv',
+                 vary_prefix='zp',airmass=[1.2,2.0],bands='grizy'):
+    """
+    Function to perform a linear fit of zp/mean_wave vs atmos params
+
+    Parameters
+    ----------
+    df : pandas df
+        Data to fit.
+    varxp : str, optional
+        atmos parameter. The default is 'pwv'.
+    vary_prefix : str, optional
+        prefix obs (zp/mean_wave). The default is 'zp'.
+    airmass : list(float), optional
+        List of airmass values o consider. The default is [1.2,2.0].
+    bands : str, optional
+        Filters to consider. The default is 'grizy'.
+
+    Returns
+    -------
+    dfn : pandas df
+        output data.
+
+    """
     
     ro = []
     print(df.columns)
@@ -59,6 +100,35 @@ def linfit_atmos(df,varxp='pwv',vary_prefix='zp',airmass=[1.2,2.0],bands='grizy'
 def plot(df,obs_param='zp',airmass=1.2,
          fig=None,ax=None,labelIt=True,
          linestyle='solid',color='k',valref=1):
+    """
+    Function to plot zp,mean_wave vs inverse of the fit slope
+
+    Parameters
+    ----------
+    df : pandas df
+        Data to plot.
+    obs_param : str, optional
+        obs parameter. The default is 'zp'.
+    airmass : float, optional
+        airmass value. The default is 1.2.
+    fig : matplotlib figure, optional
+        Figure for the plot. The default is None.
+    ax : matplotlib axis, optional
+        axis for the plot. The default is None.
+    labelIt : bool, optional
+        To add a label to the plot. The default is True.
+    linestyle : str, optional
+        line style for the plot. The default is 'solid'.
+    color : str, optional
+        color for the plot. The default is 'k'.
+    valref: float, optional.
+        reference value. The default is 1.
+
+    Returns
+    -------
+    None.
+
+    """
     
     
     if fig is None:
@@ -90,6 +160,25 @@ def plot(df,obs_param='zp',airmass=1.2,
                 marker=marks[atm],mfc='None',markersize=12,color=color)
         
 def plot_summary(df_zp,obs_param='zp',valref=1,unit='mmag'):
+    """
+    summary plot
+
+    Parameters
+    ----------
+    df_zp : pandas df
+        Data to plot.
+    obs_param : str, optional
+        obs parameter. The default is 'zp'.
+    valref : float, optional
+        reference value. The default is 1.
+    unit : str, optional
+        plot unit. The default is 'mmag'.
+
+    Returns
+    -------
+    None.
+
+    """
     
     fig, ax = plt.subplots(figsize=(12,8))  
     plot(df_zp,obs_param=obs_param,fig=fig,ax=ax,valref=valref)
@@ -145,12 +234,43 @@ def plot_summary(df_zp,obs_param='zp',valref=1,unit='mmag'):
             fontsize=12,color='r')    
 
 def plot_all_summary(df_zp,df_wave):
+    """
+    plot all summary
+
+    Parameters
+    ----------
+    df_zp : pandas df
+        zp data.
+    df_wave : pandas df
+        mean wave data.
+
+    Returns
+    -------
+    None.
+
+    """
     
     plot_summary(df_zp)
     plot_summary(df_wave,obs_param='mean_wave',valref=0.1,unit='nm')
     
 def plot_atmos_data_airmass(theDir,
                             atmos_params=['pwv','aerosol','airmass','ozone']):
+    """
+    plot atmos data
+
+    Parameters
+    ----------
+    theDir : str
+        Data dir.
+    atmos_params : list(str), optional
+        List of atmos parameters. 
+        The default is ['pwv','aerosol','airmass','ozone'].
+
+    Returns
+    -------
+    None.
+
+    """
     
     all_atm = ['pwv','aerosol','airmass','ozone']
     legxx = ['$\sigma_{PWV}$ [mm]',
@@ -188,6 +308,23 @@ def plot_atmos_data_airmass(theDir,
                          xtext=xxtext[vv],smoothIt=False,fitIt=True)
     
 def get_atmos_data(df,atmos_params=['airmass','ozone','aerosol','pwv']):
+    """
+    Function to grab atmos data (interpolator)
+
+    Parameters
+    ----------
+    df : pandas df
+        Data to process.
+    atmos_params : list(str), optional
+        List of atmos parameters. 
+        The default is ['airmass','ozone','aerosol','pwv'].
+
+    Returns
+    -------
+    dd : pandas df
+        Output data.
+
+    """
     
     cols = ['band','airmass',
                      'atmos_param','obs_param']
@@ -195,6 +332,20 @@ def get_atmos_data(df,atmos_params=['airmass','ozone','aerosol','pwv']):
     return dd
 
 def get_interp(grp):
+    """
+    Function to grab interpolator of atmos params
+
+    Parameters
+    ----------
+    grp : pandas df
+        Data to process.
+
+    Returns
+    -------
+    pandas df
+        table of interpolators.
+
+    """
     
     
     a = grp['slope'].values[0]
@@ -213,6 +364,24 @@ def get_interp(grp):
     
 def get_values(df,sigmas=dict(zip(['airmass','ozone','aerosol','pwv'],
                                   [3e-3,20,5e-3,0.2]))):
+    """
+    Function to estimate sigma_zp and sigma_mean_wave 
+    for a set of sigmas of atmos params
+
+    Parameters
+    ----------
+    df : pandas df
+        Data to process.
+    sigmas : dict, optional
+        Atmos parameters. 
+        The default is dict(zip(['airmass','ozone','aerosol','pwv'],                                  [3e-3,20,5e-3,0.2])).
+
+    Returns
+    -------
+    db : pandas df
+        Output data.
+
+    """
     
     cols = ['band','airmass',
                     'atmos_param','obs_param']
@@ -221,7 +390,24 @@ def get_values(df,sigmas=dict(zip(['airmass','ozone','aerosol','pwv'],
     db = da.groupby(['band','airmass']).apply(lambda x: calc_combi(x),include_groups=False).reset_index()
    
     return db
+
 def get_val(grp, thedict):
+    """
+    Function to grab interp values
+
+    Parameters
+    ----------
+    grp : pandas df
+        Data to process.
+    thedict : dict
+        sigma values.
+
+    Returns
+    -------
+    pandas df
+        output data.
+
+    """
     
     atmos_param = grp.name[2]
     sigma = thedict[atmos_param]
@@ -233,6 +419,20 @@ def get_val(grp, thedict):
     return pd.DataFrame.from_dict(dd)
     
 def calc_combi(grp):
+    """
+    Function to estimate combination of sigmas
+
+    Parameters
+    ----------
+    grp : pandas df
+        Data to process.
+
+    Returns
+    -------
+    res : pandas df
+        Output data.
+
+    """
     
     atmos_params = grp['atmos_param'].to_list()
     sigma_values = grp['sigma_value'].to_list()
@@ -252,9 +452,6 @@ def calc_combi(grp):
     return res
 
     
-    
-    
-    
 parser = OptionParser(description='Fit sigma_zp and sigma_mean_wave \
                       vs sigma of atmos params')
                       
@@ -262,28 +459,32 @@ parser.add_option('--dataDir', type=str, default='../zp_atmos',
                   help='data dir [%default]')
 parser.add_option('--atmos_param', type=str, default='airmass,ozone,aerosol,pwv',
                   help='atmospheric parameters [%default]')
+parser.add_option('--plots', type=str, default='vs_airmass,summary',
+                  help='plots [%default]')
 
 opts, args = parser.parse_args()
 
 theDir = opts.dataDir
 atmos_params= opts.atmos_param.split(',')
+plots = opts.plots.split(',')
 
 df_zp, df_wave = load_data(theDir, atmos_params)
 rr = get_atmos_data(df_zp)
 
 print(rr)
 
-fres = get_values(rr)
-
-print(fres)
-#plot_all_summary(df_zp, df_wave)
+if 'summary' in plots:
+    plot_all_summary(df_zp, df_wave)
   
 #print('go',atmos_params)
-#plot_atmos_data_airmass(theDir,atmos_params)
+if 'vs_airmass' in plots:
+    plot_atmos_data_airmass(theDir,atmos_params)
 
 #print(df_zp)
 
 
+fres = get_values(rr)
+print(fres)
 
 
 plt.show()
