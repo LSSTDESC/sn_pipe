@@ -36,6 +36,8 @@ parser.add_option('--prior_refvalue', type=str, default='0.3',
                   help='prior refvalue list [%default]')
 parser.add_option('--prior_sigma', type=str, default='0.0073',
                   help='prior sigma list [%default]')
+parser.add_option('--tagName', type=str, default='_notag',
+                  help='tag for the script [%default]')
 
 opts, args = parser.parse_args()
 
@@ -48,6 +50,7 @@ prior = opts.prior
 prior_varname = opts.prior_varname
 prior_refvalue = opts.prior_refvalue
 prior_sigma = opts.prior_sigma
+tagName = opts.tagName
 
 
 # load OS files to process
@@ -69,7 +72,7 @@ pp['dataDir'] = dataDir
 
 for i, row in fis.iterrows():
     dbName = row['dbName']
-    processName = 'cosmofit_survey_{}'.format(dbName)
+    processName = 'cosmofit_survey_{}_{}'.format(dbName,tagName)
     mybatch = BatchIt(processName=processName)
     pp['dbName_DD'] = dbName
     pp['dbName_WFD'] = dbName
