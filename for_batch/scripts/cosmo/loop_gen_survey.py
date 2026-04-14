@@ -39,14 +39,19 @@ parser.add_option("--low_z_optimize", type=int, default=0,
 parser.add_option("--dbList", type=str,
                   default='list_OS_new_wfd.csv',
                   help="list of db to process [%default]")
+parser.add_option("--tagName", type=str,
+                  default='taga',
+                  help="tag for the script [%default]")
 
 opts, args = parser.parse_args()
 
 dbList = opts.dbList
 
 params = vars(opts)
+tagName = params['tagName']
 
 del params['dbList']
+del params['tagName']
 
 script = 'run_scripts/cosmology/gen_survey.py'
 """
@@ -57,7 +62,8 @@ for key, vals in params.items():
 dbNames = pd.read_csv(dbList, comment='#')
 
 # now build the batch
-processName = 'gen_survey'
+processName = 'gen_survey_{}'.format(tagName)
+
 mybatch = BatchIt(processName=processName)
 
 for i, row in dbNames.iterrows():
