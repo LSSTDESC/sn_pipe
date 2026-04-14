@@ -105,3 +105,28 @@ Options:
 [sigma_zp_y vs sigma_pwv](sigma_pz_sigma_pwv.png)
 
 [sigma_mean_wave_y vs sigma_pwv](sigma_mean_wave_sigma_pwv.png)
+
+### Usage: run_scripts/telescope/fit_sigmas_zp_wave_vs_sigma_atmos.py [options]
+
+<pre>
+
+Fit sigma_zp and sigma_mean_wave vs sigma of atmos params
+
+Options:
+  -h, --help            show this help message and exit
+  --dataDir=DATADIR     data dir [../zp_atmos]
+  --atmos_param=ATMOS_PARAM
+                        atmospheric parameters [airmass,ozone,aerosol,pwv]
+  --plots=PLOTS         plots [vs_airmass,summary,from_sigmas]
+  --sigmas=SIGMAS       sigmas of atmos params [3e-3,20,5e-3,0.2]
+  --unit=UNIT           unit of sigmas of atmos params [,DU,,mm]
+
+</pre>
+
+[sigma_zp vs sigma_pwv](fig4a.png)
+
+[sigma_mean_wave vs sigma_pwv](fig3a.png)
+
+[sigma_zp vs band and atmos. param for a set of atmos. param sigmas](fig1a.png)
+
+[sigma_zp budget vs band](fig2a.png)
