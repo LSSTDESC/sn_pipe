@@ -9,39 +9,12 @@ from optparse import OptionParser
 import sn_phystools_input as cosmo_input
 from sn_tools.sn_io import make_dict_from_config
 from sn_tools.sn_io import add_parser, checkDir
-from sn_tools.sn_io import load_cosmo_params_from_script
+from sn_cosmology.cosmo_tools import cosmo_dict,make_df
 from sn_cosmology.random_hd import HD_random
-from sn_cosmology.cosmo_tools import transform
 from sn_tools.sn_utils import multiproc
 import pandas as pd
 import glob
 import time
-
-
-def make_df(ddict):
-    """
-    Function to transform a dict to pandas df
-
-    Parameters
-    ----------
-    ddict : dict
-        Data to process.
-
-    Returns
-    -------
-    res_df : pandas df
-        output data.
-
-    """
-
-    res_df = pd.DataFrame()
-    # fitted values in a df
-    for key, vals in ddict.items():
-        res = pd.DataFrame.from_dict(transform(vals))
-        res['config'] = [key]
-        res_df = pd.concat((res, res_df))
-
-    return res_df
 
 
 def cosmo_fits(nreal, params, j, output_q=None):
@@ -100,30 +73,6 @@ def cosmo_fits(nreal, params, j, output_q=None):
     else:
         return cosmo_df
     
-def cosmo_dict(pp,txt='cosmofit_'):
-    """
-    Function to select and rename dict items
-
-    Parameters
-    ----------
-    pp : dict
-        original dict.
-    txt : str, optional
-        substr to search/remove. The default is 'cosmofit_'.
-
-    Returns
-    -------
-    res : dict
-        Final dict.
-
-    """
-    
-    res = dict(filter(lambda item: txt in item[0],pp.items()))
-    res = {key.split(txt)[-1]:value for key, value in res.items()}
-    
-    return res
-
-
 # get all possible script parameters and put in a dict
 path_cosmo_input = cosmo_input.__path__
 confDict = make_dict_from_config(
@@ -136,42 +85,21 @@ add_parser(parser, confDict)
 
 opts, args = parser.parse_args()
 
-# grab params
-fitparams_names = opts.fitparam_names.split(',')
-fitparams_values = list(map(float, opts.fitparam_values.split(',')))
-prior = opts.prior
-H0 = opts.H0
-Om0 = opts.Om0
-Ode0 = opts.Ode0
-w0 = opts.w0
-wa = opts.wa
-alpha = opts.alpha
-beta = opts.beta
-sigmaInt = opts.sigmaInt
-recalc_sigmu = opts.recalc_sigmu
-prior_varname = opts.prior_varname.split(',')
-prior_refvalue = opts.prior_refvalue.split(',')
-prior_sigma = opts.prior_sigma.split(',')
+params = vars(opts)
 
-prior_refvalue = list(map(float, prior_refvalue))
-prior_sigma = list(map(float, prior_sigma))
+fitparams_names = params['fitparam_names'].split(',')
+fitparams_values = list(map(float, params['fitparam_values'].split(',')))
+
+prior_refvalue = list(map(float, params['prior_refvalue'].split(',')))
+prior_sigma = list(map(float, params['prior_sigma'].split(',')))
 
 priors = pd.DataFrame()
 
-if prior == 1:
-    priors = pd.DataFrame({'varname': prior_varname,
+if params['prior'] == 1:
+    priors = pd.DataFrame({'varname': params['prior_varname'].split(','),
                            'refvalue': prior_refvalue,
                            'sigma': prior_sigma})
-
-dataDir = opts.dataDir
-dbName_DD = opts.dbName_DD
-dbName_WFD = opts.dbName_WFD
-yearmax = opts.yearmax
-nproc = opts.nproc
-outDir = opts.outDir
-
 #load cosmology parameters
-params = vars(opts)
 
 cosmodict_fit = cosmo_dict(params,'cosmofit_')
 cosmodict_simu = cosmo_dict(params,'cosmosimu_')
@@ -186,27 +114,35 @@ hd_random = HD_random(fitconfig=fitconfig, cosmodict_fit=cosmodict_fit,
 
 # loop on data and make the fit
 
-fis = glob.glob('{}/{}_{}/*.hdf5'.format(dataDir, dbName_DD, dbName_WFD))
+fis = glob.glob('{}/{}_{}/*.hdf5'.format(params['dataDir'], 
+                                         params['dbName_DD'], 
+                                         params['dbName_WFD']))
 
 n_random_surveys = int(len(fis)/10)
 
 n_real = list(range(1, n_random_surveys+1))
 
 pp = {}
-pp['dataDir'] = dataDir
-pp['dbName_DD'] = dbName_DD
-pp['dbName_WFD'] = dbName_WFD
-pp['yearmax'] = yearmax
+pp['dataDir'] = params['dataDir']
+pp['dbName_DD'] = params['dbName_DD']
+pp['dbName_WFD'] = params['dbName_WFD']
+pp['yearmax'] = params['yearmax']
 pp['hd_random'] = hd_random
-pp['prior'] = prior
+pp['prior'] = params['prior']
 
 time_ref = time.time()
-cosmo_df = multiproc(n_real, pp, cosmo_fits, nproc=nproc)
+if params['test_mode'] == 0:
+    cosmo_df = multiproc(n_real, pp, cosmo_fits, nproc=params['nproc'])
 
-checkDir(outDir)
+    checkDir(params['outDir'])
 
-outName = '{}/cosmo_fit_{}_{}.hdf5'.format(outDir, dbName_DD, dbName_WFD)
+    outName = '{}/cosmo_fit_{}_{}.hdf5'.format(params['outDir'], 
+                                           params['dbName_DD'], 
+                                           params['dbName_WFD'])
 
-cosmo_df.to_hdf(outName, key='cosmo')
+    cosmo_df.to_hdf(outName, key='cosmo')
+else:
+    cosmo_df = cosmo_fits([1],pp,0)
+    print(cosmo_df)
 
 print('end fit cosmo', time.time()-time_ref)
