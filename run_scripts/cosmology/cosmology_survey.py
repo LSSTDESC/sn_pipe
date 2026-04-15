@@ -9,6 +9,7 @@ from optparse import OptionParser
 import sn_phystools_input as cosmo_input
 from sn_tools.sn_io import make_dict_from_config
 from sn_tools.sn_io import add_parser, checkDir
+from sn_tools.sn_io import load_cosmo_params_from_script
 from sn_cosmology.random_hd import HD_random
 from sn_cosmology.cosmo_tools import transform
 from sn_tools.sn_utils import multiproc
@@ -98,6 +99,29 @@ def cosmo_fits(nreal, params, j, output_q=None):
         return output_q.put({j: cosmo_df})
     else:
         return cosmo_df
+    
+def cosmo_dict(pp,txt='cosmofit_'):
+    """
+    Function to select and rename dict items
+
+    Parameters
+    ----------
+    pp : dict
+        original dict.
+    txt : str, optional
+        substr to search/remove. The default is 'cosmofit_'.
+
+    Returns
+    -------
+    res : dict
+        Final dict.
+
+    """
+    
+    res = dict(filter(lambda item: txt in item[0],pp.items()))
+    res = {key.split(txt)[-1]:value for key, value in res.items()}
+    
+    return res
 
 
 # get all possible script parameters and put in a dict
@@ -146,13 +170,19 @@ yearmax = opts.yearmax
 nproc = opts.nproc
 outDir = opts.outDir
 
+#load cosmology parameters
+params = vars(opts)
+
+cosmodict_fit = cosmo_dict(params,'cosmofit_')
+cosmodict_simu = cosmo_dict(params,'cosmosimu_')
+
 fitconfig = {}
 
 fitconfig['fita'] = dict(zip(fitparams_names, fitparams_values))
 
 # random instance
-hd_random = HD_random(fitconfig=fitconfig, prior=priors)
-
+hd_random = HD_random(fitconfig=fitconfig, cosmodict_fit=cosmodict_fit,
+                      cosmodict_simu=cosmodict_simu,prior=priors)
 
 # loop on data and make the fit
 
