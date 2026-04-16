@@ -7,8 +7,9 @@ Created on Tue Apr 14 08:52:23 2026
 """
 from optparse import OptionParser
 from sn_analysis.sn_fit_tools import load_fit_atmos_data
-from sn_analysis.sn_atmos_tools import get_atmos_data 
-from sn_analysis.sn_atmos_tools import get_obs_values,rename
+#from sn_analysis.sn_atmos_tools import get_atmos_data 
+from sn_analysis.sn_atmos_tools import rename,merge_zp_wave
+from sn_analysis.sn_atmos_tools import process_obs_data
 import numpy as np
 import pandas as pd
 import os
@@ -39,101 +40,14 @@ def process_all_data(theDir,atmos_params):
     sigma['aerosol'] = np.arange(0,0.02,0.0001)
     sigma['pwv'] = np.arange(0.,0.3,0.001)
     
-    combi_zp = process_data(df_zp,sigma)
-    combi_wave = process_data(df_wave,sigma)
+    combi_zp = process_obs_data(df_zp,sigma,atmos_params,do_combi=True)
+    combi_wave = process_obs_data(df_wave,sigma,atmos_params,do_combi=True)
     
     #rename and merge
     
-    combi_zp = rename(combi_zp,atmos_params)
-    combi_wave = rename(combi_wave,atmos_params)
+    combi_tot = merge_zp_wave(combi_zp,combi_wave,atmos_params)
     
-    ccols = ['band','airmass']
-    for atm in atmos_params:
-        ccols += ['sigma_{}'.format(atm)]
-        
-    combi_tot = combi_zp.merge(combi_wave,left_on=ccols,right_on=ccols)
-        
-    print(combi_tot.columns)    
-
     return combi_tot
-
-def process_data(df_zp,sigma):
-    """
-    Data processing (per obs)
-
-    Parameters
-    ----------
-    df_zp : pandas df
-        Data to process.
-    sigma : dict(str,array(float))
-        List of sigma for atmos params (key).
-
-    Returns
-    -------
-    combis : pandas df
-        Processed data.
-
-    """
-    
-    interp_zp = get_atmos_data(df_zp,atmos_params=atmos_params)
-    cols = ['band', 'airmass', 'atmos_param', 'obs_param']
-    df_values = interp_zp.groupby(cols).apply(lambda x: get_obs_values(x,sigma),include_groups=False).reset_index()
-
-    print(df_values)
-
-    combis = df_values.groupby(['band','airmass','obs_param']).apply(lambda x:make_combi(x),include_groups=False).reset_index()
-
-    print(combis)
-
-    #estimate sigma_tot
-
-    combis['sigma_tot'] = 0
-
-    for atm in atmos_params:
-        combis['sigma_tot'] += combis['sigma_obs_param_{}'.format(atm)]**2
-    
-    combis['sigma_tot'] = np.sqrt(combis['sigma_tot'])
-
-    print(combis)
-
-    return combis
-
-
-
-def make_combi(grp,atmos_params=['airmass','ozone','aerosol','pwv']):
-    """
-    Function to make a combination of pandas sf
-
-    Parameters
-    ----------
-    grp : pandas df
-        Data to process.
-    atmos_params : list(str), optional
-        List of atmos params. The default is ['airmass','ozone','aerosol','pwv'].
-
-    Returns
-    -------
-    df_combi : pandas df
-        output data.
-
-    """
-    
-    cols = ['sigma_atmos_param','sigma_obs_param']
-    df_combi = pd.DataFrame()
-    for atm in atmos_params:
-        idx = grp['atmos_param'] == atm
-        sel = pd.DataFrame(grp[idx][cols])
-        sigma_atm = 'sigma_{}'.format(atm)
-        sigma_obs = 'sigma_obs_param_{}'.format(atm)
-        sel = sel.rename(columns={'sigma_atmos_param':sigma_atm,
-                                  'sigma_obs_param':sigma_obs})
-        if df_combi.empty:
-            df_combi = pd.DataFrame(sel)
-        else:
-            df_combi = df_combi.merge(sel, how='cross')
-        
-    return df_combi
-
 
 
 def plot_sigma_obs(df,obs_param='zp',sigma_obs_param=1,
