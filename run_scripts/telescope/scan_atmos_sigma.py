@@ -7,54 +7,77 @@ Created on Tue Apr 14 08:52:23 2026
 """
 from optparse import OptionParser
 from sn_analysis.sn_fit_tools import load_fit_atmos_data
-from sn_analysis.sn_atmos_tools import get_atmos_data  
+from sn_analysis.sn_atmos_tools import get_atmos_data 
+from sn_analysis.sn_atmos_tools import get_obs_values,rename
 import numpy as np
 import pandas as pd
+import os
 
-def get_values(grp,sigma):
-    
-    print(grp.name)
-    atmos_param = grp.name[2]
-    sigmas = sigma[atmos_param]
-    
-    interp = grp['interp'].values[0]
-    
-    res = interp(sigmas)
-    
-    df = pd.DataFrame(res,columns=['sigma_obs_param'])
-    
-    df['sigma_atmos_param'] = sigmas
-    
-    return df
+def process_all_data(theDir,atmos_params):
+    """
+    Data processing (general script)
 
-def make_combi(grp,atmos_params=['airmass','ozone','aerosol','pwv']):
+    Parameters
+    ----------
+    theDir : str
+        Data dir.
+    atmos_params : list(str)
+        List of atmos params.
+
+    Returns
+    -------
+    combi_tot : pandas df
+        Processed data.
+
+    """
     
-    print('ooooo',grp)
-    cols = ['sigma_atmos_param','sigma_obs_param']
-    df_combi = pd.DataFrame()
+    df_zp, df_wave = load_fit_atmos_data(theDir, atmos_params)
+    
+    sigma = {}
+    sigma['airmass'] = np.arange(0.0,0.012,0.001)
+    sigma['ozone'] = np.arange(0,50,5)
+    sigma['aerosol'] = np.arange(0,0.02,0.0001)
+    sigma['pwv'] = np.arange(0.,0.3,0.001)
+    
+    combi_zp = process_data(df_zp,sigma)
+    combi_wave = process_data(df_wave,sigma)
+    
+    #rename and merge
+    
+    combi_zp = rename(combi_zp,atmos_params)
+    combi_wave = rename(combi_wave,atmos_params)
+    
+    ccols = ['band','airmass']
     for atm in atmos_params:
-        idx = grp['atmos_param'] == atm
-        sel = pd.DataFrame(grp[idx][cols])
-        print('booo',sel)
-        sigma_atm = 'sigma_{}'.format(atm)
-        sigma_obs = 'sigma_obs_param_{}'.format(atm)
-        sel = sel.rename(columns={'sigma_atmos_param':sigma_atm,
-                                  'sigma_obs_param':sigma_obs})
-        if df_combi.empty:
-            df_combi = pd.DataFrame(sel)
-        else:
-            df_combi = df_combi.merge(sel, how='cross')
-            
-    print(df_combi)
+        ccols += ['sigma_{}'.format(atm)]
         
+    combi_tot = combi_zp.merge(combi_wave,left_on=ccols,right_on=ccols)
         
-    return df_combi
+    print(combi_tot.columns)    
 
-def process_data(df_zp):
+    return combi_tot
+
+def process_data(df_zp,sigma):
+    """
+    Data processing (per obs)
+
+    Parameters
+    ----------
+    df_zp : pandas df
+        Data to process.
+    sigma : dict(str,array(float))
+        List of sigma for atmos params (key).
+
+    Returns
+    -------
+    combis : pandas df
+        Processed data.
+
+    """
     
     interp_zp = get_atmos_data(df_zp,atmos_params=atmos_params)
     cols = ['band', 'airmass', 'atmos_param', 'obs_param']
-    df_values = interp_zp.groupby(cols).apply(lambda x: get_values(x,sigma),include_groups=False).reset_index()
+    df_values = interp_zp.groupby(cols).apply(lambda x: get_obs_values(x,sigma),include_groups=False).reset_index()
 
     print(df_values)
 
@@ -75,24 +98,84 @@ def process_data(df_zp):
 
     return combis
 
-def rename(dfa):
+
+
+def make_combi(grp,atmos_params=['airmass','ozone','aerosol','pwv']):
+    """
+    Function to make a combination of pandas sf
+
+    Parameters
+    ----------
+    grp : pandas df
+        Data to process.
+    atmos_params : list(str), optional
+        List of atmos params. The default is ['airmass','ozone','aerosol','pwv'].
+
+    Returns
+    -------
+    df_combi : pandas df
+        output data.
+
+    """
     
-    df = pd.DataFrame(dfa)
-    obs_param = df['obs_param'].unique()[0]
+    cols = ['sigma_atmos_param','sigma_obs_param']
+    df_combi = pd.DataFrame()
     for atm in atmos_params:
-        vvara = 'sigma_obs_param_{}'.format(atm)
-        vvarb = 'sigma_{}_{}'.format(obs_param,atm)
-        df = df.rename(columns={vvara:vvarb})
-    
-    df = df.rename(columns={'sigma_tot':'sigma_{}_tot'.format(obs_param)})
-    
-    return df
+        idx = grp['atmos_param'] == atm
+        sel = pd.DataFrame(grp[idx][cols])
+        sigma_atm = 'sigma_{}'.format(atm)
+        sigma_obs = 'sigma_obs_param_{}'.format(atm)
+        sel = sel.rename(columns={'sigma_atmos_param':sigma_atm,
+                                  'sigma_obs_param':sigma_obs})
+        if df_combi.empty:
+            df_combi = pd.DataFrame(sel)
+        else:
+            df_combi = df_combi.merge(sel, how='cross')
+        
+    return df_combi
+
+
 
 def plot_sigma_obs(df,obs_param='zp',sigma_obs_param=1,
                    band='y',xvar='sigma_pwv',yvar='sigma_aerosol',
                    airmass=1.2,fig=None,ax=None,
                    ellipse_color='yellow',ellipse_hatch='None',
                    frac_select=False):
+    """
+    To plot some results
+
+    Parameters
+    ----------
+    df : pandas df
+        Data to plot.
+    obs_param : str, optional
+        obs parameter to consider. The default is 'zp'.
+    sigma_obs_param : float, optional
+        sigma obs param to select. The default is 1.
+    band : str, optional
+        band to consider. The default is 'y'.
+    xvar : str, optional
+        x-axis variable. The default is 'sigma_pwv'.
+    yvar : str, optional
+        y-axis variable. The default is 'sigma_aerosol'.
+    airmass : float, optional
+        airmass value. The default is 1.2.
+    fig : matplotlib figure, optional
+        Figure for the plot. The default is None.
+    ax : matplotlib axis, optional
+        axis for the plot. The default is None.
+    ellipse_color : str, optional
+        ellipse color. The default is 'yellow'.
+    ellipse_hatch : str, optional
+        ellipse hatch type. The default is 'None'.
+    frac_select : bool, optional
+        To select what to display. The default is False.
+
+    Returns
+    -------
+    None.
+
+    """
     
     if fig is None:
         fig, ax = plt.subplots(figsize=(12,8))
@@ -108,8 +191,8 @@ def plot_sigma_obs(df,obs_param='zp',sigma_obs_param=1,
 
 
     vv = 'sigma_{}_tot'.format(obs_param)
-    idx = combi_tot['sigma_zp_tot'] >=0.95*sigma_obs_param
-    idx &= combi_tot['sigma_zp_tot'] <=1.05*sigma_obs_param
+    idx = df[vv] >=0.95*sigma_obs_param
+    idx &= df[vv] <=1.05*sigma_obs_param
     idx &= df['airmass'] == airmass
     idx &= df['band'] == band
     if frac_select:
@@ -148,31 +231,16 @@ opts, args = parser.parse_args()
 theDir = opts.dataDir
 atmos_params= opts.atmos_param.split(',')
 
-df_zp, df_wave = load_fit_atmos_data(theDir, atmos_params)
+#data processing
+fName = 'combi_atmos.hfd5'
 
-sigma = {}
-sigma['airmass'] = np.arange(0.0,0.012,0.001)
-sigma['ozone'] = np.arange(0,50,5)
-sigma['aerosol'] = np.arange(0,0.02,0.0001)
-sigma['pwv'] = np.arange(0.,0.3,0.001)
-
-
-combi_zp = process_data(df_zp)
-combi_wave = process_data(df_wave)
-
-#rename and merge
-
-combi_zp = rename(combi_zp)
-combi_wave = rename(combi_wave)
-
-ccols = ['band','airmass']
-for atm in atmos_params:
-    ccols += ['sigma_{}'.format(atm)]
+if not os.path.isfile(fName):
+    combi_tot = process_all_data(theDir, atmos_params)
+    combi_tot.to_hdf(fName,key='atmos')
     
-combi_tot = combi_zp.merge(combi_wave,left_on=ccols,right_on=ccols)
-    
-print(combi_tot.columns)
+combi_tot=pd.read_hdf(fName)
 
+#show plots
 import matplotlib.pyplot as plt
 
 sigma_obs_param=1
@@ -183,6 +251,7 @@ plot_sigma_obs(combi_tot,sigma_obs_param=sigma_obs_param,fig=fig,ax=ax,
 """
 plot_sigma_obs(combi_tot,sigma_obs_param=sigma_obs_param,fig=fig,ax=ax,
                ellipse_color='yellow',ellipse_hatch='/',frac_select=True)
+
 #plot_sigma_obs(combi_tot,airmass=2.0,sigma_obs_param=sigma_obs_param)
 
 plt.show()
