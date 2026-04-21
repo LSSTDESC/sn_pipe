@@ -90,7 +90,7 @@ def plot_sigma_atmos_band(theDir,atmos_params,plotDir=''):
 
 
 
-parser = OptionParser(description='Scan the atmos parameter sigma space')
+parser = OptionParser(description='Estimate sigma_zp_tot from config and sigma_atmos from sigma_zp_atmos')
                       
 parser.add_option('--dataDir', type=str, default='../zp_atmos',
                   help='data dir [%default]')
