@@ -130,3 +130,25 @@ Options:
 [sigma_zp vs band and atmos. param for a set of atmos. param sigmas](fig1a.png)
 
 [sigma_zp budget vs band](fig2a.png)
+
+### Usage: run_scripts/telescope/get_zp_wave.py
+
+<pre>
+Estimate sigma_zp_tot from config and sigma_atmos from sigma_zp_atmos
+
+Options:
+  -h, --help            show this help message and exit
+  --dataDir=DATADIR     data dir [../zp_atmos]
+  --atmos_param=ATMOS_PARAM
+                        atmospheric parameters [airmass,ozone,aerosol,pwv]
+  --config=CONFIG       sigma atmos parameters [config_atmos.csv]
+  --plots=PLOTS         plots to perform [from_config,sigmas]
+  --plotDir=PLOTDIR     where the plots will be saved [../iso_zp]
+
+</pre>
+
+[sigma_zp_tot vs filter](iso_zp/summary_zp.png)
+
+[sigma_airmass vs filter for sigma_zp_airmass values](iso_zp/sigma_airmass_0.png)
+
+[sigma_airmass/airmass vs filter for sigma_zp_airmass values](iso_zp/sigma_airmass_1.png)
