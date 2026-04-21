@@ -45,7 +45,10 @@ dbNames = pd.read_csv(dbList, comment='#')
 processName = 'gen_survey_{}'.format(tagName)
 
 mybatch = BatchIt(processName=processName)
-
+for vv in params.keys():
+    if isinstance(params[vv],str):
+        params[vv] = '\'{}\''.format(params[vv])
+        
 for i, row in dbNames.iterrows():
     params['dbName_DD'] = row['dbName']
     params['dbName_WFD'] = row['dbName']
