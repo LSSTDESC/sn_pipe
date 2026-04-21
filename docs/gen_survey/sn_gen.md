@@ -21,8 +21,8 @@ Options:
                         sel config [G10_JLA]
   --outName=OUTNAME     output file name [cosmo_fit]
   --surveyFile=SURVEYFILE
-                        survey to use
-                        [input/cosmology/scenarios/survey_scenario.csv]
+                        survey to use [input/cosmology/scenarios/survey_scenar
+                        io_spectroz_TiDES_5.csv]
   --hosteffiDir=HOSTEFFIDIR
                         host effi dir [input/cosmology/host_effi]
   --footprintDir=FOOTPRINTDIR
@@ -58,8 +58,14 @@ Options:
   --H0=H0               cosmo par [70.0]
   --Om0=OM0             cosmo par [0.3]
   --Ode0=ODE0           cosmo par [0.7]
-  --w0=W0               cosmo par [-1.0]
-  --wa=WA               cosmo par [0.0]
+  --deparams=DEPARAMS   cosmo param names [w0,wa]
+  --devalues=DEVALUES   cosmo param values [-1.,0.]
+  --declass=DECLASS     DE class to use (w0waCDM/DDE_FLRW) [w0waCDM]
+  --classloc=CLASSLOC   DE class
+                        location(astropy.cosmology/sn_tools.sn_cosmo_model)
+                        [astropy.cosmology]
+  --demodel=DEMODEL     DE eos model name [CPL]
+  --deeos=DEEOS         DE eos model [w0+wa*z/(1+z)]
   --alpha=ALPHA         nuisance par [0.13]
   --beta=BETA           nuisance par [3.1]
   --recalc_sigmu=RECALC_SIGMU
@@ -90,24 +96,35 @@ Usage: python for_batch/scripts/cosmo/loop_gen_survey.py [options]
 Options:
   -h, --help            show this help message and exit
   --dataDir_DD=DATADIR_DD
-                        DD data dir[/sps/lsst/users/gris/Output_SN_DD_sigmaInt
-                        _0.0_Hounsell_z_smflux_notelrot_airmass_G10_JLA]
+                         DD data dir [/sps/lsst/users/gris/DD_dir]
   --dataDir_WFD=DATADIR_WFD
-                        WFD data dir [/sps/lsst/users/gris/Output_SN_WFD_sigma
-                        Int_0.0_Hounsell_z_smflux_notelrot_airmass_G10_JLA]
+                         WFD data dir [/sps/lsst/users/gris/WFD_dir]
   --surveyFile=SURVEYFILE
-                        survey file [survey_scenario_spectroz_TiDES_5.csv]
-  --seasons=SEASONS     seasons/years to consider [1-10]
+                        survey file [input/cosmology/scenarios/survey_scenario
+                        _spectroz_TiDES_5.csv]
+  --seasons=SEASONS      seasons/years to consider [1-10]
   --save_full_survey=SAVE_FULL_SURVEY
-                        to save the full survey or not [0]
+                         to save the full survey [0]
   --n_random_survey=N_RANDOM_SURVEY
-                        number of random surveys to generate [50]
+                         number of random surveys to generate [50]
   --select_WFD=SELECT_WFD
-                        to select WFD SNe Ia
+                         to select WFD SNe Ia [1]
   --surveyDir=SURVEYDIR
-                        output directory [/sps/lsst/users/gris/sn_surveys]
+                         output directory [/sps/lsst/users/gris/sn_surveys]
   --low_z_optimize=LOW_Z_OPTIMIZE
-                        to buil an optimize low-z WFD sample [0]
-  --dbList=DBLIST       list of db to process [list_OS_new_wfd.csv]
+                         to buil an optimize low-z WFD sample [0]
+  --dbList=DBLIST        list of db to process [list_OS_new_wfd.csv]
+  --tagName=TAGNAME      tag for the script [taga]
+  --H0=H0               cosmo par [70.0]
+  --Om0=OM0             cosmo par [0.3]
+  --Ode0=ODE0           cosmo par [0.7]
+  --deparams=DEPARAMS   cosmo param names [w0,wa]
+  --devalues=DEVALUES   cosmo param values [-1.,0.]
+  --declass=DECLASS     DE class to use (w0waCDM/DDE_FLRW) [w0waCDM]
+  --classloc=CLASSLOC   DE class
+                        location(astropy.cosmology/sn_tools.sn_cosmo_model)
+                        [astropy.cosmology]
+  --demodel=DEMODEL     DE eos model name [CPL]
+  --deeos=DEEOS         DE eos model [w0+wa*z/(1+z)]
 
 </pre>
