@@ -9,39 +9,19 @@ Created on Wed Sep  3 13:32:18 2025
 import pandas as pd
 from optparse import OptionParser
 from sn_tools.sn_batchutils import BatchIt
-parser = OptionParser()
+from sn_tools.sn_io import make_dict_from_config
+from sn_tools.sn_io import add_parser
+import sn_phystools_input as cosmo_input
 
-parser.add_option("--dataDir_DD", type="str",
-                  default='/sps/lsst/users/gris/Output_SN_DD_sigmaInt_0.0_Hounsell_z_smflux_notelrot_airmass_G10_JLA',
-                  help="DD data dir[%default]")
-parser.add_option("--dataDir_WFD", type="str",
-                  default='/sps/lsst/users/gris/Output_SN_WFD_sigmaInt_0.0_Hounsell_z_smflux_notelrot_airmass_G10_JLA',
-                  help="WFD data dir [%default]")
-parser.add_option("--surveyFile", type="str",
-                  default='survey_scenario_spectroz_TiDES_5.csv',
-                  help='survey file [%default]')
-parser.add_option("--seasons", type="str",
-                  default='1-10',
-                  help='seasons/years to consider [%default]')
-parser.add_option("--save_full_survey", type=int,
-                  default=0,
-                  help='to save the full survey or not [%default]')
-parser.add_option("--n_random_survey", type=int,
-                  default=50,
-                  help='number of random surveys to generate [%default]')
-parser.add_option("--select_WFD", type=int, default=1,
-                  help='to select WFD SNe Ia')
-parser.add_option("--surveyDir", type=str,
-                  default='/sps/lsst/users/gris/sn_surveys',
-                  help="output directory [%default]")
-parser.add_option("--low_z_optimize", type=int, default=0,
-                  help='to buil an optimize low-z WFD sample [%default]')
-parser.add_option("--dbList", type=str,
-                  default='list_OS_new_wfd.csv',
-                  help="list of db to process [%default]")
-parser.add_option("--tagName", type=str,
-                  default='taga',
-                  help="tag for the script [%default]")
+# get all possible script parameters and put in a dict
+path_cosmo_input = cosmo_input.__path__
+confDict = make_dict_from_config(
+    path_cosmo_input[0], 'sn_loop_survey.txt')
+
+parser = OptionParser('script to generate multiple LSST SN surveys')
+
+# parser for script parameters : 'dynamical' generation
+add_parser(parser, confDict)
 
 opts, args = parser.parse_args()
 
