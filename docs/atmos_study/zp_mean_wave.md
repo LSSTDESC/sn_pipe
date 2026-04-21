@@ -152,3 +152,15 @@ Options:
 [sigma_airmass vs filter for sigma_zp_airmass values](iso_zp/sigma_airmass_0.png)
 
 [sigma_airmass/airmass vs filter for sigma_zp_airmass values](iso_zp/sigma_airmass_1.png)
+
+[sigma_ozone vs filter for sigma_zp_ozone values](iso_zp/sigma_ozone_0.png)
+
+[sigma_ozone/airmass vs filter for sigma_zp_ozone values](iso_zp/sigma_ozone_1.png)
+
+[sigma_aerosol vs filter for sigma_zp_aerosol values](iso_zp/sigma_aerosol_0.png)
+
+[sigma_aerosol/aerosol vs filter for sigma_zp_aerosol values](iso_zp/sigma_aerosol_1.png)
+
+[sigma_pwv vs filter for sigma_zp_pwv values](iso_zp/sigma_pwv_0.png)
+
+[sigma_pwv/pwv vs filter for sigma_zp_pwv values](iso_zp/sigma_pwv_1.png)
