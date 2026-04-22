@@ -1,0 +1,19 @@
+dbList list_OS_new_wfd.csv str #db list to process
+outDir /sps/lsst/users/gris/cosmo_fit_last str # output directory
+dataDir /sps/lsst/users/gris/sn_surveys str # input directory for survey files
+fitparam_names w0,wa,Om0,sigmaInt str # fit parameter names
+prior 1 int # prior for the fit
+prior_varname Om0 str # prior varname list
+prior_refvalue 0.3 str # prior refvalue list
+prior_sigmac 0.0073 str #prior sigma list
+tagName notag str #tag for the script
+sigmaInt 0.12 float #SN intrinsic dispersion
+H0 70 float #cosmo par
+Om0 0.3 float #cosmo par
+Ode0 0.7 float #cosmo par
+deparams w0,wa str #cosmo param names
+devalues -1.,0. str #cosmo param values
+declass w0waCDM str #DE class to use (w0waCDM/DDE_FLRW)
+classloc astropy.cosmology str #DE class location(astropy.cosmology/sn_tools.sn_cosmo_model)
+demodel CPL str #DE eos model name
+deeos w0+wa*z/(1+z) str #DE eos model
