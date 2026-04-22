@@ -95,17 +95,24 @@ This step requires to generate SNe Ia LSST surveys as describe [here](../gen_sur
 Options:
   -h, --help            show this help message and exit
   --fitparam_names=FITPARAM_NAMES
-                        fit parameter names [w0,wa,Om0]
+                        fit parameter names [w0,wa,Om0,sigmaInt]
   --fitparam_values=FITPARAM_VALUES
-                        fit parameter init values [-1.0,0.0,0.3]
+                        fit parameter init values [-1.0,0.0,0.3,0.12]
   --prior=PRIOR         prior for the fit [1]
   --H0=H0               cosmo par [70.0]
   --Om0=OM0             cosmo par [0.3]
   --Ode0=ODE0           cosmo par [0.7]
-  --w0=W0               cosmo par [-1.0]
-  --wa=WA               cosmo par [0.0]
+  --deparams=DEPARAMS   cosmo param names [w0,wa]
+  --devalues=DEVALUES   cosmo param values [-1.,0.]
+  --declass=DECLASS     DE class to use (w0waCDM/DDE_FLRW) [w0waCDM]
+  --classloc=CLASSLOC   DE class
+                        location(astropy.cosmology/sn_tools.sn_cosmo_model)
+                        [astropy.cosmology]
+  --demodel=DEMODEL     DE eos model name [CPL]
+  --deeos=DEEOS         DE eos model [w0+wa*z/(1+z)]
   --alpha=ALPHA         nuisance par [0.13]
   --beta=BETA           nuisance par [3.1]
+  --sigmaInt=SIGMAINT   SN intrinsic dispersion [0.12]
   --recalc_sigmu=RECALC_SIGMU
                         recalc sigma_mu [1]
   --prior_varname=PRIOR_VARNAME
@@ -122,6 +129,8 @@ Options:
   --yearmax=YEARMAX     year max for cosmology measurements [10]
   --nproc=NPROC         number of procs for multiprocessing [8]
   --outDir=OUTDIR       output directory [../cosmo_fit_test]
+  --test_mode=TEST_MODE
+                        to run in test mode [0]
 
 </pre>
 
@@ -135,19 +144,31 @@ Options:
 Options:
   -h, --help            show this help message and exit
   --dbList=DBLIST       db list to process [list_OS_new_wfd.csv]
-  --outDir=OUTDIR       output directory [/sps/lsst/users/gris/cosmo_fit_last]
-  --dataDir=DATADIR     input directory for survey
-                        files[/sps/lsst/users/gris/sn_surveys]
+  --outDir=OUTDIR        output directory
+                        [/sps/lsst/users/gris/cosmo_fit_last]
+  --dataDir=DATADIR      input directory for survey files
+                        [/sps/lsst/users/gris/sn_surveys]
   --fitparam_names=FITPARAM_NAMES
-                        fit parameter names [w0,wa,Om0,sigmaInt]
-  --fitparam_values=FITPARAM_VALUES
-                        fit parameter values [-1.0,0.0,0.3,0.12]
-  --prior=PRIOR         prior for the fit [1]
+                         fit parameter names [w0,wa,Om0,sigmaInt]
+  --prior=PRIOR          prior for the fit [1]
   --prior_varname=PRIOR_VARNAME
-                        prior varname list [Om0]
+                         prior varname list [Om0]
   --prior_refvalue=PRIOR_REFVALUE
-                        prior refvalue list [0.3]
+                         prior refvalue list [0.3]
   --prior_sigma=PRIOR_SIGMA
                         prior sigma list [0.0073]
+  --tagName=TAGNAME     tag for the script [notag]
+  --sigmaInt=SIGMAINT   SN intrinsic dispersion [0.12]
+  --H0=H0               cosmo par [70.0]
+  --Om0=OM0             cosmo par [0.3]
+  --Ode0=ODE0           cosmo par [0.7]
+  --deparams=DEPARAMS   cosmo param names [w0,wa]
+  --devalues=DEVALUES   cosmo param values [-1.,0.]
+  --declass=DECLASS     DE class to use (w0waCDM/DDE_FLRW) [w0waCDM]
+  --classloc=CLASSLOC   DE class
+                        location(astropy.cosmology/sn_tools.sn_cosmo_model)
+                        [astropy.cosmology]
+  --demodel=DEMODEL     DE eos model name [CPL]
+  --deeos=DEEOS         DE eos model [w0+wa*z/(1+z)]
 
 </pre>
