@@ -1,12 +1,14 @@
 # $${\color{red} Dark \space Energy \space parameters \space estimation \space from \space a \space Hubble \space diagram \space fit}$$
 
+<!---
 ## $${\color{blue} Cosmology\space from \space SNe \space Ia \space production}$$
 
 ### Usage: run_scripts/cosmology/cosmology.py
 
 <pre>
 
-[comment]: <> Script to fit cosmology parameters
+
+Script to fit cosmology parameters
 
 Options:
   -h, --help            show this help message and exit
@@ -78,6 +80,7 @@ Options:
                         recalc sigma_mu [0]
 
 </pre>
+--->
 
 ## $${\color{blue} Cosmology \space from \space SNe \space Ia \space LSST \space surveys}$$
 
