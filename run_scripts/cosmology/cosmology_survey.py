@@ -11,6 +11,7 @@ from sn_tools.sn_io import make_dict_from_config
 from sn_tools.sn_io import add_parser, checkDir
 from sn_cosmology.cosmo_tools import cosmo_dict,make_df
 from sn_cosmology.random_hd import HD_random
+from sn_cosmology.cosmo_tools import load_cosmo_params_from_script
 from sn_tools.sn_utils import multiproc
 import pandas as pd
 import glob
@@ -48,6 +49,7 @@ def cosmo_fits(nreal, params, j, output_q=None):
 
     cosmo_df = pd.DataFrame()
     print('processing', j, nreal)
+    #nreal = [1]
     for nn in nreal:
         fis = glob.glob('{}/{}_{}/*_{}.hdf5'.format(dataDir,
                                                     dbName_DD, dbName_WFD, nn))
@@ -99,18 +101,36 @@ if params['prior'] == 1:
     priors = pd.DataFrame({'varname': params['prior_varname'].split(','),
                            'refvalue': prior_refvalue,
                            'sigma': prior_sigma})
-#load cosmology parameters
+#load cosmology parameters and model
 
-cosmodict_fit = cosmo_dict(params,'cosmofit_')
-cosmodict_simu = cosmo_dict(params,'cosmosimu_')
+cosmodict = load_cosmo_params_from_script(params)
+
+for key,val in cosmodict['de_params'].items():
+    cosmodict[key] = val
+
+#grab fitparams_values
+
+dpar = {}
+fitcosmo_params = []
+for vv in fitparams_names:
+    if vv != 'sigmaInt':
+        dpar[vv] = cosmodict[vv]
+        fitcosmo_params.append(vv)
+
+if 'sigmaInt' in fitparams_names:
+    dpar['sigmaInt'] = params['sigmaInt']
 
 fitconfig = {}
 
-fitconfig['fita'] = dict(zip(fitparams_names, fitparams_values))
+#fitconfig['fita'] = dict(zip(fitparams_names, fitparams_values))
+
+fitconfig['fita'] = dpar
 
 # random instance
-hd_random = HD_random(fitconfig=fitconfig, cosmodict_fit=cosmodict_fit,
-                      cosmodict_simu=cosmodict_simu,prior=priors)
+hd_random = HD_random(fitconfig=fitconfig, 
+                      fitcosmo_params=fitcosmo_params,
+                      cosmodict=cosmodict,
+                      prior=priors)
 
 # loop on data and make the fit
 
@@ -143,6 +163,7 @@ if params['test_mode'] == 0:
     cosmo_df.to_hdf(outName, key='cosmo')
 else:
     cosmo_df = cosmo_fits([1],pp,0)
-    print(cosmo_df)
+    cols = list(map(lambda st: '{}_fit'.format(st),fitparams_names))
+    print(cosmo_df[cols])
 
 print('end fit cosmo', time.time()-time_ref)
