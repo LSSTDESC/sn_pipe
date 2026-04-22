@@ -6,7 +6,7 @@
 
 <pre>
 
-Script to fit cosmology parameters
+[comment] Script to fit cosmology parameters
 
 Options:
   -h, --help            show this help message and exit
