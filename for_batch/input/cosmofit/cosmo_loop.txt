@@ -5,7 +5,7 @@ fitparam_names w0,wa,Om0,sigmaInt str # fit parameter names
 prior 1 int # prior for the fit
 prior_varname Om0 str # prior varname list
 prior_refvalue 0.3 str # prior refvalue list
-prior_sigmac 0.0073 str #prior sigma list
+prior_sigma 0.0073 str #prior sigma list
 tagName notag str #tag for the script
 sigmaInt 0.12 float #SN intrinsic dispersion
 H0 70 float #cosmo par
