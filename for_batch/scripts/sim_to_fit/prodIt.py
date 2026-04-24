@@ -131,11 +131,12 @@ scr_ += ' --dbList_DD={}'.format(dbList_DD)
 scr_ += ' --outDir_WFD={}'.format(outDir_WFD)
 scr_ += ' --dbList_WFD={}'.format(dbList_WFD)
 
+"""
 for vv in cct:
     if isinstance(params[vv],str):
         scr_ += ' --{}=\'{}\''.format(vv, params[vv])
     else:
         scr_ += ' --{}={}'.format(vv, params[vv])
-
+"""
 print(scr_)
 os.system(scr_)

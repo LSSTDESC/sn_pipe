@@ -229,11 +229,12 @@ for i, row in df.iterrows():
     procDict['InstrumentSimu_ntrial_zp'] = opts.InstrumentSimu_ntrial_zp
     procDict['tag_script'] = opts.tag_script
     procDict['FoV'] = opts.FoV
+    """
     for vv in cosmo_list: 
         if isinstance(params[vv],str):
             procDict[vv]= '\'{}\''.format(params[vv])
         else:
             procDict[vv]= params[vv]
-
+    """
 
     go_batch(script, procDict)

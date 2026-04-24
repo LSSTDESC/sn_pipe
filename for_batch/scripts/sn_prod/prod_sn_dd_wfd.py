@@ -251,12 +251,13 @@ if dbList_DD != '':
     cmd_ddf += ' --tag_script={}'.format(tag_script)
     cmd_ddf += ' --FoV={}'.format(FoV)
    
+    """
     for vv in cosmo_list: 
         if isinstance(params[vv],str):
             cmd_ddf += ' --{}=\'{}\''.format(vv,params[vv])
         else:
             cmd_ddf += ' --{}={}'.format(vv,params[vv])
-    
+    """
     print(cmd_ddf)
     os.system(cmd_ddf)
 
@@ -301,11 +302,12 @@ if dbList_WFD != '':
         InstrumentSimu_ntrial_zp)
     cmd_wfd += ' --tag_script={}'.format(tag_script)
     cmd_wfd += ' --FoV={}'.format(FoV)
+    """
     for vv in cosmo_list: 
         if isinstance(params[vv],str):
             cmd_wfd += ' --{}=\'{}\''.format(vv,params[vv])
         else:
             cmd_wfd += ' --{}={}'.format(vv,params[vv])
-    
+    """
     print(cmd_wfd)
     os.system(cmd_wfd)
