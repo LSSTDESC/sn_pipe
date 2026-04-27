@@ -74,6 +74,25 @@ def cosmo_fits(nreal, params, j, output_q=None):
         return output_q.put({j: cosmo_df})
     else:
         return cosmo_df
+ 
+def cosmo_tab_values(params):
+    from sn_cosmology.cosmo_tabul import Cosmo_tabul
+    from sn_tools.sn_interp import RegularGrid_interp
+    # cosmo tabul
+    costab = Cosmo_tabul(params)
+    df_tot = costab()
+    
+    print(df_tot)
+    #get interpolator
+    ccols = params['cosmofitparams'].split(',')
+    ccols.append('z')
+
+    interpa = RegularGrid_interp(df_tot,ccols) 
+
+    interp = interpa()
+    
+    return interp
+    
     
 # get all possible script parameters and put in a dict
 path_cosmo_input = cosmo_input.__path__
@@ -126,11 +145,20 @@ fitconfig = {}
 
 fitconfig['fita'] = dpar
 
+params['cosmofitparams'] = ','.join(fitcosmo_params)
+#grab distmod values
+distmod_interp = None
+if params['distmod_from_tabul']:
+    distmod_interp = cosmo_tab_values(params)
+
+
+
 # random instance
+
 hd_random = HD_random(fitconfig=fitconfig, 
                       fitcosmo_params=fitcosmo_params,
                       cosmodict=cosmodict,
-                      prior=priors)
+                      prior=priors,distmod_interp=distmod_interp)
 
 # loop on data and make the fit
 
