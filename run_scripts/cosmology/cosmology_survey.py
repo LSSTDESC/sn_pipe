@@ -150,10 +150,8 @@ params['cosmofitparams'] = ','.join(fitcosmo_params)
 distmod_interp = None
 if params['distmod_from_tabul']:
     distmod_interp = cosmo_tab_values(params)
-
-
-
-# random instance
+    
+# random HD
 
 hd_random = HD_random(fitconfig=fitconfig, 
                       fitcosmo_params=fitcosmo_params,
@@ -192,6 +190,7 @@ if params['test_mode'] == 0:
 else:
     cosmo_df = cosmo_fits([1],pp,0)
     cols = list(map(lambda st: '{}_fit'.format(st),fitparams_names))
+    cols += ['Chi2_fit_red']
     print(cosmo_df[cols])
 
 print('end fit cosmo', time.time()-time_ref)
