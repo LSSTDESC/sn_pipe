@@ -16,6 +16,7 @@ from sn_tools.sn_utils import multiproc
 import pandas as pd
 import glob
 import time
+import os
 
 
 def cosmo_fits(nreal, params, j, output_q=None):
@@ -76,11 +77,40 @@ def cosmo_fits(nreal, params, j, output_q=None):
         return cosmo_df
  
 def cosmo_tab_values(params):
-    from sn_cosmology.cosmo_tabul import Cosmo_tabul
+    """
+    Function to load interpolator for distmod values
+
+    Parameters
+    ----------
+    params : dict
+        parameters.
+
+    Returns
+    -------
+    interp : RegularGridInterpolator
+        The interpolator.
+
+    """
+    
+    
+    
     from sn_tools.sn_interp import RegularGrid_interp
-    # cosmo tabul
-    costab = Cosmo_tabul(params)
-    df_tot = costab()
+    tabul_file = '{}/{}'.format(params['distmod_tabul_dir'],
+                                params['distmod_tabul_file'])
+    
+    #the cosmo tabul file does not exist -> create it
+    if not os.path.isfile(tabul_file):
+        print('file not found->processing',tabul_file)
+        print(test)
+        from sn_cosmology.cosmo_tabul import Cosmo_tabul
+        # cosmo tabul
+        costab = Cosmo_tabul(params)
+        df_tot = costab()
+        checkDir(params['distmod_tabul_dir'])
+        df_tot.to_hdf5(tabul_file,key='distmod')
+    else:
+        df_tot = pd.read_hdf(tabul_file)
+    
     
     print(df_tot)
     #get interpolator
