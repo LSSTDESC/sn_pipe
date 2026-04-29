@@ -34,7 +34,7 @@ def load_data(dbDir,dbName,runType,field):
 
     """
     
-    search_path = '{}/{}/{}_spectroz/*{}*.hdf5'.format(dbDir,dbName,runType,field)
+    search_path = '{}/{}/{}_spectroz/SN*{}*.hdf5'.format(dbDir,dbName,runType,field)
     
     print('search_path',search_path)
     fis = glob.glob(search_path)
@@ -48,7 +48,7 @@ def load_data(dbDir,dbName,runType,field):
         
     return df
     
-def get_nsn_season(grp, norm_factor=30, zmin=0., zmax=1.1, dz=0.05):
+def get_nsn_season(grp, norm_factor=30, zmin=0., zmax=1.1, dz=0.01):
     """
     Function to estimate the number of SN per season
 
@@ -73,8 +73,11 @@ def get_nsn_season(grp, norm_factor=30, zmin=0., zmax=1.1, dz=0.05):
 
     bins = np.arange(zmin, zmax+dz, dz)
     
-    nsn_obs = bin_it(grp, xvar='zmeas', norm_factor=norm_factor,
+    print('nsn?',len(grp))
+    nsn_obs = bin_it(grp, xvar='zmeas', norm_factor=1,
                    bins=bins, outvar='nsn_obs')
+    
+    print('nsn bis?',nsn_obs['nsn_obs'].sum())
     
     season_length = grp['season_length'].mean()
     survey_area = grp['survey_area'].mean()
@@ -86,11 +89,11 @@ def get_nsn_season(grp, norm_factor=30, zmin=0., zmax=1.1, dz=0.05):
     df_nsn_rate = get_nsn(rate='Hounsell', H0=70, Om0=0.3,
                           zmin=zmin, zmax=zmax-dz/2, dz=dz,
                           season_length=season_length,
-                          survey_area=survey_area, account_for_edges=True,
+                          survey_area=survey_area*norm_factor, account_for_edges=True,
                           min_rf_phase=min_rf_phase, max_rf_phase=max_rf_phase)
    
     print(df_nsn_rate[['z','nsn']])
-    
+    #df_nsn_rate['nsn'] = df_nsn_rate['nsn'].round()
     import matplotlib.pyplot as plt
     fig, ax = plt.subplots(figsize=(12,8))
     nn = grp.name
@@ -100,10 +103,13 @@ def get_nsn_season(grp, norm_factor=30, zmin=0., zmax=1.1, dz=0.05):
     fig.suptitle(figtit)
     #ax.plot(nsn_obs['zmeas'],nsn_obs['nsn_obs'])
     vv = np.cumsum(nsn_obs['nsn_obs'])
-    ax.plot(nsn_obs['zmeas'],vv,label='obs',linestyle='solid')
-    ax.plot(df_nsn_rate['z'],df_nsn_rate['nsn'],label='rate',linestyle='dotted')
+    ax.plot(nsn_obs['zmeas'],nsn_obs['nsn_obs'],'ko',label='obs') #linestyle='solid')
+    ax.plot(df_nsn_rate['z'],df_nsn_rate['nsn'],'b*',label='rate') #linestyle='dotted')
     
     print(df_nsn_rate['nsn'].max(),np.max(vv))
+    
+    print('total',vv.tolist()[-1],df_nsn_rate['nsn'].sum())
+    print('boo',df_nsn_rate['nsn'])
     
     ax.grid(visible=True)
     ax.set_xlabel('$z$')
