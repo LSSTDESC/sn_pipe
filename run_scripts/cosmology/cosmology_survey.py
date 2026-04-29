@@ -101,7 +101,6 @@ def cosmo_tab_values(params):
     #the cosmo tabul file does not exist -> create it
     if not os.path.isfile(tabul_file):
         print('file not found->processing',tabul_file)
-        print(test)
         from sn_cosmology.cosmo_tabul import Cosmo_tabul
         # cosmo tabul
         costab = Cosmo_tabul(params)
