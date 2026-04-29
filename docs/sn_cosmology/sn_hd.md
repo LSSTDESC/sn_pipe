@@ -134,6 +134,19 @@ Options:
   --outDir=OUTDIR       output directory [../cosmo_fit_test]
   --test_mode=TEST_MODE
                         to run in test mode [0]
+  --cosmofitparams_min=COSMOFITPARAMS_MIN
+                        min val of cosmo parameters [-0.5,-3.,0.2]
+  --cosmofitparams_max=COSMOFITPARAMS_MAX
+                        max val of cosmo parameters [0.,-1.,0.4]
+  --cosmofitparams_delta=COSMOFITPARAMS_DELTA
+                        delta val of cosmo parameters [0.1,0.1,0.05]
+  --distmod_from_tabul=DISTMOD_FROM_TABUL
+                        to estimate distmod values from imterpolator [0]
+  --distmod_tabul_file=DISTMOD_TABUL_FILE
+                        tabulated values of distmod
+                        [distmod_tabul_oscilla.hdf5]
+  --distmod_tabul_dir=DISTMOD_TABUL_DIR
+                        dir of tabulated values of distmod [../distmod_tabul]
 
 </pre>
 
@@ -173,5 +186,18 @@ Options:
                         [astropy.cosmology]
   --demodel=DEMODEL     DE eos model name [CPL]
   --deeos=DEEOS         DE eos model [w0+wa*z/(1+z)]
+  --cosmofitparams_min=COSMOFITPARAMS_MIN
+                        min val of cosmo parameters [-0.5,-3.,0.2]
+  --cosmofitparams_max=COSMOFITPARAMS_MAX
+                        max val of cosmo parameters [0.,-1.,0.4]
+  --cosmofitparams_delta=COSMOFITPARAMS_DELTA
+                        delta val of cosmo parameters [0.1,0.1,0.05]
+  --distmod_from_tabul=DISTMOD_FROM_TABUL
+                        to estimate distmod values from imterpolator [0]
+  --distmod_tabul_file=DISTMOD_TABUL_FILE
+                        tabulated values of distmod
+                        [distmod_tabul_oscilla.hdf5]
+  --distmod_tabul_dir=DISTMOD_TABUL_DIR
+                        dir of tabulated values of distmod [../distmod_tabul]
 
 </pre>
