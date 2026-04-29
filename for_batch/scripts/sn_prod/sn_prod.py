@@ -286,6 +286,7 @@ def batch_DDF_rate(theDict,
     
     zranges = [[zmin,zint],[zint,zmax]]
 
+    zranges = [[zmin,zmax]]
     tag_list = pd.DataFrame()
     if 'None' not in reprocList:
         tag_list = pd.read_csv(reprocList)
@@ -647,6 +648,11 @@ if opts.fieldType == 'WFD':
         runMode = 'all_seasons'
         if opts.fieldType == 'WFD':
             for seas in seasons:
+                batch_WFD_rate(procDict,
+                                   seas_min=seas[0], seas_max=seas[1],
+                                   zmin=0.01, zmax=opts.SN_z_max,
+                                   mem=mem, runMode=runMode, extend_rate=False)
+                """
                 if opts.SN_z_max >= 0.4:
                     batch_WFD_rate(procDict,
                                    seas_min=seas[0], seas_max=seas[1],
@@ -661,7 +667,7 @@ if opts.fieldType == 'WFD':
                                    seas_min=seas[0], seas_max=seas[1],
                                    zmin=0.01, zmax=opts.SN_z_max,
                                    mem=mem, runMode=runMode, extend_rate=False)
-
+                """
 
 # this is for WFD
 # procDict['simuParams_fromFile'] = opts.simuParams_fromFile

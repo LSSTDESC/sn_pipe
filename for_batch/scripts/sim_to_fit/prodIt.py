@@ -91,6 +91,9 @@ parser.add_option('--Cosmology_Om0', type=float,
 parser.add_option('--Cosmology_Ode0', type=float,
                   default=0.70,
                   help='Omega_DE [%default]')
+parser.add_option("--SN_z_max", type=float,
+                  default=1.1,
+                  help="zmax for sn prod [%default]")
 
 opts, args = parser.parse_args()
 
@@ -115,7 +118,7 @@ script = 'python for_batch/scripts/sn_prod/prod_sn_dd_wfd.py'
 
 cct = ['SN_smearFlux', 'Fitter_sigmaz',
        'Observations_coadd', 'LC_coadd', 'saturation_effect',
-       'InstrumentSimu_ntrial_zp', 'tag_script', 'mem','FoV']
+       'InstrumentSimu_ntrial_zp', 'tag_script', 'mem','FoV','SN_z_max']
 cosmo_params=['Cosmology_deparams', 'Cosmology_devalues', 'Cosmology_declass', 
        'Cosmology_classloc','Cosmology_demodel', 'Cosmology_deeos', 
        'Cosmology_H0', 'Cosmology_Om0', 'Cosmology_Ode0']
@@ -131,12 +134,10 @@ scr_ += ' --dbList_DD={}'.format(dbList_DD)
 scr_ += ' --outDir_WFD={}'.format(outDir_WFD)
 scr_ += ' --dbList_WFD={}'.format(dbList_WFD)
 
-"""
 for vv in cct:
-    if isinstance(params[vv],str):
+    if isinstance(params[vv],str) and "(" in params[vv]:
         scr_ += ' --{}=\'{}\''.format(vv, params[vv])
     else:
         scr_ += ' --{}={}'.format(vv, params[vv])
-"""
 print(scr_)
 os.system(scr_)

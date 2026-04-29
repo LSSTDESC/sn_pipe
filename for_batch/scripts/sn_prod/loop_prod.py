@@ -161,8 +161,8 @@ opts, args = parser.parse_args()
 
 params = vars(opts)
 
-cmd_scr = 'python for_batch/scripts/sn_prod/loop_prod.py'
-cmd_scr += ' --SN_sigmaInt=0.0'
+#cmd_scr = 'python for_batch/scripts/sn_prod/loop_prod.py'
+#cmd_scr += ' --SN_sigmaInt=0.0'
 search_key = 'Cosmology'
 cosmo_dict = dict(filter(lambda item: search_key in item[0], params.items()))
 
