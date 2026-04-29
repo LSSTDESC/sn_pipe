@@ -1,5 +1,7 @@
 # Cosmology with SNe Ia
 
+## [Distance modulus tabulated values](sn_tabul.md)
+
 ## [Cosmology parameters estimation from Hubble Diagram fit](sn_hd.md)
 
 ## Cosmology results analysis
