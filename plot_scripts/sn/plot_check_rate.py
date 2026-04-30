@@ -48,7 +48,7 @@ def load_data(dbDir,dbName,runType,field):
         
     return df
     
-def get_nsn_season(grp, norm_factor=30, zmin=0., zmax=1.1, dz=0.01):
+def get_nsn_season(grp, norm_factor=30,cumul=False):
     """
     Function to estimate the number of SN per season
 
@@ -58,12 +58,6 @@ def get_nsn_season(grp, norm_factor=30, zmin=0., zmax=1.1, dz=0.01):
         Data to process.
     norm_factor : float, optional
         normalization factor. The default is 30.
-    zmin : float, optional
-        min redshift. The default is 0..
-    zmax : float, optional
-        max redshift. The default is 1.1.
-    dz : float, optional
-        redshift step. The default is 0.05.
 
     Returns
     -------
@@ -71,6 +65,9 @@ def get_nsn_season(grp, norm_factor=30, zmin=0., zmax=1.1, dz=0.01):
 
     """
 
+    zmin = grp['z'].min()
+    zmax = grp['z'].max()
+    dz = 0.05
     bins = np.arange(zmin, zmax+dz, dz)
     
     print('nsn?',len(grp))
@@ -103,13 +100,17 @@ def get_nsn_season(grp, norm_factor=30, zmin=0., zmax=1.1, dz=0.01):
     figtit += ' season={}'.format(int(nn[2]))
     fig.suptitle(figtit)
     #ax.plot(nsn_obs['zmeas'],nsn_obs['nsn_obs'])
-    vv = np.cumsum(nsn_obs['nsn_obs'])
-    ax.plot(nsn_obs['zmeas'],vv,'ko',label='obs') #linestyle='solid')
-    ax.plot(df_nsn_rate['z'],df_nsn_rate['nsn'].cumsum(),'b*',label='rate') #linestyle='dotted')
+    vva = nsn_obs['nsn_obs']
+    vvb = df_nsn_rate['nsn']
+    if cumul:
+        vva = np.cumsum(vva)
+        vvb = vvb.cumsum()
+    ax.plot(nsn_obs['zmeas'],vva,'ko',label='obs') #linestyle='solid')
+    ax.plot(df_nsn_rate['z'],vvb,'b*',label='rate') #linestyle='dotted')
     
-    print(df_nsn_rate['nsn'].max(),np.max(vv))
+    print(df_nsn_rate['nsn'].max(),np.max(vva))
     
-    print('total',vv.tolist()[-1],df_nsn_rate['nsn'].sum())
+    print('total',vva.tolist()[-1],df_nsn_rate['nsn'].sum())
     print('boo',df_nsn_rate['nsn'])
     
     ax.grid(visible=True)
@@ -132,6 +133,8 @@ parser.add_option("--runType", type="str", default='DDF',
                   help="type of run: DDF, WFD [%default]")
 parser.add_option("--field", type="str", default='COSMOS',
                   help="field [%default]")
+parser.add_option("--norm_factor", type=float, default=30,
+                  help="normalisation factor[%default]")
 
 opts, args = parser.parse_args()
 
@@ -139,10 +142,11 @@ dbDir = opts.dbDir
 dbName = opts.dbName
 runType = opts.runType
 field = opts.field
+norm_factor = opts.norm_factor
 
 df = load_data(dbDir, dbName, runType, field)
 
-tt = df.groupby(['field','healpixID','season']).apply(lambda x: get_nsn_season(x))
+tt = df.groupby(['field','healpixID','season']).apply(lambda x: get_nsn_season(x,norm_factor=norm_factor))
 
 
 
