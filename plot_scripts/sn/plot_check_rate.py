@@ -89,7 +89,8 @@ def get_nsn_season(grp, norm_factor=30, zmin=0., zmax=1.1, dz=0.01):
     df_nsn_rate = get_nsn(rate='Hounsell', H0=70, Om0=0.3,
                           zmin=zmin, zmax=zmax-dz/2, dz=dz,
                           season_length=season_length,
-                          survey_area=survey_area*norm_factor, account_for_edges=True,
+                          survey_area=survey_area*norm_factor, 
+                          account_for_edges=True,
                           min_rf_phase=min_rf_phase, max_rf_phase=max_rf_phase)
    
     print(df_nsn_rate[['z','nsn']])
@@ -103,8 +104,8 @@ def get_nsn_season(grp, norm_factor=30, zmin=0., zmax=1.1, dz=0.01):
     fig.suptitle(figtit)
     #ax.plot(nsn_obs['zmeas'],nsn_obs['nsn_obs'])
     vv = np.cumsum(nsn_obs['nsn_obs'])
-    ax.plot(nsn_obs['zmeas'],nsn_obs['nsn_obs'],'ko',label='obs') #linestyle='solid')
-    ax.plot(df_nsn_rate['z'],df_nsn_rate['nsn'],'b*',label='rate') #linestyle='dotted')
+    ax.plot(nsn_obs['zmeas'],vv,'ko',label='obs') #linestyle='solid')
+    ax.plot(df_nsn_rate['z'],df_nsn_rate['nsn'].cumsum(),'b*',label='rate') #linestyle='dotted')
     
     print(df_nsn_rate['nsn'].max(),np.max(vv))
     
