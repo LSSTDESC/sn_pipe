@@ -208,10 +208,12 @@ def ana_simu(dbDir, dbName):
     # get simu data
     fName = '{}/{}.npy'.format(dbDir, dbName)
 
-    obs = np.load(fName)
-    idx = np.in1d(obs['target_name'], ddf_list)
+    obs = pd.DataFrame(np.load(fName))
+    obs['tt_name'] = obs['target'].str.split(',').str.get(0)
+    print(obs['tt_name'].unique())
+    idx = obs['tt_name'].isin(ddf_list)
     obs = obs[idx]
-    obs = pd.DataFrame.from_records(obs)
+    #obs = pd.DataFrame.from_records(obs)
 
     nyears = 10
 
