@@ -644,7 +644,8 @@ if opts.fieldType == 'WFD':
     if procDict['SN_NSNabsolute'] > 0.:
         batch_WFD(procDict)
     else:
-        seasons = [(1, 7), (7, 14)]
+        #seasons = [(1, 7), (7, 14)]
+        seasons = [(1,12)]
         runMode = 'all_seasons'
         if opts.fieldType == 'WFD':
             for seas in seasons:
