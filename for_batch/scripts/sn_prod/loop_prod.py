@@ -156,6 +156,9 @@ parser.add_option('--Cosmology_Om0', type=float,
 parser.add_option('--Cosmology_Ode0', type=float,
                   default=0.30,
                   help='Omega_DE [%default]')
+parser.add_option("--SN_z_nbins", type=int,
+                  default=10,
+                  help="number of z bins for simulation [%default]")
 
 opts, args = parser.parse_args()
 
@@ -206,6 +209,7 @@ for i, row in df.iterrows():
     procDict['SN_z_max'] = opts.SN_z_max
     procDict['SN_z_min'] = opts.SN_z_min
     procDict['SN_z_step'] = opts.SN_z_step
+    procDict['SN_z_nbins'] = opts.SN_z_nbins
     procDict['SN_z_type'] = opts.SN_z_type
     procDict['SN_z_sigmaz'] = opts.SN_sigmaz
     procDict['fit_remove_sat'] = opts.fit_remove_sat

@@ -152,7 +152,9 @@ parser.add_option('--Cosmology_Om0', type=float,
 parser.add_option('--Cosmology_Ode0', type=float,
                   default=0.30,
                   help='Omega_DE [%default]')
-
+parser.add_option("--SN_z_nbins", type=int,
+                  default=10,
+                  help="number of z bins for simulation [%default]")
 
 opts, args = parser.parse_args()
 
@@ -201,6 +203,7 @@ sigma_ozone = opts.sigma_ozone
 InstrumentSimu_ntrial_zp = opts.InstrumentSimu_ntrial_zp
 tag_script = opts.tag_script
 FoV = opts.FoV
+sn_z_nbins = opts.SN_z_nbins
 
 params = vars(opts)
 
@@ -232,6 +235,7 @@ if dbList_DD != '':
     cmd_ddf += ' --SN_z_max={}'.format(sn_z_max)
     cmd_ddf += ' --SN_z_min={}'.format(sn_z_min)
     cmd_ddf += ' --SN_z_step={}'.format(sn_z_step)
+    cmd_ddf += ' --SN_z_nbins={}'.format(sn_z_nbins)
     cmd_ddf += ' --SN_z_type={}'.format(sn_z_type)
     cmd_ddf += ' --SN_x1_type={}'.format(x1_type)
     cmd_ddf += ' --SN_x1_min={}'.format(x1_min)
@@ -250,6 +254,7 @@ if dbList_DD != '':
         InstrumentSimu_ntrial_zp)
     cmd_ddf += ' --tag_script={}'.format(tag_script)
     cmd_ddf += ' --FoV={}'.format(FoV)
+    
    
     """
     for vv in cosmo_list: 
@@ -277,6 +282,7 @@ if dbList_WFD != '':
     cmd_wfd += ' --SN_z_max={}'.format(sn_z_max)
     cmd_wfd += ' --SN_z_min={}'.format(sn_z_min)
     cmd_wfd += ' --SN_z_step={}'.format(sn_z_step)
+    cmd_wfd += ' --SN_z_nbins={}'.format(sn_z_nbins)
     cmd_wfd += ' --SN_z_type={}'.format(sn_z_type)
     cmd_wfd += ' --SN_NSNfactor={}'.format(sn_nsn_factor_wfd)
     cmd_wfd += ' --SN_NSNabsolute={}'.format(sn_nsn_abs_wfd)

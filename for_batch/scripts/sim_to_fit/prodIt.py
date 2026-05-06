@@ -94,6 +94,12 @@ parser.add_option('--Cosmology_Ode0', type=float,
 parser.add_option("--SN_z_max", type=float,
                   default=1.1,
                   help="zmax for sn prod [%default]")
+parser.add_option("--SN_z_min", type=float,
+                  default=0.0,
+                  help="zmin for sn prod [%default]")
+parser.add_option("--SN_z_nbins", type=int,
+                  default=10,
+                  help="number of z bins for simulation [%default]")
 
 opts, args = parser.parse_args()
 
@@ -118,7 +124,8 @@ script = 'python for_batch/scripts/sn_prod/prod_sn_dd_wfd.py'
 
 cct = ['SN_smearFlux', 'Fitter_sigmaz',
        'Observations_coadd', 'LC_coadd', 'saturation_effect',
-       'InstrumentSimu_ntrial_zp', 'tag_script', 'mem','FoV','SN_z_max']
+       'InstrumentSimu_ntrial_zp', 'tag_script', 'mem','FoV',
+       'SN_z_max','SN_z_min','SN_z_nbins']
 cosmo_params=['Cosmology_deparams', 'Cosmology_devalues', 'Cosmology_declass', 
        'Cosmology_classloc','Cosmology_demodel', 'Cosmology_deeos', 
        'Cosmology_H0', 'Cosmology_Om0', 'Cosmology_Ode0']
