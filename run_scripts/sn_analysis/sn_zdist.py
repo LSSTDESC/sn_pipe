@@ -15,9 +15,28 @@ import matplotlib.pyplot as plt
 from sn_analysis.sn_tools import get_spline
 
 def load_data(dbDir,dbName,runType):
+    """
+    Function to load the data
+
+    Parameters
+    ----------
+    dbDir : str
+        Data dir.
+    dbName : str
+        Db name.
+    runType : str
+        run type.
+
+    Returns
+    -------
+    dout : pandas df
+        Output data.
+
+    """
     
     search_path = '{}/{}/{}/*.hdf5'.format(dbDir,dbName,runType)
     
+    print('search path',search_path)
     fis = glob.glob(search_path)
     
     dout = pd.DataFrame()
@@ -29,18 +48,59 @@ def load_data(dbDir,dbName,runType):
     return dout
     
     
-def zdist(grp,norm_factor=30,sel=False):
+def zdist(grp,norm_factor=30,sel=False,runType='DDF'):
+    """
+    Function to estimate the zdist distrib
+
+    Parameters
+    ----------
+    grp : pandas df
+        Data to process.
+    norm_factor : float, optional
+        normalisation factor. The default is 30.
+    sel : bool, optional
+        to select data. The default is False.
+    runType: str, optional.
+        run type. The default is DDF.
+
+    Returns
+    -------
+    ro : pandas df
+        Output data.
+
+    """
     
     dz = 0.01
     bins=np.arange(0.01, 1.1+dz,dz)
     if sel:
         idxb = grp['sigmaC'] <= 0.04
+        if runType == 'WFD':
+            idxb &= grp['n_epochs_bef'] >= 5
+            idxb &= grp['n_epochs_aft'] >= 10
+            idxb &= grp['n_epochs_m10_p5'] >= 5
+            idxb &= grp['n_epochs_phase_minus_10'] >= 2
+        
         grp = grp[idxb]
     ro = bin_it(grp,xvar='z_fit',bins=bins,norm_factor=norm_factor,outvar='nz')
     
     return ro
 
 def plot_zdist_indiv(df,fields=['COSMOS']):
+    """
+    Function to plot zdist per year for a set of DDFs
+
+    Parameters
+    ----------
+    df : pandas df
+        Data to process.
+    fields : list(str), optional
+        List of fields. The default is ['COSMOS'].
+
+    Returns
+    -------
+    None.
+
+    """
     
     dbName = df['dbName'].unique()[0]
     
@@ -88,6 +148,27 @@ def plot_zdist_indiv(df,fields=['COSMOS']):
     ax.legend(bbox_to_anchor=(1., 0.8), ncol=1, frameon=False, fontsize=15)
         
 def plot_zdist_all(df,config,fig=None,ax=None,figtitle=''):
+    """
+    Function to draw zdist for OS.
+
+    Parameters
+    ----------
+    df : pandas df
+        Data to plot.
+    config : pandas df
+        configuration file.
+    fig : matplotlib figure, optional
+        figure for the plot. The default is None.
+    ax : matplotlib axis, optional
+        axis for the plot. The default is None.
+    figtitle : str, optional
+        figure title. The default is ''.
+
+    Returns
+    -------
+    None.
+
+    """
     
     if fig is None:
         fig, ax = plt.subplots(figsize=(12,8))
@@ -148,12 +229,16 @@ parser.add_option('--config', type=str,
 parser.add_option('--runType', type=str,
                   default='DDF_spectroz',
                   help='run type [%default]')
+parser.add_option('--norm_factor', type=float,
+                  default=30,
+                  help='normalisation factor [%default]')
 
 opts, args = parser.parse_args()
 
 dbDir = opts.dbDir
 config = opts.config
 runType = opts.runType
+norm_factor = opts.norm_factor
 
 df_config = pd.read_csv(config,comment='#')
 
@@ -166,6 +251,7 @@ fields = ['XMM-LSS']
 df_z_tot = pd.DataFrame()
 df_z_tot_sel = pd.DataFrame()
 df_tot = pd.DataFrame()
+rtyp = runType.split('_')[0]
 for i,row in df_config.iterrows():
     # load the data
     df = load_data(dbDir,row['dbName'],runType)    
@@ -173,20 +259,21 @@ for i,row in df_config.iterrows():
     print(df)
     df_tot = pd.concat((df_tot,df))
     
-    df_z = df.groupby(ccols).apply(lambda x:zdist(x),include_groups=False).reset_index()
+    df_z = df.groupby(ccols).apply(lambda x:zdist(x,norm_factor=norm_factor,runType=rtyp),include_groups=False).reset_index()
     #plot_zdist_indiv(df_z,fields=fields)
     
     df_z_tot = pd.concat((df_z_tot,df_z))
     
-    df_z_sel = df.groupby(ccols).apply(lambda x:zdist(x,sel=True),include_groups=False).reset_index()
-    #plot_zdist_indiv(df_z,fields=fields)
+    df_z_sel = df.groupby(ccols).apply(lambda x:zdist(x,norm_factor=norm_factor,sel=True,runType=rtyp),include_groups=False).reset_index()
+    #plot_zdist_indiv(df_z,fields=fields),norm_factor=norm_factor
     
     df_z_tot_sel = pd.concat((df_z_tot_sel,df_z_sel))
 
 #fig, ax = plt.subplots(figsize=(12,8))
 fig=None
 ax=None
-plot_zdist_all(df_z_tot,df_config,fig=fig,ax=ax)
-plot_zdist_all(df_z_tot_sel,df_config,fig=fig,ax=ax,figtitle='$\sigma_C \leq 0.04$')
+figtitlem = rtyp
+plot_zdist_all(df_z_tot,df_config,fig=fig,ax=ax,figtitle=figtitlem)
+plot_zdist_all(df_z_tot_sel,df_config,fig=fig,ax=ax,figtitle=figtitlem+' - $\sigma_C \leq 0.04$')
 
 plt.show()
