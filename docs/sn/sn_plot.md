@@ -28,3 +28,7 @@
 ## Cross-check SNe Ia production rate
 
 ### [Observation vs expected rate](sn_obs_rate.md)
+
+## SNe Ia redshift distribution
+
+### [NSN vs z](sn_zdist.md)
