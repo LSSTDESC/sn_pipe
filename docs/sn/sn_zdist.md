@@ -13,6 +13,9 @@ Options:
 </pre>
 
 [NSN vs z - DDF](plot_zdist_ddf.png)
+
 [NSN (sigmaC <= 0.04) vs z - DDF](plot_zdist_ddf_sigmac.png)
+
 [NSN vs z - WFD](plot_zdist_wfd.png)
+
 [NSN (sigmaC <= 0.04) vs z - WFD](plot_zdist_wfd_sigmac.png)
