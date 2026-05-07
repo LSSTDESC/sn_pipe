@@ -66,7 +66,7 @@ if 'map' in plots:
     plot_grid(tab,varx='mean_airmass',
               vary=thevar,ylabel=labdict[thevar],
               varz='std_zp_{}'.format(theband),
-              figtitle='$\sigma_{ZP}^{'+theband+'}$ [mag]',smoothIt=False)
+              figtitle='$\sigma_{ZP}^{'+theband+'}$ [mmag]',smoothIt=True)
     plot_grid(tab,varx='mean_airmass',
               vary=thevar,ylabel=labdict[thevar],
               varz='std_mean_wave_{}'.format(theband),

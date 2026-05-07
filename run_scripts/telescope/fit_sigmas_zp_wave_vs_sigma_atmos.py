@@ -46,7 +46,7 @@ if 'vs_airmass' in plots:
 
 if 'from_sigmas' in plots:
     from sn_plotter_tools.plot_atmos_tools import plot_perf_obs_param
-    plot_perf_obs_param(df_zp,sigmas,unit)
+    plot_perf_obs_param(df_zp,sigmas,unit,unit='mmag')
     plot_perf_obs_param(df_wave,sigmas,unit,obs_param='mean_wave',unit = 'nm',
                     ylabel='mean\ wave',ylines=[0.1],yannot=['0.1 nm'])
 
