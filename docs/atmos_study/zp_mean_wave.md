@@ -98,7 +98,7 @@ Options:
 
 </pre>
 
-[grid of sigma_zp_y vs airmass](map_sigma_mean_wave_y_airmass.png)
+[grid of sigma_zp_y vs airmass](map_sigma_zp_y_airmass.png)
 
 [grid of sigma_mean_wave_y vs airmass](map_sigma_mean_wave_y_airmass.png)
 
