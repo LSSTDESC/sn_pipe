@@ -12,6 +12,7 @@ from sn_tools.sn_batchutils import BatchIt
 from sn_tools.sn_io import make_dict_from_config
 from sn_tools.sn_io import add_parser
 #import sn_phystools_input as cosmo_input
+import copy
 
 # get all possible script parameters and put in a dict
 #path_cosmo_input = cosmo_input.__path__
@@ -35,12 +36,13 @@ script = 'run_scripts/cosmology/cosmology_survey.py'
 # loop on files and create batches
 
 for i, row in fis.iterrows():
+    ppb = copy.deepcopy(pp)
     dbName = row['dbName']
-    processName = 'cosmofit_survey_{}_{}'.format(dbName,pp['tagName'])
+    processName = 'cosmofit_survey_{}_{}'.format(dbName,ppb['tagName'])
     mybatch = BatchIt(processName=processName)
-    del pp['tagName']
-    del pp['dbList']
-    pp['dbName_DD'] = dbName
-    pp['dbName_WFD'] = dbName
-    mybatch.add_batch(script, pp)
+    del ppb['tagName']
+    del ppb['dbList']
+    ppb['dbName_DD'] = dbName
+    ppb['dbName_WFD'] = dbName
+    mybatch.add_batch(script, ppb)
     mybatch.go_batch()
