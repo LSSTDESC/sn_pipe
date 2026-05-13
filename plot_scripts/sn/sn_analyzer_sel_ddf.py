@@ -85,13 +85,15 @@ get_info = opts.get_info.split(',')
 # read config file
 conf_df = pd.read_csv(config, comment='#')
 
+if 'dbDir' not in conf_df.columns:
+    conf_df['dbDir'] = inputDir
 # load the data
 
 dbNames = conf_df['dbName'].unique()
 
 df_nsn = pd.DataFrame()
-for dbName in dbNames:
-    fName = '{}/{}/{}'.format(inputDir, dbName, fileName)
+for i,row in conf_df.iterrows():
+    fName = '{}/{}/{}'.format(row['dbDir'], row['dbName'], fileName)
 
     # process data
     if not os.path.isfile(fName):
@@ -99,7 +101,11 @@ for dbName in dbNames:
         print('Please consider processing the data!')
     else:
         df_ = pd.read_hdf(fName)
+        df_['dbName_plot'] = row['dbName_plot']
         df_nsn = pd.concat((df_nsn, df_))
+        
+print('aooo',df_nsn)
+df_nsn['dbName'] = df_nsn['dbName_plot']
 
 if print_nsn:
     print_nsn_latex(df_nsn)
