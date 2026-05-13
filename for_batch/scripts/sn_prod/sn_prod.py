@@ -159,6 +159,7 @@ def batch_WFD(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
     sat = theDict['saturation_effect']
     sat_psf = theDict['saturation_psf']
     ccdfullwell = theDict['saturation_ccdfullwell']
+    
     if deltaz == 0.01:
         zmin = 0.01
 
@@ -651,7 +652,7 @@ if opts.fieldType == 'WFD':
             for seas in seasons:
                 batch_WFD_rate(procDict,
                                    seas_min=seas[0], seas_max=seas[1],
-                                   zmin=0.01, zmax=opts.SN_z_max,
+                                   zmin=opts.SN_z_min, zmax=opts.SN_z_max,
                                    mem=mem, runMode=runMode, extend_rate=False)
                 """
                 if opts.SN_z_max >= 0.4:
