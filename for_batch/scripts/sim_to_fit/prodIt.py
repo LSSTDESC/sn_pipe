@@ -100,7 +100,36 @@ parser.add_option("--SN_z_min", type=float,
 parser.add_option("--SN_z_nbins", type=int,
                   default=10,
                   help="number of z bins for simulation [%default]")
-
+parser.add_option("--SN_x1_type", type=str,
+                  default='random',
+                  help="x1 type simulation [%default]")
+parser.add_option("--SN_x1_min", type=float,
+                  default=0.0,
+                  help="x1 min value for simulation [%default]")
+parser.add_option("--SN_color_type", type=str,
+                  default='random',
+                  help="color type simulation [%default]")
+parser.add_option("--SN_color_min", type=float,
+                  default=0.0,
+                  help="color min value for simulation [%default]")
+parser.add_option("--SN_z_type", type=str,
+                  default='random',
+                  help="redshift type simulation [%default]")
+parser.add_option("--SN_daymax_type", type=str,
+                  default='random',
+                  help="T0 simulation type [%default]")
+parser.add_option("--SN_NSNfactor_DDF", type=int,
+                  default=30,
+                  help="nsn factor for DDF production[%default]")
+parser.add_option("--SN_NSNfactor_WFD", type=int,
+                  default=10,
+                  help="nsn factor for WFD production[%default]")
+parser.add_option("--SN_NSNabsolute_DDF", type=int,
+                  default=-1,
+                  help="absolute nsn for DDF production[%default]")
+parser.add_option("--SN_NSNabsolute_WFD", type=int,
+                  default=-1,
+                  help="absolute nsn for WFD production[%default]")
 opts, args = parser.parse_args()
 
 params = vars(opts)
@@ -125,7 +154,11 @@ script = 'python for_batch/scripts/sn_prod/prod_sn_dd_wfd.py'
 cct = ['SN_smearFlux', 'Fitter_sigmaz',
        'Observations_coadd', 'LC_coadd', 'saturation_effect',
        'InstrumentSimu_ntrial_zp', 'tag_script', 'mem','FoV',
-       'SN_z_max','SN_z_min','SN_z_nbins']
+       'SN_z_max','SN_z_min','SN_z_nbins','SN_x1_type','SN_x1_min',
+       'SN_color_type','SN_color_min','SN_z_type','SN_daymax_type',
+       'SN_NSNfactor_DDF','SN_NSNfactor_WFD',
+       'SN_NSNabsolute_DDF','SN_NSNabsolute_WFD']
+
 cosmo_params=['Cosmology_deparams', 'Cosmology_devalues', 'Cosmology_declass', 
        'Cosmology_classloc','Cosmology_demodel', 'Cosmology_deeos', 
        'Cosmology_H0', 'Cosmology_Om0', 'Cosmology_Ode0']
