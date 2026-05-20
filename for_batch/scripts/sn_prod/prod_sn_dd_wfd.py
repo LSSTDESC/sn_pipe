@@ -155,6 +155,9 @@ parser.add_option('--Cosmology_Ode0', type=float,
 parser.add_option("--SN_z_nbins", type=int,
                   default=10,
                   help="number of z bins for simulation [%default]")
+parser.add_option("--SN_daymax_type", type=str,
+                  default='random',
+                  help="T0 type for simulation [%default]")
 
 opts, args = parser.parse_args()
 
@@ -178,6 +181,7 @@ sn_z_max = opts.SN_z_max
 sn_z_min = opts.SN_z_min
 sn_z_step = opts.SN_z_step
 sn_z_type = opts.SN_z_type
+sn_daymax_type = opts.sn_daymax_type
 sn_nsn_factor_dd = opts.SN_NSNfactor_DDF
 sn_nsn_factor_wfd = opts.SN_NSNfactor_WFD
 sn_nsn_abs_dd = opts.SN_NSNabsolute_DDF
@@ -241,6 +245,7 @@ if dbList_DD != '':
     cmd_ddf += ' --SN_x1_min={}'.format(x1_min)
     cmd_ddf += ' --SN_color_type={}'.format(color_type)
     cmd_ddf += ' --SN_color_min={}'.format(color_min)
+    cmd_ddf += ' --SN_daymax_type={}'.format(sn_daymax_type)
     cmd_ddf += ' --mem={}'.format(mem)
     cmd_ddf += ' --atmosType={}'.format(atmosType)
     cmd_ddf += ' --fit_coadded={}'.format(fit_coadded)
@@ -283,6 +288,7 @@ if dbList_WFD != '':
     cmd_wfd += ' --SN_z_step={}'.format(sn_z_step)
     cmd_wfd += ' --SN_z_nbins={}'.format(sn_z_nbins)
     cmd_wfd += ' --SN_z_type={}'.format(sn_z_type)
+    cmd_wfd += ' --SN_daymax_type={}'.format(sn_daymax_type)
     cmd_wfd += ' --SN_NSNfactor={}'.format(sn_nsn_factor_wfd)
     cmd_wfd += ' --SN_NSNabsolute={}'.format(sn_nsn_abs_wfd)
     cmd_wfd += ' --Observations_coadd={}'.format(obs_coadd)

@@ -159,6 +159,9 @@ parser.add_option('--Cosmology_Ode0', type=float,
 parser.add_option("--SN_z_nbins", type=int,
                   default=10,
                   help="number of z bins for simulation [%default]")
+parser.add_option("--SN_daymax_type", type=str,
+                  default='random',
+                  help="T0 type for simulation [%default]")
 
 opts, args = parser.parse_args()
 
@@ -233,6 +236,8 @@ for i, row in df.iterrows():
     procDict['InstrumentSimu_ntrial_zp'] = opts.InstrumentSimu_ntrial_zp
     procDict['tag_script'] = opts.tag_script
     procDict['FoV'] = opts.FoV
+    procDict['SN_daymax_type'] = opts.SN_daymax_type
+    
     """
     for vv in cosmo_list: 
         if isinstance(params[vv],str):
