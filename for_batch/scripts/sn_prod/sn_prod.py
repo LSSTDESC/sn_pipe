@@ -636,10 +636,12 @@ procDict.pop('mem')
 mem = opts.mem
 
 if opts.fieldType == 'DD':
+    """
     if procDict['SN_NSNabsolute'] > 0.:
-        batch_DDF(procDict, mem=mem, deltaz=0.02)
+        batch_DDF(procDict, mem=mem, deltaz=procDict['SN_z_max']-procDict['SN_z_min'])
     else:
-        batch_DDF_rate(procDict, mem=mem)
+    """
+    batch_DDF_rate(procDict, mem=mem)
 
 if opts.fieldType == 'WFD':
     if procDict['SN_NSNabsolute'] > 0.:
