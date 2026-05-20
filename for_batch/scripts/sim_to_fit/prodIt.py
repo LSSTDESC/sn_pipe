@@ -115,6 +115,9 @@ parser.add_option("--SN_color_min", type=float,
 parser.add_option("--SN_z_type", type=str,
                   default='random',
                   help="redshift type simulation [%default]")
+parser.add_option("--SN_z_step", type=float,
+                  default=0.1,
+                  help="SN z step [%default]")
 parser.add_option("--SN_daymax_type", type=str,
                   default='random',
                   help="T0 simulation type [%default]")
@@ -154,7 +157,7 @@ script = 'python for_batch/scripts/sn_prod/prod_sn_dd_wfd.py'
 cct = ['SN_smearFlux', 'Fitter_sigmaz',
        'Observations_coadd', 'LC_coadd', 'saturation_effect',
        'InstrumentSimu_ntrial_zp', 'tag_script', 'mem','FoV',
-       'SN_z_max','SN_z_min','SN_z_nbins','SN_x1_type','SN_x1_min',
+       'SN_z_max','SN_z_min','SN_z_nbins','SN_z_step','SN_x1_type','SN_x1_min',
        'SN_color_type','SN_color_min','SN_z_type','SN_daymax_type',
        'SN_NSNfactor_DDF','SN_NSNfactor_WFD',
        'SN_NSNabsolute_DDF','SN_NSNabsolute_WFD']
