@@ -33,8 +33,11 @@ def load_data(dbDir,dbName,runType,field):
         Loaded data.
 
     """
+    extent = ''
     
-    search_path = '{}/{}/{}_spectroz/SN*{}*.hdf5'.format(dbDir,dbName,runType,field)
+    if runType == 'WFD':
+        extent = '_nosat'
+    search_path = '{}/{}/{}_spectroz{}/SN*{}*.hdf5'.format(dbDir,dbName,runType,extent,field)
     
     print('search_path',search_path)
     fis = glob.glob(search_path)
