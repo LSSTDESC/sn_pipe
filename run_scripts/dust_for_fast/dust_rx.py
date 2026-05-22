@@ -66,7 +66,7 @@ def r_x(r_v=3.1, bandpass_dict=None, ref_ebv=1.0,tel_dir='throughputs_1.9'):
             a,b = testsed.setup_o_donnell_ab()
             testsed.add_dust(a, b, ebv=ref_ebv, r_v=r_v)
             # Calculate difference due to dust when EBV=1.0
-            # (m_dust = m_nodust - Ax, Ax > 0)
+            # (m_dust = m_nodust + Ax, Ax > 0)
             ax1[filtername] = testsed.calc_mag(bandpass_dict[filtername]) - flatmag
         # Add the R_x term, to start to transition toward this name.
         r_x = ax1.copy()
