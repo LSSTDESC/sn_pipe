@@ -27,6 +27,9 @@ x1 = opts.x1
 color = opts.color
 
 scr = 'python for_batch/scripts/sn_prod/prod_simu_ddf_fmb.py'
+ntrial = 1000
+if opts.config_atmos == 'prode':
+    ntrial=1
 
 for i in range(len(z)):
     zmin = z[i][0]
@@ -39,6 +42,6 @@ for i in range(len(z)):
     for vv in atm_params:
         cmd += ' --{}={}'.format(vv,sel_atmos[vv].values[0])
     cmd += " --config_atmos={}".format(opts.config_atmos)
-    
+    cmd += " --ntrial={}".format(ntrial)
     print(cmd)
     os.system(cmd)
