@@ -1,0 +1,6 @@
+config,sigma_airmass,sigma_ozone,sigma_aerosol,sigma_pwv
+confa,2e-3,10,5.e-4,0.05
+confb,2e-3,10,1.e-3,0.01
+confc,2e-3,10,1.e-3,0.05
+confd,3e-3,20,5.e-3,0.2
+#confe,0.,0.,0.,0.
