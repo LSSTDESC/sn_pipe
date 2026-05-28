@@ -39,7 +39,7 @@ def convert_multi(list_os, params, j=0, output_q=None):
     for i, row in list_os.iterrows():
         
         cmd = scr
-        cmd += ' --dbName={}'.format(row['dbName'])
+        cmd += ' --dbName={}'.format(row['dbName'].split('.db')[0])
         cmd += ' --inputDir={}'.format(inputDir)
         cmd += ' --outputDir={}'.format(outputDir)
         
