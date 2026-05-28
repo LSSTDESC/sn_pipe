@@ -28,7 +28,7 @@ color = opts.color
 
 scr = 'python for_batch/scripts/sn_prod/prod_simu_ddf_fmb.py'
 ntrial = 1000
-if opts.config_atmos == 'prode':
+if opts.config_atmos == 'confe':
     ntrial=1
 
 for i in range(len(z)):
