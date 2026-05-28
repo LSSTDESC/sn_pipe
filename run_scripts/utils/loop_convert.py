@@ -58,9 +58,11 @@ parser = OptionParser(description=desc)
 
 parser.add_option("--list_OS", type=str, default='list_OS.csv',
                   help="list of OS to convert [%default]")    
-parser.add_option("--inputDir", type=str, default='/sps/lsst/groups/cadence/LSST_SN_PhG/cadence_db/fbs_5.3/db',
+parser.add_option("--inputDir", type=str, 
+                  default='/sps/lsst/groups/cadence/LSST_SN_PhG/cadence_db/fbs_5.3/db',
                   help="input dir of files to convert [%default]") 
-parser.add_option("--outputDir", type=str, default='/sps/lsst/groups/cadence/LSST_SN_PhG/cadence_db/fbs_5.3/db',
+parser.add_option("--outputDir", type=str, 
+                  default='/sps/lsst/groups/cadence/LSST_SN_PhG/cadence_db/fbs_5.3/npy',
                   help="output dir of converted files [%default]")
 parser.add_option("--nproc", type=int, default=8,
                   help="nproc for multiprocessing [%default]")
