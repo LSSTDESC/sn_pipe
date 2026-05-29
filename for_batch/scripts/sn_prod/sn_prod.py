@@ -89,7 +89,7 @@ def batch_DDF(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
                 dbName, fieldName, tag_dir, np.round(sigmaInt, 2),
                 snrate, smearFlux, zvmin, zvmax, tag_script)
             mybatch = BatchIt(processName=procName, time=time, mem=mem)
-            seasons = range(1, 14)
+            seasons = range(1, 11)
             if not tag_list.empty:
                 idx = tag_list['ProductionID'] == procName
                 sel = tag_list[idx]
@@ -276,7 +276,7 @@ def batch_DDF_rate(theDict,
     snrate = theDict['SN_z_rate']
     smearFlux = theDict['SN_smearFlux']
     season_min = 1
-    season_max = 14
+    season_max = 11
     zmin = theDict['SN_z_min']
     zmax = theDict['SN_z_max']
     zint = np.min([0.6,zmax])
@@ -434,7 +434,7 @@ def batch_DDF_rate_per_season(theDict, scriptref='run_scripts/sim_to_fit/run_sim
             dbName, fieldName, tag_dir, np.round(sigmaInt, 2),
             snrate, smearFlux, tag_script)
         mybatch = BatchIt(processName=procName, time=time, mem=mem)
-        seasons = range(1, 14)
+        seasons = range(1, 11)
         if not tag_list.empty:
             idx = tag_list['ProductionID'] == procName
             sel = tag_list[idx]
@@ -648,7 +648,7 @@ if opts.fieldType == 'WFD':
         batch_WFD(procDict)
     else:
         #seasons = [(1, 7), (7, 14)]
-        seasons = [(1,12)]
+        seasons = [(1,11)]
         runMode = 'all_seasons'
         if opts.fieldType == 'WFD':
             for seas in seasons:
