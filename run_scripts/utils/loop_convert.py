@@ -43,8 +43,8 @@ def convert_multi(list_os, params, j=0, output_q=None):
         cmd += ' --inputDir={}'.format(inputDir)
         cmd += ' --outputDir={}'.format(outputDir)
         
-        #os.system(cmd)
-        print(cmd)
+        os.system(cmd)
+        #print(cmd)
         
         
     if output_q is not None:
