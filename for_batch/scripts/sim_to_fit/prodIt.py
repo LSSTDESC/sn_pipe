@@ -133,6 +133,10 @@ parser.add_option("--SN_NSNabsolute_DDF", type=int,
 parser.add_option("--SN_NSNabsolute_WFD", type=int,
                   default=-1,
                   help="absolute nsn for WFD production[%default]")
+parser.add_option("--DD_list", type=str,
+                  default='COSMOS,CDFS,EDFS_a,EDFS_b,ELAISS1,XMM-LSS',
+                  help="List of DDFs to process [%default]")
+
 opts, args = parser.parse_args()
 
 params = vars(opts)
@@ -160,7 +164,7 @@ cct = ['SN_smearFlux', 'Fitter_sigmaz',
        'SN_z_max','SN_z_min','SN_z_nbins','SN_z_step','SN_x1_type','SN_x1_min',
        'SN_color_type','SN_color_min','SN_z_type','SN_daymax_type',
        'SN_NSNfactor_DDF','SN_NSNfactor_WFD',
-       'SN_NSNabsolute_DDF','SN_NSNabsolute_WFD']
+       'SN_NSNabsolute_DDF','SN_NSNabsolute_WFD','DD_list']
 
 cosmo_params=['Cosmology_deparams', 'Cosmology_devalues', 'Cosmology_declass', 
        'Cosmology_classloc','Cosmology_demodel', 'Cosmology_deeos', 
