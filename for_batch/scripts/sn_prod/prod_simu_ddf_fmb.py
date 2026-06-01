@@ -32,6 +32,7 @@ cmd += " --SN_x1_type=unique --SN_x1_min={}".format(pp['x1'])
 cmd += " --SN_color_type=unique --SN_color_min={}".format(pp['color'])
 cmd += " --SN_NSNabsolute_DDF={}".format(pp['nsn']) 
 cmd += " --SN_z_type=unique --SN_daymax_type=random"
+cmd += " --DD_list={}".format(pp['DD_list'])
 
 print(cmd)
 os.system(cmd)
