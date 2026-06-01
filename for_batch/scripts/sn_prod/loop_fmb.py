@@ -1,6 +1,8 @@
 import os
 from optparse import OptionParser
 import pandas as pd
+import numpy as np
+
 desc = 'script to launch a set of sim_to_fit for dedicted (x1,color) SNe Ia'
 parser = OptionParser(description=desc)
 
@@ -8,7 +10,7 @@ parser.add_option("--x1", type=float, default=0.0,
                   help="stretch [%default]")    
 parser.add_option("--color", type=float, default=0.0,
                   help="color [%default]")
-parser.add_option("--config_atmos", type=str, default='confa',
+parser.add_option("--config_atmos", type=str, default='confe',
                   help="color [%default]") 
 
 opts, args = parser.parse_args()
@@ -31,14 +33,20 @@ ntrial = 1000
 if opts.config_atmos == 'confe':
     ntrial=1
 
+z = np.arange(0.,1.15,0.05)
+
 for i in range(len(z)):
-    zmin = z[i][0]
-    zmax = z[i][1]
+    nbins=1
+    nsn = 100
+    zmin = z[i]
+    zmax = 0.01
     
+    if zmin >=0.8:
+        nsn = 300
     cmd = scr
     cmd += ' --zmin={} --zmax={}'.format(zmin,zmax)
-    cmd += ' --nbins={} --x1={} --color={}'.format(nbins[i],x1,color)
-    cmd += ' --nsn={}'.format(nsn[i])
+    cmd += ' --nbins={} --x1={} --color={}'.format(nbins,x1,color)
+    cmd += ' --nsn={}'.format(nsn)
     for vv in atm_params:
         cmd += ' --{}={}'.format(vv,sel_atmos[vv].values[0])
     cmd += " --config_atmos={}".format(opts.config_atmos)
