@@ -11,3 +11,4 @@ sigma_ozone 0. float #sigma_ozone
 ntrial 1 int #ntrials for zp estimation
 nsn 100 int #number of sn to simulate
 config_atmos confa str #atmos config
+DD_list COSMOS,CDFS,EDFS_a,EDFS_b,ELAISS1,XMM-LSS str #list of DDF to process

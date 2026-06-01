@@ -12,6 +12,9 @@ parser.add_option("--color", type=float, default=0.0,
                   help="color [%default]")
 parser.add_option("--config_atmos", type=str, default='confe',
                   help="color [%default]") 
+parser.add_option("--DD_list", type=str,
+                  default='COSMOS,CDFS,EDFS_a,EDFS_b,ELAISS1,XMM-LSS',
+                  help="List of DDFs to process [%default]")
 
 opts, args = parser.parse_args()
 
@@ -27,6 +30,7 @@ nbins = [2,3,3,4,2,2,2]
 nsn = [100]*4+[300]*3
 x1 = opts.x1
 color = opts.color
+dd_list = opts.DD_list
 
 scr = 'python for_batch/scripts/sn_prod/prod_simu_ddf_fmb.py'
 ntrial = 1000
@@ -51,5 +55,6 @@ for i in range(len(z)):
         cmd += ' --{}={}'.format(vv,sel_atmos[vv].values[0])
     cmd += " --config_atmos={}".format(opts.config_atmos)
     cmd += " --ntrial={}".format(ntrial)
+    cmd += " --DD_list={}".format(dd_list)
     print(cmd)
     os.system(cmd)
