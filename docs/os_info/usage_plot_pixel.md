@@ -37,16 +37,15 @@ python plot_scripts/os_info/plot_os_pixel_info.py --dbDir=../dd_pixels --plots=g
 
 [nvisits vs distance to the center of pixel set](plotd2.png)
 
-#python plot_scripts/os_info/plot_os_pixel_info.py --dbDir=../wfd_pixels --dbName=baseline_v5.0.0_10yrs --fieldType=WFD --mollview_season=1 --plots=hist,mollview --nside=64
-
 python plot_scripts/os_info/plot_os_pixel_info.py --dbDir=../wfd_pixels_5.3 --dbName=baseline_v5.3.0_10yrs,comp_survey_v5.3.0_10yrs --fieldType=WFD --seasons=10yrs --plots=mollview,hist --hist_var=nvisits --mollview_var=nvisits --nside=64 --nvisits_10yrs_min=10000
+
 [Nvisits 10 yrs - WFD - histogram](plotd3.png)
 
-[cadence all years - WFD - histogram](plotd6.png)
+[Nvisits 10 years - WFD - Mollweid view - OS1](plotd4.png)
 
-[Nvisits year 1 - WFD - Mollweid view](plotd4.png)
+[Nvisits 10 years - WFD - Mollweid view - OS2](plotd5.png)
 
-[cadence year 1- WFD - Mollweid view](plotd5.png)
+[diff Nvisits 10 years - WFD - Mollweid view](plotd6.png)
 
 ## Summary plots (DDF)
 
