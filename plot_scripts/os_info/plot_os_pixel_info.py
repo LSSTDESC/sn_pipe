@@ -176,17 +176,43 @@ def load_data(dbDir, dbName, fields, fieldType='DD'):
         df = pd.concat((df, dd))
 
     return df
-
-def plot_histos_deprecated(hist_var,df,seasons):
+    
+def plot_mollviews(sel,seasons,var_to_plot):
     """
-    Function to plot histograms of data
+    Function to display Mollweid plots for a set of variavles
 
     Parameters
     ----------
-    hist_var : list(str)
-        List of variables to plot.
-    df : pandas df
+    sel : TYPE
+        DESCRIPTION.
+    seasons : TYPE
+        DESCRIPTION.
+
+    Returns
+    -------
+    None.
+
+    """
+
+    for vv in var_to_plot:
+        plot_mollviews_db(sel,vv,seasons,yleg=dict_leg[vv])
+       
+def plot_mollviews_db(sel,vv,seasons,yleg='',timescale='year'):
+    """
+    Function to display mollview plots for OS
+
+    Parameters
+    ----------
+    sel : pandas df
         Data to plot.
+    vv : str
+        variable to plot.
+    seasons : list(int) or list(str)
+        seasons to plot.
+    yleg : str, optional
+        y-axis legend. The default is ''.
+    timescale : str, optional
+        Time scale to use. The default is 'year'.
 
     Returns
     -------
@@ -194,41 +220,75 @@ def plot_histos_deprecated(hist_var,df,seasons):
 
     """
     
-    dbNames = df['dbName'].unique().tolist()
-    ccols = ['r','k','b']
-    lls = ['solid','dashed','dotted']
-    colors = dict(zip(dbNames,ccols[0:len(dbNames)]))
-    ls = dict(zip(dbNames,lls[0:len(dbNames)]))
     
-    for vv in hist_var:
-        vary = ''
-        if seasons=='10yrs':
-            fig, ax = plt.subplots(figsize=(12, 8))
-        
-        for dbName in dbNames:
-            idx = df['dbName'] == dbName
-            sel = df[idx]
+    if seasons == '10yrs':
+        sel = sel.groupby(['healpixID','dbName'])[vv].sum().reset_index()
+        sel[timescale] = '10 yr survey'
+        seasons = ['10 yr survey']
+    
+    dbNames = sel['dbName'].unique()
+     
+    for dbName in dbNames:
+        idx = sel['dbName'] == dbName
+        selb=sel[idx]
+        plotMollview_seasons(nside, selb, dbName,
+                             yvar=vv, yleg=dict_leg[vv],
+                             op=np.mean, seasons=seasons,outDir=mollview_outDir)
+    ## add the diff
+    
+    if len(dbNames) ==2:
+        dd = {}
+        for i,dbName in enumerate(dbNames):
+            idxa = sel['dbName'] == dbName
+            dd[i] = pd.DataFrame(sel[idxa])
             
-            if seasons == '10yrs':
-                bb = sel.groupby(['healpixID'])[vv].sum().reset_index()
-                idx = bb['nvisits'] < 1100.
-                ax.hist(bb[idx][vv], histtype='step', 
-                        bins=50,label=dbName,
-                        linestyle=ls[dbName],color=colors[dbName])
-            if vary == timescale:
-                for year in sel[vary].unique():
-                    idxb = sel[vary] == year
-                    if varx == 'cadence':
-                        idxb &= sel[varx] < 25.
-                        selb = sel[idxb]
-                        ax.hist(selb[vv], histtype='step', bins=50)
+        ddb = dd[0].merge(dd[1],left_on=['healpixID',timescale],
+                          right_on=['healpixID',timescale])
+        newvar = 'delta_{}'.format(vv)
+        ddb[newvar] = ddb['{}_x'.format(vv)]-ddb['{}_y'.format(vv)]
+        dbNa = ddb['dbName_x'].unique()[0]
+        dbNb = ddb['dbName_y'].unique()[0]
+        dbName = '{}-{}'.format(dbNa,dbNb)
+        #ddb = ddb.fillna(0)
+        #ddb[timescale] = '10 yr survey'
+        print('test',ddb[timescale].unique())
+        plotMollview_seasons(nside, ddb, dbName,
+                             yvar=newvar, yleg='$\Delta$ '+dict_leg[vv],
+                             op=np.mean, seasons=seasons,
+                             outDir=mollview_outDir,themin=-500)
+    
+def high_nvisits_pixels(sel,varx='nvisits',thresh=2000):
+    """
+    Function to grab the list of hot pixels
 
-        ax.set_xlabel(r'{}'.format(dict_leg[vv]))
-        ax.set_ylabel(r'Number of entries')
-        ax.grid(visible=True)
-        ax.set_xlim([0., None])
-        ax.legend(fontsize=15,frameon=False)
-        
+    Parameters
+    ----------
+    sel : pandas df
+        Data to process.
+    varx : str, optional
+        x-axis variable. The default is 'nvisits'.
+    thresh : int, optional
+        min number of visits. The default is 2000.
+
+    Returns
+    -------
+    selpix : list(int)
+        list of healpixIDs.
+
+    """
+    
+    
+    sel = sel.groupby(['healpixID','dbName'])[varx].sum().reset_index()
+    
+   
+    idx = sel['nvisits'] >= thresh
+    selpix = sel[idx]['healpixID'].unique().tolist()
+ 
+    return selpix
+    
+    
+    
+
 def plot_histos(hist_var,df,seasons,timescale='year'):
     """
     Function to plot histograms of data
@@ -239,7 +299,10 @@ def plot_histos(hist_var,df,seasons,timescale='year'):
         List of variables to plot.
     df : pandas df
         Data to plot.
-
+    seasons : list(int) or list(str)
+        seasons to plot.
+    timescale : str, optional
+        Time scale to use. The default is 'year'.
     Returns
     -------
     None.
@@ -262,6 +325,27 @@ def plot_histos(hist_var,df,seasons,timescale='year'):
         
         
 def plot_histos_db(df,varx,fig=None,ax=None,figtit=''):
+    """
+    Function to plot histos for OS
+
+    Parameters
+    ----------
+    df : pandas df
+        Data to plot.
+    varx : str
+        x-axis variable.
+    fig : matplotlib figure, optional
+        Figure for the plot. The default is None.
+    ax : matplotlib axis, optional
+        axis for the plot. The default is None.
+    figtit : str, optional
+        figure title. The default is ''.
+
+    Returns
+    -------
+    None.
+
+    """
     
     ccols = ['r','k','b']
     lls = ['solid','dashed','dotted']
@@ -327,6 +411,9 @@ parser.add_option('--hist_var', type=str,
 parser.add_option('--mollview_outDir', type=str,
                   default='None',
                   help='output dir for mollview figures [%default]')
+parser.add_option('--nvisits_10yrs_min', type=int,
+                  default=1200,
+                  help='min nvisits after 10 yrs (to remove hot spots) [%default]')
 
 opts, args = parser.parse_args()
 
@@ -342,14 +429,8 @@ fields = opts.fields.split(',')
 fieldType = opts.fieldType
 timescale = opts.timescale
 mollview_outDir = opts.mollview_outDir
+nvisits_10yrs_min=opts.nvisits_10yrs_min
 
-"""
-if '-' in mollview_seasons:
-    cad_brk = mollview_seasons.split('-')
-    moll_seasons = list(range(int(cad_brk[0]), int(cad_brk[1])+1))
-else:
-    moll_seasons = list(map(int, mollview_seasons.split(',')))
-"""
 if '-' in seasons:
     cad_brk = seasons.split('-')
     seasons = list(range(int(cad_brk[0]), int(cad_brk[1])+1))
@@ -383,6 +464,13 @@ idx &= df[timescale] < 11
 idx &= df['cadence'] > 0.
 sel = df[idx]
 
+#remove hot spots
+hot_pixels = high_nvisits_pixels(sel,thresh=nvisits_10yrs_min)
+
+idx = sel['healpixID'].isin(hot_pixels)
+
+sel = sel[~idx]
+
 vvar = ['cadence', 'nvisits', 'm5_i']
 legvar = ['cadence [day]', 'N$_{visits}$/pixel', '$m_{5}^{i}$']
 dict_leg = dict(zip(vvar, legvar))
@@ -399,6 +487,8 @@ if 'gen_plots' in plots:
                            yleg=r'{}'.format(dict_leg[vary]), timescale=timescale)
 
 if 'mollview' in plots:
+    plot_mollviews(sel,seasons,mollview_var)
+    """
     dbNames = sel['dbName'].unique()
     for vv in mollview_var:
         for dbName in dbNames:
@@ -424,34 +514,12 @@ if 'mollview' in plots:
             plotMollview_seasons(nside, ddb, dbName,
                                  yvar=newvar, yleg='$\Delta$ '+dict_leg[vv],
                                  op=np.mean, seasons=seasons,outDir=mollview_outDir)
-            
+      """      
             
 
 if 'hist' in plots:
     plot_histos(hist_var,sel,seasons)
-    """
-    print(sel.columns)
-    for vv in hist_var:
-        varx = vv.split('_')[0]
-        vary = vv.split('_')[1]
-        fig, ax = plt.subplots(figsize=(12, 8))
-        if '10yrs' in vv:
-            bb = sel.groupby(['healpixID'])[varx].sum().reset_index()
-            idx = bb['nvisits'] < 1000.
-            ax.hist(bb[idx][varx], histtype='step', bins=50)
-        if vary == timescale:
-            for year in sel[vary].unique():
-                idxb = sel[vary] == year
-                if varx == 'cadence':
-                    idxb &= sel[varx] < 25.
-                selb = sel[idxb]
-                ax.hist(selb[varx], histtype='step', bins=50)
-
-        ax.set_xlabel(r'{}'.format(dict_leg[varx]))
-        ax.set_ylabel(r'Number of entries')
-        ax.grid(visible=True)
-        ax.set_xlim([0., None])
-    """
+    
 """
 print_pixel_info(sel, 109384)
 print_pixel_info(sel, 109031)
