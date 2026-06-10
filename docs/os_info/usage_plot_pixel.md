@@ -10,8 +10,7 @@ Options:
   --dbDir=DBDIR         dbDir of the OS to process [../test_metric]
   --nside=NSIDE         healpix nside parameter [128]
   --plots=PLOTS         plots to show [gen_plots,mollview]
-  --mollview_seasons=MOLLVIEW_SEASONS
-                        plots to show [1-5]
+  --seasons=SEASONS     seasons to show [1-5]
   --fields=FIELDS       fields to show [COSMOS,XMM-
                         LSS,CDFS,ELAISS1,EDFS_a,EDFS_b]
   --fieldType=FIELDTYPE
@@ -25,6 +24,8 @@ Options:
   --hist_var=HIST_VAR   hist var to plot [nvisits_10yrs,cadence_year]
   --mollview_outDir=MOLLVIEW_OUTDIR
                         output dir for mollview figures [None]
+  --nvisits_10yrs_min=NVISITS_10YRS_MIN
+                        min nvisits after 10 yrs (to remove hot spots) [1200]
 		
 </pre>
 
@@ -36,8 +37,9 @@ python plot_scripts/os_info/plot_os_pixel_info.py --dbDir=../dd_pixels --plots=g
 
 [nvisits vs distance to the center of pixel set](plotd2.png)
 
-python plot_scripts/os_info/plot_os_pixel_info.py --dbDir=../wfd_pixels --dbName=baseline_v5.0.0_10yrs --fieldType=WFD --mollview_season=1 --plots=hist,mollview --nside=64
+#python plot_scripts/os_info/plot_os_pixel_info.py --dbDir=../wfd_pixels --dbName=baseline_v5.0.0_10yrs --fieldType=WFD --mollview_season=1 --plots=hist,mollview --nside=64
 
+python plot_scripts/os_info/plot_os_pixel_info.py --dbDir=../wfd_pixels_5.3 --dbName=baseline_v5.3.0_10yrs,comp_survey_v5.3.0_10yrs --fieldType=WFD --seasons=10yrs --plots=mollview,hist --hist_var=nvisits --mollview_var=nvisits --nside=64 --nvisits_10yrs_min=10000
 [Nvisits 10 yrs - WFD - histogram](plotd3.png)
 
 [cadence all years - WFD - histogram](plotd6.png)
