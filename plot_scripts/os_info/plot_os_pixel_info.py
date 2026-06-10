@@ -374,6 +374,55 @@ def plot_histos_db(df,varx,fig=None,ax=None,figtit=''):
     ax.set_xlim([0., None])
     ax.legend(fontsize=15,frameon=False)
     
+def plot_nvisits_cumsum(sel,varx='nvisits'):
+    
+    dbNames = sel['dbName'].unique()
+    
+    #nvisits full survey
+    
+    ddb = sel.groupby(['dbName','healpixID'])[varx].sum().reset_index()
+    
+    fig, ax = plt.subplots()
+    for dbName in dbNames:
+        idx = ddb['dbName'] == dbName
+        selb = ddb[idx]
+        selb = selb.sort_values(by=[varx])
+        nv = selb[varx].sum()
+        ax.plot(selb[varx],selb[varx].cumsum()/nv)
+        #ax.hist(sel)
+        
+    plt.show()
+    
+    
+def tag_hotspot(df,ra=224,dec=-29,width=20.,varx='nvisits'):
+    
+    sel = df.groupby(['dbName','healpixID','pixRA','pixDec'])[varx].sum().reset_index()
+    
+    print(sel[['pixRA','pixDec']])
+    idx = sel['pixRA'] >= ra-width
+    print(len(sel[idx]),ra-width,ra+width)
+    idx &= sel['pixRA'] <= ra+width
+    idx &= sel['pixDec'] >= dec-width
+    idx &= sel['pixDec'] <= dec+width
+    
+    sel = sel[idx]
+    
+    
+    dbNames = sel['dbName'].unique()
+    
+    fig, ax = plt.subplots()
+    
+    for dbName in dbNames:
+        idx = sel['dbName'] == dbName
+        selb = sel[idx]
+        
+        ax.hist(selb[varx],histtype='step')
+        
+    plt.show()
+    
+    
+    
+    
     
     
 parser = OptionParser(description='Script to plot pixel level OS infos')
@@ -440,20 +489,12 @@ else:
     else:
         if seasons != '10yrs':
             seasons = [int(seasons)]
-print('seasons moll', seasons)
-
-# fName = '{}/{}.hdf5'.format(dbDir, dbName)
 
 df = pd.DataFrame()
 for dbName in dbNames:
     df_ = load_data(dbDir, dbName, fields, fieldType=fieldType)
     df_['dbName'] = dbName
     df = pd.concat((df,df_))
-
-# df = pd.read_hdf(fName)
-#df['dbName'] = dbName
-print(df.columns)
-# print(test)
 
 if mollview_outDir != 'None':
     from sn_tools.sn_io import checkDir
@@ -464,10 +505,15 @@ idx &= df[timescale] < 11
 idx &= df['cadence'] > 0.
 sel = df[idx]
 
+tag_hotspot(sel)
+
+plot_nvisits_cumsum(sel)
 #remove hot spots
 hot_pixels = high_nvisits_pixels(sel,thresh=nvisits_10yrs_min)
 
 idx = sel['healpixID'].isin(hot_pixels)
+
+hot_spots = sel[idx]
 
 sel = sel[~idx]
 
@@ -488,38 +534,13 @@ if 'gen_plots' in plots:
 
 if 'mollview' in plots:
     plot_mollviews(sel,seasons,mollview_var)
-    """
-    dbNames = sel['dbName'].unique()
-    for vv in mollview_var:
-        for dbName in dbNames:
-            idx = sel['dbName'] == dbName
-            selb=sel[idx]
-            plotMollview_seasons(nside, selb, dbName,
-                                 yvar=vv, yleg=dict_leg[vv],
-                                 op=np.mean, seasons=seasons,outDir=mollview_outDir)
-        ## add the diff
-        if len(dbNames) ==2:
-            dd = {}
-            for i,dbName in enumerate(dbNames):
-                idxa = df['dbName'] == dbName
-                dd[i] = pd.DataFrame(df[idxa])
-                
-            ddb = dd[0].merge(dd[1],left_on=['healpixID',timescale],
-                              right_on=['healpixID',timescale])
-            newvar = 'delta_{}'.format(vv)
-            ddb[newvar] = ddb['{}_x'.format(vv)]-ddb['{}_y'.format(vv)]
-            dbNa = ddb['dbName_x'].unique()[0]
-            dbNb = ddb['dbName_y'].unique()[0]
-            dbName = '{}-{}'.format(dbNa,dbNb)
-            plotMollview_seasons(nside, ddb, dbName,
-                                 yvar=newvar, yleg='$\Delta$ '+dict_leg[vv],
-                                 op=np.mean, seasons=seasons,outDir=mollview_outDir)
-      """      
             
 
 if 'hist' in plots:
     plot_histos(hist_var,sel,seasons)
+   
     
+
 """
 print_pixel_info(sel, 109384)
 print_pixel_info(sel, 109031)
