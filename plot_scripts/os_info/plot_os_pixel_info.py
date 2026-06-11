@@ -309,11 +309,13 @@ def plot_histos(hist_var,df,seasons,timescale='year'):
 
     """
     
-    if seasons == '10yrs':
-        df = df.groupby(['healpixID','dbName'])[hist_var].sum().reset_index()
-    
     for vv in hist_var:
         if seasons == '10yrs':
+            if vv == 'nvisits':
+                df = df.groupby(['healpixID','dbName'])[hist_var].sum().reset_index()
+            if vv == 'cadence':
+                df = df.groupby(['healpixID','dbName'])[hist_var].mean().reset_index()
+                df = df[df['cadence']<=50]
             plot_histos_db(df,vv,figtit='10 years')
         else:
             for seas in seasons:
@@ -360,19 +362,44 @@ def plot_histos_db(df,varx,fig=None,ax=None,figtit=''):
     if figtit != '':
         fig.suptitle(figtit)
         
+    d_df = {}
     for dbName in dbNames:
            idx = df['dbName'] == dbName
            sel = df[idx]
+           if len(dbNames) == 2:
+               d_df[dbName] = sel
            ax.hist(sel[varx], histtype='step', 
-                   bins=50,label=dbName,
+                   bins=100,label=dbName,
                    linestyle=ls[dbName],color=colors[dbName])
-    
     
     ax.set_xlabel(r'{}'.format(dict_leg[varx]))
     ax.set_ylabel(r'Number of entries')
     ax.grid(visible=True)
     ax.set_xlim([0., None])
     ax.legend(fontsize=15,frameon=False)
+    
+    #plot the diff here
+    
+    if len(dbNames) == 2:
+        dba = dbNames[0]
+        dbb = dbNames[1]  
+        df_m = d_df[dba].merge(d_df[dbb],
+                                  left_on=['healpixID'],
+                                  right_on=['healpixID'])
+        newvar = 'diff_{}'.format(varx) 
+        df_m[newvar] = df_m['{}_x'.format(varx)]-df_m['{}_y'.format(varx)]
+        figb, axb = plt.subplots(figsize=(12, 8))
+        axb.hist(df_m[newvar], histtype='step', 
+                   bins=50,
+                   linestyle='solid',color='k')
+        axb.grid(visible=True)
+        xlab = '$\Delta$'+'{}'.format(dict_leg[varx])
+        axb.set_xlabel(r'{}'.format(xlab))
+        axb.set_ylabel(r'Number of entries')
+        
+    
+    
+   
     
 def plot_nvisits_cumsum(sel,varx='nvisits'):
     
@@ -505,9 +532,10 @@ idx &= df[timescale] < 11
 idx &= df['cadence'] > 0.
 sel = df[idx]
 
-tag_hotspot(sel)
+#tag_hotspot(sel)
 
-plot_nvisits_cumsum(sel)
+#plot_nvisits_cumsum(sel)
+
 #remove hot spots
 hot_pixels = high_nvisits_pixels(sel,thresh=nvisits_10yrs_min)
 
