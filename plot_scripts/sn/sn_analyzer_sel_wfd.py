@@ -234,6 +234,7 @@ if 'density_indiv' in plots:
 
 if 'density_season' in plots:
     from sn_plotter_analysis.sn_analyser_wdf import plot_density_wfd_season
+    wfd[timescale] = wfd[timescale].astype(int)
     plot_density_wfd_season(wfd, timescale, timeslots, nside, conf,
                             varp=vartoplot)
 
