@@ -109,13 +109,13 @@ def statIt(df_survey, dbName_DD, outDir, fName='sn_survey.hdf5'):
 
     """
 
-    # estimate some stat
+    # estimate some stat - nsn
 
     dfb = df_survey.groupby(['field', 'year', 'nreal']).apply(
-        lambda x: get_stat(x)).reset_index()
+        lambda x: get_stat(x),include_groups=False).reset_index()
 
     dfc = dfb.groupby(['field', 'year']).apply(
-        lambda x: get_statb(x)).reset_index()
+        lambda x: get_statb(x),include_groups=False).reset_index()
     dfc['dbName'] = dbName_DD
 
     outDir = '{}/{}'.format(outDir, dbName_DD)
@@ -124,6 +124,21 @@ def statIt(df_survey, dbName_DD, outDir, fName='sn_survey.hdf5'):
     outName = '{}/{}'.format(outDir, fName)
 
     dfc.to_hdf(outName, key='sn_survey')
+    
+    # estimate some stat - z dist
+    
+    dfa_zd = df_survey.groupby(['field', 'year', 'nreal']).apply(
+        lambda x: get_zdist(x),include_groups=False).reset_index()
+    
+    print(dfa_zd)
+def get_zdist(grp,bins=np.arange(0.0,1.15,0.05)):
+    
+    from sn_analysis.sn_calc_plot import bin_it
+    
+    res = bin_it(grp,xvar='z_fit',bins=bins,outvar='nsn')
+    
+    return res
+    
 
 
 def ana_fields(df_survey, df_nospectroz, outDir,
