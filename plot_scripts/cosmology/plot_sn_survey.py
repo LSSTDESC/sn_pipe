@@ -20,7 +20,7 @@ from sn_plotter_analysis.sn_plot import plot_ddf_year
 from sn_plotter_analysis.sn_analyser_tools import print_nsn_latex
 
 
-def plot_ddf(df, pp, conf_df):
+def plot_field(df, pp, conf_df):
     """
     Function to plot the data
 
@@ -46,9 +46,15 @@ def plot_ddf(df, pp, conf_df):
 
     # all fields
     if 'nsn_all' in plots:
+        fields = ud_fields+dd_fields+wfd_fields
+        plot_ddf_year(df, conf_df,
+                      cols=['year', 'dbName','dbName_plot'],
+                      fields=fields)
+    #all ddf 
+    if 'nsn_ddf' in plots:
         fields = ud_fields+dd_fields
         plot_ddf_year(df, conf_df,
-                      cols=['year', 'dbName'],
+                      cols=['year', 'dbName','dbName_plot'],
                       fields=fields)
 
     # UD only
@@ -56,7 +62,7 @@ def plot_ddf(df, pp, conf_df):
 
         fields = ud_fields
         plot_ddf_year(df, conf_df,
-                      cols=['year', 'dbName'],
+                      cols=['year', 'dbName','dbName_plot'],
                       fields=fields)
 
     # WFD only
@@ -64,7 +70,7 @@ def plot_ddf(df, pp, conf_df):
 
         fields = wfd_fields
         plot_ddf_year(df, conf_df,
-                      cols=['year', 'dbName'],
+                      cols=['year', 'dbName','dbName_plot'],
                       fields=fields)
 
 
@@ -128,7 +134,7 @@ parser.add_option('--dataDir', type=str,
 parser.add_option('--surveyList', type=str, default='list_surveys_plot.csv',
                   help='OS for DD [%default]')
 parser.add_option('--plots', type=str,
-                  default='nsn_all,nsn_ud,wfd',
+                  default='nsn_all,nsn_ddf,nsn_ud,wfd',
                   help='plots to draw [%default]')
 parser.add_option('--print_nsn', type=int,
                   default=0,
@@ -181,6 +187,17 @@ for i, row in dbList.iterrows():
         df___ = pd.read_hdf(effiName)
         df_effi = pd.concat((df_effi, df___))
 
+#add dbName_plot here
+df = df.merge(dbList,left_on=['dbName'],right_on=['dbName'])
+
+#correct for WFD: nsn_z_08_sigmaC
+
+idx = df['field'] == 'WFD'
+sel = df[idx]
+sel['nsn_z_08_sigmaC'] = sel['nsn']
+sel['err_nsn_z_08_sigmaC'] = sel['err_nsn']
+df = pd.concat((sel,df[~idx]))
+
 
 # read config file
 conf_df = pd.read_csv(pp['config'], comment='#')
@@ -188,14 +205,14 @@ conf_df = pd.read_csv(pp['config'], comment='#')
 tp = pp['genplot'].split(',')
 
 if 'survey_spectro' in tp:
-    plot_ddf(df, pp, conf_df)
+    plot_field(df, pp, conf_df)
 
     if pp['print_nsn']:
         print_nsn_latex(df)
 
 if 'survey_all' in tp:
     if len(df_all) > 0:
-        plot_ddf(df_all, pp, conf_df)
+        plot_field(df_all, pp, conf_df)
         if pp['print_nsn']:
             print_nsn_latex(df_all)
 
