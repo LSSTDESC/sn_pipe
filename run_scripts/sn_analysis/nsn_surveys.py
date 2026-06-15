@@ -131,7 +131,24 @@ def statIt(df_survey, dbName_DD, outDir, fName='sn_survey.hdf5'):
         lambda x: get_zdist(x),include_groups=False).reset_index()
     
     print(dfa_zd)
+    
 def get_zdist(grp,bins=np.arange(0.0,1.15,0.05)):
+    """
+    method to estimate z distribution
+
+    Parameters
+    ----------
+    grp : pandas df
+        Data to process.
+    bins : array, optional
+        Binning to use. The default is np.arange(0.0,1.15,0.05).
+
+    Returns
+    -------
+    res : TYPE
+        DESCRIPTION.
+
+    """
     
     from sn_analysis.sn_calc_plot import bin_it
     
