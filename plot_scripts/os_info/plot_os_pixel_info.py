@@ -222,7 +222,14 @@ def plot_mollviews_db(sel,vv,seasons,yleg='',timescale='year'):
     
     
     if seasons == '10yrs':
-        sel = sel.groupby(['healpixID','dbName'])[vv].sum().reset_index()
+        if vv.split('_')[0] =='nvisits':
+            sel = sel.groupby(['healpixID','dbName'])[vv].sum().reset_index()
+            op = np.mean
+        if vv.split('_')[0] =='cadence':
+            idx = sel[vv] < 30
+            idx &= sel[vv] > 0
+            sel = sel[idx].groupby(['healpixID','dbName'])[vv].median().reset_index()
+            op = np.median
         sel[timescale] = '10 yr survey'
         seasons = ['10 yr survey']
     
@@ -233,7 +240,7 @@ def plot_mollviews_db(sel,vv,seasons,yleg='',timescale='year'):
         selb=sel[idx]
         plotMollview_seasons(nside, selb, dbName,
                              yvar=vv, yleg=dict_leg[vv],
-                             op=np.mean, seasons=seasons,outDir=mollview_outDir)
+                             op=op, seasons=seasons,outDir=mollview_outDir)
     ## add the diff
     
     if len(dbNames) ==2:
@@ -254,8 +261,8 @@ def plot_mollviews_db(sel,vv,seasons,yleg='',timescale='year'):
         print('test',ddb[timescale].unique())
         plotMollview_seasons(nside, ddb, dbName,
                              yvar=newvar, yleg='$\Delta$ '+dict_leg[vv],
-                             op=np.mean, seasons=seasons,
-                             outDir=mollview_outDir,themin=-500)
+                             op=op, seasons=seasons,
+                             outDir=mollview_outDir,themin=np.min(ddb[newvar]))
     
 def high_nvisits_pixels(sel,varx='nvisits',thresh=2000):
     """
@@ -311,11 +318,16 @@ def plot_histos(hist_var,df,seasons,timescale='year'):
     
     for vv in hist_var:
         if seasons == '10yrs':
-            if vv == 'nvisits':
+            if vv.split('_')[0] == 'nvisits':
                 df = df.groupby(['healpixID','dbName'])[hist_var].sum().reset_index()
-            if vv == 'cadence':
+            if vv == 'nvisits_night':
                 df = df.groupby(['healpixID','dbName'])[hist_var].mean().reset_index()
-                df = df[df['cadence']<=50]
+            if vv.split('_')[0] == 'cadence':
+                idx= df[vv]<=30
+                idx &= df[vv]>0
+                df = df[idx]
+                df = df.groupby(['healpixID','dbName'])[hist_var].median().reset_index()
+                
             plot_histos_db(df,vv,figtit='10 years')
         else:
             for seas in seasons:
@@ -461,7 +473,7 @@ parser.add_option('--dbDir', type=str, default='../test_metric',
 parser.add_option('--nside', type=int, default=128,
                   help='healpix nside parameter [%default]')
 parser.add_option('--plots', type=str,
-                  default='gen_plots,mollview',
+                  default='gen_plots,mollview,hist',
                   help='plots to show [%default]')
 parser.add_option('--seasons', type=str,
                   default='1-5',
@@ -523,6 +535,19 @@ for dbName in dbNames:
     df_['dbName'] = dbName
     df = pd.concat((df,df_))
 
+#load the dust_map
+fDust = 'reference_files/dustmap_{}_delta_mag_dust.hdf5'.format(nside)
+df_dust = pd.read_hdf(fDust)
+
+df = df.merge(df_dust,left_on=['healpixID'],right_on=['healpixID'])
+
+#select on dust
+
+idx = df['ebvofMW'] < 0.25
+df = df[idx]
+
+print('nentries',len(df))
+
 if mollview_outDir != 'None':
     from sn_tools.sn_io import checkDir
     checkDir(mollview_outDir)
@@ -545,8 +570,19 @@ hot_spots = sel[idx]
 
 sel = sel[~idx]
 
-vvar = ['cadence', 'nvisits', 'm5_i']
-legvar = ['cadence [day]', 'N$_{visits}$/pixel', '$m_{5}^{i}$']
+bands = 'ugrizy'
+vvar = ['cadence', 'nvisits', 'm5_i','nvisits_night']
+for b in bands:
+    vvar.append('cadence_{}'.format(b))
+    vvar.append('nvisits_{}'.format(b))
+    
+legvar = ['cadence [day]', '$\Sigma N_{visits}$/pixel', 
+          '$m_{5}^{i}$','<N$_{visits}$>/night/pixel']
+
+for b in bands:
+    legvar.append('cadence {} [day]'.format(b))
+    legvar.append('$\Sigma N_{visits}^{'+b+'}$/pixel')
+    
 dict_leg = dict(zip(vvar, legvar))
 
 if 'gen_plots' in plots:
