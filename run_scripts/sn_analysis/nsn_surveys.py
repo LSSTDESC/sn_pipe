@@ -88,7 +88,8 @@ def grab_data(dataDir, dbName_DD, dbName_WFD, add_str=''):
     return df_survey
 
 
-def statIt(df_survey, dbName_DD, outDir, fName='sn_survey.hdf5'):
+def statIt(df_survey, dbName_DD, outDir, 
+           fName='sn_survey.hdf5', zdistName='sn_z_dist.hdf5'):
     """
     Estimate and save statistics on file
 
@@ -102,7 +103,9 @@ def statIt(df_survey, dbName_DD, outDir, fName='sn_survey.hdf5'):
         Output directory.
     fName : str, optional
         Output file name. The default is 'sn_survey.hdf5'.
-
+    zdistName: str, optional.
+        redshift distribution file name. The default is 'sn_z_dist.hdf5'.   
+    
     Returns
     -------
     None.
@@ -130,7 +133,89 @@ def statIt(df_survey, dbName_DD, outDir, fName='sn_survey.hdf5'):
     dfa_zd = df_survey.groupby(['field', 'year', 'nreal']).apply(
         lambda x: get_zdist(x),include_groups=False).reset_index()
     
+    outName = '{}/{}'.format(outDir, zdistName)
+
+    dfa_zd.to_hdf(outName, key='sn_zdist')
+    """
     print(dfa_zd)
+    
+    df_zd_summ = dfa_zd.groupby(['field','year','z_fit']).apply(lambda x: mean_it(x),include_groups=False).reset_index()
+    
+    print(df_zd_summ.groupby(['field'])['nsn'].sum(),df_zd_summ['nsn'].sum())
+    
+    import matplotlib.pyplot as plt
+    
+    fig, ax = plt.subplots()
+    
+    idx = df_zd_summ['field']=='WFD'
+    
+    sel = df_zd_summ[idx]
+    
+    selb = df_zd_summ.groupby(['z_fit']).apply(lambda x: sum_it(x,norm_factor=1),include_groups=False).reset_index()
+    selb = selb.sort_values(by=['z_fit'])
+    ax.plot(selb['z_fit'],selb['nsn'])
+    
+    plt.show()
+    """
+def mean_it(grp):
+    """
+    Grab mean and std
+
+    Parameters
+    ----------
+    grp : pandas df
+        Data to process.
+
+    Returns
+    -------
+    res : pandas df
+        Result.
+
+    """
+    
+    
+    dd = {}
+    
+    dd['nsn'] = [grp['nsn'].mean()]
+    dd['nsn_err'] = [grp['nsn'].std()]
+    
+    res = pd.DataFrame.from_dict(dd)
+    
+    return res
+    
+    
+def sum_it(grp,norm_factor=50):
+    """
+    Function to sum data
+
+    Parameters
+    ----------
+    grp : pandas df
+        Data to process.
+    norm_factor: float, optional.
+        normalization factor. The default is 50.
+
+    Returns
+    -------
+    res : pandas df
+        Result.
+
+    """
+    
+    dd = {}
+    
+    dd['nsn'] = [grp['nsn'].sum()]
+    dd['nsn_err'] = [np.sqrt(np.sum(grp['nsn_err']**2))]
+    
+    res = pd.DataFrame.from_dict(dd)
+    
+    res['nsn']/=norm_factor
+    res['nsn_err']/=norm_factor
+    
+    return res
+    
+    
+    
     
 def get_zdist(grp,bins=np.arange(0.0,1.15,0.05)):
     """
