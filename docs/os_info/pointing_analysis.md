@@ -9,9 +9,7 @@
 ### analysis of the data -> create outputfile with processed data
 - use the script [run_scripts/metrics/stat_DD.py](usage_stat_DD.md)
 - @ccin2p3, it is possible to use the [anaos.sh](anaos.sh) script using
-sh srun_test.sh anaos.sh
-
-An example of the srun_tesh.sh is given [here](srun_test.sh).
+sh sh_scripts/srun_cc.sh anaos.sh
 
 ### plot the data
 
@@ -37,9 +35,7 @@ An example of the srun_tesh.sh is given [here](srun_test.sh).
 - use the script [run_scripts/os_info/nvisits_m5.py](usage_nvisits_m5.md)
 
 - @ccin2p3, it is possible to use the [nvisits_m5.sh](nvisits_m5.sh) script using
-sh srun_test.sh nvisits_m5.sh
-
-An example of the srun_tesh.sh is given [here](srun_test.sh).
+sh sh_scripts/srun_cc.sh nvisits_m5.sh
 
 ### plot the results
 
