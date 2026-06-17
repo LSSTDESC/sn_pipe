@@ -28,7 +28,6 @@ Usage: script to plot LSST SN surveys
 <pre>
 Options:
   -h, --help            show this help message and exit
-  --dataDir=DATADIR     data directory [../sn_summary_surveys]
   --surveyList=SURVEYLIST
                         OS for DD [list_surveys_plot.csv]
   --plots=PLOTS         plots to draw [nsn_all,nsn_ud]

@@ -1,2 +1,6 @@
-dbName
-baseline_v4.3.1_10yrs
+dataDir,dbName,dbName_plot
+../sn_summary_surveys_spectro_scen_1,baseline_v5.3.0_10yrs,baseline_v5.3.0_suspect_1
+../sn_summary_surveys_spectro_scen_2,baseline_v5.3.0_10yrs,baseline_v5.3.0_suspect_2
+../sn_summary_surveys_spectro_scen_3,baseline_v5.3.0_10yrs,baseline_v5.3.0_suspect_3
+../sn_summary_surveys_spectro_scen_4,baseline_v5.3.0_10yrs,baseline_v5.3.0_suspect_4
+../sn_summary_surveys_spectro_scen_5,baseline_v5.3.0_10yrs,baseline_v5.3.0_suspect_5
