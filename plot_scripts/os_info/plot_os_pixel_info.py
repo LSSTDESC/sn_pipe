@@ -224,14 +224,19 @@ def plot_mollviews_db(sel,vv,seasons,yleg='',timescale='year'):
     if seasons == '10yrs':
         if vv.split('_')[0] =='nvisits':
             sel = sel.groupby(['healpixID','dbName'])[vv].sum().reset_index()
-            op = np.mean
         if vv.split('_')[0] =='cadence':
             idx = sel[vv] < 30
             idx &= sel[vv] > 0
             sel = sel[idx].groupby(['healpixID','dbName'])[vv].median().reset_index()
-            op = np.median
+            
         sel[timescale] = '10 yr survey'
         seasons = ['10 yr survey']
+    
+    if vv.split('_')[0] =='nvisits':
+        op = np.mean
+        
+    if vv.split('_')[0] =='cadence':
+        op = np.median
     
     dbNames = sel['dbName'].unique()
      
@@ -502,6 +507,9 @@ parser.add_option('--mollview_outDir', type=str,
 parser.add_option('--nvisits_10yrs_min', type=int,
                   default=1200,
                   help='min nvisits after 10 yrs (to remove hot spots) [%default]')
+parser.add_option('--dust', type=int,
+                  default=0,
+                  help='to apply E(B-V) cut [%default]')
 
 opts, args = parser.parse_args()
 
@@ -518,6 +526,7 @@ fieldType = opts.fieldType
 timescale = opts.timescale
 mollview_outDir = opts.mollview_outDir
 nvisits_10yrs_min=opts.nvisits_10yrs_min
+dust = opts.dust
 
 if '-' in seasons:
     cad_brk = seasons.split('-')
@@ -536,15 +545,16 @@ for dbName in dbNames:
     df = pd.concat((df,df_))
 
 #load the dust_map
-fDust = 'reference_files/dustmap_{}_delta_mag_dust.hdf5'.format(nside)
-df_dust = pd.read_hdf(fDust)
+if dust:
+    fDust = 'reference_files/dustmap_{}_delta_mag_dust.hdf5'.format(nside)
+    df_dust = pd.read_hdf(fDust)
 
-df = df.merge(df_dust,left_on=['healpixID'],right_on=['healpixID'])
+    df = df.merge(df_dust,left_on=['healpixID'],right_on=['healpixID'])
 
-#select on dust
+    #select on dust
 
-idx = df['ebvofMW'] < 0.25
-df = df[idx]
+    idx = df['ebvofMW'] < 0.25
+    df = df[idx]
 
 print('nentries',len(df))
 
