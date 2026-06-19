@@ -7,15 +7,9 @@ Created on Tue Aug 26 09:55:57 2025
 """
 
 from optparse import OptionParser
-import glob
 import pandas as pd
-from sn_cosmology.cosmo_tools import get_seasons
 import matplotlib.pyplot as plt
-import numpy as np
 import os
-import time
-from sn_analysis.sn_calc_plot import bin_it
-from sn_tools.sn_utils import multiproc
 from sn_plotter_analysis.sn_plot import plot_ddf_year
 from sn_plotter_analysis.sn_analyser_tools import print_nsn_latex
 
@@ -127,10 +121,11 @@ def plot_effi(df_effi, config, fields=['COSMOS', 'WFD'], years=[1, 2]):
 
 
 parser = OptionParser('script to plot LSST SN surveys')
-
+"""
 parser.add_option('--dataDir', type=str,
                   default='../sn_summary_surveys',
                   help='data directory [%default]')
+"""
 parser.add_option('--surveyList', type=str, default='list_surveys_plot.csv',
                   help='OS for DD [%default]')
 parser.add_option('--plots', type=str,
@@ -175,20 +170,22 @@ df_all = pd.DataFrame()
 df_effi = pd.DataFrame()
 
 for i, row in dbList.iterrows():
-    fName = '{}/{}/sn_survey.hdf5'.format(pp['dataDir'], row['dbName'])
+    fName = '{}/{}/sn_survey.hdf5'.format(row['dataDir'], row['dbName'])
+    print('loading',fName)
     df_ = pd.read_hdf(fName)
+    df_['dbName_plot'] = row['dbName_plot']
     df = pd.concat((df, df_))
-    fName_all = '{}/{}/sn_survey_all.hdf5'.format(pp['dataDir'], row['dbName'])
+    fName_all = '{}/{}/sn_survey_all.hdf5'.format(row['dataDir'], row['dbName'])
     if os.path.exists(fName_all):
         df__ = pd.read_hdf(fName_all)
         df_all = pd.concat((df_all, df__))
-    effiName = '{}/{}/effi_spectro.hdf5'.format(pp['dataDir'], row['dbName'])
+    effiName = '{}/{}/effi_spectro.hdf5'.format(row['dataDir'], row['dbName'])
     if os.path.exists(effiName):
         df___ = pd.read_hdf(effiName)
         df_effi = pd.concat((df_effi, df___))
 
 #add dbName_plot here
-df = df.merge(dbList,left_on=['dbName'],right_on=['dbName'])
+#df = df.merge(dbList,left_on=['dbName'],right_on=['dbName'])
 
 #correct for WFD: nsn_z_08_sigmaC
 

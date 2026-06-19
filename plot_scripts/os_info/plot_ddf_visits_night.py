@@ -45,7 +45,7 @@ def plot_seq_frac(data, dbName, field='COSMOS', season=1,
 
     """
 
-    idx = data['target_name'] == field
+    idx = data['field'] == field
     idx &= data['year'] == season
     sel = data[idx]
 
@@ -84,7 +84,7 @@ def plot_all(ro, dbName, field='DD:COSMOS', season=3):
     """
 
     idx = ro['dbName'] == dbName
-    idx &= ro['target_name'] == field
+    idx &= ro['field'] == field
     idx &= ro['year'] == season
     ro = ro[idx]
 
@@ -155,7 +155,7 @@ def plot_summary(data, field='DD:COSMOS',
     fig.suptitle(figtit)
     fig.subplots_adjust(right=0.75)
 
-    idx = data['target_name'] == field
+    idx = data['field'] == field
 
     sel = data[idx]
 
@@ -281,7 +281,7 @@ def get_stats(df_summary, df_orig):
 
     """
 
-    rr = df_summary.groupby(['dbName', 'target_name', 'year']).apply(
+    rr = df_summary.groupby(['dbName', 'field', 'year']).apply(
         lambda x: get_stat_indiv(x, df_orig), include_groups=False).reset_index()
 
     return rr
@@ -289,7 +289,7 @@ def get_stats(df_summary, df_orig):
 
 def analysis_sequences(df_summary, df_orig,
                        dbName='baseline_v4.3.1_10yrs',
-                       target_name='DD:COSMOS', year=3):
+                       field='DD:COSMOS', year=3):
     """
     Function to analyze sequences for each field/season
 
@@ -301,7 +301,7 @@ def analysis_sequences(df_summary, df_orig,
         original results.
     dbName: str, optional.
        OS name. The default is 'baseline_v4.3.1_10yrs'.
-    target_name : str, optional
+    field : str, optional
         field name. The default is 'DD:COSMOS'.
     year : int, optional
         year. The default is 3.
@@ -311,24 +311,24 @@ def analysis_sequences(df_summary, df_orig,
 
     """
     idx = df_summary['dbName'] == dbName
-    idx &= df_summary['target_name'] == target_name
+    idx &= df_summary['field'] == field
 
     idx &= df_summary['year'] == year
 
-    rr = df_summary[idx].groupby(['dbName', 'target_name', 'year']).apply(
+    rr = df_summary[idx].groupby(['dbName', 'field', 'year']).apply(
         lambda x: get_ratios(x, df_orig), include_groups=False)
 
     plot_stat_visits_vs_exp(rr, op.ge, '>',
-                            bins=np.arange(1.0, 2.5, 0.01), field=target_name)
+                            bins=np.arange(1.0, 2.5, 0.01), field=field)
     plot_stat_visits_vs_exp(rr, op.le, '<',
-                            bins=np.arange(0.0, 1.1, 0.01), field=target_name)
+                            bins=np.arange(0.0, 1.1, 0.01), field=field)
 
     plt.show(block=False)
 
 
 def ana_plot(ro, config, fields):
 
-    dft = ro.groupby(['dbName', 'target_name', 'year']).apply(
+    dft = ro.groupby(['dbName', 'field', 'year']).apply(
         lambda x: summary_seq(x), include_groups=False).reset_index()
 
     # plots here
@@ -349,10 +349,10 @@ def ana_plot(ro, config, fields):
         idxa = dft['dbName'] == dbName
         sela = dft[idxa]
         print('list of fields')
-        print(sela['target_name'].unique())
+        print(sela['field'].unique())
         answer = input('target?')
-        target_name = answer
-        idxb = sela['target_name'] == target_name
+        field = answer
+        idxb = sela['field'] == field
         selb = sela[idxb]
         print('years:')
         print(selb['year'].to_list())
@@ -360,7 +360,7 @@ def ana_plot(ro, config, fields):
         year = int(answer)
 
         analysis_sequences(dft, data, dbName=dbName,
-                           target_name=target_name, year=year)
+                           field=field, year=year)
 
 
 def ana_indiv(ro):
@@ -389,17 +389,17 @@ def ana_indiv(ro):
         idxa = ro['dbName'] == dbName
         sela = ro[idxa]
         print('list of fields')
-        print(sela['target_name'].unique())
+        print(sela['field'].unique())
         answer = input('target?')
-        target_name = answer
-        idxb = sela['target_name'] == target_name
+        field = answer
+        idxb = sela['field'] == field
         selb = sela[idxb]
         print('years:')
         print(selb['year'].unique())
         answer = input('year?')
         year = int(answer)
 
-        plot_all(ro, dbName, field=target_name, season=year)
+        plot_all(ro, dbName, field=field, season=year)
 
 
 def ana_night(data):
@@ -482,7 +482,7 @@ if 'plot_night' in plots:
     ana_night(data)
 
 # ro = ana_seq(data)
-idx = data['target_name'].isin(fields)
+idx = data['field'].isin(fields)
 data = data[idx]
 
 dbNames = data['dbName'].unique().tolist()

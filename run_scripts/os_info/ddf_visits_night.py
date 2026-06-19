@@ -209,9 +209,9 @@ def ana_simu(dbDir, dbName):
     fName = '{}/{}.npy'.format(dbDir, dbName)
 
     obs = pd.DataFrame(np.load(fName))
-    obs['tt_name'] = obs['target'].str.split(',').str.get(0)
-    print(obs['tt_name'].unique())
-    idx = obs['tt_name'].isin(ddf_list)
+    obs['field'] = obs['scheduler_note'].str.split(',').str.get(0)
+    print(obs['field'].unique())
+    idx = obs['field'].isin(ddf_list)
     obs = obs[idx]
     #obs = pd.DataFrame.from_records(obs)
 
@@ -227,7 +227,7 @@ def ana_simu(dbDir, dbName):
         sel['year'] = i+1
         res = pd.concat((res, sel))
 
-    dd = res.groupby(['target_name', 'night', 'year']).apply(
+    dd = res.groupby(['field', 'night', 'year']).apply(
         lambda x: process_night(x), include_groups=False).reset_index()
 
     return dd

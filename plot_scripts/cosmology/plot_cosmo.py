@@ -315,6 +315,7 @@ def process_cosmo(dbDir, config, spectro_config, cols_group,
     df_tot = pd.DataFrame()
     for i, row in config.iterrows():
         dbName = row['dbName']
+        print('loading',dbName)
         df = load_cosmo_data(dbDir, dbName, cols_group,
                              spectro_config, cols=cols)
         df['dbName'] = dbName
@@ -441,7 +442,7 @@ if 'mom_year' in plots:
                fill_between=fill_between, year_max=year_max)
 
 if 'mom_survey' in plots:
-
+    
     plot_allOS_survey(dbNorm=dbNorm)
 
 if 'sigma_w0' in plots:
