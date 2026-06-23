@@ -5,7 +5,7 @@
 - use the script [plot_scripts/os_info/plot_ddf_nightly.py](usage_plot_nightly.md)
 
 
-
+------------------------------------------------------------------------
 ## $${\color{blue} Global \space pointing \space analysis}$$
 
 ### analysis of the data -> create outputfile with processed data
@@ -33,11 +33,12 @@ sh sh_scripts/srun_cc.sh anaos.sh
 
 ### [UD season analysis](ud_season_ana.md)
 
-
+-------------------------------------------------------------------------------------------
 ##  $${\color{blue} Nightly \space filter \space allocation \space for \space DDFs}$$
 
 - use the script [plot_scripts/os_info/plot_ddf_nightly.py](usage_plot_ddf_nightly.md)
 
+-----------------------------------------------------------------------------------------------
 ##  $${\color{blue}  Calibration \space requirements \space (PZ, WL) \space and \space of \space AGN \space constraints}$$
 
 ### data analysis -> create outputfile with processed data
@@ -50,3 +51,5 @@ sh sh_scripts/srun_cc.sh nvisits_m5.sh
 ### plot the results
 
 - use the script [plot_scripts/os_info/pz_wl_calib_reqs.py](usage_calib.md)
+
+----------------------------------------------------------------------------------------------
