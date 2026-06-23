@@ -15,11 +15,9 @@ sh sh_scripts/srun_cc.sh anaos.sh
 
 ### plot the data
 
-### generic plots
-
 - use the script [plot_scripts/metrics/plot_DD_stat.py](usage_plot_DD.md)
 
-### [UD season analysis](ud_season_ana.md)
+----------------------------------------------------------------------------------
 
 
 
@@ -32,6 +30,9 @@ sh sh_scripts/srun_cc.sh anaos.sh
 ### plot the data
 
 - use the script [plot_scripts/os_info/plot_ddf_visits_night.py](usage_plot_ddf_visits.md)
+
+### [UD season analysis](ud_season_ana.md)
+
 
 ##  $${\color{blue} Nightly \space filter \space allocation \space for \space DDFs}$$
 
