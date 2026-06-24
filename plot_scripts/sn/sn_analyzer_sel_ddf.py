@@ -109,12 +109,13 @@ df_nsn['dbName'] = df_nsn['dbName_plot']
 
 if print_nsn:
     print_nsn_latex(df_nsn)
+    print_nsn_latex(df_nsn,'nsn_z_08_sigmaC','err_nsn_z_08_sigmaC')
 
 # all fields
 if 'nsn_all' in plots:
     fields = ud_fields+dd_fields
     plot_ddf_year(df_nsn, conf_df,
-                  cols=['year', 'dbName'],
+                  cols=['year', 'dbName','dbName_plot'],
                   fields=fields, os_ref=os_ref)
 
 # UD only
@@ -122,7 +123,7 @@ if 'nsn_ud' in plots:
 
     fields = ud_fields
     plot_ddf_year(df_nsn, conf_df,
-                  cols=['year', 'dbName'],
+                  cols=['year', 'dbName','dbName_plot'],
                   fields=fields, os_ref=os_ref)
 
 # DD only
@@ -130,7 +131,7 @@ if 'nsn_dd' in plots:
 
     fields = dd_fields
     plot_ddf_year(df_nsn, conf_df,
-                  cols=['year', 'dbName'],
+                  cols=['year', 'dbName','dbName_plot'],
                   fields=fields, os_ref=os_ref)
 
 if 'weather_impact' in get_info:
@@ -143,7 +144,7 @@ if 'weather_impact' in get_info:
 if 'survey_area' in plots:
 
     plot_ddf_area(df_nsn, conf_df,
-                  cols=['year', 'dbName', 'field'],
+                  cols=['year', 'dbName', 'dbName_plot','field'],
                   fields=['COSMOS'])
 
 
