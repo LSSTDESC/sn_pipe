@@ -150,7 +150,7 @@ parser.add_option('--print_nsn', type=int,
                   default=0,
                   help='to print nsn as a latex table [%default]')
 parser.add_option('--cumul', type=int,
-                  default=0,
+                  default=1,
                   help='to plot sum(nsn) [%default]')
 parser.add_option('--savepng', type=int,
                   default=1,
@@ -197,12 +197,12 @@ if print_nsn:
 if 'summary' in plots:
     from sn_plotter_analysis.sn_analyser_wdf import plot_summary_wfd
     from sn_plotter_analysis.sn_analyser_wdf import plot_summary_wfd_norm
-    plot_summary_wfd(wfd, conf, timescale, cumul=True)
-    plot_summary_wfd_norm(wfd, conf, timescale, cumul=True)
+    plot_summary_wfd(wfd, conf, timescale, cumul=cumul)
+    plot_summary_wfd_norm(wfd, conf, timescale, cumul=cumul)
 
     if OS_ref != 'None':
         plot_summary_wfd_norm(wfd, conf, timescale,
-                              yvar_err='None', cumul=True, dbNorm=OS_ref)
+                              yvar_err='None', cumul=cumul, dbNorm=OS_ref)
 
 
 res = list(filter(lambda x: 'mollweid' in x, plots))
