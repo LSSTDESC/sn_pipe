@@ -404,8 +404,14 @@ def plot_histos_db(df,varx,fig=None,ax=None,figtit=''):
                                   left_on=['healpixID'],
                                   right_on=['healpixID'])
         newvar = 'diff_{}'.format(varx) 
-        df_m[newvar] = df_m['{}_x'.format(varx)]-df_m['{}_y'.format(varx)]
+        df_m[newvar] = df_m['{}_x'.format(varx)]-df_m['{}_y'.format(varx)]  
+        dbNa = df_m['dbName_x'].unique()[0]
+        dbNb = df_m['dbName_y'].unique()[0]
+        dbName = '{}-{}'.format(dbNa,dbNb)
         figb, axb = plt.subplots(figsize=(12, 8))
+        if figtit != '':
+            figtit += '\n '+dbName
+            figb.suptitle(figtit)
         axb.hist(df_m[newvar], histtype='step', 
                    bins=50,
                    linestyle='solid',color='k')
