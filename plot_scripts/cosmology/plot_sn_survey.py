@@ -8,7 +8,7 @@ Created on Tue Aug 26 09:55:57 2025
 
 from optparse import OptionParser
 import pandas as pd
-import matplotlib.pyplot as plt
+from sn_plotter_analysis import  plt
 import os
 from sn_plotter_analysis.sn_plot import plot_ddf_year
 from sn_plotter_analysis.sn_analyser_tools import print_nsn_latex
@@ -119,6 +119,49 @@ def plot_effi(df_effi, config, fields=['COSMOS', 'WFD'], years=[1, 2]):
                 ax.legend(loc='center left', bbox_to_anchor=(
                     1, 0.5), ncol=1, fontsize=14, frameon=False)
 
+def complete_missing_years(df):
+    """
+    Function to set nsn=0 for missing WFD seasons
+
+    Parameters
+    ----------
+    df : pandas df
+        Data to process.
+
+    Returns
+    -------
+    df : pandas df
+        output data.
+
+    """
+    
+    idx = df['field'] == 'WFD'
+    tt = pd.DataFrame(df[idx])
+    
+    year_max = tt['year'].max()
+    
+    cols = ['field', 'year', 'level_2', 'nsn', 'err_nsn', 'nsn_z_08_sigmaC',
+       'err_nsn_z_08_sigmaC', 'nsn_z_08', 'err_nsn_z_08', 'survey_area',
+       'dbName']
+    
+    nyrs = 10-year_max
+    
+    vv = pd.DataFrame()
+    if nyrs > 0:
+        vv = tt[:nyrs]
+        years = range(year_max+1,11)
+        vv['year'] = years
+        for kk in ['nsn', 'err_nsn', 'nsn_z_08_sigmaC',
+                   'err_nsn_z_08_sigmaC', 'nsn_z_08', 
+                   'err_nsn_z_08', 'survey_area']:
+            vv[kk] = [0]*len(years)
+            
+        
+    if len(vv) > 0:
+        df = pd.concat((df,vv))
+        
+    return df
+    
 
 parser = OptionParser('script to plot LSST SN surveys')
 """
@@ -173,6 +216,7 @@ for i, row in dbList.iterrows():
     fName = '{}/{}/sn_survey.hdf5'.format(row['dataDir'], row['dbName'])
     print('loading',fName)
     df_ = pd.read_hdf(fName)
+    df_ = complete_missing_years(df_)
     df_['dbName_plot'] = row['dbName_plot']
     df = pd.concat((df, df_))
     fName_all = '{}/{}/sn_survey_all.hdf5'.format(row['dataDir'], row['dbName'])

@@ -568,6 +568,7 @@ df = pd.DataFrame()
 for dbName in dbNames:
     df_ = load_data(dbDir, dbName, fields, fieldType=fieldType)
     df_['dbName'] = dbName
+    df_['nvisits_gri'] = df_['nvisits_g']+df_['nvisits_r']+df_['nvisits_i']
     df = pd.concat((df,df_))
 
 #load the dust_map
@@ -595,6 +596,7 @@ if histo_outDir != 'None':
 idx = df[timescale] > 0
 idx &= df[timescale] < 11
 idx &= df['cadence'] > 0.
+
 sel = df[idx]
 
 #tag_hotspot(sel)
@@ -616,12 +618,17 @@ for b in bands:
     vvar.append('cadence_{}'.format(b))
     vvar.append('nvisits_{}'.format(b))
     
-legvar = ['cadence [day]', '$\Sigma N_{visits}$/pixel', 
+legvar = ['cadence [night]', '$\Sigma N_{visits}$/pixel', 
           '$m_{5}^{i}$','<N$_{visits}$>/night/pixel']
 
 for b in bands:
-    legvar.append('cadence {} [day]'.format(b))
+    legvar.append('cadence {} [night]'.format(b))
     legvar.append('$\Sigma N_{visits}^{'+b+'}$/pixel')
+    
+for b in ['gri']:
+    vvar.append('nvisits_{}'.format(b))
+    legvar.append('$\Sigma N_{visits}^{'+b+'}$/pixel')
+
     
 dict_leg = dict(zip(vvar, legvar))
 
