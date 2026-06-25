@@ -246,6 +246,7 @@ def plot_mollviews_db(sel,vv,seasons,yleg='',timescale='year'):
         plotMollview_seasons(nside, selb, dbName,
                              yvar=vv, yleg=dict_leg[vv],
                              op=op, seasons=seasons,outDir=mollview_outDir)
+        
     ## add the diff
     
     if len(dbNames) ==2:
@@ -298,8 +299,6 @@ def high_nvisits_pixels(sel,varx='nvisits',thresh=2000):
  
     return selpix
     
-    
-    
 
 def plot_histos(hist_var,df,seasons,timescale='year'):
     """
@@ -333,17 +332,25 @@ def plot_histos(hist_var,df,seasons,timescale='year'):
                 df = df[idx]
                 df = df.groupby(['healpixID','dbName'])[hist_var].median().reset_index()
                 
-            plot_histos_db(df,vv,figtit='10 years')
+            outName = ''
+            if histo_outDir != 'None':
+                outName = 'hist_{}_{}'.format(vv,seasons)
+            plot_histos_db(df,vv,figtit='10 years',outDir=histo_outDir,
+                           outName=outName)
+            
         else:
             for seas in seasons:
                 idx = df[timescale] == seas
                 sel = df[idx]
-                plot_histos_db(sel,vv,figtit='year {}'.format(seas))
+                outName = ''
+                if histo_outDir != 'None':
+                    outName = 'hist_{}_{}'.format(vv,seas)
+                plot_histos_db(sel,vv,figtit='year {}'.format(seas),
+                               outDir=histo_outDir,outName=outName)
+                
                 
         
-        
-        
-def plot_histos_db(df,varx,fig=None,ax=None,figtit=''):
+def plot_histos_db(df,varx,fig=None,ax=None,figtit='',outDir='None',outName=''):
     """
     Function to plot histos for OS
 
@@ -395,6 +402,10 @@ def plot_histos_db(df,varx,fig=None,ax=None,figtit=''):
     ax.set_xlim([0., None])
     ax.legend(fontsize=15,frameon=False)
     
+    #save the plot here
+    if outName!= '':
+        plt.savefig('{}/{}.png'.format(outDir,outName))
+    
     #plot the diff here
     
     if len(dbNames) == 2:
@@ -420,7 +431,8 @@ def plot_histos_db(df,varx,fig=None,ax=None,figtit=''):
         axb.set_xlabel(r'{}'.format(xlab))
         axb.set_ylabel(r'Number of entries')
         
-    
+        if outName != '':
+            plt.savefig('{}/diff_{}.png'.format(outDir,outName))
     
    
     
@@ -510,12 +522,18 @@ parser.add_option('--hist_var', type=str,
 parser.add_option('--mollview_outDir', type=str,
                   default='None',
                   help='output dir for mollview figures [%default]')
+parser.add_option('--histo_outDir', type=str,
+                  default='None',
+                  help='output dir for histograms [%default]')
 parser.add_option('--nvisits_10yrs_min', type=int,
                   default=1200,
                   help='min nvisits after 10 yrs (to remove hot spots) [%default]')
 parser.add_option('--dust', type=int,
                   default=0,
                   help='to apply E(B-V) cut [%default]')
+parser.add_option('--show_plot', type=int,
+                  default=1,
+                  help='to display the plots [%default]')
 
 opts, args = parser.parse_args()
 
@@ -531,8 +549,10 @@ fields = opts.fields.split(',')
 fieldType = opts.fieldType
 timescale = opts.timescale
 mollview_outDir = opts.mollview_outDir
+histo_outDir = opts.histo_outDir
 nvisits_10yrs_min=opts.nvisits_10yrs_min
 dust = opts.dust
+show_plot = opts.show_plot
 
 if '-' in seasons:
     cad_brk = seasons.split('-')
@@ -567,6 +587,10 @@ print('nentries',len(df))
 if mollview_outDir != 'None':
     from sn_tools.sn_io import checkDir
     checkDir(mollview_outDir)
+    
+if histo_outDir != 'None':
+    from sn_tools.sn_io import checkDir
+    checkDir(histo_outDir)
 
 idx = df[timescale] > 0
 idx &= df[timescale] < 11
@@ -610,7 +634,8 @@ if 'gen_plots' in plots:
                              vary=vary, legy=dict_leg[vary])
         if varx == 'dist':
             multiplot_dist(sel, yvar=vary,
-                           yleg=r'{}'.format(dict_leg[vary]), timescale=timescale)
+                           yleg=r'{}'.format(dict_leg[vary]), 
+                           timescale=timescale)
 
 if 'mollview' in plots:
     plot_mollviews(sel,seasons,mollview_var)
@@ -626,4 +651,5 @@ print_pixel_info(sel, 109384)
 print_pixel_info(sel, 109031)
 """
 
-plt.show()
+if show_plot:
+    plt.show()
