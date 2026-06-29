@@ -35,4 +35,4 @@ cmd += " --SN_z_type=unique --SN_daymax_type=random"
 cmd += " --DD_list={}".format(pp['DD_list'])
 
 print(cmd)
-#os.system(cmd)
+os.system(cmd)
