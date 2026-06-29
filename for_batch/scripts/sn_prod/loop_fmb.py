@@ -42,13 +42,14 @@ ntrial = 1000
 if opts.config_atmos == 'confe':
     ntrial=1
 
-z = np.arange(0.,1.15,0.05)
+dz = 0.05
+z = np.arange(0.,1.15,dz)
 
-for i in range(len(z)):
+for i in range(len(z)-1):
     nbins=1
     nsn = 100
     zmin = z[i]
-    zmax = 0.01
+    zmax = zmin+dz
     
     if zmin >=0.8:
         nsn = 300
@@ -63,4 +64,4 @@ for i in range(len(z)):
     cmd += " --DD_list={}".format(dd_list)
     cmd += " --dbList_DD={}".format(dbList_DD)
     print(cmd)
-    os.system(cmd)
+    #os.system(cmd)
