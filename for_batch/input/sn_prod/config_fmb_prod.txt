@@ -12,3 +12,4 @@ ntrial 1 int #ntrials for zp estimation
 nsn 100 int #number of sn to simulate
 config_atmos confa str #atmos config
 DD_list COSMOS,CDFS,EDFS_a,EDFS_b,ELAISS1,XMM-LSS str #list of DDF to process
+dbList_DD DD_fbs_5.3_extract.csv str # list of OS to process

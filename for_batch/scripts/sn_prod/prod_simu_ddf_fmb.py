@@ -15,7 +15,7 @@ opts, args = parser.parse_args()
 pp = vars(opts)
 
 cmd="python for_batch/scripts/sim_to_fit/prodIt.py" 
-cmd += " --dbList_DD=DD_fbs_5.0.0_extract.csv"
+cmd += " --dbList_DD={}".format(pp['dbList_DD'])
 cmd += " --Observations_coadd=0 --mem=10Gb"
 cmd += " --InstrumentSimu_ntrial_zp={}".format(pp['ntrial'])
 cmd += " --outDir_DD=sn_fmb_{}".format(pp['config_atmos'])
@@ -35,4 +35,4 @@ cmd += " --SN_z_type=unique --SN_daymax_type=random"
 cmd += " --DD_list={}".format(pp['DD_list'])
 
 print(cmd)
-os.system(cmd)
+#os.system(cmd)
