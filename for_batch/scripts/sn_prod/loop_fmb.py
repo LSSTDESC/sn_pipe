@@ -64,4 +64,4 @@ for i in range(len(z)-1):
     cmd += " --DD_list={}".format(dd_list)
     cmd += " --dbList_DD={}".format(dbList_DD)
     print(cmd)
-    #os.system(cmd)
+    os.system(cmd)
