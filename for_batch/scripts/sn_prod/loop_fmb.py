@@ -15,8 +15,10 @@ parser.add_option("--config_atmos", type=str, default='confe',
 parser.add_option("--DD_list", type=str,
                   default='COSMOS,CDFS,EDFS_a,EDFS_b,ELAISS1,XMM-LSS',
                   help="List of DDFs to process [%default]")
-parser.add_option('--dbList_DD', type=str, default='DD_fbs_5.3_extract.csv',
+parser.add_option('--dbList', type=str, default='DD_fbs_5.3_extract.csv',
                   help='list of OS to process [%default]')
+parser.add_option('--runType', type=str, default='DDF',
+                  help='type of run to process [%default]')
 
 opts, args = parser.parse_args()
 
@@ -35,7 +37,8 @@ nsn = [100]*4+[300]*3
 x1 = opts.x1
 color = opts.color
 dd_list = opts.DD_list
-dbList_DD = opts.dbList_DD
+dbList = opts.dbList
+runType = opts.runType
 
 scr = 'python for_batch/scripts/sn_prod/prod_simu_ddf_fmb.py'
 ntrial = 1000
@@ -43,18 +46,30 @@ if opts.config_atmos == 'confe':
     ntrial=1
 
 dz = 0.05
-z = np.arange(0.,1.15,dz)
+zmin = 0.
+zmax = 1.15
+
+if runType == 'WFD':
+    zmax = 0.5
+z = np.arange(zmin,zmax,dz)
 
 for i in range(len(z)-1):
     nbins=1
     nsn = 100
-    zmin = z[i]
-    zmax = zmin+dz
+    zmin_l = z[i]+i*dz
+    if zmin_l < 0.01:
+        zmin_v = 0.01
+    else:
+        zmin_v = zmin_l
+    zmax_l = zmin_v+dz
     
-    if zmin >=0.8:
+    if zmin_l >=0.8:
         nsn = 300
+        
+    if zmin_l > zmax:
+        break
     cmd = scr
-    cmd += ' --zmin={} --zmax={}'.format(np.round(zmin,2),np.round(zmax,2))
+    cmd += ' --zmin={} --zmax={}'.format(np.round(zmin_v,2),np.round(zmax_l,2))
     cmd += ' --nbins={} --x1={} --color={}'.format(nbins,x1,color)
     cmd += ' --nsn={}'.format(nsn)
     for vv in atm_params:
@@ -62,6 +77,7 @@ for i in range(len(z)-1):
     cmd += " --config_atmos={}".format(opts.config_atmos)
     cmd += " --ntrial={}".format(ntrial)
     cmd += " --DD_list={}".format(dd_list)
-    cmd += " --dbList_DD={}".format(dbList_DD)
+    cmd += " --dbList={}".format(dbList)
+    cmd += " --runType={}".format(opts.runType)
     print(cmd)
     os.system(cmd)
