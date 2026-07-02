@@ -21,7 +21,7 @@ import time
 from sn_analysis.sn_nsn_effi import getRates
 from scipy.interpolate import interp1d
 
-def load_data(dbDir, dbName, runType, field,nproc=8):
+def load_data(dbDir, dbName, runType, field,x1,color,nproc=8):
     """
     Function to load the data
 
@@ -35,6 +35,10 @@ def load_data(dbDir, dbName, runType, field,nproc=8):
         runtype.
     field : str
         field.
+    x1: float
+        SN stretch
+    color: float
+        SN color
     nproc: int,optional.
         number of proc to use. The default is 8.
 
@@ -48,7 +52,9 @@ def load_data(dbDir, dbName, runType, field,nproc=8):
     theDir = '{}/{}/{}'.format(dbDir, dbName, runType)
 
     print('scanning', theDir)
-    fis = glob.glob('{}/*{}*.hdf5'.format(theDir, field))
+    search_path = '{}/*{}*_{}_{}*.hdf5'.format(theDir, field,x1,color)
+    print(search_path)
+    fis = glob.glob(search_path)
 
     print('files to load',len(fis))
     params = {}
@@ -135,7 +141,7 @@ def get_symbol(opdoc):
     if re.match('^\\W+$', sym):
         return sym
 
-def zlim_field(field,dbDir,dbName,runType):
+def zlim_field(field,dbDir,dbName,runType,x1,color,nproc):
     """
     Function to estimate redshift limits
 
@@ -149,6 +155,12 @@ def zlim_field(field,dbDir,dbName,runType):
         OS to consider.
     runType : str
         Type of run (DDF/WFD).
+    x1: float
+        SN Ia stretch
+    color: float
+        SN Ia color
+    nproc: int
+        n proc for multiprocessing
 
     Returns
     -------
@@ -158,7 +170,7 @@ def zlim_field(field,dbDir,dbName,runType):
     """
     
     time_ref = time.time()
-    data = load_data(dbDir, dbName, runType, field)
+    data = load_data(dbDir, dbName, runType, field,x1,color)
     print('loaded',time.time()-time_ref)
     data['field'] = field
     data = complete_df(data)
@@ -171,7 +183,7 @@ def zlim_field(field,dbDir,dbName,runType):
     obs = data['healpixID'].unique().tolist()
     
     #obs = [143706.0]
-    res = multiproc(obs,params,zlim_field_multiproc,nproc=8)
+    res = multiproc(obs,params,zlim_field_multiproc,nproc=nproc)
     
     return res
    
@@ -203,8 +215,11 @@ def zlim_field_multiproc(toproc, params, j=0, output_q=None):
     idx = data['healpixID'].isin(toproc)
     sel_data = pd.DataFrame(data[idx])
     
+    sel_data['healpixID'] = sel_data['healpixID'].astype(int)
+    sel_data['season'] = sel_data['season'].astype(int)
+    
     df_zlim = sel_data.groupby(['field','healpixID','pixRA','pixDec','season']).apply(
-     lambda x: process_season_pixel(x, sellist,plot=False), 
+     lambda x: process_season_pixel(x, sellist,plot=True), 
        include_groups=False).reset_index()
     
     if output_q is not None:
@@ -212,7 +227,7 @@ def zlim_field_multiproc(toproc, params, j=0, output_q=None):
     else:
         return df_zlim
     
-def process_db(dbDir, dbName, runType, fields,sellist=None):
+def process_db(dbDir, dbName, runType, fields,x1,color,nproc,sellist=None):
     """
     Function to process OS data
 
@@ -226,6 +241,12 @@ def process_db(dbDir, dbName, runType, fields,sellist=None):
         run type.
     fields : list(str)
         List of fields to process.  
+    x1: float
+        SN stratch value
+    color: float
+        SN color value
+    nproc: int
+     n proc for multiprocessing
     sellist: dict, optional.
         slection criteria. The default is None.
 
@@ -240,7 +261,7 @@ def process_db(dbDir, dbName, runType, fields,sellist=None):
 
     for field in fields:
         
-        df_zlim_ = zlim_field(field, dbDir, dbName, runType)
+        df_zlim_ = zlim_field(field, dbDir, dbName, runType,x1,color,nproc)
         df_zlim = pd.concat((df_zlim,df_zlim_))
 
     return df_zlim
@@ -396,7 +417,10 @@ def plot_proc(grp,grp_effi,df_nsn_rate):
     ax.hist(grp_sel['chisq_red'],histtype='step',bins=20)
     """
     fig, ax = plt.subplots()
-    fig.suptitle(grp.name)
+    ll = grp.name
+    vleg = "{} {} {}".format(ll[0],ll[1],ll[-1])
+    
+    fig.suptitle(vleg)
     ax.errorbar(grp_effi['z_fit'],grp_effi['effi'],yerr=grp_effi['effi_err'])
     axb = ax.twinx()
     nsn_tot_rate = np.max(np.cumsum(df_nsn_rate['nsn']))
@@ -558,10 +582,10 @@ def get_nsn_from_rate(grp,effis,zmin,zmax,dz):
 parser = OptionParser(description='Script to analyze SN selection criteria')
 
 parser.add_option('--dbDir', type=str,
-                  default='../Output_SN_DD_sigmaInt_0.0_Hounsell_z_smflux_notelrot_airmass_zfaint',
+                  default='../sn_fmb_confe',
                   help='OS location dir[%default]')
 parser.add_option('--dbName', type=str,
-                  default='baseline_v5.0.0_10yrs',
+                  default='baseline_v5.3.0_10yrs',
                   help='OS name [%default]')
 parser.add_option('--runType', type=str,
                   default='DDF_spectroz',
@@ -577,7 +601,15 @@ parser.add_option("--selconfig", type=str,
 parser.add_option('--outDir', type=str,
                   default='../zlim',
                   help='output Dir dir[%default]')
-
+parser.add_option('--x1', type=float,
+                  default=-2.0,
+                  help='SN Ia stretch value [%default]')
+parser.add_option('--color', type=float,
+                  default=0.2,
+                  help='SN Ia color value [%default]')
+parser.add_option('--nproc', type=int,
+                  default=8,
+                  help='nproc for multiprocessing [%default]')
 opts, args = parser.parse_args()
 
 dbDir = opts.dbDir
@@ -589,6 +621,9 @@ timescale = opts.timescale
 fields = opts.fields.split(',')
 selconfig = opts.selconfig
 outDir = opts.outDir
+x1 = opts.x1
+color = opts.color
+nproc = opts.nproc
 
 # create output dir (if necessary)
 checkDir(outDir)
@@ -601,9 +636,10 @@ sellist = selection_criteria()[selconfig]
 # sellist.append(('Nfilt_5', operator.ge, 2, 7))
 # sellist.append(('sigmaC', operator.le, 0.04, 7))
 
-#print(sellist)
+print(sellist)
 
-df_zlim = process_db(dbDir, dbName, runType, fields,sellist=sellist)
+df_zlim = process_db(dbDir, dbName, runType, fields,x1,color,
+                     nproc,sellist=sellist)
 
 # save the data
 outName = '{}/zlim_{}.hdf5'.format(outDir, dbName)
