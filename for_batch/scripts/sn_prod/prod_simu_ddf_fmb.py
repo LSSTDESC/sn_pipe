@@ -14,20 +14,32 @@ opts, args = parser.parse_args()
 
 pp = vars(opts)
 
+ttag = 'fmb'
+if pp['x1_type'] == 'random':
+    ttag = 'all'
+
 cmd="python for_batch/scripts/sim_to_fit/prodIt.py" 
 cmd += " --dbList_DD={}".format(pp['dbList'])
 cmd += " --dbList_WFD={}".format(pp['dbList'])
 cmd += " --Observations_coadd=0 --mem=10Gb"
 cmd += " --InstrumentSimu_ntrial_zp={}".format(pp['ntrial'])
-cmd += " --outDir_DD=sn_fmb_{}".format(pp['config_atmos'])
-cmd += " --outDir_WFD=wfd_sn_fmb_{}".format(pp['config_atmos'])
+cmd += " --outDir_DD=dd_sn_{}_{}".format(ttag,pp['config_atmos'])
+cmd += " --outDir_WFD=wfd_sn_{}_{}".format(ttag,pp['config_atmos'])
 cmd += " --sigma_airmass={}".format(pp['sigma_airmass'])
 cmd += " --sigma_ozone={}".format(pp['sigma_ozone'])
 cmd += " --sigma_aerosol={}".format(pp['sigma_aerosol'])
 cmd += " --sigma_pwv={}".format(pp['sigma_pwv'])
-cmd += " --tag_script=sn_fmb_{}_{}_{}_{}_{}".format(pp['x1'],pp['color'],
-                                                    pp['z_min'],pp['z_max'],
-                                                    pp['config_atmos']) 
+tag_script = 'sn_{}'.format(ttag)
+if pp['x1_type'] == 'unique':
+    tag_script += '_{}_{}'.format(pp['x1'],pp['color'])
+if pp['z_type'] == 'unique':
+    tag_script += '_{}'.format(pp['z_min'])
+else:
+    tag_script += '_{}_{}'.format(pp['z_min'],pp['z_max'])
+    
+tag_script += '_{}'.format(pp['config_atmos'])
+
+cmd += " --tag_script={}".format(tag_script) 
 cmd += " --runType={}".format(pp['runType'])
 cmd += " --SN_z_type={}".format(pp['z_type'])
 cmd += " --SN_z_min={} --SN_z_max={}".format(pp['z_min'],pp['z_max'])
@@ -42,4 +54,4 @@ cmd += " --SN_NSNabsolute_WFD={}".format(pp['nsn'])
 cmd += " --DD_list={}".format(pp['DD_list'])
 
 print(cmd)
-os.system(cmd)
+#os.system(cmd)
