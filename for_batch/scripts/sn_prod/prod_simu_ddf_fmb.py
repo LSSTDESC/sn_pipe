@@ -54,4 +54,4 @@ cmd += " --SN_NSNabsolute_WFD={}".format(pp['nsn'])
 cmd += " --DD_list={}".format(pp['DD_list'])
 
 print(cmd)
-#os.system(cmd)
+os.system(cmd)
