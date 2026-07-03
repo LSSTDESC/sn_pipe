@@ -10,6 +10,14 @@ parser.add_option("--x1", type=float, default=-2.0,
                   help="stretch [%default]")    
 parser.add_option("--color", type=float, default=0.2,
                   help="color [%default]")
+parser.add_option("--x1_type", type=str, default='unique',
+                  help="x1 type of run [%default]")    
+parser.add_option("--color_type", type=str, default='unique',
+                  help="color type of run [%default]")
+parser.add_option("--z_type", type=str, default='uniform',
+                  help="z type of run [%default]")
+parser.add_option("--daymax_type", type=str, default='random',
+                  help="daymax type of run [%default]")
 parser.add_option("--config_atmos", type=str, default='confe',
                   help="color [%default]") 
 parser.add_option("--DD_list", type=str,
@@ -40,6 +48,10 @@ dd_list = opts.DD_list
 dbList = opts.dbList
 runType = opts.runType
 
+pp = vars(opts)
+
+ccols = ['x1_type','color_type','z_type','daymax_type']
+
 scr = 'python for_batch/scripts/sn_prod/prod_simu_ddf_fmb.py'
 ntrial = 1000
 if opts.config_atmos == 'confe':
@@ -69,7 +81,7 @@ for i in range(len(z)-1):
     if zmin_l > zmax:
         break
     cmd = scr
-    cmd += ' --zmin={} --zmax={}'.format(np.round(zmin_v,2),np.round(zmax_l,2))
+    cmd += ' --z_min={} --z_max={}'.format(np.round(zmin_v,2),np.round(zmax_l,2))
     cmd += ' --nbins={} --x1={} --color={}'.format(nbins,x1,color)
     cmd += ' --nsn={}'.format(nsn)
     for vv in atm_params:
@@ -79,5 +91,7 @@ for i in range(len(z)-1):
     cmd += " --DD_list={}".format(dd_list)
     cmd += " --dbList={}".format(dbList)
     cmd += " --runType={}".format(opts.runType)
+    for vv in ccols:
+        cmd += " --{}={}".format(vv,pp[vv])
     print(cmd)
     os.system(cmd)

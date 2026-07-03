@@ -1,8 +1,12 @@
 x1 -2.0 float # x1 min for LC prod
+x1_type unique str #x1 type
 color 0.2 float # color min for LC prod
-zmin 0.01 float # min z for LC prod
-zmax 1.1 float # max z for LC prod
-zstep 0.05 float #zstep for prod in uniform mode
+color_type unique str #color type
+z_min 0.01 float # min z for LC prod
+z_max 1.1 float # max z for LC prod
+z_step 0.05 float #zstep for prod in uniform mode
+z_type unique str #ztype
+daymax_type random str #T0 type
 nbins 10 int #number of z-bins for simulation
 sigma_airmass 0.0 float #instrument sigma_airmass
 sigma_aerosol 0.0 float #instrument sigma_aerosol
