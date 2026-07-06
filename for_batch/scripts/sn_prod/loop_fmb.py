@@ -27,6 +27,16 @@ parser.add_option('--dbList', type=str, default='DD_fbs_5.3_extract.csv',
                   help='list of OS to process [%default]')
 parser.add_option('--runType', type=str, default='DDF',
                   help='type of run to process [%default]')
+parser.add_option('--zmin', type=float, default=0.,
+                  help='min redshift [%default]')
+parser.add_option('--zmax', type=float, default=1.1,
+                  help='max redshift [%default]')
+parser.add_option('--dz', type=float, default=0.05,
+                  help='max redshift [%default]')
+parser.add_option('--nsn_lowz', type=int, default=100,
+                  help='nsn low z [%default]')
+parser.add_option('--nsn_highz', type=int, default=300,
+                  help='nsn high z [%default]')
 
 opts, args = parser.parse_args()
 
@@ -47,6 +57,12 @@ color = opts.color
 dd_list = opts.DD_list
 dbList = opts.dbList
 runType = opts.runType
+dz = opts.dz
+zmin = opts.zmin
+zmax = opts.zmax
+nsn_lowz = opts.nsn_lowz
+nsn_highz = opts.nsn_highz
+
 
 pp = vars(opts)
 
@@ -57,26 +73,25 @@ ntrial = 1000
 if opts.config_atmos == 'confe':
     ntrial=1
 
-dz = 0.05
-zmin = 0.
-zmax = 1.15
-
 if runType == 'WFD':
     zmax = 0.5
-z = np.arange(zmin,zmax,dz)
+    
+z = np.arange(zmin,zmax+dz,dz)
 
+print(z)
 for i in range(len(z)-1):
     nbins=1
-    nsn = 100
-    zmin_l = z[i]+i*dz
+    nsn = nsn_lowz
+    zmin_l = z[i]#+i*dz
     if zmin_l < 0.01:
         zmin_v = 0.01
     else:
         zmin_v = zmin_l
     zmax_l = zmin_v+dz
+    print('min max',zmin_l,zmax_l)
     
-    if zmin_l >=0.8:
-        nsn = 300
+    if zmin_l >=0.6:
+        nsn = nsn_highz
         
     if zmin_l > zmax:
         break
