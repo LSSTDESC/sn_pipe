@@ -170,10 +170,16 @@ def zlim_field(field,dbDir,dbName,runType,x1,color,nproc):
     """
     
     time_ref = time.time()
-    data = load_data(dbDir, dbName, runType, field,x1,color)
-    print('loaded',time.time()-time_ref)
-    data['field'] = field
-    data = complete_df(data)
+    
+    dbDirs = dbDir.split(',')
+    data = pd.DataFrame()
+    for dbDir in dbDirs:
+        data_ = load_data(dbDir, dbName, runType, field,x1,color)
+        print('loaded',time.time()-time_ref)
+        data_['field'] = field
+        data_ = complete_df(data_)
+        data_['config'] = dbDir.split('../')[1]
+        data = pd.concat((data,data_))
 
     params = {}
     
@@ -267,6 +273,181 @@ def process_db(dbDir, dbName, runType, fields,x1,color,nproc,sellist=None):
     return df_zlim
 
 def process_season_pixel(grp, sellist,plot=False):
+    """
+    Function to process a pixel/season
+
+    Parameters
+    ----------
+    grp : pandas df
+        Data to process.
+    sellist : dict
+        selection dict.
+    plot : bool, optional
+        To plot the results. The default is False.
+
+    Returns
+    -------
+    None.
+
+    """
+    field = grp.name[0]
+    hpix = '{}'.format(grp.name[1])
+    season = '{}'.format(grp.name[-1])
+    figtit = '{} {} {}'.format(field,hpix,season)
+    print('test',grp.name)
+    
+    idx = np.abs(grp['sigmaC']) < 0.04
+    grp = grp[idx]
+    
+    print('alllors',len(grp))
+    
+    #get selected group
+    grp_sel = select(grp,sellist)
+    
+    print(len(grp),len(grp_sel))
+  
+    plot_hist(grp_sel)
+    plot_indiv(grp_sel,figtit,varx='z_fit',vary='diff_mu',
+                 var_std='sigma_mu',var_norm='')
+    
+    #get binned values
+    
+    ddf = grp_sel.groupby(['z','config']).apply(lambda x : get_vals(x),
+                                   include_groups=False).reset_index()
+    
+    print('nsn',ddf['nsn'].sum())
+    figtit = '{} {} {}'.format(field,hpix,season)
+    
+    plot_indiv(ddf,figtit)
+    """
+    import matplotlib.pyplot as plt
+    fig, ax = plt.subplots(figsize=(12,8))
+    tit = '{} {} {}'.format(field,hpix,season)
+    fig.suptitle(tit)
+    configs = ddf['config'].unique()
+    colors = ['k','r']
+    lstyle = ['solid','dashed']
+    
+    for i,conf in enumerate(configs):
+        idx = ddf['config'] == conf
+        sel = ddf[idx]
+        print('nsn',conf,sel['nsn'].sum())
+        ax.errorbar(sel['z_fit'],sel['diff_mu']/sel['mu'],
+                    yerr=sel['diff_mu_std']/sel['mu'],
+                    color=colors[i],marker='o',linestyle=lstyle[i],
+                    label=conf)
+    ax.legend()
+    """
+    
+    
+    return
+
+def plot_hist(df,fig=None,ax=None):
+    
+    
+    if fig is None:
+        import matplotlib.pyplot as plt
+        fig, ax = plt.subplots(figsize=(12,8))
+       
+    configs = df['config'].unique()
+    colors = ['k','r']
+    lstyle = ['solid','dashed']
+    
+    for i,conf in enumerate(configs):
+        idx = df['config'] == conf
+        sel = df[idx]  
+        ax.hist(sel['sigma_mu']/sel['mu'],histtype='step',bins=20,
+                linestyle=lstyle[i],color=colors[i],
+                label=conf)
+    
+    ax.legend()
+    
+
+def plot_indiv(ddf,figtit,varx='z_fit',vary='diff_mu',
+               var_std='diff_mu_std',var_norm='mu'):
+    
+    import matplotlib.pyplot as plt
+    fig, ax = plt.subplots(figsize=(12,8))
+    fig.suptitle(figtit)
+    configs = ddf['config'].unique()
+    colors = ['k','r']
+    lstyle = ['solid','dashed']
+    
+    for i,conf in enumerate(configs):
+        idx = ddf['config'] == conf
+        sel = ddf[idx]
+        if 'nsn' in sel.columns:
+            print('nsn',conf,sel['nsn'].sum())
+        vary_pl = sel[vary]
+        vary_std_pl = sel[var_std]
+        if var_norm != '':
+            vary_pl /= sel[var_norm]
+            vary_std_pl/=sel[var_norm]
+        ax.errorbar(sel[varx],vary_pl,
+                    yerr=vary_std_pl,
+                    color=colors[i],marker='o',linestyle=lstyle[i],
+                    label=conf)
+    ax.legend()
+    
+    plt.show()
+    
+    """
+    print(test)
+    deltab=0.1
+    zmin = 0.01
+    zmax = grp['z_fit'].max()+deltab
+    bins = np.arange(zmin,zmax,deltab)
+   
+    from sn_analysis.sn_calc_plot import bin_it_weighted
+    
+    res = bin_it_weighted(grp_sel,xvar='z_fit', 
+                      yvar='diff_mu',yvar_err='diff_mu_std',bins=bins)
+   
+    print(res.columns)
+   
+    import matplotlib.pyplot as plt
+    fig, ax = plt.subplots()
+    
+    ax.errorbar(res['z_fit'],res['diff_mu_weighted_mean'],
+                yerr=res['diff_mu_std'],color='k',marker='o')
+    
+    plt.show()
+    """
+def get_vals(grp):
+    
+    
+    print(grp.name,len(grp))
+    
+    dd = {}
+    
+    grp['coeff'] = 1./grp['sigma_mu']**2
+    
+    dd['z_fit'] = [grp['z_fit'].mean()]
+    
+    vals = np.sum(grp['coeff'])
+    vv = np.sqrt(vals)
+    
+    dd['diff_mu_std'] = [1./vv]
+    
+    
+    vvb = np.sum(grp['coeff']*grp['diff_mu'])/vals
+    
+    dd['diff_mu'] = [vvb]
+    
+    vvc = np.sum(grp['coeff']*grp['mu'])/vals
+    
+    dd['mu'] = [vvc]
+    
+    dd['nsn'] = [len(grp)]
+    
+    res = pd.DataFrame.from_dict(dd)
+    
+    return res
+    
+    
+    
+    
+def process_season_pixel_old(grp, sellist,plot=False):
     """
     Function to process a season/pixel
 
@@ -601,11 +782,11 @@ parser.add_option("--selconfig", type=str,
 parser.add_option('--outDir', type=str,
                   default='../zlim',
                   help='output Dir dir[%default]')
-parser.add_option('--x1', type=float,
-                  default=-2.0,
+parser.add_option('--x1', type=str,
+                  default='-2.0',
                   help='SN Ia stretch value [%default]')
-parser.add_option('--color', type=float,
-                  default=0.2,
+parser.add_option('--color', type=str,
+                  default='0.2',
                   help='SN Ia color value [%default]')
 parser.add_option('--nproc', type=int,
                   default=8,

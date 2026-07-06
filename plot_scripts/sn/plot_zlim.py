@@ -125,7 +125,7 @@ df_dist = df.groupby(['field','season']).apply(lambda x:get_dist(x),
 
 print(df_dist)
 idx = df_dist['field'] == 'COSMOS'
-idx &= df_dist['season'] == 4
+idx &= df_dist['season'] == 3
 
 sel = df_dist[idx]
 
