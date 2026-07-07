@@ -58,10 +58,28 @@ parser.add_option('--pixelList', type=str, default='pixelList.csv',
                   help='pixelList (None if NA) [%default]')
 parser.add_option('--save_LC', type=int, default=0,
                   help='to save LC on disk [%default]')
+parser.add_option('--sigma_airmass', type=float, default=0.0,
+                  help='sigma airmass [%default]')
+parser.add_option('--sigma_ozone', type=float, default=0.0,
+                  help='sigma ozone [%default]')
+parser.add_option('--sigma_aerosol', type=float, default=0.0,
+                  help='sigma aerosol [%default]')
+parser.add_option('--sigma_pwv', type=float, default=0.0,
+                  help='sigma pwv [%default]')
+parser.add_option('--smear_flux', type=int, default=1,
+                  help='flux smearing [%default]')
+
 opts, args = parser.parse_args()
 
 pp = vars(opts)
 
+ntrial_zp = 1
+atmos_cols = ['airmass','ozone','aerosol','pwv']
+
+for vv in atmos_cols:
+    if pp['sigma_{}'.format(vv)] >= 1.e-5:
+        ntrial_zp = 1000
+        
 cmd = "python run_scripts/sim_to_fit/run_sim_to_fit.py" 
 cmd += " --dbName={}".format(pp['dbName'])
 cmd += " --dbDir={}".format(pp['dbDir'])
@@ -117,7 +135,7 @@ cmd += " --LC_coadd=1"
 cmd += " --InstrumentSimu_telescope_tag=1.9"
 cmd += " --InstrumentFit_telescope_tag=1.9"
 cmd += " --Fitter_sigmaz=1e-05"
-cmd += " --SN_smearFlux=1"
+cmd += " --SN_smearFlux={}".format(pp['smear_flux'])
 cmd += " --lookup_ddf=input/simulation/lookup_ddf.csv"
 cmd += " --saturation_effect=0"
 cmd += " --saturation_psf=single_gauss"
@@ -130,11 +148,10 @@ cmd += " --SN_minRFphaseQual=-10.0"
 cmd += " --SN_maxRFphaseQual=35.0"
 cmd += " --InstrumentSimu_atmosType=const"
 cmd += " --fit_coadded=0"
-cmd += " --InstrumentSimu_sigma_airmass=0.0"
-cmd += " --InstrumentSimu_sigma_aerosol=0.0"
-cmd += " --InstrumentSimu_sigma_pwv=0.0"
-cmd += " --InstrumentSimu_sigma_ozone=0.0"
-cmd += " --InstrumentSimu_ntrial_zp=1"
+for vv in atmos_cols:
+    cmd += " --InstrumentSimu_sigma_{}={}".format(vv,pp['sigma_{}'.format(vv)])
+    
+cmd += " --InstrumentSimu_ntrial_zp={}".format(ntrial_zp)
 cmd += " --FoV=9.6"
 cmd += " --Cosmology_Om0=0.3"
 cmd += " --Cosmology_Ode0=0.7"
@@ -145,6 +162,7 @@ cmd += " --Cosmology_declass=w0waCDM"
 cmd += " --Cosmology_classloc=astropy.cosmology"
 cmd += " --Cosmology_demodel=CPL"
 cmd += " --Cosmology_deeos='w0+wa*z/(1+z)'"
+
 seasons = pp['seasons']
 if '-' in seasons:
     seasons=seasons.replace('-','_')
@@ -153,7 +171,9 @@ if ',' in seasons:
     
 prodID = 'SN_{}_{}_{}_{}_{}'.format(pp['fieldType'],pp['dbName'],
                                     pp['x1'],pp['color'],seasons)
+
 cmd += " --ProductionIDSimu={}".format(prodID)
+
 if pp['pixelList'] != "None":
     cmd += " --pixelList={}".format(pp['pixelList'])
 
