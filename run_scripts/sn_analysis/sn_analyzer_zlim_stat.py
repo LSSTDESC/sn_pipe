@@ -296,7 +296,10 @@ def process_season_pixel(grp, sellist,plot=False):
     figtit = '{} {} {}'.format(field,hpix,season)
     print('test',grp.name)
     
-    idx = np.abs(grp['sigmaC']) < 0.04
+    
+    idx = np.abs(grp['x1_fit']) < 3.0
+    idx &= np.abs(grp['color_fit']) < 0.3
+    
     grp = grp[idx]
     
     print('alllors',len(grp))
@@ -304,16 +307,25 @@ def process_season_pixel(grp, sellist,plot=False):
     #get selected group
     grp_sel = select(grp,sellist)
     
-    print(len(grp),len(grp_sel))
+    print('stat',len(grp),len(grp_sel))
   
-    plot_hist(grp_sel)
+    plot_hist(grp_sel,vary='x1')
+    plot_hist(grp_sel,vary='color')
+    """
     plot_indiv(grp_sel,figtit,varx='z_fit',vary='diff_mu',
                  var_std='sigma_mu',var_norm='')
+    """
+    
+    plot_indiv(grp_sel,figtit,varx='z_fit',vary='diff_mu',
+                 var_std='diff_mu_std',var_norm='')
     
     #get binned values
     
     ddf = grp_sel.groupby(['z','config']).apply(lambda x : get_vals(x),
                                    include_groups=False).reset_index()
+    
+    plot_indiv(ddf,figtit,varx='z_fit',vary='sigma_mu',
+                 var_std='',var_norm='')
     
     print('nsn',ddf['nsn'].sum())
     figtit = '{} {} {}'.format(field,hpix,season)
@@ -342,7 +354,7 @@ def process_season_pixel(grp, sellist,plot=False):
     
     return
 
-def plot_hist(df,fig=None,ax=None):
+def plot_hist(df,vary='x1_fit',fig=None,ax=None):
     
     
     if fig is None:
@@ -356,9 +368,10 @@ def plot_hist(df,fig=None,ax=None):
     for i,conf in enumerate(configs):
         idx = df['config'] == conf
         sel = df[idx]  
-        ax.hist(sel['sigma_mu']/sel['mu'],histtype='step',bins=20,
+        ax.hist(sel[vary],histtype='step',bins=20,
                 linestyle=lstyle[i],color=colors[i],
                 label=conf)
+        print('stat',conf,len(sel))
     
     ax.legend()
     
@@ -379,10 +392,13 @@ def plot_indiv(ddf,figtit,varx='z_fit',vary='diff_mu',
         if 'nsn' in sel.columns:
             print('nsn',conf,sel['nsn'].sum())
         vary_pl = sel[vary]
-        vary_std_pl = sel[var_std]
+        vary_std_pl = None
+        if var_std != '':
+            vary_std_pl = sel[var_std]
         if var_norm != '':
             vary_pl /= sel[var_norm]
-            vary_std_pl/=sel[var_norm]
+            if var_std != '':
+                vary_std_pl/=sel[var_norm]
         ax.errorbar(sel[varx],vary_pl,
                     yerr=vary_std_pl,
                     color=colors[i],marker='o',linestyle=lstyle[i],
@@ -439,6 +455,8 @@ def get_vals(grp):
     dd['mu'] = [vvc]
     
     dd['nsn'] = [len(grp)]
+    
+    dd['sigma_mu'] = [1./vv]
     
     res = pd.DataFrame.from_dict(dd)
     
