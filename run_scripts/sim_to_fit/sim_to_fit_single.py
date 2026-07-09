@@ -68,6 +68,8 @@ parser.add_option('--sigma_pwv', type=float, default=0.0,
                   help='sigma pwv [%default]')
 parser.add_option('--smear_flux', type=int, default=1,
                   help='flux smearing [%default]')
+parser.add_option('--SN_simuFile', type=str, default='None',
+                  help='to insert a simu file [%default]')
 
 opts, args = parser.parse_args()
 
@@ -176,6 +178,8 @@ cmd += " --ProductionIDSimu={}".format(prodID)
 
 if pp['pixelList'] != "None":
     cmd += " --pixelList={}".format(pp['pixelList'])
+
+cmd += ' --SN_simuFile={}'.format(pp['SN_simuFile'])
 
 print(cmd)
 os.system(cmd)
