@@ -70,6 +70,10 @@ parser.add_option('--smear_flux', type=int, default=1,
                   help='flux smearing [%default]')
 parser.add_option('--SN_simuFile', type=str, default='None',
                   help='to insert a simu file [%default]')
+parser.add_option('--obs_coadd',type=int,default=0,
+                  help = 'to coadd obs [%default]')
+parser.add_option('--lc_coadd',type=int,default=1,
+                  help = 'to coadd LCs [%default]')
 
 opts, args = parser.parse_args()
 
@@ -129,11 +133,11 @@ cmd += " --nside={}".format(pp['nside'])
 cmd += " --Pixelisation_nside={}".format(pp['nside'])
 cmd += " --fieldName={}".format(pp['fieldName'])
 cmd += " --Observations_season={}".format(pp['seasons'])
-
+cmd += " --Observations_coadd={}".format(pp['obs_coadd'])
 
 #miscellaneous parameters
-cmd += " --Observations_coadd=0"
-cmd += " --LC_coadd=1"
+#cmd += " --Observations_coadd=0"
+cmd += " --LC_coadd={}".format(pp['lc_coadd'])
 cmd += " --InstrumentSimu_telescope_tag=1.9"
 cmd += " --InstrumentFit_telescope_tag=1.9"
 cmd += " --Fitter_sigmaz=1e-05"

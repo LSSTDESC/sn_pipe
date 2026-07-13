@@ -78,8 +78,8 @@ def get_info_sn(sndata,snid,ccols=['SNID','x1','color','z','daymax',
 
 def plot_hist(df_tot,var=['pull_x1_x','pull_x1_y']):
     fig, ax = plt.subplots()
-    idx = df_tot['pull_x1_y'] < 1.e6
-
+    idx = np.abs(df_tot['pull_x1_y']) < 5.
+    idx &= np.abs(df_tot['pull_x1_x']) < 5.
     sel = df_tot[idx]
     
     print('effi',len(df_tot),len(sel))
@@ -87,7 +87,51 @@ def plot_hist(df_tot,var=['pull_x1_x','pull_x1_y']):
     for vv in var:
         ax.hist(sel[vv],histtype='step',bins=30)
         print('stat',vv,sel[vv].mean(),sel[vv].std(),sel[vv].median())
+   
+def compare_lc(lc_sn_a,lc_sn_b):
+    
+    lc_a = lc_sn_a.lc_plot['lc']
+    lc_b = lc_sn_b.lc_plot['lc']
+    
+    
+    df_a = lc_a[['filter','time','flux','fluxerr','zp','airmass']].to_pandas()
+    df_b = lc_b[['filter','time','flux','fluxerr','zp','airmass']].to_pandas()
+    
+    df_a = df_a.round({'time':6})
+    df_b = df_b.round({'time':6})
+    
+    df_c = df_a.merge(df_b,left_on=['filter','time','airmass'],
+                      right_on=['filter','time','airmass'])
+    
+    
+    print(df_c)
+    
+    df_c['fluxerr_ratio'] = df_c['fluxerr_x']/df_c['fluxerr_y']
+    df_c['delta_zp'] = df_c['zp_x']-df_c['zp_y']
+    
+    fig, ax = plt.subplots()
+    
+    var = 'delta_zp'
+    idx = df_c['flux_x'] > 0. 
+    idx &= df_c['flux_y'] > 0.
+    ax.hist(df_c[idx][var],histtype='step',bins=40)
+    
+    
+    for b in df_c['filter'].unique():
+        idx = df_c['filter'] == b
+        idx &= df_c['flux_x'] > 0. 
+        idx &= df_c['flux_y'] > 0. 
+        sel = df_c[idx]
         
+        print(b,sel['delta_zp'].mean(),
+              sel['delta_zp'].median(),sel['delta_zp'].std())
+    
+    
+    
+    
+    
+    
+    
 dira = '../test_LC_confe/baseline_v5.3.0_10yrs/DDF_spectroz/'
 dirb = '../test_LC_confd/baseline_v5.3.0_10yrs/DDF_spectroz/'
 
@@ -97,10 +141,11 @@ snFile_b = 'SN_SN_DD_baseline_v5.3.0_10yrs_-2.0_0.2_1.hdf5'
 sellist = selection_criteria()['G10_JLA']
 print(sellist)
 
+"""
 import operator as op
 sellist.append(('chisq_red',op.le,20))
 sellist.append(('sigma_t0',op.le,0.5))
-
+"""
 print(sellist)
 sndata_a = get_sndata(dira,snFile_a,sellist)
 sndata_b = get_sndata(dirb,snFile_b,sellist)
@@ -169,13 +214,15 @@ for snid in snids:
 print('finally',len(df_tot))
 
 
+"""
 idx = df_tot['pull_x1_y']  >= -0.7
 idx &= df_tot['pull_x1_y']  <= -0.4
 df_tot = df_tot[idx]
-
 """
+
 plot_hist(df_tot)
 plot_hist(df_tot,var=['pull_color_x','pull_color_y'])
+"""
 plot_hist(df_tot,var=['chisq_red_x','chisq_red_y'])
 plot_hist(df_tot,var=['diff_mu_x','diff_mu_y'])
 plot_hist(df_tot,var=['sigma_mu_x','sigma_mu_y'])
@@ -183,9 +230,9 @@ plot_hist(df_tot,var=['sigma_x1_x','sigma_x1_y'])
 plot_hist(df_tot,var=['sigma_color_x','sigma_color_y'])
 plot_hist(df_tot,var=['x1_fit_x','x1_fit_y'])
 plot_hist(df_tot,var=['sigma_t0_x','sigma_t0_y'])
-
-plt.show()
 """
+plt.show()
+
 
 snids = df_tot['SNID'].to_list()
 
@@ -193,9 +240,14 @@ for snid in snids:
     idc = df_tot['SNID'] == snid
     sel = df_tot[idc]
     print(sel['pull_x1_y'])
-    lc_plus_sn_b = get_info(meta_b,snid,sndata_bp)
+    lc_plus_sn_a = get_info(meta_a,snid,sndata_a)
+    lc_plus_sn_b = get_info(meta_b,snid,sndata_b)
     
+    lc_plus_sn_a.plot_all("time")
     lc_plus_sn_b.plot_all("time")
+    
+
+    #compare_lc(lc_plus_sn_a,lc_plus_sn_b)
 
     plt.show()
 
