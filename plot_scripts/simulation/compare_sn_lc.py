@@ -77,9 +77,12 @@ def get_info_sn(sndata,snid,ccols=['SNID','x1','color','z','daymax',
     return pd.DataFrame(sel[ccols])
 
 def plot_hist(df_tot,var=['pull_x1_x','pull_x1_y']):
+    
     fig, ax = plt.subplots()
-    idx = np.abs(df_tot['pull_x1_y']) < 5.
-    idx &= np.abs(df_tot['pull_x1_x']) < 5.
+    vv = '_'.join(var[0].split('_')[:-1])
+    fig.suptitle(vv)
+    idx = np.abs(df_tot['pull_x1_y']) < 1.e6
+    #idx &= np.abs(df_tot['pull_x1_x']) < 5.
     sel = df_tot[idx]
     
     print('effi',len(df_tot),len(sel))
@@ -125,13 +128,15 @@ def compare_lc(lc_sn_a,lc_sn_b):
         
         print(b,sel['delta_zp'].mean(),
               sel['delta_zp'].median(),sel['delta_zp'].std())
+        
+def plot_lc_feature(lc, varx='flux',vary='sigma_m5',fig=None,ax=None,marker='o',color='r'):
     
+    if fig is None:
+        fig, ax = plt.subplots()
+
+    ax.plot(lc[varx],lc[vary],marker=marker,color=color,linestyle='None')
     
-    
-    
-    
-    
-    
+
 dira = '../test_LC_confe/baseline_v5.3.0_10yrs/DDF_spectroz/'
 dirb = '../test_LC_confd/baseline_v5.3.0_10yrs/DDF_spectroz/'
 
@@ -220,14 +225,17 @@ idx &= df_tot['pull_x1_y']  <= -0.4
 df_tot = df_tot[idx]
 """
 
+"""
 plot_hist(df_tot)
 plot_hist(df_tot,var=['pull_color_x','pull_color_y'])
-"""
+
 plot_hist(df_tot,var=['chisq_red_x','chisq_red_y'])
 plot_hist(df_tot,var=['diff_mu_x','diff_mu_y'])
 plot_hist(df_tot,var=['sigma_mu_x','sigma_mu_y'])
 plot_hist(df_tot,var=['sigma_x1_x','sigma_x1_y'])
 plot_hist(df_tot,var=['sigma_color_x','sigma_color_y'])
+"""
+"""
 plot_hist(df_tot,var=['x1_fit_x','x1_fit_y'])
 plot_hist(df_tot,var=['sigma_t0_x','sigma_t0_y'])
 """
@@ -243,10 +251,16 @@ for snid in snids:
     lc_plus_sn_a = get_info(meta_a,snid,sndata_a)
     lc_plus_sn_b = get_info(meta_b,snid,sndata_b)
     
+    """
     lc_plus_sn_a.plot_all("time")
     lc_plus_sn_b.plot_all("time")
-    
-
+    """
+    lc_a = lc_plus_sn_a.lc_plot['lc']
+    lc_b = lc_plus_sn_b.lc_plot['lc']
+    fig, ax = plt.subplots()
+    plot_lc_feature(lc_a,vary='sigma_5',fig=fig,ax=ax,marker='o',color='k')
+    plot_lc_feature(lc_b,vary='sigma_5',fig=fig,ax=ax,marker='*',color='r')
+    #plot_lc_feature(lc_a,vary='sigma_shot',fig=fig,ax=ax,marker='*',color='r')
     #compare_lc(lc_plus_sn_a,lc_plus_sn_b)
 
     plt.show()
