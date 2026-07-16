@@ -91,33 +91,42 @@ def plot_hist(df_tot,var=['pull_x1_x','pull_x1_y']):
         ax.hist(sel[vv],histtype='step',bins=30)
         print('stat',vv,sel[vv].mean(),sel[vv].std(),sel[vv].median())
    
-def compare_lc(lc_sn_a,lc_sn_b):
-    
-    lc_a = lc_sn_a.lc_plot['lc']
-    lc_b = lc_sn_b.lc_plot['lc']
+def compare_lc(lc_a,lc_b):
     
     
-    df_a = lc_a[['filter','time','flux','fluxerr','zp','airmass']].to_pandas()
-    df_b = lc_b[['filter','time','flux','fluxerr','zp','airmass']].to_pandas()
+    cols = ['filter','time','flux','fluxerr','zp',
+            'airmass','sigma_5','sigma_shot','flux_orig','night','snr']
+    df_a = lc_a[cols].to_pandas()
+    df_b = lc_b[cols].to_pandas()
     
     df_a = df_a.round({'time':6})
     df_b = df_b.round({'time':6})
     
-    df_c = df_a.merge(df_b,left_on=['filter','time','airmass'],
-                      right_on=['filter','time','airmass'])
+    df_c = df_a.merge(df_b,left_on=['filter','time'],
+                      right_on=['filter','time'])
+    
     
     
     print(df_c)
     
     df_c['fluxerr_ratio'] = df_c['fluxerr_x']/df_c['fluxerr_y']
+    df_c['flux_orig_ratio'] = df_c['flux_orig_x']/df_c['flux_orig_y']
+    df_c['m5_ratio'] = df_c['sigma_5_x']/df_c['sigma_5_y']
+    df_c['noise_ratio'] = df_c['sigma_shot_x']/df_c['sigma_shot_y']
     df_c['delta_zp'] = df_c['zp_x']-df_c['zp_y']
     
+    return df_c
+    sel = df_c.groupby(['filter']).apply(lambda x: calc_lc(x))
+    
+    #print(sel)
+    
+    """
     fig, ax = plt.subplots()
     
     var = 'delta_zp'
     idx = df_c['flux_x'] > 0. 
     idx &= df_c['flux_y'] > 0.
-    ax.hist(df_c[idx][var],histtype='step',bins=40)
+    #ax.hist(df_c[idx][var],histtype='step',bins=40)
     
     
     for b in df_c['filter'].unique():
@@ -125,10 +134,37 @@ def compare_lc(lc_sn_a,lc_sn_b):
         idx &= df_c['flux_x'] > 0. 
         idx &= df_c['flux_y'] > 0. 
         sel = df_c[idx]
-        
+        ax.hist(sel[var],histtype='step',bins=40,label=b)
         print(b,sel['delta_zp'].mean(),
               sel['delta_zp'].median(),sel['delta_zp'].std())
-        
+    
+    ax.legend()
+    """
+    
+def calc_lc(grp,cols=['delta_zp','fluxerr_ratio',
+                      'm5_ratio','noise_ratio',
+                      'flux_orig_ratio','flux_x','flux_y','time']):
+    
+    #compare what can be compared
+    """
+    idx = grp['flux_x'] > 0. 
+    idx &= grp['flux_y'] > 0. 
+    sel = grp[idx]
+    """
+    sel = pd.DataFrame(grp)
+    
+    sel = sel.sort_values(by=['time'])
+    print(grp.name)
+    print(sel.columns)
+    ccolsb = ['delta_zp','fluxerr_ratio',
+              'flux_x','flux_y','time','flux_orig_y','fluxerr_y',
+              'flux_orig_x','fluxerr_x']
+    print(sel[ccolsb])
+    
+    
+    return sel[cols]
+    
+    
 def plot_lc_feature(lc, varx='flux',vary='sigma_m5',fig=None,ax=None,marker='o',color='r'):
     
     if fig is None:
@@ -136,7 +172,26 @@ def plot_lc_feature(lc, varx='flux',vary='sigma_m5',fig=None,ax=None,marker='o',
 
     ax.plot(lc[varx],lc[vary],marker=marker,color=color,linestyle='None')
     
+def process_comp_lc(snids,meta_a,meta_b):
 
+    
+    df = pd.DataFrame()
+    for snid in snids:
+        
+        lc_plus_sn_a = get_info(meta_a,snid,pd.DataFrame())
+        lc_plus_sn_b = get_info(meta_b,snid,pd.DataFrame())
+        
+        lc_a = lc_plus_sn_a.lc_plot['lc']
+        lc_b = lc_plus_sn_b.lc_plot['lc']
+        
+        ro = compare_lc(lc_a,lc_b)
+
+        ro['snid'] = snid
+        
+        df = pd.concat((df,ro))
+        
+    return df
+        
 dira = '../test_LC_confe/baseline_v5.3.0_10yrs/DDF_spectroz/'
 dirb = '../test_LC_confd/baseline_v5.3.0_10yrs/DDF_spectroz/'
 
@@ -173,6 +228,14 @@ df_tot = pd.DataFrame()
 mcols = ['SNID','x1','color','z','daymax']
 
 io = -1
+
+res = process_comp_lc(snids,meta_a,meta_b)
+
+print(res.columns)
+
+print(test)
+
+
 for snid in snids:
     
     io +=1
@@ -244,6 +307,7 @@ plt.show()
 
 snids = df_tot['SNID'].to_list()
 
+snids = ['SN_0108958_01_00003_6']
 for snid in snids:
     idc = df_tot['SNID'] == snid
     sel = df_tot[idc]
@@ -251,18 +315,18 @@ for snid in snids:
     lc_plus_sn_a = get_info(meta_a,snid,sndata_a)
     lc_plus_sn_b = get_info(meta_b,snid,sndata_b)
     
-    """
+    
     lc_plus_sn_a.plot_all("time")
     lc_plus_sn_b.plot_all("time")
-    """
+    
     lc_a = lc_plus_sn_a.lc_plot['lc']
     lc_b = lc_plus_sn_b.lc_plot['lc']
     fig, ax = plt.subplots()
-    plot_lc_feature(lc_a,vary='sigma_5',fig=fig,ax=ax,marker='o',color='k')
-    plot_lc_feature(lc_b,vary='sigma_5',fig=fig,ax=ax,marker='*',color='r')
+    plot_lc_feature(lc_a,varx='flux_orig',vary='sigma_5',fig=fig,ax=ax,marker='o',color='k')
+    plot_lc_feature(lc_b,varx='flux_orig',vary='sigma_5',fig=fig,ax=ax,marker='*',color='r')
     #plot_lc_feature(lc_a,vary='sigma_shot',fig=fig,ax=ax,marker='*',color='r')
-    #compare_lc(lc_plus_sn_a,lc_plus_sn_b)
-
+    compare_lc(lc_a,lc_b)
+    print('SNID',snid)
     plt.show()
 
 plt.show()
