@@ -116,11 +116,12 @@ with open(yaml_name_fit, 'w') as f:
     data_fit = yaml.dump(yaml_params_fit, f)
 
 # define what to process using simuWrapper
+fit_lc = opts.fit_lc
 
 metricList = [SimInfoFitWrapper(yaml_name,
                                 infoDict,
                                 yaml_name_fit,
-                                fit_remove_sat)]
+                                fit_remove_sat,fit_lc)]
 fieldType = yaml_params['Observations']['fieldtype']
 fieldName = yaml_params['Observations']['fieldname']
 nside = yaml_params['Pixelisation']['nside']

@@ -74,6 +74,8 @@ parser.add_option('--obs_coadd',type=int,default=0,
                   help = 'to coadd obs [%default]')
 parser.add_option('--lc_coadd',type=int,default=1,
                   help = 'to coadd LCs [%default]')
+parser.add_option('--fit_lc',type=int,default=1,
+                  help = 'to fit LCs or not [%default]')
 
 opts, args = parser.parse_args()
 
@@ -168,6 +170,8 @@ cmd += " --Cosmology_declass=w0waCDM"
 cmd += " --Cosmology_classloc=astropy.cosmology"
 cmd += " --Cosmology_demodel=CPL"
 cmd += " --Cosmology_deeos='w0+wa*z/(1+z)'"
+
+cmd += " --fit_lc={}".format(pp['fit_lc'])
 
 seasons = pp['seasons']
 if '-' in seasons:
