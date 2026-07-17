@@ -14,6 +14,7 @@ from sn_plotter_simu.visuLC import lc_sn
 import matplotlib.pyplot as plt
 from sn_analysis.sn_tools import complete_df
 from sn_analysis.sn_selection import selection_criteria,select
+from sn_tools.sn_utils import multiproc
 
 def get_metadata(theDir):
     
@@ -93,21 +94,19 @@ def plot_hist(df_tot,var=['pull_x1_x','pull_x1_y']):
    
 def compare_lc(lc_a,lc_b):
     
-    
     cols = ['filter','time','flux','fluxerr','zp',
             'airmass','sigma_5','sigma_shot','flux_orig','night','snr']
     df_a = lc_a[cols].to_pandas()
     df_b = lc_b[cols].to_pandas()
     
+   
+    
     df_a = df_a.round({'time':6})
     df_b = df_b.round({'time':6})
     
+    
     df_c = df_a.merge(df_b,left_on=['filter','time'],
                       right_on=['filter','time'])
-    
-    
-    
-    print(df_c)
     
     df_c['fluxerr_ratio'] = df_c['fluxerr_x']/df_c['fluxerr_y']
     df_c['flux_orig_ratio'] = df_c['flux_orig_x']/df_c['flux_orig_y']
@@ -172,11 +171,14 @@ def plot_lc_feature(lc, varx='flux',vary='sigma_m5',fig=None,ax=None,marker='o',
 
     ax.plot(lc[varx],lc[vary],marker=marker,color=color,linestyle='None')
     
-def process_comp_lc(snids,meta_a,meta_b):
+def process_comp_lc(toproc, params, j=0, output_q=None):
 
-    
+    meta_a = params['meta_a']   
+    meta_b = params['meta_b']
+
     df = pd.DataFrame()
-    for snid in snids:
+    
+    for snid in toproc:
         
         lc_plus_sn_a = get_info(meta_a,snid,pd.DataFrame())
         lc_plus_sn_b = get_info(meta_b,snid,pd.DataFrame())
@@ -190,10 +192,26 @@ def process_comp_lc(snids,meta_a,meta_b):
         
         df = pd.concat((df,ro))
         
-    return df
+    if output_q is not None:
+        return output_q.put({j: df})
+    else:
+        return df
         
-dira = '../test_LC_confe/baseline_v5.3.0_10yrs/DDF_spectroz/'
-dirb = '../test_LC_confd/baseline_v5.3.0_10yrs/DDF_spectroz/'
+def plot_diff_lc(df):
+    
+    print(df.columns)
+    
+    print(df['filter'].unique())
+    dfa = df.groupby(['filter','airmass_x'])['delta_zp'].std()
+    
+    print(dfa)
+    
+def plot_diff_indiv(grp):
+    
+    print('toto')
+
+dira = '../test_LC_confe_nocoadd/baseline_v5.3.0_10yrs/DDF_spectroz/'
+dirb = '../test_LC_confd_nocoadd/baseline_v5.3.0_10yrs/DDF_spectroz/'
 
 snFile_a = 'SN_SN_DD_baseline_v5.3.0_10yrs_-2.0_0.2_1.hdf5'
 snFile_b = 'SN_SN_DD_baseline_v5.3.0_10yrs_-2.0_0.2_1.hdf5'
@@ -206,17 +224,12 @@ import operator as op
 sellist.append(('chisq_red',op.le,20))
 sellist.append(('sigma_t0',op.le,0.5))
 """
-print(sellist)
-sndata_a = get_sndata(dira,snFile_a,sellist)
-sndata_b = get_sndata(dirb,snFile_b,sellist)
 
-print('alors',len(sndata_a),len(sndata_b))
 
 meta_a = get_metadata(dira)
 meta_b = get_metadata(dirb)
     
 snids = meta_a['SNID'].tolist()
-snids = sndata_a['SNID'].tolist()
 
 print('snids',len(snids))
 sndata_ap = pd.DataFrame()
@@ -229,12 +242,23 @@ mcols = ['SNID','x1','color','z','daymax']
 
 io = -1
 
-res = process_comp_lc(snids,meta_a,meta_b)
+params = {}
+params['meta_a'] = meta_a
+params['meta_b'] = meta_b
+
+res = multiproc(snids,params,process_comp_lc,nproc=8)
+
+plot_diff_lc(res)
 
 print(res.columns)
 
 print(test)
 
+print(sellist)
+sndata_a = get_sndata(dira,snFile_a,sellist)
+sndata_b = get_sndata(dirb,snFile_b,sellist)
+
+print('alors',len(sndata_a),len(sndata_b))
 
 for snid in snids:
     
