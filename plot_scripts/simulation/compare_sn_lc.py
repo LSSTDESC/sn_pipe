@@ -95,7 +95,7 @@ def plot_hist(df_tot,var=['pull_x1_x','pull_x1_y']):
 def compare_lc(lc_a,lc_b):
     
     cols = ['filter','time','flux','fluxerr','zp',
-            'airmass','sigma_5','sigma_shot','flux_orig','night','snr']
+            'airmass','sigma_f5','sigma_shot','flux_orig','night','snr']
     df_a = lc_a[cols].to_pandas()
     df_b = lc_b[cols].to_pandas()
     
@@ -110,7 +110,7 @@ def compare_lc(lc_a,lc_b):
     
     df_c['fluxerr_ratio'] = df_c['fluxerr_x']/df_c['fluxerr_y']
     df_c['flux_orig_ratio'] = df_c['flux_orig_x']/df_c['flux_orig_y']
-    df_c['m5_ratio'] = df_c['sigma_5_x']/df_c['sigma_5_y']
+    df_c['m5_ratio'] = df_c['sigma_f5_x']/df_c['sigma_f5_y']
     df_c['noise_ratio'] = df_c['sigma_shot_x']/df_c['sigma_shot_y']
     df_c['delta_zp'] = df_c['zp_x']-df_c['zp_y']
     
@@ -212,6 +212,9 @@ def plot_diff_indiv(grp):
 
 dira = '../test_LC_confe_nocoadd/baseline_v5.3.0_10yrs/DDF_spectroz/'
 dirb = '../test_LC_confd_nocoadd/baseline_v5.3.0_10yrs/DDF_spectroz/'
+
+dira = '../test_LC_confe_coadd_before_smearing/baseline_v5.3.0_10yrs/DDF_spectroz/'
+dirb = '../test_LC_confe_nocoadd/baseline_v5.3.0_10yrs/DDF_spectroz/'
 
 snFile_a = 'SN_SN_DD_baseline_v5.3.0_10yrs_-2.0_0.2_1.hdf5'
 snFile_b = 'SN_SN_DD_baseline_v5.3.0_10yrs_-2.0_0.2_1.hdf5'
@@ -346,8 +349,8 @@ for snid in snids:
     lc_a = lc_plus_sn_a.lc_plot['lc']
     lc_b = lc_plus_sn_b.lc_plot['lc']
     fig, ax = plt.subplots()
-    plot_lc_feature(lc_a,varx='flux_orig',vary='sigma_5',fig=fig,ax=ax,marker='o',color='k')
-    plot_lc_feature(lc_b,varx='flux_orig',vary='sigma_5',fig=fig,ax=ax,marker='*',color='r')
+    plot_lc_feature(lc_a,varx='flux_orig',vary='sigma_f5',fig=fig,ax=ax,marker='o',color='k')
+    plot_lc_feature(lc_b,varx='flux_orig',vary='sigma_f5',fig=fig,ax=ax,marker='*',color='r')
     #plot_lc_feature(lc_a,vary='sigma_shot',fig=fig,ax=ax,marker='*',color='r')
     compare_lc(lc_a,lc_b)
     print('SNID',snid)
