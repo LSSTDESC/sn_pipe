@@ -255,7 +255,7 @@ dirb = '../test_LC_confd_nocoadd/baseline_v5.3.0_10yrs/DDF_spectroz/'
 
 dira = '../test_LC_confe_coadd_before_smearing/baseline_v5.3.0_10yrs/DDF_spectroz/'
 dirb = '../test_LC_confe_nocoadd/baseline_v5.3.0_10yrs/DDF_spectroz/'
-dirb = '../test_LC_confe_coadd_after_smearing/baseline_v5.3.0_10yrs/DDF_spectroz/'
+#dirb = '../test_LC_confe_coadd_after_smearing/baseline_v5.3.0_10yrs/DDF_spectroz/'
 snFile_a = 'SN_SN_DD_baseline_v5.3.0_10yrs_-2.0_0.2_1.hdf5'
 snFile_b = 'SN_SN_DD_baseline_v5.3.0_10yrs_-2.0_0.2_1.hdf5'
 
@@ -294,8 +294,6 @@ res = multiproc(snids,params,process_comp_lc,nproc=8)
 plot_diff_lc(res)
 
 print(res.columns)
-
-print(test)
 
 print(sellist)
 sndata_a = get_sndata(dira,snFile_a,sellist)
