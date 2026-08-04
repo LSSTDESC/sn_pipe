@@ -95,7 +95,9 @@ def plot_hist(df_tot,var=['pull_x1_x','pull_x1_y']):
 def compare_lc(lc_a,lc_b):
     
     cols = ['filter','time','flux','fluxerr','zp',
-            'airmass','sigma_f5','sigma_shot','flux_orig','night','snr']
+            'airmass','sigma_f5','sigma_shot',
+            'flux_orig','night','snr']
+    
     df_a = lc_a[cols].to_pandas()
     df_b = lc_b[cols].to_pandas()
     
@@ -104,15 +106,29 @@ def compare_lc(lc_a,lc_b):
     df_a = df_a.round({'time':6})
     df_b = df_b.round({'time':6})
     
-    
+    df_a = df_a.sort_values(by=['time'])
+    df_b = df_b.sort_values(by=['time'])
     df_c = df_a.merge(df_b,left_on=['filter','time'],
                       right_on=['filter','time'])
+    
+    """
+    print(df_a[['filter','time']])
+    print('hoho')
+    print(df_b[['filter','time']])
+    
+    
+    
+    print('toto',len(df_a),len(df_b),len(df_c))
+    
+    print(test)
+    """
     
     df_c['fluxerr_ratio'] = df_c['fluxerr_x']/df_c['fluxerr_y']
     df_c['flux_orig_ratio'] = df_c['flux_orig_x']/df_c['flux_orig_y']
     df_c['m5_ratio'] = df_c['sigma_f5_x']/df_c['sigma_f5_y']
     df_c['noise_ratio'] = df_c['sigma_shot_x']/df_c['sigma_shot_y']
     df_c['delta_zp'] = df_c['zp_x']-df_c['zp_y']
+    #df_c['time_ratio'] = df_c['time_x']-df_c['time_y']
     
     return df_c
     sel = df_c.groupby(['filter']).apply(lambda x: calc_lc(x))
@@ -145,12 +161,14 @@ def calc_lc(grp,cols=['delta_zp','fluxerr_ratio',
                       'flux_orig_ratio','flux_x','flux_y','time']):
     
     #compare what can be compared
-    """
+    
     idx = grp['flux_x'] > 0. 
     idx &= grp['flux_y'] > 0. 
+    idx &= grp['flux_orig_x'] > 0. 
+    idx &= grp['flux_orig_y'] > 0.
     sel = grp[idx]
-    """
-    sel = pd.DataFrame(grp)
+    
+    #sel = pd.DataFrame(grp)
     
     sel = sel.sort_values(by=['time'])
     print(grp.name)
@@ -201,21 +219,43 @@ def plot_diff_lc(df):
     
     print(df.columns)
     
+    thevar = 'fluxerr_ratio'
+    thevar = 'flux_orig_ratio'
+    
+    idx = df['flux_orig_x'] > 0.
+    idx &= df['flux_orig_y'] > 0.
+    
+    df = df[idx]
+    
+    print(df[['flux_orig_x','flux_orig_y',thevar]])
+    print(df[thevar].mean(),df[thevar].std())
+    
+    for b in 'grizy':
+        idx = df['filter'] == b
+        print(b,df[idx][thevar].mean(),df[idx][thevar].std())
+        plot_diff_indiv(df[idx],thevar,figtit=b)
+        
+    plt.show()
     print(df['filter'].unique())
     dfa = df.groupby(['filter','airmass_x'])['delta_zp'].std()
     
     print(dfa)
     
-def plot_diff_indiv(grp):
+def plot_diff_indiv(grp,thevar,figtit=''):
     
-    print('toto')
+    fig, ax = plt.subplots()
+    if figtit != '':
+        fig.suptitle(figtit)
+    
+    ax.hist(grp[thevar],histtype='step',bins=20)
+    
 
 dira = '../test_LC_confe_nocoadd/baseline_v5.3.0_10yrs/DDF_spectroz/'
 dirb = '../test_LC_confd_nocoadd/baseline_v5.3.0_10yrs/DDF_spectroz/'
 
 dira = '../test_LC_confe_coadd_before_smearing/baseline_v5.3.0_10yrs/DDF_spectroz/'
 dirb = '../test_LC_confe_nocoadd/baseline_v5.3.0_10yrs/DDF_spectroz/'
-
+dirb = '../test_LC_confe_coadd_after_smearing/baseline_v5.3.0_10yrs/DDF_spectroz/'
 snFile_a = 'SN_SN_DD_baseline_v5.3.0_10yrs_-2.0_0.2_1.hdf5'
 snFile_b = 'SN_SN_DD_baseline_v5.3.0_10yrs_-2.0_0.2_1.hdf5'
 
