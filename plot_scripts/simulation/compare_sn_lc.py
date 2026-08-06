@@ -15,6 +15,7 @@ import matplotlib.pyplot as plt
 from sn_analysis.sn_tools import complete_df
 from sn_analysis.sn_selection import selection_criteria,select
 from sn_tools.sn_utils import multiproc
+from optparse import OptionParser
 
 def get_metadata(theDir):
     
@@ -42,7 +43,10 @@ def get_sndata(fDir,fName,sellist):
     df = select(df,list_sel=sellist)
     
     for vv in ['x1','color']:
-        df['pull_{}'.format(vv)] = (df[vv]-df['{}_fit'.format(vv)])/df['sigma_{}'.format(vv)]
+        vdiff = '{}_fit'.format(vv)
+        vsigma = 'sigma_{}'.format(vv)
+        df['pull_{}'.format(vv)] = (df[vv]-df[vdiff])/df[vsigma]
+        df['diff_{}'.format(vv)] = (df[vv]-df[vdiff])
         
     print(df.columns)
     
@@ -100,8 +104,6 @@ def compare_lc(lc_a,lc_b):
     
     df_a = lc_a[cols].to_pandas()
     df_b = lc_b[cols].to_pandas()
-    
-   
     
     df_a = df_a.round({'time':6})
     df_b = df_b.round({'time':6})
@@ -249,12 +251,196 @@ def plot_diff_indiv(grp,thevar,figtit=''):
     
     ax.hist(grp[thevar],histtype='step',bins=20)
     
+def comp_lc_sn(df_tot,meta_a,sndata_a,meta_b,sndata_b,sellist,snid):
+
+    
+    
+    idc = df_tot['SNID'] == snid
+    sel = df_tot[idc]
+    
+    lc_plus_sn_a = get_info(meta_a,snid,sndata_a)
+    lc_plus_sn_b = get_info(meta_b,snid,sndata_b)
+    
+    
+    lc_plus_sn_a.plot_all("time")
+    lc_plus_sn_b.plot_all("time")
+    
+    lc_a = lc_plus_sn_a.lc_plot['lc']
+    lc_b = lc_plus_sn_b.lc_plot['lc']
+    """
+    fig, ax = plt.subplots()
+    plot_lc_feature(lc_a,varx='flux_orig',vary='sigma_f5',fig=fig,ax=ax,marker='o',color='k')
+    plot_lc_feature(lc_b,varx='flux_orig',vary='sigma_f5',fig=fig,ax=ax,marker='*',color='r')
+    #plot_lc_feature(lc_a,vary='sigma_shot',fig=fig,ax=ax,marker='*',color='r')
+    """
+    compare_lc(lc_a,lc_b)
+    print('SNID',snid)
+    plt.show(block=False)    
+    
+def grab_infos(meta_a,sndata_a,meta_b,sndata_b,snid,
+               ccols = ['time','filter','flux','fluxerr','zp','airmass'],
+               mcols = ['SNID','x1','color','z','daymax']):
+    
+    
+    sndata_ap = pd.DataFrame()
+    sndata_bp = pd.DataFrame()
+    
+    lc_plus_sn_a = get_info(meta_a,snid,sndata_ap)
+    lc_plus_sn_b = get_info(meta_b,snid,sndata_bp)
+    
+    lc_a = lc_plus_sn_a.lc_plot['lc']
+    lc_b = lc_plus_sn_b.lc_plot['lc']
+    
+    dfa = lc_a[ccols].to_pandas()
+    dfb = lc_b[ccols].to_pandas()
+    
+    
+    dfc = dfa.merge(dfb, left_on=['time','filter','airmass'],
+                    right_on=['time','filter','airmass'])
+    
+    
+    info_a = get_info_sn(sndata_a,snid)
+    info_b = get_info_sn(sndata_b,snid)
+    
+    df_tot = info_a.merge(info_b, left_on=mcols, right_on=mcols)
+    
+    #df_tot = pd.concat((df_tot,bb))
+    
+    return df_tot
+    
+def lc_sn_comp(dira,snFile_a,dirb,snFile_b,sellist):
+    
+    meta_a = get_metadata(dira)
+    meta_b = get_metadata(dirb)
+    
+    sndata_a = get_sndata(dira,snFile_a,sellist)
+    sndata_b = get_sndata(dirb,snFile_b,sellist)
+    
+    snids = meta_a['SNID'].tolist()
+    #snids = ['SN_0108958_01_00003_6']
+    
+    print(snids)
+    
+    
+    while (1):
+        answer = input('SNID?')
+        snid = answer
+        if snid == 'exit':
+            break
+        df_tot = grab_infos(meta_a, sndata_a,meta_b,sndata_b,snid)
+    
+        comp_lc_sn(df_tot,meta_a,sndata_a,meta_b,sndata_b,sellist,snid)
+        
+def comp_lc(dira,dirb):
+
+    meta_a = get_metadata(dira)
+    meta_b = get_metadata(dirb)
+    snids = meta_a['SNID'].tolist()
+    
+    params = {}
+    params['meta_a'] = meta_a
+    params['meta_b'] = meta_b
+
+    res = multiproc(snids,params,process_comp_lc,nproc=8)
+    
+    plot_diff_lc(res) 
+    
+    
+def comp_sn(dira,snFile_a,dirb,snFile_b,sellist):
+    
+    
+    sn_a = get_sndata(dira, snFile_a, sellist)
+    sn_b = get_sndata(dirb, snFile_b, sellist)
+    
+    
+    
+    print(sn_a)
+    print(sn_b)
+    
+    sn_m = sn_a.merge(sn_b,left_on=['SNID'],right_on=['SNID'])
+    
+    print(sn_m)
+    
+    """
+    plot_pull_hist(sn_m)
+    
+    plot_pull_hist(sn_m,prefix='diff',cutval=0.2)
+    """
+    plot_pull_vs(sn_m,varx='SNID',prefix='diff',cutval=0.2)
+    
+    
+def plot_pull_hist(sn_m,prefix='pull',cutval=5):
+    
+    
+    for vv in ['x1','color']:
+        
+        fig, ax = plt.subplots()
+        vvp = '{}_{}'.format(prefix,vv)
+        plot_pull_indiv_hist(ax,sn_m,varpull='{}_x'.format(vvp),cutval=cutval)
+        plot_pull_indiv_hist(ax,sn_m,varpull='{}_y'.format(vvp),cutval=cutval)
+    
+    
+    plt.show()
+
+def plot_pull_indiv_hist(ax,sn_m,varpull='pull_x1_x',cutval=5):
+    
+    
+    idx = np.abs(sn_m[varpull]) <= cutval
+    
+    sel = sn_m[idx]
+    
+    print(varpull,len(sel),sel[varpull].mean(),sel[varpull].std())
+    ax.hist(sel[varpull],histtype='step')
+    
+def plot_pull_vs(sn_m,varx='SNID',prefix='pull',cutval=5):
+   
+   
+   for vv in ['x1','color']:
+       
+       fig, ax = plt.subplots()
+       vvp = '{}_{}'.format(prefix,vv)
+       vvx = '{}_x'.format(vvp)
+       vvy = '{}_y'.format(vvp)
+       plot_pull_indiv_vs(ax,sn_m,varx=varx,varpull=vvx,cutval=cutval)
+       plot_pull_indiv_vs(ax,sn_m,varx=varx,varpull=vvy,cutval=cutval)
+       vdiff = 'diff_{}'.format(vvp)
+       sn_m[vdiff] = np.abs(sn_m[vvx]-sn_m[vvy])
+       
+       sn_m = sn_m.sort_values(by=vdiff)
+       
+       print(sn_m[['SNID',vdiff,
+                   '{}_x'.format(vv),
+                   '{}_fit_x'.format(vv),
+                   '{}_fit_y'.format(vv)]])
+       
+
+
+
+def plot_pull_indiv_vs(ax,sn_m,varx='SNID',varpull='pull_x1_x',cutval=5):
+    
+    
+    idx = np.abs(sn_m[varpull]) <= cutval
+    
+    sel = sn_m[idx]
+    
+    print(varpull,len(sel),sel[varpull].mean(),sel[varpull].std())
+    ax.plot(sel[varx],sel[varpull],linestyle='None')   
+
+parser = OptionParser()
+
+parser.add_option('--run_mode', type=str, default='sn_lc',
+                  help='run mode (sn_lc,comp_lc,comp_sn) [%default]')
+
+opts, args = parser.parse_args()
+
+run_mode = opts.run_mode
 
 dira = '../test_LC_confe_nocoadd/baseline_v5.3.0_10yrs/DDF_spectroz/'
 dirb = '../test_LC_confd_nocoadd/baseline_v5.3.0_10yrs/DDF_spectroz/'
 
 dira = '../test_LC_confe_coadd_before_smearing/baseline_v5.3.0_10yrs/DDF_spectroz/'
-dirb = '../test_LC_confe_nocoadd/baseline_v5.3.0_10yrs/DDF_spectroz/'
+#dirb = '../test_LC_confd_coadd_before_smearing/baseline_v5.3.0_10yrs/DDF_spectroz/'
+dirb = '../test_LC_confe_coadd_after_smearing/baseline_v5.3.0_10yrs/DDF_spectroz/'
 #dirb = '../test_LC_confe_coadd_after_smearing/baseline_v5.3.0_10yrs/DDF_spectroz/'
 snFile_a = 'SN_SN_DD_baseline_v5.3.0_10yrs_-2.0_0.2_1.hdf5'
 snFile_b = 'SN_SN_DD_baseline_v5.3.0_10yrs_-2.0_0.2_1.hdf5'
@@ -268,10 +454,20 @@ sellist.append(('chisq_red',op.le,20))
 sellist.append(('sigma_t0',op.le,0.5))
 """
 
+#compare lcs
+if run_mode == 'comp_lc':
+    comp_lc(dira,dirb)
 
-meta_a = get_metadata(dira)
-meta_b = get_metadata(dirb)
-    
+#compare lc fits
+if run_mode == 'sn_lc':
+    lc_sn_comp(dira,snFile_a, dirb,snFile_b, sellist)    
+
+#compare sn
+if run_mode == 'comp_sn':
+    comp_sn(dira, snFile_a, dirb, snFile_b, sellist)
+
+
+"""
 snids = meta_a['SNID'].tolist()
 
 print('snids',len(snids))
@@ -290,61 +486,37 @@ params['meta_a'] = meta_a
 params['meta_b'] = meta_b
 
 res = multiproc(snids,params,process_comp_lc,nproc=8)
-
+"""
+"""
 plot_diff_lc(res)
 
 print(res.columns)
 
 print(sellist)
-sndata_a = get_sndata(dira,snFile_a,sellist)
-sndata_b = get_sndata(dirb,snFile_b,sellist)
+"""
 
-print('alors',len(sndata_a),len(sndata_b))
 
-for snid in snids:
+#print('add',len(df_tot),io,io-len(df_tot),len(info_a),len(info_b))
+"""
+bands = dfc['filter'].unique()
+
+for b in bands:
+    idx = dfc['filter'] == b
+    sel = dfc[idx]
     
-    io +=1
-    lc_plus_sn_a = get_info(meta_a,snid,sndata_ap)
-    lc_plus_sn_b = get_info(meta_b,snid,sndata_bp)
+    fig, ax = plt.subplots()
+    fig.suptitle(b)
+    ax.hist(sel['zp_y']-sel['zp_x'])
     
-    lc_a = lc_plus_sn_a.lc_plot['lc']
-    lc_b = lc_plus_sn_b.lc_plot['lc']
+    figb, axb = plt.subplots()
+    figb.suptitle(b)
     
-    dfa = lc_a[ccols].to_pandas()
-    dfb = lc_b[ccols].to_pandas()
-    
-    
-    dfc = dfa.merge(dfb, left_on=['time','filter','airmass'],
-                    right_on=['time','filter','airmass'])
-    
-    
-    info_a = get_info_sn(sndata_a,snid)
-    info_b = get_info_sn(sndata_b,snid)
-    
-    bb = info_a.merge(info_b, left_on=mcols, right_on=mcols)
-    
-    df_tot = pd.concat((df_tot,bb))
-    #print('add',len(df_tot),io,io-len(df_tot),len(info_a),len(info_b))
-    """
-    bands = dfc['filter'].unique()
-    
-    for b in bands:
-        idx = dfc['filter'] == b
-        sel = dfc[idx]
-        
-        fig, ax = plt.subplots()
-        fig.suptitle(b)
-        ax.hist(sel['zp_y']-sel['zp_x'])
-        
-        figb, axb = plt.subplots()
-        figb.suptitle(b)
-        
-        axb.plot(sel['airmass'],sel['zp_y']-sel['zp_x'],'ko')
-    
-    break
-    """
+    axb.plot(sel['airmass'],sel['zp_y']-sel['zp_x'],'ko')
+
+break
+"""
   
-print('finally',len(df_tot))
+#print('finally',len(df_tot))
 
 
 """
@@ -370,29 +542,7 @@ plot_hist(df_tot,var=['sigma_t0_x','sigma_t0_y'])
 plt.show()
 
 
-snids = df_tot['SNID'].to_list()
 
-snids = ['SN_0108958_01_00003_6']
-for snid in snids:
-    idc = df_tot['SNID'] == snid
-    sel = df_tot[idc]
-    print(sel['pull_x1_y'])
-    lc_plus_sn_a = get_info(meta_a,snid,sndata_a)
-    lc_plus_sn_b = get_info(meta_b,snid,sndata_b)
-    
-    
-    lc_plus_sn_a.plot_all("time")
-    lc_plus_sn_b.plot_all("time")
-    
-    lc_a = lc_plus_sn_a.lc_plot['lc']
-    lc_b = lc_plus_sn_b.lc_plot['lc']
-    fig, ax = plt.subplots()
-    plot_lc_feature(lc_a,varx='flux_orig',vary='sigma_f5',fig=fig,ax=ax,marker='o',color='k')
-    plot_lc_feature(lc_b,varx='flux_orig',vary='sigma_f5',fig=fig,ax=ax,marker='*',color='r')
-    #plot_lc_feature(lc_a,vary='sigma_shot',fig=fig,ax=ax,marker='*',color='r')
-    compare_lc(lc_a,lc_b)
-    print('SNID',snid)
-    plt.show()
 
 plt.show()
 
