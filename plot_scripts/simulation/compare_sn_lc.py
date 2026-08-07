@@ -222,14 +222,14 @@ def plot_diff_lc(df):
     print(df.columns)
     
     thevar = 'fluxerr_ratio'
-    thevar = 'flux_orig_ratio'
+    #thevar = 'flux_orig_ratio'
     
     idx = df['flux_orig_x'] > 0.
     idx &= df['flux_orig_y'] > 0.
     
     df = df[idx]
     
-    print(df[['flux_orig_x','flux_orig_y',thevar]])
+    print(df[['fluxerr_x','fluxerr_y',thevar]])
     print(df[thevar].mean(),df[thevar].std())
     
     for b in 'grizy':
@@ -237,7 +237,7 @@ def plot_diff_lc(df):
         print(b,df[idx][thevar].mean(),df[idx][thevar].std())
         plot_diff_indiv(df[idx],thevar,figtit=b)
         
-    plt.show()
+    plt.show(block=False)
     print(df['filter'].unique())
     dfa = df.groupby(['filter','airmass_x'])['delta_zp'].std()
     
@@ -343,7 +343,17 @@ def comp_lc(dira,dirb):
 
     res = multiproc(snids,params,process_comp_lc,nproc=8)
     
-    plot_diff_lc(res) 
+    print(res.columns)
+    snids = res['snid'].unique()
+    print(snids)
+    
+    while (1):
+        answer = input('SNID?')
+        snid = answer
+        if snid == 'exit':
+            break
+        idx = res['snid'] == snid
+        plot_diff_lc(res[idx]) 
     
     
 def comp_sn(dira,snFile_a,dirb,snFile_b,sellist):
@@ -351,8 +361,6 @@ def comp_sn(dira,snFile_a,dirb,snFile_b,sellist):
     
     sn_a = get_sndata(dira, snFile_a, sellist)
     sn_b = get_sndata(dirb, snFile_b, sellist)
-    
-    
     
     print(sn_a)
     print(sn_b)
@@ -438,9 +446,9 @@ run_mode = opts.run_mode
 dira = '../test_LC_confe_nocoadd/baseline_v5.3.0_10yrs/DDF_spectroz/'
 dirb = '../test_LC_confd_nocoadd/baseline_v5.3.0_10yrs/DDF_spectroz/'
 
-dira = '../test_LC_confe_coadd_before_smearing/baseline_v5.3.0_10yrs/DDF_spectroz/'
+dira = '../test_LC_confe_coadd_bef_smearing_grizy/baseline_v5.3.0_10yrs/DDF_spectroz/'
 #dirb = '../test_LC_confd_coadd_before_smearing/baseline_v5.3.0_10yrs/DDF_spectroz/'
-dirb = '../test_LC_confe_coadd_after_smearing/baseline_v5.3.0_10yrs/DDF_spectroz/'
+dirb = '../test_LC_confe_obscoadd_grizy/baseline_v5.3.0_10yrs/DDF_spectroz/'
 #dirb = '../test_LC_confe_coadd_after_smearing/baseline_v5.3.0_10yrs/DDF_spectroz/'
 snFile_a = 'SN_SN_DD_baseline_v5.3.0_10yrs_-2.0_0.2_1.hdf5'
 snFile_b = 'SN_SN_DD_baseline_v5.3.0_10yrs_-2.0_0.2_1.hdf5'
@@ -539,10 +547,4 @@ plot_hist(df_tot,var=['sigma_color_x','sigma_color_y'])
 plot_hist(df_tot,var=['x1_fit_x','x1_fit_y'])
 plot_hist(df_tot,var=['sigma_t0_x','sigma_t0_y'])
 """
-plt.show()
-
-
-
-
-plt.show()
 
