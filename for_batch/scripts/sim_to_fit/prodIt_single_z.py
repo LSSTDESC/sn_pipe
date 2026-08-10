@@ -10,7 +10,7 @@ from sn_tools.sn_batchutils import BatchIt
 from sn_tools.sn_utils import get_val
 import numpy as np
 
-def get_script_values(season,z):
+def get_script_values(season,z,dbDir,dbName,dbExtens):
     """
     build a dict of script values
 
@@ -20,6 +20,12 @@ def get_script_values(season,z):
         season of observation.
     z : float
         redshift.
+    dbDir: str
+        DB loc dir
+    dbName: str
+        OS to process
+    dbExtens: str
+        OS file extens
 
     Returns
     -------
@@ -44,6 +50,10 @@ def get_script_values(season,z):
     dd['lc_coadd'] = 0
     dd['fit_lc'] = 1
     
+    dd['dbDir'] = dbDir
+    dd['dbName'] = dbName
+    dd['dbExtens'] = dbExtens
+    
     return dd
    
 
@@ -60,11 +70,23 @@ parser.add_option("--seasons", type=str,
 parser.add_option("--z", type=float,
                   default=0.01,
                   help="redshift to process [%default]")
+parser.add_option("--dbDir", type=str,
+                  default='../DB_Files',
+                  help="DB location dir [%default]")
+parser.add_option("--dbName", type=str,
+                  default='baseline_v5.3.0_10yrs',
+                  help="OS to process [%default]")
+parser.add_option("--dbExtens", type=str,
+                  default='npy',
+                  help="DB file extensions [%default]")
 
 opts, args = parser.parse_args()
 
 seasons = get_val(opts.seasons)
 z = opts.z
+dbDir = opts.dbDir
+dbName = opts.dbName
+dbExtens = opts.dbExtens
 
 procName='sn_z_single_{}'.format(np.round(z,2))
 
@@ -72,7 +94,7 @@ bb = BatchIt(processName=procName)
 
 script = 'run_scripts/sim_to_fit/sim_to_fit_single.py'
 for seas in seasons:
-    dd = get_script_values(seas,z)
+    dd = get_script_values(seas,z,dbDir,dbName,dbExtens)
     #print(dd)
     bb.add_batch(script,dd)
     
