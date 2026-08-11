@@ -140,6 +140,7 @@ def process_from_simu(pp,dict_atmos):
     z = float(simDir.split('/')[-1].split('_')[-1])
     z = np.round(z,2)
     pp['zmin'] = z
+    pp['outDir'] = '{}/z_{}'.format(pp['outDir'],z)
     procName='sn_z_single_from_simu_{}_{}_{}_{}'.format(z,
                                                         config,
                                                         obs_coadd,lc_coadd)
