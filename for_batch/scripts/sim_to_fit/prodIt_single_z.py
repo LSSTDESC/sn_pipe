@@ -136,7 +136,7 @@ def process_from_simu(pp,dict_atmos):
     obs_coadd = pp['obs_coadd']
     lc_coadd = pp['lc_coadd']
     dbName = pp['dbName']
-    conf = pp['conf']
+    conf = pp['config']
     
     z = float(simDir.split('/')[-1].split('_')[-1])
     z = np.round(z,2)
