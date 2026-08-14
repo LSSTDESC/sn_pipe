@@ -156,12 +156,13 @@ def process_from_simu(pp,dict_atmos):
 
     ppb = copy.deepcopy(pp)
     for fi in fis:
-        print(fi)
+        #print(fi)
         seas = fi.split('.hdf5')[0].split('/')[-1].split('_')[-1]
-        print(seas)
+        #print(seas)
         ppb['seasons'] = seas
+        ppb['SN_simuFile'] = fi
         dd = get_script_values(ppb,dict_atmos)
-        #print(dd)
+        #print('oooo',dd)
         bb.add_batch(script,dd)
         
     bb.go_batch()
