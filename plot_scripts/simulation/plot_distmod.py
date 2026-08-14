@@ -298,7 +298,7 @@ if pp['action'] == 'compare_orig':
         df = complete_data(df)
         
         dd['conf_{}'.format(i)] = df
-        """        
+           
         thevar = 'pull_color'
         idx = np.abs(df[thevar]) <= 5
         
@@ -306,11 +306,11 @@ if pp['action'] == 'compare_orig':
         ax.hist(sel[thevar],histtype='step',label=confdis)
 
         print(confdis,len(sel),sel[thevar].mean(),sel[thevar].std())
-        """
-    """
+        
+    
     ax.legend()
     plt.show()
-    """
+    
     
     ddb = dd['conf_0'].merge(dd['conf_2'],left_on=['SNID'],right_on=['SNID'])
     
