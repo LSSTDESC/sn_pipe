@@ -37,10 +37,8 @@ def process_config(fDir,obs_coadd,lc_coadd,dbName,runType,
 
 def get_files(fDir,obs_coadd,lc_coadd,dbName,runType,config):
     
-    if config == 'confe':
-        fDir = '{}/z_*_{}_{}'.format(fDir,obs_coadd,lc_coadd)
-    else:
-        fDir = '{}/{}_z_*_{}_{}'.format(fDir,config,obs_coadd,lc_coadd)
+    
+    fDir = '{}/{}_z_*_{}_{}'.format(fDir,config,obs_coadd,lc_coadd)
     
     fis = glob.glob(fDir)
     
@@ -190,13 +188,12 @@ def load_conf_from_dict(dd,conf,obs_coadd,lc_coadd,season):
     
 def load_conf_orig(fDir,dbName,runType,z,conf,obs_coadd,lc_coadd,season):
     
-    if conf== 'confe':
-        fDir = '{}/z_{}_{}_{}'.format(fDir,z,obs_coadd,lc_coadd)
-    else:
-        fDir = '{}/{}_z_{}_{}_{}'.format(fDir,conf,z,obs_coadd,lc_coadd)
+    
+    fDir = '{}/{}_z_{}_{}_{}'.format(fDir,conf,z,obs_coadd,lc_coadd)
     
     fName = '{}/{}/{}/SN_*_{}.hdf5'.format(fDir,dbName,runType,season)
     
+    print('looking fir',fName)
     fis = glob.glob(fName)
     df = pd.read_hdf(fis[0])
     
@@ -235,6 +232,7 @@ lc_coadd = [0,1,2]
 
 confs= ['confe','confd']
 
+confs = ['confe']
 if pp['action'] == 'process':
     for conf in confs:
         for i in range(len(obs_coadd)):
@@ -256,7 +254,7 @@ if pp['action'] == 'plot':
     obs_coadds = [1,0,0]
     lc_coadds = [0,1,2]
     
-    season = 5
+    season = 2
     
     fig, ax = plt.subplots(figsize=(12,8))
 
