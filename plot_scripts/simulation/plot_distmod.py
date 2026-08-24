@@ -148,6 +148,7 @@ def shape_data(confs,obs_coadd,lc_coadd,outDir):
     
             df = pd.read_hdf(fName)
             
+            print('loaded',len(df))
             dfb = df.groupby(ccols).apply(lambda x: calc(x),include_groups=False).reset_index()
             figtit = '{} - obs_coadd {} - lc_coadd {}'.format(conf,
                                                               obs_coadd[i],
@@ -206,7 +207,7 @@ parser.add_option('--dataDir', type=str,
                   help='data directory [%default]')
 """
 parser.add_option('--action', type=str, default='plot',
-                  help='what to do (process,plot) [%default]')
+                  help='what to do (process,plot,compare,compare_orig) [%default]')
 
 opts, args = parser.parse_args()
 
@@ -232,7 +233,7 @@ lc_coadd = [0,1,2]
 
 confs= ['confe','confd']
 
-confs = ['confe']
+#confs = ['confd']
 if pp['action'] == 'process':
     for conf in confs:
         for i in range(len(obs_coadd)):
@@ -251,6 +252,7 @@ if pp['action'] == 'plot':
 
     
     configs = ['confe','confe','confe']
+    #configs = ['confd','confd','confd']
     obs_coadds = [1,0,0]
     lc_coadds = [0,1,2]
     
@@ -260,10 +262,12 @@ if pp['action'] == 'plot':
 
     for i in range(len(configs)):
         dfa = load_conf_from_dict(dd,configs[i],obs_coadds[i],lc_coadds[i],season)
+        leg = '{}_{}_{}_{}'.format(configs[i],obs_coadds[i],lc_coadds[i],season)
         plot_indiv(dfa,xvar='z',yvar='diff_mu_weighted_mean',
-                   yvar_err='diff_mu_sigma',fig=fig,ax=ax)
+                   yvar_err='diff_mu_sigma',fig=fig,ax=ax,leg=leg)
     
     
+    ax.legend()
     plt.show()
     
 if pp['action'] == 'compare':
@@ -285,8 +289,8 @@ if pp['action'] == 'compare_orig':
     configs = ['confe','confe','confe']
     obs_coadds = [1,0,0]
     lc_coadds = [0,1,2]
-    season = 5
-    z = 0.8
+    season = 2
+    z = 0.9
     
     fig, ax = plt.subplots()
     dd = {}
