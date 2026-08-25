@@ -26,8 +26,17 @@ dira = '../test_LC_confe_coadd_bef_smearing_grizy/baseline_v5.3.0_10yrs/DDF_spec
 dirb = '../test_LC_confe_obscoadd_grizy/baseline_v5.3.0_10yrs/DDF_spectroz/'
 #dirb = '../test_LC_confe_coadd_after_smearing/baseline_v5.3.0_10yrs/DDF_spectroz/'
 
-dira = '../prod_single/confe_z_0.81_1_0/baseline_v5.3.0_10yrs/DDF_spectroz'
-dirb = '../prod_single/confe_z_0.81_0_1/baseline_v5.3.0_10yrs/DDF_spectroz'
+master_a = '../prod_single/confe_z_0.81_1_0'
+master_b = '../prod_single/confe_z_0.81_0_1'
+
+master_a = '../test_new_1_0'
+master_a = '../test_new_0_1'
+
+dbName = 'baseline_v5.3.0_10yrs'
+runType = 'DDF_spectroz'
+
+dira = '{}/{}/{}'.format(master_a,dbName,runType)
+dirb = '{}/{}/{}'.format(master_b,dbName,runType)
 
 snFile_a = 'SN_SN_DD_baseline_v5.3.0_10yrs_-2.0_0.2_1.hdf5'
 snFile_b = 'SN_SN_DD_baseline_v5.3.0_10yrs_-2.0_0.2_1.hdf5'
