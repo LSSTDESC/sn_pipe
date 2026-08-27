@@ -13,10 +13,14 @@ parser = OptionParser()
 
 parser.add_option('--run_mode', type=str, default='sn_lc',
                   help='run mode (comp_lc,comp_lc_sn,comp_sn) [%default]')
+parser.add_option('--master_dirs', type=str, 
+                  default='../prod_single/confe_z_0.81_1_0,../prod_single/confe_z_0.81_0_1',
+                  help='master dirs for data [%default]')
 
 opts, args = parser.parse_args()
 
 run_mode = opts.run_mode
+master_dirs =opts.master_dirs.split(',')
 
 dira = '../test_LC_confe_nocoadd/baseline_v5.3.0_10yrs/DDF_spectroz/'
 dirb = '../test_LC_confd_nocoadd/baseline_v5.3.0_10yrs/DDF_spectroz/'
@@ -26,11 +30,11 @@ dira = '../test_LC_confe_coadd_bef_smearing_grizy/baseline_v5.3.0_10yrs/DDF_spec
 dirb = '../test_LC_confe_obscoadd_grizy/baseline_v5.3.0_10yrs/DDF_spectroz/'
 #dirb = '../test_LC_confe_coadd_after_smearing/baseline_v5.3.0_10yrs/DDF_spectroz/'
 
-master_a = '../prod_single/confe_z_0.81_1_0'
-master_b = '../prod_single/confe_z_0.81_0_1'
+master_a = master_dirs[0]
+master_b = master_dirs[1]
 
-master_a = '../test_new_1_0'
-master_a = '../test_new_0_1'
+#master_a = '../test_new_1_0'
+#master_a = '../test_new_0_1'
 
 dbName = 'baseline_v5.3.0_10yrs'
 runType = 'DDF_spectroz'
@@ -53,7 +57,7 @@ sellist.append(('sigma_t0',op.le,0.5))
 #compare lcs
 if run_mode == 'comp_lc':
     from sn_plotter_simu.visuLC import Comp_lc
-    Comp_lc(dira,dirb)
+    Comp_lc(dira,dirb,todo='plot_lc_super')
 
 #compare lc fits
 if run_mode == 'comp_lc_sn':
