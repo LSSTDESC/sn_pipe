@@ -61,7 +61,7 @@ sellist.append(('sigma_t0',op.le,0.5))
 #compare lcs
 if run_mode == 'comp_lc':
     from sn_plotter_simu.visuLC import Comp_lc
-    Comp_lc(dira,dirb,todo='plot_lc_super')
+    Comp_lc(dira,dirb,todo='show_diff')
 
 #compare lc fits
 if run_mode == 'comp_lc_sn':
