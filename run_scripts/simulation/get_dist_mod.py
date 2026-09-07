@@ -66,14 +66,15 @@ def complete_data(df,sellist=[]):
     
     return df
 
-def get_stat(grp,cols=['diff_x1','diff_color','mu','mu_exp']):
+def get_stat(grp,cols=['diff_x1','diff_color','mu','mu_exp','dL','x0']):
     
-    print(grp.columns,grp.name)
+    print(grp.columns.to_list())
     
-    rmean = grp[cols].mean().to_list()
+    rmean = grp[cols].mean()
     rstd = grp[cols].std()
     
-    print(type(rmean))
+    print(rmean)
+    print(rstd)
     
 
 parser = OptionParser(description='Script to compare LCs on a large scale')
