@@ -13,7 +13,7 @@ from sn_tools.sn_io import checkDir
 parser = OptionParser(description='Script to compare LCs on a large scale')
 
 parser.add_option('--master_dir', type=str, 
-                  default='sps/lsst/groups/cadence/LSST_SN_PhG/prod_lcnew',
+                  default='/sps/lsst/groups/cadence/LSST_SN_PhG/prod_lcnew',
                   help='master dir for data [%default]')
 parser.add_option('--dbName', type=str, default='baseline_v5.3.0_10yrs',
                   help='OS to process [%default]')
