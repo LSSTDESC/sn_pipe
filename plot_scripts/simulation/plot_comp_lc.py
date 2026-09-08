@@ -79,7 +79,7 @@ def plot_season(df,season):
         ax.set_xlabel(r'$z$')
         ax.set_ylabel(r'$\sigma^{LC\/ error\/ ratio}$ [%]')
 
-theDir = '../comp_lc_fit_coadd'
+theDir = '../comp_lc_nofit_nocoadd'
 
 
 df = load_data(theDir)
