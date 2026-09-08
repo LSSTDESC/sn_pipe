@@ -22,24 +22,19 @@ def load_data(master_dir,fDir,dbName,runType,sellist):
     
     fis = glob.glob(pathName)
     
-    print('allo',pathName)
     df = pd.DataFrame()
     
     for fi in fis:
         dfa = pd.read_hdf(fi)
         df = pd.concat((df,dfa))
         
-    print('before',len(df))
-    df = complete_data(df,sellist)
-    
-    print('after',len(df))    
+    df = complete_data(df,sellist)  
     
     return df
     
 def grab_data(z,pp,sellist):
     
     fDir='lc{}_{}_{}_{}'.format(z,pp['config'],pp['config_fit'],pp['config_coadd'])
-
 
     df = load_data(pp['master_dir'],fDir,pp['dbName'],pp['runType'],sellist)
     
@@ -66,17 +61,100 @@ def complete_data(df,sellist=[]):
     
     return df
 
-def get_stat(grp,cols=['diff_x1','diff_color','mu','mu_exp','dL','x0']):
+def get_stat(grp,cols=['x1','color','mu']):
     
-    print(grp.columns.to_list())
     
-    rmean = grp[cols].mean()
-    rstd = grp[cols].std()
+    cols_diff = list(map(lambda it: 'diff_{}'.format(it), cols))
+    cols_diff_sigma = list(map(lambda it: 'diff_{}_sigma'.format(it), cols))
+    cols_diff_std = list(map(lambda it: 'diff_{}_std'.format(it), cols))
+    cols_sigma = list(map(lambda it: 'sigma_{}'.format(it), cols))
+    cols_ci = list(map(lambda it: 'ci_{}'.format(it), cols))
+    cols_diff_mean = list(map(lambda it: '{}_mean'.format(it), cols_diff))
+    cols_diff_med = list(map(lambda it: '{}_med'.format(it), cols_diff))
     
-    print(rmean)
-    print(rstd)
+    """
+    grp[cols_ci] = 1./grp[cols_sigma]**2
+    
+    dd = {}
+    for i,vv in enumerate(cols_mean):
+        dd[vv] = np.sum(grp[cols_diff[i]]*grp[cols_ci[i]])/np.sum(grp[cols_ci[i]])
+        dd[cols_diff_sigma[i]] = 1./np.sqrt(np.sum(grp[cols_ci[i]]))
+    print(dd)
+    """
+    
+    rmed = grp[cols_diff].median()
+    rmean = grp[cols_diff].mean()
+    rstd = grp[cols_diff].std()
+    
+    df = pd.DataFrame([rmed.to_list()],columns=cols_diff_med)
+    dfa = pd.DataFrame([rmean.to_list()],columns=cols_diff_mean)
+    df = pd.concat((df,dfa),axis=1)
+    dfb = pd.DataFrame([rstd.to_list()],columns=cols_diff_std)
+    df = pd.concat((df,dfb),axis=1)
+    
+    df['nsn'] = len(grp)
+    
+    return df
+    
+def get_data_z(pp,sellist):
+    
+    zmin = 0.01
+    zmax = 1.1
+    zstep = 0.01
+    
+    zvals = np.arange(zmin,zmax+zstep,zstep)
+    
+    df = pd.DataFrame()
+    for z in zvals:
+        if z <= zmax:
+            dfa = grab_data(np.round(z,2), pp, sellist)
+            df = pd.concat((df,dfa))
+    
+    df['config'] = pp['config']
+    return df
     
 
+
+def plot_season(res):
+    
+    seasons = res['season'].unique()
+    
+    for seas in seasons:
+        idx = res['season'] == seas
+        sel = res[idx]
+        
+        plot_configs(sel,seas)
+
+def plot_configs(res,season,xvar='z',yvar='nsn'):
+    
+    fig, ax = plt.subplots()
+    fig.suptitle('season {}'.format(season))
+
+    confs = res['config'].unique()
+
+    bins = np.arange(0.0,1.1,0.1)
+    for conf in confs:
+        idx = res['config'] == conf
+        sel = res[idx]
+        from sn_analysis.sn_calc_plot import bin_it_sum
+        df = bin_it_sum(sel, xvar=xvar,yvar=yvar,bins=bins)
+        ax.plot(df[xvar],df[yvar],label=conf)
+    
+    ax.legend()
+def process(pp,sellist,outName='comp_distmod.hdf5'):
+    
+    df = pd.DataFrame()
+    configs = ['confa','confb','confc','confd','confe','conff']
+
+    for conf in configs:
+        pp['config'] = conf
+        dfb = get_data_z(pp,sellist)
+        df = pd.concat((df,dfb))
+
+    res = df.groupby(['z','config','season']).apply(lambda x: get_stat(x),include_groups=False).reset_index()
+
+    res.to_hdf(outName,key='distmod')
+    
 parser = OptionParser(description='Script to compare LCs on a large scale')
 
 parser.add_option('--master_dir', type=str, 
@@ -89,8 +167,8 @@ parser.add_option('--dbName', type=str, default='baseline_v5.3.0_10yrs',
                   help='OS to process [%default]')
 parser.add_option('--runType', type=str, default='DDF_spectroz',
                   help='run type [%default]')
-parser.add_option('--configs', type=str, default='confa,conff',
-                  help='configs [%default]')
+parser.add_option('--process', type=int, default=0,
+                  help='to force data processing [%default]')
 parser.add_option('--config_fit', type=str, default='fit',
                   help='fit config [%default]')
 parser.add_option('--config_coadd', type=str, default='coadd',
@@ -101,14 +179,13 @@ opts, args = parser.parse_args()
 pp = vars(opts)
 sellist = selection_criteria()['G10_JLA']
 
-zmin = 0.1
-zmax = 0.1
-zstep = 0.01
+outName='comp_distmod.hdf5'
 
-zvals = np.arange(zmin,zmax+zstep,zstep)
+if pp['process']:
+    process(pp,sellist,outName)
+    
+res = pd.read_hdf(outName)
 
-for z in zvals:
-    if z <= zmax:
-        df = grab_data(z, pp, sellist)
-
-res = df.groupby(['z']).apply(lambda x: get_stat(x),include_groups=False).reset_index()
+plot_season(res)
+    
+plt.show()
