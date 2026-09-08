@@ -13,6 +13,7 @@ import glob
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import operator as op
 
 def load_data(master_dir,fDir,dbName,runType,sellist):
     
@@ -125,7 +126,7 @@ def plot_season(res):
         
         plot_configs(sel,seas)
 
-def plot_configs(res,season,xvar='z',yvar='nsn'):
+def plot_configs(res,season,xvar='z',yvar='diff_mu_mean'):
     
     fig, ax = plt.subplots()
     fig.suptitle('season {}'.format(season))
@@ -136,8 +137,8 @@ def plot_configs(res,season,xvar='z',yvar='nsn'):
     for conf in confs:
         idx = res['config'] == conf
         sel = res[idx]
-        from sn_analysis.sn_calc_plot import bin_it_sum
-        df = bin_it_sum(sel, xvar=xvar,yvar=yvar,bins=bins)
+        from sn_analysis.sn_calc_plot import bin_it_mean
+        df = bin_it_mean(sel, xvar=xvar,yvar=yvar,bins=bins)
         ax.plot(df[xvar],df[yvar],label=conf)
     
     ax.legend()
@@ -178,8 +179,9 @@ opts, args = parser.parse_args()
 
 pp = vars(opts)
 sellist = selection_criteria()['G10_JLA']
+sellist.append(('sigma_color',op.le,0.04))
 
-outName='comp_distmod.hdf5'
+outName='comp_distmod_sigmaC.hdf5'
 
 if pp['process']:
     process(pp,sellist,outName)
