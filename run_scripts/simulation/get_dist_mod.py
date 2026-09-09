@@ -16,6 +16,28 @@ import matplotlib.pyplot as plt
 import operator as op
 
 def load_data(master_dir,fDir,dbName,runType,sellist):
+    """
+    Function to load data
+
+    Parameters
+    ----------
+    master_dir : str
+        main data dir.
+    fDir : str
+        file dir.
+    dbName : str
+        OS name.
+    runType : str
+        run type.
+    sellist : dict
+        selection criteria.
+
+    Returns
+    -------
+    df : pandas df
+        Data.
+
+    """
     
     dirName = '{}/{}/{}/{}'.format(master_dir,fDir,dbName,runType)
     
@@ -34,6 +56,24 @@ def load_data(master_dir,fDir,dbName,runType,sellist):
     return df
     
 def grab_data(z,pp,sellist):
+    """
+    Function to load data (z)
+
+    Parameters
+    ----------
+    z : float
+        redshift value.
+    pp : dict
+        parameters.
+    sellist : dict
+        selection criteria.
+
+    Returns
+    -------
+    df : pandas df
+        Data.
+
+    """
     
     fDir='lc{}_{}_{}_{}'.format(z,pp['config'],pp['config_fit'],pp['config_coadd'])
 
@@ -42,6 +82,22 @@ def grab_data(z,pp,sellist):
     return df
     
 def complete_data(df,sellist=[]):
+    """
+    Function to complete SN data
+
+    Parameters
+    ----------
+    df : pandas df
+        Data to process.
+    sellist : dict, optional
+        selection criteria. The default is [].
+
+    Returns
+    -------
+    df : pandas df
+        Resulting df.
+
+    """
     
     
     from sn_analysis.sn_tools import complete_df
@@ -63,6 +119,22 @@ def complete_data(df,sellist=[]):
     return df
 
 def get_stat(grp,cols=['x1','color','mu']):
+    """
+    Function to get some stat
+
+    Parameters
+    ----------
+    grp : pandas df
+        Data to process.
+    cols : list(str), optional
+        columns to consider. The default is ['x1','color','mu'].
+
+    Returns
+    -------
+    df : pandas df
+        Result.
+
+    """
     
     
     cols_diff = list(map(lambda it: 'diff_{}'.format(it), cols))
@@ -98,6 +170,22 @@ def get_stat(grp,cols=['x1','color','mu']):
     return df
     
 def get_data_z(pp,sellist):
+    """
+    Function to grab data vs z bins
+
+    Parameters
+    ----------
+    pp : dict
+        parameters.
+    sellist : dict
+        selection criteria.
+
+    Returns
+    -------
+    df : pandas df
+        processed data.
+
+    """
     
     zmin = 0.01
     zmax = 1.1
@@ -113,36 +201,25 @@ def get_data_z(pp,sellist):
     
     df['config'] = pp['config']
     return df
-    
 
-
-def plot_season(res):
-    
-    seasons = res['season'].unique()
-    
-    for seas in seasons:
-        idx = res['season'] == seas
-        sel = res[idx]
-        
-        plot_configs(sel,seas)
-
-def plot_configs(res,season,xvar='z',yvar='diff_mu_mean'):
-    
-    fig, ax = plt.subplots()
-    fig.suptitle('season {}'.format(season))
-
-    confs = res['config'].unique()
-
-    bins = np.arange(0.0,1.1,0.1)
-    for conf in confs:
-        idx = res['config'] == conf
-        sel = res[idx]
-        from sn_analysis.sn_calc_plot import bin_it_mean
-        df = bin_it_mean(sel, xvar=xvar,yvar=yvar,bins=bins)
-        ax.plot(df[xvar],df[yvar],label=conf)
-    
-    ax.legend()
 def process(pp,sellist,outName='comp_distmod.hdf5'):
+    """
+    Function to process data
+
+    Parameters
+    ----------
+    pp : dict
+        parameters.
+    sellist : dict
+        selection criteria.
+    outName : str, optional
+        output file name. The default is 'comp_distmod.hdf5'.
+
+    Returns
+    -------
+    None.
+
+    """
     
     df = pd.DataFrame()
     configs = ['confa','confb','confc','confd','confe','conff']
@@ -185,9 +262,3 @@ outName='comp_distmod_sigmaC.hdf5'
 
 if pp['process']:
     process(pp,sellist,outName)
-    
-res = pd.read_hdf(outName)
-
-plot_season(res)
-    
-plt.show()
