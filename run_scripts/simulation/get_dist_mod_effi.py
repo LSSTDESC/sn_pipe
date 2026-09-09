@@ -7,12 +7,10 @@ Created on Mon Sep  7 14:01:06 2026
 """
 
 from optparse import OptionParser
-from sn_tools.sn_io import checkDir
 from sn_analysis.sn_selection import selection_criteria
 import glob
 import pandas as pd
 import numpy as np
-import operator as op
 from sn_analysis.sn_tools import complete_df
 from sn_analysis.sn_selection import select
 from sn_analysis.sn_calc_plot import effi,bin_it_mean
