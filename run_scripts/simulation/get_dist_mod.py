@@ -12,8 +12,10 @@ from sn_analysis.sn_selection import selection_criteria
 import glob
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
 import operator as op
+from sn_analysis.sn_tools import complete_df
+from sn_analysis.sn_selection import select
+from sn_analysis.sn_calc_plot import effi
 
 def load_data(master_dir,fDir,dbName,runType,sellist):
     """
@@ -98,15 +100,12 @@ def complete_data(df,sellist=[]):
         Resulting df.
 
     """
-    
-    
-    from sn_analysis.sn_tools import complete_df
-    from sn_analysis.sn_selection import select
  
     df['sigma_color'] = np.sqrt(df['Cov_colorcolor'])
  
     df = complete_df(df)
  
+    #select data here
     if sellist:
         df = pd.DataFrame(select(df,list_sel=sellist))
  
@@ -229,10 +228,71 @@ def process(pp,sellist,outName='comp_distmod.hdf5'):
         dfb = get_data_z(pp,sellist)
         df = pd.concat((df,dfb))
 
-    res = df.groupby(['z','config','season']).apply(lambda x: get_stat(x),include_groups=False).reset_index()
+    cols = ['z','config','season']
+    res = df.groupby(cols).apply(lambda x: get_stat(x),include_groups=False).reset_index()
 
     res.to_hdf(outName,key='distmod')
     
+def go_effi(pp,sellist,outName='comp_distmod.hdf5'):
+    """
+    Function to estimate efficiencies
+
+    Parameters
+    ----------
+    pp : dict
+        parameters.
+    sellist : dict
+        selection criteria.
+    outName : str, optional
+        output file name. The default is 'comp_distmod.hdf5'.
+
+    Returns
+    -------
+    None.
+
+    """
+    
+    df = pd.DataFrame()
+    configs = ['confa','confb','confc','confd','confe','conff']
+
+    for conf in configs:
+        pp['config'] = conf
+        dfb = get_data_z(pp,sellist={})
+        df = pd.concat((df,dfb))
+
+    cols = ['config','season']
+    res = df.groupby(cols).apply(lambda x: get_effi(x,sellist),include_groups=False).reset_index()
+
+
+    print(res)
+    res.to_hdf(outName,key='effi')
+   
+def get_effi(grp,sellist):
+    """
+    Function to calculate efficiencies
+
+    Parameters
+    ----------
+    grp : pandas df
+        original data.
+    sellist : dict
+        selection criteria.
+
+    Returns
+    -------
+    effis : pandas df
+        efficiencies vs z.
+
+    """
+    
+    
+    #selected data
+    grpb = pd.DataFrame(select(grp,list_sel=sellist))
+    
+    effis = effi(grp,grpb,xvar='z', bins=np.arange(0.0, 1.1, 0.05))
+    
+    return effis
+   
 parser = OptionParser(description='Script to compare LCs on a large scale')
 
 parser.add_option('--master_dir', type=str, 
@@ -245,8 +305,8 @@ parser.add_option('--dbName', type=str, default='baseline_v5.3.0_10yrs',
                   help='OS to process [%default]')
 parser.add_option('--runType', type=str, default='DDF_spectroz',
                   help='run type [%default]')
-parser.add_option('--process', type=int, default=0,
-                  help='to force data processing [%default]')
+parser.add_option('--action', type=str, default='process',
+                  help='what to do (process/effi) [%default]')
 parser.add_option('--config_fit', type=str, default='fit',
                   help='fit config [%default]')
 parser.add_option('--config_coadd', type=str, default='coadd',
@@ -256,9 +316,12 @@ opts, args = parser.parse_args()
 
 pp = vars(opts)
 sellist = selection_criteria()['G10_JLA']
-sellist.append(('sigma_color',op.le,0.04))
+#sellist.append(('sigma_color',op.le,0.04))
 
-outName='comp_distmod_sigmaC.hdf5'
+outName='effi.hdf5'
 
-if pp['process']:
+if pp['action'] == 'process':
     process(pp,sellist,outName)
+    
+if pp['action'] == 'effi':
+    go_effi(pp,sellist,outName)
