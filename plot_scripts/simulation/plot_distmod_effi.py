@@ -93,10 +93,10 @@ def plot_configs(res,season,
     bins = np.arange(0.0,1.1,0.1)
     for conf in confs:
         idx = res['config'] == conf
-        sel = res[idx]
-        if yvar == 'effi':
-            sel['effi'] *= 100
-            sel['effi_err'] *= 100
+        sel = pd.DataFrame(res[idx])
+       
+        sel['effi'] *= 100
+        sel['effi_err'] *= 100
         
         if binIt:
             if yvar != 'nsn':
@@ -110,9 +110,46 @@ def plot_configs(res,season,
         ax.errorbar(sel[xvar],sel[yvar],yerr=yerr,label=conf)
     
     ax.legend()
+    ax.grid(visible=True)
 
+def plot_season_correl(dres,seasons,xvar='diff_mu',
+                       yvar='effi'):
+    
+    
+    for seas in seasons:
+        fig, ax = plt.subplots()
+        
+        for key, res in dres.items():
+            idx = res['season'] == seas
+            sel = res[idx]
+        
+            plot_configs_correl(sel,seas,xvar,yvar,fig=fig,ax=ax)
 
+def plot_configs_correl(res,season,
+                       xvar='diff_mu_mean',yvar='effi',
+                       fig=None,ax=None):
+    
+    if fig is None:
+        fig, ax = plt.subplots()
 
+    fig.suptitle('season {}'.format(season))
+
+    confs = res['config'].unique()
+
+    bins = np.arange(0.0,1.1,0.1)
+    for conf in confs:
+        idx = res['config'] == conf
+        sel = pd.DataFrame(res[idx])
+        
+        
+        sel['effi'] *= 100
+        sel['effi_err'] *= 100
+        
+        
+        ax.plot(sel[xvar],sel[yvar],label=conf)
+    
+    ax.legend()
+    ax.grid(visible=True)
 parser = OptionParser('script to plot dist mod, ...')
 
 parser.add_option('--files', type=str, default='comp_distmod.hdf5,comp_distmod_sigmaC.hdf5',
@@ -132,14 +169,19 @@ res = {}
 for i,fi in enumerate(fis):
     res[i] = pd.read_hdf(fi)
     
-        
+    
+print(res[0].columns)    
+    
 
-plot_season(res,seasons)
+plot_season(res,seasons,yvar='diff_mu',yvar_err='diff_mu_std')
+
 """
 plot_season(res,seasons,yvar='nsn')
 """
 
-#plot_season(res,seasons,yvar='effi',yvar_err='effi_err')
+plot_season(res,seasons,yvar='effi',yvar_err='effi_err')
     
+plot_season_correl(res,seasons,xvar='diff_mu_std',yvar='effi')
+
 plt.show()
 
