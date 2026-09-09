@@ -15,7 +15,7 @@ import numpy as np
 import operator as op
 from sn_analysis.sn_tools import complete_df
 from sn_analysis.sn_selection import select
-from sn_analysis.sn_calc_plot import effi
+from sn_analysis.sn_calc_plot import effi,bin_it_mean
 
 def load_data(master_dir,fDir,dbName,runType,sellist):
     """
@@ -117,7 +117,7 @@ def complete_data(df,sellist=[]):
     
     return df
 
-def get_stat(grp,cols=['x1','color','mu']):
+def get_stat_deprecated(grp,cols=['x1','color','mu']):
     """
     Function to get some stat
 
@@ -167,7 +167,43 @@ def get_stat(grp,cols=['x1','color','mu']):
     df['nsn'] = len(grp)
     
     return df
-    
+ 
+def get_stat(grp,xvar='z',
+             cols=['x1','color','mu'],
+             bins=np.arange(0.,1.,0.01)):
+    """
+    Function to grab stat (means, std)
+
+    Parameters
+    ----------
+    grp : pandas df
+        data to process.
+    xvar : str, optional
+        x-axis var. The default is 'z'.
+    cols : list(str), optional
+        list of columns to consider. The default is ['x1','color','mu'].
+    bins : array, optional
+        z bins. The default is np.arange(0.,1.,0.01).
+
+    Returns
+    -------
+    df : pandas df
+        output data.
+
+    """
+     
+    cols_diff = list(map(lambda it: 'diff_{}'.format(it), cols))   
+     
+    df = pd.DataFrame()
+    for col in cols_diff:
+        tt = bin_it_mean(grp,xvar=xvar,yvar=col,bins=bins)
+        if len(df)>0:
+            df = df.merge(tt,left_on=[xvar],right_on=[xvar])
+        else:
+            df = pd.DataFrame(tt)
+        
+    return df
+     
 def get_data_z(pp,sellist):
     """
     Function to grab data vs z bins
@@ -221,53 +257,34 @@ def process(pp,sellist,outName='comp_distmod.hdf5'):
     """
     
     df = pd.DataFrame()
-    configs = ['confa','confb','confc','confd','confe','conff']
-
-    for conf in configs:
-        pp['config'] = conf
-        dfb = get_data_z(pp,sellist)
-        df = pd.concat((df,dfb))
-
-    cols = ['z','config','season']
-    res = df.groupby(cols).apply(lambda x: get_stat(x),include_groups=False).reset_index()
-
-    res.to_hdf(outName,key='distmod')
     
-def go_effi(pp,sellist,outName='comp_distmod.hdf5'):
-    """
-    Function to estimate efficiencies
-
-    Parameters
-    ----------
-    pp : dict
-        parameters.
-    sellist : dict
-        selection criteria.
-    outName : str, optional
-        output file name. The default is 'comp_distmod.hdf5'.
-
-    Returns
-    -------
-    None.
-
-    """
-    
-    df = pd.DataFrame()
     configs = ['confa','confb','confc','confd','confe','conff']
-
+    
     for conf in configs:
         pp['config'] = conf
         dfb = get_data_z(pp,sellist={})
         df = pd.concat((df,dfb))
 
+    bins=np.arange(0.0, 1.1, 0.05)
     cols = ['config','season']
-    res = df.groupby(cols).apply(lambda x: get_effi(x,sellist),include_groups=False).reset_index()
-
-
-    print(res)
-    res.to_hdf(outName,key='effi')
+    xvar = 'z'
+    #select data here
+    dfb = pd.DataFrame(select(df,list_sel=sellist))
+    resa = dfb.groupby(cols).apply(lambda x: get_stat(x,xvar=xvar,bins=bins),include_groups=False).reset_index()
+ 
+    # estimating efficiencies
+    res = df.groupby(cols).apply(lambda x: get_effi(x,sellist,xvar=xvar,bins=bins),include_groups=False).reset_index()
+    #res.to_hdf(outName,key='distmod')
+    
+    print(resa[cols])
+    print(res[cols])
+    
+    ccols = cols+[xvar]
+    df = resa.merge(res, left_on=ccols,right_on=ccols)
+    
+    df.to_hdf(outName,key='distmod')
    
-def get_effi(grp,sellist):
+def get_effi(grp,sellist,xvar='z',bins=np.arange(0.0, 1.1, 0.05)):
     """
     Function to calculate efficiencies
 
@@ -277,7 +294,11 @@ def get_effi(grp,sellist):
         original data.
     sellist : dict
         selection criteria.
-
+    xvar : str, optional
+        x-axis variable. The default is 'z'.
+    bins : array, optional
+        redshift bins. The default is np.arange(0.0, 1.1, 0.05).
+   
     Returns
     -------
     effis : pandas df
@@ -289,7 +310,7 @@ def get_effi(grp,sellist):
     #selected data
     grpb = pd.DataFrame(select(grp,list_sel=sellist))
     
-    effis = effi(grp,grpb,xvar='z', bins=np.arange(0.0, 1.1, 0.05))
+    effis = effi(grp,grpb,xvar=xvar, bins=bins)
     
     return effis
    
@@ -305,8 +326,6 @@ parser.add_option('--dbName', type=str, default='baseline_v5.3.0_10yrs',
                   help='OS to process [%default]')
 parser.add_option('--runType', type=str, default='DDF_spectroz',
                   help='run type [%default]')
-parser.add_option('--action', type=str, default='process',
-                  help='what to do (process/effi) [%default]')
 parser.add_option('--config_fit', type=str, default='fit',
                   help='fit config [%default]')
 parser.add_option('--config_coadd', type=str, default='coadd',
@@ -318,10 +337,6 @@ pp = vars(opts)
 sellist = selection_criteria()['G10_JLA']
 #sellist.append(('sigma_color',op.le,0.04))
 
-outName='effi.hdf5'
+outName='distmod_effi.hdf5'
 
-if pp['action'] == 'process':
-    process(pp,sellist,outName)
-    
-if pp['action'] == 'effi':
-    go_effi(pp,sellist,outName)
+process(pp,sellist,outName)
