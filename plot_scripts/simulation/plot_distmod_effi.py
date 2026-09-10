@@ -5,16 +5,14 @@ Created on Thu Aug 13 10:23:19 2026
 
 @author: philippe.gris@clermont.in2p3.fr
 """
-import glob
+
 from optparse import OptionParser
 import pandas as pd
-from sn_analysis.sn_selection import selection_criteria
 import numpy as np
 import matplotlib.pyplot as plt
-from sn_tools.sn_io import checkDir
-from sn_tools.sn_utils import clean_level
 from sn_tools.sn_obs import load_season
 from sn_analysis.sn_calc_plot import bin_it_mean,bin_it_sum
+from scipy.interpolate import interp1d
 
 def plot_season(dres,seasons,xvar='z',yvar='diff_mu_mean',
                 yvar_err='',binIt=False):
@@ -94,9 +92,6 @@ def plot_configs(res,season,
     for conf in confs:
         idx = res['config'] == conf
         sel = pd.DataFrame(res[idx])
-       
-        sel['effi'] *= 100
-        sel['effi_err'] *= 100
         
         if binIt:
             if yvar != 'nsn':
@@ -141,15 +136,94 @@ def plot_configs_correl(res,season,
         idx = res['config'] == conf
         sel = pd.DataFrame(res[idx])
         
-        
-        sel['effi'] *= 100
-        sel['effi_err'] *= 100
-        
-        
         ax.plot(sel[xvar],sel[yvar],label=conf)
     
     ax.legend()
     ax.grid(visible=True)
+    
+    
+def get_zlim(grp):
+    
+    grp = grp.sort_values(by=['z'])
+    
+    
+    idx = grp['z']>=0.1
+    idx &= grp['z'] < 0.5
+    sel = grp[idx]
+    
+    ratio_min = sel['effi'].min()/100.
+    ratio_max = sel['effi'].max()/100.
+    ratio_mean = 0.5*(ratio_min+ratio_max)
+    
+    ro = sel['nsn_obs'].sum()/sel['nsn_exp'].sum()
+    ro = sel['effi'].mean()/100.
+    
+    for vv in [ratio_min,ratio_max,ratio_mean]:
+        norm_factor = 1./vv
+        calc_zlim(grp.copy(),norm_factor)
+    
+ 
+    
+def calc_zlim(grpa,norm_factor,vref=[95.,98.]):
+    
+    idx = grpa['z']>=0.1
+    idx &= grpa['z'] < 0.5
+    sela = grpa[idx]
+    
+    print('allo',norm_factor,sela['effi'].min(),sela['effi'].max())
+    
+    grp = pd.DataFrame(grpa)
+    grp['effi'] *= norm_factor
+    grp['nsn_exp'] *= norm_factor
+    
+    idx = grp['z']>=0.1
+    idx &= grp['z'] < 0.5
+    sel = grp[idx]
+    
+    print('allo',norm_factor,sel['effi'].min(),sel['effi'].max())
+    grp = calc_var(grp)
+    
+    
+    effi_z = interp1d(grp['effi'],grp['z'],bounds_error=False, fill_value=0.)
+    rat_z = interp1d(grp['z'],grp['nsn_ratio'],bounds_error=False, fill_value=0.)
+    
+    for vv in vref:
+        zlim = effi_z(vv)
+        frac = rat_z(zlim)
+    
+        print(norm_factor,vv,zlim,frac)
+    
+    show_me(grp)
+    
+def calc_var(df):
+    
+    df['nsn_exp_sum'] = np.cumsum(df['nsn_exp'])
+    df['nsn_obs_sum'] = np.cumsum(df['nsn_obs'])
+    
+    df['nsn_ratio'] =1.-df['nsn_obs_sum']/ df['nsn_exp_sum']
+    df['nsn_exp_sum'] /= df['nsn_exp_sum'].max()
+    df['nsn_obs_sum'] /= df['nsn_obs_sum'].max()    
+    
+    
+    return df
+    
+def show_me(grp):
+    
+   fig, ax = plt.subplots()
+   
+   ax.errorbar(grp['z'],grp['effi'],yerr=grp['effi_err'])
+   
+   axb = ax.twinx()
+   """
+   axb.plot(grp['z'],grp['nsn_exp_sum'])
+   axb.plot(grp['z'],grp['nsn_obs_sum'])
+   """
+   axb.plot(grp['z'],grp['nsn_ratio'])
+   
+   ax.grid(visible=True)
+   plt.show()    
+    
+    
 parser = OptionParser('script to plot dist mod, ...')
 
 parser.add_option('--files', type=str, default='comp_distmod.hdf5,comp_distmod_sigmaC.hdf5',
@@ -172,16 +246,23 @@ for i,fi in enumerate(fis):
     
 print(res[0].columns)    
     
-
+"""
 plot_season(res,seasons,yvar='diff_mu',yvar_err='diff_mu_std')
 
-"""
 plot_season(res,seasons,yvar='nsn')
-"""
+
 
 plot_season(res,seasons,yvar='effi',yvar_err='effi_err')
     
 plot_season_correl(res,seasons,xvar='diff_mu_std',yvar='effi')
+
+"""
+cols = ['healpixID','pixRA','pixDec','config','season']
+
+for key, vals in res.items():
+    dd = vals.groupby(cols).apply(lambda x: get_zlim(x))    
+
+
 
 plt.show()
 

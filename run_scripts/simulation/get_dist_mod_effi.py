@@ -14,6 +14,7 @@ import numpy as np
 from sn_analysis.sn_tools import complete_df
 from sn_analysis.sn_selection import select
 from sn_analysis.sn_calc_plot import effi,bin_it_mean
+from sn_analysis.sn_nsn_effi import getRates
 
 def load_data(master_dir,fDir,dbName,runType,sellist):
     """
@@ -264,7 +265,7 @@ def process(pp,sellist,outName='comp_distmod.hdf5'):
         df = pd.concat((df,dfb))
 
     bins=np.arange(0.0, 1.1, 0.05)
-    cols = ['config','season']
+    cols = ['healpixID','pixRA','pixDec','config','season']
     xvar = 'z'
     #select data here
     dfb = pd.DataFrame(select(df,list_sel=sellist))
@@ -274,11 +275,14 @@ def process(pp,sellist,outName='comp_distmod.hdf5'):
     res = df.groupby(cols).apply(lambda x: get_effi(x,sellist,xvar=xvar,bins=bins),include_groups=False).reset_index()
     #res.to_hdf(outName,key='distmod')
     
+    #estimating the number of SN (expected and observed)
+    resc = res.groupby(cols).apply(lambda x: get_nsn(x)).reset_index()
+    
     print(resa[cols])
-    print(res[cols])
+    print(resc[cols])
     
     ccols = cols+[xvar]
-    df = resa.merge(res, left_on=ccols,right_on=ccols)
+    df = resa.merge(resc, left_on=ccols,right_on=ccols)
     
     df.to_hdf(outName,key='distmod')
    
@@ -310,8 +314,52 @@ def get_effi(grp,sellist,xvar='z',bins=np.arange(0.0, 1.1, 0.05)):
     
     effis = effi(grp,grpb,xvar=xvar, bins=bins)
     
+    effis['season_length'] = grp['season_length'].mean()
+    effis['survey_area'] = grp['survey_area'].mean()
+    
     return effis
    
+def get_nsn(grp):
+    """
+    Function to estimate the number of SN (expected and observed)
+
+    Parameters
+    ----------
+    grp : pandas df
+        obs efficiencies.
+
+    Returns
+    -------
+    df : pandas df
+        output data.
+
+    """
+    
+    zvals = grp['z'].to_list()
+    
+    season_length = grp['season_length'].mean()
+    survey_area = grp['survey_area'].mean()
+    
+    zz, rateInterp, rateInterp_err = getRates(rate='Hounsell', 
+                                              survey_area=survey_area, 
+                                              season_length=season_length)
+    sn_rate = rateInterp(zvals)
+    sn_rate_err = rateInterp_err(zvals)
+    
+    cols = ['z','effi','effi_err']
+    df = pd.DataFrame(grp[cols])
+    df['nsn_exp'] = sn_rate
+    df['nsn_exp_err'] = sn_rate_err
+    df['nsn_obs'] = df['effi']*df['nsn_exp']
+    df['nsn_obs_err'] = np.sqrt((df['nsn_exp']*df['effi_err'])**2\
+                                +(df['effi']*df['nsn_exp_err'])**2)
+        
+    #set effis in %
+    df['effi'] = 100.*df['effi']
+    df['effi_err'] = 100.*df['effi_err']
+    return df   
+    
+    
 parser = OptionParser(description='Script to compare LCs on a large scale')
 
 parser.add_option('--master_dir', type=str, 
