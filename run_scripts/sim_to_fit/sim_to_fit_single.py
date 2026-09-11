@@ -68,6 +68,14 @@ parser.add_option('--sigma_pwv', type=float, default=0.0,
                   help='sigma pwv [%default]')
 parser.add_option('--smear_flux', type=int, default=1,
                   help='flux smearing [%default]')
+parser.add_option('--round_airmass', type=int, default=2,
+                  help='rounding airmass [%default]')
+parser.add_option('--round_ozone', type=int, default=1,
+                  help='rounding ozone [%default]')
+parser.add_option('--round_aerosol', type=int, default=3,
+                  help='rounding aerosol [%default]')
+parser.add_option('--round_pwv', type=int, default=2,
+                  help='rounding pwv [%default]')
 parser.add_option('--SN_simuFile', type=str, default='None',
                   help='to insert a simu file [%default]')
 parser.add_option('--obs_coadd',type=int,default=0,
@@ -160,6 +168,7 @@ cmd += " --InstrumentSimu_atmosType=const"
 cmd += " --fit_coadded=0"
 for vv in atmos_cols:
     cmd += " --InstrumentSimu_sigma_{}={}".format(vv,pp['sigma_{}'.format(vv)])
+    cmd += " --InstrumentSimu_round_{}={}".format(vv,pp['round_{}'.format(vv)])
     
 cmd += " --InstrumentSimu_ntrial_zp={}".format(ntrial_zp)
 cmd += " --FoV=9.6"
