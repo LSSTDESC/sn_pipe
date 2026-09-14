@@ -143,9 +143,21 @@ def plot_configs_correl(res,season,
     
     
 def get_zlim(grp):
+    """
+    Function to estimate the redshift limit for groups of data
+
+    Parameters
+    ----------
+    grp : pandas df
+        Data to process.
+
+    Returns
+    -------
+    None.
+
+    """
     
     grp = grp.sort_values(by=['z'])
-    
     
     idx = grp['z']>=0.1
     idx &= grp['z'] < 0.5
@@ -154,45 +166,82 @@ def get_zlim(grp):
     ratio_min = sel['effi'].min()/100.
     ratio_max = sel['effi'].max()/100.
     ratio_mean = 0.5*(ratio_min+ratio_max)
-    
+    """
     ro = sel['nsn_obs'].sum()/sel['nsn_exp'].sum()
     ro = sel['effi'].mean()/100.
+    """
+    norm_factors = [1,ratio_min,ratio_max,ratio_mean]
+    defs = ['orig','max','min','mean']
     
-    for vv in [ratio_min,ratio_max,ratio_mean]:
+    dd = {}
+    for i,vv in enumerate(norm_factors):
         norm_factor = 1./vv
-        calc_zlim(grp.copy(),norm_factor)
+        dda = calc_zlim(grp.copy(),norm_factor,defs[i])
+        dd.update(dda)
+        
+    #print(dd)
     
- 
+    res = pd.DataFrame.from_dict(dd)
+
     
-def calc_zlim(grpa,norm_factor,vref=[95.,98.]):
+    return res
     
-    idx = grpa['z']>=0.1
-    idx &= grpa['z'] < 0.5
-    sela = grpa[idx]
+def calc_zlim(grpa,norm_factor,def_str,vref=[95.,98.]):
+    """
+    Function to estimate the redshift limit
+
+    Parameters
+    ----------
+    grpa : pandas df
+        Data to process.
+    norm_factor : float
+        norm factor.
+    vref : list(float), optional
+        efficiency values to estimate zlim. The default is [95.,98.].
+
+    Returns
+    -------
+    None.
+
+    """
     
-    print('allo',norm_factor,sela['effi'].min(),sela['effi'].max())
+    #print('allo',norm_factor,sela['effi'].min(),sela['effi'].max())
     
     grp = pd.DataFrame(grpa)
     grp['effi'] *= norm_factor
     grp['nsn_exp'] *= norm_factor
+
     
-    idx = grp['z']>=0.1
-    idx &= grp['z'] < 0.5
-    sel = grp[idx]
-    
-    print('allo',norm_factor,sel['effi'].min(),sel['effi'].max())
+    #print('allo',norm_factor,sel['effi'].min(),sel['effi'].max())
     grp = calc_var(grp)
     
     
     effi_z = interp1d(grp['effi'],grp['z'],bounds_error=False, fill_value=0.)
     rat_z = interp1d(grp['z'],grp['nsn_ratio'],bounds_error=False, fill_value=0.)
     
+    r = []
     for vv in vref:
         zlim = effi_z(vv)
         frac = rat_z(zlim)
     
-        print(norm_factor,vv,zlim,frac)
+        #print(norm_factor,vv,zlim,frac)
     
+        r.append((def_str,vv,zlim,frac))
+    
+    #print(r)
+    
+    dd = {}
+    for vv in r:
+        vvref = np.round(vv[1]/100.,2)
+        zlim = 'z_{}_{}'.format(vvref,def_str)
+        dd[zlim] = [vv[2].tolist()]
+        frac = 'frac_{}_{}'.format(vvref,def_str)
+        dd[frac] = [vv[3].tolist()]
+        
+    #print(dd)
+    
+    return dd
+        
     show_me(grp)
     
 def calc_var(df):
@@ -226,7 +275,7 @@ def show_me(grp):
     
 parser = OptionParser('script to plot dist mod, ...')
 
-parser.add_option('--files', type=str, default='comp_distmod.hdf5,comp_distmod_sigmaC.hdf5',
+parser.add_option('--files', type=str, default='comp_distmod.hdf5',
                   help='files to analyze [%default]')
 parser.add_option('--seasons', type=str, default='1-10',
                   help='seasons to show [%default]')
@@ -249,20 +298,24 @@ print(res[0].columns)
 """
 plot_season(res,seasons,yvar='diff_mu',yvar_err='diff_mu_std')
 
-plot_season(res,seasons,yvar='nsn')
+#plot_season(res,seasons,yvar='nsn')
 
 
 plot_season(res,seasons,yvar='effi',yvar_err='effi_err')
-    
+ 
+ 
 plot_season_correl(res,seasons,xvar='diff_mu_std',yvar='effi')
 
 """
+
 cols = ['healpixID','pixRA','pixDec','config','season']
 
+df = pd.DataFrame()
 for key, vals in res.items():
-    dd = vals.groupby(cols).apply(lambda x: get_zlim(x))    
+    dd = vals.groupby(cols).apply(lambda x: get_zlim(x),include_groups=False).reset_index() 
+    df = pd.concat((df,dd))
 
 
-
+print(df.columns,df['season'].unique())
 plt.show()
 

@@ -191,15 +191,17 @@ if '-' in seasons:
 if ',' in seasons:
     seasons=seasons.replace(',','and')
     
-prodID = 'SN_{}_{}_{}_{}_{}'.format(pp['fieldType'],pp['dbName'],
-                                    pp['x1'],pp['color'],seasons)
+prodID = 'SN_{}_{}_{}_{}_{}_{}'.format(pp['fieldType'],pp['dbName'],
+                                    pp['x1'],pp['color'],
+                                    pp['fieldName'],seasons)
 
 cmd += " --ProductionIDSimu={}".format(prodID)
 
 if pp['pixelList'] != "None":
     cmd += " --pixelList={}".format(pp['pixelList'])
 
-cmd += ' --SN_simuFile={}'.format(pp['SN_simuFile'])
+if pp['SN_simuFile'] != '':
+    cmd += ' --SN_simuFile={}'.format(pp['SN_simuFile'])
 
 print(cmd)
 os.system(cmd)
