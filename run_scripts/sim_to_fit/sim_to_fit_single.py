@@ -86,10 +86,10 @@ parser.add_option('--fit_lc',type=int,default=1,
                   help = 'to fit LCs or not [%default]')
 parser.add_option('--fit_bands',type=str,default='grizy',
                   help = 'bands to use for the fit [%default]')
-parser.add_option("--RA_min",type=float,default=0.,
-                  help="min RA - WFD survey[%default]")
-parser.add_option("--RA_max",type=float,default=10.,
-                  help="max RA - WFD survey[%default]")
+parser.add_option("--RAmin",type=float,default=0.,
+                  help="min RA - WFD survey [%default]")
+parser.add_option("--RAmax",type=float,default=10.,
+                  help="max RA - WFD survey [%default]")
 
 opts, args = parser.parse_args()
 
@@ -101,7 +101,7 @@ atmos_cols = ['airmass','ozone','aerosol','pwv']
 for vv in atmos_cols:
     if pp['sigma_{}'.format(vv)] >= 1.e-5:
         ntrial_zp = 1000
-        
+
 cmd = "python run_scripts/sim_to_fit/run_sim_to_fit.py" 
 cmd += " --dbName={}".format(pp['dbName'])
 cmd += " --dbDir={}".format(pp['dbDir'])
@@ -199,9 +199,9 @@ prodID = 'SN_{}_{}_{}_{}_{}_{}'.format(pp['fieldType'],pp['dbName'],
                                     pp['x1'],pp['color'],
                                     pp['fieldName'],seasons)
 if pp['fieldType'] == 'WFD':
-    prodID = '{}_{}_{}'.format(prodID,pp['RA_min'],pp['RA_max'])
-    for vv in ['RA_min','RA_max']:
-        cmd += '--{}={}'.format(vv,pp[vv])
+    prodID = '{}_{}_{}'.format(prodID,pp['RAmin'],pp['RAmax'])
+    for vv in ['RAmin','RAmax']:
+        cmd += ' --{}={}'.format(vv,pp[vv])
 
 cmd += " --ProductionIDSimu={}".format(prodID)
 
