@@ -120,13 +120,13 @@ def prepare_dict(par_names, params):
     return dict_mean, dict_sigma
 
 
-def process_combi(combi_sigma, params, num_combi, outName,nproc=8):
+def process_combi(combis, params, num_combi, outName,nproc=8):
     """
     Fonction to process a set of parameters
 
     Parameters
     ----------
-    combi_sigma : pandas df
+    combis : pandas df
         list of sets of parameters.
     params : dict
         script parameters.
@@ -144,37 +144,115 @@ def process_combi(combi_sigma, params, num_combi, outName,nproc=8):
 
     time_ref = time.time()
     df = pd.DataFrame()
-    ncombi = len(combi_sigma)
+    ncombi = len(combis)
     print('ncombi:',ncombi)
-    for i, row in combi_sigma.iterrows():
-
+    for i, row in combis.iterrows():
+        """
         time_ref_b = time.time()
         par_means = row[par_names].to_list()
         colsb = list(map(lambda x: 'sigma_' + x, par_names))
         par_sigmas = row[colsb].to_list()
+        
+        colsc = list(map(lambda x: 'bias_' + x, par_names))
+        par_bias = row[colsc].to_list()
 
         airmass = np.round(row['airmass'], 1)
         param_outName = 'params_airmass_{}_{}'.format(airmass, num_combi)
         sigma_zp = Sigma_zp_meanwave(through_dir, site_name, pressure,
                                      par_names, par_means, par_sigmas,
+                                     par_bias,
                                      save_throughputs_dir='',
                                      param_outDir=params['param_outDir'],
                                      param_outName=param_outName,
                                      save_random_dir=params['save_random_dir'])
+        if params['nsample'] == 1:
+                nproc=1
         
         res = sigma_zp(ntrials=params['nsample'], nproc=nproc)
-
+        """
+        res = process_single_combi(row, params,i,num_combi,ncombi)
         df = pd.concat((df, res))
 
-        rat = np.round(100.*i/ncombi,1)
-        deltat = time.time()-time_ref_b
-        print('combi', np.round(deltat,2),'s',rat,"%")
+       
     print('finally', time.time()-time_ref)
     df['num_combi'] = num_combi
 
     # dump in file
     store.append('zp_atmos', df)
 
+def process_single_combi(row,params,icombi,num_combi,ncombi):
+    
+    time_ref_b = time.time()
+    par_means = row[par_names].to_list()
+    colsb = list(map(lambda x: 'sigma_' + x, par_names))
+    par_sigmas = row[colsb].to_list()
+    
+    colsc = list(map(lambda x: 'bias_' + x, par_names))
+    par_bias = row[colsc].to_list()
+    
+    airmass = np.round(row['airmass'], 1)
+    param_outName = 'params_airmass_{}_{}'.format(airmass, num_combi)
+    sigma_zp = Sigma_zp_meanwave(through_dir, site_name, pressure,
+                             par_names, par_means, par_sigmas,
+                             par_bias,
+                             save_throughputs_dir='',
+                             param_outDir=params['param_outDir'],
+                             param_outName=param_outName,
+                             save_random_dir=params['save_random_dir'])
+    if params['nsample'] == 1:
+        nproc=1
+    
+    res = sigma_zp(ntrials=params['nsample'], nproc=nproc)    
+    
+    rat = np.round(100.*icombi/ncombi,1)
+    deltat = time.time()-time_ref_b
+    print('combi', np.round(deltat,2),'s',rat,"%")
+    
+    return res
+
+def get_combi_bias(cols,params,prefix='bias'):
+    """
+    Function to estimate combinations of biases
+
+    Parameters
+    ----------
+    cols : list(str)
+        List of columns to consider.
+    params : dict
+        parameter values.
+    prefix : str, optional
+        prefix to use. The default is 'bias'.
+
+    Returns
+    -------
+    df : pandas df
+        combi result.
+
+    """
+    
+    colsb_min = list(map(lambda x: '{}_{}_min'.format(prefix,x), cols))
+    
+    df = pd.DataFrame()
+    for i,vv in enumerate(cols):
+        col_min = '{}_{}_min'.format(prefix,vv)
+        col_max = '{}_{}_max'.format(prefix,vv)
+        col_step = '{}_{}_step'.format(prefix,vv)
+
+        vals = [params[col_min]]
+        if params[col_step] > 1.e-8:
+            vals = np.arange(params[col_min],
+                             params[col_max]+params[col_step],
+                             params[col_step])
+        
+        ddf = pd.DataFrame(vals,columns=['{}_{}'.format(prefix,vv)])
+        
+        if i == 0:
+            df = ddf.copy()
+        else:
+            df = df.merge(ddf,how='cross')
+
+
+    return df
 
 # get all possible simulation parameters and put in a dict
 path_input = 'input/zp_atmos'
@@ -209,11 +287,19 @@ par_names = ['airmass', 'pwv', 'ozone', 'beta', 'aerosol']
 dict_mean, dict_sigma = prepare_dict(par_names, params)
 
 combi_sigma = get_combi(dict_mean, dict_sigma, par_names)
+combi_bias = get_combi_bias(par_names,params,prefix='bias')
 
+#combine combis
+
+combis = combi_sigma.merge(combi_bias,how='cross')
+
+print(combis)
 # loop on the number of trials
 outName = '{}/{}'.format(params['outDir'], params['outName'])
 store = pd.HDFStore(outName, 'w')
+
+
 for i in range(params['ntrial']):
-    process_combi(combi_sigma, params, i+1, store,params['nproc'])
+    process_combi(combis, params, i+1, store,params['nproc'])
 
 store.close()
