@@ -6,7 +6,7 @@ Created on Thu Nov 14 14:49:10 2024
 @author: philippe.gris@clermont.in2p3.fr
 """
 
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import time
@@ -14,7 +14,7 @@ from sn_telmodel.sn_throughtools import Sigma_zp_meanwave
 from optparse import OptionParser
 from sn_tools.sn_io import make_dict_from_config, add_parser
 from sn_tools.sn_io import checkDir
-
+from sn_tools.sn_utils import multiproc
 
 def get_combi(dict_mean, dict_sigma, parList):
     """
@@ -119,8 +119,7 @@ def prepare_dict(par_names, params):
 
     return dict_mean, dict_sigma
 
-
-def process_combi(combis, params, num_combi, outName,nproc=8):
+def process_combi(combis, pparams, j=0, output_q=None):
     """
     Fonction to process a set of parameters
 
@@ -141,35 +140,15 @@ def process_combi(combis, params, num_combi, outName,nproc=8):
         output data.
 
     """
+    
+    params = pparams['params']
+    num_combi = pparams['num_combi']
 
     time_ref = time.time()
     df = pd.DataFrame()
     ncombi = len(combis)
     print('ncombi:',ncombi)
     for i, row in combis.iterrows():
-        """
-        time_ref_b = time.time()
-        par_means = row[par_names].to_list()
-        colsb = list(map(lambda x: 'sigma_' + x, par_names))
-        par_sigmas = row[colsb].to_list()
-        
-        colsc = list(map(lambda x: 'bias_' + x, par_names))
-        par_bias = row[colsc].to_list()
-
-        airmass = np.round(row['airmass'], 1)
-        param_outName = 'params_airmass_{}_{}'.format(airmass, num_combi)
-        sigma_zp = Sigma_zp_meanwave(through_dir, site_name, pressure,
-                                     par_names, par_means, par_sigmas,
-                                     par_bias,
-                                     save_throughputs_dir='',
-                                     param_outDir=params['param_outDir'],
-                                     param_outName=param_outName,
-                                     save_random_dir=params['save_random_dir'])
-        if params['nsample'] == 1:
-                nproc=1
-        
-        res = sigma_zp(ntrials=params['nsample'], nproc=nproc)
-        """
         res = process_single_combi(row, params,i,num_combi,ncombi)
         df = pd.concat((df, res))
 
@@ -177,10 +156,39 @@ def process_combi(combis, params, num_combi, outName,nproc=8):
     print('finally', time.time()-time_ref)
     df['num_combi'] = num_combi
 
+
+    if output_q is not None:
+        return output_q.put({j: df})
+    else:
+        return df
+
+
     # dump in file
-    store.append('zp_atmos', df)
+    #store.append('zp_atmos', df)
 
 def process_single_combi(row,params,icombi,num_combi,ncombi):
+    """
+    Functio to process a single combi
+
+    Parameters
+    ----------
+    row : pandas df
+        input data.
+    params : dict
+        parameters.
+    icombi : int
+        i for combi.
+    num_combi : int
+        num combi.
+    ncombi : int
+        total number of combi.
+
+    Returns
+    -------
+    res : pandas df
+        output data.
+
+    """
     
     time_ref_b = time.time()
     par_means = row[par_names].to_list()
@@ -204,10 +212,11 @@ def process_single_combi(row,params,icombi,num_combi,ncombi):
     
     res = sigma_zp(ntrials=params['nsample'], nproc=nproc)    
     
+    """
     rat = np.round(100.*icombi/ncombi,1)
     deltat = time.time()-time_ref_b
     print('combi', np.round(deltat,2),'s',rat,"%")
-    
+    """
     return res
 
 def get_combi_bias(cols,params,prefix='bias'):
@@ -292,14 +301,23 @@ combi_bias = get_combi_bias(par_names,params,prefix='bias')
 #combine combis
 
 combis = combi_sigma.merge(combi_bias,how='cross')
+combis['num_combi'] = combis.reset_index().index
 
-print(combis)
-# loop on the number of trials
 outName = '{}/{}'.format(params['outDir'], params['outName'])
 store = pd.HDFStore(outName, 'w')
 
 
-for i in range(params['ntrial']):
-    process_combi(combis, params, i+1, store,params['nproc'])
+pparams = {}
+pparams['params'] = params
 
+# loop on the number of trials
+for i in range(params['ntrial']):
+    pparams['num_combi'] =+1
+    if params['nsample'] == 1:
+        res = multiproc(combis,pparams,process_combi,params['nproc'])
+    else:
+        res = process_combi(combis, pparams)
+
+print(res)
+store.append('zp_atmos', res)
 store.close()
