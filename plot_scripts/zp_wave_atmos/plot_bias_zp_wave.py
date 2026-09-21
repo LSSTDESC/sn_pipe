@@ -11,7 +11,7 @@ import pandas as pd
 import numpy as np
 from astropy.table import Table
 from sn_plotter_analysis import plt
-from sn_plotter_tools.plot_tools import plot_grid
+from sn_plotter_tools.plot_tools import plot_grid,get_data_from_grid
 from sn_tools.sn_io import checkDir
 
 def plot(df,b='g',xvar='airmass',yvar='zp',
@@ -73,7 +73,7 @@ def plot(df,b='g',xvar='airmass',yvar='zp',
     figtit += '\n'
     figtit += '{} band'.format(b)
     
-    df = plot_grid(Table.from_pandas(df),varx='orig_airmass',
+    plot_grid(Table.from_pandas(df),varx='orig_airmass',
               vary=bias_str,ylabel=ylabel,unit_y=unit_y,
               varz=yyvar_delta,
               figtitle=figtit,
@@ -86,7 +86,6 @@ def plot(df,b='g',xvar='airmass',yvar='zp',
               add_plot_str=['-1 %','+1 %'],
               add_plot_color='magenta')
     
-    return df
     """
     print('allll',bias_str)
     fig, ax = plt.subplots(figsize=(12,10))  
@@ -144,9 +143,41 @@ def get_var_ref(grp,xvar='airmass',yvar='zp',band='g'):
     
     return res
     
+def get_values_from_grid(df,b='g',xvar='airmass',yvar='zp',
+                         bias_var='airmass',unit_y='%',unit_z='mmag'):
     
+    xxvar = 'orig_{}'.format(xvar)
+    yyvar = 'mean_{}_{}'.format(yvar,b)
     
+    bias_str = 'bias_{}'.format(bias_var)
+    
+    bias_values = df[bias_str]
+    
+    #add ref 
+    cols = 'orig_{}'.format(xvar)
+    dfa = df.groupby([cols]).apply(lambda x: get_var_ref(x,xvar,yvar,b),include_groups=False).reset_index()
+    
+    df = df.merge(dfa, left_on=cols,right_on=cols)
 
+    yyvar_delta = 'delta_{}_{}'.format(yvar,b)
+    yyvar_ref = 'mean_{}_{}_ref'.format(yvar,b)
+    df[yyvar_delta] = 1000.*(df[yyvar]-df[yyvar_ref])
+
+    idx = df[cols] >= 1.1
+    idx &= df[cols] <= 2.4
+    #idx &= np.abs(df[yyvar_delta]) <=5
+    df = pd.DataFrame(df[idx])
+    
+    #multiply biases by 100 to be in %
+    
+    df[bias_str] *= 100
+    
+    df = get_data_from_grid(Table.from_pandas(df),varx='orig_airmass',
+                   vary=bias_str,unit_y=unit_y,
+                   varz=yyvar_delta,
+                   iso=np.arange(-5.,5.,0.01))    
+
+    return df
 parser = OptionParser(description='analyze and plot zp and mean wave from bias run')
 
 parser.add_option('--dataDir', type=str, default='../zp_atmos_bias',
@@ -159,6 +190,8 @@ parser.add_option('--bands', type=str, default='grizy',
                   help='filters to plot [%default]')
 parser.add_option('--outDir', type=str, default='../zp_atmos_bias_summary',
                   help='filters to plot [%default]')
+parser.add_option('--what', type=str, default='grid_plot,interp_estimates',
+                  help='what to do [%default]')
 
 opts, args = parser.parse_args()
 
@@ -167,6 +200,7 @@ atmos_param= opts.atmos_param
 obs=opts.obs
 bands = opts.bands
 outDir = opts.outDir
+what=opts.what
 
 checkDir(outDir)
 theFile = '{}/zp_atmos_{}.hdf5'.format(theDir,atmos_param)
@@ -175,11 +209,16 @@ df = pd.read_hdf(theFile)
 
 dfr = pd.DataFrame()
 for b in bands:
-    dfa = plot(df,b,yvar=obs,bias_var=atmos_param)
-    dfr = pd.concat((dfr,dfa))
- 
-fName = '{}/{}_atmos_bias_{}.hdf5'.format(outDir,obs,atmos_param)
-print(dfr)
-dfr.to_hdf(fName,key='bias')
+    if 'plot_grid' in what:
+        plot(df,b,yvar=obs,bias_var=atmos_param)
+    if 'interp_estimates' in what:
+        dfa = get_values_from_grid(df,b,yvar=obs,bias_var=atmos_param)
+        dfr = pd.concat((dfr,dfa))
 
-plt.show()
+if len(dfr) > 0:
+    fName = '{}/{}_atmos_bias_{}.hdf5'.format(outDir,obs,atmos_param)
+    print(dfr)
+    dfr.to_hdf(fName,key='bias')
+
+if 'plot_grid' in what:
+    plt.show()
