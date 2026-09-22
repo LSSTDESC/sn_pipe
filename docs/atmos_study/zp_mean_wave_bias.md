@@ -19,10 +19,15 @@ Options:
 </pre>
 
 [grid: airmass bias - y band](iso_zp/grid_bias_airmass_y.png)
+
 [grid: airmass bias - r band](iso_zp/grid_bias_airmass_r.png)
+
 [grid: pwv bias - y band](iso_zp/grid_bias_pwv_y.png)
+
 [grid: aerosol bias - g band](iso_zp/grid_bias_aerosol_g.png)
+
 [grid: aerosol bias - r band](iso_zp/grid_bias_aerosol_r.png)
+
 [grid: ozone bias - r band](iso_zp/grid_bias_ozone_r.png)
 
 ### Summary plots
@@ -47,6 +52,9 @@ Options:
 </pre>
 
 [airmass bias](iso_zp/bias_airmass.png)
+
 [ozone bias](iso_zp/bias_ozone.png)
+
 [aerosol bias](iso_zp/bias_aerosol.png)
+
 [pwv bias](iso_zp/bias_pwv.png)
