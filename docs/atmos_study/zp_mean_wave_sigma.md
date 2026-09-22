@@ -1,6 +1,12 @@
-### Impact of atmos params uncertainty measurements
+## Impact of atmos params uncertainty measurements
 
-### Usage: plot_scripts/zp_wave_atmos/plot_sigma_zp_wave.py [options]
+### Data production
+
+- see example_scripts/zp_atmos.sh
+
+### Data analysis and figures
+
+#### Usage: plot_scripts/zp_wave_atmos/plot_sigma_zp_wave.py [options]
 
 <pre>
 analyze and plot zp and mean wave
@@ -23,7 +29,7 @@ Options:
 
 [sigma_mean_wave_y vs sigma_pwv](sigma_mean_wave_sigma_pwv.png)
 
-### Usage: run_scripts/telescope/fit_sigmas_zp_wave_vs_sigma_atmos.py [options]
+#### Usage: run_scripts/telescope/fit_sigmas_zp_wave_vs_sigma_atmos.py [options]
 
 <pre>
 
@@ -48,7 +54,7 @@ Options:
 
 [sigma_zp budget vs band](fig2a.png)
 
-### Usage: run_scripts/telescope/get_zp_wave.py
+#### Usage: run_scripts/telescope/get_zp_wave.py
 
 <pre>
 Estimate sigma_zp_tot from config and sigma_atmos from sigma_zp_atmos
