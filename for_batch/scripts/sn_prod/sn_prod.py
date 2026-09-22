@@ -89,13 +89,13 @@ def batch_DDF(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
                 dbName, fieldName, tag_dir, np.round(sigmaInt, 2),
                 snrate, smearFlux, zvmin, zvmax, tag_script)
             mybatch = BatchIt(processName=procName, time=time, mem=mem)
-            seasons = range(1, 11)
+            seasons = range(1, 12)
             if not tag_list.empty:
                 idx = tag_list['ProductionID'] == procName
                 sel = tag_list[idx]
                 if len(sel) > 0:
                     season_max = sel['season_max'].max()
-                    seasons = range(season_max, 11)
+                    seasons = range(season_max, 12)
 
             for season in seasons:
                 procDict['ProductionIDSimu'] = 'SN_{}_{}'.format(
@@ -209,7 +209,7 @@ def batch_WFD(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py',
     RAs = np.arange(0., 360.+deltaRA, deltaRA)
 
     seas_min = 1
-    seas_max = 11
+    seas_max = 12
     seasons = range(seas_min, seas_max+1)
     for RA in RAs[:-1]:
         RAmin = np.round(RA, 1)
@@ -276,7 +276,7 @@ def batch_DDF_rate(theDict,
     snrate = theDict['SN_z_rate']
     smearFlux = theDict['SN_smearFlux']
     season_min = 1
-    season_max = 11
+    season_max = 12
     zmin = theDict['SN_z_min']
     zmax = theDict['SN_z_max']
     zint = np.min([0.6,zmax])
@@ -336,7 +336,7 @@ def batch_DDF_rate(theDict,
             sel = tag_list[idx]
             if len(sel) > 0:
                 season_min = sel['season_max'].max()
-                season_max = 11
+                season_max = 12
 
         seasons = '{}-{}'.format(season_min, season_max)
 
@@ -434,13 +434,13 @@ def batch_DDF_rate_per_season(theDict, scriptref='run_scripts/sim_to_fit/run_sim
             dbName, fieldName, tag_dir, np.round(sigmaInt, 2),
             snrate, smearFlux, tag_script)
         mybatch = BatchIt(processName=procName, time=time, mem=mem)
-        seasons = range(1, 11)
+        seasons = range(1, 12)
         if not tag_list.empty:
             idx = tag_list['ProductionID'] == procName
             sel = tag_list[idx]
             if len(sel) > 0:
                 season_max = sel['season_max'].max()
-                seasons = range(season_max, 11)
+                seasons = range(season_max, 12)
 
         for season in seasons:
             procDict['ProductionIDSimu'] = 'SN_{}_{}'.format(
@@ -574,7 +574,7 @@ def batch_WFD_rate(theDict, scriptref='run_scripts/sim_to_fit/run_sim_to_fit.py'
             sel = tag_list[idx]
             if len(sel) > 0:
                 season_max = sel['season_max'].max()
-                seasons = range(season_max, 11)
+                seasons = range(season_max, 12)
 
         if runMode == 'seasonal':
 
@@ -648,7 +648,7 @@ if opts.fieldType == 'WFD':
         batch_WFD(procDict)
     else:
         #seasons = [(1, 7), (7, 14)]
-        seasons = [(1,11)]
+        seasons = [(1,12)]
         runMode = 'all_seasons'
         if opts.fieldType == 'WFD':
             for seas in seasons:
