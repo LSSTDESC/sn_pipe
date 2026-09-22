@@ -7,7 +7,7 @@
 Script to estimate zp and mean_wave from atmos parameters
 
 Options:
-  -h, --help            show this help message and exit
+ -h, --help            show this help message and exit
   --telDir=TELDIR       tel main dir [throughputs]
   --throughDir=THROUGHDIR
                         throughput dir [baseline]
@@ -24,6 +24,12 @@ Options:
                         sigma airmass max value [0.02]
   --sigma_airmass_step=SIGMA_AIRMASS_STEP
                         sigma airmass step value [0.0]
+  --bias_airmass_min=BIAS_AIRMASS_MIN
+                        bias airmass min value [0.0]
+  --bias_airmass_max=BIAS_AIRMASS_MAX
+                        bias airmass max value [0.1]
+  --bias_airmass_step=BIAS_AIRMASS_STEP
+                        bias airmass step value [0.0]
   --pwv_min=PWV_MIN     pwv min value [5.0]
   --pwv_max=PWV_MAX     pwv max value [7.0]
   --pwv_step=PWV_STEP   pwv step value [0.0]
@@ -33,6 +39,12 @@ Options:
                         sigma pwv max value [0.3]
   --sigma_pwv_step=SIGMA_PWV_STEP
                         sigma pwv step value [0.0]
+  --bias_pwv_min=BIAS_PWV_MIN
+                        bias pwv min value [0.0]
+  --bias_pwv_max=BIAS_PWV_MAX
+                        bias pwv max value [0.1]
+  --bias_pwv_step=BIAS_PWV_STEP
+                        bias pwv step value [0.0]
   --ozone_min=OZONE_MIN
                         ozone min value [330.0]
   --ozone_max=OZONE_MAX
@@ -45,6 +57,12 @@ Options:
                         sigma ozone max value [20.0]
   --sigma_ozone_step=SIGMA_OZONE_STEP
                         sigma ozone step value [0.0]
+  --bias_ozone_min=BIAS_OZONE_MIN
+                        bias ozone min value [0.0]
+  --bias_ozone_max=BIAS_OZONE_MAX
+                        bias ozone max value [0.1]
+  --bias_ozone_step=BIAS_OZONE_STEP
+                        bias ozone step value [0.0]
   --aerosol_min=AEROSOL_MIN
                         aerosol min value [0.05]
   --aerosol_max=AEROSOL_MAX
@@ -57,6 +75,12 @@ Options:
                         sigma aerosol max value [0.02]
   --sigma_aerosol_step=SIGMA_AEROSOL_STEP
                         sigma aerosol step value [0.0]
+  --bias_aerosol_min=BIAS_AEROSOL_MIN
+                        bias aerosol min value [0.0]
+  --bias_aerosol_max=BIAS_AEROSOL_MAX
+                        bias aerosol max value [0.1]
+  --bias_aerosol_step=BIAS_AEROSOL_STEP
+                        bias aerosol step value [0.0]
   --beta_min=BETA_MIN   beta min value [1.4]
   --beta_max=BETA_MAX   beta max value [0.4]
   --beta_step=BETA_STEP
@@ -67,12 +91,18 @@ Options:
                         sigma beta max value [0.4]
   --sigma_beta_step=SIGMA_BETA_STEP
                         sigma beta step value [0.0]
+  --bias_beta_min=BIAS_BETA_MIN
+                        bias beta min value [0.0]
+  --bias_beta_max=BIAS_BETA_MAX
+                        bias beta max value [0.1]
+  --bias_beta_step=BIAS_BETA_STEP
+                        bias beta step value [0.0]
   --outDir=OUTDIR       outputDir [../zp_atmos]
   --outName=OUTNAME     outName [zp_atmos_config1.hdf5]
   --param_outDir=PARAM_OUTDIR
                         output dir for params [None]
   --save_random_dir=SAVE_RANDOM_DIR
-                        outputDir for random trials ['']
+                        outputDir for random trials [None]
   --ntrial=NTRIAL       number of trials [1]
   --nsample=NSAMPLE     number of sample per trial [1000]
   --nproc=NPROC         number of procs [8]

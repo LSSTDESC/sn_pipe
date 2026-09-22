@@ -1,4 +1,8 @@
-### Impact of atmos params bias
+## Impact of atmos params bias
+
+### Data production
+
+- see example_scripts/zp_atmos_bias.sh
 
 ### Data analysis and grid plots
 
