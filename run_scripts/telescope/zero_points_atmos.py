@@ -147,13 +147,13 @@ def process_combi(combis, pparams, j=0, output_q=None):
     time_ref = time.time()
     df = pd.DataFrame()
     ncombi = len(combis)
-    print('ncombi:',ncombi)
+    print('ncombi:',ncombi,combis['sigma_pwv'].min(),combis['sigma_pwv'].max())
     for i, row in combis.iterrows():
         res = process_single_combi(row, params,i,num_combi,ncombi)
         df = pd.concat((df, res))
 
        
-    print('finally', time.time()-time_ref)
+    print('finally', i,time.time()-time_ref)
     df['num_combi'] = num_combi
 
 
@@ -207,12 +207,13 @@ def process_single_combi(row,params,icombi,num_combi,ncombi):
                              param_outDir=params['param_outDir'],
                              param_outName=param_outName,
                              save_random_dir=params['save_random_dir'])
-    
+    """
     nproc=params['nproc']
+    
     if params['nsample'] == 1:
         nproc=1
-    
-    res = sigma_zp(ntrials=params['nsample'], nproc=nproc)    
+    """
+    res = sigma_zp(ntrials=params['nsample'], nproc=1)    
     
     """
     rat = np.round(100.*icombi/ncombi,1)
@@ -300,6 +301,8 @@ dict_mean, dict_sigma = prepare_dict(par_names, params)
 combi_sigma = get_combi(dict_mean, dict_sigma, par_names)
 combi_bias = get_combi_bias(par_names,params,prefix='bias')
 
+print(combi_sigma)
+
 #combine combis
 
 combis = combi_sigma.merge(combi_bias,how='cross')
@@ -315,11 +318,14 @@ pparams['params'] = params
 # loop on the number of trials
 for i in range(params['ntrial']):
     pparams['num_combi'] =+1
+    res = multiproc(combis,pparams,process_combi,params['nproc'])
+    
+    """
     if params['nsample'] == 1:
         res = multiproc(combis,pparams,process_combi,params['nproc'])
     else:
         res = process_combi(combis, pparams)
-
+    """
 print(res)
 store.append('zp_atmos', res)
 store.close()

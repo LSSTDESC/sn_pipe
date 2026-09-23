@@ -11,6 +11,20 @@ from optparse import OptionParser
 from sn_plotter_tools.plot_tools import plot_grid,plot_airmass
 import matplotlib.pyplot as plt
 
+def get_flist():
+    
+   ro = []
+   for ba in 'grizy':
+       for bb in 'grizy':
+           if ba != bb:
+               ro.append(''.join(sorted(ba+bb)))
+   
+   list_filter_combi = set(ro)
+    
+   return list_filter_combi
+    
+    
+    
     
 parser = OptionParser(description='analyze and plot zp and mean wave')
 
@@ -43,7 +57,13 @@ print(df[['mean_airmass','sigma_pwv','mean_mean_wave_z', 'std_mean_wave_z']])
 
 for b in 'grizy':
     df['std_zp_{}'.format(b)] *= 1000 # in mmag
-    
+
+flist = get_flist()
+
+for b in flist:
+    df['std_zp_{}'.format(b)] *= 1000 # in mmag
+ 
+   
 #grid plots
 
 varx = ['sigma_pwv','sigma_aerosol','sigma_airmass','sigma_ozone']
@@ -67,13 +87,15 @@ if 'map' in plots:
               vary=thevar,ylabel=labdict[thevar],
               varz='std_zp_{}'.format(theband),
               figtitle='$\sigma_{ZP}^{'+theband+'}$ [mmag]',smoothIt=True)
+    """
     plot_grid(tab,varx='mean_airmass',
               vary=thevar,ylabel=labdict[thevar],
               varz='std_mean_wave_{}'.format(theband),
               figtitle='$\sigma_{mean wave}^{'+theband+'}$ [nm]',
               iso=[0.05,0.1,0.15],
               txt_iso=['0.05 nm','0.1 nm','0.15 nm'],
-              x_iso=[1.5]*3,smoothIt=True)
+              x_iso_tag=[1.5]*3,smoothIt=True)
+    """
 if 'sigma' in plots:
     airmass=[1.2,2.0]
     plot_airmass(df,varx=thevar,xlabel=labdict[thevar],
