@@ -49,8 +49,13 @@ fName = '{}/{}'.format(theDir,theFile)
 
 df = pd.read_hdf(fName)
 
-idx = df['sigma_aerosol'] <= 0.0125
+
+idx = df['orig_airmass'] >=1.07
+idx &= df['orig_airmass'] <=2.4
+idx = df['sigma_aerosol'] <=0.015
+#idx &= df['orig_airmass'] <=2.4
 df = df[idx]
+
 print(df.columns)
 
 print(df[['mean_airmass','sigma_pwv','mean_mean_wave_z', 'std_mean_wave_z']])
@@ -83,10 +88,12 @@ thevar = 'sigma_{}'.format(atmos_param)
 tab = Table.from_pandas(df,index=False)
 
 if 'map' in plots:
+    print('allo',tab[thevar].min(),tab[thevar].max())
     plot_grid(tab,varx='mean_airmass',
               vary=thevar,ylabel=labdict[thevar],
               varz='std_zp_{}'.format(theband),
-              figtitle='$\sigma_{ZP}^{'+theband+'}$ [mmag]',smoothIt=True)
+              figtitle='$\sigma_{ZP}^{'+theband+'}$ [mmag]',
+              smoothIt=True,k_ytext=1.05)
     """
     plot_grid(tab,varx='mean_airmass',
               vary=thevar,ylabel=labdict[thevar],
