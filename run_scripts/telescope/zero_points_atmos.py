@@ -320,12 +320,5 @@ for i in range(params['ntrial']):
     pparams['num_combi'] =+1
     res = multiproc(combis,pparams,process_combi,params['nproc'])
     
-    """
-    if params['nsample'] == 1:
-        res = multiproc(combis,pparams,process_combi,params['nproc'])
-    else:
-        res = process_combi(combis, pparams)
-    """
-print(res)
 store.append('zp_atmos', res)
 store.close()
