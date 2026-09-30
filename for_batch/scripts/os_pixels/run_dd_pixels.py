@@ -134,4 +134,4 @@ for i, row in dbs.iterrows():
         st = os.stat(scriptName)
         os.chmod(scriptName, st.st_mode | 0o111)
         cmd_e = 'sh example_scripts/srun_cc.sh {}'.format(scriptName)
-        #os.system(cmd_e)
+        os.system(cmd_e)
