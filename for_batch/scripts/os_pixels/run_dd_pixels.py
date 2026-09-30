@@ -7,7 +7,7 @@ Created on Wed Apr  2 14:55:59 2025
 """
 from optparse import OptionParser
 import pandas as pd
-import numpy as np
+#import numpy as np
 import os
 from sn_tools.sn_batchutils import BatchIt
 from sn_tools.sn_io import checkDir
@@ -90,13 +90,25 @@ for i, row in dbs.iterrows():
 
     procName = 'DD_pixels_{}'.format(row['dbName'])
 
+    procDict['fieldName'] = ','.join(fields)
+    prodId = '{}'.format(procName)
+
+    procDict['prodID'] = prodId
+    procDict['nproc'] = nproc
+    procDict['nproc_pixels'] = 0
+    procDict['timescale'] = timescale
+    procDict['FoV'] = fov
+
     if procmode == 'batch':
         mybatch = BatchIt(processName=procName, time=proctime, mem=procmem)
+        mybatch.add_batch(scriptref, procDict)
 
     if procmode == 'interact':
         scriptName = '{}/{}.sh'.format(shDir, procName)
         script = open_script(scriptName)
+        add_script(script, scriptref, procDict)
 
+    """
     for field in fields:
 
         procDict['fieldName'] = field
@@ -113,7 +125,7 @@ for i, row in dbs.iterrows():
 
         if procmode == 'interact':
             add_script(script, scriptref, procDict)
-
+    """
     # go for batch
     if procmode == 'batch':
         mybatch.go_batch()
@@ -121,5 +133,5 @@ for i, row in dbs.iterrows():
         script.close()
         st = os.stat(scriptName)
         os.chmod(scriptName, st.st_mode | 0o111)
-        cmd_e = 'sh srun_test.sh {}'.format(scriptName)
-        os.system(cmd_e)
+        cmd_e = 'sh example_scripts/srun_cc.sh {}'.format(scriptName)
+        #os.system(cmd_e)
