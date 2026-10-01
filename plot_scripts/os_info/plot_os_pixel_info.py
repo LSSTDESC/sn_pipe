@@ -177,7 +177,7 @@ def load_data(dbDir, dbName, fields, fieldType='DD'):
 
     return df
     
-def plot_mollviews(sel,seasons,var_to_plot):
+def plot_mollviews(sel,seasons,var_to_plot,nvisits_10yrs_min):
     """
     Function to display Mollweid plots for a set of variavles
 
@@ -197,7 +197,8 @@ def plot_mollviews(sel,seasons,var_to_plot):
     for vv in var_to_plot:
         plot_mollviews_db(sel,vv,seasons,yleg=dict_leg[vv])
        
-def plot_mollviews_db(sel,vv,seasons,yleg='',timescale='year'):
+def plot_mollviews_db(sel,vv,seasons,yleg='',timescale='year',
+                      nvisits_10yrs_min=0):
     """
     Function to display mollview plots for OS
 
@@ -219,7 +220,6 @@ def plot_mollviews_db(sel,vv,seasons,yleg='',timescale='year'):
     None.
 
     """
-    
     
     if seasons == '10yrs':
         if vv.split('_')[0] =='nvisits':
@@ -324,7 +324,7 @@ def plot_histos(hist_var,df,seasons,timescale='year'):
         if seasons == '10yrs':
             if vv.split('_')[0] == 'nvisits':
                 df = df.groupby(['healpixID','dbName'])[hist_var].sum().reset_index()
-            if vv == 'nvisits_night':
+            if vv == 'nvisits_night' or vv =='ebvofMW':
                 df = df.groupby(['healpixID','dbName'])[hist_var].mean().reset_index()
             if vv.split('_')[0] == 'cadence':
                 idx= df[vv]<=30
@@ -433,7 +433,117 @@ def plot_histos_db(df,varx,fig=None,ax=None,figtit='',outDir='None',outName=''):
         
         if outName != '':
             plt.savefig('{}/diff_{}.png'.format(outDir,outName))
+            
+def plot_vs(df,xvar,yvar,seasons,timescale='year'):
+    """
+    Function to plot histograms of data
+
+    Parameters
+    ----------
+    hist_var : list(str)
+        List of variables to plot.
+    df : pandas df
+        Data to plot.
+    seasons : list(int) or list(str)
+        seasons to plot.
+    timescale : str, optional
+        Time scale to use. The default is 'year'.
+    Returns
+    -------
+    None.
+
+    """
     
+    if seasons == '10yrs':
+        if xvar.split('_')[0] == 'nvisits':
+            df = df.groupby(['healpixID','dbName','ebvofMW'])[xvar].sum().reset_index()
+            idx = df['nvisits'] >= 500
+            df = df[idx]
+        figtit = '10 yrs'
+    plot_vs_db(df,xvar,yvar,figtit=figtit)
+    
+def plot_vs_db(df,varx,vary,fig=None,ax=None,figtit='',outDir='None',outName=''):
+    """
+    Function to plot histos for OS
+
+    Parameters
+    ----------
+    df : pandas df
+        Data to plot.
+    varx : str
+        x-axis variable.
+    fig : matplotlib figure, optional
+        Figure for the plot. The default is None.
+    ax : matplotlib axis, optional
+        axis for the plot. The default is None.
+    figtit : str, optional
+        figure title. The default is ''.
+
+    Returns
+    -------
+    None.
+
+    """
+    
+    ccols = ['r','k','b']
+    lls = ['solid','dashed','dotted']
+    
+    dbNames = df['dbName'].unique().tolist()
+    colors = dict(zip(dbNames,ccols[0:len(dbNames)]))
+    ls = dict(zip(dbNames,lls[0:len(dbNames)]))
+    
+    if fig is None:
+        fig, ax = plt.subplots(figsize=(12, 8))
+
+    if figtit != '':
+        fig.suptitle(figtit)
+        
+    d_df = {}
+    for dbName in dbNames:
+           idx = df['dbName'] == dbName
+           sel = df[idx]
+           if len(dbNames) == 2:
+               d_df[dbName] = sel
+           ax.plot(sel[varx], sel[vary],label=dbName,
+                   linestyle='None',color=colors[dbName],
+                   marker='o',mfc='None',markersize=10)
+    
+    ax.set_xlabel(r'{}'.format(dict_leg[varx]))
+    ax.set_ylabel(r'Number of entries')
+    ax.grid(visible=True)
+    ax.set_xlim([0., None])
+    ax.legend(fontsize=15,frameon=False)
+    
+    #save the plot here
+    if outName!= '':
+        plt.savefig('{}/{}.png'.format(outDir,outName))
+    
+    #plot the diff here
+    
+    if len(dbNames) == 2:
+        dba = dbNames[0]
+        dbb = dbNames[1]  
+        df_m = d_df[dba].merge(d_df[dbb],
+                                  left_on=['healpixID','ebvofMW'],
+                                  right_on=['healpixID','ebvofMW'])
+        newvar = 'diff_{}'.format(varx) 
+        df_m[newvar] = df_m['{}_x'.format(varx)]-df_m['{}_y'.format(varx)]  
+        dbNa = df_m['dbName_x'].unique()[0]
+        dbNb = df_m['dbName_y'].unique()[0]
+        dbName = '{}-{}'.format(dbNa,dbNb)
+        figb, axb = plt.subplots(figsize=(12, 8))
+        if figtit != '':
+            figtit += '\n '+dbName
+            figb.suptitle(figtit)
+        axb.plot(df_m[newvar],df_m[vary],
+                   linestyle='None',color='k',marker='o')
+        axb.grid(visible=True)
+        xlab = '$\Delta$'+'{}'.format(dict_leg[varx])
+        axb.set_xlabel(r'{}'.format(xlab))
+        axb.set_ylabel(r'Number of entries')
+        
+        if outName != '':
+            plt.savefig('{}/diff_{}.png'.format(outDir,outName))    
    
     
 def plot_nvisits_cumsum(sel,varx='nvisits'):
@@ -483,10 +593,6 @@ def tag_hotspot(df,ra=224,dec=-29,width=20.,varx='nvisits'):
     plt.show()
     
     
-    
-    
-    
-    
 parser = OptionParser(description='Script to plot pixel level OS infos')
 
 parser.add_option('--dbName', type=str, default='test_newb',
@@ -525,12 +631,15 @@ parser.add_option('--mollview_outDir', type=str,
 parser.add_option('--histo_outDir', type=str,
                   default='None',
                   help='output dir for histograms [%default]')
-parser.add_option('--nvisits_10yrs_min', type=int,
+parser.add_option('--nvisits_10yrs_max', type=int,
                   default=1200,
-                  help='min nvisits after 10 yrs (to remove hot spots) [%default]')
-parser.add_option('--dust', type=int,
+                  help='max nvisits after 10 yrs (to remove hot spots) [%default]')
+parser.add_option('--nvisits_10yrs_min', type=int,
                   default=0,
-                  help='to apply E(B-V) cut [%default]')
+                  help='min nvisits after 10 yrs  [%default]')
+parser.add_option('--ebvofMW_max', type=float,
+                  default=0.25,
+                  help='max E(B-V) [%default]')
 parser.add_option('--show_plot', type=int,
                   default=1,
                   help='to display the plots [%default]')
@@ -551,8 +660,9 @@ timescale = opts.timescale
 mollview_outDir = opts.mollview_outDir
 histo_outDir = opts.histo_outDir
 nvisits_10yrs_min=opts.nvisits_10yrs_min
-dust = opts.dust
+nvisits_10yrs_max=opts.nvisits_10yrs_max
 show_plot = opts.show_plot
+ebvofMW_max = opts.ebvofMW_max
 
 if '-' in seasons:
     cad_brk = seasons.split('-')
@@ -572,16 +682,16 @@ for dbName in dbNames:
     df = pd.concat((df,df_))
 
 #load the dust_map
-if dust:
-    fDust = 'reference_files/dustmap_{}_delta_mag_dust.hdf5'.format(nside)
-    df_dust = pd.read_hdf(fDust)
 
-    df = df.merge(df_dust,left_on=['healpixID'],right_on=['healpixID'])
+fDust = 'reference_files/dustmap_{}_delta_mag_dust.hdf5'.format(nside)
+df_dust = pd.read_hdf(fDust)
 
-    #select on dust
+df = df.merge(df_dust,left_on=['healpixID'],right_on=['healpixID'])
 
-    idx = df['ebvofMW'] < 0.25
-    df = df[idx]
+#select on dust
+
+idx = df['ebvofMW'] < ebvofMW_max
+df = df[idx]
 
 print('nentries',len(df))
 
@@ -594,7 +704,7 @@ if histo_outDir != 'None':
     checkDir(histo_outDir)
 
 idx = df[timescale] > 0
-idx &= df[timescale] < 11
+idx &= df[timescale] < 12
 idx &= df['cadence'] > 0.
 
 sel = df[idx]
@@ -604,7 +714,7 @@ sel = df[idx]
 #plot_nvisits_cumsum(sel)
 
 #remove hot spots
-hot_pixels = high_nvisits_pixels(sel,thresh=nvisits_10yrs_min)
+hot_pixels = high_nvisits_pixels(sel,thresh=nvisits_10yrs_max)
 
 idx = sel['healpixID'].isin(hot_pixels)
 
@@ -612,24 +722,36 @@ hot_spots = sel[idx]
 
 sel = sel[~idx]
 
+#add nvisits_10 yrs
+ccols = ['healpixID','dbName']
+selb = sel.groupby(ccols)['nvisits'].sum().reset_index()
+selb = selb.rename(columns={'nvisits':'nvisits_10yrs'})
+sel = sel.merge(selb,left_on=ccols,right_on=ccols)
+
+# select
+idx = sel['nvisits_10yrs'] >= nvisits_10yrs_min
+sel = sel[idx]
+
 bands = 'ugrizy'
 vvar = ['cadence', 'nvisits', 'm5_i','nvisits_night']
 for b in bands:
     vvar.append('cadence_{}'.format(b))
     vvar.append('nvisits_{}'.format(b))
     
-legvar = ['cadence [night]', '$\Sigma N_{visits}$/pixel', 
-          '$m_{5}^{i}$','<N$_{visits}$>/night/pixel']
+legvar = ['cadence [night]', '$\Sigma N_{visits}$', 
+          '$m_{5}^{i}$','<N$_{visits}$>/night']
 
 for b in bands:
     legvar.append('cadence {} [night]'.format(b))
-    legvar.append('$\Sigma N_{visits}^{'+b+'}$/pixel')
+    legvar.append('$\Sigma N_{visits}^{'+b+'}$')
     
 for b in ['gri']:
     vvar.append('nvisits_{}'.format(b))
-    legvar.append('$\Sigma N_{visits}^{'+b+'}$/pixel')
+    legvar.append('$\Sigma N_{visits}^{'+b+'}$')
 
-    
+vvar.append('ebvofMW')
+legvar.append('E(B-V)')    
+
 dict_leg = dict(zip(vvar, legvar))
 
 if 'gen_plots' in plots:
@@ -645,12 +767,12 @@ if 'gen_plots' in plots:
                            timescale=timescale)
 
 if 'mollview' in plots:
-    plot_mollviews(sel,seasons,mollview_var)
+    plot_mollviews(sel,seasons,mollview_var,nvisits_10yrs_min)
             
 
 if 'hist' in plots:
-    plot_histos(hist_var,sel,seasons)
-   
+    plot_histos(hist_var,sel,seasons,nvisits_10yrs_min)
+    #plot_vs(sel,'nvisits','ebvofMW',seasons)
     
 
 """
