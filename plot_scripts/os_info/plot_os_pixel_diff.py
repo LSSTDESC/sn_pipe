@@ -110,9 +110,38 @@ def add_dust_select(df,nside,ebvofMW_max):
     
     return df
     
-def plot_histo_db(df,xvar,xlabel='ooo',
+def plot_histo_db(df,xvar,xlabel,
                   figtit='',fig=None,ax=None,
                   lstyle='solid',color='k',marker='o'):
+    """
+    Function to plot a single db histogram
+
+    Parameters
+    ----------
+    df : pandas df
+        Data to plot.
+    xvar : str
+        xaxis variable.
+    xlabel : str, optional
+        x-axis label.
+    figtit : str, optional
+        fig title. The default is ''.
+    fig : matplotlib figure, optional
+        figure of the display. The default is None.
+    ax : matplotlib axis, optional
+        axis for the plot. The default is None.
+    lstyle : str, optional
+        line style. The default is 'solid'.
+    color : str, optional
+        color. The default is 'k'.
+    marker : str, optional
+        marker. The default is 'o'.
+
+    Returns
+    -------
+    None.
+
+    """
     
     if xvar == 'nvisits_10yrs':
         dfb = df.groupby(['healpixID','dbName'])[xvar].mean().reset_index()
@@ -129,6 +158,25 @@ def plot_histo_db(df,xvar,xlabel='ooo',
     
     
 def plot_histos_db(df,xvar,xlabel,figtit):
+    """
+    Function to plot a set of histograms
+
+    Parameters
+    ----------
+    df : pandas df
+        Data to plot.
+    xvar : str
+        x-axis variable.
+    xlabel : str
+        x-axis label.
+    figtit : str
+        Figure title.
+
+    Returns
+    -------
+    None.
+
+    """
     
     dbNames = df['dbName'].unique()
     
@@ -150,6 +198,22 @@ def plot_histos_db(df,xvar,xlabel,figtit):
                       color=colors[i],marker=markers[i])
 
 def get_area(grp,nside):
+    """
+    Function to estimate survey area
+
+    Parameters
+    ----------
+    grp : pandas df
+        Data to process.
+    nside : int
+        healpix nside parameter.
+
+    Returns
+    -------
+    pandas df
+        a set of infos.
+
+    """
     
     import healpy as hp
 
@@ -171,7 +235,28 @@ def get_area(grp,nside):
     return pd.DataFrame.from_dict(res)
     
 def plot_vs_db(df,yvar='survey_area',ylabel='survey area [deg2]',
-               ref_OS='baseline_v5.3.0_10yrs',plot_mode="diff_abs"):
+               ref_OS='baseline_v5.3.0_10yrs',plot_mode="normal"):
+    """
+    Function to plot vs OS
+
+    Parameters
+    ----------
+    df : pandas df
+        Data to process.
+    yvar : str, optional
+        y-axis variable. The default is 'survey_area'.
+    ylabel : str, optional
+        y-axis label. The default is 'survey area [deg2]'.
+    ref_OS : str, optional
+        ref OS. The default is 'baseline_v5.3.0_10yrs'.
+    plot_mode : str, optional
+        Type of plot. The default is "normal".
+
+    Returns
+    -------
+    None.
+
+    """
     
     yvarp = yvar
     if plot_mode=="diff_abs" or plot_mode=="diff_rel":
