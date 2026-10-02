@@ -26,7 +26,7 @@ def plot_atmos_bias(df,col='band',colx='bias_value [%]',
     
     #idx = df['airmass'] == airmass
     idx = df[coly] > 0.
-    idx &= df[col].isin(list(bands))
+    idx &= df[col].isin(bands)
     
     sel = df[idx]
     
@@ -131,7 +131,8 @@ for vv in atmos_params:
     df = pd.concat((df,da))
     
 atmos_params=['airmass','ozone','aerosol','pwv']
-bands=['grizy','gr','grizy','izy'] 
+#bands=['grizy','gr','grizy','izy'] 
+bands=[['gr','ri','iz','zy']]*4
 ymax = [5,2.5,5,5]
 yymax=dict(zip(atmos_params,ymax))
 bb = dict(zip(atmos_params,bands))

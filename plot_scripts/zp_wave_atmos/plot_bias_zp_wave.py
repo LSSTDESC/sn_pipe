@@ -52,7 +52,8 @@ def plot(df,b='g',xvar='airmass',yvar='zp',
     
     #add ref 
     cols = 'orig_{}'.format(xvar)
-    dfa = df.groupby([cols]).apply(lambda x: get_var_ref(x,xvar,yvar,b),include_groups=False).reset_index()
+    dfa = df.groupby([cols]).apply(lambda x: get_var_ref(x,xvar,yvar,b),
+                                   include_groups=False).reset_index()
     
     df = df.merge(dfa, left_on=cols,right_on=cols)
 
@@ -145,6 +146,32 @@ def get_var_ref(grp,xvar='airmass',yvar='zp',band='g'):
     
 def get_values_from_grid(df,b='g',xvar='airmass',yvar='zp',
                          bias_var='airmass',unit_y='%',unit_z='mmag'):
+    """
+    Function to estimate values from grid
+
+    Parameters
+    ----------
+    df : pandas df
+        Data to process.
+    b : str, optional
+        band to consider. The default is 'g'.
+    xvar : str, optional
+        x-axis variable. The default is 'airmass'.
+    yvar : str, optional
+        y-axis variable. The default is 'zp'.
+    bias_var : str, optional
+        bias var. The default is 'airmass'.
+    unit_y : str, optional
+        y-axis var unit. The default is '%'.
+    unit_z : str, optional
+        z-axis unit. The default is 'mmag'.
+
+    Returns
+    -------
+    df : pandas df
+        estimations.
+
+    """
     
     xxvar = 'orig_{}'.format(xvar)
     yyvar = 'mean_{}_{}'.format(yvar,b)
@@ -178,6 +205,7 @@ def get_values_from_grid(df,b='g',xvar='airmass',yvar='zp',
                    iso=np.arange(-5.,5.,0.01))    
 
     return df
+
 parser = OptionParser(description='analyze and plot zp and mean wave from bias run')
 
 parser.add_option('--dataDir', type=str, default='../zp_atmos_bias',
@@ -186,11 +214,11 @@ parser.add_option('--atmos_param', type=str, default='airmass',
                   help='bias atmospheric parameter [%default]')
 parser.add_option('--obs', type=str, default='zp',
                   help='variable to plot [%default]')
-parser.add_option('--bands', type=str, default='grizy',
+parser.add_option('--bands', type=str, default='g/r/i/z/y/gr/ri/iz/zy',
                   help='filters to plot [%default]')
 parser.add_option('--outDir', type=str, default='../zp_atmos_bias_summary',
-                  help='filters to plot [%default]')
-parser.add_option('--what', type=str, default='grid_plot,interp_estimates',
+                  help='output dir [%default]')
+parser.add_option('--what', type=str, default='plot_grid,interp_estimates',
                   help='what to do [%default]')
 
 opts, args = parser.parse_args()
@@ -198,7 +226,7 @@ opts, args = parser.parse_args()
 theDir = opts.dataDir
 atmos_param= opts.atmos_param
 obs=opts.obs
-bands = opts.bands
+bands = opts.bands.split('/')
 outDir = opts.outDir
 what=opts.what
 
@@ -208,6 +236,7 @@ theFile = '{}/zp_atmos_{}.hdf5'.format(theDir,atmos_param)
 df = pd.read_hdf(theFile)
 
 dfr = pd.DataFrame()
+
 for b in bands:
     if 'plot_grid' in what:
         plot(df,b,yvar=obs,bias_var=atmos_param)
