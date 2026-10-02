@@ -43,16 +43,23 @@ Options:
   --plots=PLOTS         plots [vs_airmass,summary,from_sigmas]
   --sigmas=SIGMAS       sigmas of atmos params [3e-3,20,5e-3,0.2]
   --unit=UNIT           unit of sigmas of atmos params [,DU,,mm]
-
+  --dirPlot=DIRPLOT     dir for output plots [../plot_atmos]
 </pre>
 
-[sigma_zp vs sigma_pwv](fig4a.png)
+[sigma_zp vs sigma_pwv (grizy)](fig4a.png)
+
+[sigma_zp vs sigma_pwv (gr,ri,iz,zy)](fig_std_zp_sigma_pwv_gr_ri_iz_zy.png)
 
 [sigma_mean_wave vs sigma_pwv](fig3a.png)
 
-[sigma_zp vs band and atmos. param for a set of atmos. param sigmas](fig1a.png)
+[sigma_zp vs band and atmos. param for a set of atmos. param sigmas](from_sigma_zp_sigma.png)
 
-[sigma_zp budget vs band](fig2a.png)
+[sigma_zp budget vs band](from_sigma_zp_frac.png)
+
+[summary zp (1mmag)](summary_zp.png)
+
+[summary mean wave (0.1 nm)](summary_mean_wave.png)
+
 
 #### Usage: run_scripts/telescope/get_zp_wave.py
 
