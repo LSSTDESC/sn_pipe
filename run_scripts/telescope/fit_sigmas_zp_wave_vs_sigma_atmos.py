@@ -8,6 +8,7 @@ Created on Thu Apr  2 14:26:22 2026
 from optparse import OptionParser
 import matplotlib.pyplot as plt
 from sn_analysis.sn_fit_tools import load_fit_atmos_data
+from sn_tools.sn_io import checkDir
   
 parser = OptionParser(description='Fit sigma_zp and sigma_mean_wave \
                       vs sigma of atmos params')
@@ -22,6 +23,8 @@ parser.add_option('--sigmas', type=str, default='3e-3,20,5e-3,0.2',
                   help='sigmas of atmos params [%default]')
 parser.add_option('--unit', type=str, default=',DU,,mm',
                   help='unit of sigmas of atmos params [%default]')
+parser.add_option('--dirPlot', type=str, default='../plot_atmos',
+                  help='dir for output plots [%default]')
 
 opts, args = parser.parse_args()
 
@@ -33,21 +36,31 @@ unit = opts.unit.split(',')
 sigmas = list(map(float, sigmas))
 sigmas = dict(zip(atmos_params,sigmas))
 unit = dict(zip(atmos_params,unit))
+plotDir = opts.dirPlot
+
+#create outdir if necessary
+checkDir(plotDir)
+
+#define bands
+bands = ['g','r','i','z','y']
+bands_zp = ['gr','ri','iz','zy']
 
 df_zp, df_wave = load_fit_atmos_data(theDir, atmos_params)
 
 if 'summary' in plots:
     from sn_plotter_tools.plot_atmos_tools import plot_all_summary
-    plot_all_summary(df_zp, df_wave)
+    plot_all_summary(df_zp, df_wave,plotDir=plotDir)
   
 if 'vs_airmass' in plots:
     from sn_plotter_tools.plot_atmos_tools import plot_atmos_data_airmass
-    plot_atmos_data_airmass(theDir,atmos_params)
+    plot_atmos_data_airmass(theDir,atmos_params,plotDir=plotDir)
 
 if 'from_sigmas' in plots:
     from sn_plotter_tools.plot_atmos_tools import plot_perf_obs_param
-    plot_perf_obs_param(df_zp,sigmas,unit,unit='mmag')
+    plot_perf_obs_param(df_zp,sigmas,unit,unit='mmag',bands=bands+bands_zp,
+                        plotDir=plotDir)
     plot_perf_obs_param(df_wave,sigmas,unit,obs_param='mean_wave',unit = 'nm',
-                    ylabel='mean\ wave',ylines=[0.1],yannot=['0.1 nm'])
+                    ylabel='mean\ wave',ylines=[0.1],yannot=['0.1 nm'],
+                    plotDir=plotDir)
 
 plt.show()
