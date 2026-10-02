@@ -39,7 +39,8 @@ unit = dict(zip(atmos_params,unit))
 plotDir = opts.dirPlot
 
 #create outdir if necessary
-checkDir(plotDir)
+if plotDir != 'None':
+    checkDir(plotDir)
 
 #define bands
 bands = ['g','r','i','z','y']
