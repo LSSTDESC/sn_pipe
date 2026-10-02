@@ -117,14 +117,4 @@ An example on how to use this script is available: see sh_scripts/zp_atmos.sh
 
 [Impact of atmos params bias](zp_mean_wave_bias.md)
 
-### Usage: run_scripts/telescope/scan_atmos_sigma.py [options]
-
-<pre>
-Scan the atmos parameter sigma space
-
-Options:
-  -h, --help            show this help message and exit
-  --dataDir=DATADIR     data dir [../zp_atmos]
-  --atmos_param=ATMOS_PARAM
-                        atmospheric parameters [airmass,ozone,aerosol,pwv]
-</pre>
+[Scan atmos sigma param space](scan_sigma.md)
