@@ -13,7 +13,7 @@ import healpy as hp
 from sn_plotter_analysis import plt
 
 
-def load_data(dbDir, config, field):
+def load_data(dbDir, config):
     """
     Function to load data
 
@@ -38,7 +38,9 @@ def load_data(dbDir, config, field):
     df = pd.DataFrame()
     for i, row in df_config.iterrows():
         dbName = row['dbName']
-        fName = '{}/{}/*{}*.hdf5'.format(dbDir, dbName, field)
+        #fName = '{}/{}/*{}*.hdf5'.format(dbDir, dbName, field)
+        fName = '{}/{}/*.hdf5'.format(dbDir, dbName)
+        print('search path',fName)
         fi = glob.glob(fName)[0]
         ff = pd.read_hdf(fi)
         ff['dbName'] = dbName
@@ -221,7 +223,21 @@ timescale = opts.timescale
 nside = opts.nside
 
 pixArea = hp.nside2pixarea(nside, degrees=True)
+df = load_data(dbDir, config)
+print(df.columns)
 
+dfb = df.groupby(['field','dbName', 'dbName_plot', 'dither', 
+                  'dither_type', timescale]).apply(
+        lambda x: get_info_pixels(x, pixArea=pixArea), include_groups=False).reset_index()
+print(dfb)
+
+fields = dfb['field'].unique()
+for field in fields:
+    idx = dfb['field'] == field
+    sel = dfb[idx]
+    plot_timescale(sel, figtitle=field)
+
+"""
 for field in fields:
     # load the data
     df = load_data(dbDir, config, field)
@@ -229,15 +245,21 @@ for field in fields:
         lambda x: get_info_pixels(x, pixArea=pixArea), include_groups=False).reset_index()
     print(dfb)
     plot_timescale(dfb, figtitle=field)
-
-    """
-    dfc = dfb.groupby(['dbName', 'dbName_plot', 'dither', 'dither_type'])[
-        'area'].mean().reset_index()
-    """
-    dfc = df.groupby(['dbName', 'dbName_plot', 'dither', 'dither_type']).apply(
-        lambda x: get_info_pixels(x, pixArea=pixArea), include_groups=False).reset_index()
-    print(dfc)
-
-    plot_dither(dfc, figtitle=field)
-
+"""
+"""
+dfc = dfb.groupby(['dbName', 'dbName_plot', 'dither', 'dither_type'])[
+    'area'].mean().reset_index()
+"""
+#dither??
+"""
+dfc = df.groupby(['field','dbName', 'dbName_plot', 'dither', 'dither_type']).apply(
+    lambda x: get_info_pixels(x, pixArea=pixArea), include_groups=False).reset_index()
+print(dfc)
+fields = dfc['field'].unique()
+for field in fields:
+    idx = dfc['field'] == field
+    sel = dfc[idx]
+    print('alalalal',len(sel))
+    plot_dither(sel, figtitle=field)
+"""
 plt.show()
