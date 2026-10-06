@@ -9,7 +9,7 @@ Options:
   --dbName=DBNAME       dbName to process [test_newb]
   --dbDir=DBDIR         dbDir of the OS to process [../test_metric]
   --nside=NSIDE         healpix nside parameter [128]
-  --plots=PLOTS         plots to show [gen_plots,mollview]
+  --plots=PLOTS         plots to show [gen_plots,mollview,hist]
   --seasons=SEASONS     seasons to show [1-5]
   --fields=FIELDS       fields to show [COSMOS,XMM-
                         LSS,CDFS,ELAISS1,EDFS_a,EDFS_b]
@@ -24,14 +24,22 @@ Options:
   --hist_var=HIST_VAR   hist var to plot [nvisits_10yrs,cadence_year]
   --mollview_outDir=MOLLVIEW_OUTDIR
                         output dir for mollview figures [None]
+  --histo_outDir=HISTO_OUTDIR
+                        output dir for histograms [None]
+  --nvisits_10yrs_max=NVISITS_10YRS_MAX
+                        max nvisits after 10 yrs (to remove hot spots) [1200]
   --nvisits_10yrs_min=NVISITS_10YRS_MIN
-                        min nvisits after 10 yrs (to remove hot spots) [1200]
+                        min nvisits after 10 yrs  [0]
+  --ebvofMW_max=EBVOFMW_MAX
+                        max E(B-V) [0.25]
+  --show_plot=SHOW_PLOT
+                        to display the plots [1]
 		
 </pre>
 
 ## example
 
-python plot_scripts/os_info/plot_os_pixel_info.py --dbDir=../dd_pixels --plots=gen_plots --dbName=ddf_dither_0.8_v5.0.0_10yrs --fields=COSMOS --gen_var=cadence_dist,nvisits_dist
+python plot_scripts/os_info/plot_os_pixel_info.py --dbDir=../dd_pixels --plots=gen_plots --dbName=ddf_dither_0.8_v5.0.0_10yrs --fields=COSMOS --gen_var=cadence_dist,nvisits_dist --nvisits_10yrs_max=1000000
 
 [cadence vs distance to the center of pixel set](plotd1.png)
 
