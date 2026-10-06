@@ -21,8 +21,12 @@ Options:
 
 </pre>
 
-[$\Delta$ cadence](summary_delta_cadence_shrink.png)
-[relative cadence](summary_rel_cadence_shrink.png)
-[$\Delta$ Nvisits](summary_delta_nvisits_shrink.png)
-[relative survey area](summary_rel_area_shrink.png)
+[diff cadence](summary_delta_cadence_shrink.png)
+
+[diff relative cadence](summary_rel_cadence_shrink.png)
+
+[diff Nvisits](summary_delta_nvisits_shrink.png)
+
+[diff relative survey area](summary_rel_area_shrink.png)
+
 [survey area](summary_area_shrink.png)
