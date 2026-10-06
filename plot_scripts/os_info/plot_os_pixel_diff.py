@@ -235,7 +235,7 @@ def get_area(grp,nside):
     return pd.DataFrame.from_dict(res)
     
 def plot_vs_db(df,yvar='survey_area',ylabel='survey area [deg2]',
-               ref_OS='baseline_v5.3.0_10yrs',plot_mode="normal"):
+               ref_OS='baseline_v5.3.0_10yrs',plot_mode="normal",figtit=''):
     """
     Function to plot vs OS
 
@@ -251,6 +251,8 @@ def plot_vs_db(df,yvar='survey_area',ylabel='survey area [deg2]',
         ref OS. The default is 'baseline_v5.3.0_10yrs'.
     plot_mode : str, optional
         Type of plot. The default is "normal".
+    figtit: str, optional.
+        Figure title. The default is ''
 
     Returns
     -------
@@ -271,8 +273,15 @@ def plot_vs_db(df,yvar='survey_area',ylabel='survey area [deg2]',
         df['dbName_plot'] = df['dbName_plot_x']
     
     fig, ax = plt.subplots(figsize=(15,10))
+    if figtit != '':
+        fig.suptitle(figtit)
+    
     
     df = df.sort_values(by=[yvarp])
+    if plot_mode != 'normal':
+        idx = df['dbName_x'] == ref_OS
+        df = pd.DataFrame(df[~idx])
+        
     ax.plot(df['dbName_plot'],df[yvarp])
     
     ax.set_ylabel(r'{}'.format(ylabel))
@@ -303,7 +312,7 @@ parser.add_option('--nvisits_10yrs_min', type=int,
                   default=500,
                   help='min nvisits after 10 yrs  [%default]')
 parser.add_option('--nvisits_10yrs_max', type=int,
-                  default=10000,
+                  default=2000,
                   help='max nvisits after 10 yrs  [%default]')
 parser.add_option('--ebvofMW_max', type=float,
                   default=0.25,
@@ -352,10 +361,24 @@ dd = df.groupby(['dbName','dbName_plot']).apply(lambda x: get_area(x,nside),
                                   include_groups=False).reset_index()
 
 print(dd)
+figtit = '{}'.format(nvisits_10yrs_min)
+figtit += '$\leq N_{visits}^{10 yrs}\leq$'
+figtit += '{}'.format(nvisits_10yrs_max)
+figtit += ' - E(B-V)'
+figtit += '$\leq$'
+figtit += '{}'.format(ebvofMW_max)
 
-plot_vs_db(dd,plot_mode='normal')
-plot_vs_db(dd,'survey_area','$\Delta$survey area [%]',plot_mode="diff_rel")
-plot_vs_db(dd,'nvisits_10yrs','$\Sigma N_{visits}$',plot_mode='diff_abs')
-plot_vs_db(dd,'cadence','$\Delta$cadence [night]',plot_mode="diff_abs")
-plot_vs_db(dd,'cadence','$\Delta$cadence [%]',plot_mode="diff_rel")
+figtit_norm = figtit
+figtit_norm += '\n ref OS:{}'.format(ref_OS)
+plot_vs_db(dd,plot_mode='normal',figtit=figtit)
+
+plot_vs_db(dd,'survey_area','$\Delta$survey area [%]',
+           plot_mode="diff_rel",figtit=figtit_norm)
+plot_vs_db(dd,'nvisits_10yrs','$\Delta N_{visits}$',
+           plot_mode='diff_abs',figtit=figtit_norm)
+plot_vs_db(dd,'cadence','$\Delta$cadence [night]',
+           plot_mode="diff_abs",figtit=figtit_norm)
+plot_vs_db(dd,'cadence','$\Delta$cadence [%]',
+           plot_mode="diff_rel",figtit=figtit_norm)
+
 plt.show()
