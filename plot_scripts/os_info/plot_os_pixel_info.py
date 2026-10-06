@@ -152,6 +152,7 @@ def load_data(dbDir, dbName, fields, fieldType='DD'):
     theDir = '{}/{}'.format(dbDir, dbName)
     prefix = '{}_pixels_{}'.format(fieldType, dbName)
 
+    """
     # grab the list of data
     list_data = []
     if fieldType == 'DD':
@@ -174,7 +175,15 @@ def load_data(dbDir, dbName, fields, fieldType='DD'):
     for fi in list_data:
         dd = pd.read_hdf(fi)
         df = pd.concat((df, dd))
-
+    """
+    df = pd.DataFrame()
+    fName = '{}/{}*.hdf5'.format(theDir, prefix)
+    print('search_path',fName)
+    fis = glob.glob(fName)
+    for fi in fis:
+        dd = pd.read_hdf(fi)
+        df = pd.concat((df, dd))
+    
     return df
     
 def plot_mollviews(sel,seasons,var_to_plot,nvisits_10yrs_min):
@@ -547,6 +556,21 @@ def plot_vs_db(df,varx,vary,fig=None,ax=None,figtit='',outDir='None',outName='')
    
     
 def plot_nvisits_cumsum(sel,varx='nvisits'):
+    """
+    Function to plot nvisits cumsum
+
+    Parameters
+    ----------
+    sel : pandas df
+        Data to process.
+    varx : str, optional
+        x-axis variable. The default is 'nvisits'.
+
+    Returns
+    -------
+    None.
+
+    """
     
     dbNames = sel['dbName'].unique()
     
@@ -755,6 +779,8 @@ legvar.append('E(B-V)')
 dict_leg = dict(zip(vvar, legvar))
 
 if 'gen_plots' in plots:
+    idx = sel['field'].isin(fields)
+    sel = sel[idx]
     for vv in gen_var:
         vary = vv.split('_')[0]
         varx = vv.split('_')[1]
