@@ -13,7 +13,8 @@ from sn_plotter_metrics import plt,filtercolors
 import numpy as np
 
 def plot_season_length(data,vary='season_length', 
-                       labely='season length [nights]'):
+                       labely='season length [nights]',
+                       dbName=''):
     """
     Function to plot season length vs season for each DDF
 
@@ -55,7 +56,11 @@ def plot_season_length(data,vary='season_length',
     ax.set_ylabel(r'{}'.format(labely))
     ax.set_xlabel(r'season')
 
-def plot_nvisits(data,field='DD:COSMOS'):
+    ax.text(1.05, 0.3, dbName,
+    ha='center', va='bottom',
+    transform=ax.transAxes,rotation=270)
+
+def plot_nvisits(data,field='DD:COSMOS',dbName=''):
     """
     Function to plot the number of visits per band/season
 
@@ -73,7 +78,8 @@ def plot_nvisits(data,field='DD:COSMOS'):
     """
     
     fig, ax = plt.subplots(figsize=(12, 8))
-    fig.suptitle(corresp[field])
+    figtit = '{} \n {}'.format(dbName,corresp[field])
+    fig.suptitle(figtit)
     fig.subplots_adjust(top=0.85)
 
     
@@ -136,17 +142,19 @@ colb = ['COSMOS','XMM-LSS','CDFS','ELAISS1','EDFS_a','EDFS_b']
 corresp = dict(zip(cola,colb))
 
 
-plot_season_length(data)
+plot_season_length(data,dbName=dbName)
 
-plot_season_length(data,'season_length_ud')
+plot_season_length(data,'season_length_ud',dbName=dbName)
 
 plot_season_length(data,'deltat_beg_survey',
-                   labely='$\Delta t = t_{start}^{UD}-t_{start}^{season}$ [nights]')
+                   labely='$\Delta t = t_{start}^{UD}-t_{start}^{season}$ [nights]'
+                   ,dbName=dbName)
 
 plot_season_length(data,'deltat_end_survey',
-                   labely='$\Delta t = t_{end}^{UD}-t_{end}^{season}$ [nights]')
+                   labely='$\Delta t = t_{end}^{UD}-t_{end}^{season}$ [nights]'
+                   ,dbName=dbName)
 
-plot_nvisits(data)
+plot_nvisits(data,dbName=dbName)
 
 plt.show()
     
