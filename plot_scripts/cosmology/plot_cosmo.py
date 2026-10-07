@@ -431,7 +431,7 @@ if ref_OS != 'None':
     figtit = 'ref: {}'.format(dbNorm.split('_10yrs')[0])
     figtit += '\n '+comment_on_plot
 if 'mom_year' in plots:
-    legy = 'SMoM'
+    legy = 'SMoM=FoM$^{UL}_{SNe Ia}$'
     if ref_OS != 'None':
         legy = '$\\frac{\\Delta SMoM}{SMoM}$ [%]'
     plot_allOS(data, df_conf, varx=timescale,
@@ -442,8 +442,10 @@ if 'mom_year' in plots:
                fill_between=fill_between, year_max=year_max)
 
 if 'mom_survey' in plots:
-    
-    plot_allOS_survey(dbNorm=dbNorm)
+    legy = 'SMoM=FoM$^{UL}_{SNe Ia}$'
+    if ref_OS != 'None':
+        legy = '$\\frac{\\Delta SMoM}{SMoM}$ [%]'
+    plot_allOS_survey(dbNorm=dbNorm,legy=legy)
 
 if 'sigma_w0' in plots:
     legy = '\sigma_{w_0}'
