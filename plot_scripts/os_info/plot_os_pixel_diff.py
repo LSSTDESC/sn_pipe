@@ -376,6 +376,8 @@ plot_vs_db(dd,'survey_area','$\Delta$survey area [%]',
            plot_mode="diff_rel",figtit=figtit_norm)
 plot_vs_db(dd,'nvisits_10yrs','$\Delta N_{visits}$',
            plot_mode='diff_abs',figtit=figtit_norm)
+plot_vs_db(dd,'nvisits_10yrs','$N_{visits}$',
+           plot_mode='normal',figtit=figtit_norm)
 plot_vs_db(dd,'cadence','$\Delta$cadence [night]',
            plot_mode="diff_abs",figtit=figtit_norm)
 plot_vs_db(dd,'cadence','$\Delta$cadence [%]',
