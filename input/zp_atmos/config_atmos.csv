@@ -1,7 +1,7 @@
-config,airmass,ozone,aerosol,pwv
-confa,0.,0.,0.,0.
-confb,2.e-3,10,5.e-4,5.e-2
-confc,2.e-3,10,1.e-3,5.e-2
-confd,2.e-3,10,1.e-3,1.e-2
-confe,3.e-3,20.,5.e-3,2.e-1
-conff,3.e-3,20.,5.e-3,5.e-1
+config,airmass,ozone,aerosol,pwv,color,marker
+confa,0.,0.,0.,0.,k,o
+confb,2.e-3,10,5.e-4,5.e-2,r,P
+confc,2.e-3,10,1.e-3,5.e-2,b,s
+confd,2.e-3,10,1.e-3,1.e-2,g,h
+confe,3.e-3,20.,5.e-3,2.e-1,m,v
+conff,3.e-3,20.,5.e-3,4.e-1,grey,^
