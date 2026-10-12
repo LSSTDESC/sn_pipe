@@ -8,7 +8,7 @@ Created on Thu Apr 16 14:12:04 2026
 
 from optparse import OptionParser
 from sn_analysis.sn_fit_tools import load_fit_atmos_data
-from sn_analysis.sn_atmos_tools import process_obs_data 
+from sn_analysis.sn_atmos_tools import process_obs_data,clean
 from sn_analysis.sn_atmos_tools import merge_zp_wave,get_sigmas_atmos
 from sn_plotter_tools.plot_atmos_tools import plot_results_config
 from sn_plotter_tools.plot_atmos_tools import plot_sigma_obs_param
@@ -48,12 +48,14 @@ def plot_from_config(theDir,atmos_params,config,plotDir=''):
     
     combi_zp = process_obs_data(df_zp,sigma,atmos_params,do_combi=False)
     combi_wave = process_obs_data(df_wave,sigma,atmos_params,do_combi=False)
-    
+     
+    """
     combi_tot = merge_zp_wave(combi_zp,combi_wave,atmos_params)
-        
-    plot_results_config(combi_tot,df_atm,plotDir=plotDir)   
     
-
+    plot_results_config(combi_tot,df_atm,plotDir=plotDir)   
+    """
+    combi_zp = clean(combi_zp,atmos_params)
+    plot_results_config(combi_zp,df_atm,plotDir=plotDir)
     
 def plot_sigma_atmos_band(theDir,atmos_params,plotDir=''):
     """
