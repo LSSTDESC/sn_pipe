@@ -61,3 +61,4 @@ ntrial 1 int #number of trials
 nsample 1000 int #number of sample per trial
 #nproc for the processing
 nproc 8 int #number of procs
+nproc_single_combi 1 int #nproc single combi

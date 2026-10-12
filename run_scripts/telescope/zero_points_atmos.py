@@ -207,13 +207,10 @@ def process_single_combi(row,params,icombi,num_combi,ncombi):
                              param_outDir=params['param_outDir'],
                              param_outName=param_outName,
                              save_random_dir=params['save_random_dir'])
-    """
-    nproc=params['nproc']
     
-    if params['nsample'] == 1:
-        nproc=1
-    """
-    res = sigma_zp(ntrials=params['nsample'], nproc=1)    
+    nproc_single_combi=params['nproc_single_combi']
+    
+    res = sigma_zp(ntrials=params['nsample'], nproc=nproc_single_combi)    
     
     """
     rat = np.round(100.*icombi/ncombi,1)
