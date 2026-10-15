@@ -1,5 +1,6 @@
 #OS infos
 dbDir ../DB_Files str #OS dir
 dbName baseline_v5.3.0_10yrs str #OS name
-dbExtent npy str #OS file extens
+dbExtens npy str #OS file extens
 star_calib_file input/scheduler/calspec_v2.csv str #star used for atmos calib
+outDir ../DB_Files_star_calib str #output directory
