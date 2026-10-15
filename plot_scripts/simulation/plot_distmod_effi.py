@@ -9,7 +9,8 @@ Created on Thu Aug 13 10:23:19 2026
 from optparse import OptionParser
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
+from sn_plotter_analysis import plt
 from sn_tools.sn_obs import load_season
 from sn_analysis.sn_calc_plot import bin_it_mean,bin_it_sum
 from scipy.interpolate import interp1d
@@ -41,7 +42,7 @@ def plot_season(dres,seasons,xvar='z',yvar='diff_mu_mean',
     """
     
     for seas in seasons:
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(figsize=(12,8))
         
         for key, res in dres.items():
             idx = res['season'] == seas
@@ -82,7 +83,7 @@ def plot_configs(res,season,
     
     
     if fig is None:
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(figsize=(12,8))
 
     fig.suptitle('season {}'.format(season))
 
@@ -106,6 +107,8 @@ def plot_configs(res,season,
     
     ax.legend()
     ax.grid(visible=True)
+    ax.set_ylabel(r'effi [%]')
+    ax.set_xlabel(r'$z$')
 
 def plot_season_correl(dres,seasons,xvar='diff_mu',
                        yvar='effi'):
@@ -303,10 +306,11 @@ plot_season(res,seasons,yvar='diff_mu',yvar_err='diff_mu_std')
 
 plot_season(res,seasons,yvar='effi',yvar_err='effi_err')
  
+"""
  
 plot_season_correl(res,seasons,xvar='diff_mu_std',yvar='effi')
 
-"""
+
 
 cols = ['healpixID','pixRA','pixDec','config','season']
 
@@ -316,6 +320,6 @@ for key, vals in res.items():
     df = pd.concat((df,dd))
 
 
-print(df.columns,df['season'].unique())
+print(df.columns,df['season'].unique(),df['healpixID'].unique())
 plt.show()
 
