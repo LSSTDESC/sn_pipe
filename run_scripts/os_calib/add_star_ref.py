@@ -198,7 +198,7 @@ def matchIt(grp,stars):
 
 parser = OptionParser(description='add (smeared) atmos. params to OS strategy')
 
-confDict = make_dict_from_config('input_script', 'atmos_calib_os.txt')
+confDict = make_dict_from_config('input_script', 'add_star_ref.txt')
 
 # parser for simulation parameters : 'dynamical' generation
 add_parser(parser, confDict)
