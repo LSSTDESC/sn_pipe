@@ -435,11 +435,11 @@ idx = wfd['ebvofMW'] <= 0.25
 wfd = wfd[idx]
 
 #plot dist hist
-
-figtit = '{} \n WFD'.format(dbName)
+dbNameb = dbName.split('_star_calib')[0]
+figtit = '{} \n WFD'.format(dbNameb)
 plot_hist(wfd,figtit=figtit)
 
-figtit = '{} \n DDF'.format(dbName)
+figtit = '{} \n DDF'.format(dbNameb)
 plot_hist_ddf(ddf,figtit=figtit)
 
 
