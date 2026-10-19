@@ -10,9 +10,9 @@ from optparse import OptionParser
 import numpy as np
 import pandas as pd
 from sn_plotter_analysis import plt
-from sn_tools.sn_obs import get_fields
 from sn_tools.sn_utils import clean_level
-import healpy as hp
+from sn_analysis.sn_os_atmos_calib_tools import ddf_wfd
+
 
 def plot_hist(df,xvar='dist [deg]',legx='distance [deg]',figtit=''):
     """
@@ -205,129 +205,6 @@ def plot_nstars(df,xvar='night',xleg='night',
     ax.legend()
     ax.grid(visible=True)
         
-def ddf_wfd(obs,nside=64):
-    """
-    Function to get ddf and wfd obs
-
-    Parameters
-    ----------
-    obs : array
-        observations.
-    nside : int, optional
-        healpix nside parameter. The default is 64.
-
-    Returns
-    -------
-    ddf : array
-        DDF obs.
-    wfd : array
-        WFD obs.
-
-    """
-    
-    # get DDFs
-    ddf = get_fields(obs,'input/simulation/lookup_ddf.csv')  
-    
-    cols = 'observationId'  
-    obsids = ddf[cols].tolist()
-    
-    idx = np.isin(obs[cols],obsids)
-    
-    wfd = obs[~idx]
-    
-    #get pixels
-    wfd=get_pixels(wfd,nside)
-    
-    #add ebvofMW
-    wfd = get_ebv(wfd,
-                  ebv_map='reference_files/dustmap_64_delta_mag_dust.hdf5')
-    
-    return ddf,wfd
-
-def get_pixels(obs,nside):
-    """
-    Function to get pixels
-
-    Parameters
-    ----------
-    obs : array
-        Data to process.
-    nside : int
-        healpix nside parameter.
-
-    Returns
-    -------
-    obs : pandas df
-        original array+healpixID,pixRA, pixDec columns.
-
-    """
-    
-    obs = pd.DataFrame.from_records(obs)
-    #set pixelIds
-    healpixIDs = hp.ang2pix(nside, obs['RA'],
-                               obs['Dec'], nest=True, lonlat=True)
-    
-    # get pixel coordinates
-    coords = hp.pix2ang(nside, healpixIDs,
-                        nest=True, lonlat=True)
-    pixRA, pixDec = coords[0], coords[1]
-    
-    obs['healpixID'] = healpixIDs
-    obs['pixRA'] = pixRA
-    obs['pixDec'] = pixDec
-    """
-    This is too slow
-    import numpy.lib.recfunctions as rf
-    obs = rf.append_fields(obs, 'healpixID',healpixIDs)
-    obs = rf.append_fields(obs, 'pixRA',pixRA)
-    obs = rf.append_fields(obs, 'pixDec',pixDec)   
-    """
-    return obs
-
-def get_ebv(df,ebv_map):
-    """
-    Function to grab ebvofMW
-
-    Parameters
-    ----------
-    df : pandas df
-        input data.
-    ebv_map : str
-        file of ebv map.
-
-    Returns
-    -------
-    res : array
-        original array+ebvofMW value.
-
-    """
-
-    #load ebv map
-    ebv = pd.read_hdf(ebv_map)
-    
-    #transform obs to df
-    #df = pd.DataFrame.from_records(obs)
-    
-    #merge with ebv file
-    
-    cols = ['healpixID','ebvofMW']
-    ebv = ebv[cols]
-    df = df.merge(ebv, left_on=[cols[0]],right_on=[cols[0]])
-    
-    #return as record arrar
-    
-    res = df.to_records(index=False)
-    del df
-    
-    return res
-    
-"""
-def re_frac(grp):
-
-    grp['frac'] = 100.*grp['n']/grp['n'].sum()
-
-    return grp       
-"""
 def count_frac(grp,values=[500]):
     """
     Function to count frac of and nstars depending on min obs values
