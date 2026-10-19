@@ -31,3 +31,11 @@ Options:
   --dbExtens=DBEXTENS  OS extens  [npy]
 
 </pre>
+
+[DDF obs - distance [deg] to calspec stars](ddf_match_calib_obs.png)
+
+[WFD obs - distance [deg] to calspec stars](wfd_match_calib_obs.png)
+
+[WFD - Nobs vs calib star year 3](wfd_nobs_calib_y3.png)
+
+[WFD - Nobs frac vs Ncalspec](frac_obs_ncalspec.png)
