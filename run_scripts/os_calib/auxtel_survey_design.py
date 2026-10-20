@@ -39,40 +39,11 @@ obs.sort(order='mjd')
 
 print(obs.dtype)
 
-survey = AuxTelSurvey(obs,nside=nside)
+survey = AuxTelSurvey(obs,params['dbName'],
+                      nside=nside,
+                      figDir='../os_auxtel_survey',
+                      movieDir='../os_auxtel_movie')
+night_min=1
+night_max=1
 
-varx = 'RA'
-vary='Dec'
-xmin, xmax = np.min(obs[varx]),np.max(obs[varx])
-ymin, ymax = np.min(obs[vary]),np.max(obs[vary])
-
-for i in range(len(obs)):
-    fig, ax = plt.subplots()
-    
-    ax.plot(obs[:i][varx],obs[:i][vary],'ko')
-    
-    ax.plot(obs[i][varx],obs[i][vary],'ro')
-    
-    ax.set_xlim([xmin,xmax])
-    ax.set_ylim([ymin,ymax])
-    
-    if i > 0:
-        ra_a = obs[i]['RA']
-        time_a = obs[i]['mjd']
-        ra_b = obs[i-1]['RA']
-        dec_a = obs[i]['Dec']
-        dec_b = obs[i-1]['Dec']
-        time_b = obs[i-1]['mjd']
-        visit_b = obs[i-1]['visitTime']
-        slew_b = obs[i-1]['slewTime']
-        slew_a = obs[i]['slewTime']
-        dist = ((ra_a-ra_b)*np.cos(np.deg2rad(dec_a)))**2
-        dist =+ (dec_a-dec_b)**2
-        dist = np.sqrt(dist)
-        deltaT = 24*3600*(time_a-time_b)-visit_b
-        
-        print(deltaT,dist,dist/deltaT,slew_a,slew_b)
-    
-    
-    plt.show()
-    
+survey(night_min,night_max)
