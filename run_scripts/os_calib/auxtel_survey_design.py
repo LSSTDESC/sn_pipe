@@ -10,7 +10,6 @@ from sn_tools.sn_io import make_dict_from_config
 from sn_tools.sn_io import add_parser
 from sn_analysis.sn_os_atmos_calib_tools import load_OS,ddf_wfd
 import numpy as np
-import matplotlib.pyplot as plt
 from sn_tools.os_auxtel_visu import AuxTelSurvey
 
 parser = OptionParser(description='auxtel survey design')
@@ -28,6 +27,12 @@ params=vars(opts)
 
 obs = load_OS(params['dbDir'], params['dbName'], params['dbExtens'])
 
+#add year
+
+obs['year'] = obs['night']/366+1
+
+obs['year'] = obs['year'].astype(int)
+
 nside=32
 ddf,wfd = ddf_wfd(obs.to_records(index=False),nside=nside)
 
@@ -38,12 +43,19 @@ obs = np.concat((ddf,wfd))
 obs.sort(order='mjd')
 
 print(obs.dtype)
-
+year = params['year']
 survey = AuxTelSurvey(obs,params['dbName'],
                       nside=nside,
                       figDir='../os_auxtel_survey',
-                      movieDir='../os_auxtel_movie')
-night_min=1
-night_max=1
+                      #movieDir='../os_auxtel_movie',
+                      year=year)
 
-survey(night_min,night_max)
+nights=range(1,9)
+nproc = params['nproc']
+
+nights = range(1,366)
+nproc=30
+
+nights = [1,2,3,4]
+nproc=1
+survey(nights,nproc)
