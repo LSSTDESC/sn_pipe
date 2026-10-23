@@ -48,7 +48,7 @@ def init_path(x,y,iorder,ncity):
     
     return path
 
-def revcst(x,y,iorder,ncity,n):
+def revcst(x,y,iorder,n):
     """
     returns the value of the cost function for a proposed path reversal.
 
@@ -60,8 +60,6 @@ def revcst(x,y,iorder,ncity,n):
         y positions.
     iorder : array(int)
         pos order.
-    ncity : int
-        number of pos.
     n : array(int)[2]
         starting and ending cities along 
         the path segment which is to be reversed
@@ -72,12 +70,16 @@ def revcst(x,y,iorder,ncity,n):
         cost function value.
 
     """
-    
+    ncity = len(x)
     xx = np.zeros((5,),dtype=float)
     yy = np.zeros((5,),dtype=float)
-    
-    n[2] = 1+((n[0]+ncity-2)%ncity) # find the city before n[1]
-    n[3] = 1+(n[1]%ncity) #...and the city after n[2]
+    """
+    n[2] = 1+((n[0]+ncity-2)%ncity) # find the city before n[0]
+    n[3] = 1+(n[1]%ncity) #...and the city after n[1]
+    """
+    #modif to account fo start at 0
+    n[2] = ((n[0]+ncity-1)%ncity) # find the city before n[0]
+    n[3] = ((n[1]+1)%ncity) #...and the city after n[1]
     
     for j in range(4):
         ii = iorder[n[j]]
@@ -91,7 +93,7 @@ def revcst(x,y,iorder,ncity,n):
     
     return de
     
-def reverse(iorder,ncity,n):
+def reverse(iorder,n):
     """
     path segment reversal. 
     The vector n has as its four elements the first and last positions 
@@ -103,8 +105,6 @@ def reverse(iorder,ncity,n):
     ----------
     iorder : array(int)
         the present itinerary
-    ncity : int
-        number of positions.
     n : array(int)
         segment+positions before and after.
 
@@ -114,22 +114,27 @@ def reverse(iorder,ncity,n):
         the segment from n[0] to n[1] in reversed order
 
     """
-    
+    ncity = len(iorder)
     # this many positions must be swapped to effect the reversal
     nn = (1+((n[1]-n[0]+ncity)%ncity))/2 
     
+    nn = int(nn)
     for j in range(nn):
         #start at the ends of the segment and swap pair of cities
         #moving toward the center
+        """
         k = 1+((n[0]+j-2)%ncity)
         l = 1+((n[1]-j+ncity)%ncity)
+        """
+        k = (n[0]+j)%ncity
+        l = (n[1]-j+ncity)%ncity
         itmp = iorder[k]
         iorder[k] = iorder[l]
         iorder[l] = itmp
         
     return iorder
     
-def trncst(x,y,iorder,ncity,n):
+def trncst(x,y,iorder,n):
     """
     value of the cost function for a proposed path segment transport.
     
@@ -142,8 +147,6 @@ def trncst(x,y,iorder,ncity,n):
         y positions.
     iorder : array(int)
         the present itinerary.
-    ncity : int
-        number of position.
     n : array(int)
         first three elements: starting and ending cities of the path 
         to be transported, and the point among the remaining cities 
@@ -156,13 +159,20 @@ def trncst(x,y,iorder,ncity,n):
         The cost of the change.
 
     """
-    
+    ncity=len(x)
     xx = np.zeros((7,),dtype=float)
     yy = np.zeros((7,),dtype=float)
     
+    """
     n[3] = 1+(n[2]%ncity) #find the city following n[2]
     n[4] = 1+((n[0]+ncity-2)%ncity) #find the city preceding n[1]
     n[5] = 1+(n[1]%ncity) #find the city following n[1]
+    """
+    n[3] = (n[2]+1)%ncity #find the city following n[2]
+    n[4] = (n[0]+ncity-1)%ncity #find the city preceding n[1]
+    n[5] = (n[1]+1)%ncity #find the city following n[1]
+    
+    
     
     for j in range(6):
         ii = iorder[n[j]]
@@ -178,7 +188,7 @@ def trncst(x,y,iorder,ncity,n):
     
     return de
     
-def trnspt(iorder,ncity,n):
+def trnspt(iorder,n):
     """
     The actual transport is done here, once metrop has approved.
     
@@ -187,8 +197,6 @@ def trnspt(iorder,ncity,n):
     ----------
     iorder : array(int)
         input array with the present itinerary
-    ncity : int
-        number of positions.
     n : array(int)
         six elements
         - beginning n[0] and end n[1] of the path to be transported
@@ -204,27 +212,34 @@ def trnspt(iorder,ncity,n):
         reflect the movement of the path segment - new itinerary
 
     """
+    ncity = len(iorder)
     
     jorder = np.ones((ncity,),dtype=int)
-    
+    """
     m1 = 1+((n[1]-n[0]+ncity)%ncity) # find ncities from n[0] to n[1]
     m2 = 1+((n[4]-n[3]+ncity)%ncity) # find ncities from n[3] to n[4]
     m3 = 1+((n[2]-n[5]+ncity)%ncity) # find ncities from n[5] to n[2]
+    """
+    m1 = (n[1]-n[0]+ncity)%ncity # find ncities from n[0] to n[1]
+    m2 = (n[4]-n[3]+ncity)%ncity # find ncities from n[3] to n[4]
+    m3 = (n[2]-n[5]+ncity)%ncity # find ncities from n[5] to n[2]
+    
     
     nn = 0
     
-    for j in range(m1):
-        jj = 1+((j+n[0]-2)%ncity) # copy the chosen fragment
-        nn += 1
+    for j in range(m1+1):
+        jj = (j+n[0])%ncity # copy the chosen fragment
         jorder[nn] = iorder[jj]
-    for j in range(m2):
-        jj = 1+((j+n[3]-2)%ncity) # copy the segment from n[3] to n[4]
         nn += 1
+    print(m1,nn)
+    for j in range(m2+1):
+        jj = (j+n[3])%ncity # copy the segment from n[3] to n[4]
         jorder[nn] = iorder[jj]
-    for j in range(m3):
-        jj = 1+((j+n[5]-2)%ncity) # copy the segment from n[5] to n[2]
         nn += 1
+    for j in range(m3+1):
+        jj = (j+n[5])%ncity # copy the segment from n[5] to n[2]
         jorder[nn] = iorder[jj]
+        nn += 1
     #copy jorder back into order
     for j in range(ncity):
         iorder[j] = jorder[j]
@@ -255,7 +270,7 @@ def metrop(de,t):
     """
     
     rr = np.random.random_sample()
-    
+        
     return (de < 0 or rr < np.exp(-de/t))
     
 def get_segment(ncity,n):
@@ -281,15 +296,14 @@ def get_segment(ncity,n):
     nn = 0
     
     while nn < 3:
-        n[0] = np.random.randint(0,ncity,1) #beginning of the segment
-        n[1] = np.random.randint(0,ncity-1,1) #end of the segment
+        n[0] = np.random.randint(0,ncity,1)[0] #beginning of the segment
+        n[1] = np.random.randint(0,ncity-1,1)[0] #end of the segment
         if n[1] >= n[0]:
             n[1] += 1
         #nn is the number of cities not on the segment
-        nn = 1+((n[0]-n[1]+ncity-1)%ncity) 
-        print(n[0],n[1],ncity,nn)
+        nn = 1+((n[0]-n[1]+ncity-1)%ncity)
     
-    return n
+    return n,nn
     
 
 fName = 'input/scheduler/calspec_gaia_matching.csv'
@@ -314,11 +328,45 @@ path = init_path(x,y,iorder,ncity)
 
 print('init path',path)
 
-n = get_segment(ncity,n)
+njt = 100
+nover = 100*ncity
+nlimit = 10*ncity
+tfactr=0.9
+t = 0.5
 
-de = revcst(x,y,iorder,ncity,n)
-
-print('path reversal',de)
+for jt in range(njt):
+    nsucc = 0
+    for k in range(nover):
+        #grab initial segment
+        n,nn = get_segment(ncity,n)
+        #segment reversal or transport?
+        rr = np.random.random_sample()
+        if rr > 0.5: #do a transport
+            rrb = np.random.random_sample()
+            n[2] = n[1]+int(np.abs(nn-1)*rrb+1) 
+            n[2] %= ncity #transport the location not on the path
+            de = trncst(x,y,iorder,n) # calculate cost
+            ans = metrop(de,t) #consult the oracle
+            if ans:
+                nsucc += 1
+                path += de
+                trnspt(iorder,n) # carry out the transport
+        else: #do a path reversal
+            de = revcst(x,y,iorder,n) # estimate cost
+            ans = metrop(de,t) # consult the oracle
+            if ans:
+                nsucc +=1
+                path += de
+                reverse(iorder,n) #carry out the reversal
+        if nsucc >= nlimit:
+            break
+        print('temp',t)
+        print('path length',path)
+        print('succesfull moves',nsucc)
+        t *= tfactr
+        if nsucc == 0:
+            break
+        
 
 
 
