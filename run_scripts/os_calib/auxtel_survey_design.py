@@ -10,7 +10,7 @@ from sn_tools.sn_io import make_dict_from_config
 from sn_tools.sn_io import add_parser
 from sn_analysis.sn_os_atmos_calib_tools import load_OS,ddf_wfd
 import numpy as np
-from sn_tools.os_auxtel_visu import AuxTelSurvey
+from sn_tools.os_auxtel_tools import AuxTelSurvey
 
 parser = OptionParser(description='auxtel survey design')
 
@@ -44,6 +44,14 @@ obs.sort(order='mjd')
 
 print(obs.dtype)
 year = params['year']
+
+star_list=params['star_calib_file']
+survey = AuxTelSurvey(obs,params['dbName'],
+                      star_list,
+                      year=year)
+survey()
+
+"""
 survey = AuxTelSurvey(obs,params['dbName'],
                       nside=nside,
                       figDir='../os_auxtel_survey',
@@ -59,3 +67,4 @@ nproc=30
 nights = [1,2,3,4]
 nproc=1
 survey(nights,nproc)
+"""
