@@ -49,8 +49,11 @@ star_list=params['star_calib_file']
 survey = AuxTelSurvey(obs,params['dbName'],
                       star_list,
                       year=year)
-survey()
+df_survey = survey()
 
+print(df_survey)
+
+df_survey.to_hdf('auxtel_survey_test.hdf5',key='auxtel_survey')
 """
 survey = AuxTelSurvey(obs,params['dbName'],
                       nside=nside,
