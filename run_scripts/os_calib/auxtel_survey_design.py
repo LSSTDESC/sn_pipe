@@ -46,9 +46,8 @@ print(obs.dtype)
 year = params['year']
 
 star_list=params['star_calib_file']
-survey = AuxTelSurvey(obs,params['dbName'],
-                      star_list,
-                      year=year,survey_type='synchronous',nproc=16)
+survey = AuxTelSurvey(obs,star_list,year=year,
+                      survey_type='synchronous',nproc=16)
 df_survey = survey()
 
 print(df_survey)
