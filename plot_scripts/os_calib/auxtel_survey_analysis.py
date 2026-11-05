@@ -13,17 +13,54 @@ import numpy as np
 np.set_printoptions(legacy='1.25')
 
 def ana_data(dd):
+    """
+    Data analysis
+
+    Parameters
+    ----------
+    dd : dict
+        Data to analyze.
+
+    Returns
+    -------
+    dft : pandas df
+        nightly global analysis.
+    dftb : pandas df
+        nightly analysis per star
+
+    """
     
     dft = pd.DataFrame()
+    dftb = pd.DataFrame()
+    
     for key,df in dd.items():
         df_o = df.groupby(['night']).apply(lambda x:night_analysis(x),
                                            include_groups=False).reset_index()
         df_o['config'] = key
         dft = pd.concat((dft,df_o))
         
-    return dft
+        df_s = df.groupby(['night','Star_name']).apply(lambda x:night_star_analysis(x),
+                                           include_groups=False).reset_index()
+        df_s['config'] = key
+        dftb = pd.concat((dftb,df_s))
+        
+    return dft,dftb
 
 def night_analysis(df):
+    """
+    nightly global analysis
+
+    Parameters
+    ----------
+    df : pandas df
+        Data to analyze.
+
+    Returns
+    -------
+    res : pandas df
+        the nightly analysis.
+
+    """
     
     dd = {}
     
@@ -39,8 +76,58 @@ def night_analysis(df):
     res = pd.DataFrame.from_dict(dd)
     
     return res
+
+def night_star_analysis(df):
+    """
+    analysis per star/night
+
+    Parameters
+    ----------
+    df : pandas df
+        Data to analyze.
+
+    Returns
+    -------
+    res : pandas df
+        analysis results per star/night.
+
+    """
+    
+    dd = {}
+    df = df.sort_values(by=['mjd'])
+    df['visitTime'] = df['numExposure']*df['exposure_time']
+    #grab cadence mean and std
+    df['time'] = df['mjd']*24*60.
+    cad = df['time'].diff()
+    
+    dd['cad_mean [min]'] = [cad.mean()]
+    dd['cad_std [min]'] = [cad.std()]
+    dd['nvisits'] = [len(df)]
+    dd['slew_time'] = [df['slew_time'].sum()]
+    dd['obs_time'] = [df['visitTime'].sum()]
+    
+    res = pd.DataFrame.from_dict(dd)
+   
+    return res   
     
 def plot_night(df,yvar='nstars',ylabel='$N_{stars}$'):
+    """
+    display result vs night
+
+    Parameters
+    ----------
+    df : pandas df
+        Data to show.
+    yvar : str, optional
+        y-axis variable. The default is 'nstars'.
+    ylabel : str, optional
+        y-axis label. The default is '$N_{stars}$'.
+
+    Returns
+    -------
+    None.
+
+    """
     
     configs = df['config'].unique()
     
@@ -79,9 +166,11 @@ for key,vals in dd.items():
     df_dict[key] = pd.read_hdf(fName)
     
 
-df = ana_data(df_dict)
+df,dfs = ana_data(df_dict)
 
+plot_night(df)
 plot_night(df,yvar='slew_time',ylabel='slew time [s]')
 plot_night(df,yvar='slew_rat',ylabel='slew time/total night time')   
 plot_night(df,yvar='total_night_time',ylabel='total night time [h]')
+plot_night(dfs,yvar='cad_mean [min]',ylabel='mean cadence [min]')
 plt.show()
