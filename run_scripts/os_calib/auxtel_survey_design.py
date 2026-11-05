@@ -11,6 +11,7 @@ from sn_tools.sn_io import add_parser
 from sn_analysis.sn_os_atmos_calib_tools import load_OS,ddf_wfd
 import numpy as np
 from sn_tools.os_auxtel_tools import AuxTelSurvey
+from sn_tools.sn_io import checkDir
 
 parser = OptionParser(description='auxtel survey design')
 
@@ -22,6 +23,10 @@ add_parser(parser, confDict)
 opts, args = parser.parse_args()
 
 params=vars(opts)
+
+#outputdir
+if params['outDir'] != 'None':
+    checkDir(params['outDir'])
 
 #load obs
 
@@ -47,12 +52,15 @@ year = params['year']
 
 star_list=params['star_calib_file']
 survey = AuxTelSurvey(obs,star_list,year=year,
-                      survey_type='synchronous',nproc=16)
+                      survey_type=params['survey_type'],
+                      nproc=params['nproc'])
 df_survey = survey()
 
 print(df_survey)
-
-df_survey.to_hdf('auxtel_survey_sync_test.hdf5',key='auxtel_survey')
+outName = '{}/auxtel_survey_{}_{}_{}.hdf5'.format(params['outDir'],
+                                                  params['dbName'],
+                                            params['survey_type'],year)
+df_survey.to_hdf(outName,key='auxtel_survey')
 """
 survey = AuxTelSurvey(obs,params['dbName'],
                       nside=nside,

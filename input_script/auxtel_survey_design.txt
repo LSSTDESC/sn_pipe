@@ -3,6 +3,7 @@ dbDir ../DB_Files_star_calib str #OS dir
 dbName baseline_v5.3.0_10yrs_star_calib str #OS name
 dbExtens npy str #OS file extens
 star_calib_file input/scheduler/calspec_v2.csv str #star used for atmos calib
-outDir ../DB_Files_star_calib str #output directory
+outDir ../auxtel_surveys str #output directory
 year 1 int #year to process
 nproc 8 int #nproc for multiprocessing
+survey_type asynchronous str #type of survey (asynchronous/synchronous)
