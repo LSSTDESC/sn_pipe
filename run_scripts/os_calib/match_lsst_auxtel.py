@@ -42,7 +42,7 @@ def load_all_obs(params):
     
     obs['year'] = obs['year'].astype(int)
     
-    nside=32
+    nside=16
     ddf,wfd = ddf_wfd(obs.to_records(index=False),nside=nside)
     
     #concatenate
@@ -124,7 +124,7 @@ def match_nights(nights,params,j=0,output_q=None):
     idx = auxtel_obs['night'].isin(nights)
     auxtel_obs = auxtel_obs[idx]
     
-    cols = ['observationId','night']
+    cols = ['observationId','night','year']
     df = lsst_obs.groupby(cols).apply(lambda x: match_night(x,auxtel_obs),
                                         include_groups=False).reset_index()
     
@@ -160,7 +160,9 @@ def match_night(obs,auxtel_obs):
     cols_aux = ['Star_name','RA_deg','Dec_deg','mjd_star']
     sel_aux = auxtel_obs[idx][cols_aux]
     
-    cols_obs = ['RA','Dec','mjd']
+    cols_obs = ['RA','Dec','mjd','visitTime','slewTime']
+    cols_obs += ['healpixID', 'pixRA', 'pixDec', 'ebvofMW', 'field']
+
     sel_obs = obs[cols_obs]
     
     #match

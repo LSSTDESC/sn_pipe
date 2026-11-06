@@ -10,6 +10,38 @@ import pandas as pd
 from sn_tools.sn_io import make_dict_from_config
 from sn_tools.sn_io import add_parser
 from sn_plotter_analysis import plt
+from sn_plotter_scheduler.plot_scheduler import LSST_plus_AuxTel_visu
+
+def load_data(params):
+    
+    auxtypes = params['auxtel_type'].split(',')
+    
+    df = {}
+    for auxtype in auxtypes:
+        fName = '{}/lsst_plus_auxtel_{}_{}_{}.hdf5'.format(params['dataDir'],
+                                                           params['dbName'],
+                                                           auxtype,
+                                                           params['year'])
+    
+        dfa = pd.read_hdf(fName)
+        dfa['delta_mjd [min]'] = dfa['delta_mjd']*60.*24.
+        df[auxtype] = dfa
+    
+    return df
+    
+
+def plot_global(df,xvar='delta_mjd [min]',xlabel='$\Delta T$ [min]'):
+    
+    fig, ax = plt.subplots(figsize=(12,8))
+
+    for key,dfb in df.items():
+        ax.hist(dfb[xvar],histtype='step',bins=100)
+        #ax.hist(df['delta_r'],histtype='step',bins=50)
+    
+    ax.grid(visible=True)
+    ax.set_xlabel(r'{}'.format(xlabel))
+    ax.set_ylabel(r'Number of Entries')
+    
 
 parser = OptionParser(description='lsst matched auxtel analysis')
 
@@ -23,18 +55,17 @@ opts, args = parser.parse_args()
 params=vars(opts)
 
 #load data
+df = load_data(params)
+"""
+plot_global(df)
+plot_global(df,xvar='delta_r',xlabel='dist [deg]')
+"""
+dd = df['asynchronous']
+print(dd.columns)
+visu = LSST_plus_AuxTel_visu(dd.to_records(index=False), 
+                             params['dbName'],nside=16)
 
-fName = '{}/lsst_plus_auxtel_{}_{}_{}.hdf5'.format(params['dataDir'],
-                                                   params['dbName'],
-                                                   params['auxtel_type'],
-                                                   params['year'])
+visu(nproc=1)
 
-df = pd.read_hdf(fName)
 
-print(df)
-
-fig, ax = plt.subplots()
-
-ax.hist(df['delta_mjd']*24*60.,histtype='step',bins=100)
-#ax.hist(df['delta_r'],histtype='step',bins=50)
 plt.show()
