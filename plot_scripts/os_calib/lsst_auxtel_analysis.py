@@ -29,6 +29,21 @@ def load_data(params):
     
     return df
     
+def load_auxtel_data(params):
+    
+    auxtypes = params['auxtel_type'].split(',')
+    
+    df_aux = {}
+    for auxtype in auxtypes:
+        auxName = '{}/auxtel_survey_{}_{}_{}.hdf5'.format(params['auxtel_dir'],
+                                                          params['dbName'],
+                                                          auxtype,
+                                                          params['year'])
+        df_aux[auxtype] = pd.read_hdf(auxName)
+    
+    return df_aux
+    
+    
 
 def plot_global(df,xvar='delta_mjd [min]',xlabel='$\Delta T$ [min]'):
     
@@ -56,16 +71,31 @@ params=vars(opts)
 
 #load data
 df = load_data(params)
+
 """
 plot_global(df)
 plot_global(df,xvar='delta_r',xlabel='dist [deg]')
 """
-dd = df['asynchronous']
-print(dd.columns)
-visu = LSST_plus_AuxTel_visu(dd.to_records(index=False), 
-                             params['dbName'],nside=16)
 
-visu(nproc=1)
+#load auxtel obs
+df_aux = load_auxtel_data(params)
+
+aux_type_choice='synchronous'
+dd = df[aux_type_choice]
+dd_aux = df_aux[aux_type_choice]
+dd_aux['year'] = dd_aux['night']/365+1
+dd_aux['year'] = dd_aux['year'].astype(int)
+print(dd.columns)
+visu = LSST_plus_AuxTel_visu(dd.to_records(index=False),
+                             dd_aux.to_records(index=False),
+                             params['dbName'],aux_type_choice,
+                             nside=16,
+                             figDir=params['figDir'],
+                             movieDir=params['movieDir'],
+                             year=params['year'])
+
+nights = dd['night'].unique()
+visu(nights,nproc=params['nproc'])
 
 
 plt.show()

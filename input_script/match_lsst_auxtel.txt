@@ -4,7 +4,7 @@ dbName baseline_v5.3.0_10yrs str #OS name
 dbExtens npy str #OS file extens
 auxtel_survey_dir ../auxtel_surveys str #the auxtel survey dir
 auxtel_survey_prefix auxtel_survey str #auxtel prefix file name
-auxtel_survey_db baseline_v5.3.0_10yrs_star_calib str #the auxtel survey db
+auxtel_survey_db baseline_v5.3.0_10yrs str #the auxtel survey db
 auxtel_survey_type asynchronous str #auxtel survey type
 outDir ../lsst_match_auxtel_survey str #output directory
 year 1 int #year to process
