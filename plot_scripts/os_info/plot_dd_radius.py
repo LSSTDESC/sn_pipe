@@ -39,7 +39,7 @@ def plot_radius(data, df_config, year=1, field='COSMOS'):
 
     dbNames = sel['dbName'].unique()
 
-    fig, ax = plt.subplots(nrows=2, figsize=(14, 9))
+    fig, ax = plt.subplots(nrows=2, figsize=(16, 9))
     tit = '{} - year {}'.format(field, year)
     fig.suptitle(tit)
     fig.subplots_adjust(hspace=0.0, right=0.73)
@@ -75,12 +75,12 @@ def plot_radius(data, df_config, year=1, field='COSMOS'):
         ax[i].fill_between([1.75, 2.0], [ymin]*2, [ymax]
                            * 2, color='yellow', alpha=0.1)
         ax[i].set_ylim([ymin, ymax])
-        ax[i].grid()
+        ax[i].grid(visible=True)
 
     ax[1].set_xlabel(r'distance [deg]')
     ax[0].set_ylabel(r'<$N_{visits}$>')
     ax[1].set_ylabel(r'<cad>-<cad$^{dist\leq 1.5~ deg}$> [day]')
-    ax[0].get_xaxis().set_visible(False)
+    #ax[0].get_xaxis().set_visible(False)
 
 
 parser = OptionParser(description='Script to plot pixel level OS radius')
@@ -101,4 +101,5 @@ print(df['dbName'].unique())
 plot_radius(df, df_config)
 plot_radius(df, df_config, year=2)
 plot_radius(df, df_config, year=3)
+plot_radius(df, df_config, year=5)
 plt.show()
