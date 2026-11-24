@@ -10,7 +10,7 @@ import pandas as pd
 from sn_plotter_os_info.os_info_util import load_sel_dust
 from sn_tools.sn_utils import multiproc
 #import matplotlib.pyplot as plt
-from sn_plotter_analysis import plt
+from sn_plotter_analysis import plt,filtercolors
 import numpy as np
 
 def nvisits_survey(grp,timescale='year'):
@@ -204,6 +204,52 @@ def slices(data,var='pixDec',varb='Dec',
     
     return res
 
+def plot_slices_db(res,xvar='Dec_min',xleg='Dec [deg]',yvar='nvisits',
+                    yleg='$N_{visits}$'):
+    
+    dbNames = res['dbName'].unique()
+    from sn_plotter_tools.plot_tools import plot_xy
+    years = range(1, 13)
+    marks = ['o', 's', 'P', 'v', '^', 'p']*2
+    lsb = ['solid']*6+['dashed']*6
+    clrs = ['k']*2+['r']*2+['g']*2+['b']*2+['m']*2+['orange']*2
+
+    mm = dict(zip(years, marks))
+    ll = dict(zip(years, lsb))
+    ccol = dict(zip(years, clrs))
+   
+    for dbName in dbNames:
+        idx = res['dbName'] == dbName
+        
+        sel = res[idx]
+        
+        print('allo',res['nvisits'].sum())
+        years = sel['year'].unique()
+        
+        fig, ax = plt.subplots(figsize=(14,8))
+        for y in years:
+            
+            idxb = sel['year'] == y
+            
+            selb = sel[idxb]
+            
+            ls = ll[y]
+            color = ccol[y]
+            marker = mm[y]
+            
+            plot_xy(selb,xvar=xvar,xleg=xleg,yvar=yvar,
+                    yleg=yleg,fig=fig,ax=ax,
+                    label='year {}'.format(y),
+                    color=color,
+                    marker=marker,linestyle=ls,figtit=dbName)
+            
+        
+        ax.set_xlabel(r'{}'.format(xleg))
+        ax.set_ylabel(r'{}'.format(yleg))
+        ax.grid(visible=True)
+        ax.legend()
+
+
 parser = OptionParser(description='Script to plot pixel level OS infos')
 
 parser.add_option('--dbList', type=str, default='list_db.csv',
@@ -234,7 +280,8 @@ df = load_sel_dust(dbDir, dbNames, 'WFD','WFD',nside=nside,
                    ebvofMW_max=ebvofMW_max)
 idx = df['year'] <= 10
 idx &= df['year'] >=1
-    
+idx &= df['cadence'] <= 4
+
 df = df[idx]
     
 
@@ -255,11 +302,13 @@ for b in 'ugrizy':
     varsum.append('{}_{}'.format(col,b))
 
 if 'slices' in plots:
+    bins = np.arange(-90.,90.,10.)
     res = df.groupby(['dbName','year']).apply(lambda x: slices(x,
-                                                               varsum=varsum),
+                                                               varsum=varsum,
+                                                               bins=bins),
                                               include_groups=False).reset_index()
     
-    plot_slices_year(res)
+    plot_slices_db(res,yvar='nvisits_u')
     
 
 plt.show()
