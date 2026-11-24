@@ -10,8 +10,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from sn_plotter_metrics.plot4metric import multiplot_dist
 from sn_plotter_metrics.plot4metric import plotMollview_seasons
+from sn_plotter_os_info.os_info_util import load_sel_dust
 import numpy as np
-import glob
+#import glob
 
 
 def plot_var_mean(datam, figtitle='', varx='season',
@@ -126,65 +127,6 @@ def print_pixel_info(sel, healpixID):
     selnc = sel[idxb]
     print(selnc[['healpixID', 'pixRA', 'pixDec', 'nvisits', 'cadence', 'season']])
 
-
-def load_data(dbDir, dbName, fields, fieldType='DD'):
-    """
-    Function to load the data
-
-    Parameters
-    ----------
-    dbDir : str
-        data main directory.
-    dbName : str
-        OS to analyze.
-    fields : list(str)
-        list of fields to process.
-    fieldType : str, optional
-        type of field (DD/WFD). The default is 'DD'.
-
-    Returns
-    -------
-    df : pandas df
-        output data.
-
-    """
-
-    theDir = '{}/{}'.format(dbDir, dbName)
-    prefix = '{}_pixels_{}'.format(fieldType, dbName)
-
-    """
-    # grab the list of data
-    list_data = []
-    if fieldType == 'DD':
-        # loop on ddfs
-        for field in fields:
-            fName = '{}/{}_{}*.hdf5'.format(theDir, prefix, field)
-            fis = glob.glob(fName)
-            if len(fis) == 0:
-                print('data not found', fName)
-            list_data += fis
-    if fieldType == 'WFD':
-        fName = '{}/{}_*.hdf5'.format(theDir, prefix)
-        fis = glob.glob(fName)
-        if len(fis) == 0:
-            print('data not found', fName)
-        list_data += fis
-
-    # load the data
-    df = pd.DataFrame()
-    for fi in list_data:
-        dd = pd.read_hdf(fi)
-        df = pd.concat((df, dd))
-    """
-    df = pd.DataFrame()
-    fName = '{}/{}*.hdf5'.format(theDir, prefix)
-    print('search_path',fName)
-    fis = glob.glob(fName)
-    for fi in fis:
-        dd = pd.read_hdf(fi)
-        df = pd.concat((df, dd))
-    
-    return df
     
 def plot_mollviews(sel,seasons,var_to_plot,nvisits_10yrs_min):
     """
@@ -698,6 +640,10 @@ else:
         if seasons != '10yrs':
             seasons = [int(seasons)]
 
+print('alors seasons',seasons)
+df = load_sel_dust(dbDir,dbNames,fields,fieldType,
+              nside=nside,ebvofMW_max=ebvofMW_max)
+"""
 df = pd.DataFrame()
 for dbName in dbNames:
     df_ = load_data(dbDir, dbName, fields, fieldType=fieldType)
@@ -718,6 +664,7 @@ idx = df['ebvofMW'] < ebvofMW_max
 df = df[idx]
 
 print('nentries',len(df))
+"""
 
 if mollview_outDir != 'None':
     from sn_tools.sn_io import checkDir
@@ -746,6 +693,7 @@ hot_spots = sel[idx]
 
 sel = sel[~idx]
 
+print('hot spots',len(hot_spots))
 #add nvisits_10 yrs
 ccols = ['healpixID','dbName']
 selb = sel.groupby(ccols)['nvisits'].sum().reset_index()
@@ -797,7 +745,7 @@ if 'mollview' in plots:
             
 
 if 'hist' in plots:
-    plot_histos(hist_var,sel,seasons,nvisits_10yrs_min)
+    plot_histos(hist_var,sel,seasons)
     #plot_vs(sel,'nvisits','ebvofMW',seasons)
     
 
