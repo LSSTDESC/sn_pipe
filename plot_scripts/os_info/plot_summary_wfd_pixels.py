@@ -12,6 +12,7 @@ from sn_tools.sn_utils import multiproc
 #import matplotlib.pyplot as plt
 from sn_plotter_analysis import plt,filtercolors
 import numpy as np
+import healpy as hp
 
 def nvisits_survey(grp,timescale='year'):
     """
@@ -91,11 +92,6 @@ def stat(grp,col='nvisits_10yrs'):
         DESCRIPTION.
 
     """
-    
-    idx = grp['nvisits_10yrs'] >= 400
-    idx &= grp['nvisits_10yrs'] <= 1200
-    
-    grp = grp[idx]
     dd = {}
     
     dd['{}_mean'.format(col)] = [grp[col].mean()]
@@ -168,13 +164,7 @@ def plot_nvisits(df):
 
     """
     
-    params = {}
-    params['data'] = df
-    
-    nvisits = multiproc(df['dbName'].unique(),
-                        params,nvisits_multiproc,nproc=nproc)
-    
-    res = nvisits.groupby(['dbName']).apply(lambda x:stat(x),
+    res = df.groupby(['dbName']).apply(lambda x:stat(x),
                                         include_groups=False).reset_index()
     res['dbName_red'] = res['dbName'].str.split('_v5.3.7').str.get(0)
     print(res.columns)
@@ -185,10 +175,19 @@ def slices(data,var='pixDec',varb='Dec',
            varsum=['nvisits',
                    'nvisits_u','nvisits_g',
                    'nvisits_r','nvisits_i',
-                   'nvisits_z','nvisits_y',],bins=np.arange(-90.,90.,10.)):
+                   'nvisits_z','nvisits_y',
+                   'density'], 
+           bins=np.arange(-90.,90.,10.)):
     
     
     group = data.groupby(pd.cut(data[var], bins),observed=False)
+    nvisits_sum = data['nvisits'].sum()
+    nvisits_med = data['nvisits'].median()
+    nvisits_mean = data['nvisits'].mean()
+    
+    idx = data['pixDec'] <= 10
+    nvisits_min = data[idx]['nvisits'].min()
+    
     
     res = pd.DataFrame()
     for name,gr in group:
@@ -196,16 +195,31 @@ def slices(data,var='pixDec',varb='Dec',
         dd['{}_min'.format(varb)] = [float(name.left)]
         dd['{}_max'.format(varb)] = [float(name.right)]
         for vv in varsum:
-            dd[vv] = [int(gr[vv].sum())]
-            
+            #dd[vv] = [int(gr[vv].sum())]
+            dd[vv] = [gr[vv].mean()]
+            dd['{}_std'.format(vv)] = [gr[vv].std()]
+            """
+            dd['frac_{}'.format(vv)] = [100.*gr[vv].sum()/nvisits_sum]
+            dd['diff_{}'.format(vv)] = [gr[vv].median()-nvisits_med]
+            dd['doff_{}'.format(vv)] = [gr[vv].mean()-nvisits_mean]
+            #dd['daff_{}'.format(vv)] = [gr[vv].sum()-nvisits_min]
+            """
         rr = pd.DataFrame.from_dict(dd)
             
         res = pd.concat((res,rr))
     
+    res['Dec'] = 0.5*(res['Dec_min']+res['Dec_max'])
+    res = res.sort_values(by=['Dec'])
+    
+    for vv in varsum:
+        res['diff_{}'.format(vv)]=res[vv].diff()
+        norm = res['{}_std'.format(vv)]/np.sqrt(len(res))
+        res['diff_std_{}'.format(vv)]=res[vv].diff()/norm
+    
     return res
 
 def plot_slices_db(res,xvar='Dec_min',xleg='Dec [deg]',yvar='nvisits',
-                    yleg='$N_{visits}$'):
+                    yleg='$N_{visits}$',yerr=None):
     
     dbNames = res['dbName'].unique()
     from sn_plotter_tools.plot_tools import plot_xy
@@ -223,7 +237,7 @@ def plot_slices_db(res,xvar='Dec_min',xleg='Dec [deg]',yvar='nvisits',
         
         sel = res[idx]
         
-        print('allo',res['nvisits'].sum())
+        print('allo',sel['nvisits'].sum())
         years = sel['year'].unique()
         
         fig, ax = plt.subplots(figsize=(14,8))
@@ -237,11 +251,15 @@ def plot_slices_db(res,xvar='Dec_min',xleg='Dec [deg]',yvar='nvisits',
             color = ccol[y]
             marker = mm[y]
             
+            #selb['rat_u'] = selb['nvisits_u']/selb['nvisits']
+            #yvar = 'rat_u'
             plot_xy(selb,xvar=xvar,xleg=xleg,yvar=yvar,
+                    yerr=yerr,
                     yleg=yleg,fig=fig,ax=ax,
                     label='year {}'.format(y),
                     color=color,
-                    marker=marker,linestyle=ls,figtit=dbName)
+                    marker=marker,msize=5,
+                    linestyle=ls,figtit=dbName)
             
         
         ax.set_xlabel(r'{}'.format(xleg))
@@ -249,6 +267,36 @@ def plot_slices_db(res,xvar='Dec_min',xleg='Dec [deg]',yvar='nvisits',
         ax.grid(visible=True)
         ax.legend()
 
+def plot_dec_slices_db(df,dbName='baseline_v5.3.7_10yrs',
+                       year=1,
+                       bins=np.arange(-80,30,2)):
+    
+    idx = df['dbName'] == dbName
+    idx &= df['year'] == year
+    #df['density'] = df['nvisits']/pixSize
+    
+    group = df.groupby(pd.cut(df['pixDec'], bins),observed=False)
+   
+    for name,gr in group:
+        fig, ax = plt.subplots()
+        fig.suptitle(name)
+        ax.hist(gr['density'],histtype='step',bins=40)
+        
+        plt.show()
+   
+def survey_spikes(grp,thresh=20,varx='diff_std_density'):
+    
+    dd = {}
+    idx = np.abs(grp[varx]) >= thresh
+    
+    dd['nspikes'] = [len(grp[idx])]
+    
+    return pd.DataFrame.from_dict(dd)
+    
+    
+    
+    
+    
 
 parser = OptionParser(description='Script to plot pixel level OS infos')
 
@@ -273,6 +321,7 @@ nside = opts.nside
 ebvofMW_max = opts.ebvofMW_max
 nproc = opts.nproc
 plots = opts.plots.split(',')
+pixSize = hp.nside2pixarea(nside, degrees=True)
 
 dbNames = pd.read_csv(dbList,comment='#')['dbName'].to_list()
 
@@ -280,10 +329,13 @@ df = load_sel_dust(dbDir, dbNames, 'WFD','WFD',nside=nside,
                    ebvofMW_max=ebvofMW_max)
 idx = df['year'] <= 10
 idx &= df['year'] >=1
-idx &= df['cadence'] <= 4
+#remove hot spots per year
+idx &= df['nvisits'] <= 400
+#idx &= df['cadence'] <= 4
 
 df = df[idx]
     
+df['density'] = df['nvisits']/pixSize
 
 print(df.columns)
 
@@ -292,6 +344,20 @@ cols = ['dbName','healpixID']
 nvisits = df.groupby(cols).apply(lambda x:nvisits_survey(x),
                                  include_groups=False).reset_index()
 """
+params = {}
+params['data'] = df
+
+nvisits = multiproc(df['dbName'].unique(),
+                    params,nvisits_multiproc,nproc=nproc)
+cols = ['dbName','healpixID']
+df = df.merge(nvisits,left_on=cols,right_on=cols)
+
+#select pixels with at 400<nvisits_10yrs < 1200
+
+idx = df['nvisits_10yrs'] >= 400
+idx &= df['nvisits_10yrs'] <= 1200
+
+df = df[idx]
 
 if 'nvisits_10yrs' in plots:
     plot_nvisits(df)
@@ -300,15 +366,26 @@ col = 'nvisits'
 varsum = [col]
 for b in 'ugrizy':
     varsum.append('{}_{}'.format(col,b))
+varsum.append('density')
 
 if 'slices' in plots:
-    bins = np.arange(-90.,90.,10.)
-    res = df.groupby(['dbName','year']).apply(lambda x: slices(x,
-                                                               varsum=varsum,
-                                                               bins=bins),
+    dec_min=-80
+    dec_max = 30.
+    delta_dec = 5.
+    bins = np.arange(dec_min,dec_max+delta_dec,delta_dec)
+    """
+    dbName = 'three_stripes_kr_v5.3.7_10yrs'
+    plot_dec_slices_db(df,dbName=dbName,year=2,bins=bins)
+    
+    """
+    cols = ['dbName','year']
+    res = df.groupby(cols).apply(lambda x: slices(x,varsum=varsum,bins=bins),
                                               include_groups=False).reset_index()
+    print(res.columns)
+    plot_slices_db(res,yvar='diff_std_density')
     
-    plot_slices_db(res,yvar='nvisits_u')
-    
+    resb = res.groupby(cols).apply(lambda x: survey_spikes(x,thresh=1),
+                                              include_groups=False).reset_index()
 
+    print(resb)
 plt.show()

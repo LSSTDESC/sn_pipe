@@ -221,7 +221,7 @@ def plot_mollviews_db(sel,vv,seasons,yleg='',timescale='year',
                              op=op, seasons=seasons,
                              outDir=mollview_outDir,themin=np.min(ddb[newvar]))
     
-def high_nvisits_pixels(sel,varx='nvisits',thresh=2000):
+def high_nvisits_pixels(sel,varx='nvisits',thresh_10yrs=2000):
     """
     Function to grab the list of hot pixels
 
@@ -231,8 +231,8 @@ def high_nvisits_pixels(sel,varx='nvisits',thresh=2000):
         Data to process.
     varx : str, optional
         x-axis variable. The default is 'nvisits'.
-    thresh : int, optional
-        min number of visits. The default is 2000.
+    thresh_10yrs : int, optional
+        max number of visits for ten years. The default is 2000.
 
     Returns
     -------
@@ -241,11 +241,10 @@ def high_nvisits_pixels(sel,varx='nvisits',thresh=2000):
 
     """
     
-    
     sel = sel.groupby(['healpixID','dbName'])[varx].sum().reset_index()
     
    
-    idx = sel['nvisits'] >= thresh
+    idx = sel[varx] >= thresh_10yrs
     selpix = sel[idx]['healpixID'].unique().tolist()
  
     return selpix
@@ -685,14 +684,17 @@ sel = df[idx]
 #plot_nvisits_cumsum(sel)
 
 #remove hot spots
-hot_pixels = high_nvisits_pixels(sel,thresh=nvisits_10yrs_max)
+hot_pixels = high_nvisits_pixels(sel,thresh_10yrs=nvisits_10yrs_max)
 
 idx = sel['healpixID'].isin(hot_pixels)
 
 hot_spots = sel[idx]
 
 sel = sel[~idx]
-
+   
+idx = sel['nvisits'] <= 200
+   
+sel = sel[idx]
 print('hot spots',len(hot_spots))
 #add nvisits_10 yrs
 ccols = ['healpixID','dbName']
