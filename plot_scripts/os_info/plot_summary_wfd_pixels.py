@@ -13,6 +13,8 @@ from sn_tools.sn_utils import multiproc
 from sn_plotter_analysis import plt,filtercolors
 import numpy as np
 import healpy as hp
+from sn_tools.sn_obs import season
+from sn_plotter_tools.plot_tools import plot_xy
 
 def nvisits_survey(grp,timescale='year'):
     """
@@ -198,6 +200,7 @@ def slices(data,var='pixDec',varb='Dec',
             #dd[vv] = [int(gr[vv].sum())]
             dd[vv] = [gr[vv].mean()]
             dd['{}_std'.format(vv)] = [gr[vv].std()]
+            dd['diff_{}'.format(vv)] = [gr[vv].median()/nvisits_med]
             """
             dd['frac_{}'.format(vv)] = [100.*gr[vv].sum()/nvisits_sum]
             dd['diff_{}'.format(vv)] = [gr[vv].median()-nvisits_med]
@@ -208,6 +211,7 @@ def slices(data,var='pixDec',varb='Dec',
             
         res = pd.concat((res,rr))
     
+    """
     res['Dec'] = 0.5*(res['Dec_min']+res['Dec_max'])
     res = res.sort_values(by=['Dec'])
     
@@ -215,14 +219,14 @@ def slices(data,var='pixDec',varb='Dec',
         res['diff_{}'.format(vv)]=res[vv].diff()
         norm = res['{}_std'.format(vv)]/np.sqrt(len(res))
         res['diff_std_{}'.format(vv)]=res[vv].diff()/norm
-    
+    """
     return res
 
 def plot_slices_db(res,xvar='Dec_min',xleg='Dec [deg]',yvar='nvisits',
                     yleg='$N_{visits}$',yerr=None):
     
     dbNames = res['dbName'].unique()
-    from sn_plotter_tools.plot_tools import plot_xy
+    
     years = range(1, 13)
     marks = ['o', 's', 'P', 'v', '^', 'p']*2
     lsb = ['solid']*6+['dashed']*6
@@ -237,10 +241,12 @@ def plot_slices_db(res,xvar='Dec_min',xleg='Dec [deg]',yvar='nvisits',
         
         sel = res[idx]
         
-        print('allo',sel['nvisits'].sum())
         years = sel['year'].unique()
-        
+        dbName_red = dbName.split('_v5.3.7')[0]
         fig, ax = plt.subplots(figsize=(14,8))
+        fig.suptitle(dbName_red)
+        fig.subplots_adjust(right=0.85)
+        
         for y in years:
             
             idxb = sel['year'] == y
@@ -258,15 +264,16 @@ def plot_slices_db(res,xvar='Dec_min',xleg='Dec [deg]',yvar='nvisits',
                     yleg=yleg,fig=fig,ax=ax,
                     label='year {}'.format(y),
                     color=color,
-                    marker=marker,msize=5,
-                    linestyle=ls,figtit=dbName)
+                    marker=marker,msize=10,
+                    linestyle=ls,figtit='',markevery=3)
             
         
         ax.set_xlabel(r'{}'.format(xleg))
         ax.set_ylabel(r'{}'.format(yleg))
         ax.grid(visible=True)
-        ax.legend()
-
+        ax.legend(bbox_to_anchor=(1.0, 0.7),
+                  ncol=1, fontsize=15, frameon=False)
+        
 def plot_dec_slices_db(df,dbName='baseline_v5.3.7_10yrs',
                        year=1,
                        bins=np.arange(-80,30,2)):
@@ -294,9 +301,115 @@ def survey_spikes(grp,thresh=20,varx='diff_std_density'):
     return pd.DataFrame.from_dict(dd)
     
     
+def dec_extension(grp,thresh=20,varx='diff_nvisits'):
+
+    idx = grp[varx] >= thresh
+    
+    sel = grp[idx]
+    
+    nn = grp.name
+    
+    nstripes = 0
+    stripe_depth_max=0
+    stripe_depth_min=0
+    
+    if len(sel) > 0:
+        
+        ro = []
+    
+        selseas = season(sel.to_records(index=False),
+                         season_gap=4,mjdCol='Dec_min')
+        
+        selseas = pd.DataFrame.from_records(selseas)
+    
+        print(grp.name)
+    
+        dec_extens = selseas['season'].unique()
+        
+        for dec in dec_extens:
+            idxb = selseas['season'] == dec
+            
+            rr = selseas[idxb]
+            
+            rr = rr.sort_values(by=['Dec_min'])
+            
+            x_min = rr['Dec_min'].min()
+            x_max = rr['Dec_min'].max()
+            
+            x_length = x_max-x_min
+            
+            if x_length> 0:
+                ro.append((dec,x_length,x_min,x_max))
+            
+    
+        df = pd.DataFrame(ro,columns=['id_stripe','stripe_depth','dec_min','dec_max'])
+        print('summary',df)
+    
+    
+        nstripes = len(df)
+        stripe_depth_max = df['stripe_depth'].max()
+        stripe_depth_min = df['stripe_depth'].min()
+        
+    rr = [(nstripes,stripe_depth_max,stripe_depth_min)]
+
+    res = pd.DataFrame(rr,
+                       columns=['nstripes','stripe_depth_max','stripe_depth_min'])
+
+    return res
+
+def plot_summary_slices(df, config,xvar='year',xleg='year',
+                        yvar='nstripes',yleg='$N_{dec}^{stripes}$'):
+    
+    dbNames = df['dbName'].unique()
+    
+    fig, ax = plt.subplots(figsize=(12,8))
+    fig.subplots_adjust(right=0.75)
+    
+    idx = df['nstripes'] <=1
+    """
+    idx &= df['stripe_depth_max'] > 0.
+    idx &= df['stripe_depth_min'] > 0.
+    """
+    print(df[idx][['dbName','year']])
+    
+    #idxb = df['dbName'] =='three_stripes_kr_v5.3.7_10yrs'
+    idxb = df['dbName'] =='baseline_v5.3.7_10yrs'
+    print(df[idxb][['dbName','year','nstripes',
+                    'stripe_depth_max','stripe_depth_min']])
+    
+    for dbName in dbNames:
+        
+        idx = df['dbName'] == dbName
+        
+        sel = df[idx]
+        
+        idxb = config['dbName'] == dbName
+        selconf = config[idxb]
+        
+        ls = selconf['ls'].values[0]
+        mm = selconf['marker'].values[0]
+        color = selconf['color'].values[0]
+        dbName_red = selconf['dbName_plot'].values[0]
+        
+        plot_xy(sel,xvar=xvar,xleg=xleg,
+                yvar=yvar,yleg=yleg,
+                fig=fig,ax=ax,label=dbName_red,
+                color=color,marker=mm,linestyle=ls)
+        
+        
+    ax.grid(visible=True)
+    ax.set_xlabel(r'{}'.format(xleg))
+    ax.set_ylabel(r'{}'.format(yleg))
+    
+   
+    ax.legend(bbox_to_anchor=(1.0, 0.7),
+              ncol=1, fontsize=12, frameon=False)    
+        
     
     
     
+    
+
 
 parser = OptionParser(description='Script to plot pixel level OS infos')
 
@@ -312,6 +425,9 @@ parser.add_option('--nproc', type=int, default=8,
                   help='nproc for multiprocessing [%default]')
 parser.add_option('--plots', type=str, default='nvisits_10yrs,slices',
                   help='plots to display [%default]')
+parser.add_option('--config', type=str,
+                  default='config_ana_selplot_fbs_5.3_nov2026.csv',
+                  help='plots to display [%default]')
 
 opts, args = parser.parse_args()
 
@@ -321,6 +437,8 @@ nside = opts.nside
 ebvofMW_max = opts.ebvofMW_max
 nproc = opts.nproc
 plots = opts.plots.split(',')
+config = opts.config
+
 pixSize = hp.nside2pixarea(nside, degrees=True)
 
 dbNames = pd.read_csv(dbList,comment='#')['dbName'].to_list()
@@ -371,7 +489,7 @@ varsum.append('density')
 if 'slices' in plots:
     dec_min=-80
     dec_max = 30.
-    delta_dec = 5.
+    delta_dec = 2.
     bins = np.arange(dec_min,dec_max+delta_dec,delta_dec)
     """
     dbName = 'three_stripes_kr_v5.3.7_10yrs'
@@ -382,10 +500,22 @@ if 'slices' in plots:
     res = df.groupby(cols).apply(lambda x: slices(x,varsum=varsum,bins=bins),
                                               include_groups=False).reset_index()
     print(res.columns)
-    plot_slices_db(res,yvar='diff_std_density')
+    plot_slices_db(res,yvar='diff_nvisits',yleg='$\Delta N_{visits}$')
     
+    resb = res.groupby(cols).apply(lambda x: dec_extension(x,thresh=1.1),
+                                              include_groups=False).reset_index()
+    
+    print(resb)
+    conf = pd.read_csv(config,comment='#')
+    plot_summary_slices(resb,conf)
+    """
+    plot_summary_slices(resb,conf,yvar='stripe_depth_max',yleg='depth max')
+    plot_summary_slices(resb,conf,yvar='stripe_depth_min',yleg='depth min')
+    """
+    """
     resb = res.groupby(cols).apply(lambda x: survey_spikes(x,thresh=1),
                                               include_groups=False).reset_index()
-
+    
     print(resb)
+    """
 plt.show()
