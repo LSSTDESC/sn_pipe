@@ -180,6 +180,31 @@ def slices(data,var='pixDec',varb='Dec',
                    'nvisits_z','nvisits_y',
                    'density'], 
            bins=np.arange(-90.,90.,10.)):
+    """
+    Function to estimate obs var for dec slices(<> 180 deg) 
+
+    Parameters
+    ----------
+    data : pandas df
+        Data to process.
+    var : str, optional
+        variable for the slices. The default is 'pixDec'.
+    varb : str, optional
+        output variable. The default is 'Dec'.
+    varsum : list(str), optional
+        list of columns to consider. The default is ['nvisits','nvisits_u',
+                                                     'nvisits_g','nvisits_r',
+                                                     'nvisits_i','nvisits_z',
+                                                     'nvisits_y','density'].
+    bins : array, optional
+        bins for slices. The default is np.arange(-90.,90.,10.).
+
+    Returns
+    -------
+    res : pandas df
+        the result.
+
+    """
     
     
     group = data.groupby(pd.cut(data[var], bins),observed=False)
@@ -190,17 +215,22 @@ def slices(data,var='pixDec',varb='Dec',
     idx = data['pixDec'] <= 10
     nvisits_min = data[idx]['nvisits'].min()
     
+    ref_med = {}
+    for vv in varsum:
+        ref_med[vv] = data[vv].median()
     
     res = pd.DataFrame()
+    
     for name,gr in group:
         dd = {}
         dd['{}_min'.format(varb)] = [float(name.left)]
         dd['{}_max'.format(varb)] = [float(name.right)]
+      
         for vv in varsum:
-            #dd[vv] = [int(gr[vv].sum())]
-            dd[vv] = [gr[vv].mean()]
+            dd[vv] = [int(gr[vv].sum())]
+            #dd[vv] = [grb[vv].mean()]
             dd['{}_std'.format(vv)] = [gr[vv].std()]
-            dd['diff_{}'.format(vv)] = [gr[vv].median()/nvisits_med]
+            dd['diff_{}'.format(vv)] = [gr[vv].median()-ref_med[vv]]
             """
             dd['frac_{}'.format(vv)] = [100.*gr[vv].sum()/nvisits_sum]
             dd['diff_{}'.format(vv)] = [gr[vv].median()-nvisits_med]
@@ -208,22 +238,120 @@ def slices(data,var='pixDec',varb='Dec',
             #dd['daff_{}'.format(vv)] = [gr[vv].sum()-nvisits_min]
             """
         rr = pd.DataFrame.from_dict(dd)
-            
+        
         res = pd.concat((res,rr))
     
+    return res
+
+def slices_ra(data,var='pixDec',varb='Dec',
+           varsum=['nvisits',
+                   'nvisits_u','nvisits_g',
+                   'nvisits_r','nvisits_i',
+                   'nvisits_z','nvisits_y',
+                   'density'], 
+           bins=np.arange(-90.,90.,10.)):
     """
-    res['Dec'] = 0.5*(res['Dec_min']+res['Dec_max'])
-    res = res.sort_values(by=['Dec'])
+    Function to estimate obs var for dec slices and 2 ra areas (<> 180 deg) 
+
+    Parameters
+    ----------
+    data : pandas df
+        Data to process.
+    var : str, optional
+        variable for the slices. The default is 'pixDec'.
+    varb : str, optional
+        output variable. The default is 'Dec'.
+    varsum : list(str), optional
+        list of columns to consider. The default is ['nvisits','nvisits_u',
+                                                     'nvisits_g','nvisits_r',
+                                                     'nvisits_i','nvisits_z',
+                                                     'nvisits_y','density'].
+    bins : array, optional
+        bins for slices. The default is np.arange(-90.,90.,10.).
+
+    Returns
+    -------
+    res : pandas df
+        the result.
+
+    """
     
+    
+    group = data.groupby(pd.cut(data[var], bins),observed=False)
+    nvisits_sum = data['nvisits'].sum()
+    nvisits_med = data['nvisits'].median()
+    nvisits_mean = data['nvisits'].mean()
+    
+    idx = data['pixDec'] <= 10
+    nvisits_min = data[idx]['nvisits'].min()
+    
+    ref_med = {}
     for vv in varsum:
-        res['diff_{}'.format(vv)]=res[vv].diff()
-        norm = res['{}_std'.format(vv)]/np.sqrt(len(res))
-        res['diff_std_{}'.format(vv)]=res[vv].diff()/norm
-    """
+        ref_med[vv] = data[vv].median()
+        
+    print(data.name,ref_med)
+    
+    res = pd.DataFrame()
+    ra_min = 0.
+    ra_max = 360.
+    nra = 3
+    ra_width = 180.
+    bins_ra = np.linspace(ra_min,ra_max,nra,endpoint=False)
+    bins_ra = np.arange(ra_min,ra_max+ra_width,ra_width)
+    
+    for name,gr in group:
+        
+        groupb = gr.groupby(pd.cut(gr['pixRA'], bins_ra),observed=False)
+        for nameb, grb in groupb:
+            dd = {}
+            dd['{}_min'.format(varb)] = [float(name.left)]
+            dd['{}_max'.format(varb)] = [float(name.right)]
+            dd['RA_min'] = [float(nameb.left)]
+            dd['RA_max'] = [float(nameb.right)]
+            for vv in varsum:
+                dd[vv] = [int(grb[vv].sum())]
+                #dd[vv] = [grb[vv].mean()]
+                dd['{}_std'.format(vv)] = [grb[vv].std()]
+                dd['diff_{}'.format(vv)] = [grb[vv].median()/ref_med[vv]]
+                """
+                dd['frac_{}'.format(vv)] = [100.*gr[vv].sum()/nvisits_sum]
+                dd['diff_{}'.format(vv)] = [gr[vv].median()-nvisits_med]
+                dd['doff_{}'.format(vv)] = [gr[vv].mean()-nvisits_mean]
+                #dd['daff_{}'.format(vv)] = [gr[vv].sum()-nvisits_min]
+                """
+            rr = pd.DataFrame.from_dict(dd)
+            
+            res = pd.concat((res,rr))
+    
     return res
 
 def plot_slices_db(res,xvar='Dec_min',xleg='Dec [deg]',yvar='nvisits',
-                    yleg='$N_{visits}$',yerr=None):
+                    yleg='$N_{visits}$',yerr=None,add_figtit=''):
+    """
+    Function to plot the slices results function
+
+    Parameters
+    ----------
+    res : pandas df
+        Data to plot.
+    xvar : str, optional
+        x-axis variable. The default is 'Dec_min'.
+    xleg : str, optional
+        x-axis label. The default is 'Dec [deg]'.
+    yvar : str, optional
+        y-axis variable. The default is 'nvisits'.
+    yleg : str, optional
+        y-axis label. The default is '$N_{visits}$'.
+    yerr : str, optional
+        y err column. The default is None.
+    add_figtit: str, optional
+        add str to fig tit. The default is ''
+
+    Returns
+    -------
+    None.
+
+    """
     
     dbNames = res['dbName'].unique()
     
@@ -236,6 +364,10 @@ def plot_slices_db(res,xvar='Dec_min',xleg='Dec [deg]',yvar='nvisits',
     ll = dict(zip(years, lsb))
     ccol = dict(zip(years, clrs))
    
+    import operator as op 
+    
+    ops_ref= [op.le,op.gt]
+   
     for dbName in dbNames:
         idx = res['dbName'] == dbName
         
@@ -244,7 +376,10 @@ def plot_slices_db(res,xvar='Dec_min',xleg='Dec [deg]',yvar='nvisits',
         years = sel['year'].unique()
         dbName_red = dbName.split('_v5.3.7')[0]
         fig, ax = plt.subplots(figsize=(14,8))
-        fig.suptitle(dbName_red)
+        figtit = dbName_red
+        if add_figtit != '':
+            figtit += '\n {}'.format(add_figtit)
+        fig.suptitle(figtit)
         fig.subplots_adjust(right=0.85)
         
         for y in years:
@@ -257,8 +392,8 @@ def plot_slices_db(res,xvar='Dec_min',xleg='Dec [deg]',yvar='nvisits',
             color = ccol[y]
             marker = mm[y]
             
-            #selb['rat_u'] = selb['nvisits_u']/selb['nvisits']
-            #yvar = 'rat_u'
+            #split ra<180, ra > 180
+            
             plot_xy(selb,xvar=xvar,xleg=xleg,yvar=yvar,
                     yerr=yerr,
                     yleg=yleg,fig=fig,ax=ax,
@@ -277,6 +412,25 @@ def plot_slices_db(res,xvar='Dec_min',xleg='Dec [deg]',yvar='nvisits',
 def plot_dec_slices_db(df,dbName='baseline_v5.3.7_10yrs',
                        year=1,
                        bins=np.arange(-80,30,2)):
+    """
+    function to plot histo for dec slices
+
+    Parameters
+    ----------
+    df : pandas df
+        Data to process.
+    dbName : str, optional
+        OS of interest. The default is 'baseline_v5.3.7_10yrs'.
+    year : int, optional
+        year to plot. The default is 1.
+    bins : array(float), optional
+        bins for the slices. The default is np.arange(-80,30,2).
+
+    Returns
+    -------
+    None.
+
+    """
     
     idx = df['dbName'] == dbName
     idx &= df['year'] == year
@@ -292,6 +446,24 @@ def plot_dec_slices_db(df,dbName='baseline_v5.3.7_10yrs',
         plt.show()
    
 def survey_spikes(grp,thresh=20,varx='diff_std_density'):
+    """
+    Function to estimate spikes
+
+    Parameters
+    ----------
+    grp : pandas df
+        Data to process.
+    thresh : float, optional
+        selection value for spikes. The default is 20.
+    varx : str, optional
+        col to consider. The default is 'diff_std_density'.
+
+    Returns
+    -------
+    pandas df
+        The result.
+
+    """
     
     dd = {}
     idx = np.abs(grp[varx]) >= thresh
@@ -302,12 +474,28 @@ def survey_spikes(grp,thresh=20,varx='diff_std_density'):
     
     
 def dec_extension(grp,thresh=20,varx='diff_nvisits'):
+    """
+    Function to estimate the dec stripes
+
+    Parameters
+    ----------
+    grp : pandas df
+        Data to process.
+    thresh : float, optional
+        Selection value to define the stripes. The default is 20.
+    varx : str, optional
+        column used for selection. The default is 'diff_nvisits'.
+
+    Returns
+    -------
+    res : pandas df
+        The output.
+
+    """
 
     idx = grp[varx] >= thresh
     
     sel = grp[idx]
-    
-    nn = grp.name
     
     nstripes = 0
     stripe_depth_max=0
@@ -321,8 +509,6 @@ def dec_extension(grp,thresh=20,varx='diff_nvisits'):
                          season_gap=4,mjdCol='Dec_min')
         
         selseas = pd.DataFrame.from_records(selseas)
-    
-        print(grp.name)
     
         dec_extens = selseas['season'].unique()
         
@@ -338,12 +524,11 @@ def dec_extension(grp,thresh=20,varx='diff_nvisits'):
             
             x_length = x_max-x_min
             
-            if x_length> 0:
+            if x_length> 2:
                 ro.append((dec,x_length,x_min,x_max))
             
     
         df = pd.DataFrame(ro,columns=['id_stripe','stripe_depth','dec_min','dec_max'])
-        print('summary',df)
     
     
         nstripes = len(df)
@@ -358,11 +543,14 @@ def dec_extension(grp,thresh=20,varx='diff_nvisits'):
     return res
 
 def plot_summary_slices(df, config,xvar='year',xleg='year',
-                        yvar='nstripes',yleg='$N_{dec}^{stripes}$'):
+                        yvar='nstripes',yleg='$N_{dec}^{stripes}$',add_figtit=''):
     
     dbNames = df['dbName'].unique()
     
     fig, ax = plt.subplots(figsize=(12,8))
+    if add_figtit != '':
+        fig.suptitle(add_figtit)
+    
     fig.subplots_adjust(right=0.75)
     
     idx = df['nstripes'] <=1
@@ -375,7 +563,7 @@ def plot_summary_slices(df, config,xvar='year',xleg='year',
     #idxb = df['dbName'] =='three_stripes_kr_v5.3.7_10yrs'
     idxb = df['dbName'] =='baseline_v5.3.7_10yrs'
     print(df[idxb][['dbName','year','nstripes',
-                    'stripe_depth_max','stripe_depth_min']])
+                    'stripe_depth_max','stripe_depth_min','ra_slice']])
     
     for dbName in dbNames:
         
@@ -403,12 +591,7 @@ def plot_summary_slices(df, config,xvar='year',xleg='year',
     
    
     ax.legend(bbox_to_anchor=(1.0, 0.7),
-              ncol=1, fontsize=12, frameon=False)    
-        
-    
-    
-    
-    
+              ncol=1, fontsize=12, frameon=False)
 
 
 parser = OptionParser(description='Script to plot pixel level OS infos')
@@ -448,7 +631,7 @@ df = load_sel_dust(dbDir, dbNames, 'WFD','WFD',nside=nside,
 idx = df['year'] <= 10
 idx &= df['year'] >=1
 #remove hot spots per year
-idx &= df['nvisits'] <= 400
+#idx &= df['nvisits'] <= 400
 #idx &= df['cadence'] <= 4
 
 df = df[idx]
@@ -474,6 +657,7 @@ df = df.merge(nvisits,left_on=cols,right_on=cols)
 
 idx = df['nvisits_10yrs'] >= 400
 idx &= df['nvisits_10yrs'] <= 1200
+#idx &= df['year'] == 9
 
 df = df[idx]
 
@@ -497,17 +681,38 @@ if 'slices' in plots:
     
     """
     cols = ['dbName','year']
-    res = df.groupby(cols).apply(lambda x: slices(x,varsum=varsum,bins=bins),
+    res = df.groupby(cols).apply(lambda x: slices_ra(x,varsum=varsum,bins=bins),
                                               include_groups=False).reset_index()
-    print(res.columns)
-    plot_slices_db(res,yvar='diff_nvisits',yleg='$\Delta N_{visits}$')
+    for opo in [0.,180.]:
+        idxc = res['RA_min']==opo
+        add_figtit = '$RA \leq 180$ deg'
+        if opo > 0.:
+           add_figtit = '$RA \geq 180$ deg' 
+        
+        plot_slices_db(res[idxc],yvar='diff_nvisits',
+                       yleg='$\Delta N_{visits}$',
+                       add_figtit=add_figtit)
     
-    resb = res.groupby(cols).apply(lambda x: dec_extension(x,thresh=1.1),
+    #analyze the slices
+    resb = pd.DataFrame()
+    for opo in [0.,180.]:
+        idxc = res['RA_min']==opo
+        resc = res[idxc].groupby(cols).apply(lambda x: dec_extension(x,thresh=1.1),
                                               include_groups=False).reset_index()
+        resc['ra_slice'] = opo
+        
+        resb = pd.concat((resb,resc))
     
-    print(resb)
     conf = pd.read_csv(config,comment='#')
-    plot_summary_slices(resb,conf)
+    
+    ra_slice = resb['ra_slice'].unique()
+    
+    for ra in ra_slice:
+        idd = resb['ra_slice'] == ra 
+        add_figtit = '$RA \leq 180$ deg'
+        if ra > 0.:
+           add_figtit = '$RA \geq 180$ deg'
+        plot_summary_slices(resb[idd],conf,add_figtit=add_figtit)
     """
     plot_summary_slices(resb,conf,yvar='stripe_depth_max',yleg='depth max')
     plot_summary_slices(resb,conf,yvar='stripe_depth_min',yleg='depth min')
